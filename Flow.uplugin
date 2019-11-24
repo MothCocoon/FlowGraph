@@ -1,0 +1,29 @@
+{
+	"FileVersion" : 3,
+	"Version" : 1,
+	"FriendlyName" : "Flow",
+	"Description" : "Toolset for scripting flow of events in game.",
+	"Category" : "Gameplay",
+	"CreatedBy" : "",
+	"CreatedByURL" : "",
+	"DocsURL" : "",
+	"MarketplaceURL" : "",
+	"SupportURL" : "",
+	"EnabledByDefault" : true,
+	"CanContainContent" : false,
+	"IsBetaVersion" : false,
+	"Installed" : false,
+	"Modules" :
+	[
+		{
+			"Name" : "Flow",
+			"Type" : "Runtime",
+			"LoadingPhase" : "PreDefault"
+		},
+		{
+			"Name" : "FlowEditor",
+			"Type" : "Editor",
+			"LoadingPhase" : "PreDefault"
+		}
+	]
+}
