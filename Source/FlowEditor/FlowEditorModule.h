@@ -1,14 +1,13 @@
 #pragma once
 
 #include "AssetTypeCategories.h"
-#include "CoreMinimal.h"
 #include "Modules/ModuleInterface.h"
 #include "Toolkits/AssetEditorToolkit.h"
 
 class FSlateStyleSet;
 struct FGraphPanelPinConnectionFactory;
 
-class IFlowAssetEditor;
+class FFlowAssetEditor;
 class UFlowAsset;
 
 struct FExtensibilityManagers
@@ -47,7 +46,7 @@ public:
 	virtual void StartupModule() override;
 	virtual void ShutdownModule() override;
 
-	TSharedRef<IFlowAssetEditor> CreateFlowAssetEditor(const EToolkitMode::Type Mode, const TSharedPtr< IToolkitHost >& InitToolkitHost, UFlowAsset* FlowAsset);
+	TSharedRef<FFlowAssetEditor> CreateFlowAssetEditor(const EToolkitMode::Type Mode, const TSharedPtr< IToolkitHost >& InitToolkitHost, UFlowAsset* FlowAsset);
 	TSharedPtr<FExtensibilityManager> GetFlowAssetMenuExtensibilityManager();
 	TSharedPtr<FExtensibilityManager> GetFlowAssetToolBarExtensibilityManager();
 

@@ -2,7 +2,7 @@
 
 #include "CoreMinimal.h"
 
-class IFlowAssetEditor;
+class FFlowAssetEditor;
 
 class UEdGraph;
 struct Rect;
@@ -10,11 +10,8 @@ struct Rect;
 class FLOWEDITOR_API FFlowGraphUtilities
 {
 public:
-	/** Can we paste to this graph? */
-	static bool CanPasteNodes(const UEdGraph* Graph);
-
-	/** Perform paste on graph, at location */
 	static void PasteNodesHere(UEdGraph* Graph, const FVector2D& Location);
+	static bool CanPasteNodes(const UEdGraph* Graph);
 
 	/** Get the bounding area for the currently selected nodes
 	 *
@@ -33,7 +30,7 @@ public:
 
 private:
 	/** Get IFlowAssetEditor for given object, if it exists */
-	static TSharedPtr<IFlowAssetEditor> GetIFlowAssetEditorForObject(const UObject* ObjectToFocusOn);
+	static TSharedPtr<FFlowAssetEditor> GetFlowAssetEditorForObject(const UObject* ObjectToFocusOn);
 
 	FFlowGraphUtilities() {}
 };

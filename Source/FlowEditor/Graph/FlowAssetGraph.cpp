@@ -61,30 +61,32 @@ public:
 	{
 		for (TArray<UEdGraphNode*>::TIterator It(FlowAsset->GetGraph()->Nodes); It; ++It)
 		{
-			UFlowGraphNode* GraphNode = Cast<UFlowGraphNode>(*It);
-			if (UFlowNode* Node = GraphNode->GetFlowNode())
+			if (UFlowGraphNode* GraphNode = Cast<UFlowGraphNode>(*It))
 			{
-				TMap<uint8, FFlowPin> Connections;
-
-				TArray<UEdGraphPin*> OutputPins;
-				GraphNode->GetOutputPins(OutputPins);
-				for (uint8 i = 0; i < OutputPins.Num(); i++)
+				if (UFlowNode* Node = GraphNode->GetFlowNode())
 				{
-					const UEdGraphPin* Pin = OutputPins[i];
-					if (Pin->LinkedTo.Num() > 0)
+					TMap<uint8, FFlowPin> Connections;
+
+					TArray<UEdGraphPin*> OutputPins;
+					GraphNode->GetOutputPins(OutputPins);
+					for (uint8 i = 0; i < OutputPins.Num(); i++)
 					{
-						UFlowGraphNode* GraphChildNode = CastChecked<UFlowGraphNode>(Pin->LinkedTo[0]->GetOwningNode());
-						const FGuid NodeId = GraphChildNode->GetFlowNode()->GetGuid();
-						const uint8 PinIndex = GraphChildNode->GetPinIndex(Pin->LinkedTo[0]);
+						const UEdGraphPin* Pin = OutputPins[i];
+						if (Pin->LinkedTo.Num() > 0)
+						{
+							UFlowGraphNode* GraphChildNode = CastChecked<UFlowGraphNode>(Pin->LinkedTo[0]->GetOwningNode());
+							const FGuid NodeId = GraphChildNode->GetFlowNode()->GetGuid();
+							const uint8 PinIndex = GraphChildNode->GetPinIndex(Pin->LinkedTo[0]);
 
-						Connections.Add(i, FFlowPin(NodeId, PinIndex));
+							Connections.Add(i, FFlowPin(NodeId, PinIndex));
+						}
 					}
-				}
 
-				Node->SetFlags(RF_Transactional);
-				Node->Modify();
-				Node->SetConnections(Connections);
-				Node->PostEditChange();
+					Node->SetFlags(RF_Transactional);
+					Node->Modify();
+					Node->SetConnections(Connections);
+					Node->PostEditChange();
+				}
 			}
 		}
 	}
