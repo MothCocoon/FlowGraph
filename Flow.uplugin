@@ -2,7 +2,7 @@
 	"FileVersion" : 3,
 	"Version" : 1,
 	"FriendlyName" : "Flow",
-	"Description" : "Toolset for scripting flow of events in game.",
+	"Description" : "Node-based tool for scripting in-game events.",
 	"Category" : "Gameplay",
 	"CreatedBy" : "",
 	"CreatedByURL" : "",

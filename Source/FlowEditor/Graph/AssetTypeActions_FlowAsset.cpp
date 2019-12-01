@@ -3,11 +3,6 @@
 
 #include "Flow/Graph/FlowAsset.h"
 
-#include "ContentBrowserModule.h"
-#include "Framework/MultiBox/MultiBoxBuilder.h"
-#include "IContentBrowserSingleton.h"
-#include "Misc/PackageName.h"
-
 #define LOCTEXT_NAMESPACE "AssetTypeActions"
 
 UClass* FAssetTypeActions_FlowAsset::GetSupportedClass() const
@@ -17,7 +12,8 @@ UClass* FAssetTypeActions_FlowAsset::GetSupportedClass() const
 
 uint32 FAssetTypeActions_FlowAsset::GetCategories()
 {
-	return FlowAssetCategory;
+	//return FlowAssetCategory;
+	return 4096; // temp hack 4.24
 }
 
 void FAssetTypeActions_FlowAsset::OpenAssetEditor(const TArray<UObject*>& InObjects, TSharedPtr<IToolkitHost> EditWithinLevelEditor)
