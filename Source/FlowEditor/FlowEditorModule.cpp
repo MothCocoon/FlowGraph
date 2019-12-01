@@ -38,7 +38,7 @@ void FFlowEditorModule::StartupModule()
 {
 	// register assets
 	IAssetTools& AssetTools = FModuleManager::LoadModuleChecked<FAssetToolsModule>("AssetTools").Get();
-	FlowAssetCategory = AssetTools.RegisterAdvancedAssetCategory(FName(TEXT("FlowAssetCategory")), LOCTEXT("FlowAssetCategory", "Flow"));
+	FlowAssetCategory = AssetTools.RegisterAdvancedAssetCategory(FName(TEXT("Flow")), LOCTEXT("FlowAssetCategory", "Flow"));
 	AssetTools.RegisterAssetTypeActions(MakeShareable(new FAssetTypeActions_FlowAsset));
 
 	// register visual utilities
@@ -65,7 +65,7 @@ void FFlowEditorModule::ShutdownModule()
 	}
 }
 
-TSharedRef<IFlowAssetEditor> FFlowEditorModule::CreateFlowAssetEditor(const EToolkitMode::Type Mode, const TSharedPtr< IToolkitHost >& InitToolkitHost, UFlowAsset* FlowAsset)
+TSharedRef<FFlowAssetEditor> FFlowEditorModule::CreateFlowAssetEditor(const EToolkitMode::Type Mode, const TSharedPtr< IToolkitHost >& InitToolkitHost, UFlowAsset* FlowAsset)
 {
 	TSharedRef<FFlowAssetEditor> NewFlowAssetEditor(new FFlowAssetEditor());
 	NewFlowAssetEditor->InitFlowAssetEditor(Mode, InitToolkitHost, FlowAsset);
