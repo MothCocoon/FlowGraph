@@ -94,11 +94,11 @@ void UFlowGraphNode::GetNodeContextMenuActions(class UToolMenu* Menu, class UGra
 	}
 }
 
-FString UFlowGraphNode::GetDesc()
+FString UFlowGraphNode::GetDescription() const
 {
 	if (FlowNode)
 	{
-		return FlowNode->GetDesc();
+		return FlowNode->GetDescription();
 	}
 
 	return FString();
