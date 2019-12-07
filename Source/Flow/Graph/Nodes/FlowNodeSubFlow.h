@@ -20,10 +20,9 @@ private:
 protected:
 	virtual void ExecuteInput(const uint8 Pin) override;
 
-public:
-	virtual FString GetDesc() override;
-
 #if WITH_EDITOR
+public:
+	virtual FString GetDescription() const override;
 	virtual UObject* GetAssetToOpen();
 #endif
 };
