@@ -129,6 +129,7 @@ protected:
 
 #if WITH_EDITOR
 public:
+	virtual FString GetDescription() const { return FString(); };
 	TMap<uint8, double> GetWireRecords() const;
 
 	UFlowNode* GetInspectedInstance();

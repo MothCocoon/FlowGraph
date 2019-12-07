@@ -19,12 +19,12 @@ void UFlowNodeSubFlow::ExecuteInput(const uint8 Pin)
 	}
 }
 
-FString UFlowNodeSubFlow::GetDesc()
+#if WITH_EDITOR
+FString UFlowNodeSubFlow::GetDescription() const
 {
 	return FlowAsset.IsNull() ? FString() : FlowAsset.ToSoftObjectPath().GetAssetName();
 }
 
-#if WITH_EDITOR
 UObject* UFlowNodeSubFlow::GetAssetToOpen()
 {
 	return FlowAsset.IsNull() ? nullptr : LoadAsset<UObject>(FlowAsset);

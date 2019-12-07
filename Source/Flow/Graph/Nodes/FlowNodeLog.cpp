@@ -21,3 +21,10 @@ void UFlowNodeLog::ExecuteInput(const uint8 Pin)
 	ActivateOutput(0);
 	Finish();
 }
+
+#if WITH_EDITOR
+FString UFlowNodeLog::GetDescription() const
+{
+	return Message;
+}
+#endif
