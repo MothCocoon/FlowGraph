@@ -476,11 +476,9 @@ bool FFlowAssetEditor::CanSelectAllNodes() const
 void FFlowAssetEditor::DeleteSelectedNodes()
 {
 	const FScopedTransaction Transaction(NSLOCTEXT("UnrealEd", "FlowEditorDeleteSelectedNode", "Delete Selected Flow Node"));
-
 	FocusedGraphEditor->GetCurrentGraph()->Modify();
 
 	const FGraphPanelSelectionSet SelectedNodes = GetSelectedNodes();
-
 	FocusedGraphEditor->ClearSelectionSet();
 
 	for (FGraphPanelSelectionSet::TConstIterator NodeIt(SelectedNodes); NodeIt; ++NodeIt)
@@ -492,8 +490,12 @@ void FFlowAssetEditor::DeleteSelectedNodes()
 			if (UFlowGraphNode* FlowGraphNode = Cast<UFlowGraphNode>(Node))
 			{
 				const FGuid NodeGuid = FlowGraphNode->GetFlowNode()->GetGuid();
-				FBlueprintEditorUtils::RemoveNode(nullptr, FlowGraphNode, true);
+				FBlueprintEditorUtils::RemoveNode(nullptr, Node, true);
 				FlowAsset->UnregisterNode(NodeGuid);
+			}
+			else
+			{
+				FBlueprintEditorUtils::RemoveNode(nullptr, Node, true);
 			}
 		}
 	}
