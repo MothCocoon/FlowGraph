@@ -4,10 +4,13 @@ public class FlowEditor : ModuleRules
 {
     public FlowEditor(ReadOnlyTargetRules Target) : base(Target)
     {
+        PCHUsage = ModuleRules.PCHUsageMode.UseExplicitOrSharedPCHs;
+
         PublicDependencyModuleNames.AddRange(
             new string[]
             {
                 "ApplicationCore",
+                "BlueprintGraph",
                 "ClassViewer",
                 "ContentBrowser",
                 "Core",
@@ -31,7 +34,7 @@ public class FlowEditor : ModuleRules
             new string[]
             {
                 "Projects",
-                "ToolMenus",
+                "ToolMenus"
             }
         );
 
@@ -40,7 +43,5 @@ public class FlowEditor : ModuleRules
                 "AssetTools"
             }
         );
-
-        PCHUsage = ModuleRules.PCHUsageMode.UseExplicitOrSharedPCHs;
     }
 }
