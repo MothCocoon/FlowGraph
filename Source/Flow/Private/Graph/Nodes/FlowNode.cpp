@@ -158,16 +158,6 @@ void UFlowNode::TriggerOutput(const FName& PinName, const bool bFinish /*= false
 	}
 }
 
-void UFlowNode::TriggerOutput(const uint8 PinName, const bool bFinish /*= false*/)
-{
-	TriggerOutput(FName(*FString::FromInt(PinName)), bFinish);
-}
-
-FORCEINLINE void UFlowNode::TriggerOutput(const int32 PinName, const bool bFinish /*= false*/)
-{
-	TriggerOutput(FName(*FString::FromInt(PinName)), bFinish);
-}
-
 void UFlowNode::Finish()
 {
 	Cleanup();
