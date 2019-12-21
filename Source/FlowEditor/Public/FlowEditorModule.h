@@ -29,13 +29,12 @@ struct FExtensibilityManagers
 	}
 };
 
-static EAssetTypeCategories::Type FlowAssetCategory;
-
 DECLARE_LOG_CATEGORY_EXTERN(LogFlowEditor, Log, All);
 
 class FFlowEditorModule : public IModuleInterface
 {
 public:
+	static EAssetTypeCategories::Type FlowAssetCategory;
 	static FString FlowContentDir;
 
 private:
