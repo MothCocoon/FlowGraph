@@ -167,8 +167,6 @@ protected:
 
 	// trigger output pin
 	void TriggerOutput(const FName& PinName, const bool bFinish = false);
-	FORCEINLINE void TriggerOutput(const uint8 PinName, const bool bFinish = false);
-	FORCEINLINE void TriggerOutput(const int32 PinName, const bool bFinish = false);
 
 	// finish execution of node, it will call Cleanup()
 	void Finish();
