@@ -1,21 +1,21 @@
-#include "AssetTypeActions_FlowAsset.h"
+#include "FlowAssetActions.h"
 #include "FlowEditorModule.h"
 
 #include "Graph/FlowAsset.h"
 
 #define LOCTEXT_NAMESPACE "AssetTypeActions"
 
-UClass* FAssetTypeActions_FlowAsset::GetSupportedClass() const
+UClass* FlowAssetActions::GetSupportedClass() const
 {
 	return UFlowAsset::StaticClass();
 }
 
-uint32 FAssetTypeActions_FlowAsset::GetCategories()
+uint32 FlowAssetActions::GetCategories()
 {
-	return FlowAssetCategory;
+	return FFlowEditorModule::FlowAssetCategory;
 }
 
-void FAssetTypeActions_FlowAsset::OpenAssetEditor(const TArray<UObject*>& InObjects, TSharedPtr<IToolkitHost> EditWithinLevelEditor)
+void FlowAssetActions::OpenAssetEditor(const TArray<UObject*>& InObjects, TSharedPtr<IToolkitHost> EditWithinLevelEditor)
 {
 	EToolkitMode::Type Mode = EditWithinLevelEditor.IsValid() ? EToolkitMode::WorldCentric : EToolkitMode::Standalone;
 
