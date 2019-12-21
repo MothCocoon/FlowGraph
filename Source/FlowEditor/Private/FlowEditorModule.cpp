@@ -1,5 +1,5 @@
 #include "FlowEditorModule.h"
-#include "Graph/AssetTypeActions_FlowAsset.h"
+#include "Graph/FlowAssetActions.h"
 #include "Graph/FlowAssetEditor.h"
 #include "Graph/FlowGraphConnectionDrawingPolicy.h"
 #include "Graph/Nodes/FlowGraphNode.h"
@@ -9,17 +9,19 @@
 
 #include "AssetToolsModule.h"
 #include "EdGraphUtilities.h"
-#include "IPluginManager.h"
+#include "Interfaces/IPluginManager.h"
 #include "Modules/ModuleManager.h"
 #include "Styling/SlateStyle.h"
 #include "Styling/SlateStyleRegistry.h"
 #include "Utils.h"
 
+
+EAssetTypeCategories::Type FFlowEditorModule::FlowAssetCategory = (EAssetTypeCategories::Type)0;
+FString FFlowEditorModule::FlowContentDir = IPluginManager::Get().FindPlugin(TEXT("Flow"))->GetContentDir();
+
 // Setup icon sizes
 static const FVector2D Icon16 = FVector2D(16.0f, 16.0f);
 static const FVector2D Icon64 = FVector2D(64.0f, 64.0f);
-
-FString FFlowEditorModule::FlowContentDir = IPluginManager::Get().FindPlugin(TEXT("Flow"))->GetContentDir();
 
 // Preprocessor macro to make defining flow icons simple...
 
@@ -39,7 +41,7 @@ void FFlowEditorModule::StartupModule()
 	// register assets
 	IAssetTools& AssetTools = FModuleManager::LoadModuleChecked<FAssetToolsModule>("AssetTools").Get();
 	FlowAssetCategory = AssetTools.RegisterAdvancedAssetCategory(FName(TEXT("Flow")), LOCTEXT("FlowAssetCategory", "Flow"));
-	AssetTools.RegisterAssetTypeActions(MakeShareable(new FAssetTypeActions_FlowAsset));
+	AssetTools.RegisterAssetTypeActions(MakeShareable(new FlowAssetActions));
 
 	// register visual utilities
 	FEdGraphUtilities::RegisterVisualNodeFactory(MakeShareable(new FFlowGraphPanelNodeFactory()));
