@@ -3,7 +3,7 @@
 #include "AssetTypeActions_Base.h"
 #include "Toolkits/IToolkitHost.h"
 
-class FAssetTypeActions_FlowAsset : public FAssetTypeActions_Base
+class FlowAssetActions : public FAssetTypeActions_Base
 {
 public:
 	// IAssetTypeActions Implementation
