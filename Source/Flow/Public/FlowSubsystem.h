@@ -33,6 +33,8 @@ public:
 	FLOW_API void StartFlow(UFlowAsset* FlowAsset);
 
 	void PreloadSubFlow(UFlowNodeSubFlow* SubFlow);
+	void FlushPreload(UFlowNodeSubFlow* SubFlow);
+
 	void StartSubFlow(UFlowNodeSubFlow* SubFlow);
 
 private:

@@ -21,6 +21,8 @@ private:
 
 protected:
 	virtual void PreloadContent() override;
+	virtual void FlushContent() override;
+
 	virtual void ExecuteInput(const FName& PinName) override;
 	virtual void OnForceFinished() override;
 

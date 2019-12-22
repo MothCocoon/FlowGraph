@@ -144,6 +144,7 @@ private:
 
 public:
 	void AddInstance(UFlowAsset* NewInstance);
+	int32 RemoveInstance(UFlowAsset* Instance);
 	void ClearInstances();
 
 #if WITH_EDITOR
@@ -158,15 +159,24 @@ private:
 	TWeakObjectPtr<UFlowNodeSubFlow> OwningFlowNode;
 	TMap<UFlowNodeSubFlow*, TWeakObjectPtr<UFlowAsset>> ChildFlows;
 
+	UPROPERTY()
 	TArray<UFlowNodeIn*> InNodes;
 
+	UPROPERTY()
+	TSet<UFlowNode*> PreloadedNodes;
+
+	UPROPERTY()
 	TArray<UFlowNode*> ActiveNodes;
+
+	UPROPERTY()
 	TArray<UFlowNode*> RecordedNodes;
 
 public:
 	void SetSubsystem(UFlowSubsystem* Subsystem);
 	void CreateNodeInstances();
+
 	void PreloadNodes();
+	void FlushPreload();
 
 	void StartFlow();
 	void StartSubFlow(UFlowNodeSubFlow* FlowNode);

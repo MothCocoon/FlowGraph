@@ -35,10 +35,8 @@ class FFlowEditorModule : public IModuleInterface
 {
 public:
 	static EAssetTypeCategories::Type FlowAssetCategory;
-	static FString FlowContentDir;
 
 private:
-	TSharedPtr<FSlateStyleSet> FlowStyleSet;
 	TSharedPtr<FGraphPanelPinConnectionFactory> FlowGraphConnectionFactory;
 	FExtensibilityManagers FlowAssetExtensibility;
 
@@ -49,7 +47,4 @@ public:
 	TSharedRef<FFlowAssetEditor> CreateFlowAssetEditor(const EToolkitMode::Type Mode, const TSharedPtr< IToolkitHost >& InitToolkitHost, UFlowAsset* FlowAsset);
 	TSharedPtr<FExtensibilityManager> GetFlowAssetMenuExtensibilityManager();
 	TSharedPtr<FExtensibilityManager> GetFlowAssetToolBarExtensibilityManager();
-
-private:
-	void SetupIcons();
 };
