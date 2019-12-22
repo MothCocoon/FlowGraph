@@ -40,6 +40,21 @@ void UFlowSubsystem::PreloadSubFlow(UFlowNodeSubFlow* SubFlow)
 	}
 }
 
+void UFlowSubsystem::FlushPreload(UFlowNodeSubFlow* SubFlow)
+{
+	if (UFlowAsset* PreloadedAsset = InstancedSubFlows.FindRef(SubFlow))
+	{
+		PreloadedAsset->FlushPreload();
+		InstancedSubFlows.Remove(SubFlow);
+
+		const int32 ActiveInstancesLeft = SubFlow->FlowAsset.Get()->RemoveInstance(PreloadedAsset);
+		if (ActiveInstancesLeft == 0)
+		{
+			InstancedAssets.Remove(SubFlow->FlowAsset.Get());
+		}
+	}
+}
+
 void UFlowSubsystem::StartSubFlow(UFlowNodeSubFlow* SubFlow)
 {
 	if (!InstancedSubFlows.Contains(SubFlow))

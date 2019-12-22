@@ -18,6 +18,14 @@ void UFlowNodeSubFlow::PreloadContent()
 	}
 }
 
+void UFlowNodeSubFlow::FlushContent()
+{
+	if (!FlowAsset.IsNull())
+	{
+		GetFlowAsset()->GetFlowSubsystem()->FlushPreload(this);
+	}
+}
+
 void UFlowNodeSubFlow::ExecuteInput(const FName& PinName)
 {
 	if (FlowAsset.IsNull())
