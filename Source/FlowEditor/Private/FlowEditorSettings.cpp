@@ -4,6 +4,7 @@ UFlowEditorSettings::UFlowEditorSettings(const FObjectInitializer& ObjectInitial
 	: Super(ObjectInitializer)
 	, NodeDescriptionBackground(FLinearColor(0.12f, 0.12f, 0.12f, 1.0f))
 	, NodeStatusBackground(FLinearColor(0.12f, 0.12f, 0.12f, 1.0f))
+	, NodePreloadedBackground(FLinearColor(0.12f, 0.12f, 0.12f, 1.0f))
 	, RecentWireDuration(3.0f)
 	, RecentWireColor(FLinearColor(1.0f, 0.05f, 0.0f, 1.0f))
 	, RecentWireThickness(6.0f)

@@ -116,11 +116,23 @@ UFlowSubsystem* UFlowNode::GetFlowSubsystem() const
 	return GetFlowAsset()->GetFlowSubsystem();
 }
 
+void UFlowNode::TriggerPreload()
+{
+	bPreloaded = true;
+	PreloadContent();
+}
+
+void UFlowNode::TriggerFlush()
+{
+	bPreloaded = false;
+	FlushContent();
+}
+
 void UFlowNode::TriggerInput(const FName& PinName)
 {
 	// record for debugging
-	TArray<double>& Records = InputRecords.FindOrAdd(PinName);
-	Records.Add(FApp::GetCurrentTime());
+	TArray<FPinRecord>& Records = InputRecords.FindOrAdd(PinName);
+	Records.Add(FPinRecord(FApp::GetCurrentTime()));
 
 	ExecuteInput(PinName);
 }
@@ -141,8 +153,8 @@ void UFlowNode::TriggerDefaultOutput(const bool bFinish)
 void UFlowNode::TriggerOutput(const FName& PinName, const bool bFinish /*= false*/)
 {
 	// record for debugging, even if nothing is connected to this pin
-	TArray<double>& Records = OutputRecords.FindOrAdd(PinName);
-	Records.Add(FApp::GetCurrentTime());
+	TArray<FPinRecord>& Records = OutputRecords.FindOrAdd(PinName);
+	Records.Add(FPinRecord(FApp::GetCurrentTime()));
 
 	// clean up node, if needed
 	if (bFinish)
@@ -176,10 +188,10 @@ void UFlowNode::ResetRecords()
 }
 
 #if WITH_EDITOR
-TMap<uint8, double> UFlowNode::GetWireRecords() const
+TMap<uint8, FPinRecord> UFlowNode::GetWireRecords() const
 {
-	TMap<uint8, double> Result;
-	for (const TPair<FName, TArray<double>>& Record : OutputRecords)
+	TMap<uint8, FPinRecord> Result;
+	for (const TPair<FName, TArray<FPinRecord>>& Record : OutputRecords)
 	{
 		Result.Add(CreatedOutputs[Record.Key], Record.Value.Last());
 	}

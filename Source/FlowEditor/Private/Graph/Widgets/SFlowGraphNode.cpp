@@ -33,6 +33,11 @@ void SFlowGraphNode::GetNodeInfoPopups(FNodeInfoContext* Context, TArray<FGraphI
 			FGraphInformationPopupInfo DescriptionPopup = FGraphInformationPopupInfo(nullptr, UFlowEditorSettings::Get()->NodeStatusBackground, Status);
 			Popups.Add(DescriptionPopup);
 		}
+		else if (FlowGraphNode->IsContentPreloaded())
+		{
+			FGraphInformationPopupInfo DescriptionPopup = FGraphInformationPopupInfo(nullptr, UFlowEditorSettings::Get()->NodeStatusBackground, TEXT("Preloaded"));
+			Popups.Add(DescriptionPopup);
+		}
 	}
 }
 

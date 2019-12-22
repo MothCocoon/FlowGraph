@@ -57,7 +57,7 @@ void FFlowGraphConnectionDrawingPolicy::BuildPaths()
 		{
 			UFlowGraphNode* FlowGraphNode = Cast<UFlowGraphNode>(Node->GetGraphNode());
 
-			for (const TPair<uint8, double>& Record : Node->GetWireRecords())
+			for (const TPair<uint8, FPinRecord>& Record : Node->GetWireRecords())
 			{
 				if (UEdGraphPin* OutputPin = FlowGraphNode->GetOutputPin(Record.Key))
 				{
@@ -66,7 +66,7 @@ void FFlowGraphConnectionDrawingPolicy::BuildPaths()
 					{
 						RecordedPaths.Add(OutputPin, OutputPin->LinkedTo[0]);
 
-						if (CurrentTime < Record.Value + RecentWireDuration)
+						if (CurrentTime < Record.Value.Time + RecentWireDuration)
 						{
 							RecentPaths.Add(OutputPin, OutputPin->LinkedTo[0]);
 						}

@@ -72,6 +72,9 @@ public:
 	// short summary of node's content
 	FString GetShortDescription() const;
 	
+	// check this to display information while node is preloaded
+	bool IsContentPreloaded() const;
+
 	// information displayed while node is working
 	FString GetStatus() const;
 

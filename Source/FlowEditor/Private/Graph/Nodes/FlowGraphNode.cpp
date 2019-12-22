@@ -371,6 +371,19 @@ FString UFlowGraphNode::GetShortDescription() const
 	return FString();
 }
 
+bool UFlowGraphNode::IsContentPreloaded() const
+{
+	if (FlowNode)
+	{
+		if (UFlowNode* NodeInstance = FlowNode->GetInspectedInstance())
+		{
+			return NodeInstance->bPreloaded;
+		}
+	}
+
+	return false;
+}
+
 FString UFlowGraphNode::GetStatus() const
 {
 	if (FlowNode)
