@@ -127,6 +127,19 @@ void UFlowAsset::AddInstance(UFlowAsset* NewInstance)
 #endif
 }
 
+int32 UFlowAsset::RemoveInstance(UFlowAsset* Instance)
+{
+#if WITH_EDITOR
+	if (InspectedInstance.IsValid() && InspectedInstance.Get() == Instance)
+	{
+		InspectedInstance = nullptr;
+	}
+#endif
+
+	ActiveInstances.Remove(Instance);
+	return ActiveInstances.Num();
+}
+
 void UFlowAsset::ClearInstances()
 {
 	ActiveInstances.Empty();
@@ -154,9 +167,6 @@ void UFlowAsset::CreateNodeInstances()
 void UFlowAsset::PreloadNodes()
 {
 	// NOTE: this is just the example algorithm of gathering nodes for preload
-
-	TSet<UFlowNode*> PreloadedNodes;
-
 	for (UFlowNodeIn* InNode : InNodes)
 	{
 		for (const TPair<TSubclassOf<UFlowNode>, int32>& Node : UFlowSettings::Get()->DefaultPreloadDepth)
@@ -170,13 +180,22 @@ void UFlowAsset::PreloadNodes()
 				{
 					if (!PreloadedNodes.Contains(FoundNode))
 					{
-						FoundNode->PreloadContent();
+						FoundNode->TriggerPreload();
 						PreloadedNodes.Emplace(FoundNode);
 					}
 				}
 			}
 		}
 	}
+}
+
+void UFlowAsset::FlushPreload()
+{
+	for (UFlowNode* PreloadedNode : PreloadedNodes)
+	{
+		PreloadedNode->TriggerFlush();
+	}
+	PreloadedNodes.Empty();
 }
 
 void UFlowAsset::StartFlow()

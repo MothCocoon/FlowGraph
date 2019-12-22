@@ -25,6 +25,9 @@ public:
 	UPROPERTY(EditAnywhere, config, Category = "NodePopups")
 	FLinearColor NodeStatusBackground;
 
+	UPROPERTY(EditAnywhere, config, Category = "NodePopups")
+	FLinearColor NodePreloadedBackground;
+
 	UPROPERTY(EditAnywhere, config, Category = "Wires", meta = (ClampMin = 1.0f))
 	float RecentWireDuration;
 

@@ -5,6 +5,7 @@
 #include "UObject/ObjectMacros.h"
 #include "UObject/Object.h"
 #include "UObject/Class.h"
+#include "VisualLoggerDebugSnapshotInterface.h"
 
 #include "Graph/FlowAssetTypes.h"
 #include "FlowNode.generated.h"
@@ -37,11 +38,27 @@ public:
 	FName PinName;
 };
 
+USTRUCT()
+struct FLOW_API FPinRecord
+{
+	GENERATED_USTRUCT_BODY()
+	
+public:
+	FPinRecord() {};
+
+	FPinRecord(const double InTime)
+	{
+		Time = InTime;
+	}
+
+	double Time;
+};
+
 /**
  * Base for all Flow Nodes
  */
 UCLASS(Abstract, hideCategories = Object)
-class FLOW_API UFlowNode : public UObject
+class FLOW_API UFlowNode : public UObject, public IVisualLoggerDebugSnapshotInterface
 {
 	GENERATED_UCLASS_BODY()
 
@@ -144,18 +161,26 @@ public:
 //////////////////////////////////////////////////////////////////////////
 // Runtime
 
+public:
+	bool bPreloaded;
+
 protected:
 	FStreamableManager Streamable;
 
 private:
-	TMap<FName, TArray<double>> InputRecords;
-	TMap<FName, TArray<double>> OutputRecords;
+	TMap<FName, TArray<FPinRecord>> InputRecords;
+	TMap<FName, TArray<FPinRecord>> OutputRecords;
 
 public:
 	UFlowSubsystem* GetFlowSubsystem() const;
-	virtual void PreloadContent() {};
+
+	void TriggerPreload();
+	void TriggerFlush();
 
 protected:
+	virtual void PreloadContent() {};
+	virtual void FlushContent() {};
+
 	// trigger execution of input pin
 	void TriggerInput(const FName& PinName);
 
@@ -202,7 +227,7 @@ protected:
 
 #if WITH_EDITOR
 public:
-	TMap<uint8, double> GetWireRecords() const;
+	TMap<uint8, FPinRecord> GetWireRecords() const;
 
 	UFlowNode* GetInspectedInstance();
 
