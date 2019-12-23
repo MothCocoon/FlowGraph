@@ -86,7 +86,7 @@ public:
 	virtual FText GetTitle() const { return GetClass()->GetDisplayNameText(); }
 
 	// short summary of node's content - displayed over node as NodeInfoPopup
-	virtual FString GetShortDescription() const { return FString(); };
+	virtual FString GetNodeDescription() const { return FString(); };
 #endif
 
 protected:
@@ -232,7 +232,7 @@ public:
 	UFlowNode* GetInspectedInstance();
 
 	// information displayed while node is working - displayed over node as NodeInfoPopup
-	virtual FString GetStatus() const { return FString(); };
+	virtual FString GetNodeStatus() const { return FString(); };
 
 	virtual UObject* GetAssetToOpen() { return nullptr; };
 	virtual AActor* GetActorToFocus() { return nullptr; };

@@ -23,6 +23,6 @@ protected:
 
 #if WITH_EDITOR
 public:
-	virtual FString GetShortDescription() const override;
+	virtual FString GetNodeDescription() const override;
 #endif
 };

@@ -70,13 +70,13 @@ public:
 // Utils
 
 	// short summary of node's content
-	FString GetShortDescription() const;
+	FString GetNodeDescription() const;
 	
 	// check this to display information while node is preloaded
 	bool IsContentPreloaded() const;
 
 	// information displayed while node is working
-	FString GetStatus() const;
+	FString GetNodeStatus() const;
 
 	UObject* GetAssetToOpen() const;
 	bool CanFocusViewport() const;
