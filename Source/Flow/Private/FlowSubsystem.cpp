@@ -2,6 +2,8 @@
 #include "Graph/FlowAsset.h"
 #include "Graph/Nodes/FlowNodeSubFlow.h"
 
+#include "Engine/GameInstance.h"
+
 UFlowSubsystem::UFlowSubsystem()
 	: UGameInstanceSubsystem()
 {

@@ -361,11 +361,11 @@ FText UFlowGraphNode::GetTooltipText() const
 	return Tooltip;
 }
 
-FString UFlowGraphNode::GetShortDescription() const
+FString UFlowGraphNode::GetNodeDescription() const
 {
 	if (FlowNode)
 	{
-		return FlowNode->GetShortDescription();
+		return FlowNode->GetNodeDescription();
 	}
 
 	return FString();
@@ -384,13 +384,13 @@ bool UFlowGraphNode::IsContentPreloaded() const
 	return false;
 }
 
-FString UFlowGraphNode::GetStatus() const
+FString UFlowGraphNode::GetNodeStatus() const
 {
 	if (FlowNode)
 	{
 		if (UFlowNode* NodeInstance = FlowNode->GetInspectedInstance())
 		{
-			return NodeInstance->GetStatus();
+			return NodeInstance->GetNodeStatus();
 		}
 	}
 
