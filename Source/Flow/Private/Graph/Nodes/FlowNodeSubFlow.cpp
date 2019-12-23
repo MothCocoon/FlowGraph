@@ -44,7 +44,7 @@ void UFlowNodeSubFlow::OnForceFinished()
 }
 
 #if WITH_EDITOR
-FString UFlowNodeSubFlow::GetShortDescription() const
+FString UFlowNodeSubFlow::GetNodeDescription() const
 {
 	return FlowAsset.IsNull() ? FString() : FlowAsset.ToSoftObjectPath().GetAssetName();
 }
