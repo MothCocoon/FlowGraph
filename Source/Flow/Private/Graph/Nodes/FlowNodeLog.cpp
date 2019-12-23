@@ -22,7 +22,7 @@ void UFlowNodeLog::ExecuteInput(const FName& PinName)
 }
 
 #if WITH_EDITOR
-FString UFlowNodeLog::GetShortDescription() const
+FString UFlowNodeLog::GetNodeDescription() const
 {
 	return Message;
 }
