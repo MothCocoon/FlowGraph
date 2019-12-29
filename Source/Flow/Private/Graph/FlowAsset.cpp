@@ -145,13 +145,10 @@ void UFlowAsset::ClearInstances()
 	ActiveInstances.Empty();
 }
 
-void UFlowAsset::SetSubsystem(UFlowSubsystem* Subsystem)
+void UFlowAsset::InitInstance(UFlowAsset* InTemplateAsset)
 {
-	FlowSubsystem = Subsystem;
-}
+	TemplateAsset = InTemplateAsset;
 
-void UFlowAsset::CreateNodeInstances()
-{
 	for (TPair<FGuid, UFlowNode*>& Node : Nodes)
 	{
 		UFlowNode* NewInstance = NewObject<UFlowNode>(this, Node.Value->GetClass(), NAME_None, RF_Transient, Node.Value, false, nullptr);
@@ -271,4 +268,9 @@ void UFlowAsset::ResetNodes()
 		Node->ResetRecords();
 	}
 	RecordedNodes.Empty();
+}
+
+UFlowSubsystem* UFlowAsset::GetFlowSubsystem() const
+{
+	return Cast<UFlowSubsystem>(GetOuter());
 }

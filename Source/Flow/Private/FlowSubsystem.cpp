@@ -3,6 +3,7 @@
 #include "Graph/Nodes/FlowNodeSubFlow.h"
 
 #include "Engine/GameInstance.h"
+#include "Misc/Paths.h"
 
 UFlowSubsystem::UFlowSubsystem()
 	: UGameInstanceSubsystem()
@@ -81,10 +82,10 @@ UFlowAsset* UFlowSubsystem::CreateFlowInstance(TSoftObjectPtr<UFlowAsset> FlowAs
 
 	InstancedAssets.Add(FlowAsset.Get());
 
-	UFlowAsset* NewInstance = NewObject<UFlowAsset>(this, FlowAsset->GetClass(), NAME_None, RF_Transient, FlowAsset.Get(), false, nullptr);
-	NewInstance->SetSubsystem(this);
+	const FString NewInstanceName = FPaths::GetBaseFilename(FlowAsset.Get()->GetPathName()) + TEXT("_") + FString::FromInt(FlowAsset.Get()->GetInstancesNum());
+	UFlowAsset* NewInstance = NewObject<UFlowAsset>(this, FlowAsset->GetClass(), *NewInstanceName, RF_Transient, FlowAsset.Get(), false, nullptr);
+	NewInstance->InitInstance(FlowAsset.Get());
 
-	NewInstance->CreateNodeInstances();
 	FlowAsset.Get()->AddInstance(NewInstance);
 
 	return NewInstance;
