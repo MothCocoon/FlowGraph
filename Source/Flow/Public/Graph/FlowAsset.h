@@ -34,9 +34,10 @@ UCLASS(hideCategories = Object)
 class FLOW_API UFlowAsset : public UObject
 {
 	GENERATED_UCLASS_BODY()
-	
+
+public:
 	friend class UFlowNode;
-	
+
 //////////////////////////////////////////////////////////////////////////
 // Graph
 
@@ -101,7 +102,7 @@ public:
 	/**
 	 * Recursively finds nodes of type T
 	 */
-	template<typename T> 
+	template<typename T>
 	void RecursiveFindNodes(UFlowNode* Node, const uint8 Depth, TArray<UFlowNode*>& OutNodes)
 	{
 		if (Node)
@@ -145,7 +146,9 @@ private:
 public:
 	void AddInstance(UFlowAsset* NewInstance);
 	int32 RemoveInstance(UFlowAsset* Instance);
+
 	void ClearInstances();
+	int32 GetInstancesNum() const { return ActiveInstances.Num(); };
 
 #if WITH_EDITOR
 	UFlowAsset* GetInspectedInstance() const { return InspectedInstance.IsValid() ? InspectedInstance.Get() : nullptr; };
@@ -154,8 +157,10 @@ public:
 //////////////////////////////////////////////////////////////////////////
 // Executing graph
 
+public:
+	UFlowAsset* TemplateAsset;
+
 private:
-	TWeakObjectPtr<UFlowSubsystem> FlowSubsystem;
 	TWeakObjectPtr<UFlowNodeSubFlow> OwningFlowNode;
 	TMap<UFlowNodeSubFlow*, TWeakObjectPtr<UFlowAsset>> ChildFlows;
 
@@ -172,8 +177,7 @@ private:
 	TArray<UFlowNode*> RecordedNodes;
 
 public:
-	void SetSubsystem(UFlowSubsystem* Subsystem);
-	void CreateNodeInstances();
+	void InitInstance(UFlowAsset* InTemplateAsset);
 
 	void PreloadNodes();
 	void FlushPreload();
@@ -190,7 +194,7 @@ private:
 	void ResetNodes();
 
 public:
-	UFlowSubsystem* GetFlowSubsystem() const { return FlowSubsystem.IsValid() ? FlowSubsystem.Get() : nullptr; };
+	UFlowSubsystem* GetFlowSubsystem() const;
 	UFlowNodeSubFlow* GetOwningFlowNode() const { return OwningFlowNode.IsValid() ? OwningFlowNode.Get() : nullptr; };
 	UFlowNode* GetNodeInstance(const FGuid Guid) const { return Nodes.FindRef(Guid); };
 
