@@ -18,12 +18,14 @@ void UFlowSubsystem::Deinitialize()
 {
 	for (int32 i = InstancedAssets.Num() - 1; i >= 0; --i)
 	{
-		if (InstancedAssets[i] != nullptr)
+		if (InstancedAssets[i].IsValid())
 		{
-			InstancedAssets[i]->ClearInstances();
+			InstancedAssets[i].Get()->ClearInstances();
 		}
 	}
+
 	InstancedAssets.Empty();
+	InstancedSubFlows.Empty();
 }
 
 void UFlowSubsystem::StartFlow(UFlowAsset* FlowAsset)
