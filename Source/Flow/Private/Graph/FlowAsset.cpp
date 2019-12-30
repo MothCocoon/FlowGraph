@@ -24,7 +24,7 @@ void UFlowAsset::PostInitProperties()
 {
 	Super::PostInitProperties();
 
-	if (!HasAnyFlags(RF_ClassDefaultObject | RF_NeedLoad))
+	if (!HasAnyFlags(RF_ClassDefaultObject | RF_NeedLoad | RF_Transient))
 	{
 		CreateGraph();
 	}
