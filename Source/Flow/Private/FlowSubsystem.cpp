@@ -16,11 +16,11 @@ void UFlowSubsystem::Initialize(FSubsystemCollectionBase& Collection)
 
 void UFlowSubsystem::Deinitialize()
 {
-	for (int32 i = InstancedAssets.Num() - 1; i >= 0; --i)
+	for (TWeakObjectPtr<UFlowAsset> InstancedAsset : InstancedAssets)
 	{
-		if (InstancedAssets[i].IsValid())
+		if (InstancedAsset.IsValid())
 		{
-			InstancedAssets[i].Get()->ClearInstances();
+			InstancedAsset.Get()->ClearInstances();
 		}
 	}
 
@@ -32,6 +32,11 @@ void UFlowSubsystem::StartFlow(UFlowAsset* FlowAsset)
 {
 	UFlowAsset* NewFlow = CreateFlowInstance(FlowAsset);
 	NewFlow->StartFlow();
+}
+
+void UFlowSubsystem::EndFlow(UFlowAsset* FlowAsset)
+{
+	// todo
 }
 
 void UFlowSubsystem::PreloadSubFlow(UFlowNodeSubFlow* SubFlow)
