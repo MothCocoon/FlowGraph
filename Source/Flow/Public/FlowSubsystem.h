@@ -21,7 +21,7 @@ private:
 	FStreamableManager Streamable;
 
 	// all instanced assets
-	TArray<TWeakObjectPtr<UFlowAsset>> InstancedAssets;
+	TSet<TWeakObjectPtr<UFlowAsset>> InstancedAssets;
 
 	// instanced assets "owned" by Sub Flow nodes
 	TMap<UFlowNodeSubFlow*, UFlowAsset*> InstancedSubFlows;
@@ -31,6 +31,7 @@ public:
 	virtual void Deinitialize() override;
 
 	FLOW_API void StartFlow(UFlowAsset* FlowAsset);
+	FLOW_API void EndFlow(UFlowAsset* FlowAsset);
 
 	void PreloadSubFlow(UFlowNodeSubFlow* SubFlow);
 	void FlushPreload(UFlowNodeSubFlow* SubFlow);
@@ -41,5 +42,5 @@ private:
 	UFlowAsset* CreateFlowInstance(TSoftObjectPtr<UFlowAsset> FlowAsset);
 
 public:
-	UWorld* GetWorld() const;
+	FORCEINLINE UWorld* GetWorld() const;
 };
