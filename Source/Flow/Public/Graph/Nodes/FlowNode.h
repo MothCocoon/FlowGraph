@@ -173,6 +173,7 @@ private:
 
 public:
 	UFlowSubsystem* GetFlowSubsystem() const;
+	virtual UWorld* GetWorld() const override;
 
 	void TriggerPreload();
 	void TriggerFlush();

@@ -116,6 +116,16 @@ UFlowSubsystem* UFlowNode::GetFlowSubsystem() const
 	return GetFlowAsset()->GetFlowSubsystem();
 }
 
+UWorld* UFlowNode::GetWorld() const
+{
+	if (UFlowSubsystem* Subsystem = GetFlowAsset()->GetFlowSubsystem())
+	{
+		return Subsystem->GetWorld();
+	}
+
+	return nullptr;
+}
+
 void UFlowNode::TriggerPreload()
 {
 	bPreloaded = true;
