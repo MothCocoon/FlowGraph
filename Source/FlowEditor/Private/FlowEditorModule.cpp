@@ -5,11 +5,13 @@
 #include "Graph/FlowGraphConnectionDrawingPolicy.h"
 #include "Graph/Nodes/FlowGraphNode.h"
 #include "Graph/Widgets/FlowGraphPanelNodeFactory.h"
+#include "LevelEditor/SLevelEditorFlow.h"
 
-#include "Graph/FlowAsset.h"
+#include "FlowAsset.h"
 
 #include "AssetToolsModule.h"
 #include "EdGraphUtilities.h"
+#include "LevelEditor.h"
 #include "Modules/ModuleManager.h"
 #include "Utils.h"
 
@@ -32,6 +34,14 @@ void FFlowEditorModule::StartupModule()
 
 	// menu extensibility
 	FlowAssetExtensibility.Init();
+
+	// add Flow Toolbar
+	if (FLevelEditorModule* LevelEditorModule = FModuleManager::GetModulePtr<FLevelEditorModule>(TEXT("LevelEditor")))
+	{
+		TSharedPtr<FExtender> MenuExtender = MakeShareable(new FExtender());
+		MenuExtender->AddToolBarExtension("Game", EExtensionHook::After, nullptr, FToolBarExtensionDelegate::CreateRaw(this, &FFlowEditorModule::CreateFlowToolbar));
+		LevelEditorModule->GetToolBarExtensibilityManager()->AddExtender(MenuExtender);
+	}
 }
 
 void FFlowEditorModule::ShutdownModule()
@@ -61,6 +71,15 @@ TSharedPtr<FExtensibilityManager> FFlowEditorModule::GetFlowAssetMenuExtensibili
 TSharedPtr<FExtensibilityManager> FFlowEditorModule::GetFlowAssetToolBarExtensibilityManager()
 {
 	return FlowAssetExtensibility.ToolBarExtensibilityManager;
+}
+
+void FFlowEditorModule::CreateFlowToolbar(FToolBarBuilder& ToolbarBuilder)
+{
+	ToolbarBuilder.BeginSection("Flow");
+	{
+		ToolbarBuilder.AddWidget(SNew(SLevelEditorFlow));
+	}
+	ToolbarBuilder.EndSection();
 }
 
 #undef LOCTEXT_NAMESPACE

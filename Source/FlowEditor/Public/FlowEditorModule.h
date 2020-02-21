@@ -47,4 +47,7 @@ public:
 	TSharedRef<FFlowAssetEditor> CreateFlowAssetEditor(const EToolkitMode::Type Mode, const TSharedPtr< IToolkitHost >& InitToolkitHost, UFlowAsset* FlowAsset);
 	TSharedPtr<FExtensibilityManager> GetFlowAssetMenuExtensibilityManager();
 	TSharedPtr<FExtensibilityManager> GetFlowAssetToolBarExtensibilityManager();
+
+private:
+	void CreateFlowToolbar(FToolBarBuilder& ToolbarBuilder);
 };
