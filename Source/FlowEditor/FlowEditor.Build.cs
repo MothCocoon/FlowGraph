@@ -33,14 +33,9 @@ public class FlowEditor : ModuleRules
         PrivateDependencyModuleNames.AddRange(
             new string[]
             {
+                "KismetWidgets",
                 "Projects",
                 "ToolMenus"
-            }
-        );
-
-        PrivateIncludePathModuleNames.AddRange(
-            new string[] {
-                "AssetTools"
             }
         );
     }
