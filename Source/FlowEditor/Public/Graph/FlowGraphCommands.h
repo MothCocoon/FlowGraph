@@ -16,8 +16,13 @@ public:
 
 	TSharedPtr<FUICommandInfo> AddInput;
 	TSharedPtr<FUICommandInfo> AddOutput;
-	TSharedPtr<FUICommandInfo> DeleteInput;
-	TSharedPtr<FUICommandInfo> DeleteOutput;
+	TSharedPtr<FUICommandInfo> RemovePin;
+
+	TSharedPtr<FUICommandInfo> AddPinBreakpoint;
+	TSharedPtr<FUICommandInfo> RemovePinBreakpoint;
+	TSharedPtr<FUICommandInfo> EnablePinBreakpoint;
+	TSharedPtr<FUICommandInfo> DisablePinBreakpoint;
+	TSharedPtr<FUICommandInfo> TogglePinBreakpoint;
 
 	TSharedPtr<FUICommandInfo> FocusViewport;
 

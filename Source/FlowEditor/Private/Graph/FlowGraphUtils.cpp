@@ -2,7 +2,7 @@
 #include "FlowAssetEditor.h"
 #include "FlowAssetGraph.h"
 
-#include "Graph/FlowAsset.h"
+#include "FlowAsset.h"
 
 #include "Toolkits/ToolkitManager.h"
 

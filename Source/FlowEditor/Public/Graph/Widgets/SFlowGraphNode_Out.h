@@ -1,20 +1,11 @@
 #pragma once
 
-#include "CoreMinimal.h"
-#include "SGraphNode.h"
-#include "Widgets/DeclarativeSyntaxSupport.h"
-#include "Widgets/SWidget.h"
+#include "SFlowGraphNode.h"
 
-class SFlowGraphNode_Out : public SGraphNode
+class SFlowGraphNode_Out : public SFlowGraphNode
 {
-public:
-	SLATE_BEGIN_ARGS(SFlowGraphNode_Out){}
-	SLATE_END_ARGS()
-
-	void Construct(const FArguments& InArgs, class UFlowGraphNode_Out* InNode);
-
 protected:
-	// SGraphNode interface
+	// SGraphNode
 	virtual TSharedRef<SWidget> CreateNodeContentArea() override;
-	// End of SGraphNode interface
+	// --
 };
