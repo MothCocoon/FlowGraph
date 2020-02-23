@@ -7,7 +7,7 @@
 
 class UFlowAsset;
 class UFlowComponent;
-class UFlowNodeSubFlow;
+class UFlowNodeSubGraph;
 
 /**
  * Flow Control System
@@ -26,7 +26,7 @@ private:
 	TSet<TWeakObjectPtr<UFlowAsset>> InstancedAssets;
 
 	// instanced assets "owned" by Sub Flow nodes
-	TMap<UFlowNodeSubFlow*, UFlowAsset*> InstancedSubFlows;
+	TMap<UFlowNodeSubGraph*, UFlowAsset*> InstancedSubFlows;
 
 public:
 	virtual void Initialize(FSubsystemCollectionBase& Collection) override;
@@ -35,10 +35,10 @@ public:
 	void StartFlow(UFlowAsset* FlowAsset);
 	void EndFlow(UFlowAsset* FlowAsset);
 
-	void PreloadSubFlow(UFlowNodeSubFlow* SubFlow);
-	void FlushPreload(UFlowNodeSubFlow* SubFlow);
+	void PreloadSubFlow(UFlowNodeSubGraph* SubFlow);
+	void FlushPreload(UFlowNodeSubGraph* SubFlow);
 
-	void StartSubFlow(UFlowNodeSubFlow* SubFlow);
+	void StartSubFlow(UFlowNodeSubGraph* SubFlow);
 
 private:
 	UFlowAsset* CreateFlowInstance(TSoftObjectPtr<UFlowAsset> FlowAsset);

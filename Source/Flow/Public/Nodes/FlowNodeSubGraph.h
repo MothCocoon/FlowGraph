@@ -1,23 +1,23 @@
 #pragma once
 
 #include "FlowNode.h"
-#include "FlowNodeSubFlow.generated.h"
+#include "FlowNodeSubGraph.generated.h"
 
 class UFlowAsset;
 
 /**
- * Sub Flow
+ * Sub Graph
  */
-UCLASS(meta = (DisplayName = "Sub Flow"))
-class FLOW_API UFlowNodeSubFlow : public UFlowNode
+UCLASS(meta = (DisplayName = "Sub Graph"))
+class FLOW_API UFlowNodeSubGraph : public UFlowNode
 {
 	GENERATED_UCLASS_BODY()
 	
 	friend class UFlowSubsystem;
 	
 private:
-	UPROPERTY(EditAnywhere, Category = "Flow")
-	TSoftObjectPtr<UFlowAsset> FlowAsset;
+	UPROPERTY(EditAnywhere, Category = "Graph")
+	TSoftObjectPtr<UFlowAsset> Asset;
 
 protected:
 	virtual void PreloadContent() override;
