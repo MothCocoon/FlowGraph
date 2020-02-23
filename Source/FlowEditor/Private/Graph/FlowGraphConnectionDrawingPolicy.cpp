@@ -5,7 +5,7 @@
 #include "Nodes/FlowGraphNode.h"
 
 #include "FlowAsset.h"
-#include "Graph/Nodes/FlowNode.h"
+#include "Nodes/FlowNode.h"
 
 #include "Editor.h"
 #include "Misc/App.h"

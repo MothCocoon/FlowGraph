@@ -5,8 +5,8 @@
 #include "Nodes/FlowGraphNode.h"
 
 #include "FlowAsset.h"
-#include "Graph/Nodes/FlowNode.h"
-#include "Graph/Nodes/FlowNodeIn.h"
+#include "Nodes/FlowNode.h"
+#include "Nodes/FlowNodeIn.h"
 
 #include "Developer/ToolMenus/Public/ToolMenus.h"
 #include "EdGraph/EdGraph.h"
