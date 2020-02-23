@@ -6,10 +6,10 @@
 #include "FlowGraphSchema.h"
 
 #include "FlowAsset.h"
-#include "Graph/Nodes/FlowNode.h"
-#include "Graph/Nodes/FlowNodeIn.h"
-#include "Graph/Nodes/FlowNodeOut.h"
-#include "Graph/Nodes/FlowNodeReroute.h"
+#include "Nodes/FlowNode.h"
+#include "Nodes/FlowNodeIn.h"
+#include "Nodes/FlowNodeOut.h"
+#include "Nodes/FlowNodeReroute.h"
 
 #include "Kismet2/BlueprintEditorUtils.h"
 

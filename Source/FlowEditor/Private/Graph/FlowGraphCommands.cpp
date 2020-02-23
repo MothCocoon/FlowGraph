@@ -1,7 +1,7 @@
 #include "FlowGraphCommands.h"
 #include "FlowGraphSchema.h"
 
-#include "Graph/Nodes/FlowNode.h"
+#include "Nodes/FlowNode.h"
 
 #include "Misc/ConfigCacheIni.h"
 

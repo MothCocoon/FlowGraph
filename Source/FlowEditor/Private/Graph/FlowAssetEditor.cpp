@@ -9,7 +9,7 @@
 #include "Widgets/SFlowPalette.h"
 
 #include "FlowAsset.h"
-#include "Graph//Nodes/FlowNode.h"
+#include "Nodes/FlowNode.h"
 
 #include "EdGraphUtilities.h"
 #include "EdGraph/EdGraphNode.h"
