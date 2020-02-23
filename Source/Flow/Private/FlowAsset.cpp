@@ -5,7 +5,7 @@
 #include "Nodes/FlowNode.h"
 #include "Nodes/FlowNodeIn.h"
 #include "Nodes/FlowNodeOut.h"
-#include "Nodes/FlowNodeSubFlow.h"
+#include "Nodes/FlowNodeSubGraph.h"
 
 #if WITH_EDITOR
 #include "FlowAssetGraph.h"
@@ -237,7 +237,7 @@ void UFlowAsset::StartFlow()
 	}
 }
 
-void UFlowAsset::StartSubFlow(UFlowNodeSubFlow* FlowNode)
+void UFlowAsset::StartSubFlow(UFlowNodeSubGraph* FlowNode)
 {
 	OwningFlowNode = FlowNode;
 	FlowNode->GetFlowAsset()->AddChildFlow(FlowNode, this);
@@ -253,7 +253,7 @@ void UFlowAsset::StartSubFlow(UFlowNodeSubFlow* FlowNode)
 	}
 }
 
-void UFlowAsset::AddChildFlow(UFlowNodeSubFlow* Node, const UFlowAsset* Asset)
+void UFlowAsset::AddChildFlow(UFlowNodeSubGraph* Node, const UFlowAsset* Asset)
 {
 	ChildFlows.Add(Node, Asset);
 }
