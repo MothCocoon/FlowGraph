@@ -1,17 +1,19 @@
 #pragma once
 
 #include "Engine/StreamableManager.h"
+#include "GameplayTagContainer.h"
 #include "Subsystems/GameInstanceSubsystem.h"
 #include "FlowSubsystem.generated.h"
 
 class UFlowAsset;
+class UFlowComponent;
 class UFlowNodeSubFlow;
 
 /**
  * Flow Control System
  */
-UCLASS(MinimalAPI)
-class UFlowSubsystem : public UGameInstanceSubsystem
+UCLASS()
+class FLOW_API UFlowSubsystem : public UGameInstanceSubsystem
 {
 	GENERATED_BODY()
 
@@ -30,8 +32,8 @@ public:
 	virtual void Initialize(FSubsystemCollectionBase& Collection) override;
 	virtual void Deinitialize() override;
 
-	FLOW_API void StartFlow(UFlowAsset* FlowAsset);
-	FLOW_API void EndFlow(UFlowAsset* FlowAsset);
+	void StartFlow(UFlowAsset* FlowAsset);
+	void EndFlow(UFlowAsset* FlowAsset);
 
 	void PreloadSubFlow(UFlowNodeSubFlow* SubFlow);
 	void FlushPreload(UFlowNodeSubFlow* SubFlow);
@@ -43,4 +45,51 @@ private:
 
 public:
 	FORCEINLINE UWorld* GetWorld() const;
+
+//////////////////////////////////////////////////////////////////////////
+// Flow Components
+
+private:
+	// all the Flow Components currently existing in the world
+	TMultiMap<FGameplayTag, TWeakObjectPtr<UFlowComponent>> FlowComponents;
+
+public:
+	virtual void RegisterComponent(UFlowComponent* Component);
+	virtual void UnregisterComponent(UFlowComponent* Component);
+
+	template<class T>
+	TArray<TWeakObjectPtr<T>> GetComponents(const FGameplayTag& Tag)
+	{
+		TArray<TWeakObjectPtr<UFlowComponent>> FoundComponents;
+		FlowComponents.MultiFind(Tag, FoundComponents);
+
+		TArray<TWeakObjectPtr<T>> ResultComponents;
+		for (const TWeakObjectPtr<UFlowComponent>& Component : FoundComponents)
+		{
+			if (Component.Get()->GetClass()->IsChildOf(T::StaticClass()))
+			{
+				ResultComponents.Emplace(Component);
+			}
+		}
+
+		return ResultComponents;
+	}
+
+	template<class T>
+	TArray<TWeakObjectPtr<T>> GetActors(const FGameplayTag& Tag)
+	{
+		TArray<TWeakObjectPtr<UFlowComponent>> FoundComponents;
+		FlowComponents.MultiFind(Tag, FoundComponents);
+
+		TArray<TWeakObjectPtr<T>> ResultActors;
+		for (const TWeakObjectPtr<UFlowComponent>& Component : FoundComponents)
+		{
+			if (Component.Get()->GetOwner()->GetClass()->IsChildOf(T::StaticClass()))
+			{
+				ResultActors.Emplace(Component.Get()->GetOwner());
+			}
+		}
+
+		return ResultActors;
+	}
 };

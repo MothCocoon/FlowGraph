@@ -11,7 +11,8 @@ public class Flow : ModuleRules
 			{
 				"Core",
 				"CoreUObject",
-				"Engine"
+				"Engine",
+                "GameplayTags"
 			}
 		);
 			
