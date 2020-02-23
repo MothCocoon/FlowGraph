@@ -7,7 +7,7 @@
 
 class UFlowNode;
 class UFlowNodeIn;
-class UFlowNodeSubFlow;
+class UFlowNodeSubGraph;
 class UFlowSubsystem;
 
 #if WITH_EDITOR
@@ -163,8 +163,8 @@ public:
 	UFlowAsset* TemplateAsset;
 
 private:
-	TWeakObjectPtr<UFlowNodeSubFlow> OwningFlowNode;
-	TMap<UFlowNodeSubFlow*, TWeakObjectPtr<UFlowAsset>> ChildFlows;
+	TWeakObjectPtr<UFlowNodeSubGraph> OwningFlowNode;
+	TMap<UFlowNodeSubGraph*, TWeakObjectPtr<UFlowAsset>> ChildFlows;
 
 	UPROPERTY()
 	TArray<UFlowNodeIn*> InNodes;
@@ -185,10 +185,10 @@ public:
 	void FlushPreload();
 
 	void StartFlow();
-	void StartSubFlow(UFlowNodeSubFlow* FlowNode);
+	void StartSubFlow(UFlowNodeSubGraph* FlowNode);
 
 private:
-	void AddChildFlow(UFlowNodeSubFlow* Node, const UFlowAsset* Asset);
+	void AddChildFlow(UFlowNodeSubGraph* Node, const UFlowAsset* Asset);
 
 	void TriggerInput(const FGuid& NodeGuid, const FName& PinName);
 
@@ -197,7 +197,7 @@ private:
 
 public:
 	UFlowSubsystem* GetFlowSubsystem() const;
-	UFlowNodeSubFlow* GetOwningFlowNode() const { return OwningFlowNode.IsValid() ? OwningFlowNode.Get() : nullptr; };
+	UFlowNodeSubGraph* GetOwningFlowNode() const { return OwningFlowNode.IsValid() ? OwningFlowNode.Get() : nullptr; };
 	UFlowNode* GetNodeInstance(const FGuid Guid) const { return Nodes.FindRef(Guid); };
 
 	bool IsActive() const { return RecordedNodes.Num() > 0; };
