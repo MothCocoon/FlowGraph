@@ -2,7 +2,7 @@
 #include "FlowEditorSettings.h"
 #include "FlowEditorStyle.h"
 
-#include "Graph/Nodes/FlowNode.h"
+#include "Nodes/FlowNode.h"
 
 #include "Editor.h"
 #include "GraphEditorSettings.h"
