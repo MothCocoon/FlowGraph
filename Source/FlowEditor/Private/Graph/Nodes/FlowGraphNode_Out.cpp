@@ -1,16 +1,12 @@
 #include "FlowGraphNode_Out.h"
-#include "GraphEditorSettings.h"
-
-#define LOCTEXT_NAMESPACE "FlowGraphNode_Out"
+#include "Graph/Widgets/SFlowGraphNode_Out.h"
 
 UFlowGraphNode_Out::UFlowGraphNode_Out(const FObjectInitializer& ObjectInitializer)
 	: Super(ObjectInitializer)
 {
 }
 
-FText UFlowGraphNode_Out::GetTooltipText() const
+TSharedPtr<SGraphNode> UFlowGraphNode_Out::CreateVisualWidget()
 {
-	return LOCTEXT("OutToolTip", "Output of flow graph");
+	return SNew(SFlowGraphNode_Out, this);
 }
-
-#undef LOCTEXT_NAMESPACE

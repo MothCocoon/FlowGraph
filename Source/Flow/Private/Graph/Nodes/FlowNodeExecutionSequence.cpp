@@ -12,13 +12,9 @@ UFlowNodeExecutionSequence::UFlowNodeExecutionSequence(const FObjectInitializer&
 
 void UFlowNodeExecutionSequence::ExecuteInput(const FName& PinName)
 {
-	CreatedOutputs.ValueSort([](const uint8& A, const uint8& B) {
-		return A < B;
-	});
-
-	for (const TPair<FName, uint8>& Output : CreatedOutputs)
+	for (const FName& Output : OutputNames)
 	{
-		TriggerOutput(Output.Key, false);
+		TriggerOutput(Output, false);
 	}
 
 	Finish();

@@ -1,6 +1,6 @@
 #include "FlowNodeSubFlow.h"
 #include "FlowSubsystem.h"
-#include "Graph/FlowAsset.h"
+#include "FlowAsset.h"
 
 UFlowNodeSubFlow::UFlowNodeSubFlow(const FObjectInitializer& ObjectInitializer)
 	: Super(ObjectInitializer)
@@ -40,7 +40,7 @@ void UFlowNodeSubFlow::ExecuteInput(const FName& PinName)
 
 void UFlowNodeSubFlow::OnForceFinished()
 {
-	TriggerDefaultOutput(true);
+	TriggerFirstOutput(true);
 }
 
 #if WITH_EDITOR

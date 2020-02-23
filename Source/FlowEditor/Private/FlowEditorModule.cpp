@@ -4,7 +4,6 @@
 #include "Graph/FlowAssetEditor.h"
 #include "Graph/FlowGraphConnectionDrawingPolicy.h"
 #include "Graph/Nodes/FlowGraphNode.h"
-#include "Graph/Widgets/FlowGraphPanelNodeFactory.h"
 #include "LevelEditor/SLevelEditorFlow.h"
 
 #include "FlowAsset.h"
@@ -29,7 +28,6 @@ void FFlowEditorModule::StartupModule()
 	AssetTools.RegisterAssetTypeActions(MakeShareable(new FlowAssetActions));
 
 	// register visual utilities
-	FEdGraphUtilities::RegisterVisualNodeFactory(MakeShareable(new FFlowGraphPanelNodeFactory()));
 	FEdGraphUtilities::RegisterVisualPinConnectionFactory(MakeShareable(new FFlowGraphConnectionDrawingPolicyFactory));
 
 	// menu extensibility

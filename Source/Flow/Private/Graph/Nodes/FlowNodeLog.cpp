@@ -18,7 +18,7 @@ void UFlowNodeLog::ExecuteInput(const FName& PinName)
 		GEngine->AddOnScreenDebugMessage(-1, 5.f, FColor::Yellow, Message);
 	}
 
-	TriggerDefaultOutput(true);
+	TriggerFirstOutput(true);
 }
 
 #if WITH_EDITOR

@@ -1,16 +1,7 @@
 #include "SFlowGraphNode_In.h"
-#include "../Nodes/FlowGraphNode_In.h"
 
 #include "Widgets/Images/SImage.h"
 #include "Widgets/SBoxPanel.h"
-
-void SFlowGraphNode_In::Construct(const FArguments& InArgs, UFlowGraphNode_In* InNode)
-{
-	GraphNode = InNode;
-
-	SetCursor(EMouseCursor::CardinalCross);
-	UpdateGraphNode();
-}
 
 TSharedRef<SWidget> SFlowGraphNode_In::CreateNodeContentArea()
 {
