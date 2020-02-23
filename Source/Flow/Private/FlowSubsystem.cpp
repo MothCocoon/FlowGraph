@@ -1,6 +1,7 @@
 #include "FlowSubsystem.h"
 #include "FlowAsset.h"
-#include "Graph/Nodes/FlowNodeSubFlow.h"
+#include "FlowComponent.h"
+#include "Nodes/FlowNodeSubFlow.h"
 
 #include "Engine/GameInstance.h"
 #include "Misc/Paths.h"
@@ -104,4 +105,20 @@ UFlowAsset* UFlowSubsystem::CreateFlowInstance(TSoftObjectPtr<UFlowAsset> FlowAs
 UWorld* UFlowSubsystem::GetWorld() const
 {
 	return GetGameInstance()->GetWorld();
+}
+
+void UFlowSubsystem::RegisterComponent(UFlowComponent* Component)
+{
+	for (const FGameplayTag& Tag : Component->IdentityTags)
+	{
+		FlowComponents.Add(Tag, Component);
+	}
+}
+
+void UFlowSubsystem::UnregisterComponent(UFlowComponent* Component)
+{
+	for (const FGameplayTag& Tag : Component->IdentityTags)
+	{
+		FlowComponents.Remove(Tag, Component);
+	}
 }
