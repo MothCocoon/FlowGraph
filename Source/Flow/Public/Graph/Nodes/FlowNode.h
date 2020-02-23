@@ -7,15 +7,13 @@
 #include "UObject/Class.h"
 #include "VisualLoggerDebugSnapshotInterface.h"
 
-#include "Graph/FlowAssetTypes.h"
+#include "FlowTypes.h"
 #include "FlowNode.generated.h"
+
+class UEdGraphNode;
 
 class UFlowAsset;
 class UFlowSubsystem;
-
-#if WITH_EDITOR
-class UEdGraphNode;
-#endif
 
 USTRUCT()
 struct FLOW_API FConnectedPin
@@ -23,6 +21,12 @@ struct FLOW_API FConnectedPin
 	GENERATED_USTRUCT_BODY()
 	
 public:
+	UPROPERTY()
+	FGuid NodeGuid;
+
+	UPROPERTY()
+	FName PinName;
+
 	FConnectedPin() {};
 
 	FConnectedPin(const FGuid InNodeId, const uint8 InPinIndex, const FName& InPinName)
@@ -30,29 +34,22 @@ public:
 		NodeGuid = InNodeId;
 		PinName = InPinName;
 	}
-
-	UPROPERTY()
-	FGuid NodeGuid;
-
-	UPROPERTY()
-	FName PinName;
 };
 
-USTRUCT()
+#if !UE_BUILD_SHIPPING
 struct FLOW_API FPinRecord
 {
-	GENERATED_USTRUCT_BODY()
-	
 public:
-	FPinRecord() {};
-
-	FPinRecord(const double InTime)
-	{
-		Time = InTime;
-	}
-
 	double Time;
+	FString HumanReadableTime;
+
+	FPinRecord();
+	FPinRecord(const double InTime);
+
+private:
+	FORCEINLINE const FString DoubleDigit(const int32 Number) const;
 };
+#endif
 
 /**
  * Base for all Flow Nodes
@@ -71,16 +68,17 @@ class FLOW_API UFlowNode : public UObject, public IVisualLoggerDebugSnapshotInte
 public:
 	FString Category;
 	EFlowNodeStyle NodeStyle;
+#endif
 
 private:
 	UPROPERTY()
 	UEdGraphNode* GraphNode;
-#endif
+
+public:
+	UEdGraphNode* GetGraphNode() const { return GraphNode; };
 
 #if WITH_EDITOR
-public:
 	void SetGraphNode(UEdGraphNode* NewGraph);
-	UEdGraphNode* GetGraphNode() const { return GraphNode; };
 
 	FString GetCategory() const { return Category; };
 	virtual FText GetTitle() const { return GetClass()->GetDisplayNameText(); }
@@ -101,49 +99,28 @@ public:
 	UFlowAsset* GetFlowAsset() const;
 
 //////////////////////////////////////////////////////////////////////////
-// Every node has different pin setup
+// All created pins (default, class-specific and added by user)
 
 public:
-	// names of node-specific inputs
+	// class-specific and user-added inputs
 	UPROPERTY()
 	TArray<FName> InputNames;
 
-	// names of node-specific outputs
+	// class-specific and user-added outputs
 	UPROPERTY()
 	TArray<FName> OutputNames;
 
+#if WITH_EDITOR
 	virtual bool CanUserAddInput() const { return false; };
 	virtual bool CanUserAddOutput() const { return false; };
 
-	bool HasUserCreatedInputs() const;
-	bool HasUserCreatedOutputs() const;
+	void RemoveUserInput();
+	void RemoveUserOutput();
+#endif
 
 protected:
 	// always use default range for nodes with user-created outputs i.e. Execution Sequence
 	void SetNumericalOutputs(const uint8 FirstNumber = 0, const uint8 LastNumber = 1);
-
-//////////////////////////////////////////////////////////////////////////
-// All created pins (default, node-specific and added by user)
-
-protected:
-	UPROPERTY()
-	TMap<FName, uint8> CreatedInputs;
-
-	UPROPERTY()
-	TMap<FName, uint8> CreatedOutputs;
-
-public:
-	void AddCreatedInput(const uint8 PinIndex, const FName& PinName);
-	void AddCreatedOutput(const uint8 PinIndex, const FName& PinName);
-
-	void RemoveCreatedInput(const FName& PinName);
-	void RemoveCreatedOutput(const FName& PinName);
-
-	FName GetInputName(const uint8 PinIndex) const;
-	FName GetOutputName(const uint8 PinIndex) const;
-
-	bool HasInputs() const { return CreatedInputs.Num() > 0; };
-	bool HasOutputs() const { return CreatedOutputs.Num() > 0; };
 
 //////////////////////////////////////////////////////////////////////////
 // Connections to other nodes
@@ -167,9 +144,12 @@ public:
 protected:
 	FStreamableManager Streamable;
 
+#if !UE_BUILD_SHIPPING
 private:
 	TMap<FName, TArray<FPinRecord>> InputRecords;
 	TMap<FName, TArray<FPinRecord>> OutputRecords;
+	EFlowActivationState ActivationState;
+#endif
 
 public:
 	UFlowSubsystem* GetFlowSubsystem() const;
@@ -189,7 +169,7 @@ protected:
 	virtual void ExecuteInput(const FName& PinName);
 
 	// if node has only one output, we can finish node in one simple call
-	void TriggerDefaultOutput(const bool bFinish);
+	void TriggerFirstOutput(const bool bFinish);
 
 	// trigger output pin
 	void TriggerOutput(const FName& PinName, const bool bFinish = false);
@@ -208,8 +188,26 @@ protected:
 	// define what happens when node is finished from outside
 	virtual void OnForceFinished() {};
 
+#if !UE_BUILD_SHIPPING
 private:
 	void ResetRecords();
+#endif
+
+#if WITH_EDITOR
+public:
+	UFlowNode* GetInspectedInstance() const;
+	EFlowActivationState GetActivationState() const { return ActivationState; };
+
+	TMap<uint8, FPinRecord> GetWireRecords() const;
+	TArray<FPinRecord> GetInputRecords(const FName& PinName) const;
+	TArray<FPinRecord> GetOutputRecords(const FName& PinName) const;
+
+	// information displayed while node is working - displayed over node as NodeInfoPopup
+	virtual FString GetStatusString() const { return FString(); };
+
+	virtual UObject* GetAssetToOpen() { return nullptr; };
+	virtual AActor* GetActorToFocus() { return nullptr; };
+#endif
 
 protected:
 	template<typename T>
@@ -225,17 +223,4 @@ protected:
 
 		return Cast<T>(AssetPtr.Get());
 	}
-
-#if WITH_EDITOR
-public:
-	TMap<uint8, FPinRecord> GetWireRecords() const;
-
-	UFlowNode* GetInspectedInstance();
-
-	// information displayed while node is working - displayed over node as NodeInfoPopup
-	virtual FString GetNodeStatus() const { return FString(); };
-
-	virtual UObject* GetAssetToOpen() { return nullptr; };
-	virtual AActor* GetActorToFocus() { return nullptr; };
-#endif
 };

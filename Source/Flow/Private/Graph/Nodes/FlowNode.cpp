@@ -1,9 +1,33 @@
 #include "FlowNode.h"
 #include "FlowSubsystem.h"
-#include "Graph/FlowAsset.h"
-#include "Graph/FlowAssetTypes.h"
+#include "FlowAsset.h"
+#include "FlowTypes.h"
 
 #include "Misc/App.h"
+
+#if !UE_BUILD_SHIPPING
+FPinRecord::FPinRecord()
+{
+	Time = 0.0f;
+	HumanReadableTime = FString();
+}
+
+FPinRecord::FPinRecord(const double InTime)
+{
+	Time = InTime;
+
+	const FDateTime SystemTime(FDateTime::Now());
+	HumanReadableTime = DoubleDigit(SystemTime.GetHour()) + TEXT(".")
+		+ DoubleDigit(SystemTime.GetMinute()) + TEXT(".")
+		+ DoubleDigit(SystemTime.GetSecond()) + TEXT(":")
+		+ DoubleDigit(SystemTime.GetMillisecond()).Left(3);
+}
+
+FORCEINLINE const FString FPinRecord::DoubleDigit(const int32 Number) const
+{
+	return Number > 9 ? FString::FromInt(Number) : TEXT("0") + FString::FromInt(Number);
+}
+#endif
 
 UFlowNode::UFlowNode(const FObjectInitializer& ObjectInitializer)
 	: Super(ObjectInitializer)
@@ -13,8 +37,8 @@ UFlowNode::UFlowNode(const FObjectInitializer& ObjectInitializer)
 	NodeStyle = EFlowNodeStyle::Default;
 #endif
 
-	InputNames = { FName() };
-	OutputNames = { FName() };
+	InputNames = { TEXT("In") };
+	OutputNames = { TEXT("Out") };
 }
 
 #if WITH_EDITOR
@@ -29,25 +53,19 @@ UFlowAsset* UFlowNode::GetFlowAsset() const
 	return Cast<UFlowAsset>(GetOuter());
 }
 
-bool UFlowNode::HasUserCreatedInputs() const
+#if WITH_EDITOR
+void UFlowNode::RemoveUserInput()
 {
-	if (CanUserAddInput())
-	{
-		return (CreatedInputs.Num() > 2); // 2 is only reasonable number of default inputs for such node
-	}
-
-	return false;
+	Modify();
+	InputNames.RemoveAt(InputNames.Num() - 1);
 }
 
-bool UFlowNode::HasUserCreatedOutputs() const
+void UFlowNode::RemoveUserOutput()
 {
-	if (CanUserAddOutput())
-	{
-		return (CreatedOutputs.Num() > 2); // 2 is only reasonable number of default inputs for such node
-	}
-
-	return false;
+	Modify();
+	OutputNames.RemoveAt(OutputNames.Num() - 1);
 }
+#endif
 
 void UFlowNode::SetNumericalOutputs(const uint8 FirstNumber /*= 0*/, const uint8 LastNumber /*= 1*/)
 {
@@ -57,48 +75,6 @@ void UFlowNode::SetNumericalOutputs(const uint8 FirstNumber /*= 0*/, const uint8
 	{
 		OutputNames.Emplace(FName(*FString::FromInt(i)));
 	}
-}
-
-void UFlowNode::AddCreatedInput(const uint8 PinIndex, const FName& PinName)
-{
-	CreatedInputs.Add(PinName, PinIndex);
-}
-
-void UFlowNode::AddCreatedOutput(const uint8 PinIndex, const FName& PinName)
-{
-	CreatedOutputs.Add(PinName, PinIndex);
-}
-
-void UFlowNode::RemoveCreatedInput(const FName& PinName)
-{
-	InputNames.Remove(PinName);
-	CreatedInputs.Remove(PinName);
-}
-
-void UFlowNode::RemoveCreatedOutput(const FName& PinName)
-{
-	OutputNames.Remove(PinName);
-	CreatedOutputs.Remove(PinName);
-}
-
-FName UFlowNode::GetInputName(const uint8 PinIndex) const
-{
-	if (const FName* Name = CreatedInputs.FindKey(PinIndex))
-	{
-		return *Name;
-	}
-
-	return FName();
-}
-
-FName UFlowNode::GetOutputName(const uint8 PinIndex) const
-{
-	if (const FName* Name = CreatedOutputs.FindKey(PinIndex))
-	{
-		return *Name;
-	}
-
-	return FName();
 }
 
 TSet<UFlowNode*> UFlowNode::GetConnectedNodes() const
@@ -140,31 +116,49 @@ void UFlowNode::TriggerFlush()
 
 void UFlowNode::TriggerInput(const FName& PinName)
 {
+	ensureAlways(InputNames.Num() > 0);
+
+#if !UE_BUILD_SHIPPING
 	// record for debugging
 	TArray<FPinRecord>& Records = InputRecords.FindOrAdd(PinName);
 	Records.Add(FPinRecord(FApp::GetCurrentTime()));
+
+	ActivationState = EFlowActivationState::Active;
+#endif
+
+#if WITH_EDITOR
+	UFlowAsset::GetFlowGraphInterface()->OnInputTriggered(GraphNode, InputNames.IndexOfByKey(PinName));
+#endif
 
 	ExecuteInput(PinName);
 }
 
 void UFlowNode::ExecuteInput(const FName& PinName)
 {
-	TriggerDefaultOutput(true);
+	TriggerFirstOutput(true);
 }
 
-void UFlowNode::TriggerDefaultOutput(const bool bFinish)
+void UFlowNode::TriggerFirstOutput(const bool bFinish)
 {
-	if (const FName* Name = CreatedOutputs.FindKey(0))
+	if (OutputNames.Num() > 0)
 	{
-		TriggerOutput(*Name, bFinish);
+		TriggerOutput(OutputNames[0], bFinish);
 	}
 }
 
 void UFlowNode::TriggerOutput(const FName& PinName, const bool bFinish /*= false*/)
 {
+	ensureAlways(OutputNames.Num() > 0);
+
+#if !UE_BUILD_SHIPPING
 	// record for debugging, even if nothing is connected to this pin
 	TArray<FPinRecord>& Records = OutputRecords.FindOrAdd(PinName);
 	Records.Add(FPinRecord(FApp::GetCurrentTime()));
+#endif
+
+#if WITH_EDITOR
+	UFlowAsset::GetFlowGraphInterface()->OnOutputTriggered(GraphNode, OutputNames.IndexOfByKey(PinName));
+#endif
 
 	// clean up node, if needed
 	if (bFinish)
@@ -182,6 +176,10 @@ void UFlowNode::TriggerOutput(const FName& PinName, const bool bFinish /*= false
 
 void UFlowNode::Finish()
 {
+#if !UE_BUILD_SHIPPING
+	ActivationState = EFlowActivationState::WasActive;
+#endif
+
 	Cleanup();
 	GetFlowAsset()->FinishNode(this);
 }
@@ -191,24 +189,17 @@ void UFlowNode::ForceFinishNode()
 	OnForceFinished();
 }
 
+#if !UE_BUILD_SHIPPING
 void UFlowNode::ResetRecords()
 {
 	InputRecords.Empty();
 	OutputRecords.Empty();
+	ActivationState = EFlowActivationState::NeverActivated;
 }
+#endif
 
 #if WITH_EDITOR
-TMap<uint8, FPinRecord> UFlowNode::GetWireRecords() const
-{
-	TMap<uint8, FPinRecord> Result;
-	for (const TPair<FName, TArray<FPinRecord>>& Record : OutputRecords)
-	{
-		Result.Add(CreatedOutputs[Record.Key], Record.Value.Last());
-	}
-	return Result;
-}
-
-UFlowNode* UFlowNode::GetInspectedInstance()
+UFlowNode* UFlowNode::GetInspectedInstance() const
 {
 	if (const UFlowAsset* FlowInstance = GetFlowAsset()->GetInspectedInstance())
 	{
@@ -216,5 +207,25 @@ UFlowNode* UFlowNode::GetInspectedInstance()
 	}
 
 	return nullptr;
+}
+
+TMap<uint8, FPinRecord> UFlowNode::GetWireRecords() const
+{
+	TMap<uint8, FPinRecord> Result;
+	for (const TPair<FName, TArray<FPinRecord>>& Record : OutputRecords)
+	{
+		Result.Emplace(OutputNames.IndexOfByKey(Record.Key), Record.Value.Last());
+	}
+	return Result;
+}
+
+TArray<FPinRecord> UFlowNode::GetInputRecords(const FName& PinName) const
+{
+	return InputRecords.FindRef(PinName);
+}
+
+TArray<FPinRecord> UFlowNode::GetOutputRecords(const FName& PinName) const
+{
+	return OutputRecords.FindRef(PinName);
 }
 #endif

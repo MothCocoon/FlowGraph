@@ -1,5 +1,5 @@
 #include "FlowAssetFactory.h"
-#include "Graph/FlowAsset.h"
+#include "FlowAsset.h"
 
 UFlowAssetFactory::UFlowAssetFactory(const FObjectInitializer& ObjectInitializer)
 	: Super(ObjectInitializer)

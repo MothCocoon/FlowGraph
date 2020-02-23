@@ -4,7 +4,7 @@
 #include "FlowGraphUtils.h"
 #include "Nodes/FlowGraphNode.h"
 
-#include "Graph/FlowAsset.h"
+#include "FlowAsset.h"
 #include "Graph/Nodes/FlowNode.h"
 #include "Graph/Nodes/FlowNodeIn.h"
 
@@ -32,6 +32,12 @@ bool UFlowGraphSchema::bFlowNodesInitialized = false;
 
 UEdGraphNode* FFlowGraphSchemaAction_NewNode::PerformAction(class UEdGraph* ParentGraph, UEdGraphPin* FromPin, const FVector2D Location, bool bSelectNewNode/* = true*/)
 {
+	// prevent adding new nodes while playing
+	if (GEditor->PlayWorld != nullptr)
+	{
+		return nullptr;
+	}
+
 	check(NodeClass);
 
 	UFlowAsset* FlowAsset = CastChecked<UFlowAssetGraph>(ParentGraph)->GetFlowAsset();
@@ -43,7 +49,6 @@ UEdGraphNode* FFlowGraphSchemaAction_NewNode::PerformAction(class UEdGraph* Pare
 
 	NewNode->GetGraphNode()->NodePosX = Location.X;
 	NewNode->GetGraphNode()->NodePosY = Location.Y;
-
 	NewNode->GetGraphNode()->AutowireNewNode(FromPin);
 
 	FlowAsset->PostEditChange();
@@ -57,12 +62,17 @@ UEdGraphNode* FFlowGraphSchemaAction_NewNode::PerformAction(class UEdGraph* Pare
 
 UEdGraphNode* FFlowGraphSchemaAction_NewFromSelected::PerformAction(class UEdGraph* ParentGraph, UEdGraphPin* FromPin, const FVector2D Location, bool bSelectNewNode/* = true*/)
 {
-	UFlowAsset* FlowAsset = CastChecked<UFlowAssetGraph>(ParentGraph)->GetFlowAsset();
+	// prevent adding new nodes while playing
+	if (GEditor->PlayWorld != nullptr)
+	{
+		return nullptr;
+	}
+
 	const FScopedTransaction Transaction(LOCTEXT("FlowEditorNewFromSelection", "Flow Editor: New From Selection"));
 	ParentGraph->Modify();
-	FlowAsset->Modify();
 
-	UEdGraphNode* CreatedNode = nullptr;
+	UFlowAsset* FlowAsset = CastChecked<UFlowAssetGraph>(ParentGraph)->GetFlowAsset();
+	FlowAsset->Modify();
 
 	if (NodeClass)
 	{
@@ -70,15 +80,15 @@ UEdGraphNode* FFlowGraphSchemaAction_NewFromSelected::PerformAction(class UEdGra
 
 		NewNode->GetGraphNode()->NodePosX = Location.X;
 		NewNode->GetGraphNode()->NodePosY = Location.Y;
+		NewNode->GetGraphNode()->AutowireNewNode(FromPin);
 
-		CreatedNode = NewNode->GetGraphNode();
-		CreatedNode->AutowireNewNode(FromPin);
+		FlowAsset->PostEditChange();
+		FlowAsset->MarkPackageDirty();
+
+		return NewNode->GetGraphNode();
 	}
 
-	FlowAsset->PostEditChange();
-	FlowAsset->MarkPackageDirty();
-
-	return CreatedNode;
+	return nullptr;
 }
 
 /////////////////////////////////////////////////////
@@ -86,9 +96,13 @@ UEdGraphNode* FFlowGraphSchemaAction_NewFromSelected::PerformAction(class UEdGra
 
 UEdGraphNode* FFlowGraphSchemaAction_NewComment::PerformAction(class UEdGraph* ParentGraph, UEdGraphPin* FromPin, const FVector2D Location, bool bSelectNewNode/* = true*/)
 {
-	// Add menu item for creating comment boxes
-	UEdGraphNode_Comment* CommentTemplate = NewObject<UEdGraphNode_Comment>();
+	// prevent adding new nodes while playing
+	if (GEditor->PlayWorld != nullptr)
+	{
+		return nullptr;
+	}
 
+	UEdGraphNode_Comment* CommentTemplate = NewObject<UEdGraphNode_Comment>();
 	FVector2D SpawnLocation = Location;
 
 	FSlateRect Bounds;
@@ -107,7 +121,12 @@ UEdGraphNode* FFlowGraphSchemaAction_NewComment::PerformAction(class UEdGraph* P
 
 UEdGraphNode* FFlowGraphSchemaAction_Paste::PerformAction(class UEdGraph* ParentGraph, UEdGraphPin* FromPin, const FVector2D Location, bool bSelectNewNode/* = true*/)
 {
-	FFlowGraphUtils::GetFlowAssetEditor(ParentGraph)->PasteNodesHere(Location);
+	// prevent adding new nodes while playing
+	if (GEditor->PlayWorld == nullptr)
+	{
+		FFlowGraphUtils::GetFlowAssetEditor(ParentGraph)->PasteNodesHere(Location);
+	}
+
 	return nullptr;
 }
 
@@ -135,27 +154,6 @@ void UFlowGraphSchema::GetGraphContextActions(FGraphContextMenuBuilder& ContextM
 		TSharedPtr<FFlowGraphSchemaAction_Paste> NewAction(new FFlowGraphSchemaAction_Paste(FText::GetEmpty(), LOCTEXT("PasteHereAction", "Paste here"), FText::GetEmpty(), 0));
 		ContextMenuBuilder.AddAction(NewAction);
 	}
-}
-
-void UFlowGraphSchema::GetContextMenuActions(class UToolMenu* Menu, class UGraphNodeContextMenuContext* Context) const
-{
-	if (Context->Pin)
-	{
-		if (Context->Pin->LinkedTo.Num() > 0)
-		{
-			FToolMenuSection& Section = Menu->AddSection("FlowGraphSchemaPinActions", LOCTEXT("PinActionsMenuHeader", "Pin Actions"));
-			Section.AddMenuEntry(FGraphEditorCommands::Get().BreakPinLinks);
-		}
-	}
-	else if (Context->Node)
-	{
-		const UFlowGraphNode* FlowGraphNode = Cast<const UFlowGraphNode>(Context->Node);
-
-		FToolMenuSection& Section = Menu->AddSection("FlowGraphSchemaNodeActions", LOCTEXT("NodeActionsMenuHeader", "Node Actions"));
-		Section.AddMenuEntry(FGraphEditorCommands::Get().BreakNodeLinks);
-	}
-
-	Super::GetContextMenuActions(Menu, Context);
 }
 
 void UFlowGraphSchema::CreateDefaultNodesForGraph(UEdGraph& Graph) const
@@ -263,13 +261,13 @@ void UFlowGraphSchema::GetFlowNodeActions(FGraphActionMenuBuilder& ActionMenuBui
 			switch (ActionMenuBuilder.FromPin->Direction)
 			{
 				case EEdGraphPinDirection::EGPD_Input:
-					if (!FlowNode->HasOutputs())
+					if (FlowNode->OutputNames.Num() == 0)
 					{
 						continue;
 					}
 					break;
 				case EEdGraphPinDirection::EGPD_Output:
-					if (!FlowNode->HasInputs())
+					if (FlowNode->InputNames.Num() == 0)
 					{
 						continue;
 					}

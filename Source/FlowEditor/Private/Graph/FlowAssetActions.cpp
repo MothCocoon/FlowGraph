@@ -1,7 +1,7 @@
 #include "FlowAssetActions.h"
 #include "FlowEditorModule.h"
 
-#include "Graph/FlowAsset.h"
+#include "FlowAsset.h"
 
 #define LOCTEXT_NAMESPACE "AssetTypeActions"
 

@@ -11,7 +11,7 @@
 #include "FlowAssetGraph.h"
 #include "FlowGraphSchema.h"
 
-TSharedPtr<IFlowAssetEditorInterface> UFlowAsset::FlowGraphEditor = nullptr;
+TSharedPtr<IFlowGraphInterface> UFlowAsset::FlowGraphInterface = nullptr;
 #endif
 
 UFlowAsset::UFlowAsset(const FObjectInitializer& ObjectInitializer)
@@ -42,7 +42,7 @@ void UFlowAsset::CreateGraph()
 {
 	if (FlowGraph == nullptr)
 	{
-		FlowGraph = UFlowAsset::GetFlowAssetEditor()->CreateGraph(this);
+		FlowGraph = UFlowAsset::GetFlowGraphInterface()->CreateGraph(this);
 
 		FlowGraph->bAllowDeletion = false;
 		FlowGraph->GetSchema()->CreateDefaultNodesForGraph(*FlowGraph);
@@ -52,18 +52,13 @@ void UFlowAsset::CreateGraph()
 FGuid UFlowAsset::CreateGraphNode(UFlowNode* InFlowNode, bool bSelectNewNode /*= true*/)
 {
 	check(InFlowNode->GraphNode == nullptr);
-	return UFlowAsset::GetFlowAssetEditor()->CreateGraphNode(FlowGraph, InFlowNode, bSelectNewNode);
+	return UFlowAsset::GetFlowGraphInterface()->CreateGraphNode(FlowGraph, InFlowNode, bSelectNewNode);
 }
 
-void UFlowAsset::CompileNodeConnections()
+void UFlowAsset::SetFlowGraphInterface(TSharedPtr<IFlowGraphInterface> InFlowAssetEditor)
 {
-	UFlowAsset::GetFlowAssetEditor()->CompileNodeConnections(this);
-}
-
-void UFlowAsset::SetFlowAssetEditor(TSharedPtr<IFlowAssetEditorInterface> InFlowAssetEditor)
-{
-	check(!FlowGraphEditor.IsValid());
-	FlowGraphEditor = InFlowAssetEditor;
+	check(!FlowGraphInterface.IsValid());
+	FlowGraphInterface = InFlowAssetEditor;
 }
 
 void UFlowAsset::RegisterNode(const FGuid& NewGuid, UFlowNode* NewNode)
@@ -81,6 +76,40 @@ void UFlowAsset::UnregisterNode(FGuid NodeGuid)
 	MarkPackageDirty();
 }
 #endif
+
+void UFlowAsset::CompileNodeConnections()
+{
+	TMap<FName, FConnectedPin> Connections;
+
+	for (const TPair<FGuid, UFlowNode*>& Pair : Nodes)
+	{
+		UFlowNode* Node = Pair.Value;
+		Connections.Empty();
+
+		for (const UEdGraphPin* ThisPin : Node->GetGraphNode()->Pins)
+		{
+			if (ThisPin->Direction == EEdGraphPinDirection::EGPD_Output && ThisPin->LinkedTo.Num() > 0)
+			{
+				if (UEdGraphPin* LinkedPin = ThisPin->LinkedTo[0])
+				{
+					const UEdGraphNode* LinkedNode = LinkedPin->GetOwningNode();
+					Connections.Add(ThisPin->PinName, FConnectedPin(LinkedNode->NodeGuid, LinkedNode->Pins.Find(LinkedPin), LinkedPin->PinName));
+				}
+			}
+		}
+
+#if WITH_EDITOR
+		Node->SetFlags(RF_Transactional);
+		Node->Modify();
+#endif
+
+		Node->SetConnections(Connections);
+
+#if WITH_EDITOR
+		Node->PostEditChange();
+#endif
+	}
+}
 
 UFlowNode* UFlowAsset::GetNode(const FGuid& Guid) const
 {
@@ -203,7 +232,7 @@ void UFlowAsset::StartFlow()
 	for (UFlowNodeIn* Node : InNodes)
 	{
 		RecordedNodes.Add(Node);
-		Node->TriggerDefaultOutput(true);
+		Node->TriggerFirstOutput(true);
 		return;
 	}
 }
@@ -219,7 +248,7 @@ void UFlowAsset::StartSubFlow(UFlowNodeSubFlow* FlowNode)
 	for (UFlowNodeIn* Node : InNodes)
 	{
 		RecordedNodes.Add(Node);
-		Node->TriggerDefaultOutput(true);
+		Node->TriggerFirstOutput(true);
 		return;
 	}
 }
@@ -253,7 +282,7 @@ void UFlowAsset::FinishNode(UFlowNode* Node)
 		{
 			if (OwningFlowNode.IsValid())
 			{
-				OwningFlowNode.Get()->TriggerDefaultOutput(true);
+				OwningFlowNode.Get()->TriggerFirstOutput(true);
 				OwningFlowNode = nullptr;
 			}
 			return;
@@ -263,10 +292,13 @@ void UFlowAsset::FinishNode(UFlowNode* Node)
 
 void UFlowAsset::ResetNodes()
 {
+#if !UE_BUILD_SHIPPING
 	for (UFlowNode* Node : RecordedNodes)
 	{
 		Node->ResetRecords();
 	}
+#endif
+
 	RecordedNodes.Empty();
 }
 

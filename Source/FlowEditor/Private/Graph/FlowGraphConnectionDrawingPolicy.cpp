@@ -4,7 +4,7 @@
 #include "FlowGraphSchema.h"
 #include "Nodes/FlowGraphNode.h"
 
-#include "Graph/FlowAsset.h"
+#include "FlowAsset.h"
 #include "Graph/Nodes/FlowNode.h"
 
 #include "Editor.h"
@@ -55,11 +55,11 @@ void FFlowGraphConnectionDrawingPolicy::BuildPaths()
 		FlowInstance->GetRecordedNodes(Nodes);
 		for (const UFlowNode* Node : Nodes)
 		{
-			UFlowGraphNode* FlowGraphNode = Cast<UFlowGraphNode>(Node->GetGraphNode());
+			const UFlowGraphNode* FlowGraphNode = Cast<UFlowGraphNode>(Node->GetGraphNode());
 
 			for (const TPair<uint8, FPinRecord>& Record : Node->GetWireRecords())
 			{
-				if (UEdGraphPin* OutputPin = FlowGraphNode->GetOutputPin(Record.Key))
+				if (UEdGraphPin* OutputPin = FlowGraphNode->OutputPins[Record.Key])
 				{
 					// check if Output pin is connected to anything
 					if (OutputPin->LinkedTo.Num() > 0)
