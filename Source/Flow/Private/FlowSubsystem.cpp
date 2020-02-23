@@ -1,7 +1,7 @@
 #include "FlowSubsystem.h"
 #include "FlowAsset.h"
 #include "FlowComponent.h"
-#include "Nodes/FlowNodeSubFlow.h"
+#include "Nodes/FlowNodeSubGraph.h"
 
 #include "Engine/GameInstance.h"
 #include "Misc/Paths.h"
@@ -40,37 +40,37 @@ void UFlowSubsystem::EndFlow(UFlowAsset* FlowAsset)
 	// todo
 }
 
-void UFlowSubsystem::PreloadSubFlow(UFlowNodeSubFlow* SubFlow)
+void UFlowSubsystem::PreloadSubFlow(UFlowNodeSubGraph* SubFlow)
 {
 	if (!InstancedSubFlows.Contains(SubFlow))
 	{
-		UFlowAsset* NewFlow = CreateFlowInstance(SubFlow->FlowAsset);
+		UFlowAsset* NewFlow = CreateFlowInstance(SubFlow->Asset);
 		InstancedSubFlows.Add(SubFlow, NewFlow);
 
 		NewFlow->PreloadNodes();
 	}
 }
 
-void UFlowSubsystem::FlushPreload(UFlowNodeSubFlow* SubFlow)
+void UFlowSubsystem::FlushPreload(UFlowNodeSubGraph* SubFlow)
 {
 	if (UFlowAsset* PreloadedAsset = InstancedSubFlows.FindRef(SubFlow))
 	{
 		PreloadedAsset->FlushPreload();
 		InstancedSubFlows.Remove(SubFlow);
 
-		const int32 ActiveInstancesLeft = SubFlow->FlowAsset.Get()->RemoveInstance(PreloadedAsset);
+		const int32 ActiveInstancesLeft = SubFlow->Asset.Get()->RemoveInstance(PreloadedAsset);
 		if (ActiveInstancesLeft == 0)
 		{
-			InstancedAssets.Remove(SubFlow->FlowAsset.Get());
+			InstancedAssets.Remove(SubFlow->Asset.Get());
 		}
 	}
 }
 
-void UFlowSubsystem::StartSubFlow(UFlowNodeSubFlow* SubFlow)
+void UFlowSubsystem::StartSubFlow(UFlowNodeSubGraph* SubFlow)
 {
 	if (!InstancedSubFlows.Contains(SubFlow))
 	{
-		UFlowAsset* NewFlow = CreateFlowInstance(SubFlow->FlowAsset);
+		UFlowAsset* NewFlow = CreateFlowInstance(SubFlow->Asset);
 		InstancedSubFlows.Add(SubFlow, NewFlow);
 	}
 
