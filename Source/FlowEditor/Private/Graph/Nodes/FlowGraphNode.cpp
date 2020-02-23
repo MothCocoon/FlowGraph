@@ -7,7 +7,7 @@
 #include "Graph/Widgets/SFlowGraphNode.h"
 
 #include "FlowAsset.h"
-#include "Graph/Nodes/FlowNode.h"
+#include "Nodes/FlowNode.h"
 
 #include "Developer/ToolMenus/Public/ToolMenus.h"
 #include "EdGraph/EdGraphSchema.h"
