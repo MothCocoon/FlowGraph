@@ -1,5 +1,5 @@
 #include "FlowSubsystem.h"
-#include "Graph/FlowAsset.h"
+#include "FlowAsset.h"
 #include "Graph/Nodes/FlowNodeSubFlow.h"
 
 #include "Engine/GameInstance.h"
@@ -88,6 +88,9 @@ UFlowAsset* UFlowSubsystem::CreateFlowInstance(TSoftObjectPtr<UFlowAsset> FlowAs
 	}
 
 	InstancedAssets.Add(FlowAsset.Get());
+
+	// Fixup connections - even in packaged game if assets haven't been re-saved in the editor after changing node's definition
+	FlowAsset.Get()->CompileNodeConnections();
 
 	const FString NewInstanceName = FPaths::GetBaseFilename(FlowAsset.Get()->GetPathName()) + TEXT("_") + FString::FromInt(FlowAsset.Get()->GetInstancesNum());
 	UFlowAsset* NewInstance = NewObject<UFlowAsset>(this, FlowAsset->GetClass(), *NewInstanceName, RF_Transient, FlowAsset.Get(), false, nullptr);

@@ -14,16 +14,17 @@ class UFlowSubsystem;
 class UEdGraph;
 class UFlowAsset;
 
-/** Interface for flow graph interaction with the FlowEditor module */
-class IFlowAssetEditorInterface
+/** Interface for calling the graph editor methods */
+class IFlowGraphInterface
 {
 public:
-	virtual ~IFlowAssetEditorInterface() {}
+	virtual ~IFlowGraphInterface() {}
 
 	virtual UEdGraph* CreateGraph(UFlowAsset* InFlowAsset) = 0;
+	virtual FGuid CreateGraphNode(UEdGraph* Graph, UFlowNode* FlowNode, bool bSelectNewNode) = 0;
 
-	virtual FGuid CreateGraphNode(UEdGraph* FlowGraph, UFlowNode* FlowNode, bool bSelectNewNode) = 0;
-	virtual void CompileNodeConnections(UFlowAsset* FlowAsset) = 0;
+	virtual void OnInputTriggered(UEdGraphNode* GraphNode, const int32 Index) = 0;
+	virtual void OnOutputTriggered(UEdGraphNode* GraphNode, const int32 Index) = 0;
 };
 #endif
 
@@ -41,35 +42,36 @@ public:
 //////////////////////////////////////////////////////////////////////////
 // Graph
 
+	// UObject
 #if WITH_EDITOR
 public:
-	//~ Begin UObject Interface
 	virtual void PostInitProperties() override;
 	static void AddReferencedObjects(UObject* InThis, FReferenceCollector& Collector);
-	//~ End UObject Interface
 #endif
+	// --
 
-	//~ Begin IFlowAssetEditorInterface
+	// IFlowGraphInterface
 #if WITH_EDITORONLY_DATA
 private:
 	UPROPERTY()
 	UEdGraph* FlowGraph;
+
+	static TSharedPtr<IFlowGraphInterface> FlowGraphInterface;
 #endif
 
 #if WITH_EDITOR
-	static TSharedPtr<IFlowAssetEditorInterface> FlowGraphEditor;
-
 public:
 	void CreateGraph();
 	UEdGraph* GetGraph() { return FlowGraph; };
 
 	FGuid CreateGraphNode(UFlowNode* InFlowNode, bool bSelectNewNode = true);
-	void CompileNodeConnections();
 
-	static void SetFlowAssetEditor(TSharedPtr<IFlowAssetEditorInterface> InFlowAssetEditor);
-	static TSharedPtr<IFlowAssetEditorInterface> GetFlowAssetEditor() { return FlowGraphEditor; };
-	//~ End IFlowAssetEditorInterface
+	static void SetFlowGraphInterface(TSharedPtr<IFlowGraphInterface> InFlowAssetEditor);
+	static TSharedPtr<IFlowGraphInterface> GetFlowGraphInterface() { return FlowGraphInterface; };
 #endif
+	// -- 
+
+	void CompileNodeConnections();
 
 //////////////////////////////////////////////////////////////////////////
 // Nodes

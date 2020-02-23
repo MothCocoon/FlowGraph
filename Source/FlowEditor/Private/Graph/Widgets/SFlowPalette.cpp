@@ -85,6 +85,7 @@ TSharedRef<SWidget> SFlowPaletteItem::CreateHotkeyDisplayWidget(const FSlateFont
 	{
 		HotkeyText = HotkeyChord->GetInputText();
 	}
+
 	return SNew(STextBlock)
 		.Text(HotkeyText)
 		.Font(NameFont);

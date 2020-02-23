@@ -2,7 +2,7 @@
 
 #include "Engine/DeveloperSettings.h"
 
-#include "Graph/FlowAssetTypes.h"
+#include "FlowTypes.h"
 #include "FlowEditorSettings.generated.h"
 
 /**
@@ -15,6 +15,10 @@ class UFlowEditorSettings final : public UDeveloperSettings
 
 public:
 	static UFlowEditorSettings* Get() { return CastChecked<UFlowEditorSettings>(UFlowEditorSettings::StaticClass()->GetDefaultObject()); }
+
+	// hide default pin names on simple nodes, reduces UI clutter
+	UPROPERTY(EditAnywhere, config, Category = "Nodes")
+	bool bShowDefaultPinNames;
 
 	UPROPERTY(EditAnywhere, config, Category = "Nodes")
 	TMap<EFlowNodeStyle, FLinearColor> NodeTitleColors;

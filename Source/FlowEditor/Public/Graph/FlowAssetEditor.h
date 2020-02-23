@@ -9,6 +9,7 @@
 
 class SFlowPalette;
 class UFlowAsset;
+class UFlowGraphNode;
 
 class IDetailsView;
 class SDockableTab;
@@ -29,7 +30,7 @@ private:
 	TSharedPtr<SGraphEditor> FocusedGraphEditor;
 	TSharedPtr<class IDetailsView> DetailsView;
 	TSharedPtr<class SFlowPalette> Palette;
-	TSharedPtr<FUICommandList> GraphEditorCommands;
+	TSharedPtr<FUICommandList> Commands;
 
 	/**	The tab ids for all the tabs used */
 	static const FName DetailsTabId;
@@ -42,17 +43,20 @@ public:
 
 	UFlowAsset* GetFlowAsset() const { return FlowAsset; };
 
-	/** FGCObject interface */
+	// FGCObject
 	virtual void AddReferencedObjects(FReferenceCollector& Collector) override;
+	// --
 
-	/** FEditorUndoClient Interface */
+	// FEditorUndoClient
 	virtual void PostUndo(bool bSuccess) override;
 	virtual void PostRedo(bool bSuccess) override { PostUndo(bSuccess); }
+	// --
 
-	/** FNotifyHook interface */
+	// FNotifyHook
 	virtual void NotifyPostChange(const FPropertyChangedEvent& PropertyChangedEvent, UProperty* PropertyThatChanged) override;
+	// --
 
-	/** IToolkit interface */
+	// IToolkit
 	virtual FName GetToolkitFName() const override;
 	virtual FText GetBaseToolkitName() const override;
 	virtual FString GetWorldCentricTabPrefix() const override;
@@ -60,6 +64,7 @@ public:
 
 	virtual void RegisterTabSpawners(const TSharedRef<class FTabManager>& TabManager) override;
 	virtual void UnregisterTabSpawners(const TSharedRef<class FTabManager>& TabManager) override;
+	// --
 
 private:
 	TSharedRef<SDockTab> SpawnTab_Details(const FSpawnTabArgs& Args);
@@ -85,6 +90,8 @@ private:
 	void OnStraightenConnections();
 
 public:
+	bool CanEdit() const;
+
 	void SetSelection(TArray<UObject*> SelectedObjects);
 
 	TSet<UObject*> GetSelectedNodes() const;
@@ -119,16 +126,43 @@ private:
 	void OnNodeDoubleClicked(class UEdGraphNode* Node);
 	void OnNodeTitleCommitted(const FText& NewText, ETextCommit::Type CommitInfo, UEdGraphNode* NodeBeingChanged);
 
+	void AddInput();
+	void AddOutput();
+	bool CanAddPin() const;
+
+	void RemovePin();
+	bool CanRemovePin() const;
+
+	void OnAddBreakpoint();
+	void OnAddPinBreakpoint();
+
+	bool CanAddBreakpoint() const;
+	bool CanAddPinBreakpoint() const;
+
+	void OnRemoveBreakpoint();
+	void OnRemovePinBreakpoint();
+
+	bool CanRemoveBreakpoint() const;
+	bool CanRemovePinBreakpoint() const;
+
+	void OnEnableBreakpoint();
+	void OnEnablePinBreakpoint();
+
+	bool CanEnableBreakpoint() const;
+	bool CanEnablePinBreakpoint() const;
+
+	void OnDisableBreakpoint();
+	void OnDisablePinBreakpoint();
+
+	bool CanDisableBreakpoint() const;
+	bool CanDisablePinBreakpoint() const;
+
+	void OnToggleBreakpoint();
+	void OnTogglePinBreakpoint();
+
+	bool CanToggleBreakpoint() const;
+	bool CanTogglePinBreakpoint() const;
+
 	void FocusViewport();
 	bool CanFocusViewport() const;
-
-	void AddInput();
-	bool CanAddInput() const;
-	void DeleteInput();
-	bool CanDeleteInput() const;
-
-	void AddOutput();
-	bool CanAddOutput() const;
-	void DeleteOutput();
-	bool CanDeleteOutput() const;
 };

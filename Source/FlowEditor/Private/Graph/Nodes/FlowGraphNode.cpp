@@ -1,10 +1,12 @@
 #include "FlowGraphNode.h"
 #include "FlowEditorSettings.h"
 #include "Graph/FlowAssetGraph.h"
+#include "Graph/FlowDebugger.h"
 #include "Graph/FlowGraphCommands.h"
 #include "Graph/FlowGraphSchema.h"
+#include "Graph/Widgets/SFlowGraphNode.h"
 
-#include "Graph/FlowAsset.h"
+#include "FlowAsset.h"
 #include "Graph/Nodes/FlowNode.h"
 
 #include "Developer/ToolMenus/Public/ToolMenus.h"
@@ -17,8 +19,72 @@
 #include "Framework/MultiBox/MultiBoxBuilder.h"
 #include "GraphEditorActions.h"
 #include "ScopedTransaction.h"
+#include "UnrealEd.h"
 
 #define LOCTEXT_NAMESPACE "FlowGraphNode"
+
+void FFlowBreakpoint::AddBreakpoint()
+{
+	if (!bHasBreakpoint)
+	{
+		bHasBreakpoint = true;
+		bBreakpointEnabled = true;
+	}
+}
+
+void FFlowBreakpoint::RemoveBreakpoint()
+{
+	if (bHasBreakpoint)
+	{
+		bHasBreakpoint = false;
+		bBreakpointEnabled = false;
+	}
+}
+
+bool FFlowBreakpoint::HasBreakpoint() const
+{
+	return bHasBreakpoint;
+}
+
+void FFlowBreakpoint::EnableBreakpoint()
+{
+	if (bHasBreakpoint && !bBreakpointEnabled)
+	{
+		bBreakpointEnabled = true;
+	}
+}
+
+bool FFlowBreakpoint::CanEnableBreakpoint() const
+{
+	return bHasBreakpoint && !bBreakpointEnabled;
+}
+
+void FFlowBreakpoint::DisableBreakpoint()
+{
+	if (bHasBreakpoint && bBreakpointEnabled)
+	{
+		bBreakpointEnabled = false;
+	}
+}
+
+bool FFlowBreakpoint::IsBreakpointEnabled() const
+{
+	return bHasBreakpoint && bBreakpointEnabled;
+}
+
+void FFlowBreakpoint::ToggleBreakpoint()
+{
+	if (bHasBreakpoint)
+	{
+		bHasBreakpoint = false;
+		bBreakpointEnabled = false;
+	}
+	else
+	{
+		bHasBreakpoint = true;
+		bBreakpointEnabled = true;
+	}
+}
 
 UFlowGraphNode::UFlowGraphNode(const FObjectInitializer& ObjectInitializer)
 	: Super(ObjectInitializer)
@@ -273,50 +339,81 @@ void UFlowGraphNode::AllocateDefaultPins()
 
 void UFlowGraphNode::GetNodeContextMenuActions(class UToolMenu* Menu, class UGraphNodeContextMenuContext* Context) const
 {
+	const FGenericCommands& GenericCommands = FGenericCommands::Get();
+	const FGraphEditorCommandsImpl& GraphCommands = FGraphEditorCommands::Get();
+	const FFlowGraphCommands& FlowGraphCommands = FFlowGraphCommands::Get();
+
 	if (Context->Pin)
 	{
-		FToolMenuSection& Section = Menu->AddSection("FlowGraphNodeDeletePins");
-		if (Context->Pin->Direction == EGPD_Input && FlowNode->HasUserCreatedInputs())
 		{
-			Section.AddMenuEntry(FFlowGraphCommands::Get().DeleteInput);
+			FToolMenuSection& Section = Menu->AddSection("FlowGraphSchemaPinActions", LOCTEXT("PinActionsMenuHeader", "Pin Actions"));
+			if (Context->Pin->LinkedTo.Num() > 0)
+			{
+				Section.AddMenuEntry(GraphCommands.BreakPinLinks);
+			}
+
+			if (Context->Pin->Direction == EGPD_Input && CanUserRemoveInput(Context->Pin))
+			{
+				Section.AddMenuEntry(FlowGraphCommands.RemovePin);
+			}
+			else if (Context->Pin->Direction == EGPD_Output && CanUserRemoveOutput(Context->Pin))
+			{
+				Section.AddMenuEntry(FlowGraphCommands.RemovePin);
+			}
 		}
 
-		if (Context->Pin->Direction == EGPD_Output && FlowNode->HasUserCreatedOutputs())
 		{
-			Section.AddMenuEntry(FFlowGraphCommands::Get().DeleteOutput);
+			FToolMenuSection& Section = Menu->AddSection("FlowGraphNodePinBreakpoints", LOCTEXT("PinBreakpointsMenuHeader", "Pin Breakpoints"));
+			Section.AddMenuEntry(FlowGraphCommands.AddPinBreakpoint);
+			Section.AddMenuEntry(FlowGraphCommands.RemovePinBreakpoint);
+			Section.AddMenuEntry(FlowGraphCommands.EnablePinBreakpoint);
+			Section.AddMenuEntry(FlowGraphCommands.DisablePinBreakpoint);
+			Section.AddMenuEntry(FlowGraphCommands.TogglePinBreakpoint);
 		}
-}
+	}
 	else if (Context->Node)
 	{
 		{
-			FToolMenuSection& Section = Menu->AddSection("FlowGraphNodeEdit");
-			Section.AddMenuEntry(FGenericCommands::Get().Delete);
-			Section.AddMenuEntry(FGenericCommands::Get().Cut);
-			Section.AddMenuEntry(FGenericCommands::Get().Copy);
-			Section.AddMenuEntry(FGenericCommands::Get().Duplicate);
-		}
+			FToolMenuSection& Section = Menu->AddSection("FlowGraphSchemaNodeActions", LOCTEXT("NodeActionsMenuHeader", "Node Actions"));
+			Section.AddMenuEntry(GenericCommands.Delete);
+			Section.AddMenuEntry(GenericCommands.Cut);
+			Section.AddMenuEntry(GenericCommands.Copy);
+			Section.AddMenuEntry(GenericCommands.Duplicate);
 
-		{
-			FToolMenuSection& Section = Menu->AddSection("FlowGraphNodePins");
+			Section.AddMenuEntry(GraphCommands.BreakNodeLinks);
+
 			if (CanUserAddInput())
 			{
-				Section.AddMenuEntry(FFlowGraphCommands::Get().AddInput);
+				Section.AddMenuEntry(FlowGraphCommands.AddInput);
 			}
-
 			if (CanUserAddOutput())
 			{
-				Section.AddMenuEntry(FFlowGraphCommands::Get().AddOutput);
+				Section.AddMenuEntry(FlowGraphCommands.AddOutput);
 			}
 		}
 
 		{
-			FToolMenuSection& Section = Menu->AddSection("FlowGraphNodeDebug");
+			FToolMenuSection& Section = Menu->AddSection("FlowGraphNodeBreakpoints", LOCTEXT("NodeBreakpointsMenuHeader", "Node Breakpoints"));
+			Section.AddMenuEntry(GraphCommands.AddBreakpoint);
+			Section.AddMenuEntry(GraphCommands.RemoveBreakpoint);
+			Section.AddMenuEntry(GraphCommands.EnableBreakpoint);
+			Section.AddMenuEntry(GraphCommands.DisableBreakpoint);
+			Section.AddMenuEntry(GraphCommands.ToggleBreakpoint);
+		}
+
+		{
+			FToolMenuSection& Section = Menu->AddSection("FlowGraphNodeExtras", LOCTEXT("NodeExtrasMenuHeader", "Node Extras"));
 			if (CanFocusViewport())
 			{
-				Section.AddMenuEntry(FFlowGraphCommands::Get().FocusViewport);
+				Section.AddMenuEntry(FlowGraphCommands.FocusViewport);
 			}
 		}
 	}
+}
+
+TSharedPtr<SGraphNode> UFlowGraphNode::CreateVisualWidget()
+{
+	return SNew(SFlowGraphNode, this);
 }
 
 FText UFlowGraphNode::GetNodeTitle(ENodeTitleType::Type TitleType) const
@@ -363,9 +460,35 @@ FText UFlowGraphNode::GetTooltipText() const
 
 FString UFlowGraphNode::GetNodeDescription() const
 {
+	return FlowNode ? FlowNode->GetNodeDescription() : FString();
+}
+
+UFlowNode* UFlowGraphNode::GetInspectedNodeInstance() const
+{
+	return FlowNode ? FlowNode->GetInspectedInstance() : nullptr;
+}
+
+EFlowActivationState UFlowGraphNode::GetActivationState() const
+{
 	if (FlowNode)
 	{
-		return FlowNode->GetNodeDescription();
+		if (UFlowNode* NodeInstance = FlowNode->GetInspectedInstance())
+		{
+			return NodeInstance->GetActivationState();
+		}
+	}
+
+	return EFlowActivationState::NeverActivated;
+}
+
+FString UFlowGraphNode::GetStatusString() const
+{
+	if (FlowNode)
+	{
+		if (UFlowNode* NodeInstance = FlowNode->GetInspectedInstance())
+		{
+			return NodeInstance->GetStatusString();
+		}
 	}
 
 	return FString();
@@ -384,37 +507,14 @@ bool UFlowGraphNode::IsContentPreloaded() const
 	return false;
 }
 
-FString UFlowGraphNode::GetNodeStatus() const
-{
-	if (FlowNode)
-	{
-		if (UFlowNode* NodeInstance = FlowNode->GetInspectedInstance())
-		{
-			return NodeInstance->GetNodeStatus();
-		}
-	}
-
-	return FString();
-}
-
 UObject* UFlowGraphNode::GetAssetToOpen() const
 {
-	if (FlowNode)
-	{
-		return FlowNode->GetAssetToOpen();
-	}
-
-	return nullptr;
+	return FlowNode ? FlowNode->GetAssetToOpen() : nullptr;
 }
 
 bool UFlowGraphNode::CanFocusViewport() const
 {
-	if (FlowNode)
-	{
-		return GEditor->bIsSimulatingInEditor && FlowNode->GetAssetToOpen();
-	}
-
-	return false;
+	return FlowNode ? (GEditor->bIsSimulatingInEditor && FlowNode->GetAssetToOpen()) : false;
 }
 
 void UFlowGraphNode::CreateInputPin(const FName& PinName)
@@ -422,17 +522,11 @@ void UFlowGraphNode::CreateInputPin(const FName& PinName)
 	UEdGraphPin* NewPin = CreatePin(EGPD_Input, UEdGraphSchema_K2::PC_Exec, PinName);
 	if (NewPin->PinName.IsNone())
 	{
-		// Makes sure pin has a name for lookup purposes but user will never see it
 		NewPin->PinName = CreateUniquePinName(TEXT("In"));
-		NewPin->PinFriendlyName = FText::FromString(TEXT(" "));
+		NewPin->PinFriendlyName = FText::FromString(TEXT("In"));
 	}
 
 	InputPins.Add(NewPin);
-
-	if (FlowNode)
-	{
-		FlowNode->AddCreatedInput(InputPins.Num() - 1, PinName);
-	}
 }
 
 void UFlowGraphNode::CreateOutputPin(const FName PinName)
@@ -440,37 +534,33 @@ void UFlowGraphNode::CreateOutputPin(const FName PinName)
 	UEdGraphPin* NewPin = CreatePin(EGPD_Output, UEdGraphSchema_K2::PC_Exec, PinName);
 	if (NewPin->PinName.IsNone())
 	{
-		// Makes sure pin has a name for lookup purposes but user will never see it
 		NewPin->PinName = CreateUniquePinName(TEXT("Out"));
-		NewPin->PinFriendlyName = FText::FromString(TEXT(" "));
+		NewPin->PinFriendlyName = FText::FromString(TEXT("Out"));
 	}
 
 	OutputPins.Add(NewPin);
-
-	if (FlowNode)
-	{
-		FlowNode->AddCreatedOutput(OutputPins.Num() - 1, PinName);
-	}
 }
 
 bool UFlowGraphNode::CanUserAddInput() const
 {
-	if (FlowNode)
-	{
-		return FlowNode->CanUserAddInput();
-	}
-
-	return false;
+	return FlowNode && FlowNode->CanUserAddInput() && InputPins.Num() < 256;
 }
 
 bool UFlowGraphNode::CanUserAddOutput() const
 {
-	if (FlowNode)
-	{
-		return FlowNode->CanUserAddOutput();
-	}
+	return FlowNode && FlowNode->CanUserAddOutput() && OutputPins.Num() < 256;
+}
 
-	return false;
+bool UFlowGraphNode::CanUserRemoveInput(const UEdGraphPin* Pin) const
+{
+	// 2 is only reasonable number of default pins for user-modifiable nodes
+	return FlowNode && FlowNode->CanUserAddInput() && InputPins.Num() > 2;
+}
+
+bool UFlowGraphNode::CanUserRemoveOutput(const UEdGraphPin* Pin) const
+{
+	// 2 is only reasonable number of default pins for user-modifiable nodes
+	return FlowNode && FlowNode->CanUserAddOutput() && OutputPins.Num() > 2;
 }
 
 void UFlowGraphNode::AddUserInput()
@@ -511,80 +601,112 @@ void UFlowGraphNode::AddUserOutput()
 	GetGraph()->NotifyGraphChanged();
 }
 
-void UFlowGraphNode::RemoveUserInput(UEdGraphPin* InPin)
+void UFlowGraphNode::RemoveUserPin(UEdGraphPin* Pin)
 {
-	const FScopedTransaction Transaction(LOCTEXT("FlowEditorDeleteInput", "Remoe Node Input"));
+	const FScopedTransaction Transaction(LOCTEXT("FlowEditorRemovePin", "Remoe Node Pin"));
 	Modify();
 
-	for (auto PinIt = InputPins.CreateIterator(); PinIt; ++PinIt)
+	if (Pin->Direction == EEdGraphPinDirection::EGPD_Input)
 	{
-		UEdGraphPin* Pin = *PinIt;
-		if (InPin == Pin)
+		if (InputPins.Contains(Pin))
 		{
-			FlowNode->RemoveCreatedInput(InPin->PinName);
-			InputPins.Remove(InPin);
+			InputBreakpoints.Remove(InputPins.Find(Pin));
+			InputPins.Remove(Pin);
 
-			InPin->MarkPendingKill();
-			Pins.Remove(InPin);
-			FlowNode->Modify();
-			break;
+			FlowNode->RemoveUserInput();
+
+			Pin->MarkPendingKill();
+			Pins.Remove(Pin);
 		}
 	}
+	else
+	{
+		if (OutputPins.Contains(Pin))
+		{
+			OutputBreakpoints.Remove(OutputPins.Find(Pin));
+			OutputPins.Remove(Pin);
+
+			FlowNode->RemoveUserOutput();
+
+			Pin->MarkPendingKill();
+			Pins.Remove(Pin);
+		}
+	}
+
+	// Recreate pins with updated names
+	ReconstructNode();
 
 	UFlowAsset* FlowAsset = CastChecked<UFlowAssetGraph>(GetGraph())->GetFlowAsset();
 	FlowAsset->CompileNodeConnections();
 	FlowAsset->MarkPackageDirty();
 
-	// Refresh the current graph, so the pins can be updated
 	GetGraph()->NotifyGraphChanged();
 }
 
-void UFlowGraphNode::RemoveUserOutput(UEdGraphPin* InPin)
+void UFlowGraphNode::OnInputTriggered(const int32 Index)
 {
-	const FScopedTransaction Transaction(LOCTEXT("FlowEditorDeleteOutput", "Remove Node Output"));
-	Modify();
-
-	for (auto PinIt = OutputPins.CreateIterator(); PinIt; ++PinIt)
+	if (InputPins.IsValidIndex(Index) && InputBreakpoints.Contains(Index))
 	{
-		UEdGraphPin* Pin = *PinIt;
-		if (InPin == Pin)
-		{
-			FlowNode->RemoveCreatedOutput(Pin->PinName);
-			OutputPins.Remove(InPin);
-
-			InPin->MarkPendingKill();
-			Pins.Remove(InPin);
-			FlowNode->Modify();
-			break;
-		}
+		InputBreakpoints[Index].bBreakpointHit = true;
+		TryPausingSession(true);
 	}
 
-	UFlowAsset* FlowAsset = CastChecked<UFlowAssetGraph>(GetGraph())->GetFlowAsset();
-	FlowAsset->CompileNodeConnections();
-	FlowAsset->MarkPackageDirty();
-
-	// Refresh the current graph, so the pins can be updated
-	GetGraph()->NotifyGraphChanged();
+	TryPausingSession(false);
 }
 
-UEdGraphPin* UFlowGraphNode::GetInputPin(const uint8 Index) const
+void UFlowGraphNode::OnOutputTriggered(const int32 Index)
 {
-	if (InputPins.IsValidIndex(Index))
+	if (OutputPins.IsValidIndex(Index) && OutputBreakpoints.Contains(Index))
 	{
-		return InputPins[Index];
+		OutputBreakpoints[Index].bBreakpointHit = true;
+		TryPausingSession(true);
 	}
 
-	return nullptr;
+	TryPausingSession(false);
 }
 
-UEdGraphPin* UFlowGraphNode::GetOutputPin(const uint8 Index) const
+void UFlowGraphNode::TryPausingSession(bool bPauseSession)
 {
-	if (OutputPins.IsValidIndex(Index))
+	// Node breakpoints waits on any pin triggered
+	if (NodeBreakpoint.IsBreakpointEnabled())
 	{
-		return OutputPins[Index];
+		NodeBreakpoint.bBreakpointHit = true;
+		bPauseSession = true;
 	}
 
-	return nullptr;
+	if (bPauseSession)
+	{
+		FEditorDelegates::ResumePIE.AddUObject(this, &UFlowGraphNode::OnResumePIE);
+		FEditorDelegates::EndPIE.AddUObject(this, &UFlowGraphNode::OnEndPIE);
+
+		FFlowDebugger::PausePlaySession();
+	}
+}
+
+void UFlowGraphNode::OnResumePIE(const bool bIsSimulating)
+{
+	ResetBreakpoints();
+}
+
+void UFlowGraphNode::OnEndPIE(const bool bIsSimulating)
+{
+	ResetBreakpoints();
+}
+
+void UFlowGraphNode::ResetBreakpoints()
+{
+	FEditorDelegates::ResumePIE.RemoveAll(this);
+	FEditorDelegates::EndPIE.RemoveAll(this);
+
+	NodeBreakpoint.bBreakpointHit = false;
+	for (TPair<int32, FFlowBreakpoint>& PinBreakpoint : InputBreakpoints)
+	{
+		PinBreakpoint.Value.bBreakpointHit = false;
+	}
+	for (TPair<int32, FFlowBreakpoint>& PinBreakpoint : OutputBreakpoints)
+	{
+		PinBreakpoint.Value.bBreakpointHit = false;
+	}
 }
 
 #undef LOCTEXT_NAMESPACE

@@ -3,6 +3,8 @@
 #include "CoreMinimal.h"
 #include "EdGraph/EdGraphNode.h"
 #include "UObject/ObjectMacros.h"
+
+#include "FlowTypes.h"
 #include "FlowGraphNode.generated.h"
 
 class UEdGraphPin;
@@ -10,8 +12,38 @@ class UEdGraphSchema;
 
 class UFlowNode;
 
+USTRUCT()
+struct FFlowBreakpoint
+{
+	GENERATED_USTRUCT_BODY()
+	
+public:
+	UPROPERTY()
+	uint32 bHasBreakpoint : 1;
+
+	uint32 bBreakpointEnabled : 1;
+	uint32 bBreakpointHit : 1;
+
+	FFlowBreakpoint() {};
+
+	void AddBreakpoint();
+	void RemoveBreakpoint();
+	bool HasBreakpoint() const;
+
+	void EnableBreakpoint();
+	bool CanEnableBreakpoint() const;
+
+	void DisableBreakpoint();
+	bool IsBreakpointEnabled() const;
+
+	void ToggleBreakpoint();
+};
+
+/**
+ * Graph representation of the Flow Node
+ */
 UCLASS()
-class UFlowGraphNode : public UEdGraphNode
+class FLOWEDITOR_API UFlowGraphNode : public UEdGraphNode
 {
 	GENERATED_UCLASS_BODY()
 	
@@ -40,6 +72,9 @@ private:
 // Graph node
 
 public:
+	UPROPERTY()
+	FFlowBreakpoint NodeBreakpoint;
+
 	// UEdGraphNode
 	virtual bool CanCreateUnderSpecifiedSchema(const UEdGraphSchema* Schema) const override;
 	virtual void AutowireNewNode(UEdGraphPin* FromPin) override;
@@ -60,6 +95,7 @@ public:
 
 	virtual void GetNodeContextMenuActions(class UToolMenu* Menu, class UGraphNodeContextMenuContext* Context) const override;
 
+	virtual TSharedPtr<SGraphNode> CreateVisualWidget() override;
 	virtual FText GetNodeTitle(ENodeTitleType::Type TitleType) const override;
 	virtual FLinearColor GetNodeTitleColor() const override;
 	virtual FSlateIcon GetIconAndTint(FLinearColor& OutColor) const override;
@@ -69,14 +105,21 @@ public:
 //////////////////////////////////////////////////////////////////////////
 // Utils
 
+public:
 	// short summary of node's content
 	FString GetNodeDescription() const;
 	
+	// get flow node for the inspected asset instance
+	UFlowNode* GetInspectedNodeInstance() const;
+
+	// used for highlighting active nodes of the inspected asset instance
+	EFlowActivationState GetActivationState() const;
+
+	// information displayed while node is active
+	FString GetStatusString() const;
+
 	// check this to display information while node is preloaded
 	bool IsContentPreloaded() const;
-
-	// information displayed while node is working
-	FString GetNodeStatus() const;
 
 	UObject* GetAssetToOpen() const;
 	bool CanFocusViewport() const;
@@ -84,8 +127,15 @@ public:
 //////////////////////////////////////////////////////////////////////////
 // Pins
 
+public:
 	TArray<UEdGraphPin*> InputPins;
 	TArray<UEdGraphPin*> OutputPins;
+
+	UPROPERTY()
+	TMap<int32, FFlowBreakpoint> InputBreakpoints;
+
+	UPROPERTY()
+	TMap<int32, FFlowBreakpoint> OutputBreakpoints;
 
 	void CreateInputPin(const FName& PinName);
 	void CreateOutputPin(const FName PinName);
@@ -93,12 +143,25 @@ public:
 	bool CanUserAddInput() const;
 	bool CanUserAddOutput() const;
 
+	bool CanUserRemoveInput(const UEdGraphPin* Pin) const;
+	bool CanUserRemoveOutput(const UEdGraphPin* Pin) const;
+
 	void AddUserInput();
 	void AddUserOutput();
 
-	void RemoveUserInput(UEdGraphPin* InPin);
-	void RemoveUserOutput(UEdGraphPin* InPin);
+	void RemoveUserPin(UEdGraphPin* Pin);
 
-	UEdGraphPin* GetInputPin(const uint8 Index) const;
-	UEdGraphPin* GetOutputPin(const uint8 Index) const;
+//////////////////////////////////////////////////////////////////////////
+// Breakpoints
+
+public:
+	void OnInputTriggered(const int32 Index);
+	void OnOutputTriggered(const int32 Index);
+
+private:
+	void TryPausingSession(bool bPauseSession);
+
+	void OnResumePIE(const bool bIsSimulating);
+	void OnEndPIE(const bool bIsSimulating);
+	void ResetBreakpoints();
 };
