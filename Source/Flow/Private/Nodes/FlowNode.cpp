@@ -5,6 +5,9 @@
 
 #include "Misc/App.h"
 
+FName UFlowNode::DefaultInputName(TEXT("In"));
+FName UFlowNode::DefaultOutputName(TEXT("Out"));
+
 #if !UE_BUILD_SHIPPING
 FPinRecord::FPinRecord()
 {
@@ -37,8 +40,8 @@ UFlowNode::UFlowNode(const FObjectInitializer& ObjectInitializer)
 	NodeStyle = EFlowNodeStyle::Default;
 #endif
 
-	InputNames = { TEXT("In") };
-	OutputNames = { TEXT("Out") };
+	InputNames = { DefaultInputName };
+	OutputNames = { DefaultOutputName };
 }
 
 #if WITH_EDITOR
