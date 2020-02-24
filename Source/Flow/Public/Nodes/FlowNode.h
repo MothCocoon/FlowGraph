@@ -102,6 +102,9 @@ public:
 // All created pins (default, class-specific and added by user)
 
 public:
+	static FName DefaultInputName;
+	static FName DefaultOutputName;
+
 	// class-specific and user-added inputs
 	UPROPERTY()
 	TArray<FName> InputNames;
