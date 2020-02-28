@@ -81,6 +81,16 @@ void UFlowAsset::CompileNodeConnections()
 {
 	TMap<FName, FConnectedPin> Connections;
 
+	// last moment to remove invalid nodes
+	for (auto NodeIt = Nodes.CreateIterator(); NodeIt; ++NodeIt)
+	{
+		const TPair<FGuid, UFlowNode*>& Pair = *NodeIt;
+		if (Pair.Value == nullptr)
+		{
+			NodeIt.RemoveCurrent();
+		}
+	}
+
 	for (const TPair<FGuid, UFlowNode*>& Pair : Nodes)
 	{
 		UFlowNode* Node = Pair.Value;
