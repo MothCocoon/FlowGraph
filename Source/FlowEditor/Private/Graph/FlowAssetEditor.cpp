@@ -565,14 +565,16 @@ void FFlowAssetEditor::DeleteSelectedNodes()
 		{
 			if (UFlowGraphNode* FlowGraphNode = Cast<UFlowGraphNode>(Node))
 			{
-				const FGuid NodeGuid = FlowGraphNode->GetFlowNode()->GetGuid();
-				FBlueprintEditorUtils::RemoveNode(nullptr, Node, true);
-				FlowAsset->UnregisterNode(NodeGuid);
+				if (FlowGraphNode->GetFlowNode())
+				{
+					const FGuid NodeGuid = FlowGraphNode->GetFlowNode()->GetGuid();
+					FBlueprintEditorUtils::RemoveNode(nullptr, Node, true);
+					FlowAsset->UnregisterNode(NodeGuid);
+					continue;
+				}
 			}
-			else
-			{
-				FBlueprintEditorUtils::RemoveNode(nullptr, Node, true);
-			}
+			
+			FBlueprintEditorUtils::RemoveNode(nullptr, Node, true);
 		}
 	}
 }

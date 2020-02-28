@@ -3,6 +3,8 @@
 
 #include "Engine/World.h"
 
+FFlowActorNotify UFlowComponent::OnNotifyFromActor;
+
 UFlowComponent::UFlowComponent(const FObjectInitializer& ObjectInitializer)
 	: Super(ObjectInitializer)
 {
@@ -26,4 +28,9 @@ void UFlowComponent::EndPlay(const EEndPlayReason::Type EndPlayReason)
 	}
 
 	Super::EndPlay(EndPlayReason);
+}
+
+void UFlowComponent::NotifyGraph(const FGameplayTag Tag)
+{
+	OnNotifyFromActor.Broadcast(this, Tag);
 }
