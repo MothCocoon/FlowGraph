@@ -6,6 +6,10 @@
 UFlowNodeOnNotifyFromActor::UFlowNodeOnNotifyFromActor(const FObjectInitializer& ObjectInitializer)
 	: Super(ObjectInitializer)
 {
+#if WITH_EDITOR
+	NodeStyle = EFlowNodeStyle::Condition;
+#endif
+
 	OutputNames = { TEXT("Success") };
 }
 
@@ -13,7 +17,7 @@ void UFlowNodeOnNotifyFromActor::ExecuteInput(const FName& PinName)
 {
 	if (ActorTag.IsValid())
 	{
-		UFlowComponent::OnNotifyFromActor.AddUObject(this, &UFlowNodeOnNotifyFromActor::OnNotifyFromActor);
+		UFlowComponent::OnNotifyFromComponent.AddDynamic(this, &UFlowNodeOnNotifyFromActor::OnNotifyFromActor);
 	}
 }
 
@@ -29,7 +33,7 @@ void UFlowNodeOnNotifyFromActor::Cleanup()
 {
 	if (ActorTag.IsValid())
 	{
-		UFlowComponent::OnNotifyFromActor.RemoveAll(this);
+		UFlowComponent::OnNotifyFromComponent.RemoveAll(this);
 	}
 }
 

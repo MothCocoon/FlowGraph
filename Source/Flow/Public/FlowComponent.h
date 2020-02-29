@@ -4,14 +4,13 @@
 #include "GameplayTagContainer.h"
 #include "FlowComponent.generated.h"
 
-DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FFlowGraphNotify, const FGameplayTag&, Tag);
-DECLARE_MULTICAST_DELEGATE_TwoParams(FFlowActorNotify, UFlowComponent* /*FlowComponent*/, const FGameplayTag& /*Tag*/);
+DECLARE_DYNAMIC_MULTICAST_DELEGATE_TwoParams(FFlowComponentNotify, UFlowComponent*, FlowComponent, const FGameplayTag&, NotifyTag);
 
 /**
-* Base component which makes possible to communicate between flow graphs and custom blueprint actors
+* Base component of Flow System - makes possible to communicate between Flow graph and actors
 */
 UCLASS(meta = (BlueprintSpawnableComponent))
-class FLOW_API UFlowComponent final : public UActorComponent
+class FLOW_API UFlowComponent : public UActorComponent
 {
 	GENERATED_UCLASS_BODY()
 
@@ -19,15 +18,21 @@ public:
 	UPROPERTY(EditDefaultsOnly, Category = "Flow")
 	FGameplayTagContainer IdentityTags;
 
-	static FFlowActorNotify OnNotifyFromActor;
+	static FFlowComponentNotify OnNotifyFromComponent;
 
 public:
 	virtual void BeginPlay() override;
 	virtual void EndPlay(const EEndPlayReason::Type EndPlayReason) override;
 
+	// Receive notification from Flow graph or another Flow Component
 	UPROPERTY(BlueprintAssignable, Category = "Flow")
-	FFlowGraphNotify NotifyFromGraph;
+	FFlowComponentNotify ReceiveNotify;
 
+	// Send notification to Flow graphs
 	UFUNCTION(BlueprintCallable, Category = "Flow")
-	void NotifyGraph(const FGameplayTag Tag);
+	void NotifyGraph(const FGameplayTag NotifyTag);
+
+	// Send notification to another actor containing Flow Component
+	UFUNCTION(BlueprintCallable, Category = "Flow")
+	virtual void NotifyActor(const FGameplayTag ActorTag, const FGameplayTag NotifyTag);
 };
