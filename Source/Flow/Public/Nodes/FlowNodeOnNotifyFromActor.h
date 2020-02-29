@@ -26,6 +26,7 @@ protected:
 	virtual void ExecuteInput(const FName& PinName) override;
 
 private:
+	UFUNCTION()
 	void OnNotifyFromActor(UFlowComponent* FlowComponent, const FGameplayTag& Tag);
 
 protected:

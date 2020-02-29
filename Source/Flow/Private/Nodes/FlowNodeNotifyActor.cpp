@@ -15,7 +15,7 @@ void UFlowNodeNotifyActor::ExecuteInput(const FName& PinName)
 	{
 		for (TWeakObjectPtr<UFlowComponent>& Component : FlowSubsystem->GetComponents<UFlowComponent>(ActorTag))
 		{
-			Component->NotifyFromGraph.Broadcast(NotifyTag);
+			Component->ReceiveNotify.Broadcast(nullptr, NotifyTag);
 		}
 	}
 

@@ -3,7 +3,7 @@
 
 #include "Engine/World.h"
 
-FFlowActorNotify UFlowComponent::OnNotifyFromActor;
+FFlowComponentNotify UFlowComponent::OnNotifyFromComponent;
 
 UFlowComponent::UFlowComponent(const FObjectInitializer& ObjectInitializer)
 	: Super(ObjectInitializer)
@@ -30,7 +30,18 @@ void UFlowComponent::EndPlay(const EEndPlayReason::Type EndPlayReason)
 	Super::EndPlay(EndPlayReason);
 }
 
-void UFlowComponent::NotifyGraph(const FGameplayTag Tag)
+void UFlowComponent::NotifyGraph(const FGameplayTag NotifyTag)
 {
-	OnNotifyFromActor.Broadcast(this, Tag);
+	OnNotifyFromComponent.Broadcast(this, NotifyTag);
+}
+
+void UFlowComponent::NotifyActor(const FGameplayTag ActorTag, const FGameplayTag NotifyTag)
+{
+	if (UFlowSubsystem* FlowSubsystem = GetWorld()->GetGameInstance()->GetSubsystem<UFlowSubsystem>())
+	{
+		for (TWeakObjectPtr<UFlowComponent>& Component : FlowSubsystem->GetComponents<UFlowComponent>(ActorTag))
+		{
+			Component->ReceiveNotify.Broadcast(this, NotifyTag);
+		}
+	}
 }
