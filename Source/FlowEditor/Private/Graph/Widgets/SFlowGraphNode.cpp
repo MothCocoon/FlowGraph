@@ -177,17 +177,16 @@ void SFlowGraphNode::CreateStandardPinWidget(UEdGraphPin* Pin)
 
 	if (!UFlowEditorSettings::Get()->bShowDefaultPinNames)
 	{
-		UFlowNode* NodeDefaults = FlowGraphNode->GetFlowNode()->GetClass()->GetDefaultObject<UFlowNode>();
 		if (Pin->Direction == EEdGraphPinDirection::EGPD_Input)
 		{
-			if (NodeDefaults->InputNames.Num() == 1 && NodeDefaults->InputNames[0] == Pin->PinName)
+			if (FlowGraphNode->GetFlowNode()->InputNames.Num() == 1 && Pin->PinName == UFlowNode::DefaultInputName)
 			{
 				NewPin->SetShowLabel(false);
 			}
 		}
 		else
 		{
-			if (NodeDefaults->OutputNames.Num() == 1 && NodeDefaults->OutputNames[0] == Pin->PinName)
+			if (FlowGraphNode->GetFlowNode()->OutputNames.Num() == 1 && Pin->PinName == UFlowNode::DefaultOutputName)
 			{
 				NewPin->SetShowLabel(false);
 			}
