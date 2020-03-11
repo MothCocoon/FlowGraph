@@ -4,6 +4,7 @@
 #include "Nodes/FlowNodeSubGraph.h"
 
 #include "Engine/GameInstance.h"
+#include "Engine/World.h"
 #include "Misc/Paths.h"
 
 UFlowSubsystem::UFlowSubsystem()
@@ -90,8 +91,13 @@ UFlowAsset* UFlowSubsystem::CreateFlowInstance(TSoftObjectPtr<UFlowAsset> FlowAs
 
 	InstancedAssets.Add(FlowAsset.Get());
 
-	// Fixup connections - even in packaged game if assets haven't been re-saved in the editor after changing node's definition
-	FlowAsset.Get()->CompileNodeConnections();
+#if WITH_EDITOR
+	if (GetWorld()->WorldType != EWorldType::Game)
+	{
+		// Fixup connections - even in packaged game if assets haven't been re-saved in the editor after changing node's definition
+		FlowAsset.Get()->CompileNodeConnections();
+	}
+#endif
 
 	const FString NewInstanceName = FPaths::GetBaseFilename(FlowAsset.Get()->GetPathName()) + TEXT("_") + FString::FromInt(FlowAsset.Get()->GetInstancesNum());
 	UFlowAsset* NewInstance = NewObject<UFlowAsset>(this, FlowAsset->GetClass(), *NewInstanceName, RF_Transient, FlowAsset.Get(), false, nullptr);

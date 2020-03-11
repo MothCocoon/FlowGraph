@@ -3,6 +3,7 @@
 #include "FlowAsset.h"
 #include "FlowTypes.h"
 
+#include "Engine/World.h"
 #include "Misc/App.h"
 
 FName UFlowNode::DefaultInputName(TEXT("In"));
@@ -130,7 +131,10 @@ void UFlowNode::TriggerInput(const FName& PinName)
 #endif
 
 #if WITH_EDITOR
-	UFlowAsset::GetFlowGraphInterface()->OnInputTriggered(GraphNode, InputNames.IndexOfByKey(PinName));
+	if (GetWorld()->WorldType != EWorldType::Game)
+	{
+		UFlowAsset::GetFlowGraphInterface()->OnInputTriggered(GraphNode, InputNames.IndexOfByKey(PinName));
+	}
 #endif
 
 	ExecuteInput(PinName);
@@ -160,7 +164,10 @@ void UFlowNode::TriggerOutput(const FName& PinName, const bool bFinish /*= false
 #endif
 
 #if WITH_EDITOR
-	UFlowAsset::GetFlowGraphInterface()->OnOutputTriggered(GraphNode, OutputNames.IndexOfByKey(PinName));
+	if (GetWorld()->WorldType != EWorldType::Game)
+	{
+		UFlowAsset::GetFlowGraphInterface()->OnOutputTriggered(GraphNode, OutputNames.IndexOfByKey(PinName));
+	}
 #endif
 
 	// clean up node, if needed
