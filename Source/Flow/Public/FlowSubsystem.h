@@ -23,9 +23,11 @@ private:
 	FStreamableManager Streamable;
 
 	// all instanced assets
-	TSet<TWeakObjectPtr<UFlowAsset>> InstancedAssets;
+	UPROPERTY()
+	TSet<UFlowAsset*> InstancedAssets;
 
 	// instanced assets "owned" by Sub Flow nodes
+	UPROPERTY()
 	TMap<UFlowNodeSubGraph*, UFlowAsset*> InstancedSubFlows;
 
 public:
