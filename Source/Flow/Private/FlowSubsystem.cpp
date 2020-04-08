@@ -18,11 +18,11 @@ void UFlowSubsystem::Initialize(FSubsystemCollectionBase& Collection)
 
 void UFlowSubsystem::Deinitialize()
 {
-	for (TWeakObjectPtr<UFlowAsset> InstancedAsset : InstancedAssets)
+	for (UFlowAsset* InstancedAsset : InstancedAssets)
 	{
-		if (InstancedAsset.IsValid())
+		if (InstancedAsset)
 		{
-			InstancedAsset.Get()->ClearInstances();
+			InstancedAsset->ClearInstances();
 		}
 	}
 
