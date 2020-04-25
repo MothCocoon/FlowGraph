@@ -90,7 +90,7 @@ FLinearColor FFlowAssetEditor::GetWorldCentricTabColorScale() const
 void FFlowAssetEditor::RegisterTabSpawners(const TSharedRef<class FTabManager>& InTabManager)
 {
 	WorkspaceMenuCategory = InTabManager->AddLocalWorkspaceMenuCategory(LOCTEXT("WorkspaceMenu_FlowAssetEditor", "Flow Editor"));
-	auto WorkspaceMenuCategoryRef = WorkspaceMenuCategory.ToSharedRef();
+	const auto WorkspaceMenuCategoryRef = WorkspaceMenuCategory.ToSharedRef();
 
 	FAssetEditorToolkit::RegisterTabSpawners(InTabManager);
 
@@ -119,7 +119,7 @@ void FFlowAssetEditor::UnregisterTabSpawners(const TSharedRef<class FTabManager>
 	InTabManager->UnregisterTabSpawner(PaletteTabId);
 }
 
-TSharedRef<SDockTab> FFlowAssetEditor::SpawnTab_Details(const FSpawnTabArgs& Args)
+TSharedRef<SDockTab> FFlowAssetEditor::SpawnTab_Details(const FSpawnTabArgs& Args) const
 {
 	check(Args.GetTabId() == DetailsTabId);
 
@@ -131,7 +131,7 @@ TSharedRef<SDockTab> FFlowAssetEditor::SpawnTab_Details(const FSpawnTabArgs& Arg
 		];
 }
 
-TSharedRef<SDockTab> FFlowAssetEditor::SpawnTab_GraphCanvas(const FSpawnTabArgs& Args)
+TSharedRef<SDockTab> FFlowAssetEditor::SpawnTab_GraphCanvas(const FSpawnTabArgs& Args) const
 {
 	check(Args.GetTabId() == GraphCanvasTabId);
 
@@ -146,7 +146,7 @@ TSharedRef<SDockTab> FFlowAssetEditor::SpawnTab_GraphCanvas(const FSpawnTabArgs&
 	return SpawnedTab;
 }
 
-TSharedRef<SDockTab> FFlowAssetEditor::SpawnTab_Palette(const FSpawnTabArgs& Args)
+TSharedRef<SDockTab> FFlowAssetEditor::SpawnTab_Palette(const FSpawnTabArgs& Args) const
 {
 	check(Args.GetTabId() == PaletteTabId);
 
@@ -270,7 +270,7 @@ void FFlowAssetEditor::UndoGraphAction()
 	GEditor->UndoTransaction();
 }
 
-void FFlowAssetEditor::RedoGraphAction()
+void FFlowAssetEditor::RedoGraphAction() const
 {
 	// Clear selection, to avoid holding refs to nodes that go away
 	FocusedGraphEditor->ClearSelectionSet();
@@ -462,13 +462,13 @@ FReply FFlowAssetEditor::OnSpawnGraphNodeByShortcut(FInputChord InChord, const F
 	return FReply::Unhandled();
 }
 
-void FFlowAssetEditor::OnCreateComment()
+void FFlowAssetEditor::OnCreateComment() const
 {
 	FFlowGraphSchemaAction_NewComment CommentAction;
 	CommentAction.PerformAction(FlowAsset->GetGraph(), nullptr, FocusedGraphEditor->GetPasteLocation());
 }
 
-void FFlowAssetEditor::OnStraightenConnections()
+void FFlowAssetEditor::OnStraightenConnections() const
 {
 	if (FocusedGraphEditor.IsValid())
 	{
@@ -481,7 +481,7 @@ bool FFlowAssetEditor::CanEdit() const
 	return GEditor->PlayWorld == nullptr;
 }
 
-void FFlowAssetEditor::SetSelection(TArray<UObject*> SelectedObjects)
+void FFlowAssetEditor::SetSelection(TArray<UObject*> SelectedObjects) const
 {
 	if (DetailsView.IsValid())
 	{
@@ -504,12 +504,12 @@ int32 FFlowAssetEditor::GetNumberOfSelectedNodes() const
 	return FocusedGraphEditor->GetSelectedNodes().Num();
 }
 
-bool FFlowAssetEditor::GetBoundsForSelectedNodes(class FSlateRect& Rect, float Padding)
+bool FFlowAssetEditor::GetBoundsForSelectedNodes(class FSlateRect& Rect, float Padding) const
 {
 	return FocusedGraphEditor->GetBoundsForSelectedNodes(Rect, Padding);
 }
 
-void FFlowAssetEditor::OnSelectedNodesChanged(const TSet<class UObject*>& NewSelection)
+void FFlowAssetEditor::OnSelectedNodesChanged(const TSet<class UObject*>& NewSelection) const
 {
 	TArray<UObject*> Selection;
 
@@ -539,7 +539,7 @@ void FFlowAssetEditor::OnSelectedNodesChanged(const TSet<class UObject*>& NewSel
 	SetSelection(Selection);
 }
 
-void FFlowAssetEditor::SelectAllNodes()
+void FFlowAssetEditor::SelectAllNodes() const
 {
 	FocusedGraphEditor->SelectAllNodes();
 }
@@ -549,7 +549,7 @@ bool FFlowAssetEditor::CanSelectAllNodes() const
 	return true;
 }
 
-void FFlowAssetEditor::DeleteSelectedNodes()
+void FFlowAssetEditor::DeleteSelectedNodes() const
 {
 	const FScopedTransaction Transaction(NSLOCTEXT("UnrealEd", "FlowEditorDeleteSelectedNode", "Delete Selected Flow Node"));
 	FocusedGraphEditor->GetCurrentGraph()->Modify();
@@ -579,7 +579,7 @@ void FFlowAssetEditor::DeleteSelectedNodes()
 	}
 }
 
-void FFlowAssetEditor::DeleteSelectedDuplicatableNodes()
+void FFlowAssetEditor::DeleteSelectedDuplicatableNodes() const
 {
 	// Cache off the old selection
 	const FGraphPanelSelectionSet OldSelectedNodes = GetSelectedNodes();
@@ -640,7 +640,7 @@ bool FFlowAssetEditor::CanDeleteNodes() const
 	return false;
 }
 
-void FFlowAssetEditor::CutSelectedNodes()
+void FFlowAssetEditor::CutSelectedNodes() const
 {
 	CopySelectedNodes();
 	// Cut should only delete nodes that can be duplicated
@@ -652,7 +652,7 @@ bool FFlowAssetEditor::CanCutNodes() const
 	return CanCopyNodes() && CanDeleteNodes();
 }
 
-void FFlowAssetEditor::CopySelectedNodes()
+void FFlowAssetEditor::CopySelectedNodes() const
 {
 	const FGraphPanelSelectionSet SelectedNodes = GetSelectedNodes();
 	for (FGraphPanelSelectionSet::TConstIterator SelectedIter(SelectedNodes); SelectedIter; ++SelectedIter)
@@ -695,12 +695,12 @@ bool FFlowAssetEditor::CanCopyNodes() const
 	return false;
 }
 
-void FFlowAssetEditor::PasteNodes()
+void FFlowAssetEditor::PasteNodes() const
 {
 	PasteNodesHere(FocusedGraphEditor->GetPasteLocation());
 }
 
-void FFlowAssetEditor::PasteNodesHere(const FVector2D& Location)
+void FFlowAssetEditor::PasteNodesHere(const FVector2D& Location) const
 {
 	// Undo/Redo support
 	const FScopedTransaction Transaction(NSLOCTEXT("UnrealEd", "FlowEditorPaste", "Paste Flow Node"));
@@ -730,7 +730,7 @@ void FFlowAssetEditor::PasteNodesHere(const FVector2D& Location)
 
 	if (PastedNodes.Num() > 0)
 	{
-		float InvNumNodes = 1.0f / float(PastedNodes.Num());
+		const float InvNumNodes = 1.0f / static_cast<float>(PastedNodes.Num());
 		AvgNodePosition.X *= InvNumNodes;
 		AvgNodePosition.Y *= InvNumNodes;
 	}
@@ -779,7 +779,7 @@ bool FFlowAssetEditor::CanPasteNodes() const
 	return false;
 }
 
-void FFlowAssetEditor::DuplicateNodes()
+void FFlowAssetEditor::DuplicateNodes() const
 {
 	CopySelectedNodes();
 	PasteNodes();
@@ -790,14 +790,13 @@ bool FFlowAssetEditor::CanDuplicateNodes() const
 	return CanCopyNodes();
 }
 
-void FFlowAssetEditor::OnNodeDoubleClicked(class UEdGraphNode* Node)
+void FFlowAssetEditor::OnNodeDoubleClicked(class UEdGraphNode* Node) const
 {
 	UFlowNode* FlowNode = Cast<UFlowGraphNode>(Node)->GetFlowNode();
 
 	if (UObject* AssetToOpen = FlowNode->GetAssetToOpen())
 	{
 		GEditor->GetEditorSubsystem<UAssetEditorSubsystem>()->OpenEditorForAsset(AssetToOpen);
-		return;
 	}
 
 	/*if (ObjectsToView.Num() > 0)
@@ -816,7 +815,7 @@ void FFlowAssetEditor::OnNodeTitleCommitted(const FText& NewText, ETextCommit::T
 	}
 }
 
-void FFlowAssetEditor::AddInput()
+void FFlowAssetEditor::AddInput() const
 {
 	const FGraphPanelSelectionSet SelectedNodes = GetSelectedNodes();
 	for (FGraphPanelSelectionSet::TConstIterator NodeIt(SelectedNodes); NodeIt; ++NodeIt)
@@ -829,7 +828,7 @@ void FFlowAssetEditor::AddInput()
 	}
 }
 
-void FFlowAssetEditor::AddOutput()
+void FFlowAssetEditor::AddOutput() const
 {
 	const FGraphPanelSelectionSet SelectedNodes = GetSelectedNodes();
 	for (FGraphPanelSelectionSet::TConstIterator NodeIt(SelectedNodes); NodeIt; ++NodeIt)
@@ -865,7 +864,7 @@ bool FFlowAssetEditor::CanAddPin() const
 	return false;
 }
 
-void FFlowAssetEditor::RemovePin()
+void FFlowAssetEditor::RemovePin() const
 {
 	if (FocusedGraphEditor.IsValid())
 	{
@@ -902,7 +901,7 @@ bool FFlowAssetEditor::CanRemovePin() const
 	return false;
 }
 
-void FFlowAssetEditor::OnAddBreakpoint()
+void FFlowAssetEditor::OnAddBreakpoint() const
 {
 	const FGraphPanelSelectionSet SelectedNodes = GetSelectedNodes();
 	for (FGraphPanelSelectionSet::TConstIterator NodeIt(SelectedNodes); NodeIt; ++NodeIt)
@@ -914,7 +913,7 @@ void FFlowAssetEditor::OnAddBreakpoint()
 	}
 }
 
-void FFlowAssetEditor::OnAddPinBreakpoint()
+void FFlowAssetEditor::OnAddPinBreakpoint() const
 {
 	if (FocusedGraphEditor.IsValid())
 	{
@@ -976,7 +975,7 @@ bool FFlowAssetEditor::CanAddPinBreakpoint() const
 	return false;
 }
 
-void FFlowAssetEditor::OnRemoveBreakpoint()
+void FFlowAssetEditor::OnRemoveBreakpoint() const
 {
 	const FGraphPanelSelectionSet SelectedNodes = GetSelectedNodes();
 	for (FGraphPanelSelectionSet::TConstIterator NodeIt(SelectedNodes); NodeIt; ++NodeIt)
@@ -988,7 +987,7 @@ void FFlowAssetEditor::OnRemoveBreakpoint()
 	}
 }
 
-void FFlowAssetEditor::OnRemovePinBreakpoint()
+void FFlowAssetEditor::OnRemovePinBreakpoint() const
 {
 	if (FocusedGraphEditor.IsValid())
 	{
@@ -1046,7 +1045,7 @@ bool FFlowAssetEditor::CanRemovePinBreakpoint() const
 	return false;
 }
 
-void FFlowAssetEditor::OnEnableBreakpoint()
+void FFlowAssetEditor::OnEnableBreakpoint() const
 {
 	const FGraphPanelSelectionSet SelectedNodes = GetSelectedNodes();
 	for (FGraphPanelSelectionSet::TConstIterator NodeIt(SelectedNodes); NodeIt; ++NodeIt)
@@ -1058,7 +1057,7 @@ void FFlowAssetEditor::OnEnableBreakpoint()
 	}
 }
 
-void FFlowAssetEditor::OnEnablePinBreakpoint()
+void FFlowAssetEditor::OnEnablePinBreakpoint() const
 {
 	if (FocusedGraphEditor.IsValid())
 	{
@@ -1138,7 +1137,7 @@ bool FFlowAssetEditor::CanEnablePinBreakpoint() const
 	return false;
 }
 
-void FFlowAssetEditor::OnDisableBreakpoint()
+void FFlowAssetEditor::OnDisableBreakpoint() const
 {
 	const FGraphPanelSelectionSet SelectedNodes = GetSelectedNodes();
 	for (FGraphPanelSelectionSet::TConstIterator NodeIt(SelectedNodes); NodeIt; ++NodeIt)
@@ -1150,7 +1149,7 @@ void FFlowAssetEditor::OnDisableBreakpoint()
 	}
 }
 
-void FFlowAssetEditor::OnDisablePinBreakpoint()
+void FFlowAssetEditor::OnDisablePinBreakpoint() const
 {
 	if (FocusedGraphEditor.IsValid())
 	{
@@ -1210,7 +1209,7 @@ bool FFlowAssetEditor::CanDisablePinBreakpoint() const
 	return false;
 }
 
-void FFlowAssetEditor::OnToggleBreakpoint()
+void FFlowAssetEditor::OnToggleBreakpoint() const
 {
 	const FGraphPanelSelectionSet SelectedNodes = GetSelectedNodes();
 	for (FGraphPanelSelectionSet::TConstIterator NodeIt(SelectedNodes); NodeIt; ++NodeIt)
@@ -1222,7 +1221,7 @@ void FFlowAssetEditor::OnToggleBreakpoint()
 	}
 }
 
-void FFlowAssetEditor::OnTogglePinBreakpoint()
+void FFlowAssetEditor::OnTogglePinBreakpoint() const
 {
 	if (FocusedGraphEditor.IsValid())
 	{
@@ -1269,7 +1268,7 @@ bool FFlowAssetEditor::CanTogglePinBreakpoint() const
 	return false;
 }
 
-void FFlowAssetEditor::FocusViewport()
+void FFlowAssetEditor::FocusViewport() const
 {
 	const FGraphPanelSelectionSet SelectedNodes = GetSelectedNodes();
 

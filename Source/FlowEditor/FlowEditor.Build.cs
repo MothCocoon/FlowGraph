@@ -4,10 +4,10 @@ public class FlowEditor : ModuleRules
 {
     public FlowEditor(ReadOnlyTargetRules Target) : base(Target)
     {
-        PCHUsage = ModuleRules.PCHUsageMode.UseExplicitOrSharedPCHs;
+        PCHUsage = PCHUsageMode.UseExplicitOrSharedPCHs;
 
         PublicDependencyModuleNames.AddRange(
-            new string[]
+            new[]
             {
                 "ApplicationCore",
                 "BlueprintGraph",
@@ -31,7 +31,7 @@ public class FlowEditor : ModuleRules
         );
 
         PrivateDependencyModuleNames.AddRange(
-            new string[]
+            new[]
             {
                 "KismetWidgets",
                 "Projects",

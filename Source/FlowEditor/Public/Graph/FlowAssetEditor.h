@@ -67,9 +67,9 @@ public:
 	// --
 
 private:
-	TSharedRef<SDockTab> SpawnTab_Details(const FSpawnTabArgs& Args);
-	TSharedRef<SDockTab> SpawnTab_GraphCanvas(const FSpawnTabArgs& Args);
-	TSharedRef<SDockTab> SpawnTab_Palette(const FSpawnTabArgs& Args);
+	TSharedRef<SDockTab> SpawnTab_Details(const FSpawnTabArgs& Args) const;
+	TSharedRef<SDockTab> SpawnTab_GraphCanvas(const FSpawnTabArgs& Args) const;
+	TSharedRef<SDockTab> SpawnTab_Palette(const FSpawnTabArgs& Args) const;
 
 public:
 	/** Edits the specified FlowAsset object */
@@ -80,89 +80,89 @@ private:
 
 	void BindGraphCommands();
 	void UndoGraphAction();
-	void RedoGraphAction();
+	void RedoGraphAction() const;
 
 	void CreateInternalWidgets();
 	TSharedRef<SGraphEditor> CreateGraphEditorWidget();
 
 	FReply OnSpawnGraphNodeByShortcut(FInputChord InChord, const FVector2D& InPosition, UEdGraph* InGraph);
-	void OnCreateComment();
-	void OnStraightenConnections();
+	void OnCreateComment() const;
+	void OnStraightenConnections() const;
 
 public:
 	bool CanEdit() const;
 
-	void SetSelection(TArray<UObject*> SelectedObjects);
+	void SetSelection(TArray<UObject*> SelectedObjects) const;
 
 	TSet<UObject*> GetSelectedNodes() const;
 	int32 GetNumberOfSelectedNodes() const;
-	bool GetBoundsForSelectedNodes(class FSlateRect& Rect, float Padding);
+	bool GetBoundsForSelectedNodes(class FSlateRect& Rect, float Padding) const;
 
 private:
-	void OnSelectedNodesChanged(const TSet<class UObject*>& NewSelection);
-	void SelectAllNodes();
+	void OnSelectedNodesChanged(const TSet<class UObject*>& NewSelection) const;
+	void SelectAllNodes() const;
 	bool CanSelectAllNodes() const;
 
-	void DeleteSelectedNodes();
-	void DeleteSelectedDuplicatableNodes();
+	void DeleteSelectedNodes() const;
+	void DeleteSelectedDuplicatableNodes() const;
 	bool CanDeleteNodes() const;
 
-	void CopySelectedNodes();
+	void CopySelectedNodes() const;
 	bool CanCopyNodes() const;
 
-	void CutSelectedNodes();
+	void CutSelectedNodes() const;
 	bool CanCutNodes() const;
 
-	void PasteNodes();
+	void PasteNodes() const;
 
 public:
-	void PasteNodesHere(const FVector2D& Location);
+	void PasteNodesHere(const FVector2D& Location) const;
 	bool CanPasteNodes() const;
 
 private:
-	void DuplicateNodes();
+	void DuplicateNodes() const;
 	bool CanDuplicateNodes() const;
 
-	void OnNodeDoubleClicked(class UEdGraphNode* Node);
+	void OnNodeDoubleClicked(class UEdGraphNode* Node) const;
 	void OnNodeTitleCommitted(const FText& NewText, ETextCommit::Type CommitInfo, UEdGraphNode* NodeBeingChanged);
 
-	void AddInput();
-	void AddOutput();
+	void AddInput() const;
+	void AddOutput() const;
 	bool CanAddPin() const;
 
-	void RemovePin();
+	void RemovePin() const;
 	bool CanRemovePin() const;
 
-	void OnAddBreakpoint();
-	void OnAddPinBreakpoint();
+	void OnAddBreakpoint() const;
+	void OnAddPinBreakpoint() const;
 
 	bool CanAddBreakpoint() const;
 	bool CanAddPinBreakpoint() const;
 
-	void OnRemoveBreakpoint();
-	void OnRemovePinBreakpoint();
+	void OnRemoveBreakpoint() const;
+	void OnRemovePinBreakpoint() const;
 
 	bool CanRemoveBreakpoint() const;
 	bool CanRemovePinBreakpoint() const;
 
-	void OnEnableBreakpoint();
-	void OnEnablePinBreakpoint();
+	void OnEnableBreakpoint() const;
+	void OnEnablePinBreakpoint() const;
 
 	bool CanEnableBreakpoint() const;
 	bool CanEnablePinBreakpoint() const;
 
-	void OnDisableBreakpoint();
-	void OnDisablePinBreakpoint();
+	void OnDisableBreakpoint() const;
+	void OnDisablePinBreakpoint() const;
 
 	bool CanDisableBreakpoint() const;
 	bool CanDisablePinBreakpoint() const;
 
-	void OnToggleBreakpoint();
-	void OnTogglePinBreakpoint();
+	void OnToggleBreakpoint() const;
+	void OnTogglePinBreakpoint() const;
 
 	bool CanToggleBreakpoint() const;
 	bool CanTogglePinBreakpoint() const;
 
-	void FocusViewport();
+	void FocusViewport() const;
 	bool CanFocusViewport() const;
 };

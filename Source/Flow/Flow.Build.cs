@@ -4,10 +4,10 @@ public class Flow : ModuleRules
 {
 	public Flow(ReadOnlyTargetRules Target) : base(Target)
 	{
-        PCHUsage = ModuleRules.PCHUsageMode.UseExplicitOrSharedPCHs;
+        PCHUsage = PCHUsageMode.UseExplicitOrSharedPCHs;
 
         PublicDependencyModuleNames.AddRange(
-			new string[]
+			new[]
 			{
 				"Core",
 				"CoreUObject",
@@ -17,7 +17,7 @@ public class Flow : ModuleRules
 		);
 			
 		PrivateDependencyModuleNames.AddRange(
-			new string[] 
+			new[] 
 			{
                 "Slate",
                 "SlateCore"

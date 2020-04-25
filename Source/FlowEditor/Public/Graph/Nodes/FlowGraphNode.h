@@ -19,12 +19,17 @@ struct FFlowBreakpoint
 	
 public:
 	UPROPERTY()
-	uint32 bHasBreakpoint : 1;
+	uint32 bHasBreakpoint;
 
-	uint32 bBreakpointEnabled : 1;
-	uint32 bBreakpointHit : 1;
+	uint32 bBreakpointEnabled;
+	uint32 bBreakpointHit;
 
-	FFlowBreakpoint() {};
+	FFlowBreakpoint()
+	{
+		bHasBreakpoint = false;
+		bBreakpointEnabled = false;
+		bBreakpointHit = false;
+	};
 
 	void AddBreakpoint();
 	void RemoveBreakpoint();

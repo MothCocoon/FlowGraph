@@ -18,7 +18,7 @@ public:
 	void Construct(const FArguments& InArgs, FCreateWidgetForActionData* const InCreateData);
 
 private:
-	TSharedRef<SWidget> CreateHotkeyDisplayWidget(const FSlateFontInfo& NameFont, const TSharedPtr<const FInputChord> HotkeyChord);
+	TSharedRef<SWidget> CreateHotkeyDisplayWidget(const FSlateFontInfo& NameFont, const TSharedPtr<const FInputChord> HotkeyChord) const;
 	virtual FText GetItemTooltip() const override;
 };
 
