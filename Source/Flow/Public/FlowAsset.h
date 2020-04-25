@@ -62,9 +62,9 @@ private:
 #if WITH_EDITOR
 public:
 	void CreateGraph();
-	UEdGraph* GetGraph() { return FlowGraph; };
+	UEdGraph* GetGraph() const { return FlowGraph; };
 
-	FGuid CreateGraphNode(UFlowNode* InFlowNode, bool bSelectNewNode = true);
+	FGuid CreateGraphNode(UFlowNode* InFlowNode, bool bSelectNewNode = true) const;
 
 	static void SetFlowGraphInterface(TSharedPtr<IFlowGraphInterface> InFlowAssetEditor);
 	static TSharedPtr<IFlowGraphInterface> GetFlowGraphInterface() { return FlowGraphInterface; };
