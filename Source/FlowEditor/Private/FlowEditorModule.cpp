@@ -16,7 +16,7 @@
 
 #define LOCTEXT_NAMESPACE "FlowEditor"
 
-EAssetTypeCategories::Type FFlowEditorModule::FlowAssetCategory = (EAssetTypeCategories::Type)0;
+EAssetTypeCategories::Type FFlowEditorModule::FlowAssetCategory = static_cast<EAssetTypeCategories::Type>(0);
 
 void FFlowEditorModule::StartupModule()
 {
@@ -61,17 +61,17 @@ TSharedRef<FFlowAssetEditor> FFlowEditorModule::CreateFlowAssetEditor(const EToo
 	return NewFlowAssetEditor;
 }
 
-TSharedPtr<FExtensibilityManager> FFlowEditorModule::GetFlowAssetMenuExtensibilityManager()
+TSharedPtr<FExtensibilityManager> FFlowEditorModule::GetFlowAssetMenuExtensibilityManager() const
 {
 	return FlowAssetExtensibility.MenuExtensibilityManager;
 }
 
-TSharedPtr<FExtensibilityManager> FFlowEditorModule::GetFlowAssetToolBarExtensibilityManager()
+TSharedPtr<FExtensibilityManager> FFlowEditorModule::GetFlowAssetToolBarExtensibilityManager() const
 {
 	return FlowAssetExtensibility.ToolBarExtensibilityManager;
 }
 
-void FFlowEditorModule::CreateFlowToolbar(FToolBarBuilder& ToolbarBuilder)
+void FFlowEditorModule::CreateFlowToolbar(FToolBarBuilder& ToolbarBuilder) const
 {
 	ToolbarBuilder.BeginSection("Flow");
 	{

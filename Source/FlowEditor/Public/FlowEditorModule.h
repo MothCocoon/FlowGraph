@@ -45,9 +45,9 @@ public:
 	virtual void ShutdownModule() override;
 
 	TSharedRef<FFlowAssetEditor> CreateFlowAssetEditor(const EToolkitMode::Type Mode, const TSharedPtr< IToolkitHost >& InitToolkitHost, UFlowAsset* FlowAsset);
-	TSharedPtr<FExtensibilityManager> GetFlowAssetMenuExtensibilityManager();
-	TSharedPtr<FExtensibilityManager> GetFlowAssetToolBarExtensibilityManager();
+	TSharedPtr<FExtensibilityManager> GetFlowAssetMenuExtensibilityManager() const;
+	TSharedPtr<FExtensibilityManager> GetFlowAssetToolBarExtensibilityManager() const;
 
 private:
-	void CreateFlowToolbar(FToolBarBuilder& ToolbarBuilder);
+	void CreateFlowToolbar(FToolBarBuilder& ToolbarBuilder) const;
 };

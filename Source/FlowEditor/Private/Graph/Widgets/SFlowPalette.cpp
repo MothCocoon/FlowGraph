@@ -14,11 +14,11 @@
 
 void SFlowPaletteItem::Construct(const FArguments& InArgs, FCreateWidgetForActionData* const InCreateData)
 {
-	FSlateFontInfo NameFont = FCoreStyle::GetDefaultFontStyle("Regular", 10);
+	const FSlateFontInfo NameFont = FCoreStyle::GetDefaultFontStyle("Regular", 10);
 
 	check(InCreateData->Action.IsValid());
 
-	TSharedPtr<FEdGraphSchemaAction> GraphAction = InCreateData->Action;
+	const TSharedPtr<FEdGraphSchemaAction> GraphAction = InCreateData->Action;
 	ActionPtr = InCreateData->Action;
 
 	// Get the Hotkey chord if one exists for this action
@@ -39,13 +39,13 @@ void SFlowPaletteItem::Construct(const FArguments& InArgs, FCreateWidgetForActio
 
 	// Find icons
 	const FSlateBrush* IconBrush = FEditorStyle::GetBrush(TEXT("NoBrush"));
-	FSlateColor IconColor = FSlateColor::UseForeground();
-	FText IconToolTip = GraphAction->GetTooltipDescription();
-	bool bIsReadOnly = false;
+	const FSlateColor IconColor = FSlateColor::UseForeground();
+	const FText IconToolTip = GraphAction->GetTooltipDescription();
+	const bool bIsReadOnly = false;
 
-	TSharedRef<SWidget> IconWidget = CreateIconWidget(IconToolTip, IconBrush, IconColor);
-	TSharedRef<SWidget> NameSlotWidget = CreateTextSlotWidget(NameFont, InCreateData, bIsReadOnly);
-	TSharedRef<SWidget> HotkeyDisplayWidget = CreateHotkeyDisplayWidget(NameFont, HotkeyChord);
+	const TSharedRef<SWidget> IconWidget = CreateIconWidget(IconToolTip, IconBrush, IconColor);
+	const TSharedRef<SWidget> NameSlotWidget = CreateTextSlotWidget(NameFont, InCreateData, bIsReadOnly);
+	const TSharedRef<SWidget> HotkeyDisplayWidget = CreateHotkeyDisplayWidget(NameFont, HotkeyChord);
 
 	// Create the actual widget
 	this->ChildSlot
@@ -78,7 +78,7 @@ void SFlowPaletteItem::Construct(const FArguments& InArgs, FCreateWidgetForActio
 		];
 }
 
-TSharedRef<SWidget> SFlowPaletteItem::CreateHotkeyDisplayWidget(const FSlateFontInfo& NameFont, const TSharedPtr<const FInputChord> HotkeyChord)
+TSharedRef<SWidget> SFlowPaletteItem::CreateHotkeyDisplayWidget(const FSlateFontInfo& NameFont, const TSharedPtr<const FInputChord> HotkeyChord) const
 {
 	FText HotkeyText;
 	if (HotkeyChord.IsValid())
