@@ -70,7 +70,7 @@ void SFlowGraphNode::GetNodeInfoPopups(FNodeInfoContext* Context, TArray<FGraphI
 	const FString Description = FlowGraphNode->GetNodeDescription();
 	if (!Description.IsEmpty())
 	{
-		FGraphInformationPopupInfo DescriptionPopup = FGraphInformationPopupInfo(nullptr, UFlowEditorSettings::Get()->NodeDescriptionBackground, Description);
+		const FGraphInformationPopupInfo DescriptionPopup = FGraphInformationPopupInfo(nullptr, UFlowEditorSettings::Get()->NodeDescriptionBackground, Description);
 		Popups.Add(DescriptionPopup);
 	}
 
@@ -79,12 +79,12 @@ void SFlowGraphNode::GetNodeInfoPopups(FNodeInfoContext* Context, TArray<FGraphI
 		const FString Status = FlowGraphNode->GetStatusString();
 		if (!Status.IsEmpty())
 		{
-			FGraphInformationPopupInfo DescriptionPopup = FGraphInformationPopupInfo(nullptr, UFlowEditorSettings::Get()->NodeStatusBackground, Status);
+			const FGraphInformationPopupInfo DescriptionPopup = FGraphInformationPopupInfo(nullptr, UFlowEditorSettings::Get()->NodeStatusBackground, Status);
 			Popups.Add(DescriptionPopup);
 		}
 		else if (FlowGraphNode->IsContentPreloaded())
 		{
-			FGraphInformationPopupInfo DescriptionPopup = FGraphInformationPopupInfo(nullptr, UFlowEditorSettings::Get()->NodeStatusBackground, TEXT("Preloaded"));
+			const FGraphInformationPopupInfo DescriptionPopup = FGraphInformationPopupInfo(nullptr, UFlowEditorSettings::Get()->NodeStatusBackground, TEXT("Preloaded"));
 			Popups.Add(DescriptionPopup);
 		}
 	}
@@ -198,7 +198,7 @@ void SFlowGraphNode::CreateStandardPinWidget(UEdGraphPin* Pin)
 
 void SFlowGraphNode::CreateOutputSideAddButton(TSharedPtr<SVerticalBox> OutputBox)
 {
-	TSharedRef<SWidget> AddPinButton = AddPinButtonContent(
+	const TSharedRef<SWidget> AddPinButton = AddPinButtonContent(
 		NSLOCTEXT("FlowNode", "FlowNodeAddPinButton", "Add pin"),
 		NSLOCTEXT("FlowNode", "FlowNodeAddPinButton_Tooltip", "Adds an output pin")
 	);

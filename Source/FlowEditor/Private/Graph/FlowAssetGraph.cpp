@@ -69,7 +69,7 @@ public:
 		return GraphNode->NodeGuid;
 	}
 
-	void IFlowGraphInterface::OnInputTriggered(UEdGraphNode* GraphNode, const int32 Index)
+	virtual void IFlowGraphInterface::OnInputTriggered(UEdGraphNode* GraphNode, const int32 Index) override
 	{
 		if (GraphNode)
 		{
@@ -77,7 +77,7 @@ public:
 		}
 	}
 
-	void IFlowGraphInterface::OnOutputTriggered(UEdGraphNode* GraphNode, const int32 Index)
+	virtual void IFlowGraphInterface::OnOutputTriggered(UEdGraphNode* GraphNode, const int32 Index) override
 	{
 		if (GraphNode)
 		{

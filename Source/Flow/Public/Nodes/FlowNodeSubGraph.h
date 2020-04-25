@@ -29,6 +29,6 @@ protected:
 #if WITH_EDITOR
 public:
 	virtual FString GetNodeDescription() const override;
-	virtual UObject* GetAssetToOpen();
+	virtual UObject* GetAssetToOpen() override;
 #endif
 };

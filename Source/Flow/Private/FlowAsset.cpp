@@ -49,7 +49,7 @@ void UFlowAsset::CreateGraph()
 	}
 }
 
-FGuid UFlowAsset::CreateGraphNode(UFlowNode* InFlowNode, bool bSelectNewNode /*= true*/)
+FGuid UFlowAsset::CreateGraphNode(UFlowNode* InFlowNode, bool bSelectNewNode /*= true*/) const
 {
 	check(InFlowNode->GraphNode == nullptr);
 	return UFlowAsset::GetFlowGraphInterface()->CreateGraphNode(FlowGraph, InFlowNode, bSelectNewNode);
@@ -295,7 +295,6 @@ void UFlowAsset::FinishNode(UFlowNode* Node)
 				OwningFlowNode.Get()->TriggerFirstOutput(true);
 				OwningFlowNode = nullptr;
 			}
-			return;
 		}
 	}
 }
