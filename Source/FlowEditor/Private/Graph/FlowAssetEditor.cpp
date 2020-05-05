@@ -59,7 +59,7 @@ void FFlowAssetEditor::PostUndo(bool bSuccess)
 	}
 }
 
-void FFlowAssetEditor::NotifyPostChange(const FPropertyChangedEvent& PropertyChangedEvent, class UProperty* PropertyThatChanged)
+void FFlowAssetEditor::NotifyPostChange(const FPropertyChangedEvent& PropertyChangedEvent, FProperty* PropertyThatChanged)
 {
 	if (FocusedGraphEditor.IsValid() && PropertyChangedEvent.ChangeType != EPropertyChangeType::Interactive)
 	{
@@ -1262,7 +1262,7 @@ bool FFlowAssetEditor::CanTogglePinBreakpoint() const
 {
 	if (FocusedGraphEditor.IsValid())
 	{
-		return FocusedGraphEditor->GetGraphPinForMenu();
+		return FocusedGraphEditor->GetGraphPinForMenu() != nullptr;
 	}
 
 	return false;

@@ -17,12 +17,11 @@ struct FFlowBreakpoint
 {
 	GENERATED_USTRUCT_BODY()
 	
-public:
 	UPROPERTY()
-	uint32 bHasBreakpoint;
+	bool bHasBreakpoint;
 
-	uint32 bBreakpointEnabled;
-	uint32 bBreakpointHit;
+	bool bBreakpointEnabled;
+	bool bBreakpointHit;
 
 	FFlowBreakpoint()
 	{
