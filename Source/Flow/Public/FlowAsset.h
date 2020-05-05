@@ -188,7 +188,7 @@ public:
 	void StartSubFlow(UFlowNodeSubGraph* FlowNode);
 
 private:
-	void AddChildFlow(UFlowNodeSubGraph* Node, const UFlowAsset* Asset);
+	void AddChildFlow(UFlowNodeSubGraph* Node, UFlowAsset* Asset);
 
 	void TriggerInput(const FGuid& NodeGuid, const FName& PinName);
 

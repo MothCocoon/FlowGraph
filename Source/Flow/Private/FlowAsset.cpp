@@ -263,7 +263,7 @@ void UFlowAsset::StartSubFlow(UFlowNodeSubGraph* FlowNode)
 	}
 }
 
-void UFlowAsset::AddChildFlow(UFlowNodeSubGraph* Node, const UFlowAsset* Asset)
+void UFlowAsset::AddChildFlow(UFlowNodeSubGraph* Node, UFlowAsset* Asset)
 {
 	ChildFlows.Add(Node, Asset);
 }
