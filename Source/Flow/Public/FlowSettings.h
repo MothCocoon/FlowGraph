@@ -8,7 +8,7 @@ class UFlowNode;
 /**
  *
  */
-UCLASS(config = Game, defaultconfig, meta = (DisplayName = "Flow"))
+UCLASS(Config = Game, defaultconfig, meta = (DisplayName = "Flow"))
 class UFlowSettings final : public UDeveloperSettings
 {
 	GENERATED_UCLASS_BODY()
@@ -17,6 +17,6 @@ public:
 	static UFlowSettings* Get() { return CastChecked<UFlowSettings>(UFlowSettings::StaticClass()->GetDefaultObject()); }
 
 	// How many nodes of given class should be preloaded with the Flow Asset instance?
-	UPROPERTY(EditAnywhere, config, Category = "Preload")
+	UPROPERTY(Config, EditAnywhere, Category = "Preload")
 	TMap<TSubclassOf<UFlowNode>, int32> DefaultPreloadDepth;
 };
