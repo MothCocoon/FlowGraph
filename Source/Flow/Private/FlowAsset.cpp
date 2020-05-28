@@ -181,6 +181,16 @@ int32 UFlowAsset::RemoveInstance(UFlowAsset* Instance)
 
 void UFlowAsset::ClearInstances()
 {
+	for (UFlowAsset* Instance : ActiveInstances)
+	{
+		for (UFlowNode* Node : Instance->ActiveNodes)
+		{
+			Node->Cleanup();
+		}
+
+		Instance->ActiveNodes.Empty();
+	}
+
 	ActiveInstances.Empty();
 }
 
@@ -288,13 +298,10 @@ void UFlowAsset::FinishNode(UFlowNode* Node)
 	{
 		ActiveNodes.Remove(Node);
 
-		if (UFlowNodeOut* NodeOut = Cast<UFlowNodeOut>(Node))
+		if (Node->GetClass()->IsChildOf(UFlowNodeOut::StaticClass()) && OwningFlowNode.IsValid())
 		{
-			if (OwningFlowNode.IsValid())
-			{
-				OwningFlowNode.Get()->TriggerFirstOutput(true);
-				OwningFlowNode = nullptr;
-			}
+			OwningFlowNode.Get()->TriggerFirstOutput(true);
+			OwningFlowNode = nullptr;
 		}
 	}
 }
