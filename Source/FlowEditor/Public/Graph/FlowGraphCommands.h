@@ -2,7 +2,6 @@
 
 #include "CoreMinimal.h"
 #include "EdGraph/EdGraphSchema.h"
-#include "EditorStyleSet.h"
 #include "Framework/Commands/Commands.h"
 #include "Framework/Commands/InputChord.h"
 
@@ -12,7 +11,8 @@ class FFlowGraphCommands : public TCommands<FFlowGraphCommands>
 public:
 	FFlowGraphCommands();
 	
-	TSharedPtr<FUICommandInfo> BreakLink;
+	TSharedPtr<FUICommandInfo> RefreshContextInputs;
+	TSharedPtr<FUICommandInfo> RefreshContextOutputs;
 
 	TSharedPtr<FUICommandInfo> AddInput;
 	TSharedPtr<FUICommandInfo> AddOutput;

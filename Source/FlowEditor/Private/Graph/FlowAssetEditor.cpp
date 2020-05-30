@@ -337,6 +337,14 @@ TSharedRef<SGraphEditor> FFlowAssetEditor::CreateGraphEditorWidget()
 			FCanExecuteAction::CreateSP(this, &FFlowAssetEditor::CanDuplicateNodes));
 
 		// Pin commands
+		Commands->MapAction(FlowGraphCommands.RefreshContextInputs,
+			FExecuteAction::CreateSP(this, &FFlowAssetEditor::RefreshContextInputs),
+			FCanExecuteAction::CreateSP(this, &FFlowAssetEditor::CanRefreshContextInputs));
+
+		Commands->MapAction(FlowGraphCommands.RefreshContextOutputs,
+			FExecuteAction::CreateSP(this, &FFlowAssetEditor::RefreshContextOutputs),
+			FCanExecuteAction::CreateSP(this, &FFlowAssetEditor::CanRefreshContextOutputs));
+
 		Commands->MapAction(FlowGraphCommands.AddInput,
 			FExecuteAction::CreateSP(this, &FFlowAssetEditor::AddInput),
 			FCanExecuteAction::CreateSP(this, &FFlowAssetEditor::CanAddPin));
@@ -573,7 +581,7 @@ void FFlowAssetEditor::DeleteSelectedNodes() const
 					continue;
 				}
 			}
-			
+
 			FBlueprintEditorUtils::RemoveNode(nullptr, Node, true);
 		}
 	}
@@ -691,7 +699,7 @@ bool FFlowAssetEditor::CanCopyNodes() const
 			}
 		}
 	}
-	
+
 	return false;
 }
 
@@ -815,6 +823,64 @@ void FFlowAssetEditor::OnNodeTitleCommitted(const FText& NewText, ETextCommit::T
 	}
 }
 
+void FFlowAssetEditor::RefreshContextInputs() const
+{
+	const FGraphPanelSelectionSet SelectedNodes = GetSelectedNodes();
+	for (FGraphPanelSelectionSet::TConstIterator NodeIt(SelectedNodes); NodeIt; ++NodeIt)
+	{
+		if (UFlowGraphNode* SelectedNode = Cast<UFlowGraphNode>(*NodeIt))
+		{
+			SelectedNode->CreateContextInputs();
+		}
+	}
+}
+
+bool FFlowAssetEditor::CanRefreshContextInputs() const
+{
+	if (CanEdit() && GetSelectedNodes().Num() == 1 && FocusedGraphEditor.IsValid())
+	{
+		const FGraphPanelSelectionSet SelectedNodes = GetSelectedNodes();
+		for (FGraphPanelSelectionSet::TConstIterator NodeIt(SelectedNodes); NodeIt; ++NodeIt)
+		{
+			if (UFlowGraphNode* SelectedNode = Cast<UFlowGraphNode>(*NodeIt))
+			{
+				return SelectedNode->SupportsContextInputs();
+			}
+		}
+	}
+	
+	return false;
+}
+
+void FFlowAssetEditor::RefreshContextOutputs() const
+{
+	const FGraphPanelSelectionSet SelectedNodes = GetSelectedNodes();
+	for (FGraphPanelSelectionSet::TConstIterator NodeIt(SelectedNodes); NodeIt; ++NodeIt)
+	{
+		if (UFlowGraphNode* SelectedNode = Cast<UFlowGraphNode>(*NodeIt))
+		{
+			SelectedNode->CreateContextOutputs();
+		}
+	}
+}
+
+bool FFlowAssetEditor::CanRefreshContextOutputs() const
+{
+	if (CanEdit() && GetSelectedNodes().Num() == 1 && FocusedGraphEditor.IsValid())
+	{
+		const FGraphPanelSelectionSet SelectedNodes = GetSelectedNodes();
+		for (FGraphPanelSelectionSet::TConstIterator NodeIt(SelectedNodes); NodeIt; ++NodeIt)
+		{
+			if (UFlowGraphNode* SelectedNode = Cast<UFlowGraphNode>(*NodeIt))
+			{
+				return SelectedNode->SupportsContextOutputs();
+			}
+		}
+	}
+	
+	return false;
+}
+
 void FFlowAssetEditor::AddInput() const
 {
 	const FGraphPanelSelectionSet SelectedNodes = GetSelectedNodes();
@@ -849,11 +915,10 @@ bool FFlowAssetEditor::CanAddPin() const
 		{
 			if (UFlowGraphNode* GraphNode = Cast<UFlowGraphNode>(Pin->GetOwningNode()))
 			{
-				if (Pin->Direction == EEdGraphPinDirection::EGPD_Input)
+				if (Pin->Direction == EGPD_Input)
 				{
 					return GraphNode->CanUserAddInput();
 				}
-				else
 				{
 					return GraphNode->CanUserAddOutput();
 				}
@@ -872,7 +937,7 @@ void FFlowAssetEditor::RemovePin() const
 		{
 			if (UFlowGraphNode* SelectedNode = Cast<UFlowGraphNode>(SelectedPin->GetOwningNode()))
 			{
-				SelectedNode->RemoveUserPin(SelectedPin);
+				SelectedNode->RemoveInstancePin(SelectedPin);
 			}
 		}
 	}
@@ -886,7 +951,7 @@ bool FFlowAssetEditor::CanRemovePin() const
 		{
 			if (UFlowGraphNode* GraphNode = Cast<UFlowGraphNode>(Pin->GetOwningNode()))
 			{
-				if (Pin->Direction == EEdGraphPinDirection::EGPD_Input)
+				if (Pin->Direction == EGPD_Input)
 				{
 					return GraphNode->CanUserRemoveInput(Pin);
 				}
@@ -921,7 +986,7 @@ void FFlowAssetEditor::OnAddPinBreakpoint() const
 		{
 			if (UFlowGraphNode* GraphNode = Cast<UFlowGraphNode>(Pin->GetOwningNode()))
 			{
-				if (Pin->Direction == EEdGraphPinDirection::EGPD_Input)
+				if (Pin->Direction == EGPD_Input)
 				{
 					FFlowBreakpoint& NewBreakpoint = GraphNode->InputBreakpoints.Add(GraphNode->InputPins.Find(Pin), FFlowBreakpoint());
 					NewBreakpoint.AddBreakpoint();
@@ -958,7 +1023,7 @@ bool FFlowAssetEditor::CanAddPinBreakpoint() const
 		{
 			if (UFlowGraphNode* GraphNode = Cast<UFlowGraphNode>(Pin->GetOwningNode()))
 			{
-				if (Pin->Direction == EEdGraphPinDirection::EGPD_Input)
+				if (Pin->Direction == EGPD_Input)
 				{
 					const int32 PinIndex = GraphNode->InputPins.Find(Pin);
 					return !GraphNode->InputBreakpoints.Contains(PinIndex) || !GraphNode->InputBreakpoints[PinIndex].HasBreakpoint();
@@ -995,7 +1060,7 @@ void FFlowAssetEditor::OnRemovePinBreakpoint() const
 		{
 			if (UFlowGraphNode* GraphNode = Cast<UFlowGraphNode>(Pin->GetOwningNode()))
 			{
-				if (Pin->Direction == EEdGraphPinDirection::EGPD_Input)
+				if (Pin->Direction == EGPD_Input)
 				{
 					GraphNode->InputBreakpoints.Remove(GraphNode->InputPins.Find(Pin));
 				}
@@ -1030,7 +1095,7 @@ bool FFlowAssetEditor::CanRemovePinBreakpoint() const
 		{
 			if (UFlowGraphNode* GraphNode = Cast<UFlowGraphNode>(Pin->GetOwningNode()))
 			{
-				if (Pin->Direction == EEdGraphPinDirection::EGPD_Input)
+				if (Pin->Direction == EGPD_Input)
 				{
 					return GraphNode->InputBreakpoints.Contains(GraphNode->InputPins.Find(Pin));
 				}
@@ -1065,7 +1130,7 @@ void FFlowAssetEditor::OnEnablePinBreakpoint() const
 		{
 			if (UFlowGraphNode* GraphNode = Cast<UFlowGraphNode>(Pin->GetOwningNode()))
 			{
-				if (Pin->Direction == EEdGraphPinDirection::EGPD_Input)
+				if (Pin->Direction == EGPD_Input)
 				{
 					GraphNode->InputBreakpoints[GraphNode->InputPins.Find(Pin)].EnableBreakpoint();
 				}
@@ -1086,7 +1151,7 @@ bool FFlowAssetEditor::CanEnableBreakpoint() const
 		{
 			if (UFlowGraphNode* GraphNode = Cast<UFlowGraphNode>(Pin->GetOwningNode()))
 			{
-				if (Pin->Direction == EEdGraphPinDirection::EGPD_Input)
+				if (Pin->Direction == EGPD_Input)
 				{
 					const int32 PinIndex = GraphNode->InputPins.IndexOfByKey(Pin);
 					return GraphNode->InputBreakpoints.Contains(PinIndex);
@@ -1120,7 +1185,7 @@ bool FFlowAssetEditor::CanEnablePinBreakpoint() const
 		{
 			if (UFlowGraphNode* GraphNode = Cast<UFlowGraphNode>(Pin->GetOwningNode()))
 			{
-				if (Pin->Direction == EEdGraphPinDirection::EGPD_Input)
+				if (Pin->Direction == EGPD_Input)
 				{
 					const int32 PinIndex = GraphNode->InputPins.Find(Pin);
 					return GraphNode->InputBreakpoints.Contains(PinIndex) && GraphNode->InputBreakpoints[PinIndex].CanEnableBreakpoint();
@@ -1157,7 +1222,7 @@ void FFlowAssetEditor::OnDisablePinBreakpoint() const
 		{
 			if (UFlowGraphNode* GraphNode = Cast<UFlowGraphNode>(Pin->GetOwningNode()))
 			{
-				if (Pin->Direction == EEdGraphPinDirection::EGPD_Input)
+				if (Pin->Direction == EGPD_Input)
 				{
 					GraphNode->InputBreakpoints[GraphNode->InputPins.Find(Pin)].DisableBreakpoint();
 				}
@@ -1192,7 +1257,7 @@ bool FFlowAssetEditor::CanDisablePinBreakpoint() const
 		{
 			if (UFlowGraphNode* GraphNode = Cast<UFlowGraphNode>(Pin->GetOwningNode()))
 			{
-				if (Pin->Direction == EEdGraphPinDirection::EGPD_Input)
+				if (Pin->Direction == EGPD_Input)
 				{
 					const int32 PinIndex = GraphNode->InputPins.Find(Pin);
 					return GraphNode->InputBreakpoints.Contains(PinIndex) && GraphNode->InputBreakpoints[PinIndex].IsBreakpointEnabled();
@@ -1229,7 +1294,7 @@ void FFlowAssetEditor::OnTogglePinBreakpoint() const
 		{
 			if (UFlowGraphNode* GraphNode = Cast<UFlowGraphNode>(Pin->GetOwningNode()))
 			{
-				if (Pin->Direction == EEdGraphPinDirection::EGPD_Input)
+				if (Pin->Direction == EGPD_Input)
 				{
 					FFlowBreakpoint& NewBreakpoint = GraphNode->InputBreakpoints.Add(GraphNode->InputPins.Find(Pin), FFlowBreakpoint());
 					NewBreakpoint.ToggleBreakpoint();
@@ -1249,10 +1314,7 @@ bool FFlowAssetEditor::CanToggleBreakpoint() const
 	const FGraphPanelSelectionSet SelectedNodes = GetSelectedNodes();
 	for (FGraphPanelSelectionSet::TConstIterator NodeIt(SelectedNodes); NodeIt; ++NodeIt)
 	{
-		if (UFlowGraphNode* SelectedNode = Cast<UFlowGraphNode>(*NodeIt))
-		{
-			return true;
-		}
+		return Cast<UFlowGraphNode>(*NodeIt) != nullptr;
 	}
 
 	return false;
@@ -1306,4 +1368,5 @@ bool FFlowAssetEditor::CanFocusViewport() const
 {
 	return GetSelectedNodes().Num() == 1;
 }
+
 #undef LOCTEXT_NAMESPACE

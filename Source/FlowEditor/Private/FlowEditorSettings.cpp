@@ -3,7 +3,6 @@
 UFlowEditorSettings::UFlowEditorSettings(const FObjectInitializer& ObjectInitializer)
 	: Super(ObjectInitializer)
 	, bShowDefaultPinNames(false)
-	, NodeTitleColors()
 	, NodeDescriptionBackground(FLinearColor(0.12f, 0.12f, 0.12f, 1.0f))
 	, NodeStatusBackground(FLinearColor(0.12f, 0.12f, 0.12f, 1.0f))
 	, NodePreloadedBackground(FLinearColor(0.12f, 0.12f, 0.12f, 1.0f))

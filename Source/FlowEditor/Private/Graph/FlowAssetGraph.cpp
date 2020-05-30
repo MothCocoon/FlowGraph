@@ -29,10 +29,10 @@ public:
 		return CastChecked<UFlowAssetGraph>(FBlueprintEditorUtils::CreateNewGraph(InFlowAsset, NAME_None, UFlowAssetGraph::StaticClass(), UFlowGraphSchema::StaticClass()));
 	}
 
-	FGuid CreateGraphNode(UEdGraph* Graph, UFlowNode* FlowNode, bool bSelectNewNode) override
+	FGuid CreateGraphNode(UEdGraph* Graph, UFlowNode* FlowNode, const bool bSelectNewNode) override
 	{
 		// Node In
-		if (UFlowNodeIn* NodeIn = Cast<UFlowNodeIn>(FlowNode))
+		if (FlowNode->GetClass()->IsChildOf(UFlowNodeIn::StaticClass()))
 		{
 			FGraphNodeCreator<UFlowGraphNode_In> NodeCreator(*Graph);
 			UFlowGraphNode* GraphNode = NodeCreator.CreateNode(bSelectNewNode);
@@ -42,7 +42,7 @@ public:
 		}
 		
 		// Node Out
-		if (UFlowNodeOut* NodeOut = Cast<UFlowNodeOut>(FlowNode))
+		if (FlowNode->GetClass()->IsChildOf(UFlowNodeOut::StaticClass()))
 		{
 			FGraphNodeCreator<UFlowGraphNode_Out> NodeCreator(*Graph);
 			UFlowGraphNode* GraphNode = NodeCreator.CreateNode(bSelectNewNode);
@@ -52,7 +52,7 @@ public:
 		}
 
 		// Node Reroute
-		if (UFlowNodeReroute* NodeOut = Cast<UFlowNodeReroute>(FlowNode))
+		if (FlowNode->GetClass()->IsChildOf(UFlowNodeReroute::StaticClass()))
 		{
 			FGraphNodeCreator<UFlowGraphNode_Reroute> NodeCreator(*Graph);
 			UFlowGraphNode* GraphNode = NodeCreator.CreateNode(bSelectNewNode);
@@ -91,8 +91,16 @@ UFlowAssetGraph::UFlowAssetGraph(const FObjectInitializer& ObjectInitializer)
 {
 	if (!UFlowAsset::GetFlowGraphInterface().IsValid())
 	{
-		UFlowAsset::SetFlowGraphInterface(TSharedPtr<IFlowGraphInterface>(new FFlowGraphInterface()));
+		UFlowAsset::SetFlowGraphInterface(MakeShared<FFlowGraphInterface>());
 	}
+}
+
+void UFlowAssetGraph::NotifyGraphChanged()
+{
+	GetFlowAsset()->CompileNodeConnections();
+	GetFlowAsset()->MarkPackageDirty();
+	
+	Super::NotifyGraphChanged();
 }
 
 UFlowAsset* UFlowAssetGraph::GetFlowAsset() const

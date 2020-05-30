@@ -17,6 +17,7 @@ struct FFlowBreakpoint
 {
 	GENERATED_USTRUCT_BODY()
 	
+public:
 	UPROPERTY()
 	bool bHasBreakpoint;
 
@@ -144,6 +145,9 @@ public:
 	void CreateInputPin(const FName& PinName);
 	void CreateOutputPin(const FName PinName);
 
+	bool SupportsContextInputs() const;
+	bool SupportsContextOutputs() const;
+	
 	bool CanUserAddInput() const;
 	bool CanUserAddOutput() const;
 
@@ -153,7 +157,15 @@ public:
 	void AddUserInput();
 	void AddUserOutput();
 
-	void RemoveUserPin(UEdGraphPin* Pin);
+	// add pin only on this instance of node, under default pins
+	void AddInstancePin(const EEdGraphPinDirection Direction, const FName& PinName);
+
+	// call node and graph updates manually, if using bBatchRemoval
+	void RemoveInstancePin(UEdGraphPin* Pin);
+
+	// Create pins from the context asset, i.e. Sequencer events
+	void CreateContextInputs();
+	void CreateContextOutputs();
 
 //////////////////////////////////////////////////////////////////////////
 // Breakpoints
