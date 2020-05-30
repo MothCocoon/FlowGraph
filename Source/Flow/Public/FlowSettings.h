@@ -13,7 +13,6 @@ class UFlowSettings final : public UDeveloperSettings
 {
 	GENERATED_UCLASS_BODY()
 
-public:
 	static UFlowSettings* Get() { return CastChecked<UFlowSettings>(UFlowSettings::StaticClass()->GetDefaultObject()); }
 
 	// How many nodes of given class should be preloaded with the Flow Asset instance?

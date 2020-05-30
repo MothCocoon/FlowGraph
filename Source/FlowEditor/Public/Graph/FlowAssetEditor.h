@@ -126,6 +126,12 @@ private:
 	void OnNodeDoubleClicked(class UEdGraphNode* Node) const;
 	void OnNodeTitleCommitted(const FText& NewText, ETextCommit::Type CommitInfo, UEdGraphNode* NodeBeingChanged);
 
+	void RefreshContextInputs() const;
+	bool CanRefreshContextInputs() const;
+
+	void RefreshContextOutputs() const;
+	bool CanRefreshContextOutputs() const;
+	
 	void AddInput() const;
 	void AddOutput() const;
 	bool CanAddPin() const;

@@ -14,6 +14,9 @@ FFlowGraphCommands::FFlowGraphCommands()
 
 void FFlowGraphCommands::RegisterCommands()
 {
+	UI_COMMAND(RefreshContextInputs, "Refresh context inputs", "Refresh inputs generated from the context asset", EUserInterfaceActionType::Button, FInputChord());
+	UI_COMMAND(RefreshContextOutputs, "Refresh context outputs", "Refresh outputs generated from the context asset", EUserInterfaceActionType::Button, FInputChord());
+	
 	UI_COMMAND(AddInput, "Add Input", "Adds an input to the node", EUserInterfaceActionType::Button, FInputChord());
 	UI_COMMAND(AddOutput, "Add Output", "Adds an output to the node", EUserInterfaceActionType::Button, FInputChord());
 	UI_COMMAND(RemovePin, "Remove Pin", "Removes a pin from the node", EUserInterfaceActionType::Button, FInputChord());
@@ -66,7 +69,7 @@ void FFlowSpawnNodeCommands::RegisterCommands()
 			}
 		}
 
-		// Setup a UI Command for keybinding
+		// Setup a UI Command for key-binding
 		TSharedPtr< FUICommandInfo > CommandInfo;
 
 		FKey Key;
@@ -74,7 +77,7 @@ void FFlowSpawnNodeCommands::RegisterCommands()
 		bool bCtrl = false;
 		bool bAlt = false;
 
-		// Parse the keybinding information
+		// Parse the key-binding information
 		FString KeyString;
 		if (FParse::Value(*NodeSpawns[x], TEXT("Key="), KeyString))
 		{

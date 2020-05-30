@@ -8,12 +8,11 @@
 /**
  *
  */
-UCLASS(config = Editor, defaultconfig, meta = (DisplayName = "Flow Editor"))
+UCLASS(Config = Editor, defaultconfig, meta = (DisplayName = "Flow Editor"))
 class UFlowEditorSettings final : public UDeveloperSettings
 {
 	GENERATED_UCLASS_BODY()
 
-public:
 	static UFlowEditorSettings* Get() { return CastChecked<UFlowEditorSettings>(UFlowEditorSettings::StaticClass()->GetDefaultObject()); }
 
 	// hide default pin names on simple nodes, reduces UI clutter
@@ -52,7 +51,7 @@ public:
 	UPROPERTY(EditAnywhere, config, Category = "Wires")
 	FLinearColor InactiveWireColor;
 
-	/** The thickness to drop down to during release / for unexecuted wires when debugging */
+	/** The thickness to drop down to during release for wires when debugging */
 	UPROPERTY(EditAnywhere, config, Category = "Wires", meta = (ClampMin = 0.0f))
 	float InactiveWireThickness;
 };
