@@ -6,19 +6,13 @@ public class Flow : ModuleRules
 	{
         PCHUsage = PCHUsageMode.UseExplicitOrSharedPCHs;
 
-        PublicDependencyModuleNames.AddRange(
-			new[]
-			{
-				"Core",
-				"CoreUObject",
-				"Engine",
-                "GameplayTags"
-			}
-		);
-			
 		PrivateDependencyModuleNames.AddRange(
 			new[] 
 			{
+                "Core",
+				"CoreUObject",
+				"Engine",
+                "GameplayTags",
                 "Slate",
                 "SlateCore"
             }

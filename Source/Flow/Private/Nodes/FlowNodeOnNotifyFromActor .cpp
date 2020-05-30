@@ -1,8 +1,6 @@
 #include "FlowNodeOnNotifyFromActor.h"
 #include "FlowComponent.h"
 
-#include "Engine/World.h"
-
 UFlowNodeOnNotifyFromActor::UFlowNodeOnNotifyFromActor(const FObjectInitializer& ObjectInitializer)
 	: Super(ObjectInitializer)
 {
@@ -21,7 +19,7 @@ void UFlowNodeOnNotifyFromActor::ExecuteInput(const FName& PinName)
 	}
 }
 
-void UFlowNodeOnNotifyFromActor::OnNotifyFromActor(UFlowComponent* FlowComponent, const FGameplayTag& Tag)
+void UFlowNodeOnNotifyFromActor::OnNotifyFromActor(class UFlowComponent* FlowComponent, const FGameplayTag& Tag)
 {
 	if (FlowComponent->IdentityTags.HasTagExact(ActorTag) && (!NotifyTag.IsValid() || NotifyTag == Tag))
 	{

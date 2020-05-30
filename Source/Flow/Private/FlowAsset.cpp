@@ -187,10 +187,10 @@ void UFlowAsset::ClearInstances()
 		{
 			Node->Cleanup();
 		}
-
+		
 		Instance->ActiveNodes.Empty();
 	}
-
+	
 	ActiveInstances.Empty();
 }
 

@@ -5,8 +5,6 @@
 #include "Nodes/FlowNode.h"
 #include "FlowNodeOnNotifyFromActor.generated.h"
 
-class UFlowComponent;
-
 /**
  * On Notify From Actor
  */
@@ -27,7 +25,7 @@ protected:
 
 private:
 	UFUNCTION()
-	void OnNotifyFromActor(UFlowComponent* FlowComponent, const FGameplayTag& Tag);
+	void OnNotifyFromActor(class UFlowComponent* FlowComponent, const FGameplayTag& Tag);
 
 protected:
 	virtual void Cleanup() override;

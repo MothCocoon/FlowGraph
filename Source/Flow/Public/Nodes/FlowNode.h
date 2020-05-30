@@ -65,7 +65,6 @@ class FLOW_API UFlowNode : public UObject, public IVisualLoggerDebugSnapshotInte
 // Node
 
 #if WITH_EDITORONLY_DATA
-public:
 	FString Category;
 	EFlowNodeStyle NodeStyle;
 #endif
@@ -114,6 +113,12 @@ public:
 	TArray<FName> OutputNames;
 
 #if WITH_EDITOR
+	virtual bool SupportsContextInputs() const { return false; }
+	virtual bool SupportsContextOutputs() const { return false; }
+	
+	virtual TArray<FName> GetContextInputs() const { return TArray<FName>(); };
+	virtual TArray<FName> GetContextOutputs() const { return TArray<FName>(); };
+	
 	virtual bool CanUserAddInput() const { return false; };
 	virtual bool CanUserAddOutput() const { return false; };
 
