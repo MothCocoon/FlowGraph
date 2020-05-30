@@ -14,9 +14,7 @@
 #include "EdGraphSchema_K2.h"
 #include "Editor.h"
 #include "Editor/EditorEngine.h"
-#include "Engine/Font.h"
 #include "Framework/Commands/GenericCommands.h"
-#include "Framework/MultiBox/MultiBoxBuilder.h"
 #include "GraphEditorActions.h"
 #include "ScopedTransaction.h"
 #include "UnrealEd.h"
@@ -116,7 +114,7 @@ void UFlowGraphNode::PostLoad()
 {
 	Super::PostLoad();
 
-	// Fixup any node pointers that may be out of date
+	// Fix any node pointers that may be out of date
 	if (FlowNode)
 	{
 		FlowNode->SetGraphNode(this);
@@ -192,7 +190,7 @@ void UFlowGraphNode::AutowireNewNode(UEdGraphPin* FromPin)
 		{
 			check(Pin);
 			FPinConnectionResponse Response = Schema->CanCreateConnection(FromPin, Pin);
-			if (ECanCreateConnectionResponse::CONNECT_RESPONSE_MAKE == Response.Response)
+			if (CONNECT_RESPONSE_MAKE == Response.Response)
 			{
 				if (Schema->TryCreateConnection(FromPin, Pin))
 				{
@@ -201,7 +199,7 @@ void UFlowGraphNode::AutowireNewNode(UEdGraphPin* FromPin)
 				}
 				break;
 			}
-			else if (ECanCreateConnectionResponse::CONNECT_RESPONSE_BREAK_OTHERS_A == Response.Response)
+			else if (CONNECT_RESPONSE_BREAK_OTHERS_A == Response.Response)
 			{
 				InsertNewNode(FromPin, Pin, NodeList);
 				break;
@@ -232,7 +230,7 @@ void UFlowGraphNode::InsertNewNode(UEdGraphPin* FromPin, UEdGraphPin* NewLinkPin
 	{
 		UEdGraphPin* OutputExecPin = Pins[OutpinPinIdx];
 		check(OutputExecPin);
-		if (ECanCreateConnectionResponse::CONNECT_RESPONSE_MAKE == Schema->CanCreateConnection(OldLinkedPin, OutputExecPin).Response)
+		if (CONNECT_RESPONSE_MAKE == Schema->CanCreateConnection(OldLinkedPin, OutputExecPin).Response)
 		{
 			if (Schema->TryCreateConnection(OldLinkedPin, OutputExecPin))
 			{
@@ -267,47 +265,45 @@ void UFlowGraphNode::ReconstructNode()
 		}
 	}
 
-	// cache pins in arrays
+	// Store old pins
+	TArray<UEdGraphPin*> OldPins(Pins);
+	TMap<FName, UEdGraphPin*> OldInputPins;
+	TMap<FName, UEdGraphPin*> OldOutputPins;
 	for (UEdGraphPin* Pin : Pins)
 	{
 		if (Pin->Direction == EGPD_Input)
 		{
-			InputPins.Add(Pin);
+			OldInputPins.Emplace(Pin->PinName, Pin);
 		}
 		else
 		{
-			OutputPins.Add(Pin);
+			OldOutputPins.Emplace(Pin->PinName, Pin);
 		}
 	}
 
-	// Store the old Input and Output pins
-	TArray<UEdGraphPin*> OldInputPins(InputPins);
-	TArray<UEdGraphPin*> OldOutputPins(OutputPins);
-
-	// Move the existing pins to a saved array
-	TArray<UEdGraphPin*> OldPins(Pins);
+	// Reset pin arrays
 	Pins.Reset();
 	InputPins.Reset();
 	OutputPins.Reset();
 
-	// Recreate the new pins
+	// Recreate pins
 	AllocateDefaultPins();
 
-	// Get new Input pins
-	for (int32 PinIndex = 0; PinIndex < OldInputPins.Num(); PinIndex++)
+	// Update input pins
+	for (UEdGraphPin* Pin : InputPins)
 	{
-		if (PinIndex < InputPins.Num())
+		if (OldInputPins.Contains(Pin->PinName))
 		{
-			InputPins[PinIndex]->MovePersistentDataFromOldPin(*OldInputPins[PinIndex]);
+			Pin->MovePersistentDataFromOldPin(*OldInputPins[Pin->PinName]);
 		}
 	}
 
-	// Get new Output pins
-	for (int32 PinIndex = 0; PinIndex < OldOutputPins.Num(); PinIndex++)
+	// Update output pins
+	for (UEdGraphPin* Pin : OutputPins)
 	{
-		if (PinIndex < OutputPins.Num())
+		if (OldOutputPins.Contains(Pin->PinName))
 		{
-			OutputPins[PinIndex]->MovePersistentDataFromOldPin(*OldOutputPins[PinIndex]);
+			Pin->MovePersistentDataFromOldPin(*OldOutputPins[Pin->PinName]);
 		}
 	}
 
@@ -315,7 +311,7 @@ void UFlowGraphNode::ReconstructNode()
 	for (UEdGraphPin* OldPin : OldPins)
 	{
 		OldPin->Modify();
-		UEdGraphNode::DestroyPin(OldPin);
+		DestroyPin(OldPin);
 	}
 }
 
@@ -381,6 +377,15 @@ void UFlowGraphNode::GetNodeContextMenuActions(class UToolMenu* Menu, class UGra
 			Section.AddMenuEntry(GenericCommands.Duplicate);
 
 			Section.AddMenuEntry(GraphCommands.BreakNodeLinks);
+
+			if (SupportsContextInputs())
+			{
+				Section.AddMenuEntry(FlowGraphCommands.RefreshContextInputs);
+			}
+			if (SupportsContextOutputs())
+			{
+				Section.AddMenuEntry(FlowGraphCommands.RefreshContextOutputs);
+			}
 
 			if (CanUserAddInput())
 			{
@@ -529,6 +534,16 @@ void UFlowGraphNode::CreateOutputPin(const FName PinName)
 	OutputPins.Add(NewPin);
 }
 
+bool UFlowGraphNode::SupportsContextInputs() const
+{
+	return FlowNode && FlowNode->SupportsContextInputs();
+}
+
+bool UFlowGraphNode::SupportsContextOutputs() const
+{
+	return FlowNode && FlowNode->SupportsContextOutputs();
+}
+
 bool UFlowGraphNode::CanUserAddInput() const
 {
 	return FlowNode && FlowNode->CanUserAddInput() && InputPins.Num() < 256;
@@ -541,60 +556,49 @@ bool UFlowGraphNode::CanUserAddOutput() const
 
 bool UFlowGraphNode::CanUserRemoveInput(const UEdGraphPin* Pin) const
 {
-	// 2 is only reasonable number of default pins for user-modifiable nodes
-	return FlowNode && FlowNode->CanUserAddInput() && InputPins.Num() > 2;
+	return FlowNode && FlowNode->InputNames.Num() > FlowNode->GetClass()->GetDefaultObject<UFlowNode>()->InputNames.Num();
 }
 
 bool UFlowGraphNode::CanUserRemoveOutput(const UEdGraphPin* Pin) const
 {
-	// 2 is only reasonable number of default pins for user-modifiable nodes
-	return FlowNode && FlowNode->CanUserAddOutput() && OutputPins.Num() > 2;
+	return FlowNode && FlowNode->OutputNames.Num() > FlowNode->GetClass()->GetDefaultObject<UFlowNode>()->OutputNames.Num();
 }
 
 void UFlowGraphNode::AddUserInput()
 {
-	const FScopedTransaction Transaction(LOCTEXT("FlowEditorAddInput", "Add Node Input"));
-	Modify();
-
-	// save pin name to asset
-	const FName NewPinName = FName(*FString::FromInt(InputPins.Num()));
-	FlowNode->InputNames.AddUnique(NewPinName);
-
-	CreateInputPin(NewPinName);
-
-	UFlowAsset* FlowAsset = CastChecked<UFlowAssetGraph>(GetGraph())->GetFlowAsset();
-	FlowAsset->CompileNodeConnections();
-	FlowAsset->MarkPackageDirty();
-
-	// Refresh the current graph, so the pins can be updated
-	GetGraph()->NotifyGraphChanged();
+	AddInstancePin(EGPD_Input, *FString::FromInt(InputPins.Num()));
 }
 
 void UFlowGraphNode::AddUserOutput()
 {
-	const FScopedTransaction Transaction(LOCTEXT("FlowEditorAddOutput", "Add Node Input"));
+	AddInstancePin(EGPD_Output, *FString::FromInt(OutputPins.Num()));
+}
+
+void UFlowGraphNode::AddInstancePin(const EEdGraphPinDirection Direction, const FName& PinName)
+{
+	const FScopedTransaction Transaction(LOCTEXT("FlowEditorAddPin", "Add Node Pin"));
 	Modify();
 
-	// save pin name to asset
-	const FName NewPinName = FName(*FString::FromInt(OutputPins.Num()));
-	FlowNode->OutputNames.AddUnique(NewPinName);
+	if (Direction == EGPD_Input)
+	{
+		FlowNode->InputNames.Add(PinName);
+		CreateInputPin(PinName);
+	}
+	else
+	{
+		FlowNode->OutputNames.Add(PinName);
+		CreateOutputPin(PinName);
+	}
 
-	CreateOutputPin(NewPinName);
-
-	UFlowAsset* FlowAsset = CastChecked<UFlowAssetGraph>(GetGraph())->GetFlowAsset();
-	FlowAsset->CompileNodeConnections();
-	FlowAsset->MarkPackageDirty();
-
-	// Refresh the current graph, so the pins can be updated
 	GetGraph()->NotifyGraphChanged();
 }
 
-void UFlowGraphNode::RemoveUserPin(UEdGraphPin* Pin)
+void UFlowGraphNode::RemoveInstancePin(UEdGraphPin* Pin)
 {
-	const FScopedTransaction Transaction(LOCTEXT("FlowEditorRemovePin", "Remoe Node Pin"));
+	const FScopedTransaction Transaction(LOCTEXT("FlowEditorRemovePin", "Remove Node Pin"));
 	Modify();
 
-	if (Pin->Direction == EEdGraphPinDirection::EGPD_Input)
+	if (Pin->Direction == EGPD_Input)
 	{
 		if (InputPins.Contains(Pin))
 		{
@@ -621,13 +625,45 @@ void UFlowGraphNode::RemoveUserPin(UEdGraphPin* Pin)
 		}
 	}
 
-	// Recreate pins with updated names
 	ReconstructNode();
+	GetGraph()->NotifyGraphChanged();
+}
 
-	UFlowAsset* FlowAsset = CastChecked<UFlowAssetGraph>(GetGraph())->GetFlowAsset();
-	FlowAsset->CompileNodeConnections();
-	FlowAsset->MarkPackageDirty();
+void UFlowGraphNode::CreateContextInputs()
+{
+	if (FlowNode == nullptr)
+	{
+		return;
+	}
 
+	const FScopedTransaction Transaction(LOCTEXT("FlowEditorCreateContextInputs", "Create Context Inputs"));
+	Modify();
+
+	// remove previous set of instance pin, reset pins to default
+	const UFlowNode* NodeDefaults = FlowNode->GetClass()->GetDefaultObject<UFlowNode>();
+	FlowNode->InputNames = NodeDefaults->InputNames;
+	FlowNode->InputNames.Append(FlowNode->GetContextInputs());
+
+	ReconstructNode();
+	GetGraph()->NotifyGraphChanged();
+}
+
+void UFlowGraphNode::CreateContextOutputs()
+{
+	if (FlowNode == nullptr)
+	{
+		return;
+	}
+
+	const FScopedTransaction Transaction(LOCTEXT("FlowEditorCreateContextOutputs", "Create Context Outputs"));
+	Modify();
+
+	// remove previous set of instance pin, reset pins to default
+	const UFlowNode* NodeDefaults = FlowNode->GetClass()->GetDefaultObject<UFlowNode>();
+	FlowNode->OutputNames = NodeDefaults->OutputNames;
+	FlowNode->OutputNames.Append(FlowNode->GetContextOutputs());
+
+	ReconstructNode();
 	GetGraph()->NotifyGraphChanged();
 }
 

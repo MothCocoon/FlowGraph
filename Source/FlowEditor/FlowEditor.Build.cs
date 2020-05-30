@@ -9,6 +9,13 @@ public class FlowEditor : ModuleRules
         PublicDependencyModuleNames.AddRange(
             new[]
             {
+                "Flow"
+            }
+        );
+
+        PrivateDependencyModuleNames.AddRange(
+            new[]
+            {
                 "ApplicationCore",
                 "BlueprintGraph",
                 "ClassViewer",
@@ -18,24 +25,18 @@ public class FlowEditor : ModuleRules
                 "DetailCustomizations",
                 "EditorStyle",
                 "Engine",
-                "Flow",
                 "GraphEditor",
                 "InputCore",
+                "KismetWidgets",
                 "LevelEditor",
+                "Projects",
                 "PropertyEditor",
                 "RenderCore",
+                "Sequencer",
                 "Slate",
                 "SlateCore",
-                "UnrealEd",
-            }
-        );
-
-        PrivateDependencyModuleNames.AddRange(
-            new[]
-            {
-                "KismetWidgets",
-                "Projects",
-                "ToolMenus"
+                "ToolMenus",
+                "UnrealEd"
             }
         );
     }

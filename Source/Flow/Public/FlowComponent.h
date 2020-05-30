@@ -4,7 +4,7 @@
 #include "GameplayTagContainer.h"
 #include "FlowComponent.generated.h"
 
-DECLARE_DYNAMIC_MULTICAST_DELEGATE_TwoParams(FFlowComponentNotify, UFlowComponent*, FlowComponent, const FGameplayTag&, NotifyTag);
+DECLARE_DYNAMIC_MULTICAST_DELEGATE_TwoParams(FFlowComponentNotify, class UFlowComponent*, FlowComponent, const FGameplayTag&, NotifyTag);
 
 /**
 * Base component of Flow System - makes possible to communicate between Flow graph and actors
@@ -14,13 +14,11 @@ class FLOW_API UFlowComponent : public UActorComponent
 {
 	GENERATED_UCLASS_BODY()
 
-public:
 	UPROPERTY(EditAnywhere, Category = "Flow")
 	FGameplayTagContainer IdentityTags;
 
 	static FFlowComponentNotify OnNotifyFromComponent;
 
-public:
 	virtual void BeginPlay() override;
 	virtual void EndPlay(const EEndPlayReason::Type EndPlayReason) override;
 

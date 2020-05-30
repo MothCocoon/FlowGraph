@@ -1,8 +1,6 @@
 #pragma once
 
 #include "CoreMinimal.h"
-#include "UObject/ObjectMacros.h"
-#include "AssetData.h"
 #include "EdGraph/EdGraphSchema.h"
 #include "FlowGraphSchema.generated.h"
 
@@ -13,7 +11,7 @@ class UFlowNode;
 USTRUCT()
 struct FLOWEDITOR_API FFlowGraphSchemaAction_NewNode : public FEdGraphSchemaAction
 {
-	GENERATED_USTRUCT_BODY();
+	GENERATED_USTRUCT_BODY()
 
 	/** Class of node we want to create */
 	UPROPERTY()
@@ -42,7 +40,7 @@ struct FLOWEDITOR_API FFlowGraphSchemaAction_NewNode : public FEdGraphSchemaActi
 USTRUCT()
 struct FLOWEDITOR_API FFlowGraphSchemaAction_NewFromSelected : public FFlowGraphSchemaAction_NewNode
 {
-	GENERATED_USTRUCT_BODY();
+	GENERATED_USTRUCT_BODY()
 
 	FFlowGraphSchemaAction_NewFromSelected() 
 		: FFlowGraphSchemaAction_NewNode()
@@ -61,7 +59,7 @@ struct FLOWEDITOR_API FFlowGraphSchemaAction_NewFromSelected : public FFlowGraph
 USTRUCT()
 struct FLOWEDITOR_API FFlowGraphSchemaAction_NewComment : public FEdGraphSchemaAction
 {
-	GENERATED_USTRUCT_BODY();
+	GENERATED_USTRUCT_BODY()
 
 	// Simple type info
 	static FName StaticGetTypeId() { static FName Type("FFlowGraphSchemaAction_NewComment"); return Type; }
@@ -84,7 +82,7 @@ struct FLOWEDITOR_API FFlowGraphSchemaAction_NewComment : public FEdGraphSchemaA
 USTRUCT()
 struct FLOWEDITOR_API FFlowGraphSchemaAction_Paste : public FEdGraphSchemaAction
 {
-	GENERATED_USTRUCT_BODY();
+	GENERATED_USTRUCT_BODY()
 
 	FFlowGraphSchemaAction_Paste() 
 		: FEdGraphSchemaAction()
@@ -104,7 +102,6 @@ class UFlowGraphSchema : public UEdGraphSchema
 {
 	GENERATED_UCLASS_BODY()
 
-public:
 	FLOWEDITOR_API void GetPaletteActions(FGraphActionMenuBuilder& ActionMenuBuilder, const FString& CategoryName) const;
 
 	// EdGraphSchema
@@ -126,7 +123,6 @@ private:
 	void GetFlowNodeActions(FGraphActionMenuBuilder& ActionMenuBuilder, const FString& CategoryName) const;
 	void GetCommentAction(FGraphActionMenuBuilder& ActionMenuBuilder, const UEdGraph* CurrentGraph = nullptr) const;
 
-private:
 	static void InitFlowNodes();
 
 	static TArray<UClass*> FlowNodeClasses;

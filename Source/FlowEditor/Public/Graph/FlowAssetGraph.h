@@ -2,7 +2,6 @@
 
 #include "CoreMinimal.h"
 #include "EdGraph/EdGraph.h"
-#include "UObject/ObjectMacros.h"
 #include "FlowAssetGraph.generated.h"
 
 class UFlowAsset;
@@ -12,7 +11,10 @@ class UFlowAssetGraph : public UEdGraph
 {
 	GENERATED_UCLASS_BODY()
 
-public:
+	// UEdGraph
+	virtual void NotifyGraphChanged() override;
+	// --
+	
 	/** Returns the FlowAsset that contains this graph */
 	UFlowAsset* GetFlowAsset() const;
 };

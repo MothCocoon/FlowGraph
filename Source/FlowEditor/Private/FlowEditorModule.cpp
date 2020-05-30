@@ -1,9 +1,9 @@
 #include "FlowEditorModule.h"
+
 #include "FlowEditorStyle.h"
 #include "Graph/FlowAssetActions.h"
 #include "Graph/FlowAssetEditor.h"
 #include "Graph/FlowGraphConnectionDrawingPolicy.h"
-#include "Graph/Nodes/FlowGraphNode.h"
 #include "LevelEditor/SLevelEditorFlow.h"
 
 #include "FlowAsset.h"
@@ -12,7 +12,6 @@
 #include "EdGraphUtilities.h"
 #include "LevelEditor.h"
 #include "Modules/ModuleManager.h"
-#include "Utils.h"
 
 #define LOCTEXT_NAMESPACE "FlowEditor"
 
@@ -30,7 +29,7 @@ void FFlowEditorModule::StartupModule()
 	// register visual utilities
 	FEdGraphUtilities::RegisterVisualPinConnectionFactory(MakeShareable(new FFlowGraphConnectionDrawingPolicyFactory));
 
-	// menu extensibility
+	// init menu extensibility
 	FlowAssetExtensibility.Init();
 
 	// add Flow Toolbar
@@ -46,12 +45,14 @@ void FFlowEditorModule::ShutdownModule()
 {
 	FFlowEditorStyle::Shutdown();
 
-	FlowAssetExtensibility.Reset();
-
+	// unregister visual utilities
 	if (FlowGraphConnectionFactory.IsValid())
 	{
 		FEdGraphUtilities::UnregisterVisualPinConnectionFactory(FlowGraphConnectionFactory);
 	}
+
+	// reset menu extensibility
+	FlowAssetExtensibility.Reset();
 }
 
 TSharedRef<FFlowAssetEditor> FFlowEditorModule::CreateFlowAssetEditor(const EToolkitMode::Type Mode, const TSharedPtr< IToolkitHost >& InitToolkitHost, UFlowAsset* FlowAsset)
