@@ -133,8 +133,10 @@ private:
 	bool CanRefreshContextOutputs() const;
 	
 	void AddInput() const;
+	bool CanAddInput() const;
+	
 	void AddOutput() const;
-	bool CanAddPin() const;
+	bool CanAddOutput() const;
 
 	void RemovePin() const;
 	bool CanRemovePin() const;

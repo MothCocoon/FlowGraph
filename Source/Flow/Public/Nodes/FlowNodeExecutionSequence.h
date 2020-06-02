@@ -12,7 +12,6 @@ class FLOW_API UFlowNodeExecutionSequence final : public UFlowNode
 	GENERATED_UCLASS_BODY()
 	
 #if WITH_EDITOR
-public:
 	virtual bool CanUserAddOutput() const override { return true; };
 #endif
 

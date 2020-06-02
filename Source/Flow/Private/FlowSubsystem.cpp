@@ -94,7 +94,7 @@ UFlowAsset* UFlowSubsystem::CreateFlowInstance(TSoftObjectPtr<UFlowAsset> FlowAs
 #if WITH_EDITOR
 	if (GetWorld()->WorldType != EWorldType::Game)
 	{
-		// Fixup connections - even in packaged game if assets haven't been re-saved in the editor after changing node's definition
+		// Fix connections - even in packaged game if assets haven't been re-saved in the editor after changing node's definition
 		FlowAsset.Get()->CompileNodeConnections();
 	}
 #endif
@@ -117,7 +117,7 @@ void UFlowSubsystem::RegisterComponent(UFlowComponent* Component)
 {
 	for (const FGameplayTag& Tag : Component->IdentityTags)
 	{
-		FlowComponents.Add(Tag, Component);
+		FlowComponents.Emplace(Tag, Component);
 	}
 }
 

@@ -31,9 +31,8 @@ protected:
 
 	// SGraphNode
 	virtual void CreateStandardPinWidget(UEdGraphPin* Pin) override;
-
+	virtual void CreateInputSideAddButton(TSharedPtr<SVerticalBox> OutputBox) override;
 	virtual void CreateOutputSideAddButton(TSharedPtr<SVerticalBox> OutputBox) override;
-	virtual EVisibility IsAddPinButtonVisible() const override;
 	virtual FReply OnAddPin() override;
 	// --
 

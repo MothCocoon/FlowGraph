@@ -6,7 +6,7 @@ UFlowNodeSubGraph::UFlowNodeSubGraph(const FObjectInitializer& ObjectInitializer
 	: Super(ObjectInitializer)
 {
 #if WITH_EDITOR
-	NodeStyle = EFlowNodeStyle::SubFlow;
+	NodeStyle = EFlowNodeStyle::SubGraph;
 #endif
 }
 
