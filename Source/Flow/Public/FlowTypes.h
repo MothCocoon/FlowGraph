@@ -11,7 +11,7 @@ enum class EFlowNodeStyle : uint8
 	InOut,
 	Latent,
 	Logic,
-	SubFlow
+	SubGraph
 };
 #endif
 
