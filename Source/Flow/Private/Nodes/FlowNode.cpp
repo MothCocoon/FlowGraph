@@ -71,6 +71,16 @@ void UFlowNode::RemoveUserOutput()
 }
 #endif
 
+void UFlowNode::SetNumericalInputs(const uint8 FirstNumber, const uint8 LastNumber)
+{
+	InputNames.Empty();
+
+	for (uint8 i = FirstNumber; i <= LastNumber; i++)
+	{
+		InputNames.Emplace(FName(*FString::FromInt(i)));
+	}
+}
+
 void UFlowNode::SetNumericalOutputs(const uint8 FirstNumber /*= 0*/, const uint8 LastNumber /*= 1*/)
 {
 	OutputNames.Empty();
@@ -239,3 +249,39 @@ TArray<FPinRecord> UFlowNode::GetOutputRecords(const FName& PinName) const
 	return OutputRecords.FindRef(PinName);
 }
 #endif
+
+FString UFlowNode::GetProgressAsString(float Value) const
+{
+	// Avoids negative zero
+	if (Value == 0)
+	{
+		Value = 0;
+	}
+
+	// First create the string
+	FString TempString = FString::Printf(TEXT("%f"), Value);
+	if (!TempString.IsNumeric())
+	{
+		// String did not format as a valid decimal number so avoid messing with it
+		return TempString;
+	}
+
+	// Get position of the first digit after decimal separator
+	int32 TrimIndex = INDEX_NONE;
+	for (int32 CharIndex = 0; CharIndex < TempString.Len(); CharIndex++)
+	{
+		const TCHAR Char = TempString[CharIndex];
+		if (Char == TEXT('.'))
+		{
+			TrimIndex = CharIndex + 2;
+			break;
+		}
+		if (TrimIndex == INDEX_NONE && Char != TEXT('0'))
+		{
+			TrimIndex = CharIndex + 1;
+		}
+	}
+
+	TempString.RemoveAt(TrimIndex, TempString.Len() - TrimIndex, /*bAllowShrinking*/false);
+	return TempString;
+}
