@@ -2,7 +2,6 @@
 
 #include "CoreMinimal.h"
 #include "Engine/StreamableManager.h"
-#include "UObject/ObjectMacros.h"
 #include "UObject/Object.h"
 #include "UObject/Class.h"
 #include "VisualLoggerDebugSnapshotInterface.h"
@@ -20,7 +19,6 @@ struct FLOW_API FConnectedPin
 {
 	GENERATED_USTRUCT_BODY()
 	
-public:
 	UPROPERTY()
 	FGuid NodeGuid;
 
@@ -39,7 +37,6 @@ public:
 #if !UE_BUILD_SHIPPING
 struct FLOW_API FPinRecord
 {
-public:
 	double Time;
 	FString HumanReadableTime;
 
@@ -128,6 +125,7 @@ public:
 
 protected:
 	// always use default range for nodes with user-created outputs i.e. Execution Sequence
+	void SetNumericalInputs(const uint8 FirstNumber = 0, const uint8 LastNumber = 1);
 	void SetNumericalOutputs(const uint8 FirstNumber = 0, const uint8 LastNumber = 1);
 
 //////////////////////////////////////////////////////////////////////////
@@ -231,4 +229,7 @@ protected:
 
 		return Cast<T>(AssetPtr.Get());
 	}
+
+public:
+	FString GetProgressAsString(float Value) const;
 };

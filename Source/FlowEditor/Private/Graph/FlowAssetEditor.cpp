@@ -347,11 +347,11 @@ TSharedRef<SGraphEditor> FFlowAssetEditor::CreateGraphEditorWidget()
 
 		Commands->MapAction(FlowGraphCommands.AddInput,
 			FExecuteAction::CreateSP(this, &FFlowAssetEditor::AddInput),
-			FCanExecuteAction::CreateSP(this, &FFlowAssetEditor::CanAddPin));
+			FCanExecuteAction::CreateSP(this, &FFlowAssetEditor::CanAddInput));
 
 		Commands->MapAction(FlowGraphCommands.AddOutput,
 			FExecuteAction::CreateSP(this, &FFlowAssetEditor::AddOutput),
-			FCanExecuteAction::CreateSP(this, &FFlowAssetEditor::CanAddPin));
+			FCanExecuteAction::CreateSP(this, &FFlowAssetEditor::CanAddOutput));
 
 		Commands->MapAction(FlowGraphCommands.RemovePin,
 			FExecuteAction::CreateSP(this, &FFlowAssetEditor::RemovePin),
@@ -848,7 +848,7 @@ bool FFlowAssetEditor::CanRefreshContextInputs() const
 			}
 		}
 	}
-	
+
 	return false;
 }
 
@@ -877,7 +877,7 @@ bool FFlowAssetEditor::CanRefreshContextOutputs() const
 			}
 		}
 	}
-	
+
 	return false;
 }
 
@@ -894,6 +894,23 @@ void FFlowAssetEditor::AddInput() const
 	}
 }
 
+bool FFlowAssetEditor::CanAddInput() const
+{
+	if (CanEdit() && GetSelectedNodes().Num() == 1 && FocusedGraphEditor.IsValid())
+	{
+		const FGraphPanelSelectionSet SelectedNodes = GetSelectedNodes();
+		for (FGraphPanelSelectionSet::TConstIterator NodeIt(SelectedNodes); NodeIt; ++NodeIt)
+		{
+			if (UFlowGraphNode* SelectedNode = Cast<UFlowGraphNode>(*NodeIt))
+			{
+				return SelectedNode->CanUserAddInput();
+			}
+		}
+	}
+
+	return false;
+}
+
 void FFlowAssetEditor::AddOutput() const
 {
 	const FGraphPanelSelectionSet SelectedNodes = GetSelectedNodes();
@@ -907,21 +924,16 @@ void FFlowAssetEditor::AddOutput() const
 	}
 }
 
-bool FFlowAssetEditor::CanAddPin() const
+bool FFlowAssetEditor::CanAddOutput() const
 {
 	if (CanEdit() && GetSelectedNodes().Num() == 1 && FocusedGraphEditor.IsValid())
 	{
-		if (UEdGraphPin* Pin = FocusedGraphEditor->GetGraphPinForMenu())
+		const FGraphPanelSelectionSet SelectedNodes = GetSelectedNodes();
+		for (FGraphPanelSelectionSet::TConstIterator NodeIt(SelectedNodes); NodeIt; ++NodeIt)
 		{
-			if (UFlowGraphNode* GraphNode = Cast<UFlowGraphNode>(Pin->GetOwningNode()))
+			if (UFlowGraphNode* SelectedNode = Cast<UFlowGraphNode>(*NodeIt))
 			{
-				if (Pin->Direction == EGPD_Input)
-				{
-					return GraphNode->CanUserAddInput();
-				}
-				{
-					return GraphNode->CanUserAddOutput();
-				}
+				return SelectedNode->CanUserAddOutput();
 			}
 		}
 	}

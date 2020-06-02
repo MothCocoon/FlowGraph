@@ -6,7 +6,6 @@
 
 #include "Editor.h"
 #include "GraphEditorSettings.h"
-#include "ScopedTransaction.h"
 #include "Widgets/SBoxPanel.h"
 
 void SFlowGraphPin::Tick(const FGeometry& AllottedGeometry, const double InCurrentTime, const float InDeltaTime)
@@ -98,13 +97,10 @@ const FSlateBrush* SFlowGraphNode::GetShadowBrush(bool bSelected) const
 		{
 			case EFlowActivationState::NeverActivated:
 				return SGraphNode::GetShadowBrush(bSelected);
-				break;
 			case EFlowActivationState::Active:
 				return FFlowEditorStyle::Get()->GetBrush(TEXT("FlowGraph.ActiveShadow"));
-				break;
 			case EFlowActivationState::WasActive:
 				return FFlowEditorStyle::Get()->GetBrush(TEXT("FlowGraph.WasActiveShadow"));
-				break;
 		}
 	}
 
@@ -177,7 +173,7 @@ void SFlowGraphNode::CreateStandardPinWidget(UEdGraphPin* Pin)
 
 	if (!UFlowEditorSettings::Get()->bShowDefaultPinNames)
 	{
-		if (Pin->Direction == EEdGraphPinDirection::EGPD_Input)
+		if (Pin->Direction == EGPD_Input)
 		{
 			if (FlowGraphNode->GetFlowNode()->InputNames.Num() == 1 && Pin->PinName == UFlowNode::DefaultInputName)
 			{
@@ -196,32 +192,60 @@ void SFlowGraphNode::CreateStandardPinWidget(UEdGraphPin* Pin)
 	this->AddPin(NewPin.ToSharedRef());
 }
 
-void SFlowGraphNode::CreateOutputSideAddButton(TSharedPtr<SVerticalBox> OutputBox)
+void SFlowGraphNode::CreateInputSideAddButton(TSharedPtr<SVerticalBox> OutputBox)
 {
-	const TSharedRef<SWidget> AddPinButton = AddPinButtonContent(
+	if (FlowGraphNode->CanUserAddInput())
+	{
+		const TSharedRef<SWidget> AddPinButton = AddPinButtonContent(
 		NSLOCTEXT("FlowNode", "FlowNodeAddPinButton", "Add pin"),
-		NSLOCTEXT("FlowNode", "FlowNodeAddPinButton_Tooltip", "Adds an output pin")
-	);
+		NSLOCTEXT("FlowNode", "FlowNodeAddPinButton_Tooltip", "Adds an input pin")
+		);
 
-	FMargin AddPinPadding = Settings->GetOutputPinPadding();
-	AddPinPadding.Top += 6.0f;
+		FMargin AddPinPadding = Settings->GetInputPinPadding();
+		AddPinPadding.Top += 6.0f;
 
-	OutputBox->AddSlot()
-		.AutoHeight()
-		.VAlign(VAlign_Center)
-		.Padding(AddPinPadding)
-		[
-			AddPinButton
-		];
+		OutputBox->AddSlot()
+			.AutoHeight()
+			.VAlign(VAlign_Center)
+			.Padding(AddPinPadding)
+			[
+				AddPinButton
+			];
+	}
 }
 
-EVisibility SFlowGraphNode::IsAddPinButtonVisible() const
+void SFlowGraphNode::CreateOutputSideAddButton(TSharedPtr<SVerticalBox> OutputBox)
 {
-	return FlowGraphNode->CanUserAddOutput() ? SGraphNode::IsAddPinButtonVisible() : EVisibility::Collapsed;
+	if (FlowGraphNode->CanUserAddOutput())
+	{
+		const TSharedRef<SWidget> AddPinButton = AddPinButtonContent(
+		NSLOCTEXT("FlowNode", "FlowNodeAddPinButton", "Add pin"),
+		NSLOCTEXT("FlowNode", "FlowNodeAddPinButton_Tooltip", "Adds an output pin")
+		);
+
+		FMargin AddPinPadding = Settings->GetOutputPinPadding();
+		AddPinPadding.Top += 6.0f;
+
+		OutputBox->AddSlot()
+			.AutoHeight()
+			.VAlign(VAlign_Center)
+			.Padding(AddPinPadding)
+			[
+				AddPinButton
+			];
+	}
 }
 
 FReply SFlowGraphNode::OnAddPin()
 {
-	FlowGraphNode->AddUserOutput();
+	if (FlowGraphNode->CanUserAddInput())
+	{
+		FlowGraphNode->AddUserInput();
+	}
+	else if (FlowGraphNode->CanUserAddOutput())
+	{
+		FlowGraphNode->AddUserOutput();
+	}
+
 	return FReply::Handled();
 }
