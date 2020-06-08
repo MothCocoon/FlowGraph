@@ -6,6 +6,8 @@
 UFlowNodeLog::UFlowNodeLog(const FObjectInitializer& ObjectInitializer)
 	: Super(ObjectInitializer)
 	, bPrintToScreen(true)
+	, Duration(5.0f)
+	, TextColor(FColor::Yellow)
 {
 }
 
@@ -15,7 +17,7 @@ void UFlowNodeLog::ExecuteInput(const FName& PinName)
 
 	if (bPrintToScreen)
 	{
-		GEngine->AddOnScreenDebugMessage(-1, 5.f, FColor::Yellow, Message);
+		GEngine->AddOnScreenDebugMessage(-1, Duration, TextColor, Message);
 	}
 
 	TriggerFirstOutput(true);
