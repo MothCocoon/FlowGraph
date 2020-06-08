@@ -148,7 +148,7 @@ public:
 	bool bPreloaded;
 
 protected:
-	FStreamableManager Streamable;
+	FStreamableManager StreamableManager;
 
 #if !UE_BUILD_SHIPPING
 private:
@@ -224,7 +224,7 @@ protected:
 		if (AssetPtr.IsPending())
 		{
 			const FSoftObjectPath& AssetRef = AssetPtr.ToSoftObjectPath();
-			AssetPtr = Cast<T>(Streamable.LoadSynchronous(AssetRef, false));
+			AssetPtr = Cast<T>(StreamableManager.LoadSynchronous(AssetRef, false));
 		}
 
 		return Cast<T>(AssetPtr.Get());

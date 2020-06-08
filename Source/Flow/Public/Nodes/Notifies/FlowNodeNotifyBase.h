@@ -3,25 +3,22 @@
 #include "GameplayTagContainer.h"
 
 #include "Nodes/FlowNode.h"
-#include "FlowNodeNotifyActor.generated.h"
+#include "FlowNodeNotifyBase.generated.h"
 
 /**
- * Notify Actor
+ * Base for nodes providing generic communication between Flow Graph and actors with Flow Component
  */
-UCLASS(meta = (DisplayName = "Notify Actor"))
-class FLOW_API UFlowNodeNotifyActor : public UFlowNode
+UCLASS(Abstract)
+class FLOW_API UFlowNodeNotifyBase : public UFlowNode
 {
 	GENERATED_UCLASS_BODY()
 	
-private:
+protected:
 	UPROPERTY(EditAnywhere, Category = "NotifyActor")
 	FGameplayTag ActorTag;
 
 	UPROPERTY(EditAnywhere, Category = "NotifyActor")
 	FGameplayTag NotifyTag;
-
-protected:
-	virtual void ExecuteInput(const FName& PinName) override;
 
 #if WITH_EDITOR
 public:
