@@ -18,6 +18,12 @@ private:
 	UPROPERTY(EditAnywhere, Category = "Flow")
 	bool bPrintToScreen;
 
+	UPROPERTY(EditAnywhere, Category = "Flow", meta = (EditCondition = "bPrintToScreen"))
+	float Duration;
+
+	UPROPERTY(EditAnywhere, Category = "Flow", meta = (EditCondition = "bPrintToScreen"))
+	FColor TextColor;
+
 protected:
 	virtual void ExecuteInput(const FName& PinName) override;
 
