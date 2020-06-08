@@ -35,6 +35,11 @@ void UFlowComponent::NotifyGraph(const FGameplayTag NotifyTag)
 	OnNotifyFromComponent.Broadcast(this, NotifyTag);
 }
 
+void UFlowComponent::NotifyFromGraph(const FGameplayTag NotifyTag)
+{
+	ReceiveNotify.Broadcast(nullptr, NotifyTag);
+}
+
 void UFlowComponent::NotifyActor(const FGameplayTag ActorTag, const FGameplayTag NotifyTag)
 {
 	if (UFlowSubsystem* FlowSubsystem = GetWorld()->GetGameInstance()->GetSubsystem<UFlowSubsystem>())
