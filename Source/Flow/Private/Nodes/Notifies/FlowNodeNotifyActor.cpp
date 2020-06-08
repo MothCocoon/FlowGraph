@@ -15,16 +15,9 @@ void UFlowNodeNotifyActor::ExecuteInput(const FName& PinName)
 	{
 		for (TWeakObjectPtr<UFlowComponent>& Component : FlowSubsystem->GetComponents<UFlowComponent>(ActorTag))
 		{
-			Component->ReceiveNotify.Broadcast(nullptr, NotifyTag);
+			Component->NotifyFromGraph(NotifyTag);
 		}
 	}
 
 	TriggerFirstOutput(true);
 }
-
-#if WITH_EDITOR
-FString UFlowNodeNotifyActor::GetNodeDescription() const
-{
-	return ActorTag.IsValid() ? ActorTag.ToString() : FString();
-}
-#endif
