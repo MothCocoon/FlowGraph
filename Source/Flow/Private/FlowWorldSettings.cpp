@@ -1,5 +1,4 @@
 #include "FlowWorldSettings.h"
-#include "FlowAsset.h"
 #include "FlowSubsystem.h"
 
 AFlowWorldSettings::AFlowWorldSettings(const FObjectInitializer& ObjectInitializer)
@@ -7,8 +6,10 @@ AFlowWorldSettings::AFlowWorldSettings(const FObjectInitializer& ObjectInitializ
 {
 }
 
-void AFlowWorldSettings::StartFlow() const
+void AFlowWorldSettings::BeginPlay()
 {
+	Super::BeginPlay();
+
 	if (FlowAsset)
 	{
 		if (UFlowSubsystem* FlowSubsystem = GetWorld()->GetGameInstance()->GetSubsystem<UFlowSubsystem>())
