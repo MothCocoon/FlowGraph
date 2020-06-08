@@ -82,7 +82,7 @@ private:
 	void UndoGraphAction();
 	void RedoGraphAction() const;
 
-	void CreateInternalWidgets();
+	void CreateWidgets();
 	TSharedRef<SGraphEditor> CreateGraphEditorWidget();
 
 	FReply OnSpawnGraphNodeByShortcut(FInputChord InChord, const FVector2D& InPosition, UEdGraph* InGraph);

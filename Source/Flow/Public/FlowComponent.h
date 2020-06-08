@@ -26,9 +26,13 @@ class FLOW_API UFlowComponent : public UActorComponent
 	UPROPERTY(BlueprintAssignable, Category = "Flow")
 	FFlowComponentNotify ReceiveNotify;
 
-	// Send notification to Flow graphs
+	// Send notification from the actor to Flow graphs
 	UFUNCTION(BlueprintCallable, Category = "Flow")
 	void NotifyGraph(const FGameplayTag NotifyTag);
+
+	// Send notification from the Flow Graph to actor
+	UFUNCTION(BlueprintCallable, Category = "Flow")
+	virtual void NotifyFromGraph(const FGameplayTag NotifyTag);
 
 	// Send notification to another actor containing Flow Component
 	UFUNCTION(BlueprintCallable, Category = "Flow")

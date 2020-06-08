@@ -170,7 +170,7 @@ void FFlowAssetEditor::InitFlowAssetEditor(const EToolkitMode::Type Mode, const 
 	FFlowGraphCommands::Register();
 	FFlowSpawnNodeCommands::Register();
 
-	CreateInternalWidgets();
+	CreateWidgets();
 	BindGraphCommands();
 
 	const TSharedRef<FTabManager::FLayout> StandaloneDefaultLayout = FTabManager::NewLayout("FlowAssetEditor_Layout")
@@ -278,12 +278,15 @@ void FFlowAssetEditor::RedoGraphAction() const
 	GEditor->RedoTransaction();
 }
 
-void FFlowAssetEditor::CreateInternalWidgets()
+void FFlowAssetEditor::CreateWidgets()
 {
 	FocusedGraphEditor = CreateGraphEditorWidget();
 
 	FDetailsViewArgs Args;
+	Args.bAllowSearch = false;
 	Args.bHideSelectionTip = true;
+	Args.bShowOptions = false;
+	Args.bShowPropertyMatrixButton = false;
 	Args.NotifyHook = this;
 
 	FPropertyEditorModule& PropertyModule = FModuleManager::LoadModuleChecked<FPropertyEditorModule>("PropertyEditor");

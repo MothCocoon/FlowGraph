@@ -34,10 +34,3 @@ void UFlowNodeOnNotifyFromActor::Cleanup()
 		UFlowComponent::OnNotifyFromComponent.RemoveAll(this);
 	}
 }
-
-#if WITH_EDITOR
-FString UFlowNodeOnNotifyFromActor::GetNodeDescription() const
-{
-	return ActorTag.IsValid() ? ActorTag.ToString() : FString();
-}
-#endif
