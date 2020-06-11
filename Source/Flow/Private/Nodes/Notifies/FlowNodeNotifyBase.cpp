@@ -9,9 +9,9 @@ UFlowNodeNotifyBase::UFlowNodeNotifyBase(const FObjectInitializer& ObjectInitial
 #if WITH_EDITOR
 FString UFlowNodeNotifyBase::GetNodeDescription() const
 {
-	const FString ActorString = ActorTag.IsValid() ? ActorTag.ToString() : TEXT("Missing Actor Tag!");
+	const FString IdentityString = IdentityTag.IsValid() ? IdentityTag.ToString() : TEXT("Missing Actor Tag!");
 	const FString NotifyString = NotifyTag.IsValid() ? NotifyTag.ToString() : TEXT("---");
 
-	return ActorString + LINE_TERMINATOR + NotifyString;
+	return IdentityString + LINE_TERMINATOR + NotifyString;
 }
 #endif
