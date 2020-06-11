@@ -9,6 +9,8 @@ class UFlowAsset;
 class UFlowComponent;
 class UFlowNodeSubGraph;
 
+DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FSimpleFlowComponentnEvent, UFlowComponent*, Component);
+
 /**
  * Flow Control System
  */
@@ -59,6 +61,9 @@ public:
 	virtual void RegisterComponent(UFlowComponent* Component);
 	virtual void UnregisterComponent(UFlowComponent* Component);
 
+	FSimpleFlowComponentnEvent OnComponentRegistered;
+	FSimpleFlowComponentnEvent OnComponentUnregistered;
+
 	template<class T>
 	TArray<TWeakObjectPtr<T>> GetComponents(const FGameplayTag& Tag)
 	{
@@ -70,7 +75,7 @@ public:
 		{
 			if (Component.Get()->GetClass()->IsChildOf(T::StaticClass()))
 			{
-				ResultComponents.Emplace(Component);
+				ResultComponents.Emplace(Cast<T>(Component));
 			}
 		}
 
@@ -88,7 +93,7 @@ public:
 		{
 			if (Component.Get()->GetOwner()->GetClass()->IsChildOf(T::StaticClass()))
 			{
-				ResultActors.Emplace(Component.Get()->GetOwner());
+				ResultActors.Emplace(Cast<T>(Component.Get()->GetOwner()));
 			}
 		}
 

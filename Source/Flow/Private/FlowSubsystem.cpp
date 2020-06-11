@@ -119,6 +119,8 @@ void UFlowSubsystem::RegisterComponent(UFlowComponent* Component)
 	{
 		FlowComponents.Emplace(Tag, Component);
 	}
+
+	OnComponentRegistered.Broadcast(Component);
 }
 
 void UFlowSubsystem::UnregisterComponent(UFlowComponent* Component)
@@ -127,4 +129,6 @@ void UFlowSubsystem::UnregisterComponent(UFlowComponent* Component)
 	{
 		FlowComponents.Remove(Tag, Component);
 	}
+
+	OnComponentUnregistered.Broadcast(Component);
 }

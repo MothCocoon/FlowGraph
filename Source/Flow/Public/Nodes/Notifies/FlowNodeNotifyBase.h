@@ -15,7 +15,7 @@ class FLOW_API UFlowNodeNotifyBase : public UFlowNode
 	
 protected:
 	UPROPERTY(EditAnywhere, Category = "NotifyActor")
-	FGameplayTag ActorTag;
+	FGameplayTag IdentityTag;
 
 	UPROPERTY(EditAnywhere, Category = "NotifyActor")
 	FGameplayTag NotifyTag;
