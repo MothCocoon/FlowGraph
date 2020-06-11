@@ -13,7 +13,7 @@ void UFlowNodeNotifyActor::ExecuteInput(const FName& PinName)
 {
 	if (UFlowSubsystem* FlowSubsystem = GetWorld()->GetGameInstance()->GetSubsystem<UFlowSubsystem>())
 	{
-		for (TWeakObjectPtr<UFlowComponent>& Component : FlowSubsystem->GetComponents<UFlowComponent>(ActorTag))
+		for (TWeakObjectPtr<UFlowComponent>& Component : FlowSubsystem->GetComponents<UFlowComponent>(IdentityTag))
 		{
 			Component->NotifyFromGraph(NotifyTag);
 		}
