@@ -13,7 +13,7 @@ UFlowNodeOnNotifyFromActor::UFlowNodeOnNotifyFromActor(const FObjectInitializer&
 
 void UFlowNodeOnNotifyFromActor::ExecuteInput(const FName& PinName)
 {
-	if (ActorTag.IsValid())
+	if (IdentityTag.IsValid())
 	{
 		UFlowComponent::OnNotifyFromComponent.AddDynamic(this, &UFlowNodeOnNotifyFromActor::OnNotifyFromActor);
 	}
@@ -21,7 +21,7 @@ void UFlowNodeOnNotifyFromActor::ExecuteInput(const FName& PinName)
 
 void UFlowNodeOnNotifyFromActor::OnNotifyFromActor(class UFlowComponent* FlowComponent, const FGameplayTag& Tag)
 {
-	if (FlowComponent->IdentityTags.HasTagExact(ActorTag) && (!NotifyTag.IsValid() || NotifyTag == Tag))
+	if (FlowComponent->IdentityTags.HasTagExact(IdentityTag) && (!NotifyTag.IsValid() || NotifyTag == Tag))
 	{
 		TriggerFirstOutput(true);
 	}
@@ -29,7 +29,7 @@ void UFlowNodeOnNotifyFromActor::OnNotifyFromActor(class UFlowComponent* FlowCom
 
 void UFlowNodeOnNotifyFromActor::Cleanup()
 {
-	if (ActorTag.IsValid())
+	if (IdentityTag.IsValid())
 	{
 		UFlowComponent::OnNotifyFromComponent.RemoveAll(this);
 	}
