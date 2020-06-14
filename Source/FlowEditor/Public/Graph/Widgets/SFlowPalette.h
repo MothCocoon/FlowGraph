@@ -1,10 +1,6 @@
 #pragma once
 
-#include "CoreMinimal.h"
-#include "Framework/Commands/InputChord.h"
 #include "SGraphPalette.h"
-#include "Widgets/DeclarativeSyntaxSupport.h"
-#include "Widgets/SWidget.h"
 
 class FFlowAssetEditor;
 

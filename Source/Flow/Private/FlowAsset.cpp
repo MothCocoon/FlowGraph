@@ -7,12 +7,7 @@
 #include "Nodes/FlowNodeOut.h"
 #include "Nodes/FlowNodeSubGraph.h"
 
-#if WITH_EDITOR
-#include "FlowAssetGraph.h"
-#include "FlowGraphSchema.h"
-
 TSharedPtr<IFlowGraphInterface> UFlowAsset::FlowGraphInterface = nullptr;
-#endif
 
 UFlowAsset::UFlowAsset(const FObjectInitializer& ObjectInitializer)
 	: Super(ObjectInitializer)
@@ -42,7 +37,7 @@ void UFlowAsset::CreateGraph()
 {
 	if (FlowGraph == nullptr)
 	{
-		FlowGraph = UFlowAsset::GetFlowGraphInterface()->CreateGraph(this);
+		FlowGraph = GetFlowGraphInterface()->CreateGraph(this);
 
 		FlowGraph->bAllowDeletion = false;
 		FlowGraph->GetSchema()->CreateDefaultNodesForGraph(*FlowGraph);
@@ -212,7 +207,7 @@ void UFlowAsset::InitInstance(UFlowAsset* InTemplateAsset)
 
 void UFlowAsset::PreloadNodes()
 {
-	// NOTE: this is just the example algorithm of gathering nodes for preload
+	// NOTE: this is just the example algorithm of gathering nodes for pre-load
 	for (UFlowNodeIn* InNode : InNodes)
 	{
 		for (const TPair<TSubclassOf<UFlowNode>, int32>& Node : UFlowSettings::Get()->DefaultPreloadDepth)

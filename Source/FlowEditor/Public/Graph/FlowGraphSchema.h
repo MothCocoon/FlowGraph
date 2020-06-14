@@ -1,6 +1,5 @@
 #pragma once
 
-#include "CoreMinimal.h"
 #include "EdGraph/EdGraphSchema.h"
 #include "FlowGraphSchema.generated.h"
 

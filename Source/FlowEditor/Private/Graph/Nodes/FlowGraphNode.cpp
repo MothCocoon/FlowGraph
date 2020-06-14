@@ -1,4 +1,4 @@
-#include "FlowGraphNode.h"
+#include "Graph/Nodes/FlowGraphNode.h"
 #include "FlowEditorSettings.h"
 #include "Graph/FlowAssetGraph.h"
 #include "Graph/FlowDebugger.h"

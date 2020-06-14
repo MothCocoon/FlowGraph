@@ -1,8 +1,6 @@
 #pragma once
 
-#include "CoreMinimal.h"
 #include "EdGraph/EdGraphNode.h"
-#include "UObject/ObjectMacros.h"
 
 #include "FlowTypes.h"
 #include "FlowGraphNode.generated.h"
@@ -17,7 +15,6 @@ struct FFlowBreakpoint
 {
 	GENERATED_USTRUCT_BODY()
 	
-public:
 	UPROPERTY()
 	bool bHasBreakpoint;
 

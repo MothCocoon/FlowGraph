@@ -1,7 +1,7 @@
-#include "SFlowPalette.h"
-#include "../FlowAssetEditor.h"
-#include "../FlowGraphCommands.h"
-#include "../FlowGraphSchema.h"
+#include "Graph/Widgets/SFlowPalette.h"
+#include "Graph/FlowAssetEditor.h"
+#include "Graph/FlowGraphCommands.h"
+#include "Graph/FlowGraphSchema.h"
 
 #include "Nodes/FlowNode.h"
 
@@ -21,7 +21,7 @@ void SFlowPaletteItem::Construct(const FArguments& InArgs, FCreateWidgetForActio
 	const TSharedPtr<FEdGraphSchemaAction> GraphAction = InCreateData->Action;
 	ActionPtr = InCreateData->Action;
 
-	// Get the Hotkey chord if one exists for this action
+	// Get the hotkey chord if one exists for this action
 	TSharedPtr<const FInputChord> HotkeyChord;
 
 	if (FFlowSpawnNodeCommands::IsRegistered())

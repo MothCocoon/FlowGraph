@@ -1,6 +1,5 @@
 #pragma once
 
-#include "CoreMinimal.h"
 #include "EdGraph/EdGraph.h"
 #include "FlowAssetGraph.generated.h"
 

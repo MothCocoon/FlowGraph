@@ -1,4 +1,4 @@
-#include "FlowNodeNotifyBase.h"
+#include "Nodes/Notifies/FlowNodeNotifyBase.h"
 #include "FlowComponent.h"
 
 UFlowNodeNotifyBase::UFlowNodeNotifyBase(const FObjectInitializer& ObjectInitializer)
