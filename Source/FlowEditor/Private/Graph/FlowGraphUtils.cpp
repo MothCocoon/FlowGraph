@@ -1,6 +1,6 @@
-#include "FlowGraphUtils.h"
-#include "FlowAssetEditor.h"
-#include "FlowAssetGraph.h"
+#include "Graph/FlowGraphUtils.h"
+#include "Graph/FlowAssetEditor.h"
+#include "Graph/FlowAssetGraph.h"
 
 #include "FlowAsset.h"
 

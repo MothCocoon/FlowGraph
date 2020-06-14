@@ -20,7 +20,7 @@ public class Flow : ModuleRules
 
         if (Target.Type == TargetType.Editor)
         {
-            PublicDependencyModuleNames.Add("FlowEditor");
+            PublicDependencyModuleNames.Add("UnrealEd");
         }
     }
 }

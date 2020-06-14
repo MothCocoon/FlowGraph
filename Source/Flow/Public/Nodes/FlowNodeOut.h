@@ -1,6 +1,6 @@
 #pragma once
 
-#include "FlowNode.h"
+#include "Nodes/FlowNode.h"
 #include "FlowNodeOut.generated.h"
 
 /**

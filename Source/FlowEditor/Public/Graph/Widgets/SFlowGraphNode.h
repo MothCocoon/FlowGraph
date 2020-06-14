@@ -1,7 +1,7 @@
 #pragma once
 
 #include "SGraphNode.h"
-#include "SGraphPinExec.h"
+#include "KismetPins/SGraphPinExec.h"
 
 #include "Graph/Nodes/FlowGraphNode.h"
 

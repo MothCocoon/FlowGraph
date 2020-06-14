@@ -1,6 +1,6 @@
 #pragma once
 
-#include "FlowNodeNotifyBase.h"
+#include "Nodes/Notifies/FlowNodeNotifyBase.h"
 #include "FlowNodeOnNotifyFromActor.generated.h"
 
 /**

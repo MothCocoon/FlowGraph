@@ -1,5 +1,5 @@
-#include "FlowGraphCommands.h"
-#include "FlowGraphSchema.h"
+#include "Graph/FlowGraphCommands.h"
+#include "Graph/FlowGraphSchema.h"
 
 #include "Nodes/FlowNode.h"
 

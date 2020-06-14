@@ -1,4 +1,4 @@
-#include "FlowNodeOnNotifyFromActor.h"
+#include "Nodes/Notifies/FlowNodeOnNotifyFromActor.h"
 #include "FlowComponent.h"
 
 UFlowNodeOnNotifyFromActor::UFlowNodeOnNotifyFromActor(const FObjectInitializer& ObjectInitializer)

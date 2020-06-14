@@ -1,4 +1,4 @@
-#include "FlowGraphNode_Reroute.h"
+#include "Graph/Nodes/FlowGraphNode_Reroute.h"
 #include "SGraphNodeKnot.h"
 
 UFlowGraphNode_Reroute::UFlowGraphNode_Reroute(const FObjectInitializer& ObjectInitializer)

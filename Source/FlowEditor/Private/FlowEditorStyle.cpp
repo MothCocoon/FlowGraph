@@ -1,5 +1,4 @@
 #include "FlowEditorStyle.h"
-#include "FlowEditorSettings.h"
 
 #include "Interfaces/IPluginManager.h"
 #include "Styling/SlateStyleRegistry.h"

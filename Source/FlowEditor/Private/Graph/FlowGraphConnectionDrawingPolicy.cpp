@@ -1,13 +1,12 @@
-#include "FlowGraphConnectionDrawingPolicy.h"
-#include "../FlowEditorSettings.h"
-#include "FlowAssetGraph.h"
-#include "FlowGraphSchema.h"
-#include "Nodes/FlowGraphNode.h"
+#include "Graph/FlowGraphConnectionDrawingPolicy.h"
+#include "FlowEditorSettings.h"
+#include "Graph/FlowAssetGraph.h"
+#include "Graph/FlowGraphSchema.h"
+#include "Graph/Nodes/FlowGraphNode.h"
 
 #include "FlowAsset.h"
 #include "Nodes/FlowNode.h"
 
-#include "Editor.h"
 #include "Misc/App.h"
 
 FConnectionDrawingPolicy* FFlowGraphConnectionDrawingPolicyFactory::CreateConnectionPolicy(const class UEdGraphSchema* Schema, int32 InBackLayerID, int32 InFrontLayerID, float ZoomFactor, const class FSlateRect& InClippingRect, class FSlateWindowElementList& InDrawElements, class UEdGraph* InGraphObj) const
@@ -18,7 +17,6 @@ FConnectionDrawingPolicy* FFlowGraphConnectionDrawingPolicyFactory::CreateConnec
 	}
 	return nullptr;
 }
-
 
 /////////////////////////////////////////////////////
 // FFlowGraphConnectionDrawingPolicy

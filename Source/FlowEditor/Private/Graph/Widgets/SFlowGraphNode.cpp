@@ -1,4 +1,4 @@
-#include "SFlowGraphNode.h"
+#include "Graph/Widgets/SFlowGraphNode.h"
 #include "FlowEditorSettings.h"
 #include "FlowEditorStyle.h"
 
