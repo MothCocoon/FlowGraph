@@ -1,9 +1,10 @@
 #include "Graph/FlowAssetGraph.h"
+
+#include "Graph/FlowGraphSchema.h"
 #include "Graph/Nodes/FlowGraphNode.h"
 #include "Graph/Nodes/FlowGraphNode_In.h"
 #include "Graph/Nodes/FlowGraphNode_Out.h"
 #include "Graph/Nodes/FlowGraphNode_Reroute.h"
-#include "Graph/FlowGraphSchema.h"
 
 #include "FlowAsset.h"
 #include "Nodes/FlowNode.h"

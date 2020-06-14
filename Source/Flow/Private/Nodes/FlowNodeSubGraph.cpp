@@ -1,6 +1,7 @@
 #include "Nodes/FlowNodeSubGraph.h"
-#include "FlowSubsystem.h"
+
 #include "FlowAsset.h"
+#include "FlowSubsystem.h"
 
 UFlowNodeSubGraph::UFlowNodeSubGraph(const FObjectInitializer& ObjectInitializer)
 	: Super(ObjectInitializer)
