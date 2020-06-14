@@ -1,6 +1,5 @@
-#include "SFlowGraphNode_In.h"
+#include "Graph/Widgets/SFlowGraphNode_In.h"
 
-#include "Widgets/Images/SImage.h"
 #include "Widgets/SBoxPanel.h"
 
 TSharedRef<SWidget> SFlowGraphNode_In::CreateNodeContentArea()

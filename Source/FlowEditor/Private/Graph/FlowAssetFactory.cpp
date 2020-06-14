@@ -1,4 +1,4 @@
-#include "FlowAssetFactory.h"
+#include "Graph/FlowAssetFactory.h"
 #include "FlowAsset.h"
 
 UFlowAssetFactory::UFlowAssetFactory(const FObjectInitializer& ObjectInitializer)
