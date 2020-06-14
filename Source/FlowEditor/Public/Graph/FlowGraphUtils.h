@@ -4,9 +4,6 @@
 
 class FFlowAssetEditor;
 
-class UEdGraph;
-struct Rect;
-
 class FLOWEDITOR_API FFlowGraphUtils
 {
 public:

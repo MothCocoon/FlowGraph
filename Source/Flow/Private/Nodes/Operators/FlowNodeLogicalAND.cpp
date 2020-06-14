@@ -1,4 +1,4 @@
-#include "FlowNodeLogicalAND.h"
+#include "Nodes/Operators/FlowNodeLogicalAND.h"
 
 UFlowNodeLogicalAND::UFlowNodeLogicalAND(const FObjectInitializer& ObjectInitializer)
 	: Super(ObjectInitializer)

@@ -1,4 +1,4 @@
-#include "FlowNode.h"
+#include "Nodes/FlowNode.h"
 #include "FlowSubsystem.h"
 #include "FlowAsset.h"
 #include "FlowTypes.h"

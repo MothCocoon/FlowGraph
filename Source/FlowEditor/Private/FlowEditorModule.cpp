@@ -83,5 +83,5 @@ void FFlowEditorModule::CreateFlowToolbar(FToolBarBuilder& ToolbarBuilder) const
 
 #undef LOCTEXT_NAMESPACE
 
-IMPLEMENT_MODULE(FFlowEditorModule, FlowEditor);
+IMPLEMENT_MODULE(FFlowEditorModule, FlowEditor)
 DEFINE_LOG_CATEGORY(LogFlowEditor);

@@ -1,4 +1,4 @@
-#include "FlowGraphNode_Out.h"
+#include "Graph/Nodes/FlowGraphNode_Out.h"
 #include "Graph/Widgets/SFlowGraphNode_Out.h"
 
 UFlowGraphNode_Out::UFlowGraphNode_Out(const FObjectInitializer& ObjectInitializer)

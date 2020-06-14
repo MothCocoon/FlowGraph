@@ -1,4 +1,4 @@
-#include "FlowDebugger.h"
+#include "Graph/FlowDebugger.h"
 #include "UnrealEd.h"
 
 FFlowDebugger::FFlowDebugger()

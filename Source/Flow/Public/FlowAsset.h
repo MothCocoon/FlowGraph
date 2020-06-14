@@ -1,8 +1,6 @@
 #pragma once
 
 #include "CoreMinimal.h"
-#include "Templates/SubclassOf.h"
-#include "UObject/ObjectMacros.h"
 #include "FlowAsset.generated.h"
 
 class UFlowNode;
@@ -10,7 +8,6 @@ class UFlowNodeIn;
 class UFlowNodeSubGraph;
 class UFlowSubsystem;
 
-#if WITH_EDITOR
 class UEdGraph;
 class UFlowAsset;
 
@@ -26,7 +23,6 @@ public:
 	virtual void OnInputTriggered(UEdGraphNode* GraphNode, const int32 Index) = 0;
 	virtual void OnOutputTriggered(UEdGraphNode* GraphNode, const int32 Index) = 0;
 };
-#endif
 
 /**
  * Single asset containing flow nodes.
@@ -36,7 +32,6 @@ class FLOW_API UFlowAsset : public UObject
 {
 	GENERATED_UCLASS_BODY()
 
-public:
 	friend class UFlowNode;
 
 //////////////////////////////////////////////////////////////////////////
@@ -44,19 +39,18 @@ public:
 
 	// UObject
 #if WITH_EDITOR
-public:
 	virtual void PostInitProperties() override;
 	static void AddReferencedObjects(UObject* InThis, FReferenceCollector& Collector);
 #endif
 	// --
 
 	// IFlowGraphInterface
-#if WITH_EDITORONLY_DATA
 private:
+	static TSharedPtr<IFlowGraphInterface> FlowGraphInterface;
+	
+#if WITH_EDITORONLY_DATA
 	UPROPERTY()
 	UEdGraph* FlowGraph;
-
-	static TSharedPtr<IFlowGraphInterface> FlowGraphInterface;
 #endif
 
 #if WITH_EDITOR

@@ -1,4 +1,4 @@
-#include "FlowNodeIn.h"
+#include "Nodes/FlowNodeIn.h"
 
 UFlowNodeIn::UFlowNodeIn(const FObjectInitializer& ObjectInitializer)
 	: Super(ObjectInitializer)

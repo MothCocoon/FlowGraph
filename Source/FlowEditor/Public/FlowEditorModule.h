@@ -29,7 +29,7 @@ struct FExtensibilityManagers
 	}
 };
 
-DECLARE_LOG_CATEGORY_EXTERN(LogFlowEditor, Log, All);
+DECLARE_LOG_CATEGORY_EXTERN(LogFlowEditor, Log, All)
 
 class FFlowEditorModule : public IModuleInterface
 {

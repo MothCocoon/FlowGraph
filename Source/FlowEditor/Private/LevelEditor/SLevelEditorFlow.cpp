@@ -1,9 +1,9 @@
-#include "SLevelEditorFlow.h"
+#include "LevelEditor/SLevelEditorFlow.h"
 #include "FlowAsset.h"
 #include "FlowWorldSettings.h"
 
 #include "Editor.h"
-#include "MultiBoxDefs.h"
+#include "Framework/MultiBox/MultiBoxDefs.h"
 #include "PropertyCustomizationHelpers.h"
 #include "SLevelOfDetailBranchNode.h"
 
@@ -13,7 +13,7 @@ void SLevelEditorFlow::Construct(const FArguments& InArgs)
 {
 	CreateFlowWidget();
 
-	FDelegateHandle Handle = FEditorDelegates::OnMapOpened.AddRaw(this, &SLevelEditorFlow::OnMapOpened);
+	FEditorDelegates::OnMapOpened.AddRaw(this, &SLevelEditorFlow::OnMapOpened);
 }
 
 void SLevelEditorFlow::OnMapOpened(const FString& Filename, bool bAsTemplate)
@@ -37,7 +37,7 @@ void SLevelEditorFlow::CreateFlowWidget()
 		.OnObjectChanged(this, &SLevelEditorFlow::OnFlowChanged)
 		.ObjectPath(this, &SLevelEditorFlow::GetFlowPath);
 
-	TSharedRef<SWidget> FlowWidget =
+	const TSharedRef<SWidget> FlowWidget =
 		SNew(SHorizontalBox)
 		+ SHorizontalBox::Slot()
 		.AutoWidth()

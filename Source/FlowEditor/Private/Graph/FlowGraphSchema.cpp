@@ -1,8 +1,8 @@
-#include "FlowGraphSchema.h"
-#include "FlowAssetEditor.h"
-#include "FlowAssetGraph.h"
-#include "FlowGraphUtils.h"
-#include "Nodes/FlowGraphNode.h"
+#include "Graph/FlowGraphSchema.h"
+#include "Graph/FlowAssetEditor.h"
+#include "Graph/FlowAssetGraph.h"
+#include "Graph/FlowGraphUtils.h"
+#include "Graph/Nodes/FlowGraphNode.h"
 
 #include "FlowAsset.h"
 #include "Nodes/FlowNode.h"
@@ -12,13 +12,8 @@
 #include "EdGraph/EdGraph.h"
 #include "EdGraphNode_Comment.h"
 #include "Editor.h"
-#include "Engine/Selection.h"
-#include "Framework/MultiBox/MultiBoxBuilder.h"
-#include "GraphEditor.h"
-#include "GraphEditorActions.h"
 #include "Layout/SlateRect.h"
 #include "ScopedTransaction.h"
-#include "UObject/UObjectHash.h"
 #include "UObject/UObjectIterator.h"
 
 #define LOCTEXT_NAMESPACE "FlowGraphSchema"
@@ -272,6 +267,7 @@ void UFlowGraphSchema::GetFlowNodeActions(FGraphActionMenuBuilder& ActionMenuBui
 						continue;
 					}
 					break;
+				default: ;
 			}
 		}
 

@@ -2,9 +2,7 @@
 
 #include "CoreMinimal.h"
 #include "Engine/StreamableManager.h"
-#include "UObject/Object.h"
-#include "UObject/Class.h"
-#include "VisualLoggerDebugSnapshotInterface.h"
+#include "VisualLogger/VisualLoggerDebugSnapshotInterface.h"
 
 #include "FlowTypes.h"
 #include "FlowNode.generated.h"

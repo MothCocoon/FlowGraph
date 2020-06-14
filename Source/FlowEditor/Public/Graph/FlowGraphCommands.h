@@ -1,9 +1,6 @@
 #pragma once
 
-#include "CoreMinimal.h"
 #include "EdGraph/EdGraphSchema.h"
-#include "Framework/Commands/Commands.h"
-#include "Framework/Commands/InputChord.h"
 
 /** Generic graph commands for the flow graph */
 class FFlowGraphCommands : public TCommands<FFlowGraphCommands>
