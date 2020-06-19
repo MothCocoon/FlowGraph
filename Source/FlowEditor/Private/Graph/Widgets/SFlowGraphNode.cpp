@@ -8,6 +8,8 @@
 #include "GraphEditorSettings.h"
 #include "Widgets/SBoxPanel.h"
 
+#define LOCTEXT_NAMESPACE "SFlowGraphNode"
+
 void SFlowGraphPin::Tick(const FGeometry& AllottedGeometry, const double InCurrentTime, const float InDeltaTime)
 {
 	SGraphPinExec::Tick(AllottedGeometry, InCurrentTime, InDeltaTime);
@@ -197,8 +199,8 @@ void SFlowGraphNode::CreateInputSideAddButton(TSharedPtr<SVerticalBox> OutputBox
 	if (FlowGraphNode->CanUserAddInput())
 	{
 		const TSharedRef<SWidget> AddPinButton = AddPinButtonContent(
-		NSLOCTEXT("FlowNode", "FlowNodeAddPinButton", "Add pin"),
-		NSLOCTEXT("FlowNode", "FlowNodeAddPinButton_Tooltip", "Adds an input pin")
+		LOCTEXT("FlowNodeAddPinButton", "Add pin"),
+		LOCTEXT("FlowNodeAddPinButton_Tooltip", "Adds an input pin")
 		);
 
 		FMargin AddPinPadding = Settings->GetInputPinPadding();
@@ -219,8 +221,8 @@ void SFlowGraphNode::CreateOutputSideAddButton(TSharedPtr<SVerticalBox> OutputBo
 	if (FlowGraphNode->CanUserAddOutput())
 	{
 		const TSharedRef<SWidget> AddPinButton = AddPinButtonContent(
-		NSLOCTEXT("FlowNode", "FlowNodeAddPinButton", "Add pin"),
-		NSLOCTEXT("FlowNode", "FlowNodeAddPinButton_Tooltip", "Adds an output pin")
+		LOCTEXT("FlowNodeAddPinButton", "Add pin"),
+		LOCTEXT("FlowNodeAddPinButton_Tooltip", "Adds an output pin")
 		);
 
 		FMargin AddPinPadding = Settings->GetOutputPinPadding();
@@ -249,3 +251,5 @@ FReply SFlowGraphNode::OnAddPin()
 
 	return FReply::Handled();
 }
+
+#undef LOCTEXT_NAMESPACE
