@@ -6,7 +6,7 @@
 class FlowAssetActions : public FAssetTypeActions_Base
 {
 public:
-	virtual FText GetName() const override { return NSLOCTEXT("AssetTypeActions", "AssetTypeActions_FlowAsset", "Flow Asset"); }
+	virtual FText GetName() const override;
 	virtual FColor GetTypeColor() const override { return FColor(255, 196, 128); }
 	virtual bool CanFilter() override { return true; }
 

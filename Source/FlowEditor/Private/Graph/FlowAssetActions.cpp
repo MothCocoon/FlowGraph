@@ -3,7 +3,12 @@
 
 #include "FlowAsset.h"
 
-#define LOCTEXT_NAMESPACE "AssetTypeActions"
+#define LOCTEXT_NAMESPACE "FlowAssetTypeActions"
+
+FText FlowAssetActions::GetName() const
+{
+	return LOCTEXT("AssetTypeActions_FlowAsset", "Flow Asset");
+}
 
 UClass* FlowAssetActions::GetSupportedClass() const
 {
