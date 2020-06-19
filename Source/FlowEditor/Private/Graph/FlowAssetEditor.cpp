@@ -563,7 +563,7 @@ bool FFlowAssetEditor::CanSelectAllNodes() const
 
 void FFlowAssetEditor::DeleteSelectedNodes() const
 {
-	const FScopedTransaction Transaction(NSLOCTEXT("UnrealEd", "FlowEditorDeleteSelectedNode", "Delete Selected Flow Node"));
+	const FScopedTransaction Transaction(LOCTEXT("FlowEditorDeleteSelectedNode", "Delete Selected Flow Node"));
 	FocusedGraphEditor->GetCurrentGraph()->Modify();
 
 	const FGraphPanelSelectionSet SelectedNodes = GetSelectedNodes();
@@ -715,7 +715,7 @@ void FFlowAssetEditor::PasteNodes() const
 void FFlowAssetEditor::PasteNodesHere(const FVector2D& Location) const
 {
 	// Undo/Redo support
-	const FScopedTransaction Transaction(NSLOCTEXT("UnrealEd", "FlowEditorPaste", "Paste Flow Node"));
+	const FScopedTransaction Transaction(LOCTEXT("FlowEditorPaste", "Paste Flow Node"));
 	FlowAsset->GetGraph()->Modify();
 	FlowAsset->Modify();
 

@@ -226,7 +226,7 @@ void UFlowGraphSchema::BreakNodeLinks(UEdGraphNode& TargetNode) const
 
 void UFlowGraphSchema::BreakPinLinks(UEdGraphPin& TargetPin, bool bSendsNodeNotifcation) const
 {
-	const FScopedTransaction Transaction(NSLOCTEXT("UnrealEd", "GraphEd_BreakPinLinks", "Break Pin Links"));
+	const FScopedTransaction Transaction(LOCTEXT("GraphEd_BreakPinLinks", "Break Pin Links"));
 
 	Super::BreakPinLinks(TargetPin, bSendsNodeNotifcation);
 
