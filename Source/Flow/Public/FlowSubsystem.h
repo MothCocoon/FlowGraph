@@ -48,7 +48,7 @@ private:
 	UFlowAsset* CreateFlowInstance(TSoftObjectPtr<UFlowAsset> FlowAsset);
 
 public:
-	FORCEINLINE UWorld* GetWorld() const;
+	virtual UWorld* GetWorld() const override;
 
 //////////////////////////////////////////////////////////////////////////
 // Flow Components
@@ -73,7 +73,7 @@ public:
 		TArray<TWeakObjectPtr<T>> ResultComponents;
 		for (const TWeakObjectPtr<UFlowComponent>& Component : FoundComponents)
 		{
-			if (Component.Get()->GetClass()->IsChildOf(T::StaticClass()))
+			if (Component->GetClass()->IsChildOf(T::StaticClass()))
 			{
 				ResultComponents.Emplace(Cast<T>(Component));
 			}
@@ -91,9 +91,9 @@ public:
 		TArray<TWeakObjectPtr<T>> ResultActors;
 		for (const TWeakObjectPtr<UFlowComponent>& Component : FoundComponents)
 		{
-			if (Component.Get()->GetOwner()->GetClass()->IsChildOf(T::StaticClass()))
+			if (Component->GetOwner()->GetClass()->IsChildOf(T::StaticClass()))
 			{
-				ResultActors.Emplace(Cast<T>(Component.Get()->GetOwner()));
+				ResultActors.Emplace(Cast<T>(Component->GetOwner()));
 			}
 		}
 
