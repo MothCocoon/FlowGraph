@@ -6,38 +6,34 @@ public class FlowEditor : ModuleRules
     {
         PCHUsage = PCHUsageMode.UseExplicitOrSharedPCHs;
 
-        PublicDependencyModuleNames.AddRange(
-            new[]
-            {
-                "Flow"
-            }
-        );
+        PublicDependencyModuleNames.AddRange(new[]
+        {
+            "Flow"
+        });
 
-        PrivateDependencyModuleNames.AddRange(
-            new[]
-            {
-                "ApplicationCore",
-                "BlueprintGraph",
-                "ClassViewer",
-                "ContentBrowser",
-                "Core",
-                "CoreUObject",
-                "DetailCustomizations",
-                "EditorStyle",
-                "Engine",
-                "GraphEditor",
-                "InputCore",
-                "KismetWidgets",
-                "LevelEditor",
-                "Projects",
-                "PropertyEditor",
-                "RenderCore",
-                "Sequencer",
-                "Slate",
-                "SlateCore",
-                "ToolMenus",
-                "UnrealEd"
-            }
-        );
+        PrivateDependencyModuleNames.AddRange(new[]
+        {
+            "ApplicationCore",
+            "BlueprintGraph",
+            "ClassViewer",
+            "ContentBrowser",
+            "Core",
+            "CoreUObject",
+            "DetailCustomizations",
+            "EditorStyle",
+            "Engine",
+            "GraphEditor",
+            "InputCore",
+            "KismetWidgets",
+            "LevelEditor",
+            "Projects",
+            "PropertyEditor",
+            "RenderCore",
+            "Sequencer",
+            "Slate",
+            "SlateCore",
+            "ToolMenus",
+            "UnrealEd"
+        });
     }
 }

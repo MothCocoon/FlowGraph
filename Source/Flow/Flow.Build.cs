@@ -6,17 +6,15 @@ public class Flow : ModuleRules
 	{
         PCHUsage = PCHUsageMode.UseExplicitOrSharedPCHs;
 
-		PrivateDependencyModuleNames.AddRange(
-			new[] 
-			{
-                "Core",
-				"CoreUObject",
-				"Engine",
-                "GameplayTags",
-                "Slate",
-                "SlateCore"
-            }
-        );
+		PrivateDependencyModuleNames.AddRange(new[] 
+		{
+            "Core",
+			"CoreUObject",
+			"Engine",
+            "GameplayTags",
+            "Slate",
+            "SlateCore"
+        });
 
         if (Target.Type == TargetType.Editor)
         {
