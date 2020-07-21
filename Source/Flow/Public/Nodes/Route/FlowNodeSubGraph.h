@@ -16,7 +16,7 @@ class FLOW_API UFlowNodeSubGraph : public UFlowNode
 	friend class UFlowSubsystem;
 	
 private:
-	UPROPERTY(EditAnywhere, Category = "Graph")
+	UPROPERTY(EditDefaultsOnly, Category = "Graph")
 	TSoftObjectPtr<UFlowAsset> Asset;
 
 protected:
