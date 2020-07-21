@@ -4,6 +4,9 @@
 UFlowNodeNotifyBase::UFlowNodeNotifyBase(const FObjectInitializer& ObjectInitializer)
 	: Super(ObjectInitializer)
 {
+#if WITH_EDITOR
+	Category = TEXT("Notifies");
+#endif
 }
 
 #if WITH_EDITOR

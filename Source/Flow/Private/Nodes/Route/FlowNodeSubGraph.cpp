@@ -1,4 +1,4 @@
-#include "Nodes/FlowNodeSubGraph.h"
+#include "Nodes/Route/FlowNodeSubGraph.h"
 
 #include "FlowAsset.h"
 #include "FlowSubsystem.h"
@@ -7,6 +7,7 @@ UFlowNodeSubGraph::UFlowNodeSubGraph(const FObjectInitializer& ObjectInitializer
 	: Super(ObjectInitializer)
 {
 #if WITH_EDITOR
+	Category = TEXT("Route");
 	NodeStyle = EFlowNodeStyle::SubGraph;
 #endif
 }
