@@ -230,4 +230,5 @@ protected:
 
 public:
 	FString GetProgressAsString(float Value) const;
+	void LogError(FString Message);
 };
