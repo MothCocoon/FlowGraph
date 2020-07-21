@@ -1,6 +1,7 @@
 #include "Nodes/FlowNode.h"
 
 #include "FlowAsset.h"
+#include "FlowModule.h"
 #include "FlowSubsystem.h"
 #include "FlowTypes.h"
 
@@ -285,4 +286,13 @@ FString UFlowNode::GetProgressAsString(float Value) const
 
 	TempString.RemoveAt(TrimIndex, TempString.Len() - TrimIndex, /*bAllowShrinking*/false);
 	return TempString;
+}
+
+void UFlowNode::LogError(FString Message)
+{
+	const FString TemplatePath = GetFlowAsset()->TemplateAsset->GetPathName();
+	Message += TEXT(" in node ") + GetName() + TEXT(", asset ") + FPaths::GetPath(TemplatePath) + TEXT("/") + FPaths::GetBaseFilename(TemplatePath);
+
+	GEngine->AddOnScreenDebugMessage(-1, 2.0f, FColor::Red, Message);
+	UE_LOG(LogFlow, Error, TEXT("%s"), *Message);
 }
