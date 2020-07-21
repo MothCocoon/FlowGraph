@@ -42,7 +42,7 @@ struct FLOW_API FPinRecord
 	FPinRecord(const double InTime);
 
 private:
-	FORCEINLINE const FString DoubleDigit(const int32 Number) const;
+	FORCEINLINE FString DoubleDigit(const int32 Number) const;
 };
 #endif
 
