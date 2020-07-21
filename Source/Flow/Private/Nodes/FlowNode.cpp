@@ -28,7 +28,7 @@ FPinRecord::FPinRecord(const double InTime)
 		+ DoubleDigit(SystemTime.GetMillisecond()).Left(3);
 }
 
-FORCEINLINE const FString FPinRecord::DoubleDigit(const int32 Number) const
+FORCEINLINE FString FPinRecord::DoubleDigit(const int32 Number) const
 {
 	return Number > 9 ? FString::FromInt(Number) : TEXT("0") + FString::FromInt(Number);
 }
@@ -38,7 +38,7 @@ UFlowNode::UFlowNode(const FObjectInitializer& ObjectInitializer)
 	: Super(ObjectInitializer)
 {
 #if WITH_EDITOR
-	Category = TEXT("Flow");
+	Category = TEXT("Uncategorized");
 	NodeStyle = EFlowNodeStyle::Default;
 #endif
 

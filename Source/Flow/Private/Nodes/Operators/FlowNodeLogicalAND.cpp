@@ -4,6 +4,7 @@ UFlowNodeLogicalAND::UFlowNodeLogicalAND(const FObjectInitializer& ObjectInitial
 	: Super(ObjectInitializer)
 {
 #if WITH_EDITOR
+	Category = TEXT("Operators");
 	NodeStyle = EFlowNodeStyle::Logic;
 #endif
 

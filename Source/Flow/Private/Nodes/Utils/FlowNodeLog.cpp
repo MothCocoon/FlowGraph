@@ -1,4 +1,4 @@
-#include "Nodes/FlowNodeLog.h"
+#include "Nodes/Utils/FlowNodeLog.h"
 #include "FlowModule.h"
 
 #include "Engine/Engine.h"
@@ -9,6 +9,9 @@ UFlowNodeLog::UFlowNodeLog(const FObjectInitializer& ObjectInitializer)
 	, Duration(5.0f)
 	, TextColor(FColor::Yellow)
 {
+#if WITH_EDITOR
+	Category = TEXT("Utils");
+#endif
 }
 
 void UFlowNodeLog::ExecuteInput(const FName& PinName)

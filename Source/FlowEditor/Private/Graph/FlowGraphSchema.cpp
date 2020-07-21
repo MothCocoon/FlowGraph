@@ -7,7 +7,7 @@
 
 #include "FlowAsset.h"
 #include "Nodes/FlowNode.h"
-#include "Nodes/FlowNodeIn.h"
+#include "Nodes/Route/FlowNodeIn.h"
 
 #include "Developer/ToolMenus/Public/ToolMenus.h"
 #include "EdGraph/EdGraph.h"
