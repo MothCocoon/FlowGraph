@@ -8,9 +8,9 @@
 
 #include "FlowAsset.h"
 #include "Nodes/FlowNode.h"
-#include "Nodes/FlowNodeIn.h"
-#include "Nodes/FlowNodeOut.h"
-#include "Nodes/FlowNodeReroute.h"
+#include "Nodes/Route/FlowNodeIn.h"
+#include "Nodes/Route/FlowNodeOut.h"
+#include "Nodes/Route/FlowNodeReroute.h"
 
 #include "Kismet2/BlueprintEditorUtils.h"
 

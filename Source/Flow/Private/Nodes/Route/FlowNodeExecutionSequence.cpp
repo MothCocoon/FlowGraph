@@ -1,9 +1,10 @@
-#include "Nodes/FlowNodeExecutionSequence.h"
+#include "Nodes/Route/FlowNodeExecutionSequence.h"
 
 UFlowNodeExecutionSequence::UFlowNodeExecutionSequence(const FObjectInitializer& ObjectInitializer)
 	: Super(ObjectInitializer)
 {
 #if WITH_EDITOR
+	Category = TEXT("Route");
 	NodeStyle = EFlowNodeStyle::Logic;
 #endif
 
