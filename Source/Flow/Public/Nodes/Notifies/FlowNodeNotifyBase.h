@@ -14,10 +14,10 @@ class FLOW_API UFlowNodeNotifyBase : public UFlowNode
 	GENERATED_UCLASS_BODY()
 	
 protected:
-	UPROPERTY(EditDefaultsOnly, Category = "NotifyActor")
+	UPROPERTY(EditDefaultsOnly, Category = "Notify")
 	FGameplayTag IdentityTag;
 
-	UPROPERTY(EditDefaultsOnly, Category = "NotifyActor")
+	UPROPERTY(EditDefaultsOnly, Category = "Notify")
 	FGameplayTag NotifyTag;
 
 #if WITH_EDITOR
