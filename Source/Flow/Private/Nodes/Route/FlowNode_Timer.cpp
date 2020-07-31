@@ -1,6 +1,6 @@
-#include "Nodes/Route/FlowNodeTimer.h"
+#include "Nodes/Route/FlowNode_Timer.h"
 
-UFlowNodeTimer::UFlowNodeTimer(const FObjectInitializer& ObjectInitializer)
+UFlowNode_Timer::UFlowNode_Timer(const FObjectInitializer& ObjectInitializer)
 	: Super(ObjectInitializer)
 	, CompletionTime(1.0f)
 	, StepTime(0.0f)
@@ -19,7 +19,7 @@ UFlowNodeTimer::UFlowNodeTimer(const FObjectInitializer& ObjectInitializer)
 	OutputNames.Add(TEXT("Skipped"));
 }
 
-void UFlowNodeTimer::ExecuteInput(const FName& PinName)
+void UFlowNode_Timer::ExecuteInput(const FName& PinName)
 {
 	if (CompletionTime == 0.0f)
 	{
@@ -40,10 +40,10 @@ void UFlowNodeTimer::ExecuteInput(const FName& PinName)
 		{
 			if (StepTime > 0.0f)
 			{
-				GetWorld()->GetTimerManager().SetTimer(StepTimerHandle, this, &UFlowNodeTimer::OnStep, StepTime, true);
+				GetWorld()->GetTimerManager().SetTimer(StepTimerHandle, this, &UFlowNode_Timer::OnStep, StepTime, true);
 			}
 
-			GetWorld()->GetTimerManager().SetTimer(CompletionTimerHandle, this, &UFlowNodeTimer::OnCompletion, CompletionTime, false);
+			GetWorld()->GetTimerManager().SetTimer(CompletionTimerHandle, this, &UFlowNode_Timer::OnCompletion, CompletionTime, false);
 		}
 		else
 		{
@@ -57,7 +57,7 @@ void UFlowNodeTimer::ExecuteInput(const FName& PinName)
 	}
 }
 
-void UFlowNodeTimer::OnStep()
+void UFlowNode_Timer::OnStep()
 {
 	SumOfSteps += StepTime;
 
@@ -71,12 +71,12 @@ void UFlowNodeTimer::OnStep()
 	}
 }
 
-void UFlowNodeTimer::OnCompletion()
+void UFlowNode_Timer::OnCompletion()
 {
 	TriggerOutput(TEXT("Completed"), true);
 }
 
-void UFlowNodeTimer::Cleanup()
+void UFlowNode_Timer::Cleanup()
 {
 	if (GetWorld())
 	{
@@ -94,7 +94,7 @@ void UFlowNodeTimer::Cleanup()
 }
 
 #if WITH_EDITOR
-FString UFlowNodeTimer::GetNodeDescription() const
+FString UFlowNode_Timer::GetNodeDescription() const
 {
 	if (CompletionTime > 0.0f)
 	{
@@ -109,7 +109,7 @@ FString UFlowNodeTimer::GetNodeDescription() const
 	return TEXT("Invalid settings");
 }
 
-FString UFlowNodeTimer::GetStatusString() const
+FString UFlowNode_Timer::GetStatusString() const
 {
 	if (StepTime > 0.0f)
 	{

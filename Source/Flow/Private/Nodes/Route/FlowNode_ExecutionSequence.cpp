@@ -1,6 +1,6 @@
-#include "Nodes/Route/FlowNodeExecutionSequence.h"
+#include "Nodes/Route/FlowNode_ExecutionSequence.h"
 
-UFlowNodeExecutionSequence::UFlowNodeExecutionSequence(const FObjectInitializer& ObjectInitializer)
+UFlowNode_ExecutionSequence::UFlowNode_ExecutionSequence(const FObjectInitializer& ObjectInitializer)
 	: Super(ObjectInitializer)
 {
 #if WITH_EDITOR
@@ -11,7 +11,7 @@ UFlowNodeExecutionSequence::UFlowNodeExecutionSequence(const FObjectInitializer&
 	SetNumericalOutputs(0, 1);
 }
 
-void UFlowNodeExecutionSequence::ExecuteInput(const FName& PinName)
+void UFlowNode_ExecutionSequence::ExecuteInput(const FName& PinName)
 {
 	for (const FName& Output : OutputNames)
 	{

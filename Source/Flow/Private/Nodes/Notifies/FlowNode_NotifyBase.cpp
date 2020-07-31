@@ -1,7 +1,7 @@
-#include "Nodes/Notifies/FlowNodeNotifyBase.h"
+#include "Nodes/Notifies/FlowNode_NotifyBase.h"
 #include "FlowComponent.h"
 
-UFlowNodeNotifyBase::UFlowNodeNotifyBase(const FObjectInitializer& ObjectInitializer)
+UFlowNode_NotifyBase::UFlowNode_NotifyBase(const FObjectInitializer& ObjectInitializer)
 	: Super(ObjectInitializer)
 {
 #if WITH_EDITOR
@@ -10,7 +10,7 @@ UFlowNodeNotifyBase::UFlowNodeNotifyBase(const FObjectInitializer& ObjectInitial
 }
 
 #if WITH_EDITOR
-FString UFlowNodeNotifyBase::GetNodeDescription() const
+FString UFlowNode_NotifyBase::GetNodeDescription() const
 {
 	const FString IdentityString = IdentityTag.IsValid() ? IdentityTag.ToString() : TEXT("Missing Actor Tag!");
 	const FString NotifyString = NotifyTag.IsValid() ? NotifyTag.ToString() : TEXT("---");
