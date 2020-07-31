@@ -1,13 +1,13 @@
 #pragma once
 
 #include "Nodes/FlowNode.h"
-#include "FlowNodeTimer.generated.h"
+#include "FlowNode_Timer.generated.h"
 
 /**
  * Timer
  */
 UCLASS(meta = (DisplayName = "Timer"))
-class FLOW_API UFlowNodeTimer final : public UFlowNode
+class FLOW_API UFlowNode_Timer final : public UFlowNode
 {
 	GENERATED_UCLASS_BODY()
 

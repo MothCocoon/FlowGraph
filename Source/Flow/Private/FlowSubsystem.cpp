@@ -1,7 +1,7 @@
 #include "FlowSubsystem.h"
 #include "FlowAsset.h"
 #include "FlowComponent.h"
-#include "Nodes/Route/FlowNodeSubGraph.h"
+#include "Nodes/Route/FlowNode_SubGraph.h"
 
 #include "Engine/GameInstance.h"
 #include "Engine/World.h"
@@ -41,7 +41,7 @@ void UFlowSubsystem::EndFlow(UFlowAsset* FlowAsset)
 	// todo
 }
 
-void UFlowSubsystem::PreloadSubFlow(UFlowNodeSubGraph* SubFlow)
+void UFlowSubsystem::PreloadSubFlow(UFlowNode_SubGraph* SubFlow)
 {
 	if (!InstancedSubFlows.Contains(SubFlow))
 	{
@@ -52,7 +52,7 @@ void UFlowSubsystem::PreloadSubFlow(UFlowNodeSubGraph* SubFlow)
 	}
 }
 
-void UFlowSubsystem::FlushPreload(UFlowNodeSubGraph* SubFlow)
+void UFlowSubsystem::FlushPreload(UFlowNode_SubGraph* SubFlow)
 {
 	if (UFlowAsset* PreloadedAsset = InstancedSubFlows.FindRef(SubFlow))
 	{
@@ -67,7 +67,7 @@ void UFlowSubsystem::FlushPreload(UFlowNodeSubGraph* SubFlow)
 	}
 }
 
-void UFlowSubsystem::StartSubFlow(UFlowNodeSubGraph* SubFlow)
+void UFlowSubsystem::StartSubFlow(UFlowNode_SubGraph* SubFlow)
 {
 	if (!InstancedSubFlows.Contains(SubFlow))
 	{

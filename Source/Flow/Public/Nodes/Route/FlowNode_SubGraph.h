@@ -1,7 +1,7 @@
 #pragma once
 
 #include "Nodes/FlowNode.h"
-#include "FlowNodeSubGraph.generated.h"
+#include "FlowNode_SubGraph.generated.h"
 
 class UFlowAsset;
 
@@ -9,7 +9,7 @@ class UFlowAsset;
  * Sub Graph
  */
 UCLASS(meta = (DisplayName = "Sub Graph"))
-class FLOW_API UFlowNodeSubGraph : public UFlowNode
+class FLOW_API UFlowNode_SubGraph : public UFlowNode
 {
 	GENERATED_UCLASS_BODY()
 	

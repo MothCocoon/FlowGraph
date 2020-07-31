@@ -1,13 +1,13 @@
 #pragma once
 
 #include "Nodes/FlowNode.h"
-#include "FlowNodeExecutionSequence.generated.h"
+#include "FlowNode_ExecutionSequence.generated.h"
 
 /**
  * Execution Sequence
  */
 UCLASS(meta = (DisplayName = "Sequence"))
-class FLOW_API UFlowNodeExecutionSequence final : public UFlowNode
+class FLOW_API UFlowNode_ExecutionSequence final : public UFlowNode
 {
 	GENERATED_UCLASS_BODY()
 	

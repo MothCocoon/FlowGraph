@@ -1,9 +1,9 @@
-#include "Nodes/Route/FlowNodeSubGraph.h"
+#include "Nodes/Route/FlowNode_SubGraph.h"
 
 #include "FlowAsset.h"
 #include "FlowSubsystem.h"
 
-UFlowNodeSubGraph::UFlowNodeSubGraph(const FObjectInitializer& ObjectInitializer)
+UFlowNode_SubGraph::UFlowNode_SubGraph(const FObjectInitializer& ObjectInitializer)
 	: Super(ObjectInitializer)
 {
 #if WITH_EDITOR
@@ -12,7 +12,7 @@ UFlowNodeSubGraph::UFlowNodeSubGraph(const FObjectInitializer& ObjectInitializer
 #endif
 }
 
-void UFlowNodeSubGraph::PreloadContent()
+void UFlowNode_SubGraph::PreloadContent()
 {
 	if (!Asset.IsNull())
 	{
@@ -20,7 +20,7 @@ void UFlowNodeSubGraph::PreloadContent()
 	}
 }
 
-void UFlowNodeSubGraph::FlushContent()
+void UFlowNode_SubGraph::FlushContent()
 {
 	if (!Asset.IsNull())
 	{
@@ -28,7 +28,7 @@ void UFlowNodeSubGraph::FlushContent()
 	}
 }
 
-void UFlowNodeSubGraph::ExecuteInput(const FName& PinName)
+void UFlowNode_SubGraph::ExecuteInput(const FName& PinName)
 {
 	if (Asset.IsNull())
 	{
@@ -40,18 +40,18 @@ void UFlowNodeSubGraph::ExecuteInput(const FName& PinName)
 	}
 }
 
-void UFlowNodeSubGraph::OnForceFinished()
+void UFlowNode_SubGraph::OnForceFinished()
 {
 	TriggerFirstOutput(true);
 }
 
 #if WITH_EDITOR
-FString UFlowNodeSubGraph::GetNodeDescription() const
+FString UFlowNode_SubGraph::GetNodeDescription() const
 {
 	return Asset.IsNull() ? FString() : Asset.ToSoftObjectPath().GetAssetName();
 }
 
-UObject* UFlowNodeSubGraph::GetAssetToOpen()
+UObject* UFlowNode_SubGraph::GetAssetToOpen()
 {
 	return Asset.IsNull() ? nullptr : LoadAsset<UObject>(Asset);
 }
