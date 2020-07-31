@@ -7,7 +7,7 @@
 
 class UFlowAsset;
 class UFlowComponent;
-class UFlowNodeSubGraph;
+class UFlowNode_SubGraph;
 
 DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FSimpleFlowComponentnEvent, UFlowComponent*, Component);
 
@@ -30,7 +30,7 @@ private:
 
 	// instanced assets "owned" by Sub Flow nodes
 	UPROPERTY()
-	TMap<UFlowNodeSubGraph*, UFlowAsset*> InstancedSubFlows;
+	TMap<UFlowNode_SubGraph*, UFlowAsset*> InstancedSubFlows;
 
 public:
 	virtual void Initialize(FSubsystemCollectionBase& Collection) override;
@@ -39,10 +39,10 @@ public:
 	void StartFlow(UFlowAsset* FlowAsset);
 	void EndFlow(UFlowAsset* FlowAsset);
 
-	void PreloadSubFlow(UFlowNodeSubGraph* SubFlow);
-	void FlushPreload(UFlowNodeSubGraph* SubFlow);
+	void PreloadSubFlow(UFlowNode_SubGraph* SubFlow);
+	void FlushPreload(UFlowNode_SubGraph* SubFlow);
 
-	void StartSubFlow(UFlowNodeSubGraph* SubFlow);
+	void StartSubFlow(UFlowNode_SubGraph* SubFlow);
 
 private:
 	UFlowAsset* CreateFlowInstance(TSoftObjectPtr<UFlowAsset> FlowAsset);

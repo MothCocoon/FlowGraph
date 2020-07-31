@@ -3,9 +3,9 @@
 #include "FlowSubsystem.h"
 
 #include "Nodes/FlowNode.h"
-#include "Nodes/Route/FlowNodeIn.h"
-#include "Nodes/Route/FlowNodeOut.h"
-#include "Nodes/Route/FlowNodeSubGraph.h"
+#include "Nodes/Route/FlowNode_In.h"
+#include "Nodes/Route/FlowNode_Out.h"
+#include "Nodes/Route/FlowNode_SubGraph.h"
 
 TSharedPtr<IFlowGraphInterface> UFlowAsset::FlowGraphInterface = nullptr;
 
@@ -107,7 +107,6 @@ void UFlowAsset::CompileNodeConnections()
 		Node->SetFlags(RF_Transactional);
 		Node->Modify();
 #endif
-
 		Node->SetConnections(Connections);
 
 #if WITH_EDITOR
@@ -198,7 +197,7 @@ void UFlowAsset::InitInstance(UFlowAsset* InTemplateAsset)
 		UFlowNode* NewInstance = NewObject<UFlowNode>(this, Node.Value->GetClass(), NAME_None, RF_Transient, Node.Value, false, nullptr);
 		Node.Value = NewInstance;
 
-		if (UFlowNodeIn* InNode = Cast<UFlowNodeIn>(NewInstance))
+		if (UFlowNode_In* InNode = Cast<UFlowNode_In>(NewInstance))
 		{
 			InNodes.Add(InNode);
 		}
@@ -208,7 +207,7 @@ void UFlowAsset::InitInstance(UFlowAsset* InTemplateAsset)
 void UFlowAsset::PreloadNodes()
 {
 	// NOTE: this is just the example algorithm of gathering nodes for pre-load
-	for (UFlowNodeIn* InNode : InNodes)
+	for (UFlowNode_In* InNode : InNodes)
 	{
 		for (const TPair<TSubclassOf<UFlowNode>, int32>& Node : UFlowSettings::Get()->DefaultPreloadDepth)
 		{
@@ -244,7 +243,7 @@ void UFlowAsset::StartFlow()
 	ResetNodes();
 
 	// when starting root flow, always call default In node
-	for (UFlowNodeIn* Node : InNodes)
+	for (UFlowNode_In* Node : InNodes)
 	{
 		RecordedNodes.Add(Node);
 		Node->TriggerFirstOutput(true);
@@ -252,7 +251,7 @@ void UFlowAsset::StartFlow()
 	}
 }
 
-void UFlowAsset::StartSubFlow(UFlowNodeSubGraph* FlowNode)
+void UFlowAsset::StartSubFlow(UFlowNode_SubGraph* FlowNode)
 {
 	OwningFlowNode = FlowNode;
 	FlowNode->GetFlowAsset()->AddChildFlow(FlowNode, this);
@@ -260,7 +259,7 @@ void UFlowAsset::StartSubFlow(UFlowNodeSubGraph* FlowNode)
 	ResetNodes();
 
 	// todo: support selecting In node matching input on SubFlow node in parent graph
-	for (UFlowNodeIn* Node : InNodes)
+	for (UFlowNode_In* Node : InNodes)
 	{
 		RecordedNodes.Add(Node);
 		Node->TriggerFirstOutput(true);
@@ -268,7 +267,7 @@ void UFlowAsset::StartSubFlow(UFlowNodeSubGraph* FlowNode)
 	}
 }
 
-void UFlowAsset::AddChildFlow(UFlowNodeSubGraph* Node, UFlowAsset* Asset)
+void UFlowAsset::AddChildFlow(UFlowNode_SubGraph* Node, UFlowAsset* Asset)
 {
 	ChildFlows.Add(Node, Asset);
 }
@@ -293,7 +292,7 @@ void UFlowAsset::FinishNode(UFlowNode* Node)
 	{
 		ActiveNodes.Remove(Node);
 
-		if (Node->GetClass()->IsChildOf(UFlowNodeOut::StaticClass()) && OwningFlowNode.IsValid())
+		if (Node->GetClass()->IsChildOf(UFlowNode_Out::StaticClass()) && OwningFlowNode.IsValid())
 		{
 			OwningFlowNode.Get()->TriggerFirstOutput(true);
 			OwningFlowNode = nullptr;

@@ -1,9 +1,9 @@
-#include "Nodes/Utils/FlowNodeLog.h"
+#include "Nodes/Utils/FlowNode_Log.h"
 #include "FlowModule.h"
 
 #include "Engine/Engine.h"
 
-UFlowNodeLog::UFlowNodeLog(const FObjectInitializer& ObjectInitializer)
+UFlowNode_Log::UFlowNode_Log(const FObjectInitializer& ObjectInitializer)
 	: Super(ObjectInitializer)
 	, bPrintToScreen(true)
 	, Duration(5.0f)
@@ -14,7 +14,7 @@ UFlowNodeLog::UFlowNodeLog(const FObjectInitializer& ObjectInitializer)
 #endif
 }
 
-void UFlowNodeLog::ExecuteInput(const FName& PinName)
+void UFlowNode_Log::ExecuteInput(const FName& PinName)
 {
 	UE_LOG(LogFlow, Warning, TEXT("%s"), *Message);
 
@@ -27,7 +27,7 @@ void UFlowNodeLog::ExecuteInput(const FName& PinName)
 }
 
 #if WITH_EDITOR
-FString UFlowNodeLog::GetNodeDescription() const
+FString UFlowNode_Log::GetNodeDescription() const
 {
 	return Message;
 }

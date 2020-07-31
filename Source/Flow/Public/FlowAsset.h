@@ -4,8 +4,8 @@
 #include "FlowAsset.generated.h"
 
 class UFlowNode;
-class UFlowNodeIn;
-class UFlowNodeSubGraph;
+class UFlowNode_In;
+class UFlowNode_SubGraph;
 class UFlowSubsystem;
 
 class UEdGraph;
@@ -53,8 +53,8 @@ private:
 	UEdGraph* FlowGraph;
 #endif
 
-#if WITH_EDITOR
 public:
+#if WITH_EDITOR
 	void CreateGraph();
 	UEdGraph* GetGraph() const { return FlowGraph; };
 
@@ -65,14 +65,18 @@ public:
 #endif
 	// -- 
 
-	void CompileNodeConnections();
-
 //////////////////////////////////////////////////////////////////////////
 // Nodes
 
 private:
 	UPROPERTY()
 	TMap<FGuid, UFlowNode*> Nodes;
+
+	UPROPERTY(EditDefaultsOnly, Category = "Flow")
+	TArray<FName> Inputs;
+	
+	UPROPERTY(EditDefaultsOnly, Category = "Flow")
+	TArray<FName> Outputs;
 
 public:
 #if WITH_EDITOR
@@ -93,6 +97,7 @@ public:
 	void UnregisterNode(FGuid NodeGuid);
 #endif
 
+	void CompileNodeConnections();
 	UFlowNode* GetNode(const FGuid& Guid) const;
 
 	/**
@@ -157,11 +162,11 @@ public:
 	UFlowAsset* TemplateAsset;
 
 private:
-	TWeakObjectPtr<UFlowNodeSubGraph> OwningFlowNode;
-	TMap<UFlowNodeSubGraph*, TWeakObjectPtr<UFlowAsset>> ChildFlows;
+	TWeakObjectPtr<UFlowNode_SubGraph> OwningFlowNode;
+	TMap<UFlowNode_SubGraph*, TWeakObjectPtr<UFlowAsset>> ChildFlows;
 
 	UPROPERTY()
-	TArray<UFlowNodeIn*> InNodes;
+	TArray<UFlowNode_In*> InNodes;
 
 	UPROPERTY()
 	TSet<UFlowNode*> PreloadedNodes;
@@ -179,10 +184,10 @@ public:
 	void FlushPreload();
 
 	void StartFlow();
-	void StartSubFlow(UFlowNodeSubGraph* FlowNode);
+	void StartSubFlow(UFlowNode_SubGraph* FlowNode);
 
 private:
-	void AddChildFlow(UFlowNodeSubGraph* Node, UFlowAsset* Asset);
+	void AddChildFlow(UFlowNode_SubGraph* Node, UFlowAsset* Asset);
 
 	void TriggerInput(const FGuid& NodeGuid, const FName& PinName);
 
@@ -191,7 +196,7 @@ private:
 
 public:
 	UFlowSubsystem* GetFlowSubsystem() const;
-	UFlowNodeSubGraph* GetOwningFlowNode() const { return OwningFlowNode.IsValid() ? OwningFlowNode.Get() : nullptr; };
+	UFlowNode_SubGraph* GetOwningFlowNode() const { return OwningFlowNode.IsValid() ? OwningFlowNode.Get() : nullptr; };
 	UFlowNode* GetNodeInstance(const FGuid Guid) const { return Nodes.FindRef(Guid); };
 
 	bool IsActive() const { return RecordedNodes.Num() > 0; };

@@ -1,6 +1,6 @@
-#include "Nodes/Operators/FlowNodeLogicalAND.h"
+#include "Nodes/Operators/FlowNode_LogicalAND.h"
 
-UFlowNodeLogicalAND::UFlowNodeLogicalAND(const FObjectInitializer& ObjectInitializer)
+UFlowNode_LogicalAND::UFlowNode_LogicalAND(const FObjectInitializer& ObjectInitializer)
 	: Super(ObjectInitializer)
 {
 #if WITH_EDITOR
@@ -11,7 +11,7 @@ UFlowNodeLogicalAND::UFlowNodeLogicalAND(const FObjectInitializer& ObjectInitial
 	SetNumericalInputs(0, 1);
 }
 
-void UFlowNodeLogicalAND::ExecuteInput(const FName& PinName)
+void UFlowNode_LogicalAND::ExecuteInput(const FName& PinName)
 {
 	ExecutedInputNames.Add(PinName);
 
@@ -21,7 +21,7 @@ void UFlowNodeLogicalAND::ExecuteInput(const FName& PinName)
 	}
 }
 
-void UFlowNodeLogicalAND::Cleanup()
+void UFlowNode_LogicalAND::Cleanup()
 {
 	ExecutedInputNames.Empty();
 }

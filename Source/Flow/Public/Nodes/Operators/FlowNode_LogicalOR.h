@@ -1,25 +1,20 @@
 #pragma once
 
 #include "Nodes/FlowNode.h"
-#include "FlowNodeLogicalAND.generated.h"
+#include "FlowNode_LogicalOR.generated.h"
 
 /**
- * Logical AND
+ * Logical OR
  */
-UCLASS(meta = (DisplayName = "AND"))
-class FLOW_API UFlowNodeLogicalAND final : public UFlowNode
+UCLASS(meta = (DisplayName = "OR"))
+class FLOW_API UFlowNode_LogicalOR final : public UFlowNode
 {
 	GENERATED_UCLASS_BODY()
-
-private:
-	TSet<FName> ExecutedInputNames;
 	
 #if WITH_EDITOR
-public:
 	virtual bool CanUserAddInput() const override { return true; };
 #endif
 
 protected:
 	virtual void ExecuteInput(const FName& PinName) override;
-	virtual void Cleanup() override;
 };
