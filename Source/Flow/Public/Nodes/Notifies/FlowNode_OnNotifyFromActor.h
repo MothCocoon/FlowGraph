@@ -1,13 +1,13 @@
 #pragma once
 
-#include "Nodes/Notifies/FlowNodeNotifyBase.h"
-#include "FlowNodeOnNotifyFromActor.generated.h"
+#include "Nodes/Notifies/FlowNode_NotifyBase.h"
+#include "FlowNode_OnNotifyFromActor.generated.h"
 
 /**
  * On Notify From Actor
  */
 UCLASS(meta = (DisplayName = "On Notify From Actor"))
-class FLOW_API UFlowNodeOnNotifyFromActor : public UFlowNodeNotifyBase
+class FLOW_API UFlowNode_OnNotifyFromActor : public UFlowNode_NotifyBase
 {
 	GENERATED_UCLASS_BODY()
 

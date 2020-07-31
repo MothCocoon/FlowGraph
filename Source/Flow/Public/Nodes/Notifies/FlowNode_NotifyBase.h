@@ -3,13 +3,13 @@
 #include "GameplayTagContainer.h"
 
 #include "Nodes/FlowNode.h"
-#include "FlowNodeNotifyBase.generated.h"
+#include "FlowNode_NotifyBase.generated.h"
 
 /**
  * Base for nodes providing generic communication between Flow Graph and actors with Flow Component
  */
 UCLASS(Abstract)
-class FLOW_API UFlowNodeNotifyBase : public UFlowNode
+class FLOW_API UFlowNode_NotifyBase : public UFlowNode
 {
 	GENERATED_UCLASS_BODY()
 	
