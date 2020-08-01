@@ -3,8 +3,9 @@
 #include "FlowSubsystem.h"
 
 #include "Nodes/FlowNode.h"
-#include "Nodes/Route/FlowNode_In.h"
-#include "Nodes/Route/FlowNode_Out.h"
+#include "Nodes/Route/FlowNode_CustomEvent.h"
+#include "Nodes/Route/FlowNode_Start.h"
+#include "Nodes/Route/FlowNode_Finish.h"
 #include "Nodes/Route/FlowNode_SubGraph.h"
 
 TSharedPtr<IFlowGraphInterface> UFlowAsset::FlowGraphInterface = nullptr;
@@ -47,7 +48,7 @@ void UFlowAsset::CreateGraph()
 FGuid UFlowAsset::CreateGraphNode(UFlowNode* InFlowNode, bool bSelectNewNode /*= true*/) const
 {
 	check(InFlowNode->GraphNode == nullptr);
-	return UFlowAsset::GetFlowGraphInterface()->CreateGraphNode(FlowGraph, InFlowNode, bSelectNewNode);
+	return GetFlowGraphInterface()->CreateGraphNode(FlowGraph, InFlowNode, bSelectNewNode);
 }
 
 void UFlowAsset::SetFlowGraphInterface(TSharedPtr<IFlowGraphInterface> InFlowAssetEditor)
@@ -93,7 +94,7 @@ void UFlowAsset::CompileNodeConnections()
 
 		for (const UEdGraphPin* ThisPin : Node->GetGraphNode()->Pins)
 		{
-			if (ThisPin->Direction == EEdGraphPinDirection::EGPD_Output && ThisPin->LinkedTo.Num() > 0)
+			if (ThisPin->Direction == EGPD_Output && ThisPin->LinkedTo.Num() > 0)
 			{
 				if (UEdGraphPin* LinkedPin = ThisPin->LinkedTo[0])
 				{
@@ -181,10 +182,10 @@ void UFlowAsset::ClearInstances()
 		{
 			Node->Cleanup();
 		}
-		
+
 		Instance->ActiveNodes.Empty();
 	}
-	
+
 	ActiveInstances.Empty();
 }
 
@@ -197,24 +198,40 @@ void UFlowAsset::InitInstance(UFlowAsset* InTemplateAsset)
 		UFlowNode* NewInstance = NewObject<UFlowNode>(this, Node.Value->GetClass(), NAME_None, RF_Transient, Node.Value, false, nullptr);
 		Node.Value = NewInstance;
 
-		if (UFlowNode_In* InNode = Cast<UFlowNode_In>(NewInstance))
+		// there can be only one, automatically added while creating graph
+		if (UFlowNode_Start* InNode = Cast<UFlowNode_Start>(NewInstance))
 		{
-			InNodes.Add(InNode);
+			StartNode = InNode;
+		}
+
+		if (UFlowNode_CustomEvent* CustomEvent = Cast<UFlowNode_CustomEvent>(NewInstance))
+		{
+			const FName& EventName = CustomEvent->EventName;
+			if (EventName != NAME_None && !CustomEventNodes.Contains(CustomEvent->EventName))
+			{
+				CustomEventNodes.Emplace(CustomEvent->EventName, CustomEvent);
+			}
 		}
 	}
 }
 
 void UFlowAsset::PreloadNodes()
 {
+	TArray<UFlowNode*> GraphEntryNodes = { StartNode };
+	for (const TPair<FName, UFlowNode_CustomEvent*>& CustomEvent : CustomEventNodes)
+	{
+		GraphEntryNodes.Emplace(CustomEvent.Value);
+	}
+
 	// NOTE: this is just the example algorithm of gathering nodes for pre-load
-	for (UFlowNode_In* InNode : InNodes)
+	for (UFlowNode* EntryNode : GraphEntryNodes)
 	{
 		for (const TPair<TSubclassOf<UFlowNode>, int32>& Node : UFlowSettings::Get()->DefaultPreloadDepth)
 		{
 			if (Node.Value > 0)
 			{
 				TArray<UFlowNode*> FoundNodes;
-				RecursiveFindNodesByClass(InNode, Node.Key, Node.Value, FoundNodes);
+				RecursiveFindNodesByClass(EntryNode, Node.Key, Node.Value, FoundNodes);
 
 				for (UFlowNode* FoundNode : FoundNodes)
 				{
@@ -242,34 +259,35 @@ void UFlowAsset::StartFlow()
 {
 	ResetNodes();
 
-	// when starting root flow, always call default In node
-	for (UFlowNode_In* Node : InNodes)
+	ensureAlways(StartNode);
+	RecordedNodes.Add(StartNode);
+	StartNode->TriggerFirstOutput(true);
+}
+
+void UFlowAsset::StartSubFlow(UFlowNode_SubGraph* SubGraphNode)
+{
+	NodeOwningThisGraph = SubGraphNode;
+	NodeOwningThisGraph->GetFlowAsset()->ActiveSubGraphs.Add(SubGraphNode, this);
+
+	StartFlow();
+}
+
+void UFlowAsset::TriggerCustomEvent(UFlowNode_SubGraph* Node, const FName& EventName)
+{
+	const TWeakObjectPtr<UFlowAsset> ChildAsset = ActiveSubGraphs.FindRef(Node);
+	if (ChildAsset.IsValid())
 	{
-		RecordedNodes.Add(Node);
-		Node->TriggerFirstOutput(true);
-		return;
+		if (UFlowNode_CustomEvent* CustomEvent = ChildAsset->CustomEventNodes.FindRef(EventName))
+		{
+			RecordedNodes.Add(CustomEvent);
+			CustomEvent->TriggerFirstOutput(true);
+		}
 	}
 }
 
-void UFlowAsset::StartSubFlow(UFlowNode_SubGraph* FlowNode)
+void UFlowAsset::TriggerCustomOutput(const FName& EventName) const
 {
-	OwningFlowNode = FlowNode;
-	FlowNode->GetFlowAsset()->AddChildFlow(FlowNode, this);
-
-	ResetNodes();
-
-	// todo: support selecting In node matching input on SubFlow node in parent graph
-	for (UFlowNode_In* Node : InNodes)
-	{
-		RecordedNodes.Add(Node);
-		Node->TriggerFirstOutput(true);
-		return;
-	}
-}
-
-void UFlowAsset::AddChildFlow(UFlowNode_SubGraph* Node, UFlowAsset* Asset)
-{
-	ChildFlows.Add(Node, Asset);
+	NodeOwningThisGraph->TriggerOutput(EventName);
 }
 
 void UFlowAsset::TriggerInput(const FGuid& NodeGuid, const FName& PinName)
@@ -292,10 +310,10 @@ void UFlowAsset::FinishNode(UFlowNode* Node)
 	{
 		ActiveNodes.Remove(Node);
 
-		if (Node->GetClass()->IsChildOf(UFlowNode_Out::StaticClass()) && OwningFlowNode.IsValid())
+		if (Node->GetClass()->IsChildOf(UFlowNode_Finish::StaticClass()) && NodeOwningThisGraph.IsValid())
 		{
-			OwningFlowNode.Get()->TriggerFirstOutput(true);
-			OwningFlowNode = nullptr;
+			NodeOwningThisGraph.Get()->TriggerFirstOutput(true);
+			NodeOwningThisGraph = nullptr;
 		}
 	}
 }

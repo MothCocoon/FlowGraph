@@ -121,7 +121,6 @@ void UFlowGraphNode::PostLoad()
 		FlowNode->SetGraphNode(this);
 	}
 
-	// Fixup pins after changes in node's definition
 	ReconstructNode();
 }
 
@@ -259,7 +258,7 @@ void UFlowGraphNode::ReconstructNode()
 		{
 			UEdGraphPin* OtherPin = LinkedToRef[LinkIdx];
 			// If we are linked to a pin that its owner doesn't know about, break that link
-			if (!OtherPin->GetOwningNode()->Pins.Contains(OtherPin))
+			if (OtherPin && !OtherPin->GetOwningNode()->Pins.Contains(OtherPin))
 			{
 				Pin->LinkedTo.Remove(OtherPin);
 			}
@@ -379,13 +378,9 @@ void UFlowGraphNode::GetNodeContextMenuActions(class UToolMenu* Menu, class UGra
 
 			Section.AddMenuEntry(GraphCommands.BreakNodeLinks);
 
-			if (SupportsContextInputs())
+			if (SupportsContextPins())
 			{
-				Section.AddMenuEntry(FlowGraphCommands.RefreshContextInputs);
-			}
-			if (SupportsContextOutputs())
-			{
-				Section.AddMenuEntry(FlowGraphCommands.RefreshContextOutputs);
+				Section.AddMenuEntry(FlowGraphCommands.RefreshContextPins);
 			}
 
 			if (CanUserAddInput())
@@ -535,14 +530,9 @@ void UFlowGraphNode::CreateOutputPin(const FName PinName)
 	OutputPins.Add(NewPin);
 }
 
-bool UFlowGraphNode::SupportsContextInputs() const
+bool UFlowGraphNode::SupportsContextPins() const
 {
-	return FlowNode && FlowNode->SupportsContextInputs();
-}
-
-bool UFlowGraphNode::SupportsContextOutputs() const
-{
-	return FlowNode && FlowNode->SupportsContextOutputs();
+	return FlowNode && FlowNode->SupportsContextPins();
 }
 
 bool UFlowGraphNode::CanUserAddInput() const
@@ -630,37 +620,23 @@ void UFlowGraphNode::RemoveInstancePin(UEdGraphPin* Pin)
 	GetGraph()->NotifyGraphChanged();
 }
 
-void UFlowGraphNode::CreateContextInputs()
+void UFlowGraphNode::RefreshContextPins()
 {
 	if (FlowNode == nullptr)
 	{
 		return;
 	}
 
-	const FScopedTransaction Transaction(LOCTEXT("FlowEditorCreateContextInputs", "Create Context Inputs"));
+	const FScopedTransaction Transaction(LOCTEXT("FlowEditorRefreshContextPins", "Refresh Context Pins"));
 	Modify();
 
-	// remove previous set of instance pin, reset pins to default
 	const UFlowNode* NodeDefaults = FlowNode->GetClass()->GetDefaultObject<UFlowNode>();
+	
+	// recreate inputs
 	FlowNode->InputNames = NodeDefaults->InputNames;
 	FlowNode->InputNames.Append(FlowNode->GetContextInputs());
 
-	ReconstructNode();
-	GetGraph()->NotifyGraphChanged();
-}
-
-void UFlowGraphNode::CreateContextOutputs()
-{
-	if (FlowNode == nullptr)
-	{
-		return;
-	}
-
-	const FScopedTransaction Transaction(LOCTEXT("FlowEditorCreateContextOutputs", "Create Context Outputs"));
-	Modify();
-
-	// remove previous set of instance pin, reset pins to default
-	const UFlowNode* NodeDefaults = FlowNode->GetClass()->GetDefaultObject<UFlowNode>();
+	// recreate outputs
 	FlowNode->OutputNames = NodeDefaults->OutputNames;
 	FlowNode->OutputNames.Append(FlowNode->GetContextOutputs());
 

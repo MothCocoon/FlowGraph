@@ -1,12 +1,16 @@
 #include "FlowEditorModule.h"
 
 #include "FlowEditorStyle.h"
+#include "Graph/Customizations/FlowNode_CustomEventCustomization.h"
+#include "Graph/Customizations/FlowNode_CustomOutputCustomization.h"
 #include "Graph/FlowAssetActions.h"
 #include "Graph/FlowAssetEditor.h"
 #include "Graph/FlowGraphConnectionDrawingPolicy.h"
 #include "LevelEditor/SLevelEditorFlow.h"
 
 #include "FlowAsset.h"
+#include "Nodes/Route/FlowNode_CustomEvent.h"
+#include "Nodes/Route/FlowNode_CustomOutput.h"
 
 #include "AssetToolsModule.h"
 #include "EdGraphUtilities.h"
@@ -39,6 +43,13 @@ void FFlowEditorModule::StartupModule()
 		MenuExtender->AddToolBarExtension("Game", EExtensionHook::After, nullptr, FToolBarExtensionDelegate::CreateRaw(this, &FFlowEditorModule::CreateFlowToolbar));
 		LevelEditorModule->GetToolBarExtensibilityManager()->AddExtender(MenuExtender);
 	}
+
+	// register detail customizations
+	RegisterCustomClassLayout(UFlowNode_CustomEvent::StaticClass(), FOnGetDetailCustomizationInstance::CreateStatic(&FFlowNode_CustomEventCustomization::MakeInstance));
+	RegisterCustomClassLayout(UFlowNode_CustomOutput::StaticClass(), FOnGetDetailCustomizationInstance::CreateStatic(&FFlowNode_CustomOutputCustomization::MakeInstance));
+
+	FPropertyEditorModule& PropertyModule = FModuleManager::GetModuleChecked<FPropertyEditorModule>("PropertyEditor");
+	PropertyModule.NotifyCustomizationModuleChanged();
 }
 
 void FFlowEditorModule::ShutdownModule()
@@ -53,13 +64,31 @@ void FFlowEditorModule::ShutdownModule()
 
 	// reset menu extensibility
 	FlowAssetExtensibility.Reset();
+
+	// unregister details customizations
+	if (FModuleManager::Get().IsModuleLoaded("PropertyEditor"))
+	{
+		FPropertyEditorModule& PropertyModule = FModuleManager::GetModuleChecked<FPropertyEditorModule>("PropertyEditor");
+		
+		for (auto It = CustomClassLayouts.CreateConstIterator(); It; ++It)
+		{
+			if (It->IsValid())
+			{
+				PropertyModule.UnregisterCustomClassLayout(*It);
+			}
+		}
+	}
 }
 
-TSharedRef<FFlowAssetEditor> FFlowEditorModule::CreateFlowAssetEditor(const EToolkitMode::Type Mode, const TSharedPtr< IToolkitHost >& InitToolkitHost, UFlowAsset* FlowAsset)
+void FFlowEditorModule::RegisterCustomClassLayout(const TSubclassOf<UObject> Class, const FOnGetDetailCustomizationInstance DetailLayout)
 {
-	TSharedRef<FFlowAssetEditor> NewFlowAssetEditor(new FFlowAssetEditor());
-	NewFlowAssetEditor->InitFlowAssetEditor(Mode, InitToolkitHost, FlowAsset);
-	return NewFlowAssetEditor;
+	if (Class)
+	{
+		CustomClassLayouts.Add(Class->GetFName());
+
+		FPropertyEditorModule& PropertyModule = FModuleManager::GetModuleChecked<FPropertyEditorModule>("PropertyEditor");
+		PropertyModule.RegisterCustomClassLayout(Class->GetFName(), DetailLayout);
+	}
 }
 
 TSharedPtr<FExtensibilityManager> FFlowEditorModule::GetFlowAssetMenuExtensibilityManager() const
@@ -79,6 +108,13 @@ void FFlowEditorModule::CreateFlowToolbar(FToolBarBuilder& ToolbarBuilder) const
 		ToolbarBuilder.AddWidget(SNew(SLevelEditorFlow));
 	}
 	ToolbarBuilder.EndSection();
+}
+
+TSharedRef<FFlowAssetEditor> FFlowEditorModule::CreateFlowAssetEditor(const EToolkitMode::Type Mode, const TSharedPtr< IToolkitHost >& InitToolkitHost, UFlowAsset* FlowAsset)
+{
+	TSharedRef<FFlowAssetEditor> NewFlowAssetEditor(new FFlowAssetEditor());
+	NewFlowAssetEditor->InitFlowAssetEditor(Mode, InitToolkitHost, FlowAsset);
+	return NewFlowAssetEditor;
 }
 
 #undef LOCTEXT_NAMESPACE

@@ -16,7 +16,7 @@ void UFlowNode_SubGraph::PreloadContent()
 {
 	if (!Asset.IsNull())
 	{
-		GetFlowAsset()->GetFlowSubsystem()->PreloadSubFlow(this);
+		GetFlowSubsystem()->PreloadSubFlow(this);
 	}
 }
 
@@ -24,7 +24,7 @@ void UFlowNode_SubGraph::FlushContent()
 {
 	if (!Asset.IsNull())
 	{
-		GetFlowAsset()->GetFlowSubsystem()->FlushPreload(this);
+		GetFlowSubsystem()->FlushPreload(this);
 	}
 }
 
@@ -32,11 +32,19 @@ void UFlowNode_SubGraph::ExecuteInput(const FName& PinName)
 {
 	if (Asset.IsNull())
 	{
+		LogError(TEXT("Missing Flow Asset"));
 		Finish();
 	}
 	else
 	{
-		GetFlowAsset()->GetFlowSubsystem()->StartSubFlow(this);
+		if (PinName == DefaultInputName)
+		{
+			GetFlowSubsystem()->StartSubFlow(this);
+		}
+		else
+		{
+			GetFlowAsset()->TriggerCustomEvent(this, PinName);
+		}
 	}
 }
 
@@ -54,5 +62,31 @@ FString UFlowNode_SubGraph::GetNodeDescription() const
 UObject* UFlowNode_SubGraph::GetAssetToOpen()
 {
 	return Asset.IsNull() ? nullptr : LoadAsset<UObject>(Asset);
+}
+
+TArray<FName> UFlowNode_SubGraph::GetContextInputs()
+{
+	TArray<FName> EventNames;
+	
+	if (!Asset.IsNull())
+	{
+		LoadAsset<UFlowAsset>(Asset);
+		EventNames = Asset.Get()->GetCustomEvents();
+	}
+
+	return EventNames;
+}
+
+TArray<FName> UFlowNode_SubGraph::GetContextOutputs()
+{
+	TArray<FName> EventNames;
+	
+	if (!Asset.IsNull())
+	{
+		LoadAsset<UFlowAsset>(Asset);
+		EventNames = Asset.Get()->GetCustomOutputs();
+	}
+
+	return EventNames;
 }
 #endif

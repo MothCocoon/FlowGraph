@@ -1,6 +1,6 @@
-#include "Nodes/Route/FlowNode_In.h"
+#include "Nodes/Route/FlowNode_Start.h"
 
-UFlowNode_In::UFlowNode_In(const FObjectInitializer& ObjectInitializer)
+UFlowNode_Start::UFlowNode_Start(const FObjectInitializer& ObjectInitializer)
 	: Super(ObjectInitializer)
 {
 #if WITH_EDITOR

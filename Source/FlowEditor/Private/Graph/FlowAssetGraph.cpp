@@ -8,8 +8,8 @@
 
 #include "FlowAsset.h"
 #include "Nodes/FlowNode.h"
-#include "Nodes/Route/FlowNode_In.h"
-#include "Nodes/Route/FlowNode_Out.h"
+#include "Nodes/Route/FlowNode_Start.h"
+#include "Nodes/Route/FlowNode_Finish.h"
 #include "Nodes/Route/FlowNode_Reroute.h"
 
 #include "Kismet2/BlueprintEditorUtils.h"
@@ -33,7 +33,7 @@ public:
 	FGuid CreateGraphNode(UEdGraph* Graph, UFlowNode* FlowNode, const bool bSelectNewNode) override
 	{
 		// Node In
-		if (FlowNode->GetClass()->IsChildOf(UFlowNode_In::StaticClass()))
+		if (FlowNode->GetClass()->IsChildOf(UFlowNode_Start::StaticClass()))
 		{
 			FGraphNodeCreator<UFlowGraphNode_In> NodeCreator(*Graph);
 			UFlowGraphNode* GraphNode = NodeCreator.CreateNode(bSelectNewNode);
@@ -43,7 +43,7 @@ public:
 		}
 		
 		// Node Out
-		if (FlowNode->GetClass()->IsChildOf(UFlowNode_Out::StaticClass()))
+		if (FlowNode->GetClass()->IsChildOf(UFlowNode_Finish::StaticClass()))
 		{
 			FGraphNodeCreator<UFlowGraphNode_Out> NodeCreator(*Graph);
 			UFlowGraphNode* GraphNode = NodeCreator.CreateNode(bSelectNewNode);
