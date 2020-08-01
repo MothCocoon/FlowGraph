@@ -1,6 +1,6 @@
-#include "Nodes/Route/FlowNodeCounter.h"
+#include "Nodes/Route/FlowNode_Counter.h"
 
-UFlowNodeCounter::UFlowNodeCounter(const FObjectInitializer& ObjectInitializer)
+UFlowNode_Counter::UFlowNode_Counter(const FObjectInitializer& ObjectInitializer)
 	: Super(ObjectInitializer)
 	, Goal(2)
 {
@@ -21,7 +21,7 @@ UFlowNodeCounter::UFlowNodeCounter(const FObjectInitializer& ObjectInitializer)
 	OutputNames.Add(TEXT("Skipped"));
 }
 
-void UFlowNodeCounter::ExecuteInput(const FName& PinName)
+void UFlowNode_Counter::ExecuteInput(const FName& PinName)
 {
 	if (PinName == TEXT("Increment"))
 	{		
@@ -57,18 +57,18 @@ void UFlowNodeCounter::ExecuteInput(const FName& PinName)
 	}
 }
 
-void UFlowNodeCounter::Cleanup()
+void UFlowNode_Counter::Cleanup()
 {
 	CurrentSum = 0;
 }
 
 #if WITH_EDITOR
-FString UFlowNodeCounter::GetNodeDescription() const
+FString UFlowNode_Counter::GetNodeDescription() const
 {
 	return FString::FromInt(Goal);
 }
 
-FString UFlowNodeCounter::GetStatusString() const
+FString UFlowNode_Counter::GetStatusString() const
 {
 	return FString::FromInt(CurrentSum);
 }

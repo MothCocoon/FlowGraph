@@ -14,8 +14,7 @@ FFlowGraphCommands::FFlowGraphCommands()
 
 void FFlowGraphCommands::RegisterCommands()
 {
-	UI_COMMAND(RefreshContextInputs, "Refresh context inputs", "Refresh inputs generated from the context asset", EUserInterfaceActionType::Button, FInputChord());
-	UI_COMMAND(RefreshContextOutputs, "Refresh context outputs", "Refresh outputs generated from the context asset", EUserInterfaceActionType::Button, FInputChord());
+	UI_COMMAND(RefreshContextPins, "Refresh context pins", "Refresh pins generated from the context asset", EUserInterfaceActionType::Button, FInputChord());
 	
 	UI_COMMAND(AddInput, "Add Input", "Adds an input to the node", EUserInterfaceActionType::Button, FInputChord());
 	UI_COMMAND(AddOutput, "Add Output", "Adds an output to the node", EUserInterfaceActionType::Button, FInputChord());

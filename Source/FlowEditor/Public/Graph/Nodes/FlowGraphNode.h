@@ -142,8 +142,7 @@ public:
 	void CreateInputPin(const FName& PinName);
 	void CreateOutputPin(const FName PinName);
 
-	bool SupportsContextInputs() const;
-	bool SupportsContextOutputs() const;
+	bool SupportsContextPins() const;
 	
 	bool CanUserAddInput() const;
 	bool CanUserAddOutput() const;
@@ -161,8 +160,7 @@ public:
 	void RemoveInstancePin(UEdGraphPin* Pin);
 
 	// Create pins from the context asset, i.e. Sequencer events
-	void CreateContextInputs();
-	void CreateContextOutputs();
+	void RefreshContextPins();
 
 //////////////////////////////////////////////////////////////////////////
 // Breakpoints

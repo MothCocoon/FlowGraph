@@ -8,8 +8,7 @@ class FFlowGraphCommands : public TCommands<FFlowGraphCommands>
 public:
 	FFlowGraphCommands();
 	
-	TSharedPtr<FUICommandInfo> RefreshContextInputs;
-	TSharedPtr<FUICommandInfo> RefreshContextOutputs;
+	TSharedPtr<FUICommandInfo> RefreshContextPins;
 
 	TSharedPtr<FUICommandInfo> AddInput;
 	TSharedPtr<FUICommandInfo> AddOutput;
