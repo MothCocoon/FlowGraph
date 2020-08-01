@@ -49,7 +49,7 @@ private:
 /**
  * Base for all Flow Nodes
  */
-UCLASS(Abstract, hideCategories = Object)
+UCLASS(Abstract, HideCategories = Object)
 class FLOW_API UFlowNode : public UObject, public IVisualLoggerDebugSnapshotInterface
 {
 	GENERATED_UCLASS_BODY()
@@ -108,11 +108,10 @@ public:
 	TArray<FName> OutputNames;
 
 #if WITH_EDITOR
-	virtual bool SupportsContextInputs() const { return false; }
-	virtual bool SupportsContextOutputs() const { return false; }
+	virtual bool SupportsContextPins() const { return false; }
 	
-	virtual TArray<FName> GetContextInputs() const { return TArray<FName>(); };
-	virtual TArray<FName> GetContextOutputs() const { return TArray<FName>(); };
+	virtual TArray<FName> GetContextInputs() { return TArray<FName>(); };
+	virtual TArray<FName> GetContextOutputs() { return TArray<FName>(); };
 	
 	virtual bool CanUserAddInput() const { return false; };
 	virtual bool CanUserAddOutput() const { return false; };

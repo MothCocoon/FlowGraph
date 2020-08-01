@@ -341,13 +341,9 @@ TSharedRef<SGraphEditor> FFlowAssetEditor::CreateGraphEditorWidget()
 			FCanExecuteAction::CreateSP(this, &FFlowAssetEditor::CanDuplicateNodes));
 
 		// Pin commands
-		Commands->MapAction(FlowGraphCommands.RefreshContextInputs,
-			FExecuteAction::CreateSP(this, &FFlowAssetEditor::RefreshContextInputs),
-			FCanExecuteAction::CreateSP(this, &FFlowAssetEditor::CanRefreshContextInputs));
-
-		Commands->MapAction(FlowGraphCommands.RefreshContextOutputs,
-			FExecuteAction::CreateSP(this, &FFlowAssetEditor::RefreshContextOutputs),
-			FCanExecuteAction::CreateSP(this, &FFlowAssetEditor::CanRefreshContextOutputs));
+		Commands->MapAction(FlowGraphCommands.RefreshContextPins,
+			FExecuteAction::CreateSP(this, &FFlowAssetEditor::RefreshContextPins),
+			FCanExecuteAction::CreateSP(this, &FFlowAssetEditor::CanRefreshContextPins));
 
 		Commands->MapAction(FlowGraphCommands.AddInput,
 			FExecuteAction::CreateSP(this, &FFlowAssetEditor::AddInput),
@@ -827,19 +823,19 @@ void FFlowAssetEditor::OnNodeTitleCommitted(const FText& NewText, ETextCommit::T
 	}
 }
 
-void FFlowAssetEditor::RefreshContextInputs() const
+void FFlowAssetEditor::RefreshContextPins() const
 {
 	const FGraphPanelSelectionSet SelectedNodes = GetSelectedNodes();
 	for (FGraphPanelSelectionSet::TConstIterator NodeIt(SelectedNodes); NodeIt; ++NodeIt)
 	{
 		if (UFlowGraphNode* SelectedNode = Cast<UFlowGraphNode>(*NodeIt))
 		{
-			SelectedNode->CreateContextInputs();
+			SelectedNode->RefreshContextPins();
 		}
 	}
 }
 
-bool FFlowAssetEditor::CanRefreshContextInputs() const
+bool FFlowAssetEditor::CanRefreshContextPins() const
 {
 	if (CanEdit() && GetSelectedNodes().Num() == 1 && FocusedGraphEditor.IsValid())
 	{
@@ -848,36 +844,7 @@ bool FFlowAssetEditor::CanRefreshContextInputs() const
 		{
 			if (UFlowGraphNode* SelectedNode = Cast<UFlowGraphNode>(*NodeIt))
 			{
-				return SelectedNode->SupportsContextInputs();
-			}
-		}
-	}
-
-	return false;
-}
-
-void FFlowAssetEditor::RefreshContextOutputs() const
-{
-	const FGraphPanelSelectionSet SelectedNodes = GetSelectedNodes();
-	for (FGraphPanelSelectionSet::TConstIterator NodeIt(SelectedNodes); NodeIt; ++NodeIt)
-	{
-		if (UFlowGraphNode* SelectedNode = Cast<UFlowGraphNode>(*NodeIt))
-		{
-			SelectedNode->CreateContextOutputs();
-		}
-	}
-}
-
-bool FFlowAssetEditor::CanRefreshContextOutputs() const
-{
-	if (CanEdit() && GetSelectedNodes().Num() == 1 && FocusedGraphEditor.IsValid())
-	{
-		const FGraphPanelSelectionSet SelectedNodes = GetSelectedNodes();
-		for (FGraphPanelSelectionSet::TConstIterator NodeIt(SelectedNodes); NodeIt; ++NodeIt)
-		{
-			if (UFlowGraphNode* SelectedNode = Cast<UFlowGraphNode>(*NodeIt))
-			{
-				return SelectedNode->SupportsContextOutputs();
+				return SelectedNode->SupportsContextPins();
 			}
 		}
 	}

@@ -7,7 +7,7 @@
 
 #include "FlowAsset.h"
 #include "Nodes/FlowNode.h"
-#include "Nodes/Route/FlowNode_In.h"
+#include "Nodes/Route/FlowNode_Start.h"
 
 #include "Developer/ToolMenus/Public/ToolMenus.h"
 #include "EdGraph/EdGraph.h"
@@ -158,7 +158,7 @@ void UFlowGraphSchema::CreateDefaultNodesForGraph(UEdGraph& Graph) const
 	Graph.Modify();
 	FlowAsset->Modify();
 
-	UFlowNode_In* NewNode = FlowAsset->CreateNode<UFlowNode_In>(UFlowNode_In::StaticClass());
+	UFlowNode_Start* NewNode = FlowAsset->CreateNode<UFlowNode_Start>(UFlowNode_Start::StaticClass());
 	NewNode->GetGraphNode()->NodePosX = 0;
 	NewNode->GetGraphNode()->NodePosY = 0;
 

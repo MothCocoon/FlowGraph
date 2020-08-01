@@ -37,6 +37,7 @@ public:
 	static EAssetTypeCategories::Type FlowAssetCategory;
 
 private:
+	TSet<FName> CustomClassLayouts;
 	TSharedPtr<FGraphPanelPinConnectionFactory> FlowGraphConnectionFactory;
 	FExtensibilityManagers FlowAssetExtensibility;
 
@@ -44,10 +45,13 @@ public:
 	virtual void StartupModule() override;
 	virtual void ShutdownModule() override;
 
-	TSharedRef<FFlowAssetEditor> CreateFlowAssetEditor(const EToolkitMode::Type Mode, const TSharedPtr< IToolkitHost >& InitToolkitHost, UFlowAsset* FlowAsset);
+	void RegisterCustomClassLayout(const TSubclassOf<UObject> Class, const FOnGetDetailCustomizationInstance DetailLayout);
 	TSharedPtr<FExtensibilityManager> GetFlowAssetMenuExtensibilityManager() const;
 	TSharedPtr<FExtensibilityManager> GetFlowAssetToolBarExtensibilityManager() const;
 
 private:
 	void CreateFlowToolbar(FToolBarBuilder& ToolbarBuilder) const;
+
+public:
+	TSharedRef<FFlowAssetEditor> CreateFlowAssetEditor(const EToolkitMode::Type Mode, const TSharedPtr< IToolkitHost >& InitToolkitHost, UFlowAsset* FlowAsset);
 };
