@@ -3,8 +3,6 @@
 #include "Nodes/FlowNode.h"
 #include "FlowNode_SubGraph.generated.h"
 
-class UFlowAsset;
-
 /**
  * Sub Graph
  */
@@ -30,5 +28,10 @@ protected:
 public:
 	virtual FString GetNodeDescription() const override;
 	virtual UObject* GetAssetToOpen() override;
+
+	virtual bool SupportsContextPins() const override { return true; }
+
+	virtual TArray<FName> GetContextInputs() override;
+	virtual TArray<FName> GetContextOutputs() override;
 #endif
 };

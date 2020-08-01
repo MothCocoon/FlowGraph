@@ -4,7 +4,8 @@
 #include "FlowAsset.generated.h"
 
 class UFlowNode;
-class UFlowNode_In;
+class UFlowNode_CustomEvent;
+class UFlowNode_Start;
 class UFlowNode_SubGraph;
 class UFlowSubsystem;
 
@@ -33,6 +34,8 @@ class FLOW_API UFlowAsset : public UObject
 	GENERATED_UCLASS_BODY()
 
 	friend class UFlowNode;
+	friend class UFlowNode_CustomOutput;
+	friend class UFlowNode_SubGraph;
 
 //////////////////////////////////////////////////////////////////////////
 // Graph
@@ -73,10 +76,10 @@ private:
 	TMap<FGuid, UFlowNode*> Nodes;
 
 	UPROPERTY(EditDefaultsOnly, Category = "Flow")
-	TArray<FName> Inputs;
+	TArray<FName> CustomEvents;
 	
 	UPROPERTY(EditDefaultsOnly, Category = "Flow")
-	TArray<FName> Outputs;
+	TArray<FName> CustomOutputs;
 
 public:
 #if WITH_EDITOR
@@ -98,7 +101,12 @@ public:
 #endif
 
 	void CompileNodeConnections();
+	
 	UFlowNode* GetNode(const FGuid& Guid) const;
+	TMap<FGuid, UFlowNode*> GetNodes() const { return Nodes; }
+
+	TArray<FName> GetCustomEvents() const { return CustomEvents; }
+	TArray<FName> GetCustomOutputs() const { return CustomOutputs; }
 
 	/**
 	 * Recursively finds nodes of type T
@@ -162,11 +170,14 @@ public:
 	UFlowAsset* TemplateAsset;
 
 private:
-	TWeakObjectPtr<UFlowNode_SubGraph> OwningFlowNode;
-	TMap<UFlowNode_SubGraph*, TWeakObjectPtr<UFlowAsset>> ChildFlows;
+	TWeakObjectPtr<UFlowNode_SubGraph> NodeOwningThisGraph;
+	TMap<UFlowNode_SubGraph*, TWeakObjectPtr<UFlowAsset>> ActiveSubGraphs;
 
 	UPROPERTY()
-	TArray<UFlowNode_In*> InNodes;
+	UFlowNode_Start* StartNode;
+
+	UPROPERTY()
+	TMap<FName, UFlowNode_CustomEvent*> CustomEventNodes;
 
 	UPROPERTY()
 	TSet<UFlowNode*> PreloadedNodes;
@@ -184,10 +195,11 @@ public:
 	void FlushPreload();
 
 	void StartFlow();
-	void StartSubFlow(UFlowNode_SubGraph* FlowNode);
+	void StartSubFlow(UFlowNode_SubGraph* SubGraphNode);
 
 private:
-	void AddChildFlow(UFlowNode_SubGraph* Node, UFlowAsset* Asset);
+	void TriggerCustomEvent(UFlowNode_SubGraph* Node, const FName& EventName);
+	void TriggerCustomOutput(const FName& EventName) const;
 
 	void TriggerInput(const FGuid& NodeGuid, const FName& PinName);
 
@@ -196,7 +208,7 @@ private:
 
 public:
 	UFlowSubsystem* GetFlowSubsystem() const;
-	UFlowNode_SubGraph* GetOwningFlowNode() const { return OwningFlowNode.IsValid() ? OwningFlowNode.Get() : nullptr; };
+	UFlowNode_SubGraph* GetNodeOwningThisGraph() const { return NodeOwningThisGraph.Get(); };
 	UFlowNode* GetNodeInstance(const FGuid Guid) const { return Nodes.FindRef(Guid); };
 
 	bool IsActive() const { return RecordedNodes.Num() > 0; };
