@@ -3,10 +3,11 @@
 #include "Engine/StreamableManager.h"
 #include "GameplayTagContainer.h"
 #include "Subsystems/GameInstanceSubsystem.h"
+
+#include "FlowComponent.h"
 #include "FlowSubsystem.generated.h"
 
 class UFlowAsset;
-class UFlowComponent;
 class UFlowNode_SubGraph;
 
 DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FSimpleFlowComponentnEvent, UFlowComponent*, Component);
@@ -21,7 +22,6 @@ class FLOW_API UFlowSubsystem : public UGameInstanceSubsystem
 
 	UFlowSubsystem();
 
-private:
 	FStreamableManager Streamable;
 
 	// all instanced assets
@@ -65,8 +65,10 @@ public:
 	FSimpleFlowComponentnEvent OnComponentUnregistered;
 
 	template<class T>
-	TArray<TWeakObjectPtr<T>> GetComponents(const FGameplayTag& Tag)
+	TArray<TWeakObjectPtr<T>> GetComponents(const FGameplayTag& Tag) const
 	{
+		static_assert(TPointerIsConvertibleFromTo<T, const UActorComponent>::Value, "'T' template parameter to GetComponents must be derived from UActorComponent");
+		
 		TArray<TWeakObjectPtr<UFlowComponent>> FoundComponents;
 		FlowComponents.MultiFind(Tag, FoundComponents);
 
@@ -83,8 +85,10 @@ public:
 	}
 
 	template<class T>
-	TArray<TWeakObjectPtr<T>> GetActors(const FGameplayTag& Tag)
+	TArray<TWeakObjectPtr<T>> GetActors(const FGameplayTag& Tag) const
 	{
+		static_assert(TPointerIsConvertibleFromTo<T, const AActor>::Value, "'T' template parameter to GetComponents must be derived from AActor");
+		
 		TArray<TWeakObjectPtr<UFlowComponent>> FoundComponents;
 		FlowComponents.MultiFind(Tag, FoundComponents);
 
