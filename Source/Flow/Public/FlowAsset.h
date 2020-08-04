@@ -18,9 +18,6 @@ class IFlowGraphInterface
 public:
 	virtual ~IFlowGraphInterface() {}
 
-	virtual UEdGraph* CreateGraph(UFlowAsset* InFlowAsset) = 0;
-	virtual FGuid CreateGraphNode(UEdGraph* Graph, UFlowNode* FlowNode, bool bSelectNewNode) = 0;
-
 	virtual void OnInputTriggered(UEdGraphNode* GraphNode, const int32 Index) = 0;
 	virtual void OnOutputTriggered(UEdGraphNode* GraphNode, const int32 Index) = 0;
 };
@@ -40,12 +37,13 @@ class FLOW_API UFlowAsset : public UObject
 //////////////////////////////////////////////////////////////////////////
 // Graph
 
-	// UObject
 #if WITH_EDITOR
-	virtual void PostInitProperties() override;
+	friend class UFlowAssetGraph;
+
+	// UObject
 	static void AddReferencedObjects(UObject* InThis, FReferenceCollector& Collector);
-#endif
 	// --
+#endif
 
 	// IFlowGraphInterface
 private:
@@ -58,10 +56,7 @@ private:
 
 public:
 #if WITH_EDITOR
-	void CreateGraph();
 	UEdGraph* GetGraph() const { return FlowGraph; };
-
-	FGuid CreateGraphNode(UFlowNode* InFlowNode, bool bSelectNewNode = true) const;
 
 	static void SetFlowGraphInterface(TSharedPtr<IFlowGraphInterface> InFlowAssetEditor);
 	static TSharedPtr<IFlowGraphInterface> GetFlowGraphInterface() { return FlowGraphInterface; };
@@ -83,21 +78,10 @@ private:
 
 public:
 #if WITH_EDITOR
-	/**
-	 * Construct flow node
-	 */
-	template<class T>
-	T* CreateNode(TSubclassOf<UFlowNode> FlowNodeClass = T::StaticClass(), bool bSelectNewNode = true)
-	{
-		T* NewNode = NewObject<T>(this, FlowNodeClass, NAME_None, RF_Transactional);
-		const FGuid NodeGuid = CreateGraphNode(NewNode, bSelectNewNode);
-
-		RegisterNode(NodeGuid, Cast<UFlowNode>(NewNode));
-		return NewNode;
-	}
-
+	UFlowNode* CreateNode(const UClass* NodeClass, UEdGraphNode* GraphNode);
+	
 	void RegisterNode(const FGuid& NewGuid, UFlowNode* NewNode);
-	void UnregisterNode(FGuid NodeGuid);
+	void UnregisterNode(const FGuid& NodeGuid);
 #endif
 
 	void CompileNodeConnections();

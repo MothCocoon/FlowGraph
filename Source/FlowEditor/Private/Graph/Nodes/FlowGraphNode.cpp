@@ -93,7 +93,6 @@ UFlowGraphNode::UFlowGraphNode(const FObjectInitializer& ObjectInitializer)
 void UFlowGraphNode::SetFlowNode(UFlowNode* InFlowNode)
 {
 	FlowNode = InFlowNode;
-	InFlowNode->SetGraphNode(this);
 }
 
 UFlowNode* UFlowGraphNode::GetFlowNode() const
