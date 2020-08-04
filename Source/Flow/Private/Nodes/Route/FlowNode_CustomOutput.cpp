@@ -25,6 +25,6 @@ void UFlowNode_CustomOutput::ExecuteInput(const FName& PinName)
 #if WITH_EDITOR
 FString UFlowNode_CustomOutput::GetNodeDescription() const
 {
-	return EventName == NAME_None ? FString() : EventName.ToString();
+	return EventName.ToString();
 }
 #endif

@@ -14,6 +14,6 @@ UFlowNode_CustomEvent::UFlowNode_CustomEvent(const FObjectInitializer& ObjectIni
 #if WITH_EDITOR
 FString UFlowNode_CustomEvent::GetNodeDescription() const
 {
-	return EventName == NAME_None ? FString() : EventName.ToString();
+	return EventName.ToString();
 }
 #endif
