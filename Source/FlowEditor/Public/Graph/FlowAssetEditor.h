@@ -22,7 +22,6 @@ class FFlowAssetEditor : public FAssetEditorToolkit,
 	public FGCObject, 
 	public FNotifyHook
 {
-private:
 	/** The FlowAsset asset being inspected */
 	UFlowAsset* FlowAsset;
 
@@ -31,10 +30,15 @@ private:
 	TSharedPtr<class SFlowPalette> Palette;
 	TSharedPtr<FUICommandList> Commands;
 
+public:
 	/**	The tab ids for all the tabs used */
-	static const FName DetailsTabId;
-	static const FName GraphCanvasTabId;
-	static const FName PaletteTabId;
+	static const FName DetailsTab;
+	static const FName GraphTab;
+	static const FName PaletteTab;
+
+private:
+	/** The current UI selection state of this editor */
+	FName CurrentUISelection;
 
 public:
 	FFlowAssetEditor();
@@ -48,9 +52,11 @@ public:
 
 	// FEditorUndoClient
 	virtual void PostUndo(bool bSuccess) override;
-	virtual void PostRedo(bool bSuccess) override { PostUndo(bSuccess); }
+	virtual void PostRedo(bool bSuccess) override;
 	// --
 
+	virtual void HandleUndoTransaction();
+	
 	// FNotifyHook
 	virtual void NotifyPostChange(const FPropertyChangedEvent& PropertyChangedEvent, FProperty* PropertyThatChanged) override;
 	// --
@@ -79,47 +85,59 @@ private:
 
 	void BindGraphCommands();
 	void UndoGraphAction();
-	void RedoGraphAction() const;
+	void RedoGraphAction();
 
 	void CreateWidgets();
 	TSharedRef<SGraphEditor> CreateGraphEditorWidget();
 
 	FReply OnSpawnGraphNodeByShortcut(FInputChord InChord, const FVector2D& InPosition, UEdGraph* InGraph);
+
+public:
+	/** Gets the UI selection state of this editor */
+	FName GetUISelectionState() const { return CurrentUISelection; }
+	void SetUISelectionState(const FName SelectionOwner);
+
+	virtual void ClearSelectionStateFor(const FName SelectionOwner);
+
+private:
 	void OnCreateComment() const;
 	void OnStraightenConnections() const;
 
 public:
 	bool CanEdit() const;
 
-	void SetSelection(TArray<UObject*> SelectedObjects) const;
-
 	TSet<UObject*> GetSelectedNodes() const;
 	int32 GetNumberOfSelectedNodes() const;
 	bool GetBoundsForSelectedNodes(class FSlateRect& Rect, float Padding) const;
 
 private:
-	void OnSelectedNodesChanged(const TSet<class UObject*>& NewSelection) const;
+	void OnSelectedNodesChanged(const TSet<UObject*>& Nodes);
+
+public:
+	void SelectSingleNode(UEdGraphNode* Node) const;
+	
+private:
 	void SelectAllNodes() const;
 	bool CanSelectAllNodes() const;
 
-	void DeleteSelectedNodes() const;
-	void DeleteSelectedDuplicatableNodes() const;
+	void DeleteSelectedNodes();
+	void DeleteSelectedDuplicatableNodes();
 	bool CanDeleteNodes() const;
 
 	void CopySelectedNodes() const;
 	bool CanCopyNodes() const;
 
-	void CutSelectedNodes() const;
+	void CutSelectedNodes();
 	bool CanCutNodes() const;
 
-	void PasteNodes() const;
+	void PasteNodes();
 
 public:
-	void PasteNodesHere(const FVector2D& Location) const;
+	void PasteNodesHere(const FVector2D& Location);
 	bool CanPasteNodes() const;
 
 private:
-	void DuplicateNodes() const;
+	void DuplicateNodes();
 	bool CanDuplicateNodes() const;
 
 	void OnNodeDoubleClicked(class UEdGraphNode* Node) const;

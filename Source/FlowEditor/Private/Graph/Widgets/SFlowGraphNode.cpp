@@ -22,7 +22,7 @@ void SFlowGraphPin::Tick(const FGeometry& AllottedGeometry, const double InCurre
 			if (UFlowNode* FlowNode = GraphNode->GetInspectedNodeInstance())
 			{
 				TArray<FPinRecord> PinRecords;
-				if (GetDirection() == EEdGraphPinDirection::EGPD_Input)
+				if (GetDirection() == EGPD_Input)
 				{
 					PinRecords = FlowNode->GetInputRecords(GetPinObj()->PinName);
 				}
