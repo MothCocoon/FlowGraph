@@ -23,9 +23,13 @@ struct FLOW_API FConnectedPin
 	UPROPERTY()
 	FName PinName;
 
-	FConnectedPin() {};
+	FConnectedPin()
+	{
+		NodeGuid = FGuid();
+		PinName = NAME_None;
+	}
 
-	FConnectedPin(const FGuid InNodeId, const uint8 InPinIndex, const FName& InPinName)
+	FConnectedPin(const FGuid InNodeId, const FName& InPinName)
 	{
 		NodeGuid = InNodeId;
 		PinName = InPinName;
