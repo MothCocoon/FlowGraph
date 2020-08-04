@@ -4,11 +4,11 @@
 
 class FFlowAssetEditor;
 
-/** Widget for displaying a single item  */
+/** Widget displaying a single item  */
 class SFlowPaletteItem : public SGraphPaletteItem
 {
 public:
-	SLATE_BEGIN_ARGS(SFlowPaletteItem) {};
+	SLATE_BEGIN_ARGS(SFlowPaletteItem) {}
 	SLATE_END_ARGS()
 
 	void Construct(const FArguments& InArgs, FCreateWidgetForActionData* const InCreateData);
@@ -22,19 +22,24 @@ private:
 class SFlowPalette : public SGraphPalette
 {
 public:
-	SLATE_BEGIN_ARGS( SFlowPalette ) {};
+	SLATE_BEGIN_ARGS(SFlowPalette) {}
 	SLATE_END_ARGS()
 
-	void Construct(const FArguments& InArgs, TWeakPtr<FFlowAssetEditor> InFlowAssetEditorPtr);
+	void Construct(const FArguments& InArgs, TWeakPtr<FFlowAssetEditor> InFlowAssetEditor);
 
 protected:
-	// SGraphPalette Interface
+	// SGraphPalette
 	virtual TSharedRef<SWidget> OnCreateWidgetForAction(FCreateWidgetForActionData* const InCreateData) override;
 	virtual void CollectAllActions(FGraphActionListBuilderBase& OutAllActions) override;
-	// End of SGraphPalette Interface
+	// --
 
 	FString GetFilterCategoryName() const;
 	void CategorySelectionChanged(TSharedPtr<FString> NewSelection, ESelectInfo::Type SelectInfo);
+
+	void OnActionSelected(const TArray< TSharedPtr<FEdGraphSchemaAction> >& InActions, ESelectInfo::Type InSelectionType);
+
+public:
+	void ClearGraphActionMenuSelection() const;
 
 protected:
 	TWeakPtr<FFlowAssetEditor> FlowAssetEditorPtr;
