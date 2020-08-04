@@ -16,16 +16,6 @@ UFlowAsset::UFlowAsset(const FObjectInitializer& ObjectInitializer)
 }
 
 #if WITH_EDITOR
-void UFlowAsset::PostInitProperties()
-{
-	Super::PostInitProperties();
-
-	if (!HasAnyFlags(RF_ClassDefaultObject | RF_NeedLoad | RF_Transient))
-	{
-		CreateGraph();
-	}
-}
-
 void UFlowAsset::AddReferencedObjects(UObject* InThis, FReferenceCollector& Collector)
 {
 	UFlowAsset* This = CastChecked<UFlowAsset>(InThis);
@@ -34,27 +24,19 @@ void UFlowAsset::AddReferencedObjects(UObject* InThis, FReferenceCollector& Coll
 	Super::AddReferencedObjects(InThis, Collector);
 }
 
-void UFlowAsset::CreateGraph()
-{
-	if (FlowGraph == nullptr)
-	{
-		FlowGraph = GetFlowGraphInterface()->CreateGraph(this);
-
-		FlowGraph->bAllowDeletion = false;
-		FlowGraph->GetSchema()->CreateDefaultNodesForGraph(*FlowGraph);
-	}
-}
-
-FGuid UFlowAsset::CreateGraphNode(UFlowNode* InFlowNode, bool bSelectNewNode /*= true*/) const
-{
-	check(InFlowNode->GraphNode == nullptr);
-	return GetFlowGraphInterface()->CreateGraphNode(FlowGraph, InFlowNode, bSelectNewNode);
-}
-
 void UFlowAsset::SetFlowGraphInterface(TSharedPtr<IFlowGraphInterface> InFlowAssetEditor)
 {
 	check(!FlowGraphInterface.IsValid());
 	FlowGraphInterface = InFlowAssetEditor;
+}
+
+UFlowNode* UFlowAsset::CreateNode(const UClass* NodeClass, UEdGraphNode* GraphNode)
+{
+	UFlowNode* NewNode = NewObject<UFlowNode>(this, NodeClass, NAME_None, RF_Transactional);
+	NewNode->SetGraphNode(GraphNode);
+	
+	RegisterNode(GraphNode->NodeGuid, NewNode);
+	return NewNode;
 }
 
 void UFlowAsset::RegisterNode(const FGuid& NewGuid, UFlowNode* NewNode)
@@ -63,7 +45,7 @@ void UFlowAsset::RegisterNode(const FGuid& NewGuid, UFlowNode* NewNode)
 	Nodes.Emplace(NewGuid, NewNode);
 }
 
-void UFlowAsset::UnregisterNode(FGuid NodeGuid)
+void UFlowAsset::UnregisterNode(const FGuid& NodeGuid)
 {
 	Nodes.Remove(NodeGuid);
 	Nodes.Shrink();
@@ -99,7 +81,7 @@ void UFlowAsset::CompileNodeConnections()
 				if (UEdGraphPin* LinkedPin = ThisPin->LinkedTo[0])
 				{
 					const UEdGraphNode* LinkedNode = LinkedPin->GetOwningNode();
-					Connections.Add(ThisPin->PinName, FConnectedPin(LinkedNode->NodeGuid, LinkedNode->Pins.Find(LinkedPin), LinkedPin->PinName));
+					Connections.Add(ThisPin->PinName, FConnectedPin(LinkedNode->NodeGuid, LinkedPin->PinName));
 				}
 			}
 		}

@@ -3,7 +3,7 @@
 #include "FlowEditorModule.h"
 #include "Graph/FlowAssetGraph.h"
 #include "Graph/FlowGraphCommands.h"
-#include "Graph/FlowGraphSchema.h"
+#include "Graph/FlowGraphSchema_Actions.h"
 #include "Graph/Nodes/FlowGraphNode.h"
 #include "Graph/Nodes/FlowGraphNode_In.h"
 #include "Graph/Nodes/FlowGraphNode_Out.h"
