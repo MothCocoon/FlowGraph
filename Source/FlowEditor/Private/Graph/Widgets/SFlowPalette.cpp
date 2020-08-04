@@ -97,9 +97,9 @@ FText SFlowPaletteItem::GetItemTooltip() const
 	return ActionPtr.Pin()->GetTooltipDescription();
 }
 
-void SFlowPalette::Construct(const FArguments& InArgs, TWeakPtr<FFlowAssetEditor> InFlowAssetEditorPtr)
+void SFlowPalette::Construct(const FArguments& InArgs, TWeakPtr<FFlowAssetEditor> InFlowAssetEditor)
 {
-	FlowAssetEditorPtr = InFlowAssetEditorPtr;
+	FlowAssetEditorPtr = InFlowAssetEditor;
 
 	CategoryNames.Add(MakeShareable(new FString(TEXT("All"))));
 	CategoryNames.Append(UFlowGraphSchema::GetFlowNodeCategories());
@@ -141,6 +141,7 @@ void SFlowPalette::Construct(const FArguments& InArgs, TWeakPtr<FFlowAssetEditor
 							// Old Expression and Function lists were auto expanded so do the same here for now
 							SAssignNew(GraphActionMenu, SGraphActionMenu)
 							.OnActionDragged(this, &SFlowPalette::OnActionDragged)
+							.OnActionSelected(this, &SFlowPalette::OnActionSelected)
 							.OnCreateWidgetForAction(this, &SFlowPalette::OnCreateWidgetForAction)
 							.OnCollectAllActions(this, &SFlowPalette::CollectAllActions)
 							.AutoExpandActionMenu(true)
@@ -157,14 +158,8 @@ TSharedRef<SWidget> SFlowPalette::OnCreateWidgetForAction(FCreateWidgetForAction
 
 void SFlowPalette::CollectAllActions(FGraphActionListBuilderBase& OutAllActions)
 {
-	const UFlowGraphSchema* Schema = GetDefault<UFlowGraphSchema>();
-
 	FGraphActionMenuBuilder ActionMenuBuilder;
-
-	// Determine all possible actions
-	Schema->GetPaletteActions(ActionMenuBuilder, GetFilterCategoryName());
-
-	//@TODO: Avoid this copy
+	GetDefault<UFlowGraphSchema>()->GetPaletteActions(ActionMenuBuilder, GetFilterCategoryName());
 	OutAllActions.Append(ActionMenuBuilder);
 }
 
@@ -181,6 +176,23 @@ FString SFlowPalette::GetFilterCategoryName() const
 void SFlowPalette::CategorySelectionChanged(TSharedPtr<FString> NewSelection, ESelectInfo::Type SelectInfo)
 {
 	RefreshActionsList(true);
+}
+
+void SFlowPalette::OnActionSelected(const TArray<TSharedPtr<FEdGraphSchemaAction>>& InActions, ESelectInfo::Type InSelectionType)
+{
+	if (InSelectionType == ESelectInfo::OnMouseClick  || InSelectionType == ESelectInfo::OnKeyPress || InSelectionType == ESelectInfo::OnNavigation || InActions.Num() == 0)
+	{
+		TSharedPtr<FFlowAssetEditor> FlowAssetEditor = FlowAssetEditorPtr.Pin();
+		if (FlowAssetEditor)
+		{
+			FlowAssetEditor->SetUISelectionState(FFlowAssetEditor::PaletteTab);
+		}
+	}
+}
+
+void SFlowPalette::ClearGraphActionMenuSelection() const
+{
+	GraphActionMenu->SelectItemByName(NAME_None);
 }
 
 #undef LOCTEXT_NAMESPACE
