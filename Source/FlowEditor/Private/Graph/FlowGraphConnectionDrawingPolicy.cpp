@@ -1,7 +1,7 @@
 #include "Graph/FlowGraphConnectionDrawingPolicy.h"
 
 #include "FlowEditorSettings.h"
-#include "Graph/FlowAssetGraph.h"
+#include "Graph/FlowGraph.h"
 #include "Graph/FlowGraphSchema.h"
 #include "Graph/Nodes/FlowGraphNode.h"
 
@@ -46,7 +46,7 @@ FFlowGraphConnectionDrawingPolicy::FFlowGraphConnectionDrawingPolicy(int32 InBac
 
 void FFlowGraphConnectionDrawingPolicy::BuildPaths()
 {
-	if (const UFlowAsset* FlowInstance = CastChecked<UFlowAssetGraph>(GraphObj)->GetFlowAsset()->GetInspectedInstance())
+	if (const UFlowAsset* FlowInstance = CastChecked<UFlowGraph>(GraphObj)->GetFlowAsset()->GetInspectedInstance())
 	{
 		const double CurrentTime = FApp::GetCurrentTime();
 
