@@ -38,7 +38,7 @@ class FLOW_API UFlowAsset : public UObject
 // Graph
 
 #if WITH_EDITOR
-	friend class UFlowAssetGraph;
+	friend class UFlowGraph;
 
 	// UObject
 	static void AddReferencedObjects(UObject* InThis, FReferenceCollector& Collector);

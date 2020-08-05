@@ -1,7 +1,7 @@
 #include "Graph/FlowGraphSchema.h"
 
 #include "Graph/FlowAssetEditor.h"
-#include "Graph/FlowAssetGraph.h"
+#include "Graph/FlowGraph.h"
 #include "Graph/FlowGraphSchema_Actions.h"
 #include "Graph/FlowGraphUtils.h"
 #include "Graph/Nodes/FlowGraphNode.h"
@@ -52,7 +52,7 @@ void UFlowGraphSchema::CreateDefaultNodesForGraph(UEdGraph& Graph) const
 	UFlowGraphNode* NewGraphNode = FFlowGraphSchemaAction_NewNode::CreateNode(&Graph, nullptr, UFlowNode_Start::StaticClass(), UFlowGraphNode_In::StaticClass(), FVector2D::ZeroVector);
 	SetNodeMetaData(NewGraphNode, FNodeMetadata::DefaultGraphNode);
 
-	CastChecked<UFlowAssetGraph>(&Graph)->GetFlowAsset()->CompileNodeConnections();
+	CastChecked<UFlowGraph>(&Graph)->GetFlowAsset()->CompileNodeConnections();
 }
 
 const FPinConnectionResponse UFlowGraphSchema::CanCreateConnection(const UEdGraphPin* PinA, const UEdGraphPin* PinB) const
@@ -88,7 +88,7 @@ bool UFlowGraphSchema::TryCreateConnection(UEdGraphPin* PinA, UEdGraphPin* PinB)
 
 	if (bModified)
 	{
-		CastChecked<UFlowAssetGraph>(PinA->GetOwningNode()->GetGraph())->GetFlowAsset()->CompileNodeConnections();
+		CastChecked<UFlowGraph>(PinA->GetOwningNode()->GetGraph())->GetFlowAsset()->CompileNodeConnections();
 	}
 
 	return bModified;
@@ -108,7 +108,7 @@ void UFlowGraphSchema::BreakNodeLinks(UEdGraphNode& TargetNode) const
 {
 	Super::BreakNodeLinks(TargetNode);
 
-	CastChecked<UFlowAssetGraph>(TargetNode.GetGraph())->GetFlowAsset()->CompileNodeConnections();
+	CastChecked<UFlowGraph>(TargetNode.GetGraph())->GetFlowAsset()->CompileNodeConnections();
 }
 
 void UFlowGraphSchema::BreakPinLinks(UEdGraphPin& TargetPin, bool bSendsNodeNotifcation) const
@@ -120,7 +120,7 @@ void UFlowGraphSchema::BreakPinLinks(UEdGraphPin& TargetPin, bool bSendsNodeNoti
 	// if this would notify the node then we need to compile the FlowAsset
 	if (bSendsNodeNotifcation)
 	{
-		CastChecked<UFlowAssetGraph>(TargetPin.GetOwningNode()->GetGraph())->GetFlowAsset()->CompileNodeConnections();
+		CastChecked<UFlowGraph>(TargetPin.GetOwningNode()->GetGraph())->GetFlowAsset()->CompileNodeConnections();
 	}
 }
 

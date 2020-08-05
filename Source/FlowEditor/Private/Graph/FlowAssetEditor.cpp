@@ -1,7 +1,7 @@
 #include "Graph/FlowAssetEditor.h"
 
 #include "FlowEditorModule.h"
-#include "Graph/FlowAssetGraph.h"
+#include "Graph/FlowGraph.h"
 #include "Graph/FlowGraphCommands.h"
 #include "Graph/FlowGraphSchema_Actions.h"
 #include "Graph/Nodes/FlowGraphNode.h"

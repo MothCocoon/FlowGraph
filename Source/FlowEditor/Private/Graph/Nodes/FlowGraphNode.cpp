@@ -1,7 +1,7 @@
 #include "Graph/Nodes/FlowGraphNode.h"
 
 #include "FlowEditorSettings.h"
-#include "Graph/FlowAssetGraph.h"
+#include "Graph/FlowGraph.h"
 #include "Graph/FlowDebugger.h"
 #include "Graph/FlowGraphCommands.h"
 #include "Graph/FlowGraphSchema.h"
@@ -158,7 +158,7 @@ void UFlowGraphNode::ResetFlowNodeOwner()
 {
 	if (FlowNode)
 	{
-		UFlowAsset* FlowAsset = CastChecked<UFlowAssetGraph>(GetGraph())->GetFlowAsset();
+		UFlowAsset* FlowAsset = CastChecked<UFlowGraph>(GetGraph())->GetFlowAsset();
 
 		if (FlowNode->GetOuter() != FlowAsset)
 		{

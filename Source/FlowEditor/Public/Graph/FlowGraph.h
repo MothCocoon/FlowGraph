@@ -1,13 +1,13 @@
 #pragma once
 
 #include "EdGraph/EdGraph.h"
-#include "FlowAssetGraph.generated.h"
+#include "FlowGraph.generated.h"
 
 class UFlowNode;
 class UFlowAsset;
 
-UCLASS(MinimalAPI)
-class UFlowAssetGraph : public UEdGraph
+UCLASS()
+class FLOWEDITOR_API UFlowGraph : public UEdGraph
 {
 	GENERATED_UCLASS_BODY()
 

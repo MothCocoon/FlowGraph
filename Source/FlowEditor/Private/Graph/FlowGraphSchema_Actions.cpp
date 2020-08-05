@@ -1,7 +1,7 @@
 #include "Graph/FlowGraphSchema_Actions.h"
 
 #include "Graph/FlowAssetEditor.h"
-#include "Graph/FlowAssetGraph.h"
+#include "Graph/FlowGraph.h"
 #include "Graph/FlowGraphUtils.h"
 
 #include "Graph/Nodes/FlowGraphNode.h"
@@ -66,7 +66,7 @@ UFlowGraphNode* FFlowGraphSchemaAction_NewNode::CreateNode(UEdGraph* ParentGraph
 		FromPin->Modify();
 	}
 
-	UFlowAsset* FlowAsset = CastChecked<UFlowAssetGraph>(ParentGraph)->GetFlowAsset();
+	UFlowAsset* FlowAsset = CastChecked<UFlowGraph>(ParentGraph)->GetFlowAsset();
 	FlowAsset->Modify();
 
 	UFlowGraphNode* NewGraphNode = NewObject<UFlowGraphNode>(ParentGraph, GraphNodeClass, NAME_None, RF_Transactional);
