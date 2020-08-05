@@ -1,4 +1,4 @@
-#include "Graph/FlowAssetGraph.h"
+#include "Graph/FlowGraph.h"
 #include "Graph/FlowGraphSchema.h"
 #include "Graph/Nodes/FlowGraphNode.h"
 
@@ -24,7 +24,7 @@ public:
 	}
 };
 
-UFlowAssetGraph::UFlowAssetGraph(const FObjectInitializer& ObjectInitializer)
+UFlowGraph::UFlowGraph(const FObjectInitializer& ObjectInitializer)
 	: Super(ObjectInitializer)
 {
 	if (!UFlowAsset::GetFlowGraphInterface().IsValid())
@@ -33,9 +33,9 @@ UFlowAssetGraph::UFlowAssetGraph(const FObjectInitializer& ObjectInitializer)
 	}
 }
 
-UEdGraph* UFlowAssetGraph::CreateGraph(UFlowAsset* InFlowAsset)
+UEdGraph* UFlowGraph::CreateGraph(UFlowAsset* InFlowAsset)
 {
-	UFlowAssetGraph* NewGraph = CastChecked<UFlowAssetGraph>(FBlueprintEditorUtils::CreateNewGraph(InFlowAsset, NAME_None, StaticClass(), UFlowGraphSchema::StaticClass()));
+	UFlowGraph* NewGraph = CastChecked<UFlowGraph>(FBlueprintEditorUtils::CreateNewGraph(InFlowAsset, NAME_None, StaticClass(), UFlowGraphSchema::StaticClass()));
 	NewGraph->bAllowDeletion = false;
 
 	InFlowAsset->FlowGraph = NewGraph;
@@ -44,7 +44,7 @@ UEdGraph* UFlowAssetGraph::CreateGraph(UFlowAsset* InFlowAsset)
 	return NewGraph;
 }
 
-void UFlowAssetGraph::NotifyGraphChanged()
+void UFlowGraph::NotifyGraphChanged()
 {
 	GetFlowAsset()->CompileNodeConnections();
 	GetFlowAsset()->MarkPackageDirty();
@@ -52,7 +52,7 @@ void UFlowAssetGraph::NotifyGraphChanged()
 	Super::NotifyGraphChanged();
 }
 
-UFlowAsset* UFlowAssetGraph::GetFlowAsset() const
+UFlowAsset* UFlowGraph::GetFlowAsset() const
 {
 	return CastChecked<UFlowAsset>(GetOuter());
 }
