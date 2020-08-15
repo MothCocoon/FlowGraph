@@ -173,7 +173,7 @@ void SFlowGraphNode::CreateStandardPinWidget(UEdGraphPin* Pin)
 {
 	TSharedPtr<SGraphPin> NewPin = SNew(SFlowGraphPin, Pin);
 
-	if (!UFlowEditorSettings::Get()->bShowDefaultPinNames)
+	if (!UFlowEditorSettings::Get()->bShowDefaultPinNames && FlowGraphNode->GetFlowNode())
 	{
 		if (Pin->Direction == EGPD_Input)
 		{
