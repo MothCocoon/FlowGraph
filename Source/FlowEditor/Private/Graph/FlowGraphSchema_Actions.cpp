@@ -59,7 +59,7 @@ UFlowGraphNode* FFlowGraphSchemaAction_NewNode::CreateNode(UEdGraph* ParentGraph
 	check(NodeClass);
 
 	const FScopedTransaction Transaction(LOCTEXT("AddNode", "Add Node"));
-	
+
 	ParentGraph->Modify();
 	if (FromPin)
 	{
@@ -70,19 +70,21 @@ UFlowGraphNode* FFlowGraphSchemaAction_NewNode::CreateNode(UEdGraph* ParentGraph
 	FlowAsset->Modify();
 
 	UFlowGraphNode* NewGraphNode = NewObject<UFlowGraphNode>(ParentGraph, GraphNodeClass, NAME_None, RF_Transactional);
+	NewGraphNode->CreateNewGuid();
+
 	NewGraphNode->NodePosX = Location.X;
 	NewGraphNode->NodePosY = Location.Y;
 	ParentGraph->AddNode(NewGraphNode, false, bSelectNewNode);
 
 	UFlowNode* NewNode = FlowAsset->CreateNode(NodeClass, NewGraphNode);
 	NewGraphNode->SetFlowNode(NewNode);
-	
+
 	NewGraphNode->PostPlacedNewNode();
 	NewGraphNode->AllocateDefaultPins();
-	
+
 	ParentGraph->NotifyGraphChanged();
 	FFlowGraphUtils::GetFlowAssetEditor(ParentGraph)->SelectSingleNode(NewGraphNode);
-	
+
 	FlowAsset->PostEditChange();
 	FlowAsset->MarkPackageDirty();
 
