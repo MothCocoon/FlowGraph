@@ -8,6 +8,8 @@ FFlowComponentNotify UFlowComponent::OnNotifyFromComponent;
 UFlowComponent::UFlowComponent(const FObjectInitializer& ObjectInitializer)
 	: Super(ObjectInitializer)
 {
+	PrimaryComponentTick.bCanEverTick = false;
+	PrimaryComponentTick.bStartWithTickEnabled = false;
 }
 
 void UFlowComponent::BeginPlay()
