@@ -1,4 +1,4 @@
-#include "Nodes/Notifies/FlowNode_NotifyActor.h"
+#include "Nodes/World/FlowNode_NotifyActor.h"
 #include "FlowComponent.h"
 #include "FlowSubsystem.h"
 
