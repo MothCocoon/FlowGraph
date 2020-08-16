@@ -10,7 +10,7 @@
 class UFlowAsset;
 class UFlowNode_SubGraph;
 
-DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FSimpleFlowComponentnEvent, UFlowComponent*, Component);
+DECLARE_MULTICAST_DELEGATE_OneParam(FSimpleFlowComponentnEvent, UFlowComponent* /*Component*/);
 
 /**
  * Flow Control System
@@ -51,7 +51,7 @@ public:
 	virtual UWorld* GetWorld() const override;
 
 //////////////////////////////////////////////////////////////////////////
-// Flow Components
+// Component Registry
 
 private:
 	// all the Flow Components currently existing in the world
@@ -85,19 +85,19 @@ public:
 	}
 
 	template<class T>
-	TArray<TWeakObjectPtr<T>> GetActors(const FGameplayTag& Tag) const
+	TMap<TWeakObjectPtr<T>, TWeakObjectPtr<UFlowComponent>> GetActors(const FGameplayTag& Tag) const
 	{
 		static_assert(TPointerIsConvertibleFromTo<T, const AActor>::Value, "'T' template parameter to GetComponents must be derived from AActor");
 		
 		TArray<TWeakObjectPtr<UFlowComponent>> FoundComponents;
 		FlowComponents.MultiFind(Tag, FoundComponents);
 
-		TArray<TWeakObjectPtr<T>> ResultActors;
+		TMap<TWeakObjectPtr<T>, TWeakObjectPtr<UFlowComponent>> ResultActors;
 		for (const TWeakObjectPtr<UFlowComponent>& Component : FoundComponents)
 		{
 			if (Component->GetOwner()->GetClass()->IsChildOf(T::StaticClass()))
 			{
-				ResultActors.Emplace(Cast<T>(Component->GetOwner()));
+				ResultActors.Emplace(Cast<T>(Component->GetOwner()), Component);
 			}
 		}
 
