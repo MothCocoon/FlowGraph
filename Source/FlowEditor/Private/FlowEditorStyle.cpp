@@ -48,8 +48,8 @@ void FFlowEditorStyle::Initialize()
 	StyleSet->Set("ClassIcon.FlowAsset", new IMAGE_BRUSH(TEXT("Icons/FlowAsset_16x"), Icon16));
 	StyleSet->Set("ClassThumbnail.FlowAsset", new IMAGE_BRUSH(TEXT("Icons/FlowAsset_64x"), Icon64));
 
-	StyleSet->Set("FlowGraph.ActiveShadow", new BOX_BRUSH("Icons/FlowNode_Shadow", FMargin(18.0f / 64.0f)));
-	StyleSet->Set("FlowGraph.WasActiveShadow", new BOX_BRUSH("Icons/FlowNode_Shadow", FMargin(18.0f / 64.0f)));
+	StyleSet->Set("Flow.Node.ActiveShadow", new BOX_BRUSH("Icons/FlowNode_Shadow_Active", FMargin(18.0f / 64.0f)));
+	StyleSet->Set("Flow.Node.WasActiveShadow", new BOX_BRUSH("Icons/FlowNode_Shadow_WasActive", FMargin(18.0f / 64.0f)));
 
 	FSlateStyleRegistry::RegisterSlateStyle(*StyleSet.Get());
 };
