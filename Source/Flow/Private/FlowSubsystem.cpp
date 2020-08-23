@@ -95,7 +95,7 @@ UFlowAsset* UFlowSubsystem::CreateFlowInstance(TSoftObjectPtr<UFlowAsset> FlowAs
 	if (GetWorld()->WorldType != EWorldType::Game)
 	{
 		// Fix connections - even in packaged game if assets haven't been re-saved in the editor after changing node's definition
-		FlowAsset.Get()->CompileNodeConnections();
+		FlowAsset.Get()->HarvestNodeConnections();
 	}
 #endif
 

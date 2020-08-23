@@ -2,24 +2,38 @@
 
 #include "EdGraph/EdGraphSchema.h"
 
+class FFlowDebuggerCommands final : public TCommands<FFlowDebuggerCommands>
+{
+public:
+	FFlowDebuggerCommands();
+	
+	TSharedPtr<FUICommandInfo> GoToMasterInstance;
+
+	virtual void RegisterCommands() override;
+};
+
 /** Generic graph commands for the flow graph */
-class FFlowGraphCommands : public TCommands<FFlowGraphCommands>
+class FFlowGraphCommands final : public TCommands<FFlowGraphCommands>
 {
 public:
 	FFlowGraphCommands();
-	
+
+	/** Context Pins */
 	TSharedPtr<FUICommandInfo> RefreshContextPins;
 
+	/** Pins */
 	TSharedPtr<FUICommandInfo> AddInput;
 	TSharedPtr<FUICommandInfo> AddOutput;
 	TSharedPtr<FUICommandInfo> RemovePin;
 
+	/** Breakpoints */
 	TSharedPtr<FUICommandInfo> AddPinBreakpoint;
 	TSharedPtr<FUICommandInfo> RemovePinBreakpoint;
 	TSharedPtr<FUICommandInfo> EnablePinBreakpoint;
 	TSharedPtr<FUICommandInfo> DisablePinBreakpoint;
 	TSharedPtr<FUICommandInfo> TogglePinBreakpoint;
 
+	/** Double-click on node */
 	TSharedPtr<FUICommandInfo> FocusViewport;
 
 	virtual void RegisterCommands() override;
