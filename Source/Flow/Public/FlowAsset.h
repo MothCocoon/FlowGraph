@@ -22,6 +22,10 @@ public:
 	virtual void OnOutputTriggered(UEdGraphNode* GraphNode, const int32 Index) = 0;
 };
 
+#if WITH_EDITOR
+DECLARE_DELEGATE(FFlowAssetEvent);
+#endif
+
 /**
  * Single asset containing flow nodes.
  */
@@ -46,12 +50,12 @@ class FLOW_API UFlowAsset : public UObject
 #endif
 
 	// IFlowGraphInterface
-private:
-	static TSharedPtr<IFlowGraphInterface> FlowGraphInterface;
-	
 #if WITH_EDITORONLY_DATA
+private:
 	UPROPERTY()
 	UEdGraph* FlowGraph;
+	
+	static TSharedPtr<IFlowGraphInterface> FlowGraphInterface;
 #endif
 
 public:
@@ -84,7 +88,7 @@ public:
 	void UnregisterNode(const FGuid& NodeGuid);
 #endif
 
-	void CompileNodeConnections();
+	void HarvestNodeConnections();
 	
 	UFlowNode* GetNode(const FGuid& Guid) const;
 	TMap<FGuid, UFlowNode*> GetNodes() const { return Nodes; }
@@ -144,7 +148,18 @@ public:
 	int32 GetInstancesNum() const { return ActiveInstances.Num(); };
 
 #if WITH_EDITOR
-	UFlowAsset* GetInspectedInstance() const { return InspectedInstance.IsValid() ? InspectedInstance.Get() : nullptr; };
+	void GetInstanceDisplayNames(TArray<TSharedPtr<FName>>& OutDisplayNames) const;
+	
+	void SetInspectedInstance(const FName& NewInspectedInstanceName);
+	UFlowAsset* GetInspectedInstance() const { return InspectedInstance.IsValid() ? InspectedInstance.Get() : nullptr; }
+
+	DECLARE_EVENT(UFlowAsset, FRegenerateToolbarsEvent);
+	FRegenerateToolbarsEvent& OnRegenerateToolbars() { return RenegateToolbarsEvent; }
+
+	FRegenerateToolbarsEvent RenegateToolbarsEvent;
+
+private:
+	void BroadcastRegenerateToolbars() { RenegateToolbarsEvent.Broadcast(); }
 #endif
 
 //////////////////////////////////////////////////////////////////////////
@@ -154,8 +169,8 @@ public:
 	UFlowAsset* TemplateAsset;
 
 private:
-	TWeakObjectPtr<UFlowNode_SubGraph> NodeOwningThisGraph;
-	TMap<UFlowNode_SubGraph*, TWeakObjectPtr<UFlowAsset>> ActiveSubGraphs;
+	TWeakObjectPtr<UFlowNode_SubGraph> NodeOwningThisAssetInstance;
+	TMap<TWeakObjectPtr<UFlowNode_SubGraph>, TWeakObjectPtr<UFlowAsset>> ActiveSubGraphs;
 
 	UPROPERTY()
 	UFlowNode_Start* StartNode;
@@ -180,7 +195,8 @@ public:
 
 	void StartFlow();
 	void StartSubFlow(UFlowNode_SubGraph* SubGraphNode);
-
+	TWeakObjectPtr<UFlowAsset> GetFlowInstance(UFlowNode_SubGraph* SubGraphNode) const;
+	
 private:
 	void TriggerCustomEvent(UFlowNode_SubGraph* Node, const FName& EventName);
 	void TriggerCustomOutput(const FName& EventName) const;
@@ -192,10 +208,13 @@ private:
 
 public:
 	UFlowSubsystem* GetFlowSubsystem() const;
-	UFlowNode_SubGraph* GetNodeOwningThisGraph() const { return NodeOwningThisGraph.Get(); };
-	UFlowNode* GetNodeInstance(const FGuid Guid) const { return Nodes.FindRef(Guid); };
+	FName GetDisplayName() const;
+	
+	UFlowNode_SubGraph* GetNodeOwningThisAssetInstance() const;
+	UFlowAsset* GetMasterInstance() const;
+	UFlowNode* GetNodeInstance(const FGuid Guid) const;
 
-	bool IsActive() const { return RecordedNodes.Num() > 0; };
-	void GetActiveNodes(TArray<UFlowNode*>& OutNodes) const { OutNodes = ActiveNodes; };
-	void GetRecordedNodes(TArray<UFlowNode*>& OutNodes) const { OutNodes = RecordedNodes; };
+	bool IsActive() const { return RecordedNodes.Num() > 0; }
+	void GetActiveNodes(TArray<UFlowNode*>& OutNodes) const { OutNodes = ActiveNodes; }
+	void GetRecordedNodes(TArray<UFlowNode*>& OutNodes) const { OutNodes = RecordedNodes; }
 };

@@ -6,6 +6,9 @@
 #include "Toolkits/IToolkitHost.h"
 #include "UObject/GCObject.h"
 
+class FFlowDebuggerToolbar;
+class FFlowDebugger;
+
 class SFlowPalette;
 class UFlowAsset;
 class UFlowGraphNode;
@@ -25,11 +28,13 @@ class FFlowAssetEditor : public FAssetEditorToolkit,
 	/** The FlowAsset asset being inspected */
 	UFlowAsset* FlowAsset;
 
+	TSharedPtr<FFlowDebugger> Debugger;
+	TSharedPtr<FFlowDebuggerToolbar> Toolbar;
+	
 	TSharedPtr<SGraphEditor> FocusedGraphEditor;
 	TSharedPtr<class IDetailsView> DetailsView;
 	TSharedPtr<class SFlowPalette> Palette;
-	TSharedPtr<FUICommandList> Commands;
-
+	
 public:
 	/**	The tab ids for all the tabs used */
 	static const FName DetailsTab;
@@ -81,14 +86,26 @@ public:
 	void InitFlowAssetEditor(const EToolkitMode::Type Mode, const TSharedPtr< class IToolkitHost >& InitToolkitHost, UObject* ObjectToEdit);
 
 private:
-	void ExtendToolbar();
+	void AddPlayWorldToolbar() const;
+	void CreateFlowDebugger();
+	void BindDebuggerCommands();
 
+protected:
+	virtual void GoToMasterInstance();
+	virtual bool CanGoToMasterInstance();
+
+private:
+	void CreateWidgets();
+	TSharedRef<SGraphEditor> CreateGraphWidget();
+
+protected:
+	FGraphAppearanceInfo GetGraphAppearanceInfo() const;
+	virtual FText GetCornerText() const;
+
+private:
 	void BindGraphCommands();
 	void UndoGraphAction();
 	void RedoGraphAction();
-
-	void CreateWidgets();
-	TSharedRef<SGraphEditor> CreateGraphEditorWidget();
 
 	FReply OnSpawnGraphNodeByShortcut(FInputChord InChord, const FVector2D& InPosition, UEdGraph* InGraph);
 
@@ -104,7 +121,9 @@ private:
 	void OnStraightenConnections() const;
 
 public:
-	bool CanEdit() const;
+	static bool CanEdit();
+	static bool IsPIE();
+	static EVisibility GetDebuggerVisibility();
 
 	TSet<UObject*> GetSelectedNodes() const;
 	int32 GetNumberOfSelectedNodes() const;
