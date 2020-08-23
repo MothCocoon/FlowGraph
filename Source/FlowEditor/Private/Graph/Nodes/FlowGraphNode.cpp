@@ -2,8 +2,8 @@
 
 #include "FlowEditorSettings.h"
 #include "Graph/FlowGraph.h"
-#include "Graph/FlowDebugger.h"
-#include "Graph/FlowGraphCommands.h"
+#include "Asset/FlowDebugger.h"
+#include "FlowEditorCommands.h"
 #include "Graph/FlowGraphSchema.h"
 #include "Graph/Widgets/SFlowGraphNode.h"
 

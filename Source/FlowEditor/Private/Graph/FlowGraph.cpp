@@ -46,7 +46,7 @@ UEdGraph* UFlowGraph::CreateGraph(UFlowAsset* InFlowAsset)
 
 void UFlowGraph::NotifyGraphChanged()
 {
-	GetFlowAsset()->CompileNodeConnections();
+	GetFlowAsset()->HarvestNodeConnections();
 	GetFlowAsset()->MarkPackageDirty();
 
 	Super::NotifyGraphChanged();

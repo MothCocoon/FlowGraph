@@ -51,7 +51,7 @@ void FFlowNode_CustomOutputCustomization::GetEventNames()
 		
 		for (const FName& EventName : SortedNames)
 		{
-			if (EventName != NAME_None)
+			if (!EventName.IsNone())
 			{
 				EventNames.Emplace(MakeShareable(new FName(EventName)));
 			}

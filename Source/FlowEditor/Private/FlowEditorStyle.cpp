@@ -28,14 +28,8 @@ void FFlowEditorStyle::Initialize()
 	// engine assets
 	StyleSet->SetContentRoot(FPaths::EngineContentDir() / TEXT("Editor/Slate/"));
 
-	StyleSet->Set("FlowGraph.PausePlaySession", new IMAGE_BRUSH("Icons/icon_pause_40x", Icon40));
-	StyleSet->Set("FlowGraph.PausePlaySession.Small", new IMAGE_BRUSH("Icons/icon_pause_40x", Icon20));
-	StyleSet->Set("FlowGraph.ResumePlaySession", new IMAGE_BRUSH("Icons/icon_simulate_40x", Icon40));
-	StyleSet->Set("FlowGraph.ResumePlaySession.Small", new IMAGE_BRUSH("Icons/icon_simulate_40x", Icon20));
-	StyleSet->Set("FlowGraph.StopPlaySession", new IMAGE_BRUSH("Icons/icon_stop_40x", Icon40));
-	StyleSet->Set("FlowGraph.StopPlaySession.Small", new IMAGE_BRUSH("Icons/icon_stop_40x", Icon20));
-
-	StyleSet->Set("FlowGraph.StepOut", new IMAGE_BRUSH("Icons/icon_DebugStepOut_40x", Icon40));
+	StyleSet->Set("FlowDebugger.GoToMasterInstance", new IMAGE_BRUSH("Icons/icon_DebugStepOut_40x", Icon40));
+	StyleSet->Set("FlowDebugger.GoToMasterInstance.Small", new IMAGE_BRUSH("Icons/icon_DebugStepOut_40x", Icon20));
 
 	StyleSet->Set("FlowGraph.BreakpointEnabled", new IMAGE_BRUSH("Old/Kismet2/Breakpoint_Valid", FVector2D(24.0f, 24.0f)));
 	StyleSet->Set("FlowGraph.BreakpointDisabled", new IMAGE_BRUSH("Old/Kismet2/Breakpoint_Disabled", FVector2D(24.0f, 24.0f)));
@@ -48,6 +42,8 @@ void FFlowEditorStyle::Initialize()
 	StyleSet->Set("ClassIcon.FlowAsset", new IMAGE_BRUSH(TEXT("Icons/FlowAsset_16x"), Icon16));
 	StyleSet->Set("ClassThumbnail.FlowAsset", new IMAGE_BRUSH(TEXT("Icons/FlowAsset_64x"), Icon64));
 
+	StyleSet->Set("Flow.Node.Title", new BOX_BRUSH("Icons/FlowNode_Title", FMargin(8.0f / 64.0f, 3.0f / 32.0f, 0, 0)));
+	StyleSet->Set("Flow.Node.Body", new BOX_BRUSH("Icons/FlowNode_Body", FMargin(8.0f / 64.0f, 3.0f / 32.0f, 0, 0)));
 	StyleSet->Set("Flow.Node.ActiveShadow", new BOX_BRUSH("Icons/FlowNode_Shadow_Active", FMargin(18.0f / 64.0f)));
 	StyleSet->Set("Flow.Node.WasActiveShadow", new BOX_BRUSH("Icons/FlowNode_Shadow_WasActive", FMargin(18.0f / 64.0f)));
 
