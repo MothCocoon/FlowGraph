@@ -1,4 +1,6 @@
-#include "Graph/FlowGraphCommands.h"
+#include "FlowEditorCommands.h"
+
+#include "FlowEditorStyle.h"
 #include "Graph/FlowGraphSchema.h"
 #include "Graph/FlowGraphSchema_Actions.h"
 
@@ -7,6 +9,16 @@
 #include "Misc/ConfigCacheIni.h"
 
 #define LOCTEXT_NAMESPACE "FlowGraphCommands"
+
+FFlowDebuggerCommands::FFlowDebuggerCommands()
+	: TCommands<FFlowDebuggerCommands>("FlowDebugger", LOCTEXT("FlowDebugger", "Flow Debugger"), NAME_None, FFlowEditorStyle::GetStyleSetName())
+{
+}
+
+void FFlowDebuggerCommands::RegisterCommands()
+{
+	UI_COMMAND(GoToMasterInstance, "Go To Master", "Open editor for the Flow Asset that created this Flow instance", EUserInterfaceActionType::Button, FInputChord(EModifierKey::Alt | EModifierKey::Shift, EKeys::F11));
+}
 
 FFlowGraphCommands::FFlowGraphCommands()
 	: TCommands<FFlowGraphCommands>("FlowGraph", LOCTEXT("FlowGraph", "Flow Graph"), NAME_None, FEditorStyle::GetStyleSetName())

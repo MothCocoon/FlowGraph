@@ -1,6 +1,6 @@
 #include "Graph/FlowGraphSchema_Actions.h"
 
-#include "Graph/FlowAssetEditor.h"
+#include "Asset/FlowAssetEditor.h"
 #include "Graph/FlowGraph.h"
 #include "Graph/FlowGraphUtils.h"
 
@@ -83,7 +83,12 @@ UFlowGraphNode* FFlowGraphSchemaAction_NewNode::CreateNode(UEdGraph* ParentGraph
 	NewGraphNode->AllocateDefaultPins();
 
 	ParentGraph->NotifyGraphChanged();
-	FFlowGraphUtils::GetFlowAssetEditor(ParentGraph)->SelectSingleNode(NewGraphNode);
+
+	const TSharedPtr<FFlowAssetEditor> FlowEditor = FFlowGraphUtils::GetFlowAssetEditor(ParentGraph);
+	if (FlowEditor.IsValid())
+	{
+		FlowEditor->SelectSingleNode(NewGraphNode);
+	}
 
 	FlowAsset->PostEditChange();
 	FlowAsset->MarkPackageDirty();

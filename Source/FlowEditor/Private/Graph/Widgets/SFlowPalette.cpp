@@ -1,6 +1,6 @@
 #include "Graph/Widgets/SFlowPalette.h"
-#include "Graph/FlowAssetEditor.h"
-#include "Graph/FlowGraphCommands.h"
+#include "Asset/FlowAssetEditor.h"
+#include "FlowEditorCommands.h"
 #include "Graph/FlowGraphSchema.h"
 #include "Graph/FlowGraphSchema_Actions.h"
 

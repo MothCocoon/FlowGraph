@@ -12,11 +12,6 @@ public:
 	FFlowDebugger();
 	~FFlowDebugger();
 
-public:
-	static void StopPlaySession();
 	static void PausePlaySession();
-	static void ResumePlaySession();
-
 	static bool IsPlaySessionPaused();
-	static bool IsPlaySessionRunning();
 };

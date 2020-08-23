@@ -3,8 +3,8 @@
 #include "FlowEditorStyle.h"
 #include "Graph/Customizations/FlowNode_CustomEventCustomization.h"
 #include "Graph/Customizations/FlowNode_CustomOutputCustomization.h"
-#include "Graph/FlowAssetActions.h"
-#include "Graph/FlowAssetEditor.h"
+#include "Asset/FlowAssetActions.h"
+#include "Asset/FlowAssetEditor.h"
 #include "Graph/FlowGraphConnectionDrawingPolicy.h"
 #include "LevelEditor/SLevelEditorFlow.h"
 

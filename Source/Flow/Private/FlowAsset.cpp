@@ -8,8 +8,6 @@
 #include "Nodes/Route/FlowNode_Finish.h"
 #include "Nodes/Route/FlowNode_SubGraph.h"
 
-TSharedPtr<IFlowGraphInterface> UFlowAsset::FlowGraphInterface = nullptr;
-
 UFlowAsset::UFlowAsset(const FObjectInitializer& ObjectInitializer)
 	: Super(ObjectInitializer)
 {
@@ -24,6 +22,8 @@ void UFlowAsset::AddReferencedObjects(UObject* InThis, FReferenceCollector& Coll
 	Super::AddReferencedObjects(InThis, Collector);
 }
 
+TSharedPtr<IFlowGraphInterface> UFlowAsset::FlowGraphInterface = nullptr;
+
 void UFlowAsset::SetFlowGraphInterface(TSharedPtr<IFlowGraphInterface> InFlowAssetEditor)
 {
 	check(!FlowGraphInterface.IsValid());
@@ -34,7 +34,7 @@ UFlowNode* UFlowAsset::CreateNode(const UClass* NodeClass, UEdGraphNode* GraphNo
 {
 	UFlowNode* NewNode = NewObject<UFlowNode>(this, NodeClass, NAME_None, RF_Transactional);
 	NewNode->SetGraphNode(GraphNode);
-	
+
 	RegisterNode(GraphNode->NodeGuid, NewNode);
 	return NewNode;
 }
@@ -50,12 +50,12 @@ void UFlowAsset::UnregisterNode(const FGuid& NodeGuid)
 	Nodes.Remove(NodeGuid);
 	Nodes.Shrink();
 
-	CompileNodeConnections();
+	HarvestNodeConnections();
 	MarkPackageDirty();
 }
 #endif
 
-void UFlowAsset::CompileNodeConnections()
+void UFlowAsset::HarvestNodeConnections()
 {
 	TMap<FName, FConnectedPin> Connections;
 
@@ -134,13 +134,6 @@ void UFlowAsset::RecursiveFindNodesByClass(UFlowNode* Node, const TSubclassOf<UF
 void UFlowAsset::AddInstance(UFlowAsset* NewInstance)
 {
 	ActiveInstances.Add(NewInstance);
-
-#if WITH_EDITOR
-	if (ActiveInstances.Num() == 1)
-	{
-		InspectedInstance = NewInstance;
-	}
-#endif
 }
 
 int32 UFlowAsset::RemoveInstance(UFlowAsset* Instance)
@@ -148,7 +141,7 @@ int32 UFlowAsset::RemoveInstance(UFlowAsset* Instance)
 #if WITH_EDITOR
 	if (InspectedInstance.IsValid() && InspectedInstance.Get() == Instance)
 	{
-		InspectedInstance = nullptr;
+		SetInspectedInstance(NAME_None);
 	}
 #endif
 
@@ -158,6 +151,13 @@ int32 UFlowAsset::RemoveInstance(UFlowAsset* Instance)
 
 void UFlowAsset::ClearInstances()
 {
+#if WITH_EDITOR
+	if (InspectedInstance.IsValid())
+	{
+		SetInspectedInstance(NAME_None);
+	}
+#endif
+
 	for (UFlowAsset* Instance : ActiveInstances)
 	{
 		for (UFlowNode* Node : Instance->ActiveNodes)
@@ -170,6 +170,40 @@ void UFlowAsset::ClearInstances()
 
 	ActiveInstances.Empty();
 }
+
+#if WITH_EDITOR
+void UFlowAsset::GetInstanceDisplayNames(TArray<TSharedPtr<FName>>& OutDisplayNames) const
+{
+	for (UFlowAsset* Instance : ActiveInstances)
+	{
+		OutDisplayNames.Emplace(MakeShareable(new FName(Instance->GetDisplayName())));
+	}
+}
+
+void UFlowAsset::SetInspectedInstance(const FName& NewInspectedInstanceName)
+{
+	if (NewInspectedInstanceName.IsNone())
+	{
+		InspectedInstance = nullptr;
+	}
+	else
+	{
+		for (UFlowAsset* ActiveInstance : ActiveInstances)
+		{
+			if (ActiveInstance && ActiveInstance->GetDisplayName() == NewInspectedInstanceName)
+			{
+				if (!InspectedInstance.IsValid() || InspectedInstance != ActiveInstance)
+				{
+					InspectedInstance = ActiveInstance;
+				}
+				break;
+			}
+		}
+	}
+
+	BroadcastRegenerateToolbars();
+}
+#endif
 
 void UFlowAsset::InitInstance(UFlowAsset* InTemplateAsset)
 {
@@ -189,7 +223,7 @@ void UFlowAsset::InitInstance(UFlowAsset* InTemplateAsset)
 		if (UFlowNode_CustomEvent* CustomEvent = Cast<UFlowNode_CustomEvent>(NewInstance))
 		{
 			const FName& EventName = CustomEvent->EventName;
-			if (EventName != NAME_None && !CustomEventNodes.Contains(CustomEvent->EventName))
+			if (!EventName.IsNone() && !CustomEventNodes.Contains(CustomEvent->EventName))
 			{
 				CustomEventNodes.Emplace(CustomEvent->EventName, CustomEvent);
 			}
@@ -241,6 +275,17 @@ void UFlowAsset::StartFlow()
 {
 	ResetNodes();
 
+#if WITH_EDITOR
+	if (TemplateAsset->ActiveInstances.Num() == 1)
+	{
+		TemplateAsset->SetInspectedInstance(GetDisplayName());
+	}
+	else
+	{
+		TemplateAsset->BroadcastRegenerateToolbars();
+	}
+#endif
+	
 	ensureAlways(StartNode);
 	RecordedNodes.Add(StartNode);
 	StartNode->TriggerFirstOutput(true);
@@ -248,18 +293,23 @@ void UFlowAsset::StartFlow()
 
 void UFlowAsset::StartSubFlow(UFlowNode_SubGraph* SubGraphNode)
 {
-	NodeOwningThisGraph = SubGraphNode;
-	NodeOwningThisGraph->GetFlowAsset()->ActiveSubGraphs.Add(SubGraphNode, this);
+	NodeOwningThisAssetInstance = SubGraphNode;
+	NodeOwningThisAssetInstance->GetFlowAsset()->ActiveSubGraphs.Add(SubGraphNode, this);
 
 	StartFlow();
 }
 
+TWeakObjectPtr<UFlowAsset> UFlowAsset::GetFlowInstance(UFlowNode_SubGraph* SubGraphNode) const
+{
+	return ActiveSubGraphs.FindRef(SubGraphNode);
+}
+
 void UFlowAsset::TriggerCustomEvent(UFlowNode_SubGraph* Node, const FName& EventName)
 {
-	const TWeakObjectPtr<UFlowAsset> ChildAsset = ActiveSubGraphs.FindRef(Node);
-	if (ChildAsset.IsValid())
+	const TWeakObjectPtr<UFlowAsset> FlowInstance = ActiveSubGraphs.FindRef(Node);
+	if (FlowInstance.IsValid())
 	{
-		if (UFlowNode_CustomEvent* CustomEvent = ChildAsset->CustomEventNodes.FindRef(EventName))
+		if (UFlowNode_CustomEvent* CustomEvent = FlowInstance->CustomEventNodes.FindRef(EventName))
 		{
 			RecordedNodes.Add(CustomEvent);
 			CustomEvent->TriggerFirstOutput(true);
@@ -269,7 +319,7 @@ void UFlowAsset::TriggerCustomEvent(UFlowNode_SubGraph* Node, const FName& Event
 
 void UFlowAsset::TriggerCustomOutput(const FName& EventName) const
 {
-	NodeOwningThisGraph->TriggerOutput(EventName);
+	NodeOwningThisAssetInstance->TriggerOutput(EventName);
 }
 
 void UFlowAsset::TriggerInput(const FGuid& NodeGuid, const FName& PinName)
@@ -292,10 +342,10 @@ void UFlowAsset::FinishNode(UFlowNode* Node)
 	{
 		ActiveNodes.Remove(Node);
 
-		if (Node->GetClass()->IsChildOf(UFlowNode_Finish::StaticClass()) && NodeOwningThisGraph.IsValid())
+		if (Node->GetClass()->IsChildOf(UFlowNode_Finish::StaticClass()) && NodeOwningThisAssetInstance.IsValid())
 		{
-			NodeOwningThisGraph.Get()->TriggerFirstOutput(true);
-			NodeOwningThisGraph = nullptr;
+			NodeOwningThisAssetInstance.Get()->TriggerFirstOutput(true);
+			NodeOwningThisAssetInstance = nullptr;
 		}
 	}
 }
@@ -315,4 +365,24 @@ void UFlowAsset::ResetNodes()
 UFlowSubsystem* UFlowAsset::GetFlowSubsystem() const
 {
 	return Cast<UFlowSubsystem>(GetOuter());
+}
+
+FName UFlowAsset::GetDisplayName() const
+{
+	return GetFName();
+}
+
+UFlowNode_SubGraph* UFlowAsset::GetNodeOwningThisAssetInstance() const
+{
+	return NodeOwningThisAssetInstance.Get();
+}
+
+UFlowAsset* UFlowAsset::GetMasterInstance() const
+{
+	return NodeOwningThisAssetInstance.IsValid() ? NodeOwningThisAssetInstance.Get()->GetFlowAsset() : nullptr;
+}
+
+UFlowNode* UFlowAsset::GetNodeInstance(const FGuid Guid) const
+{
+	return Nodes.FindRef(Guid);
 }

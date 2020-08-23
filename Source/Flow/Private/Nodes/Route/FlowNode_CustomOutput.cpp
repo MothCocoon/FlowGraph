@@ -16,7 +16,7 @@ UFlowNode_CustomOutput::UFlowNode_CustomOutput(const FObjectInitializer& ObjectI
 
 void UFlowNode_CustomOutput::ExecuteInput(const FName& PinName)
 {
-	if (EventName != NAME_None && GetFlowAsset()->GetCustomOutputs().Contains(EventName) && GetFlowAsset()->GetNodeOwningThisGraph())
+	if (!EventName.IsNone() && GetFlowAsset()->GetCustomOutputs().Contains(EventName) && GetFlowAsset()->GetNodeOwningThisAssetInstance())
 	{
 		GetFlowAsset()->TriggerCustomOutput(EventName);
 	}

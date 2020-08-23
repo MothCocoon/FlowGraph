@@ -1,31 +1,35 @@
-#include "Graph/FlowAssetEditor.h"
+#include "Asset/FlowAssetEditor.h"
 
+#include "Asset/FlowDebugger.h"
+#include "Asset/FlowDebuggerToolbar.h"
+#include "FlowEditorCommands.h"
 #include "FlowEditorModule.h"
 #include "Graph/FlowGraph.h"
-#include "Graph/FlowGraphCommands.h"
 #include "Graph/FlowGraphSchema_Actions.h"
 #include "Graph/Nodes/FlowGraphNode.h"
 #include "Graph/Widgets/SFlowPalette.h"
 
 #include "FlowAsset.h"
 #include "Nodes/FlowNode.h"
+#include "Nodes/Route/FlowNode_SubGraph.h"
 
 #include "EdGraphUtilities.h"
 #include "EdGraph/EdGraphNode.h"
 #include "Editor.h"
 #include "EditorStyleSet.h"
 #include "Framework/Commands/GenericCommands.h"
-#include "Framework/MultiBox/MultiBoxBuilder.h"
 #include "GraphEditor.h"
 #include "GraphEditorActions.h"
 #include "HAL/PlatformApplicationMisc.h"
 #include "IDetailsView.h"
 #include "Kismet2/BlueprintEditorUtils.h"
+#include "Kismet2/DebuggerCommands.h"
 #include "LevelEditor.h"
 #include "Modules/ModuleManager.h"
 #include "PropertyEditorModule.h"
 #include "ScopedTransaction.h"
 #include "SNodePanel.h"
+#include "ToolMenus.h"
 #include "Widgets/Docking/SDockTab.h"
 
 #define LOCTEXT_NAMESPACE "FlowEditor"
@@ -218,75 +222,90 @@ void FFlowAssetEditor::InitFlowAssetEditor(const EToolkitMode::Type Mode, const 
 	const bool bCreateDefaultToolbar = true;
 	FAssetEditorToolkit::InitAssetEditor(Mode, InitToolkitHost, TEXT("FlowEditorApp"), StandaloneDefaultLayout, bCreateDefaultStandaloneMenu, bCreateDefaultToolbar, ObjectToEdit, false);
 
+	AddPlayWorldToolbar();
+	CreateFlowDebugger();
+
 	FFlowEditorModule* FlowEditorModule = &FModuleManager::LoadModuleChecked<FFlowEditorModule>("FlowEditor");
 	AddMenuExtender(FlowEditorModule->GetFlowAssetMenuExtensibilityManager()->GetAllExtenders(GetToolkitCommands(), GetEditingObjects()));
-
-	ExtendToolbar();
-	RegenerateMenusAndToolbars();
-
-	// @todo toolkit world centric editing
-	/*if(IsWorldCentricAssetEditor())
-	{
-		SpawnToolkitTab(GetToolbarTabId(), FString(), EToolkitTabSpot::ToolBar);
-		SpawnToolkitTab(GraphTab, FString(), EToolkitTabSpot::Viewport);
-		SpawnToolkitTab(PropertiesTabId, FString(), EToolkitTabSpot::Details);
-	}*/
 }
 
-void FFlowAssetEditor::ExtendToolbar()
+void FFlowAssetEditor::AddPlayWorldToolbar() const
 {
-	struct Local
+	// Append play world commands
+	ToolkitCommands->Append(FPlayWorldCommands::GlobalPlayWorldActions.ToSharedRef());
+
+	FName ParentToolbarName;
+	const FName ToolBarName = GetToolMenuToolbarName(ParentToolbarName);
+
+	UToolMenus* ToolMenus = UToolMenus::Get();
+	UToolMenu* FoundMenu = ToolMenus->FindMenu(ToolBarName);
+	if (!FoundMenu || !FoundMenu->IsRegistered())
 	{
-		static void FillToolbar(FToolBarBuilder& ToolbarBuilder)
-		{
-			ToolbarBuilder.BeginSection("Toolbar");
-			{
-			}
-			ToolbarBuilder.EndSection();
-		}
-	};
+		FoundMenu = ToolMenus->RegisterMenu(ToolBarName, ParentToolbarName, EMultiBoxType::ToolBar);
+	}
+
+	if (FoundMenu)
+	{
+		FToolMenuSection& Section = FoundMenu->AddSection("Debugging");
+		Section.InsertPosition = FToolMenuInsert("Asset", EToolMenuInsertType::After);
+
+		Section.AddDynamicEntry("DebuggingCommands", FNewToolMenuSectionDelegate::CreateLambda([](FToolMenuSection& InSection) {
+			FPlayWorldCommands::BuildToolbar(InSection);
+		}));
+	}
+}
+
+void FFlowAssetEditor::CreateFlowDebugger()
+{
+	Debugger = MakeShareable(new FFlowDebugger);
+	Toolbar = MakeShareable(new FFlowDebuggerToolbar(SharedThis(this)));
+
+	BindDebuggerCommands();
 
 	TSharedPtr<FExtender> ToolbarExtender = MakeShareable(new FExtender);
-
 	ToolbarExtender->AddToolBarExtension(
-		"Asset",
+		"Debugging",
 		EExtensionHook::After,
 		GetToolkitCommands(),
-		FToolBarExtensionDelegate::CreateStatic(&Local::FillToolbar)
+		FToolBarExtensionDelegate::CreateSP(Toolbar.Get(), &FFlowDebuggerToolbar::AddToolbar)
 	);
-
 	AddToolbarExtender(ToolbarExtender);
 
 	FFlowEditorModule* FlowEditorModule = &FModuleManager::LoadModuleChecked<FFlowEditorModule>("FlowEditor");
 	AddToolbarExtender(FlowEditorModule->GetFlowAssetToolBarExtensibilityManager()->GetAllExtenders(GetToolkitCommands(), GetEditingObjects()));
+
+	RegenerateMenusAndToolbars();
+	FlowAsset->OnRegenerateToolbars().AddSP(this, &FFlowAssetEditor::RegenerateMenusAndToolbars);
 }
 
-void FFlowAssetEditor::BindGraphCommands()
+void FFlowAssetEditor::BindDebuggerCommands()
 {
-	const FGenericCommands& GenericCommands = FGenericCommands::Get();
+	FFlowDebuggerCommands::Register();
+	const FFlowDebuggerCommands& NodeCommands = FFlowDebuggerCommands::Get();
 
-	ToolkitCommands->MapAction(GenericCommands.Undo,
-		FExecuteAction::CreateSP(this, &FFlowAssetEditor::UndoGraphAction),
-		FCanExecuteAction::CreateSP(this, &FFlowAssetEditor::CanEdit));
-
-	ToolkitCommands->MapAction(GenericCommands.Redo,
-		FExecuteAction::CreateSP(this, &FFlowAssetEditor::RedoGraphAction),
-		FCanExecuteAction::CreateSP(this, &FFlowAssetEditor::CanEdit));
+	ToolkitCommands->MapAction(NodeCommands.GoToMasterInstance,
+		FExecuteAction::CreateSP(this, &FFlowAssetEditor::GoToMasterInstance),
+		FCanExecuteAction::CreateSP(this, &FFlowAssetEditor::CanGoToMasterInstance),
+		FIsActionChecked(),
+		FIsActionButtonVisible::CreateStatic(&FFlowAssetEditor::IsPIE));
 }
 
-void FFlowAssetEditor::UndoGraphAction()
+void FFlowAssetEditor::GoToMasterInstance()
 {
-	GEditor->UndoTransaction();
+	UFlowAsset* AssetThatInstancedThisAsset = FlowAsset->GetInspectedInstance()->GetMasterInstance();
+
+	GEditor->GetEditorSubsystem<UAssetEditorSubsystem>()->OpenEditorForAsset(AssetThatInstancedThisAsset->TemplateAsset);
+	AssetThatInstancedThisAsset->TemplateAsset->SetInspectedInstance(AssetThatInstancedThisAsset->GetDisplayName());
 }
 
-void FFlowAssetEditor::RedoGraphAction()
+bool FFlowAssetEditor::CanGoToMasterInstance()
 {
-	GEditor->RedoTransaction();
+	return FlowAsset->GetInspectedInstance() && FlowAsset->GetInspectedInstance()->GetNodeOwningThisAssetInstance() != nullptr;
 }
 
 void FFlowAssetEditor::CreateWidgets()
 {
-	FocusedGraphEditor = CreateGraphEditorWidget();
+	FocusedGraphEditor = CreateGraphWidget();
 
 	FDetailsViewArgs Args;
 	Args.bAllowSearch = false;
@@ -302,147 +321,8 @@ void FFlowAssetEditor::CreateWidgets()
 	Palette = SNew(SFlowPalette, SharedThis(this));
 }
 
-TSharedRef<SGraphEditor> FFlowAssetEditor::CreateGraphEditorWidget()
+TSharedRef<SGraphEditor> FFlowAssetEditor::CreateGraphWidget()
 {
-	if (!Commands.IsValid())
-	{
-		Commands = MakeShareable(new FUICommandList);
-
-		const FGenericCommands& GenericCommands = FGenericCommands::Get();
-		const FGraphEditorCommandsImpl& GraphCommands = FGraphEditorCommands::Get();
-		const FFlowGraphCommands& FlowGraphCommands = FFlowGraphCommands::Get();
-
-		// Graph commands
-		Commands->MapAction(GraphCommands.CreateComment,
-			FExecuteAction::CreateSP(this, &FFlowAssetEditor::OnCreateComment),
-			FCanExecuteAction::CreateSP(this, &FFlowAssetEditor::CanEdit));
-
-		Commands->MapAction(GraphCommands.StraightenConnections,
-			FExecuteAction::CreateSP(this, &FFlowAssetEditor::OnStraightenConnections));
-
-		// Generic Node commands
-		Commands->MapAction(GenericCommands.SelectAll,
-			FExecuteAction::CreateSP(this, &FFlowAssetEditor::SelectAllNodes),
-			FCanExecuteAction::CreateSP(this, &FFlowAssetEditor::CanSelectAllNodes));
-
-		Commands->MapAction(GenericCommands.Delete,
-			FExecuteAction::CreateSP(this, &FFlowAssetEditor::DeleteSelectedNodes),
-			FCanExecuteAction::CreateSP(this, &FFlowAssetEditor::CanDeleteNodes));
-
-		Commands->MapAction(GenericCommands.Copy,
-			FExecuteAction::CreateSP(this, &FFlowAssetEditor::CopySelectedNodes),
-			FCanExecuteAction::CreateSP(this, &FFlowAssetEditor::CanCopyNodes));
-
-		Commands->MapAction(GenericCommands.Cut,
-			FExecuteAction::CreateSP(this, &FFlowAssetEditor::CutSelectedNodes),
-			FCanExecuteAction::CreateSP(this, &FFlowAssetEditor::CanCutNodes));
-
-		Commands->MapAction(GenericCommands.Paste,
-			FExecuteAction::CreateSP(this, &FFlowAssetEditor::PasteNodes),
-			FCanExecuteAction::CreateSP(this, &FFlowAssetEditor::CanPasteNodes));
-
-		Commands->MapAction(GenericCommands.Duplicate,
-			FExecuteAction::CreateSP(this, &FFlowAssetEditor::DuplicateNodes),
-			FCanExecuteAction::CreateSP(this, &FFlowAssetEditor::CanDuplicateNodes));
-
-		// Pin commands
-		Commands->MapAction(FlowGraphCommands.RefreshContextPins,
-			FExecuteAction::CreateSP(this, &FFlowAssetEditor::RefreshContextPins),
-			FCanExecuteAction::CreateSP(this, &FFlowAssetEditor::CanRefreshContextPins));
-
-		Commands->MapAction(FlowGraphCommands.AddInput,
-			FExecuteAction::CreateSP(this, &FFlowAssetEditor::AddInput),
-			FCanExecuteAction::CreateSP(this, &FFlowAssetEditor::CanAddInput));
-
-		Commands->MapAction(FlowGraphCommands.AddOutput,
-			FExecuteAction::CreateSP(this, &FFlowAssetEditor::AddOutput),
-			FCanExecuteAction::CreateSP(this, &FFlowAssetEditor::CanAddOutput));
-
-		Commands->MapAction(FlowGraphCommands.RemovePin,
-			FExecuteAction::CreateSP(this, &FFlowAssetEditor::RemovePin),
-			FCanExecuteAction::CreateSP(this, &FFlowAssetEditor::CanRemovePin));
-
-		// Breakpoint commands
-		Commands->MapAction(GraphCommands.AddBreakpoint,
-			FExecuteAction::CreateSP(this, &FFlowAssetEditor::OnAddBreakpoint),
-			FCanExecuteAction::CreateSP(this, &FFlowAssetEditor::CanAddBreakpoint),
-			FIsActionChecked(),
-			FIsActionButtonVisible::CreateSP(this, &FFlowAssetEditor::CanAddBreakpoint)
-		);
-
-		Commands->MapAction(GraphCommands.RemoveBreakpoint,
-			FExecuteAction::CreateSP(this, &FFlowAssetEditor::OnRemoveBreakpoint),
-			FCanExecuteAction::CreateSP(this, &FFlowAssetEditor::CanRemoveBreakpoint),
-			FIsActionChecked(),
-			FIsActionButtonVisible::CreateSP(this, &FFlowAssetEditor::CanRemoveBreakpoint)
-		);
-
-		Commands->MapAction(GraphCommands.EnableBreakpoint,
-			FExecuteAction::CreateSP(this, &FFlowAssetEditor::OnEnableBreakpoint),
-			FCanExecuteAction::CreateSP(this, &FFlowAssetEditor::CanEnableBreakpoint),
-			FIsActionChecked(),
-			FIsActionButtonVisible::CreateSP(this, &FFlowAssetEditor::CanEnableBreakpoint)
-		);
-
-		Commands->MapAction(GraphCommands.DisableBreakpoint,
-			FExecuteAction::CreateSP(this, &FFlowAssetEditor::OnDisableBreakpoint),
-			FCanExecuteAction::CreateSP(this, &FFlowAssetEditor::CanDisableBreakpoint),
-			FIsActionChecked(),
-			FIsActionButtonVisible::CreateSP(this, &FFlowAssetEditor::CanDisableBreakpoint)
-		);
-
-		Commands->MapAction(GraphCommands.ToggleBreakpoint,
-			FExecuteAction::CreateSP(this, &FFlowAssetEditor::OnToggleBreakpoint),
-			FCanExecuteAction::CreateSP(this, &FFlowAssetEditor::CanToggleBreakpoint),
-			FIsActionChecked(),
-			FIsActionButtonVisible::CreateSP(this, &FFlowAssetEditor::CanToggleBreakpoint)
-		);
-
-		// Pin Breakpoint commands
-		Commands->MapAction(FlowGraphCommands.AddPinBreakpoint,
-			FExecuteAction::CreateSP(this, &FFlowAssetEditor::OnAddPinBreakpoint),
-			FCanExecuteAction::CreateSP(this, &FFlowAssetEditor::CanAddPinBreakpoint),
-			FIsActionChecked(),
-			FIsActionButtonVisible::CreateSP(this, &FFlowAssetEditor::CanAddPinBreakpoint)
-		);
-
-		Commands->MapAction(FlowGraphCommands.RemovePinBreakpoint,
-			FExecuteAction::CreateSP(this, &FFlowAssetEditor::OnRemovePinBreakpoint),
-			FCanExecuteAction::CreateSP(this, &FFlowAssetEditor::CanRemovePinBreakpoint),
-			FIsActionChecked(),
-			FIsActionButtonVisible::CreateSP(this, &FFlowAssetEditor::CanRemovePinBreakpoint)
-		);
-
-		Commands->MapAction(FlowGraphCommands.EnablePinBreakpoint,
-			FExecuteAction::CreateSP(this, &FFlowAssetEditor::OnEnablePinBreakpoint),
-			FCanExecuteAction::CreateSP(this, &FFlowAssetEditor::CanEnablePinBreakpoint),
-			FIsActionChecked(),
-			FIsActionButtonVisible::CreateSP(this, &FFlowAssetEditor::CanEnablePinBreakpoint)
-		);
-
-		Commands->MapAction(FlowGraphCommands.DisablePinBreakpoint,
-			FExecuteAction::CreateSP(this, &FFlowAssetEditor::OnDisablePinBreakpoint),
-			FCanExecuteAction::CreateSP(this, &FFlowAssetEditor::CanDisablePinBreakpoint),
-			FIsActionChecked(),
-			FIsActionButtonVisible::CreateSP(this, &FFlowAssetEditor::CanDisablePinBreakpoint)
-		);
-
-		Commands->MapAction(FlowGraphCommands.TogglePinBreakpoint,
-			FExecuteAction::CreateSP(this, &FFlowAssetEditor::OnTogglePinBreakpoint),
-			FCanExecuteAction::CreateSP(this, &FFlowAssetEditor::CanTogglePinBreakpoint),
-			FIsActionChecked(),
-			FIsActionButtonVisible::CreateSP(this, &FFlowAssetEditor::CanTogglePinBreakpoint)
-		);
-
-		// Extra debug commands
-		Commands->MapAction(FlowGraphCommands.FocusViewport,
-			FExecuteAction::CreateSP(this, &FFlowAssetEditor::FocusViewport),
-			FCanExecuteAction::CreateSP(this, &FFlowAssetEditor::CanFocusViewport));
-	}
-
-	FGraphAppearanceInfo AppearanceInfo;
-	AppearanceInfo.CornerText = LOCTEXT("AppearanceCornerText_FlowAsset", "FLOW");
-
 	SGraphEditor::FGraphEditorEvents InEvents;
 	InEvents.OnSelectionChanged = SGraphEditor::FOnSelectionChanged::CreateSP(this, &FFlowAssetEditor::OnSelectedNodesChanged);
 	InEvents.OnNodeDoubleClicked = FSingleNodeEvent::CreateSP(this, &FFlowAssetEditor::OnNodeDoubleClicked);
@@ -450,13 +330,183 @@ TSharedRef<SGraphEditor> FFlowAssetEditor::CreateGraphEditorWidget()
 	InEvents.OnSpawnNodeByShortcut = SGraphEditor::FOnSpawnNodeByShortcut::CreateSP(this, &FFlowAssetEditor::OnSpawnGraphNodeByShortcut, static_cast<UEdGraph*>(FlowAsset->GetGraph()));
 
 	return SNew(SGraphEditor)
-		.AdditionalCommands(Commands)
+		.AdditionalCommands(ToolkitCommands)
 		.IsEditable(true)
-		.Appearance(AppearanceInfo)
+		.Appearance(GetGraphAppearanceInfo())
 		.GraphToEdit(FlowAsset->GetGraph())
 		.GraphEvents(InEvents)
 		.AutoExpandActionMenu(true)
 		.ShowGraphStateOverlay(false);
+}
+
+FGraphAppearanceInfo FFlowAssetEditor::GetGraphAppearanceInfo() const
+{
+	FGraphAppearanceInfo AppearanceInfo;
+	AppearanceInfo.CornerText = GetCornerText();
+
+	if (Debugger.IsValid() && FFlowDebugger::IsPlaySessionPaused())
+	{
+		AppearanceInfo.PIENotifyText = LOCTEXT("PausedLabel", "PAUSED");
+	}
+
+	return AppearanceInfo;
+}
+
+FText FFlowAssetEditor::GetCornerText() const
+{
+	return LOCTEXT("AppearanceCornerText_FlowAsset", "FLOW");
+}
+
+void FFlowAssetEditor::BindGraphCommands()
+{
+	const FGenericCommands& GenericCommands = FGenericCommands::Get();
+	const FGraphEditorCommandsImpl& GraphCommands = FGraphEditorCommands::Get();
+	const FFlowGraphCommands& FlowGraphCommands = FFlowGraphCommands::Get();
+
+	// Graph commands
+	ToolkitCommands->MapAction(GraphCommands.CreateComment,
+		FExecuteAction::CreateSP(this, &FFlowAssetEditor::OnCreateComment),
+		FCanExecuteAction::CreateStatic(&FFlowAssetEditor::CanEdit));
+
+	ToolkitCommands->MapAction(GraphCommands.StraightenConnections,
+		FExecuteAction::CreateSP(this, &FFlowAssetEditor::OnStraightenConnections));
+
+	// Generic Node commands
+	ToolkitCommands->MapAction(GenericCommands.Undo,
+		FExecuteAction::CreateSP(this, &FFlowAssetEditor::UndoGraphAction),
+		FCanExecuteAction::CreateStatic(&FFlowAssetEditor::CanEdit));
+
+	ToolkitCommands->MapAction(GenericCommands.Redo,
+		FExecuteAction::CreateSP(this, &FFlowAssetEditor::RedoGraphAction),
+		FCanExecuteAction::CreateStatic(&FFlowAssetEditor::CanEdit));
+
+	ToolkitCommands->MapAction(GenericCommands.SelectAll,
+		FExecuteAction::CreateSP(this, &FFlowAssetEditor::SelectAllNodes),
+		FCanExecuteAction::CreateSP(this, &FFlowAssetEditor::CanSelectAllNodes));
+
+	ToolkitCommands->MapAction(GenericCommands.Delete,
+		FExecuteAction::CreateSP(this, &FFlowAssetEditor::DeleteSelectedNodes),
+		FCanExecuteAction::CreateSP(this, &FFlowAssetEditor::CanDeleteNodes));
+
+	ToolkitCommands->MapAction(GenericCommands.Copy,
+		FExecuteAction::CreateSP(this, &FFlowAssetEditor::CopySelectedNodes),
+		FCanExecuteAction::CreateSP(this, &FFlowAssetEditor::CanCopyNodes));
+
+	ToolkitCommands->MapAction(GenericCommands.Cut,
+		FExecuteAction::CreateSP(this, &FFlowAssetEditor::CutSelectedNodes),
+		FCanExecuteAction::CreateSP(this, &FFlowAssetEditor::CanCutNodes));
+
+	ToolkitCommands->MapAction(GenericCommands.Paste,
+		FExecuteAction::CreateSP(this, &FFlowAssetEditor::PasteNodes),
+		FCanExecuteAction::CreateSP(this, &FFlowAssetEditor::CanPasteNodes));
+
+	ToolkitCommands->MapAction(GenericCommands.Duplicate,
+		FExecuteAction::CreateSP(this, &FFlowAssetEditor::DuplicateNodes),
+		FCanExecuteAction::CreateSP(this, &FFlowAssetEditor::CanDuplicateNodes));
+
+	// Pin commands
+	ToolkitCommands->MapAction(FlowGraphCommands.RefreshContextPins,
+		FExecuteAction::CreateSP(this, &FFlowAssetEditor::RefreshContextPins),
+		FCanExecuteAction::CreateSP(this, &FFlowAssetEditor::CanRefreshContextPins));
+
+	ToolkitCommands->MapAction(FlowGraphCommands.AddInput,
+		FExecuteAction::CreateSP(this, &FFlowAssetEditor::AddInput),
+		FCanExecuteAction::CreateSP(this, &FFlowAssetEditor::CanAddInput));
+
+	ToolkitCommands->MapAction(FlowGraphCommands.AddOutput,
+		FExecuteAction::CreateSP(this, &FFlowAssetEditor::AddOutput),
+		FCanExecuteAction::CreateSP(this, &FFlowAssetEditor::CanAddOutput));
+
+	ToolkitCommands->MapAction(FlowGraphCommands.RemovePin,
+		FExecuteAction::CreateSP(this, &FFlowAssetEditor::RemovePin),
+		FCanExecuteAction::CreateSP(this, &FFlowAssetEditor::CanRemovePin));
+
+	// Breakpoint commands
+	ToolkitCommands->MapAction(GraphCommands.AddBreakpoint,
+		FExecuteAction::CreateSP(this, &FFlowAssetEditor::OnAddBreakpoint),
+		FCanExecuteAction::CreateSP(this, &FFlowAssetEditor::CanAddBreakpoint),
+		FIsActionChecked(),
+		FIsActionButtonVisible::CreateSP(this, &FFlowAssetEditor::CanAddBreakpoint)
+	);
+
+	ToolkitCommands->MapAction(GraphCommands.RemoveBreakpoint,
+		FExecuteAction::CreateSP(this, &FFlowAssetEditor::OnRemoveBreakpoint),
+		FCanExecuteAction::CreateSP(this, &FFlowAssetEditor::CanRemoveBreakpoint),
+		FIsActionChecked(),
+		FIsActionButtonVisible::CreateSP(this, &FFlowAssetEditor::CanRemoveBreakpoint)
+	);
+
+	ToolkitCommands->MapAction(GraphCommands.EnableBreakpoint,
+		FExecuteAction::CreateSP(this, &FFlowAssetEditor::OnEnableBreakpoint),
+		FCanExecuteAction::CreateSP(this, &FFlowAssetEditor::CanEnableBreakpoint),
+		FIsActionChecked(),
+		FIsActionButtonVisible::CreateSP(this, &FFlowAssetEditor::CanEnableBreakpoint)
+	);
+
+	ToolkitCommands->MapAction(GraphCommands.DisableBreakpoint,
+		FExecuteAction::CreateSP(this, &FFlowAssetEditor::OnDisableBreakpoint),
+		FCanExecuteAction::CreateSP(this, &FFlowAssetEditor::CanDisableBreakpoint),
+		FIsActionChecked(),
+		FIsActionButtonVisible::CreateSP(this, &FFlowAssetEditor::CanDisableBreakpoint)
+	);
+
+	ToolkitCommands->MapAction(GraphCommands.ToggleBreakpoint,
+		FExecuteAction::CreateSP(this, &FFlowAssetEditor::OnToggleBreakpoint),
+		FCanExecuteAction::CreateSP(this, &FFlowAssetEditor::CanToggleBreakpoint),
+		FIsActionChecked(),
+		FIsActionButtonVisible::CreateSP(this, &FFlowAssetEditor::CanToggleBreakpoint)
+	);
+
+	// Pin Breakpoint commands
+	ToolkitCommands->MapAction(FlowGraphCommands.AddPinBreakpoint,
+		FExecuteAction::CreateSP(this, &FFlowAssetEditor::OnAddPinBreakpoint),
+		FCanExecuteAction::CreateSP(this, &FFlowAssetEditor::CanAddPinBreakpoint),
+		FIsActionChecked(),
+		FIsActionButtonVisible::CreateSP(this, &FFlowAssetEditor::CanAddPinBreakpoint)
+	);
+
+	ToolkitCommands->MapAction(FlowGraphCommands.RemovePinBreakpoint,
+		FExecuteAction::CreateSP(this, &FFlowAssetEditor::OnRemovePinBreakpoint),
+		FCanExecuteAction::CreateSP(this, &FFlowAssetEditor::CanRemovePinBreakpoint),
+		FIsActionChecked(),
+		FIsActionButtonVisible::CreateSP(this, &FFlowAssetEditor::CanRemovePinBreakpoint)
+	);
+
+	ToolkitCommands->MapAction(FlowGraphCommands.EnablePinBreakpoint,
+		FExecuteAction::CreateSP(this, &FFlowAssetEditor::OnEnablePinBreakpoint),
+		FCanExecuteAction::CreateSP(this, &FFlowAssetEditor::CanEnablePinBreakpoint),
+		FIsActionChecked(),
+		FIsActionButtonVisible::CreateSP(this, &FFlowAssetEditor::CanEnablePinBreakpoint)
+	);
+
+	ToolkitCommands->MapAction(FlowGraphCommands.DisablePinBreakpoint,
+		FExecuteAction::CreateSP(this, &FFlowAssetEditor::OnDisablePinBreakpoint),
+		FCanExecuteAction::CreateSP(this, &FFlowAssetEditor::CanDisablePinBreakpoint),
+		FIsActionChecked(),
+		FIsActionButtonVisible::CreateSP(this, &FFlowAssetEditor::CanDisablePinBreakpoint)
+	);
+
+	ToolkitCommands->MapAction(FlowGraphCommands.TogglePinBreakpoint,
+		FExecuteAction::CreateSP(this, &FFlowAssetEditor::OnTogglePinBreakpoint),
+		FCanExecuteAction::CreateSP(this, &FFlowAssetEditor::CanTogglePinBreakpoint),
+		FIsActionChecked(),
+		FIsActionButtonVisible::CreateSP(this, &FFlowAssetEditor::CanTogglePinBreakpoint)
+	);
+
+	// Extra debug commands
+	ToolkitCommands->MapAction(FlowGraphCommands.FocusViewport,
+		FExecuteAction::CreateSP(this, &FFlowAssetEditor::FocusViewport),
+		FCanExecuteAction::CreateSP(this, &FFlowAssetEditor::CanFocusViewport));
+}
+
+void FFlowAssetEditor::UndoGraphAction()
+{
+	GEditor->UndoTransaction();
+}
+
+void FFlowAssetEditor::RedoGraphAction()
+{
+	GEditor->RedoTransaction();
 }
 
 FReply FFlowAssetEditor::OnSpawnGraphNodeByShortcut(FInputChord InChord, const FVector2D& InPosition, UEdGraph* InGraph)
@@ -510,9 +560,19 @@ void FFlowAssetEditor::OnStraightenConnections() const
 	FocusedGraphEditor->OnStraightenConnections();
 }
 
-bool FFlowAssetEditor::CanEdit() const
+bool FFlowAssetEditor::CanEdit()
 {
 	return GEditor->PlayWorld == nullptr;
+}
+
+bool FFlowAssetEditor::IsPIE()
+{
+	return GEditor->PlayWorld != nullptr;
+}
+
+EVisibility FFlowAssetEditor::GetDebuggerVisibility()
+{
+	return GEditor->PlayWorld ? EVisibility::Visible : EVisibility::Collapsed;
 }
 
 FGraphPanelSelectionSet FFlowAssetEditor::GetSelectedNodes() const
@@ -785,7 +845,7 @@ void FFlowAssetEditor::PasteNodesHere(const FVector2D& Location)
 	}
 
 	// Force new pasted FlowNodes to have same connections as graph nodes
-	FlowAsset->CompileNodeConnections();
+	FlowAsset->HarvestNodeConnections();
 
 	// Update UI
 	FocusedGraphEditor->NotifyGraphChanged();
@@ -825,6 +885,18 @@ void FFlowAssetEditor::OnNodeDoubleClicked(class UEdGraphNode* Node) const
 	if (UObject* AssetToOpen = FlowNode->GetAssetToOpen())
 	{
 		GEditor->GetEditorSubsystem<UAssetEditorSubsystem>()->OpenEditorForAsset(AssetToOpen);
+
+		if (IsPIE())
+		{
+			if (UFlowNode_SubGraph* SubGraphNode = Cast<UFlowNode_SubGraph>(FlowNode))
+			{
+				const TWeakObjectPtr<UFlowAsset> SubFlowInstance = SubGraphNode->GetFlowAsset()->GetFlowInstance(SubGraphNode);
+				if (SubFlowInstance.IsValid())
+				{
+					SubGraphNode->GetFlowAsset()->TemplateAsset->SetInspectedInstance(SubFlowInstance->GetDisplayName());
+				}
+			}
+		}
 	}
 
 	/*if (ObjectsToView.Num() > 0)

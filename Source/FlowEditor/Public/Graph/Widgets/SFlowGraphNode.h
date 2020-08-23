@@ -30,6 +30,9 @@ protected:
 	virtual void GetPinBrush(const bool bLeftSide, const float WidgetWidth, const int32 PinIndex, const FFlowBreakpoint& Breakpoint, TArray<FOverlayBrushInfo>& Brushes) const;
 
 	// SGraphNode
+	virtual void UpdateGraphNode() override;
+	virtual const FSlateBrush * GetNodeBodyBrush() const override;
+	
 	virtual void CreateStandardPinWidget(UEdGraphPin* Pin) override;
 	virtual void CreateInputSideAddButton(TSharedPtr<SVerticalBox> OutputBox) override;
 	virtual void CreateOutputSideAddButton(TSharedPtr<SVerticalBox> OutputBox) override;
