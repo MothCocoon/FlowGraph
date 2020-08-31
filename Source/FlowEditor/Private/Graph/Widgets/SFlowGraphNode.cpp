@@ -15,7 +15,7 @@
 
 #define LOCTEXT_NAMESPACE "SFlowGraphNode"
 
-void SFlowGraphPin::Tick(const FGeometry& AllottedGeometry, const double InCurrentTime, const float InDeltaTime)
+void SFlowGraphPinExec::Tick(const FGeometry& AllottedGeometry, const double InCurrentTime, const float InDeltaTime)
 {
 	SGraphPinExec::Tick(AllottedGeometry, InCurrentTime, InDeltaTime);
 
@@ -38,16 +38,16 @@ void SFlowGraphPin::Tick(const FGeometry& AllottedGeometry, const double InCurre
 
 				if (PinRecords.Num() > 0)
 				{
-					FString TooltipStrig = FString();
+					FString TooltipString = FString();
 					for (int32 i = 0; i < PinRecords.Num(); i++)
 					{
-						TooltipStrig += FString::FromInt(i + 1) + TEXT(") ") + PinRecords[i].HumanReadableTime;
+						TooltipString += FString::FromInt(i + 1) + TEXT(") ") + PinRecords[i].HumanReadableTime;
 						if (i < PinRecords.Num() - 1)
 						{
-							TooltipStrig += LINE_TERMINATOR;
+							TooltipString += LINE_TERMINATOR;
 						}
 					}
-					GraphPinObj->PinToolTip = TooltipStrig;
+					GraphPinObj->PinToolTip = TooltipString;
 				}
 				else
 				{
@@ -137,16 +137,17 @@ void SFlowGraphNode::GetOverlayBrushes(bool bSelected, const FVector2D WidgetSiz
 		Brushes.Add(NodeBrush);
 	}
 
-	// Input Pin breakpoints
-	for (const TPair<int32, FFlowBreakpoint>& PinBreakpoint : FlowGraphNode->InputBreakpoints)
+	// Pin breakpoints
+	for (const TPair<FEdGraphPinReference, FFlowBreakpoint>& PinBreakpoint : FlowGraphNode->PinBreakpoints)
 	{
-		GetPinBrush(true, WidgetSize.X, PinBreakpoint.Key, PinBreakpoint.Value, Brushes);
-	}
-
-	// Output Pin breakpoints
-	for (const TPair<int32, FFlowBreakpoint>& PinBreakpoint : FlowGraphNode->OutputBreakpoints)
-	{
-		GetPinBrush(false, WidgetSize.X, PinBreakpoint.Key, PinBreakpoint.Value, Brushes);
+		if (PinBreakpoint.Key.Get()->Direction == EGPD_Input)
+		{
+			GetPinBrush(true, WidgetSize.X, FlowGraphNode->InputPins.IndexOfByKey(PinBreakpoint.Key.Get()), PinBreakpoint.Value, Brushes);
+		}
+		else
+		{
+			GetPinBrush(false, WidgetSize.X, FlowGraphNode->OutputPins.IndexOfByKey(PinBreakpoint.Key.Get()), PinBreakpoint.Value, Brushes);
+		}
 	}
 }
 
@@ -420,7 +421,7 @@ const FSlateBrush* SFlowGraphNode::GetNodeBodyBrush() const
 
 void SFlowGraphNode::CreateStandardPinWidget(UEdGraphPin* Pin)
 {
-	TSharedPtr<SGraphPin> NewPin = SNew(SFlowGraphPin, Pin);
+	TSharedPtr<SGraphPin> NewPin = SNew(SFlowGraphPinExec, Pin);
 
 	if (!UFlowEditorSettings::Get()->bShowDefaultPinNames && FlowGraphNode->GetFlowNode())
 	{

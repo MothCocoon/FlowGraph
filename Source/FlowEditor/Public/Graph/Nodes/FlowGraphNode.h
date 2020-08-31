@@ -94,7 +94,14 @@ public:
 	// UEdGraphNode
 	virtual void ReconstructNode() override;
 	virtual void AllocateDefaultPins() override;
+    // --
 
+	// variants of K2Node methods
+    void RewireOldPinsToNewPins(TArray<UEdGraphPin*>& InOldPins);
+	void ReconstructSinglePin(UEdGraphPin* NewPin, UEdGraphPin* OldPin);
+	// --
+	
+	// UEdGraphNode
 	virtual void GetNodeContextMenuActions(class UToolMenu* Menu, class UGraphNodeContextMenuContext* Context) const override;
 
 	virtual TSharedPtr<SGraphNode> CreateVisualWidget() override;
@@ -134,13 +141,12 @@ public:
 	TArray<UEdGraphPin*> OutputPins;
 
 	UPROPERTY()
-	TMap<int32, FFlowBreakpoint> InputBreakpoints;
+	TMap<FEdGraphPinReference, FFlowBreakpoint> PinBreakpoints;
 
-	UPROPERTY()
-	TMap<int32, FFlowBreakpoint> OutputBreakpoints;
+	void CreateInputPin(const FName& PinName, const int32 Index = INDEX_NONE);
+	void CreateOutputPin(const FName PinName, const int32 Index = INDEX_NONE);
 
-	void CreateInputPin(const FName& PinName);
-	void CreateOutputPin(const FName PinName);
+	void RemoveOrphanedPin(UEdGraphPin* Pin);
 
 	bool SupportsContextPins() const;
 	
