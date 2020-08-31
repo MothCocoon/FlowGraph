@@ -48,7 +48,7 @@ void UFlowAsset::RegisterNode(const FGuid& NewGuid, UFlowNode* NewNode)
 void UFlowAsset::UnregisterNode(const FGuid& NodeGuid)
 {
 	Nodes.Remove(NodeGuid);
-	Nodes.Shrink();
+	Nodes.Compact();
 
 	HarvestNodeConnections();
 	MarkPackageDirty();
