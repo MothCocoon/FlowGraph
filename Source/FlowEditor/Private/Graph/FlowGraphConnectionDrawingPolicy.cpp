@@ -95,34 +95,39 @@ void FFlowGraphConnectionDrawingPolicy::DetermineWiringStyle(UEdGraphPin* Output
 	check(GraphObj);
 	const UEdGraphSchema* Schema = GraphObj->GetSchema();
 
-	Params.WireColor = Schema->GetPinTypeColor(OutputPin->PinType);
-
-	if (InputPin == nullptr)
+	if (OutputPin->bOrphanedPin || (InputPin && InputPin->bOrphanedPin))
 	{
-		return;
+		Params.WireColor = FLinearColor::Red;
 	}
-
-	// recent paths
-	if (RecentPaths.Contains(OutputPin) && RecentPaths[OutputPin] == InputPin)
+	else
 	{
-		Params.WireColor = RecentColor;
-		Params.WireThickness = RecentWireThickness;
-		Params.bDrawBubbles = true;
+		Params.WireColor = Schema->GetPinTypeColor(OutputPin->PinType);
 
-		return;
+		if (InputPin)
+		{
+			// recent paths
+			if (RecentPaths.Contains(OutputPin) && RecentPaths[OutputPin] == InputPin)
+			{
+				Params.WireColor = RecentColor;
+				Params.WireThickness = RecentWireThickness;
+				Params.bDrawBubbles = true;
+
+				return;
+			}
+
+			// all paths, showing graph history
+			if (RecordedPaths.Contains(OutputPin) && RecordedPaths[OutputPin] == InputPin)
+			{
+				Params.WireColor = RecordedColor;
+				Params.WireThickness = RecordedWireThickness;
+				Params.bDrawBubbles = false;
+
+				return;
+			}
+
+			// It's not followed, fade it and keep it thin
+			Params.WireColor = InactiveColor;
+			Params.WireThickness = InactiveWireThickness;
+		}
 	}
-
-	// all paths, showing graph history
-	if (RecordedPaths.Contains(OutputPin) && RecordedPaths[OutputPin] == InputPin)
-	{
-		Params.WireColor = RecordedColor;
-		Params.WireThickness = RecordedWireThickness;
-		Params.bDrawBubbles = false;
-
-		return;
-	}
-
-	// It's not followed, fade it and keep it thin
-	Params.WireColor = InactiveColor;
-	Params.WireThickness = InactiveWireThickness;
 }

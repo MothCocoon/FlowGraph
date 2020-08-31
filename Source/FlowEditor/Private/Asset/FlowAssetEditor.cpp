@@ -1056,16 +1056,8 @@ void FFlowAssetEditor::OnAddPinBreakpoint() const
 	{
 		if (UFlowGraphNode* GraphNode = Cast<UFlowGraphNode>(Pin->GetOwningNode()))
 		{
-			if (Pin->Direction == EGPD_Input)
-			{
-				FFlowBreakpoint& NewBreakpoint = GraphNode->InputBreakpoints.Add(GraphNode->InputPins.Find(Pin), FFlowBreakpoint());
-				NewBreakpoint.AddBreakpoint();
-			}
-			else
-			{
-				FFlowBreakpoint& NewBreakpoint = GraphNode->OutputBreakpoints.Add(GraphNode->OutputPins.Find(Pin), FFlowBreakpoint());
-				NewBreakpoint.AddBreakpoint();
-			}
+			GraphNode->PinBreakpoints.Add(Pin, FFlowBreakpoint());
+			GraphNode->PinBreakpoints[Pin].AddBreakpoint();
 		}
 	}
 }
@@ -1090,16 +1082,7 @@ bool FFlowAssetEditor::CanAddPinBreakpoint() const
 	{
 		if (UFlowGraphNode* GraphNode = Cast<UFlowGraphNode>(Pin->GetOwningNode()))
 		{
-			if (Pin->Direction == EGPD_Input)
-			{
-				const int32 PinIndex = GraphNode->InputPins.Find(Pin);
-				return !GraphNode->InputBreakpoints.Contains(PinIndex) || !GraphNode->InputBreakpoints[PinIndex].HasBreakpoint();
-			}
-			else
-			{
-				const int32 PinIndex = GraphNode->OutputPins.Find(Pin);
-				return !GraphNode->OutputBreakpoints.Contains(PinIndex) || !GraphNode->OutputBreakpoints[PinIndex].HasBreakpoint();
-			}
+			return !GraphNode->PinBreakpoints.Contains(Pin) || !GraphNode->PinBreakpoints[Pin].HasBreakpoint();
 		}
 	}
 
@@ -1124,14 +1107,7 @@ void FFlowAssetEditor::OnRemovePinBreakpoint() const
 	{
 		if (UFlowGraphNode* GraphNode = Cast<UFlowGraphNode>(Pin->GetOwningNode()))
 		{
-			if (Pin->Direction == EGPD_Input)
-			{
-				GraphNode->InputBreakpoints.Remove(GraphNode->InputPins.Find(Pin));
-			}
-			else
-			{
-				GraphNode->OutputBreakpoints.Remove(GraphNode->OutputPins.Find(Pin));
-			}
+			GraphNode->PinBreakpoints.Remove(Pin);
 		}
 	}
 }
@@ -1156,14 +1132,7 @@ bool FFlowAssetEditor::CanRemovePinBreakpoint() const
 	{
 		if (UFlowGraphNode* GraphNode = Cast<UFlowGraphNode>(Pin->GetOwningNode()))
 		{
-			if (Pin->Direction == EGPD_Input)
-			{
-				return GraphNode->InputBreakpoints.Contains(GraphNode->InputPins.Find(Pin));
-			}
-			else
-			{
-				return GraphNode->OutputBreakpoints.Contains(GraphNode->OutputPins.Find(Pin));
-			}
+			return GraphNode->PinBreakpoints.Contains(Pin);
 		}
 	}
 
@@ -1188,14 +1157,7 @@ void FFlowAssetEditor::OnEnablePinBreakpoint() const
 	{
 		if (UFlowGraphNode* GraphNode = Cast<UFlowGraphNode>(Pin->GetOwningNode()))
 		{
-			if (Pin->Direction == EGPD_Input)
-			{
-				GraphNode->InputBreakpoints[GraphNode->InputPins.Find(Pin)].EnableBreakpoint();
-			}
-			else
-			{
-				GraphNode->OutputBreakpoints[GraphNode->OutputPins.Find(Pin)].EnableBreakpoint();
-			}
+			GraphNode->PinBreakpoints[Pin].EnableBreakpoint();
 		}
 	}
 }
@@ -1206,16 +1168,7 @@ bool FFlowAssetEditor::CanEnableBreakpoint() const
 	{
 		if (UFlowGraphNode* GraphNode = Cast<UFlowGraphNode>(Pin->GetOwningNode()))
 		{
-			if (Pin->Direction == EGPD_Input)
-			{
-				const int32 PinIndex = GraphNode->InputPins.IndexOfByKey(Pin);
-				return GraphNode->InputBreakpoints.Contains(PinIndex);
-			}
-			else
-			{
-				const int32 PinIndex = GraphNode->OutputPins.IndexOfByKey(Pin);
-				return GraphNode->OutputBreakpoints.Contains(PinIndex);
-			}
+			return GraphNode->PinBreakpoints.Contains(Pin);
 		}
 	}
 
@@ -1237,16 +1190,7 @@ bool FFlowAssetEditor::CanEnablePinBreakpoint() const
 	{
 		if (UFlowGraphNode* GraphNode = Cast<UFlowGraphNode>(Pin->GetOwningNode()))
 		{
-			if (Pin->Direction == EGPD_Input)
-			{
-				const int32 PinIndex = GraphNode->InputPins.Find(Pin);
-				return GraphNode->InputBreakpoints.Contains(PinIndex) && GraphNode->InputBreakpoints[PinIndex].CanEnableBreakpoint();
-			}
-			else
-			{
-				const int32 PinIndex = GraphNode->OutputPins.Find(Pin);
-				return GraphNode->OutputBreakpoints.Contains(PinIndex) && GraphNode->OutputBreakpoints[PinIndex].CanEnableBreakpoint();
-			}
+			return GraphNode->PinBreakpoints.Contains(Pin) && GraphNode->PinBreakpoints[Pin].CanEnableBreakpoint();
 		}
 	}
 
@@ -1271,14 +1215,7 @@ void FFlowAssetEditor::OnDisablePinBreakpoint() const
 	{
 		if (UFlowGraphNode* GraphNode = Cast<UFlowGraphNode>(Pin->GetOwningNode()))
 		{
-			if (Pin->Direction == EGPD_Input)
-			{
-				GraphNode->InputBreakpoints[GraphNode->InputPins.Find(Pin)].DisableBreakpoint();
-			}
-			else
-			{
-				GraphNode->OutputBreakpoints[GraphNode->OutputPins.Find(Pin)].DisableBreakpoint();
-			}
+			GraphNode->PinBreakpoints[Pin].DisableBreakpoint();
 		}
 	}
 }
@@ -1303,16 +1240,7 @@ bool FFlowAssetEditor::CanDisablePinBreakpoint() const
 	{
 		if (UFlowGraphNode* GraphNode = Cast<UFlowGraphNode>(Pin->GetOwningNode()))
 		{
-			if (Pin->Direction == EGPD_Input)
-			{
-				const int32 PinIndex = GraphNode->InputPins.Find(Pin);
-				return GraphNode->InputBreakpoints.Contains(PinIndex) && GraphNode->InputBreakpoints[PinIndex].IsBreakpointEnabled();
-			}
-			else
-			{
-				const int32 PinIndex = GraphNode->OutputPins.Find(Pin);
-				return GraphNode->OutputBreakpoints.Contains(PinIndex) && GraphNode->OutputBreakpoints[PinIndex].IsBreakpointEnabled();
-			}
+			return GraphNode->PinBreakpoints.Contains(Pin) && GraphNode->PinBreakpoints[Pin].IsBreakpointEnabled();
 		}
 	}
 
@@ -1337,16 +1265,8 @@ void FFlowAssetEditor::OnTogglePinBreakpoint() const
 	{
 		if (UFlowGraphNode* GraphNode = Cast<UFlowGraphNode>(Pin->GetOwningNode()))
 		{
-			if (Pin->Direction == EGPD_Input)
-			{
-				FFlowBreakpoint& NewBreakpoint = GraphNode->InputBreakpoints.Add(GraphNode->InputPins.Find(Pin), FFlowBreakpoint());
-				NewBreakpoint.ToggleBreakpoint();
-			}
-			else
-			{
-				FFlowBreakpoint& NewBreakpoint = GraphNode->OutputBreakpoints.Add(GraphNode->OutputPins.Find(Pin), FFlowBreakpoint());
-				NewBreakpoint.ToggleBreakpoint();
-			}
+			GraphNode->PinBreakpoints.Add(Pin, FFlowBreakpoint());
+			GraphNode->PinBreakpoints[Pin].ToggleBreakpoint();
 		}
 	}
 }
