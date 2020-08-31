@@ -57,10 +57,23 @@ void UFlowGraphSchema::CreateDefaultNodesForGraph(UEdGraph& Graph) const
 
 const FPinConnectionResponse UFlowGraphSchema::CanCreateConnection(const UEdGraphPin* PinA, const UEdGraphPin* PinB) const
 {
+	const UFlowGraphNode* OwningNodeA = Cast<UFlowGraphNode>(PinA->GetOwningNodeUnchecked());
+	const UFlowGraphNode* OwningNodeB = Cast<UFlowGraphNode>(PinB->GetOwningNodeUnchecked());
+
+	if (!OwningNodeA || !OwningNodeB)
+	{
+		return FPinConnectionResponse(CONNECT_RESPONSE_DISALLOW, TEXT("Invalid nodes"));
+	}
+
 	// Make sure the pins are not on the same node
 	if (PinA->GetOwningNode() == PinB->GetOwningNode())
 	{
-		return FPinConnectionResponse(CONNECT_RESPONSE_DISALLOW, LOCTEXT("ConnectionSameNode", "Both are on the same node"));
+		return FPinConnectionResponse(CONNECT_RESPONSE_DISALLOW, TEXT("Both are on the same node"));
+	}
+
+	if (PinA->bOrphanedPin || PinB->bOrphanedPin)
+	{
+		return FPinConnectionResponse(CONNECT_RESPONSE_DISALLOW, TEXT("Cannot make new connections to orphaned pin"));
 	}
 
 	// Compare the directions
@@ -69,14 +82,14 @@ const FPinConnectionResponse UFlowGraphSchema::CanCreateConnection(const UEdGrap
 
 	if (!CategorizePinsByDirection(PinA, PinB, /*out*/ InputPin, /*out*/ OutputPin))
 	{
-		return FPinConnectionResponse(CONNECT_RESPONSE_DISALLOW, LOCTEXT("ConnectionIncompatible", "Directions are not compatible"));
+		return FPinConnectionResponse(CONNECT_RESPONSE_DISALLOW, TEXT("Directions are not compatible"));
 	}
 
 	// Break existing connections on outputs only - multiple input connections are acceptable
 	if (OutputPin->LinkedTo.Num() > 0)
 	{
 		const ECanCreateConnectionResponse ReplyBreakInputs = (OutputPin == PinA ? CONNECT_RESPONSE_BREAK_OTHERS_A : CONNECT_RESPONSE_BREAK_OTHERS_B);
-		return FPinConnectionResponse(ReplyBreakInputs, LOCTEXT("ConnectionReplace", "Replace existing connections"));
+		return FPinConnectionResponse(ReplyBreakInputs, TEXT("Replace existing connections"));
 	}
 
 	return FPinConnectionResponse(CONNECT_RESPONSE_MAKE, TEXT(""));
@@ -88,7 +101,7 @@ bool UFlowGraphSchema::TryCreateConnection(UEdGraphPin* PinA, UEdGraphPin* PinB)
 
 	if (bModified)
 	{
-		CastChecked<UFlowGraph>(PinA->GetOwningNode()->GetGraph())->GetFlowAsset()->HarvestNodeConnections();
+		PinA->GetOwningNode()->GetGraph()->NotifyGraphChanged();
 	}
 
 	return bModified;
@@ -108,7 +121,7 @@ void UFlowGraphSchema::BreakNodeLinks(UEdGraphNode& TargetNode) const
 {
 	Super::BreakNodeLinks(TargetNode);
 
-	CastChecked<UFlowGraph>(TargetNode.GetGraph())->GetFlowAsset()->HarvestNodeConnections();
+	TargetNode.GetGraph()->NotifyGraphChanged();
 }
 
 void UFlowGraphSchema::BreakPinLinks(UEdGraphPin& TargetPin, bool bSendsNodeNotifcation) const
@@ -117,10 +130,14 @@ void UFlowGraphSchema::BreakPinLinks(UEdGraphPin& TargetPin, bool bSendsNodeNoti
 
 	Super::BreakPinLinks(TargetPin, bSendsNodeNotifcation);
 
-	// if this would notify the node then we need to compile the FlowAsset
-	if (bSendsNodeNotifcation)
+	if (TargetPin.bOrphanedPin)
 	{
-		CastChecked<UFlowGraph>(TargetPin.GetOwningNode()->GetGraph())->GetFlowAsset()->HarvestNodeConnections();
+		// this calls NotifyGraphChanged()
+		Cast<UFlowGraphNode>(TargetPin.GetOwningNode())->RemoveOrphanedPin(&TargetPin);
+	}
+	else if (bSendsNodeNotifcation)
+	{
+		TargetPin.GetOwningNode()->GetGraph()->NotifyGraphChanged();
 	}
 }
 
@@ -143,13 +160,13 @@ void UFlowGraphSchema::GetFlowNodeActions(FGraphActionMenuBuilder& ActionMenuBui
 		{
 			switch (ActionMenuBuilder.FromPin->Direction)
 			{
-				case EEdGraphPinDirection::EGPD_Input:
+				case EGPD_Input:
 					if (FlowNode->OutputNames.Num() == 0)
 					{
 						continue;
 					}
 					break;
-				case EEdGraphPinDirection::EGPD_Output:
+				case EGPD_Output:
 					if (FlowNode->InputNames.Num() == 0)
 					{
 						continue;

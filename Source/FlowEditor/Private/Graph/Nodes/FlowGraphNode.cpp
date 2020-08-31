@@ -22,6 +22,9 @@
 
 #define LOCTEXT_NAMESPACE "FlowGraphNode"
 
+//////////////////////////////////////////////////////////////////////////
+// Flow Breakpoint
+
 void FFlowBreakpoint::AddBreakpoint()
 {
 	if (!bHasBreakpoint)
@@ -85,9 +88,14 @@ void FFlowBreakpoint::ToggleBreakpoint()
 	}
 }
 
+//////////////////////////////////////////////////////////////////////////
+// Flow Graph Node
+
 UFlowGraphNode::UFlowGraphNode(const FObjectInitializer& ObjectInitializer)
 	: Super(ObjectInitializer)
+	, FlowNode(nullptr)
 {
+	OrphanedPinSaveMode = ESaveOrphanPinMode::SaveAll;
 }
 
 void UFlowGraphNode::SetFlowNode(UFlowNode* InFlowNode)
@@ -99,9 +107,9 @@ UFlowNode* UFlowGraphNode::GetFlowNode() const
 {
 	if (FlowNode)
 	{
-		if (UFlowAsset* RuntimeIntance = FlowNode->GetFlowAsset()->GetInspectedInstance())
+		if (UFlowAsset* InspectedInstance = FlowNode->GetFlowAsset()->GetInspectedInstance())
 		{
-			return RuntimeIntance->GetNodeInstance(FlowNode->GetGuid());
+			return InspectedInstance->GetNodeInstance(FlowNode->GetGuid());
 		}
 
 		return FlowNode;
@@ -225,9 +233,9 @@ void UFlowGraphNode::InsertNewNode(UEdGraphPin* FromPin, UEdGraphPin* NewLinkPin
 	FromPin->BreakAllPinLinks();
 
 	// Hook up the old linked pin to the first valid output pin on the new node
-	for (int32 OutpinPinIdx = 0; OutpinPinIdx < Pins.Num(); OutpinPinIdx++)
+	for (int32 PinIndex = 0; PinIndex < Pins.Num(); PinIndex++)
 	{
-		UEdGraphPin* OutputExecPin = Pins[OutpinPinIdx];
+		UEdGraphPin* OutputExecPin = Pins[PinIndex];
 		check(OutputExecPin);
 		if (CONNECT_RESPONSE_MAKE == Schema->CanCreateConnection(OldLinkedPin, OutputExecPin).Response)
 		{
@@ -249,36 +257,8 @@ void UFlowGraphNode::InsertNewNode(UEdGraphPin* FromPin, UEdGraphPin* NewLinkPin
 
 void UFlowGraphNode::ReconstructNode()
 {
-	// Break any links to 'orphan' pins
-	for (UEdGraphPin* Pin : Pins)
-	{
-		TArray<class UEdGraphPin*>& LinkedToRef = Pin->LinkedTo;
-		for (int32 LinkIdx = 0; LinkIdx < LinkedToRef.Num(); LinkIdx++)
-		{
-			UEdGraphPin* OtherPin = LinkedToRef[LinkIdx];
-			// If we are linked to a pin that its owner doesn't know about, break that link
-			if (OtherPin && !OtherPin->GetOwningNode()->Pins.Contains(OtherPin))
-			{
-				Pin->LinkedTo.Remove(OtherPin);
-			}
-		}
-	}
-
 	// Store old pins
 	TArray<UEdGraphPin*> OldPins(Pins);
-	TMap<FName, UEdGraphPin*> OldInputPins;
-	TMap<FName, UEdGraphPin*> OldOutputPins;
-	for (UEdGraphPin* Pin : Pins)
-	{
-		if (Pin->Direction == EGPD_Input)
-		{
-			OldInputPins.Emplace(Pin->PinName, Pin);
-		}
-		else
-		{
-			OldOutputPins.Emplace(Pin->PinName, Pin);
-		}
-	}
 
 	// Reset pin arrays
 	Pins.Reset();
@@ -287,29 +267,13 @@ void UFlowGraphNode::ReconstructNode()
 
 	// Recreate pins
 	AllocateDefaultPins();
+	RewireOldPinsToNewPins(OldPins);
 
-	// Update input pins
-	for (UEdGraphPin* Pin : InputPins)
-	{
-		if (OldInputPins.Contains(Pin->PinName))
-		{
-			Pin->MovePersistentDataFromOldPin(*OldInputPins[Pin->PinName]);
-		}
-	}
-
-	// Update output pins
-	for (UEdGraphPin* Pin : OutputPins)
-	{
-		if (OldOutputPins.Contains(Pin->PinName))
-		{
-			Pin->MovePersistentDataFromOldPin(*OldOutputPins[Pin->PinName]);
-		}
-	}
-
-	// Throw away the original pins
+	// Destroy old pins
 	for (UEdGraphPin* OldPin : OldPins)
 	{
 		OldPin->Modify();
+		OldPin->BreakAllPinLinks();
 		DestroyPin(OldPin);
 	}
 }
@@ -328,6 +292,94 @@ void UFlowGraphNode::AllocateDefaultPins()
 		for (const FName& OutputName : FlowNode->OutputNames)
 		{
 			CreateOutputPin(OutputName);
+		}
+	}
+}
+
+void UFlowGraphNode::RewireOldPinsToNewPins(TArray<UEdGraphPin*>& InOldPins)
+{
+	TArray<UEdGraphPin*> OrphanedOldPins;
+	TArray<bool> NewPinMatched; // Tracks whether a NewPin has already been matched to an OldPin
+	TMap<UEdGraphPin*, UEdGraphPin*> MatchedPins; // Old to New
+
+	const int32 NumNewPins = Pins.Num();
+	NewPinMatched.AddDefaulted(NumNewPins);
+
+	// Rewire any connection to pins that are matched by name (O(N^2) right now)
+	// NOTE: we iterate backwards through the list because ReconstructSinglePin()
+	//       destroys pins as we go along (clearing out parent pointers, etc.); 
+	//       we need the parent pin chain intact for DoPinsMatchForReconstruction();              
+	//       we want to destroy old pins from the split children (leafs) up, so 
+	//       we do this since split child pins are ordered later in the list 
+	//       (after their parents) 
+	for (int32 OldPinIndex = InOldPins.Num() - 1; OldPinIndex >= 0; --OldPinIndex)
+	{
+		UEdGraphPin* OldPin = InOldPins[OldPinIndex];
+
+		// common case is for InOldPins and Pins to match, so we start searching from the current index:
+		bool bMatched = false;
+		int32 NewPinIndex = (NumNewPins ? OldPinIndex % NumNewPins : 0);
+		for (int32 NewPinCount = NumNewPins - 1; NewPinCount >= 0; --NewPinCount)
+		{
+			// if Pins grows then we may skip entries and fail to find a match or NewPinMatched will not be accurate
+			check(NumNewPins == Pins.Num());
+			if (!NewPinMatched[NewPinIndex])
+			{
+				UEdGraphPin* NewPin = Pins[NewPinIndex];
+
+				if (NewPin->PinName == OldPin->PinName)
+				{
+					ReconstructSinglePin(NewPin, OldPin);
+
+					MatchedPins.Add(OldPin, NewPin);
+					bMatched = true;
+					NewPinMatched[NewPinIndex] = true;
+					break;
+				}
+			}
+			NewPinIndex = (NewPinIndex + 1) % Pins.Num();
+		}
+
+		// Orphaned pins are those that existed in the OldPins array but do not in the NewPins.
+		// We will save these pins and add them to the NewPins array if they are linked to other pins or have non-default value unless:
+		// * The node has been flagged to not save orphaned pins
+		// * The pin has been flagged not be saved if orphaned
+		// * The pin is hidden
+		if (UEdGraphPin::AreOrphanPinsEnabled() && !bDisableOrphanPinSaving && OrphanedPinSaveMode == ESaveOrphanPinMode::SaveAll
+			&& !bMatched && !OldPin->bHidden && OldPin->ShouldSavePinIfOrphaned() && OldPin->LinkedTo.Num() > 0)
+		{
+			OldPin->bOrphanedPin = true;
+			OldPin->bNotConnectable = true;
+			OrphanedOldPins.Add(OldPin);
+			InOldPins.RemoveAt(OldPinIndex, 1, false);
+		}
+	}
+
+	// The orphaned pins get placed after the rest of the new pins
+	for (int32 OrphanedIndex = OrphanedOldPins.Num() - 1; OrphanedIndex >= 0; --OrphanedIndex)
+	{
+		UEdGraphPin* OrphanedPin = OrphanedOldPins[OrphanedIndex];
+		if (OrphanedPin->ParentPin == nullptr)
+		{
+			Pins.Add(OrphanedPin);
+		}
+	}
+}
+
+void UFlowGraphNode::ReconstructSinglePin(UEdGraphPin* NewPin, UEdGraphPin* OldPin)
+{
+	check(NewPin && OldPin);
+
+	// Copy over modified persistent data
+	NewPin->MovePersistentDataFromOldPin(*OldPin);
+
+	// Update the in breakpoints as the old pin will be going the way of the dodo
+	for (TPair<FEdGraphPinReference, FFlowBreakpoint>& PinBreakpoint : PinBreakpoints)
+	{
+		if (PinBreakpoint.Key.Get() == OldPin)
+		{
+			PinBreakpoint.Key = NewPin;
+			break;
 		}
 	}
 }
@@ -517,16 +569,34 @@ bool UFlowGraphNode::CanFocusViewport() const
 	return FlowNode ? (GEditor->bIsSimulatingInEditor && FlowNode->GetAssetToOpen()) : false;
 }
 
-void UFlowGraphNode::CreateInputPin(const FName& PinName)
+void UFlowGraphNode::CreateInputPin(const FName& PinName, const int32 Index /*= INDEX_NONE*/)
 {
-	UEdGraphPin* NewPin = CreatePin(EGPD_Input, UEdGraphSchema_K2::PC_Exec, PinName.IsNone() ? UFlowNode::DefaultInputName : PinName);
-	InputPins.Add(NewPin);
+	const FEdGraphPinType PinType = FEdGraphPinType(UEdGraphSchema_K2::PC_Exec, FName(NAME_None), nullptr, EPinContainerType::None, false, FEdGraphTerminalType());
+	UEdGraphPin* NewPin = CreatePin(EGPD_Input, PinType, PinName.IsNone() ? UFlowNode::DefaultInputName : PinName, Index);
+
+	InputPins.Emplace(NewPin);
 }
 
-void UFlowGraphNode::CreateOutputPin(const FName PinName)
+void UFlowGraphNode::CreateOutputPin(const FName PinName, const int32 Index /*= INDEX_NONE*/)
 {
-	UEdGraphPin* NewPin = CreatePin(EGPD_Output, UEdGraphSchema_K2::PC_Exec, PinName.IsNone() ? UFlowNode::DefaultOutputName : PinName);
-	OutputPins.Add(NewPin);
+	const FEdGraphPinType PinType = FEdGraphPinType(UEdGraphSchema_K2::PC_Exec, FName(NAME_None), nullptr, EPinContainerType::None, false, FEdGraphTerminalType());
+	UEdGraphPin* NewPin = CreatePin(EGPD_Output, PinType, PinName.IsNone() ? UFlowNode::DefaultOutputName : PinName, Index);
+
+	OutputPins.Emplace(NewPin);
+}
+
+void UFlowGraphNode::RemoveOrphanedPin(UEdGraphPin* Pin)
+{
+	const FScopedTransaction Transaction(LOCTEXT("FlowEditorRemoveOrphanedPin", "Remove Orphaned Pin"));
+	Modify();
+
+	PinBreakpoints.Remove(Pin);
+
+	Pin->MarkPendingKill();
+	Pins.Remove(Pin);
+
+	ReconstructNode();
+	GetGraph()->NotifyGraphChanged();
 }
 
 bool UFlowGraphNode::SupportsContextPins() const
@@ -566,7 +636,7 @@ void UFlowGraphNode::AddUserOutput()
 
 void UFlowGraphNode::AddInstancePin(const EEdGraphPinDirection Direction, const FName& PinName)
 {
-	const FScopedTransaction Transaction(LOCTEXT("FlowEditorAddPin", "Add Node Pin"));
+	const FScopedTransaction Transaction(LOCTEXT("FlowEditorAddPin", "Add Instance Pin"));
 	Modify();
 
 	if (Direction == EGPD_Input)
@@ -585,16 +655,16 @@ void UFlowGraphNode::AddInstancePin(const EEdGraphPinDirection Direction, const 
 
 void UFlowGraphNode::RemoveInstancePin(UEdGraphPin* Pin)
 {
-	const FScopedTransaction Transaction(LOCTEXT("FlowEditorRemovePin", "Remove Node Pin"));
+	const FScopedTransaction Transaction(LOCTEXT("FlowEditorRemoveInstancePin", "Remove Instance Pin"));
 	Modify();
+
+	PinBreakpoints.Remove(Pin);
 
 	if (Pin->Direction == EGPD_Input)
 	{
 		if (InputPins.Contains(Pin))
 		{
-			InputBreakpoints.Remove(InputPins.Find(Pin));
 			InputPins.Remove(Pin);
-
 			FlowNode->RemoveUserInput();
 
 			Pin->MarkPendingKill();
@@ -605,9 +675,7 @@ void UFlowGraphNode::RemoveInstancePin(UEdGraphPin* Pin)
 	{
 		if (OutputPins.Contains(Pin))
 		{
-			OutputBreakpoints.Remove(OutputPins.Find(Pin));
 			OutputPins.Remove(Pin);
-
 			FlowNode->RemoveUserOutput();
 
 			Pin->MarkPendingKill();
@@ -630,7 +698,7 @@ void UFlowGraphNode::RefreshContextPins()
 	Modify();
 
 	const UFlowNode* NodeDefaults = FlowNode->GetClass()->GetDefaultObject<UFlowNode>();
-	
+
 	// recreate inputs
 	FlowNode->InputNames = NodeDefaults->InputNames;
 	FlowNode->InputNames.Append(FlowNode->GetContextInputs());
@@ -645,9 +713,9 @@ void UFlowGraphNode::RefreshContextPins()
 
 void UFlowGraphNode::OnInputTriggered(const int32 Index)
 {
-	if (InputPins.IsValidIndex(Index) && InputBreakpoints.Contains(Index))
+	if (InputPins.IsValidIndex(Index) && PinBreakpoints.Contains(InputPins[Index]))
 	{
-		InputBreakpoints[Index].bBreakpointHit = true;
+		PinBreakpoints[InputPins[Index]].bBreakpointHit = true;
 		TryPausingSession(true);
 	}
 
@@ -656,9 +724,9 @@ void UFlowGraphNode::OnInputTriggered(const int32 Index)
 
 void UFlowGraphNode::OnOutputTriggered(const int32 Index)
 {
-	if (OutputPins.IsValidIndex(Index) && OutputBreakpoints.Contains(Index))
+	if (OutputPins.IsValidIndex(Index) && PinBreakpoints.Contains(OutputPins[Index]))
 	{
-		OutputBreakpoints[Index].bBreakpointHit = true;
+		PinBreakpoints[OutputPins[Index]].bBreakpointHit = true;
 		TryPausingSession(true);
 	}
 
@@ -699,11 +767,7 @@ void UFlowGraphNode::ResetBreakpoints()
 	FEditorDelegates::EndPIE.RemoveAll(this);
 
 	NodeBreakpoint.bBreakpointHit = false;
-	for (TPair<int32, FFlowBreakpoint>& PinBreakpoint : InputBreakpoints)
-	{
-		PinBreakpoint.Value.bBreakpointHit = false;
-	}
-	for (TPair<int32, FFlowBreakpoint>& PinBreakpoint : OutputBreakpoints)
+	for (TPair<FEdGraphPinReference, FFlowBreakpoint>& PinBreakpoint : PinBreakpoints)
 	{
 		PinBreakpoint.Value.bBreakpointHit = false;
 	}

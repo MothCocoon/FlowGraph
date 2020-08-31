@@ -5,7 +5,7 @@
 
 #include "Graph/Nodes/FlowGraphNode.h"
 
-class SFlowGraphPin : public SGraphPinExec
+class SFlowGraphPinExec final : public SGraphPinExec
 {
 	// SWidget
 	virtual void Tick(const FGeometry& AllottedGeometry, const double InCurrentTime, const float InDeltaTime) override;
