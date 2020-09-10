@@ -267,6 +267,7 @@ void UFlowGraphNode::ReconstructNode()
 
 	// Recreate pins
 	AllocateDefaultPins();
+    //RefreshContextPins(false);
 	RewireOldPinsToNewPins(OldPins);
 
 	// Destroy old pins
@@ -687,28 +688,29 @@ void UFlowGraphNode::RemoveInstancePin(UEdGraphPin* Pin)
 	GetGraph()->NotifyGraphChanged();
 }
 
-void UFlowGraphNode::RefreshContextPins()
+void UFlowGraphNode::RefreshContextPins(const bool bReconstructNode)
 {
-	if (FlowNode == nullptr)
+	if (SupportsContextPins())
 	{
-		return;
+		const FScopedTransaction Transaction(LOCTEXT("RefreshContextPins", "Refresh Context Pins"));
+		Modify();
+
+		const UFlowNode* NodeDefaults = FlowNode->GetClass()->GetDefaultObject<UFlowNode>();
+
+		// recreate inputs
+		FlowNode->InputNames = NodeDefaults->InputNames;
+		FlowNode->InputNames.Append(FlowNode->GetContextInputs());
+
+		// recreate outputs
+		FlowNode->OutputNames = NodeDefaults->OutputNames;
+		FlowNode->OutputNames.Append(FlowNode->GetContextOutputs());
+
+		if (bReconstructNode)
+		{
+			ReconstructNode();
+			GetGraph()->NotifyGraphChanged();
+		}
 	}
-
-	const FScopedTransaction Transaction(LOCTEXT("FlowEditorRefreshContextPins", "Refresh Context Pins"));
-	Modify();
-
-	const UFlowNode* NodeDefaults = FlowNode->GetClass()->GetDefaultObject<UFlowNode>();
-
-	// recreate inputs
-	FlowNode->InputNames = NodeDefaults->InputNames;
-	FlowNode->InputNames.Append(FlowNode->GetContextInputs());
-
-	// recreate outputs
-	FlowNode->OutputNames = NodeDefaults->OutputNames;
-	FlowNode->OutputNames.Append(FlowNode->GetContextOutputs());
-
-	ReconstructNode();
-	GetGraph()->NotifyGraphChanged();
 }
 
 void UFlowGraphNode::OnInputTriggered(const int32 Index)

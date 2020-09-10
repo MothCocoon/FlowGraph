@@ -154,12 +154,12 @@ FFlowDebuggerToolbar::FFlowDebuggerToolbar(TSharedPtr<FFlowAssetEditor> InNodeEd
 
 void FFlowDebuggerToolbar::AddToolbar(FToolBarBuilder& ToolbarBuilder)
 {
-	ToolbarBuilder.BeginSection("FlowDebuggerToolbar");
+	ToolbarBuilder.BeginSection("");
 	{
 		FlowInstanceList = SNew(SFlowInstanceList, FlowAssetEditor);
 		ToolbarBuilder.AddWidget(FlowInstanceList.ToSharedRef());
 
-		ToolbarBuilder.AddToolBarButton(FFlowDebuggerCommands::Get().GoToMasterInstance);
+		ToolbarBuilder.AddToolBarButton(FFlowToolbarCommands::Get().GoToMasterInstance);
 
 		FlowBreadcrumb = SNew(SFlowBreadcrumb, FlowAssetEditor);
 		ToolbarBuilder.AddWidget(FlowBreadcrumb.ToSharedRef());
