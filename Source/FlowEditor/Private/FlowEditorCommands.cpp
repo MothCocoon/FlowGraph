@@ -10,13 +10,14 @@
 
 #define LOCTEXT_NAMESPACE "FlowGraphCommands"
 
-FFlowDebuggerCommands::FFlowDebuggerCommands()
-	: TCommands<FFlowDebuggerCommands>("FlowDebugger", LOCTEXT("FlowDebugger", "Flow Debugger"), NAME_None, FFlowEditorStyle::GetStyleSetName())
+FFlowToolbarCommands::FFlowToolbarCommands()
+	: TCommands<FFlowToolbarCommands>("FlowToolbar", LOCTEXT("FlowToolbar", "Flow Toobar"), NAME_None, FFlowEditorStyle::GetStyleSetName())
 {
 }
 
-void FFlowDebuggerCommands::RegisterCommands()
+void FFlowToolbarCommands::RegisterCommands()
 {
+	UI_COMMAND(RefreshAsset, "Refresh Asset", "Refresh this asset", EUserInterfaceActionType::Button, FInputChord(EModifierKey::Alt | EModifierKey::Shift, EKeys::F11));
 	UI_COMMAND(GoToMasterInstance, "Go To Master", "Open editor for the Flow Asset that created this Flow instance", EUserInterfaceActionType::Button, FInputChord(EModifierKey::Alt | EModifierKey::Shift, EKeys::F11));
 }
 

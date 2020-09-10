@@ -2,11 +2,12 @@
 
 #include "EdGraph/EdGraphSchema.h"
 
-class FFlowDebuggerCommands final : public TCommands<FFlowDebuggerCommands>
+class FFlowToolbarCommands final : public TCommands<FFlowToolbarCommands>
 {
 public:
-	FFlowDebuggerCommands();
+	FFlowToolbarCommands();
 	
+	TSharedPtr<FUICommandInfo> RefreshAsset;
 	TSharedPtr<FUICommandInfo> GoToMasterInstance;
 
 	virtual void RegisterCommands() override;
