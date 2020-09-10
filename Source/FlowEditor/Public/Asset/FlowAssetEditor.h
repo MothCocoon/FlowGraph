@@ -6,9 +6,6 @@
 #include "Toolkits/IToolkitHost.h"
 #include "UObject/GCObject.h"
 
-class FFlowDebuggerToolbar;
-class FFlowDebugger;
-
 class SFlowPalette;
 class UFlowAsset;
 class UFlowGraphNode;
@@ -28,8 +25,9 @@ class FFlowAssetEditor : public FAssetEditorToolkit,
 	/** The FlowAsset asset being inspected */
 	UFlowAsset* FlowAsset;
 
-	TSharedPtr<FFlowDebugger> Debugger;
-	TSharedPtr<FFlowDebuggerToolbar> Toolbar;
+	TSharedPtr<class FFlowAssetToolbar> AssetToolbar;
+	TSharedPtr<class FFlowDebugger> Debugger;
+	TSharedPtr<class FFlowDebuggerToolbar> DebuggerToolbar;
 	
 	TSharedPtr<SGraphEditor> FocusedGraphEditor;
 	TSharedPtr<class IDetailsView> DetailsView;
@@ -86,11 +84,17 @@ public:
 	void InitFlowAssetEditor(const EToolkitMode::Type Mode, const TSharedPtr< class IToolkitHost >& InitToolkitHost, UObject* ObjectToEdit);
 
 private:
+	void AddFlowAssetToolbar();
+	void BindAssetCommands();
+	
 	void AddPlayWorldToolbar() const;
+	
 	void CreateFlowDebugger();
 	void BindDebuggerCommands();
 
 protected:
+	virtual void RefreshAsset();
+	
 	virtual void GoToMasterInstance();
 	virtual bool CanGoToMasterInstance();
 

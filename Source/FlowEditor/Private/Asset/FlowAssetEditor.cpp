@@ -1,5 +1,6 @@
 #include "Asset/FlowAssetEditor.h"
 
+#include "Asset/FlowAssetToolbar.h"
 #include "Asset/FlowDebugger.h"
 #include "Asset/FlowDebuggerToolbar.h"
 #include "FlowEditorCommands.h"
@@ -222,11 +223,41 @@ void FFlowAssetEditor::InitFlowAssetEditor(const EToolkitMode::Type Mode, const 
 	const bool bCreateDefaultToolbar = true;
 	FAssetEditorToolkit::InitAssetEditor(Mode, InitToolkitHost, TEXT("FlowEditorApp"), StandaloneDefaultLayout, bCreateDefaultStandaloneMenu, bCreateDefaultToolbar, ObjectToEdit, false);
 
+	FFlowToolbarCommands::Register();
+	
+	AddFlowAssetToolbar();
 	AddPlayWorldToolbar();
 	CreateFlowDebugger();
 
 	FFlowEditorModule* FlowEditorModule = &FModuleManager::LoadModuleChecked<FFlowEditorModule>("FlowEditor");
 	AddMenuExtender(FlowEditorModule->GetFlowAssetMenuExtensibilityManager()->GetAllExtenders(GetToolkitCommands(), GetEditingObjects()));
+
+	FlowAsset->OnRegenerateToolbars().AddSP(this, &FFlowAssetEditor::RegenerateMenusAndToolbars);
+}
+
+void FFlowAssetEditor::AddFlowAssetToolbar()
+{
+	AssetToolbar = MakeShareable(new FFlowAssetToolbar(SharedThis(this)));
+	
+	BindAssetCommands();
+
+	TSharedPtr<FExtender> ToolbarExtender = MakeShareable(new FExtender);
+	ToolbarExtender->AddToolBarExtension(
+		"Asset",
+		EExtensionHook::After,
+		GetToolkitCommands(),
+		FToolBarExtensionDelegate::CreateSP(AssetToolbar.Get(), &FFlowAssetToolbar::AddToolbar)
+	);
+	AddToolbarExtender(ToolbarExtender);
+}
+
+void FFlowAssetEditor::BindAssetCommands()
+{
+	const FFlowToolbarCommands& NodeCommands = FFlowToolbarCommands::Get();
+
+	ToolkitCommands->MapAction(NodeCommands.RefreshAsset,
+		FExecuteAction::CreateSP(this, &FFlowAssetEditor::RefreshAsset),
+		FCanExecuteAction::CreateStatic(&FFlowAssetEditor::CanEdit));
 }
 
 void FFlowAssetEditor::AddPlayWorldToolbar() const
@@ -258,7 +289,7 @@ void FFlowAssetEditor::AddPlayWorldToolbar() const
 void FFlowAssetEditor::CreateFlowDebugger()
 {
 	Debugger = MakeShareable(new FFlowDebugger);
-	Toolbar = MakeShareable(new FFlowDebuggerToolbar(SharedThis(this)));
+	DebuggerToolbar = MakeShareable(new FFlowDebuggerToolbar(SharedThis(this)));
 
 	BindDebuggerCommands();
 
@@ -267,27 +298,33 @@ void FFlowAssetEditor::CreateFlowDebugger()
 		"Debugging",
 		EExtensionHook::After,
 		GetToolkitCommands(),
-		FToolBarExtensionDelegate::CreateSP(Toolbar.Get(), &FFlowDebuggerToolbar::AddToolbar)
+		FToolBarExtensionDelegate::CreateSP(DebuggerToolbar.Get(), &FFlowDebuggerToolbar::AddToolbar)
 	);
 	AddToolbarExtender(ToolbarExtender);
 
-	FFlowEditorModule* FlowEditorModule = &FModuleManager::LoadModuleChecked<FFlowEditorModule>("FlowEditor");
-	AddToolbarExtender(FlowEditorModule->GetFlowAssetToolBarExtensibilityManager()->GetAllExtenders(GetToolkitCommands(), GetEditingObjects()));
-
 	RegenerateMenusAndToolbars();
-	FlowAsset->OnRegenerateToolbars().AddSP(this, &FFlowAssetEditor::RegenerateMenusAndToolbars);
 }
 
 void FFlowAssetEditor::BindDebuggerCommands()
 {
-	FFlowDebuggerCommands::Register();
-	const FFlowDebuggerCommands& NodeCommands = FFlowDebuggerCommands::Get();
+	const FFlowToolbarCommands& NodeCommands = FFlowToolbarCommands::Get();
 
 	ToolkitCommands->MapAction(NodeCommands.GoToMasterInstance,
 		FExecuteAction::CreateSP(this, &FFlowAssetEditor::GoToMasterInstance),
 		FCanExecuteAction::CreateSP(this, &FFlowAssetEditor::CanGoToMasterInstance),
 		FIsActionChecked(),
 		FIsActionButtonVisible::CreateStatic(&FFlowAssetEditor::IsPIE));
+}
+
+void FFlowAssetEditor::RefreshAsset()
+{
+	TArray<UFlowGraphNode*> FlowGraphNodes;
+	FlowAsset->GetGraph()->GetNodesOfClass<UFlowGraphNode>(FlowGraphNodes);
+
+	for (UFlowGraphNode* GraphNode : FlowGraphNodes)
+	{
+		GraphNode->RefreshContextPins(true);
+	}
 }
 
 void FFlowAssetEditor::GoToMasterInstance()
@@ -922,7 +959,7 @@ void FFlowAssetEditor::RefreshContextPins() const
 	{
 		if (UFlowGraphNode* SelectedNode = Cast<UFlowGraphNode>(*NodeIt))
 		{
-			SelectedNode->RefreshContextPins();
+			SelectedNode->RefreshContextPins(true);
 		}
 	}
 }
