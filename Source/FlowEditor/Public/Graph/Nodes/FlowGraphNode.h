@@ -166,7 +166,7 @@ public:
 	void RemoveInstancePin(UEdGraphPin* Pin);
 
 	// Create pins from the context asset, i.e. Sequencer events
-	void RefreshContextPins();
+	void RefreshContextPins(const bool bReconstructNode);
 
 //////////////////////////////////////////////////////////////////////////
 // Breakpoints
