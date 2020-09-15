@@ -267,7 +267,10 @@ void UFlowGraphNode::ReconstructNode()
 
 	// Recreate pins
 	AllocateDefaultPins();
-    //RefreshContextPins(false);
+	if (SupportsContextPins() && FlowNode->CanRefreshContextPinsOnLoad())
+	{
+		RefreshContextPins(false);
+	}
 	RewireOldPinsToNewPins(OldPins);
 
 	// Destroy old pins

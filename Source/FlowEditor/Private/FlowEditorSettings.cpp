@@ -3,6 +3,7 @@
 UFlowEditorSettings::UFlowEditorSettings(const FObjectInitializer& ObjectInitializer)
 	: Super(ObjectInitializer)
 	, bShowDefaultPinNames(false)
+	, bRefreshContextPinsOnLoad(true)
 	, NodeDescriptionBackground(FLinearColor(0.0625f, 0.0625f, 0.0625f, 1.0f))
 	, NodeStatusBackground(FLinearColor(0.12f, 0.12f, 0.12f, 1.0f))
 	, NodePreloadedBackground(FLinearColor(0.12f, 0.12f, 0.12f, 1.0f))
@@ -16,8 +17,8 @@ UFlowEditorSettings::UFlowEditorSettings(const FObjectInitializer& ObjectInitial
 {
 	NodeTitleColors.Emplace(EFlowNodeStyle::Condition, FLinearColor(1.0f, 0.62f, 0.016f, 1.0f));
 	NodeTitleColors.Emplace(EFlowNodeStyle::Default, FLinearColor(-0.728f, 0.581f, 1.0f, 1.0f));
-	NodeTitleColors.Emplace(EFlowNodeStyle::InOut, FLinearColor(1.0f,0.0f,0.008f,1.0f));
+	NodeTitleColors.Emplace(EFlowNodeStyle::InOut, FLinearColor(1.0f, 0.0f, 0.008f, 1.0f));
 	NodeTitleColors.Emplace(EFlowNodeStyle::Latent, FLinearColor(0.0f, 0.770f, 0.375f, 1.0f));
 	NodeTitleColors.Emplace(EFlowNodeStyle::Logic, FLinearColor(1.0f, 1.0f, 1.0f, 1.0f));
-	NodeTitleColors.Emplace(EFlowNodeStyle::SubGraph, FLinearColor(1.0f,0.128f,0.0f,1.0f));
+	NodeTitleColors.Emplace(EFlowNodeStyle::SubGraph, FLinearColor(1.0f, 0.128f, 0.0f, 1.0f));
 }
