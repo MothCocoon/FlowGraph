@@ -114,6 +114,10 @@ public:
 #if WITH_EDITOR
 	virtual bool SupportsContextPins() const { return false; }
 	
+	/** Enabling it might cause loading gigabytes of data as nodes would load all related data (i.e. Level Sequences)
+	/** This refresh needs to be enabled by UFlowEditorSettings::bRefreshContextPinsOnLoad */
+	virtual bool CanRefreshContextPinsOnLoad() const { return true; }
+	
 	virtual TArray<FName> GetContextInputs() { return TArray<FName>(); };
 	virtual TArray<FName> GetContextOutputs() { return TArray<FName>(); };
 	
