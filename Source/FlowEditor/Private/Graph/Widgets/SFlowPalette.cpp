@@ -101,9 +101,9 @@ void SFlowPalette::Construct(const FArguments& InArgs, TWeakPtr<FFlowAssetEditor
 {
 	FlowAssetEditorPtr = InFlowAssetEditor;
 
-	CategoryNames.Add(MakeShareable(new FString(TEXT("All"))));
-	CategoryNames.Append(UFlowGraphSchema::GetFlowNodeCategories());
-
+	UpdateCategoryNames();
+    UFlowGraphSchema::OnNodeListChanged.AddSP(this, &SFlowPalette::Refresh);
+	
 	this->ChildSlot
 		[
 			SNew(SBorder)
@@ -151,6 +151,41 @@ void SFlowPalette::Construct(const FArguments& InArgs, TWeakPtr<FFlowAssetEditor
 		];
 }
 
+SFlowPalette::~SFlowPalette()
+{
+	UFlowGraphSchema::OnNodeListChanged.RemoveAll(this);
+}
+
+void SFlowPalette::Refresh()
+{
+	const FString LastSelectedCategory = CategoryComboBox->GetSelectedItem().IsValid() ? *CategoryComboBox->GetSelectedItem().Get() : FString();
+	
+	UpdateCategoryNames();
+	RefreshActionsList(true);
+
+	// refresh list of category and currently selected category
+	CategoryComboBox->RefreshOptions();
+	TSharedPtr<FString> SelectedCategory = CategoryNames[0];
+	if (!LastSelectedCategory.IsEmpty())
+	{
+		for (const TSharedPtr<FString>& CategoryName : CategoryNames)
+		{
+			if (*CategoryName.Get() == LastSelectedCategory)
+			{
+				SelectedCategory = CategoryName;
+				break;
+			}
+		}
+	}
+	CategoryComboBox->SetSelectedItem(SelectedCategory);
+}
+
+void SFlowPalette::UpdateCategoryNames()
+{
+	CategoryNames = { MakeShareable(new FString(TEXT("All"))) };
+	CategoryNames.Append(UFlowGraphSchema::GetFlowNodeCategories());
+}
+
 TSharedRef<SWidget> SFlowPalette::OnCreateWidgetForAction(FCreateWidgetForActionData* const InCreateData)
 {
 	return	SNew(SFlowPaletteItem, InCreateData);
@@ -159,7 +194,7 @@ TSharedRef<SWidget> SFlowPalette::OnCreateWidgetForAction(FCreateWidgetForAction
 void SFlowPalette::CollectAllActions(FGraphActionListBuilderBase& OutAllActions)
 {
 	FGraphActionMenuBuilder ActionMenuBuilder;
-	GetDefault<UFlowGraphSchema>()->GetPaletteActions(ActionMenuBuilder, GetFilterCategoryName());
+	UFlowGraphSchema::GetPaletteActions(ActionMenuBuilder, GetFilterCategoryName());
 	OutAllActions.Append(ActionMenuBuilder);
 }
 

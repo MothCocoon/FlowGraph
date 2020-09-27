@@ -48,7 +48,7 @@ void UFlowNode_SubGraph::ExecuteInput(const FName& PinName)
 	}
 }
 
-void UFlowNode_SubGraph::OnForceFinished()
+void UFlowNode_SubGraph::ForceFinishNode()
 {
 	TriggerFirstOutput(true);
 }

@@ -427,14 +427,14 @@ void SFlowGraphNode::CreateStandardPinWidget(UEdGraphPin* Pin)
 	{
 		if (Pin->Direction == EGPD_Input)
 		{
-			if (FlowGraphNode->GetFlowNode()->InputNames.Num() == 1 && Pin->PinName == UFlowNode::DefaultInputName)
+			if (FlowGraphNode->GetFlowNode()->GetInputNames().Num() == 1 && Pin->PinName == UFlowNode::DefaultInputName)
 			{
 				NewPin->SetShowLabel(false);
 			}
 		}
 		else
 		{
-			if (FlowGraphNode->GetFlowNode()->OutputNames.Num() == 1 && Pin->PinName == UFlowNode::DefaultOutputName)
+			if (FlowGraphNode->GetFlowNode()->GetOutputNames().Num() == 1 && Pin->PinName == UFlowNode::DefaultOutputName)
 			{
 				NewPin->SetShowLabel(false);
 			}

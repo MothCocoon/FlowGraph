@@ -1,26 +1,26 @@
-#include "Asset/FlowAssetActions.h"
+#include "Asset/AssetTypeActions_FlowAsset.h"
 #include "FlowEditorModule.h"
 
 #include "FlowAsset.h"
 
-#define LOCTEXT_NAMESPACE "FlowAssetTypeActions"
+#define LOCTEXT_NAMESPACE "AssetTypeActions_FlowAsset"
 
-FText FlowAssetActions::GetName() const
+FText FAssetTypeActions_FlowAsset::GetName() const
 {
 	return LOCTEXT("AssetTypeActions_FlowAsset", "Flow Asset");
 }
 
-UClass* FlowAssetActions::GetSupportedClass() const
-{
-	return UFlowAsset::StaticClass();
-}
-
-uint32 FlowAssetActions::GetCategories()
+uint32 FAssetTypeActions_FlowAsset::GetCategories()
 {
 	return FFlowEditorModule::FlowAssetCategory;
 }
 
-void FlowAssetActions::OpenAssetEditor(const TArray<UObject*>& InObjects, TSharedPtr<IToolkitHost> EditWithinLevelEditor)
+UClass* FAssetTypeActions_FlowAsset::GetSupportedClass() const
+{
+	return UFlowAsset::StaticClass();
+}
+
+void FAssetTypeActions_FlowAsset::OpenAssetEditor(const TArray<UObject*>& InObjects, TSharedPtr<IToolkitHost> EditWithinLevelEditor)
 {
 	const EToolkitMode::Type Mode = EditWithinLevelEditor.IsValid() ? EToolkitMode::WorldCentric : EToolkitMode::Standalone;
 

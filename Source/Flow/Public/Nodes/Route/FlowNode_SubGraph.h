@@ -22,10 +22,11 @@ protected:
 	virtual void FlushContent() override;
 
 	virtual void ExecuteInput(const FName& PinName) override;
-	virtual void OnForceFinished() override;
+
+public:
+	virtual void ForceFinishNode() override;
 
 #if WITH_EDITOR
-public:
 	virtual FString GetNodeDescription() const override;
 	virtual UObject* GetAssetToOpen() override;
 
