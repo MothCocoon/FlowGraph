@@ -67,8 +67,8 @@ public:
 	void PostCopyNode();
 
 private:
-	/** Make sure the FlowNode is owned by the FlowAsset */
-	void ResetFlowNodeOwner();
+	void SubscribeToBlueprintChanges();
+	void OnBlueprintChanged();
 
 //////////////////////////////////////////////////////////////////////////
 // Graph node

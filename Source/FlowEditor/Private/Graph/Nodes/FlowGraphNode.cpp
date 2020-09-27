@@ -126,6 +126,7 @@ void UFlowGraphNode::PostLoad()
 	if (FlowNode)
 	{
 		FlowNode->SetGraphNode(this);
+		SubscribeToBlueprintChanges();
 	}
 
 	ReconstructNode();
@@ -143,8 +144,8 @@ void UFlowGraphNode::PostDuplicate(bool bDuplicateForPIE)
 
 void UFlowGraphNode::PostEditImport()
 {
-	// Make sure this FlowNode is owned by the FlowAsset it's being pasted into.
-	ResetFlowNodeOwner();
+	PostCopyNode();
+	SubscribeToBlueprintChanges();
 }
 
 void UFlowGraphNode::PrepareForCopying()
@@ -158,12 +159,7 @@ void UFlowGraphNode::PrepareForCopying()
 
 void UFlowGraphNode::PostCopyNode()
 {
-	// Make sure the FlowNode goes back to being owned by the FlowAsset after copying.
-	ResetFlowNodeOwner();
-}
-
-void UFlowGraphNode::ResetFlowNodeOwner()
-{
+	// Make sure this FlowNode is owned by the FlowAsset it's being pasted into
 	if (FlowNode)
 	{
 		UFlowAsset* FlowAsset = CastChecked<UFlowGraph>(GetGraph())->GetFlowAsset();
@@ -174,9 +170,23 @@ void UFlowGraphNode::ResetFlowNodeOwner()
 			FlowNode->Rename(nullptr, FlowAsset, REN_DontCreateRedirectors);
 		}
 
-		// Set up the back pointer for newly created flow nodes
 		FlowNode->SetGraphNode(this);
 	}
+}
+
+void UFlowGraphNode::SubscribeToBlueprintChanges()
+{
+	if (FlowNode && FlowNode->GetClass()->ClassGeneratedBy && GEditor)
+	{
+		GEditor->OnBlueprintCompiled().AddUObject(this, &UFlowGraphNode::OnBlueprintChanged);
+		GEditor->OnClassPackageLoadedOrUnloaded().AddUObject(this, &UFlowGraphNode::OnBlueprintChanged);
+	}
+}
+
+void UFlowGraphNode::OnBlueprintChanged()
+{
+	ReconstructNode();
+	GetGraph()->NotifyGraphChanged();
 }
 
 bool UFlowGraphNode::CanCreateUnderSpecifiedSchema(const UEdGraphSchema* Schema) const
@@ -486,7 +496,7 @@ FLinearColor UFlowGraphNode::GetNodeTitleColor() const
 {
 	if (FlowNode)
 	{
-		if (const FLinearColor* Color = UFlowEditorSettings::Get()->NodeTitleColors.Find(FlowNode->NodeStyle))
+		if (const FLinearColor* Color = UFlowEditorSettings::Get()->NodeTitleColors.Find(FlowNode->GetNodeStyle()))
 		{
 			return *Color;
 		}

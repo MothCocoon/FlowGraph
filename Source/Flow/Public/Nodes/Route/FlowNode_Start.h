@@ -10,4 +10,7 @@ UCLASS(NotPlaceable, meta = (DisplayName = "Start"))
 class FLOW_API UFlowNode_Start : public UFlowNode
 {
 	GENERATED_UCLASS_BODY()
+
+protected:
+	virtual void ExecuteInput(const FName& PinName) override;
 };

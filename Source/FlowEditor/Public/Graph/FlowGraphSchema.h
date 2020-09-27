@@ -3,14 +3,15 @@
 #include "EdGraph/EdGraphSchema.h"
 #include "FlowGraphSchema.generated.h"
 
-class UEdGraph;
+DECLARE_MULTICAST_DELEGATE(FFlowGraphSchemaRefresh);
 
-UCLASS(MinimalAPI)
-class UFlowGraphSchema : public UEdGraphSchema
+UCLASS()
+class FLOWEDITOR_API UFlowGraphSchema : public UEdGraphSchema
 {
 	GENERATED_UCLASS_BODY()
 
-	FLOWEDITOR_API void GetPaletteActions(FGraphActionMenuBuilder& ActionMenuBuilder, const FString& CategoryName) const;
+	static void SubscribeToAssetChanges();
+	static void GetPaletteActions(FGraphActionMenuBuilder& ActionMenuBuilder, const FString& CategoryName);
 
 	// EdGraphSchema
 	virtual void GetGraphContextActions(FGraphContextMenuBuilder& ContextMenuBuilder) const override;
@@ -28,13 +29,25 @@ class UFlowGraphSchema : public UEdGraphSchema
 	static TArray<TSharedPtr<FString>> GetFlowNodeCategories();
 
 private:
-	void GetFlowNodeActions(FGraphActionMenuBuilder& ActionMenuBuilder, const FString& CategoryName) const;
-	void GetCommentAction(FGraphActionMenuBuilder& ActionMenuBuilder, const UEdGraph* CurrentGraph = nullptr) const;
+	static void GetFlowNodeActions(FGraphActionMenuBuilder& ActionMenuBuilder, const FString& CategoryName);
+	static void GetCommentAction(FGraphActionMenuBuilder& ActionMenuBuilder, const UEdGraph* CurrentGraph = nullptr);
 
-	static void InitFlowNodes();
+	static bool IsFlowNodePlaceable(const UClass* Class);
+	static void GatherFlowNodes();
+	static void OnHotReload(bool bWasTriggeredAutomatically);
 
+	static void OnAssetAdded(const FAssetData& AssetData);
+	static void AddAsset(const FAssetData& AssetData, const bool bBatch);
+	static void RemoveAsset(const FAssetData& AssetData);
+	static void RefreshNodeList();
+
+public:
+	static FFlowGraphSchemaRefresh OnNodeListChanged;
+
+private:
+	static FName FlowNodeClassName;
+	static TArray<UClass*> NativeFlowNodes;
+	static TMap<FString, UClass*> BlueprintFlowNodes;
 	static TArray<UClass*> FlowNodeClasses;
 	static TArray<TSharedPtr<FString>> FlowNodeCategories;
-
-	static bool bFlowNodesInitialized;
 };

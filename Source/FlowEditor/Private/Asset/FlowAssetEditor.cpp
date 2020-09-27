@@ -6,6 +6,7 @@
 #include "FlowEditorCommands.h"
 #include "FlowEditorModule.h"
 #include "Graph/FlowGraph.h"
+#include "Graph/FlowGraphSchema.h"
 #include "Graph/FlowGraphSchema_Actions.h"
 #include "Graph/Nodes/FlowGraphNode.h"
 #include "Graph/Widgets/SFlowPalette.h"
@@ -178,6 +179,8 @@ void FFlowAssetEditor::InitFlowAssetEditor(const EToolkitMode::Type Mode, const 
 	FlowAsset->SetFlags(RF_Transactional);
 	GEditor->RegisterForUndo(this);
 
+    UFlowGraphSchema::SubscribeToAssetChanges();
+	
 	FGraphEditorCommands::Register();
 	FFlowGraphCommands::Register();
 	FFlowSpawnNodeCommands::Register();
