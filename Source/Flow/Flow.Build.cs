@@ -12,6 +12,9 @@ public class Flow : ModuleRules
 			"CoreUObject",
 			"Engine",
             "GameplayTags",
+            "LevelSequence",
+			"MovieScene",
+			"MovieSceneTracks",
             "Slate",
             "SlateCore"
         });

@@ -16,6 +16,8 @@
 
 #include "AssetToolsModule.h"
 #include "EdGraphUtilities.h"
+#include "ISequencerChannelInterface.h"
+#include "ISequencerModule.h"
 #include "LevelEditor.h"
 #include "Modules/ModuleManager.h"
 
