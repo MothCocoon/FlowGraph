@@ -1,12 +1,14 @@
 #include "FlowEditorModule.h"
-
 #include "FlowEditorStyle.h"
+
+#include "Asset/AssetTypeActions_FlowAsset.h"
+#include "Asset/FlowAssetEditor.h"
+#include "Graph/Customizations/FlowNode_Customization.h"
 #include "Graph/Customizations/FlowNode_CustomEventCustomization.h"
 #include "Graph/Customizations/FlowNode_CustomOutputCustomization.h"
-#include "Asset/FlowAssetActions.h"
-#include "Asset/FlowAssetEditor.h"
 #include "Graph/FlowGraphConnectionDrawingPolicy.h"
 #include "LevelEditor/SLevelEditorFlow.h"
+#include "Nodes/AssetTypeActions_FlowNodeBlueprint.h"
 
 #include "FlowAsset.h"
 #include "Nodes/Route/FlowNode_CustomEvent.h"
@@ -25,10 +27,7 @@ void FFlowEditorModule::StartupModule()
 {
 	FFlowEditorStyle::Initialize();
 
-	// register assets
-	IAssetTools& AssetTools = FModuleManager::LoadModuleChecked<FAssetToolsModule>("AssetTools").Get();
-	FlowAssetCategory = AssetTools.RegisterAdvancedAssetCategory(FName(TEXT("Flow")), LOCTEXT("FlowAssetCategory", "Flow"));
-	AssetTools.RegisterAssetTypeActions(MakeShareable(new FlowAssetActions));
+	RegisterAssets();
 
 	// register visual utilities
 	FEdGraphUtilities::RegisterVisualPinConnectionFactory(MakeShareable(new FFlowGraphConnectionDrawingPolicyFactory));
@@ -45,6 +44,7 @@ void FFlowEditorModule::StartupModule()
 	}
 
 	// register detail customizations
+	RegisterCustomClassLayout(UFlowNode::StaticClass(), FOnGetDetailCustomizationInstance::CreateStatic(&FFlowNode_Customization::MakeInstance));
 	RegisterCustomClassLayout(UFlowNode_CustomEvent::StaticClass(), FOnGetDetailCustomizationInstance::CreateStatic(&FFlowNode_CustomEventCustomization::MakeInstance));
 	RegisterCustomClassLayout(UFlowNode_CustomOutput::StaticClass(), FOnGetDetailCustomizationInstance::CreateStatic(&FFlowNode_CustomOutputCustomization::MakeInstance));
 
@@ -55,6 +55,8 @@ void FFlowEditorModule::StartupModule()
 void FFlowEditorModule::ShutdownModule()
 {
 	FFlowEditorStyle::Shutdown();
+
+	UnregisterAssets();
 
 	// unregister visual utilities
 	if (FlowGraphConnectionFactory.IsValid())
@@ -69,7 +71,7 @@ void FFlowEditorModule::ShutdownModule()
 	if (FModuleManager::Get().IsModuleLoaded("PropertyEditor"))
 	{
 		FPropertyEditorModule& PropertyModule = FModuleManager::GetModuleChecked<FPropertyEditorModule>("PropertyEditor");
-		
+
 		for (auto It = CustomClassLayouts.CreateConstIterator(); It; ++It)
 		{
 			if (It->IsValid())
@@ -78,6 +80,34 @@ void FFlowEditorModule::ShutdownModule()
 			}
 		}
 	}
+}
+
+void FFlowEditorModule::RegisterAssets()
+{
+	IAssetTools& AssetTools = FModuleManager::LoadModuleChecked<FAssetToolsModule>("AssetTools").Get();
+	FlowAssetCategory = AssetTools.RegisterAdvancedAssetCategory(FName(TEXT("Flow")), LOCTEXT("FlowAssetCategory", "Flow"));
+
+	const TSharedRef<IAssetTypeActions> FlowAssetActions = MakeShareable(new FAssetTypeActions_FlowAsset());
+	RegisteredAssetActions.Add(FlowAssetActions);
+	AssetTools.RegisterAssetTypeActions(FlowAssetActions);
+
+	const TSharedRef<IAssetTypeActions> FlowNodeActions = MakeShareable(new FAssetTypeActions_FlowNodeBlueprint());
+	RegisteredAssetActions.Add(FlowNodeActions);
+	AssetTools.RegisterAssetTypeActions(FlowNodeActions);
+}
+
+void FFlowEditorModule::UnregisterAssets()
+{
+	if (FModuleManager::Get().IsModuleLoaded("AssetTools"))
+	{
+		IAssetTools& AssetTools = FModuleManager::GetModuleChecked<FAssetToolsModule>("AssetTools").Get();
+		for (const TSharedRef<IAssetTypeActions>& TypeAction : RegisteredAssetActions)
+		{
+			AssetTools.UnregisterAssetTypeActions(TypeAction);
+		}
+	}
+
+	RegisteredAssetActions.Empty();
 }
 
 void FFlowEditorModule::RegisterCustomClassLayout(const TSubclassOf<UObject> Class, const FOnGetDetailCustomizationInstance DetailLayout)
@@ -110,7 +140,7 @@ void FFlowEditorModule::CreateFlowToolbar(FToolBarBuilder& ToolbarBuilder) const
 	ToolbarBuilder.EndSection();
 }
 
-TSharedRef<FFlowAssetEditor> FFlowEditorModule::CreateFlowAssetEditor(const EToolkitMode::Type Mode, const TSharedPtr< IToolkitHost >& InitToolkitHost, UFlowAsset* FlowAsset)
+TSharedRef<FFlowAssetEditor> FFlowEditorModule::CreateFlowAssetEditor(const EToolkitMode::Type Mode, const TSharedPtr<IToolkitHost>& InitToolkitHost, UFlowAsset* FlowAsset)
 {
 	TSharedRef<FFlowAssetEditor> NewFlowAssetEditor(new FFlowAssetEditor());
 	NewFlowAssetEditor->InitFlowAssetEditor(Mode, InitToolkitHost, FlowAsset);

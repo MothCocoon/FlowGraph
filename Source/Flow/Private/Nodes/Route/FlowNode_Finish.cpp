@@ -10,3 +10,8 @@ UFlowNode_Finish::UFlowNode_Finish(const FObjectInitializer& ObjectInitializer)
 
 	OutputNames = {};
 }
+
+void UFlowNode_Finish::ExecuteInput(const FName& PinName)
+{
+	TriggerFirstOutput(true);
+}

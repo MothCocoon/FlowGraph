@@ -11,6 +11,11 @@ UFlowNode_CustomEvent::UFlowNode_CustomEvent(const FObjectInitializer& ObjectIni
 	InputNames.Empty();
 }
 
+void UFlowNode_CustomEvent::ExecuteInput(const FName& PinName)
+{
+	TriggerFirstOutput(true);
+}
+
 #if WITH_EDITOR
 FString UFlowNode_CustomEvent::GetNodeDescription() const
 {

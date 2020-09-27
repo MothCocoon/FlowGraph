@@ -3,15 +3,15 @@
 #include "FlowTypes.generated.h"
 
 #if WITH_EDITORONLY_DATA
-UENUM()
+UENUM(BlueprintType)
 enum class EFlowNodeStyle : uint8
 {
 	Condition,
 	Default,
-	InOut,
+	InOut UMETA(Hidden),
 	Latent,
 	Logic,
-	SubGraph
+	SubGraph UMETA(Hidden)
 };
 #endif
 

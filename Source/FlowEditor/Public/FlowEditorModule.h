@@ -1,7 +1,7 @@
 #pragma once
 
 #include "AssetTypeCategories.h"
-#include "CoreMinimal.h"
+#include "IAssetTypeActions.h"
 #include "Modules/ModuleInterface.h"
 #include "Toolkits/AssetEditorToolkit.h"
 
@@ -37,6 +37,7 @@ public:
 	static EAssetTypeCategories::Type FlowAssetCategory;
 
 private:
+	TArray< TSharedRef<IAssetTypeActions>> RegisteredAssetActions;
 	TSet<FName> CustomClassLayouts;
 	TSharedPtr<FGraphPanelPinConnectionFactory> FlowGraphConnectionFactory;
 	FExtensibilityManagers FlowAssetExtensibility;
@@ -45,7 +46,13 @@ public:
 	virtual void StartupModule() override;
 	virtual void ShutdownModule() override;
 
+private:
+	void RegisterAssets();
+	void UnregisterAssets();
+
 	void RegisterCustomClassLayout(const TSubclassOf<UObject> Class, const FOnGetDetailCustomizationInstance DetailLayout);
+
+public:
 	TSharedPtr<FExtensibilityManager> GetFlowAssetMenuExtensibilityManager() const;
 	TSharedPtr<FExtensibilityManager> GetFlowAssetToolBarExtensibilityManager() const;
 
