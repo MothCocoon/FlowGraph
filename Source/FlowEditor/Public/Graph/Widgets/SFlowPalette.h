@@ -26,8 +26,12 @@ public:
 	SLATE_END_ARGS()
 
 	void Construct(const FArguments& InArgs, TWeakPtr<FFlowAssetEditor> InFlowAssetEditor);
+	virtual ~SFlowPalette();
 
 protected:
+	void Refresh();
+	void UpdateCategoryNames();
+	
 	// SGraphPalette
 	virtual TSharedRef<SWidget> OnCreateWidgetForAction(FCreateWidgetForActionData* const InCreateData) override;
 	virtual void CollectAllActions(FGraphActionListBuilderBase& OutAllActions) override;

@@ -29,7 +29,7 @@ FPinRecord::FPinRecord(const double InTime)
 		+ DoubleDigit(SystemTime.GetMillisecond()).Left(3);
 }
 
-FORCEINLINE FString FPinRecord::DoubleDigit(const int32 Number) const
+FORCEINLINE FString FPinRecord::DoubleDigit(const int32 Number)
 {
 	return Number > 9 ? FString::FromInt(Number) : TEXT("0") + FString::FromInt(Number);
 }
@@ -37,6 +37,13 @@ FORCEINLINE FString FPinRecord::DoubleDigit(const int32 Number) const
 
 UFlowNode::UFlowNode(const FObjectInitializer& ObjectInitializer)
 	: Super(ObjectInitializer)
+#if WITH_EDITOR
+	, GraphNode(nullptr)
+#endif
+	, bPreloaded(false)
+#if !UE_BUILD_SHIPPING
+	, ActivationState(EFlowActivationState::NeverActivated)
+#endif
 {
 #if WITH_EDITOR
 	Category = TEXT("Uncategorized");
@@ -52,11 +59,16 @@ void UFlowNode::SetGraphNode(UEdGraphNode* NewGraph)
 {
 	GraphNode = NewGraph;
 }
+
+FString UFlowNode::GetNodeDescription() const
+{
+	return K2_GetNodeDescription();
+}
 #endif
 
 UFlowAsset* UFlowNode::GetFlowAsset() const
 {
-	return Cast<UFlowAsset>(GetOuter());
+	return GetOuter() ? Cast<UFlowAsset>(GetOuter()) : nullptr;
 }
 
 #if WITH_EDITOR
@@ -105,14 +117,14 @@ TSet<UFlowNode*> UFlowNode::GetConnectedNodes() const
 
 UFlowSubsystem* UFlowNode::GetFlowSubsystem() const
 {
-	return GetFlowAsset()->GetFlowSubsystem();
+	return GetFlowAsset() ? GetFlowAsset()->GetFlowSubsystem() : nullptr;
 }
 
 UWorld* UFlowNode::GetWorld() const
 {
-	if (UFlowSubsystem* Subsystem = GetFlowAsset()->GetFlowSubsystem())
+	if (GetFlowAsset() && GetFlowAsset()->GetFlowSubsystem())
 	{
-		return Subsystem->GetWorld();
+		return GetFlowAsset()->GetFlowSubsystem()->GetWorld();
 	}
 
 	return nullptr;
@@ -128,6 +140,16 @@ void UFlowNode::TriggerFlush()
 {
 	bPreloaded = false;
 	FlushContent();
+}
+
+void UFlowNode::PreloadContent()
+{
+	K2_PreloadContent();
+}
+
+void UFlowNode::FlushContent()
+{
+	K2_FlushContent();
 }
 
 void UFlowNode::TriggerInput(const FName& PinName)
@@ -154,7 +176,7 @@ void UFlowNode::TriggerInput(const FName& PinName)
 
 void UFlowNode::ExecuteInput(const FName& PinName)
 {
-	TriggerFirstOutput(true);
+	K2_ExecuteInput(PinName);
 }
 
 void UFlowNode::TriggerFirstOutput(const bool bFinish)
@@ -206,9 +228,14 @@ void UFlowNode::Finish()
 	GetFlowAsset()->FinishNode(this);
 }
 
+void UFlowNode::Cleanup()
+{
+	K2_Cleanup();
+}
+
 void UFlowNode::ForceFinishNode()
 {
-	OnForceFinished();
+	K2_ForceFinishNode();
 }
 
 #if !UE_BUILD_SHIPPING
@@ -250,9 +277,24 @@ TArray<FPinRecord> UFlowNode::GetOutputRecords(const FName& PinName) const
 {
 	return OutputRecords.FindRef(PinName);
 }
+
+FString UFlowNode::GetStatusString() const
+{
+	return K2_GetStatusString();
+}
+
+UObject* UFlowNode::GetAssetToOpen()
+{
+	return K2_GetAssetToOpen();
+}
+
+AActor* UFlowNode::GetActorToFocus()
+{
+	return K2_GetActorToFocus();
+}
 #endif
 
-FString UFlowNode::GetProgressAsString(float Value) const
+FString UFlowNode::GetProgressAsString(float Value)
 {
 	// Avoids negative zero
 	if (Value == 0)
