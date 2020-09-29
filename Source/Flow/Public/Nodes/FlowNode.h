@@ -58,6 +58,7 @@ class FLOW_API UFlowNode : public UObject, public IVisualLoggerDebugSnapshotInte
 {
 	GENERATED_UCLASS_BODY()
 
+	friend class SFlowGraphNode;
 	friend class UFlowAsset;
 	friend class UFlowGraphNode;
 
@@ -124,10 +125,13 @@ protected:
 	UPROPERTY(EditDefaultsOnly, Category = "FlowNode")
 	TArray<FName> OutputNames;
 
-public:
+	UFUNCTION(BlueprintPure, Category = "FlowNode")
 	TArray<FName> GetInputNames() const { return InputNames; }
+
+	UFUNCTION(BlueprintPure, Category = "FlowNode")
 	TArray<FName> GetOutputNames() const { return OutputNames; }
-	
+
+public:
 #if WITH_EDITOR
 	virtual bool SupportsContextPins() const { return false; }
 
@@ -208,12 +212,15 @@ protected:
 	void K2_ExecuteInput(const FName& PinName);
 
 	// if node has only one output, we can finish node in one simple call
+	UFUNCTION(BlueprintCallable, Category = "FlowNode")
 	void TriggerFirstOutput(const bool bFinish);
 
 	// trigger output pin
+	UFUNCTION(BlueprintCallable, Category = "FlowNode")
 	void TriggerOutput(const FName& PinName, const bool bFinish = false);
 
 	// finish execution of node, it will call Cleanup()
+	UFUNCTION(BlueprintCallable, Category = "FlowNode")
 	void Finish();
 
 	// method implementing UObject's cleanup after node finished the work
