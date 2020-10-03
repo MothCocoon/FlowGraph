@@ -6,7 +6,7 @@
 /**
  * Logical AND
  */
-UCLASS(meta = (DisplayName = "AND"))
+UCLASS(NotBlueprintable, meta = (DisplayName = "AND"))
 class FLOW_API UFlowNode_LogicalAND final : public UFlowNode
 {
 	GENERATED_UCLASS_BODY()

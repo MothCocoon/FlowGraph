@@ -6,7 +6,7 @@
 /**
  * Log
  */
-UCLASS(meta = (DisplayName = "Log"))
+UCLASS(NotBlueprintable, meta = (DisplayName = "Log"))
 class FLOW_API UFlowNode_Log : public UFlowNode
 {
 	GENERATED_UCLASS_BODY()

@@ -8,7 +8,7 @@
 /**
  * Base for nodes providing generic communication between Flow Graph and actors with Flow Component
  */
-UCLASS(Abstract)
+UCLASS(Abstract, NotBlueprintable)
 class FLOW_API UFlowNode_NotifyBase : public UFlowNode
 {
 	GENERATED_UCLASS_BODY()

@@ -6,7 +6,7 @@
 /**
  * Custom Event
  */
-UCLASS(meta = (DisplayName = "Custom Event"))
+UCLASS(NotBlueprintable, meta = (DisplayName = "Custom Event"))
 class FLOW_API UFlowNode_CustomEvent : public UFlowNode
 {
 	GENERATED_UCLASS_BODY()

@@ -6,7 +6,7 @@
 /**
  * Custom Output
  */
-UCLASS(meta = (DisplayName = "Custom Output"))
+UCLASS(NotBlueprintable, meta = (DisplayName = "Custom Output"))
 class FLOW_API UFlowNode_CustomOutput final : public UFlowNode
 {
 	GENERATED_UCLASS_BODY()

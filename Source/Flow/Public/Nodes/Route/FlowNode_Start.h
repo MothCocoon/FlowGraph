@@ -6,7 +6,7 @@
 /**
  * Start
  */
-UCLASS(NotPlaceable, meta = (DisplayName = "Start"))
+UCLASS(NotBlueprintable, NotPlaceable, meta = (DisplayName = "Start"))
 class FLOW_API UFlowNode_Start : public UFlowNode
 {
 	GENERATED_UCLASS_BODY()
