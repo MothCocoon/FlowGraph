@@ -11,7 +11,10 @@ class UFlowNodeBlueprintFactory : public UFactory
 	// The parent class of the created blueprint
 	UPROPERTY(EditAnywhere, Category = "FlowNodeBlueprintFactory")
 	TSubclassOf<class UFlowNode> ParentClass;
-	
+
+	// UFactory
+	virtual bool ConfigureProperties() override;
 	virtual UObject* FactoryCreateNew(UClass* Class, UObject* InParent, FName Name, EObjectFlags Flags, UObject* Context, FFeedbackContext* Warn, FName CallingContext) override;
 	virtual UObject* FactoryCreateNew(UClass* Class,UObject* InParent,FName Name,EObjectFlags Flags,UObject* Context,FFeedbackContext* Warn) override;
+	// --
 };
