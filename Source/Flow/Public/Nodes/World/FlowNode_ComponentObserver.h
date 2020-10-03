@@ -11,7 +11,7 @@ class UFlowComponent;
  * Base class for nodes operating on actors with the Flow Component
  * Such nodes usually wait until a specific action occurs in the actor
  */
-UCLASS(Abstract)
+UCLASS(Abstract, NotBlueprintable)
 class FLOW_API UFlowNode_ComponentObserver : public UFlowNode
 {
 	GENERATED_UCLASS_BODY()
