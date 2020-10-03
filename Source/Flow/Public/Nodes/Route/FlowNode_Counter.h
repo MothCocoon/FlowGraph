@@ -6,7 +6,7 @@
 /**
  * Counts how many times signal entered this node
  */
-UCLASS(meta = (DisplayName = "Counter"))
+UCLASS(NotBlueprintable, meta = (DisplayName = "Counter"))
 class FLOW_API UFlowNode_Counter final : public UFlowNode
 {
 	GENERATED_UCLASS_BODY()

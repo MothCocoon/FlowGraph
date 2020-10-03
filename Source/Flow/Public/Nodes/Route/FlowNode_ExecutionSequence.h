@@ -6,7 +6,7 @@
 /**
  * Execution Sequence
  */
-UCLASS(meta = (DisplayName = "Sequence"))
+UCLASS(NotBlueprintable, meta = (DisplayName = "Sequence"))
 class FLOW_API UFlowNode_ExecutionSequence final : public UFlowNode
 {
 	GENERATED_UCLASS_BODY()

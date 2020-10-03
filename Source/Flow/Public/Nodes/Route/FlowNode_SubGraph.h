@@ -6,7 +6,7 @@
 /**
  * Sub Graph
  */
-UCLASS(meta = (DisplayName = "Sub Graph"))
+UCLASS(NotBlueprintable, meta = (DisplayName = "Sub Graph"))
 class FLOW_API UFlowNode_SubGraph : public UFlowNode
 {
 	GENERATED_UCLASS_BODY()

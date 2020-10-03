@@ -6,7 +6,7 @@
 /**
  * Timer
  */
-UCLASS(meta = (DisplayName = "Timer"))
+UCLASS(NotBlueprintable, meta = (DisplayName = "Timer"))
 class FLOW_API UFlowNode_Timer final : public UFlowNode
 {
 	GENERATED_UCLASS_BODY()

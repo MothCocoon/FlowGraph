@@ -6,7 +6,7 @@
 /**
  * Finish
  */
-UCLASS(meta = (DisplayName = "Finish"))
+UCLASS(NotBlueprintable, meta = (DisplayName = "Finish"))
 class FLOW_API UFlowNode_Finish : public UFlowNode
 {
 	GENERATED_UCLASS_BODY()
