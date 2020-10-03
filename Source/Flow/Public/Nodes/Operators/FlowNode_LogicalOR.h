@@ -6,7 +6,7 @@
 /**
  * Logical OR
  */
-UCLASS(meta = (DisplayName = "OR"))
+UCLASS(NotBlueprintable, meta = (DisplayName = "OR"))
 class FLOW_API UFlowNode_LogicalOR final : public UFlowNode
 {
 	GENERATED_UCLASS_BODY()

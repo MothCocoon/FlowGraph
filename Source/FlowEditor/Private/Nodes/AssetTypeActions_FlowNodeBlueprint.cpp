@@ -13,7 +13,6 @@ FText FAssetTypeActions_FlowNodeBlueprint::GetName() const
 
 uint32 FAssetTypeActions_FlowNodeBlueprint::GetCategories()
 {
-	//return EAssetTypeCategories::Blueprint | FFlowEditorModule::FlowAssetCategory;
 	return FFlowEditorModule::FlowAssetCategory;
 }
 
@@ -24,10 +23,9 @@ UClass* FAssetTypeActions_FlowNodeBlueprint::GetSupportedClass() const
 
 UFactory* FAssetTypeActions_FlowNodeBlueprint::GetFactoryForBlueprintType(UBlueprint* InBlueprint) const
 {
-	return NewObject<UFlowNodeBlueprintFactory>();
-	//UFlowNodeBlueprintFactory* FlowNodeBlueprintFactory = NewObject<UFlowNodeBlueprintFactory>();
-	//FlowNodeBlueprintFactory->ParentClass = TSubclassOf<UFlowNode>(*InBlueprint->GeneratedClass);
-	//return FlowNodeBlueprintFactory;
+	UFlowNodeBlueprintFactory* FlowNodeBlueprintFactory = NewObject<UFlowNodeBlueprintFactory>();
+	FlowNodeBlueprintFactory->ParentClass = TSubclassOf<UFlowNode>(*InBlueprint->GeneratedClass);
+	return FlowNodeBlueprintFactory;
 }
 
 #undef LOCTEXT_NAMESPACE
