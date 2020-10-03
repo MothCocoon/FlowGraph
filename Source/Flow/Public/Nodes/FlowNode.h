@@ -51,7 +51,7 @@ private:
 #endif
 
 /**
- * Base for all Flow Nodes
+ * Base Flow Node class
  */
 UCLASS(Abstract, Blueprintable, HideCategories = Object)
 class FLOW_API UFlowNode : public UObject, public IVisualLoggerDebugSnapshotInterface
@@ -89,16 +89,16 @@ public:
 
 	virtual FText GetTitle() const { return GetClass()->GetDisplayNameText(); }
 
-	// short summary of node's content - displayed over node as NodeInfoPopup
+	// Short summary of node's content - displayed over node as NodeInfoPopup
 	virtual FString GetNodeDescription() const;
 #endif
 
 protected:
-	// short summary of node's content - displayed over node as NodeInfoPopup
+	// Short summary of node's content - displayed over node as NodeInfoPopup
 	UFUNCTION(BlueprintImplementableEvent, Category = "FlowNode", meta = (DisplayName = "GetNodeDescription"))
 	FString K2_GetNodeDescription() const;
 
-	// inherits Guid after graph node
+	// Inherits Guid after graph node
 	UPROPERTY()
 	FGuid NodeGuid;
 
@@ -117,11 +117,11 @@ public:
 	static FName DefaultOutputName;
 
 protected:
-	// class-specific and user-added inputs
+	// Class-specific and user-added inputs
 	UPROPERTY(EditDefaultsOnly, Category = "FlowNode")
 	TArray<FName> InputNames;
 
-	// class-specific and user-added outputs
+	// Class-specific and user-added outputs
 	UPROPERTY(EditDefaultsOnly, Category = "FlowNode")
 	TArray<FName> OutputNames;
 
@@ -158,7 +158,7 @@ protected:
 // Connections to other nodes
 
 private:
-	// map outputs to the connected node and input pin
+	// Map outputs to the connected node and input pin
 	UPROPERTY()
 	TMap<FName, FConnectedPin> Connections;
 
@@ -202,38 +202,41 @@ protected:
 	UFUNCTION(BlueprintImplementableEvent, Category = "FlowNode", meta = (DisplayName = "FlushContent"))
 	void K2_FlushContent();
 
-	// trigger execution of input pin
+	// Trigger execution of input pin
 	void TriggerInput(const FName& PinName);
 
-	// method implementing node-specific logic
+	// Method reacting on triggering Input pin
 	virtual void ExecuteInput(const FName& PinName);
 
+	// Event reacting on triggering Input pin
 	UFUNCTION(BlueprintImplementableEvent, Category = "FlowNode", meta = (DisplayName = "ExecuteInput"))
 	void K2_ExecuteInput(const FName& PinName);
 
-	// if node has only one output, we can finish node in one simple call
+	// Simply trigger the first Output Pin, convenient to use if node has only one output
 	UFUNCTION(BlueprintCallable, Category = "FlowNode")
 	void TriggerFirstOutput(const bool bFinish);
 
-	// trigger output pin
+	// Trigger Output Pin
 	UFUNCTION(BlueprintCallable, Category = "FlowNode")
 	void TriggerOutput(const FName& PinName, const bool bFinish = false);
 
-	// finish execution of node, it will call Cleanup()
+	// Finish execution of node, it will call Cleanup
 	UFUNCTION(BlueprintCallable, Category = "FlowNode")
 	void Finish();
 
-	// method implementing UObject's cleanup after node finished the work
+	// Method called after node finished the work
 	virtual void Cleanup();
 
+	// Event called after node finished the work
 	UFUNCTION(BlueprintImplementableEvent, Category = "FlowNode", meta = (DisplayName = "Cleanup"))
 	void K2_Cleanup();
 
 public:
-	// define what happens when node is terminated from the outside
+	// Define what happens when node is terminated from the outside
 	virtual void ForceFinishNode();
 
 protected:
+	// Define what happens when node is terminated from the outside
 	UFUNCTION(BlueprintImplementableEvent, Category = "FlowNode", meta = (DisplayName = "ForceFinishNode"))
 	void K2_ForceFinishNode();
 
@@ -251,7 +254,7 @@ public:
 	TArray<FPinRecord> GetInputRecords(const FName& PinName) const;
 	TArray<FPinRecord> GetOutputRecords(const FName& PinName) const;
 
-	// information displayed while node is working - displayed over node as NodeInfoPopup
+	// Information displayed while node is working - displayed over node as NodeInfoPopup
 	virtual FString GetStatusString() const;
 
 	virtual UObject* GetAssetToOpen();
@@ -259,7 +262,7 @@ public:
 #endif
 
 protected:
-	// information displayed while node is working - displayed over node as NodeInfoPopup
+	// Information displayed while node is working - displayed over node as NodeInfoPopup
 	UFUNCTION(BlueprintImplementableEvent, Category = "FlowNode", meta = (DisplayName = "GetStatusString"))
 	FString K2_GetStatusString() const;
 
