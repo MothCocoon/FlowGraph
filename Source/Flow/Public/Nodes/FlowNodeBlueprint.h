@@ -16,9 +16,10 @@ class FLOW_API UFlowNodeBlueprint final : public UBlueprint
 #if WITH_EDITOR
 	// UBlueprint
 	virtual bool SupportedByDefaultBlueprintFactory() const override { return false; }
-	// --
 
-	/** Returns the most base Flow Node blueprint for a given blueprint (if it is inherited from another Flow Node blueprint, returning null if only native / non-ability BP classes are it's parent) */
-	static UFlowNodeBlueprint* FindRootFlowNodeBlueprint(UFlowNodeBlueprint* DerivedBlueprint);
+	virtual bool SupportsDelegates() const override { return false; }
+	virtual bool SupportsEventGraphs() const override { return false; }
+	virtual bool SupportsAnimLayers() const override { return false; }
+	// --
 #endif
 };
