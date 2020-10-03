@@ -6,7 +6,7 @@
 /**
  * On Notify From Actor
  */
-UCLASS(meta = (DisplayName = "On Notify From Actor"))
+UCLASS(NotBlueprintable, meta = (DisplayName = "On Notify From Actor"))
 class FLOW_API UFlowNode_OnNotifyFromActor : public UFlowNode_NotifyBase
 {
 	GENERATED_UCLASS_BODY()
