@@ -31,7 +31,7 @@ public:
 protected:
 	void Refresh();
 	void UpdateCategoryNames();
-	
+
 	// SGraphPalette
 	virtual TSharedRef<SWidget> OnCreateWidgetForAction(FCreateWidgetForActionData* const InCreateData) override;
 	virtual void CollectAllActions(FGraphActionListBuilderBase& OutAllActions) override;
@@ -40,7 +40,7 @@ protected:
 	FString GetFilterCategoryName() const;
 	void CategorySelectionChanged(TSharedPtr<FString> NewSelection, ESelectInfo::Type SelectInfo);
 
-	void OnActionSelected(const TArray< TSharedPtr<FEdGraphSchemaAction> >& InActions, ESelectInfo::Type InSelectionType);
+	void OnActionSelected(const TArray<TSharedPtr<FEdGraphSchemaAction>>& InActions, ESelectInfo::Type InSelectionType);
 
 public:
 	void ClearGraphActionMenuSelection() const;

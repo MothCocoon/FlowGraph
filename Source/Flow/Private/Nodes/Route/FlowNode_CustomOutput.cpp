@@ -10,7 +10,7 @@ UFlowNode_CustomOutput::UFlowNode_CustomOutput(const FObjectInitializer& ObjectI
 	Category = TEXT("Route");
 	NodeStyle = EFlowNodeStyle::InOut;
 #endif
-	
+
 	OutputNames.Empty();
 }
 

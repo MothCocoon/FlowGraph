@@ -1,5 +1,4 @@
 #include "Graph/Widgets/SFlowGraphNode_In.h"
-
 #include "Widgets/SBoxPanel.h"
 
 TSharedRef<SWidget> SFlowGraphNode_In::CreateNodeContentArea()
@@ -12,18 +11,16 @@ TSharedRef<SWidget> SFlowGraphNode_In::CreateNodeContentArea()
 		[
 			SNew(SHorizontalBox)
 			+ SHorizontalBox::Slot()
-			.HAlign(HAlign_Left)
-			.FillWidth(1.0f)
-			[
-				// LEFT
-				SAssignNew(LeftNodeBox, SVerticalBox)
-			]
+				.HAlign(HAlign_Left)
+				.FillWidth(1.0f)
+				[
+					SAssignNew(LeftNodeBox, SVerticalBox)
+				]
 			+ SHorizontalBox::Slot()
-			.AutoWidth()
-			.HAlign(HAlign_Right)
-			[
-				// RIGHT
-				SAssignNew(RightNodeBox, SVerticalBox)
-			]
+				.AutoWidth()
+				.HAlign(HAlign_Right)
+				[
+					SAssignNew(RightNodeBox, SVerticalBox)
+				]
 		];
 }

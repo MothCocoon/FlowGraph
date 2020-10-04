@@ -18,9 +18,9 @@ struct FPropertyChangedEvent;
 struct Rect;
 
 class FFlowAssetEditor : public FAssetEditorToolkit,
-	public FEditorUndoClient,
-	public FGCObject, 
-	public FNotifyHook
+						public FEditorUndoClient,
+						public FGCObject,
+						public FNotifyHook
 {
 	/** The FlowAsset asset being inspected */
 	UFlowAsset* FlowAsset;
@@ -28,11 +28,11 @@ class FFlowAssetEditor : public FAssetEditorToolkit,
 	TSharedPtr<class FFlowAssetToolbar> AssetToolbar;
 	TSharedPtr<class FFlowDebugger> Debugger;
 	TSharedPtr<class FFlowDebuggerToolbar> DebuggerToolbar;
-	
+
 	TSharedPtr<SGraphEditor> FocusedGraphEditor;
 	TSharedPtr<class IDetailsView> DetailsView;
 	TSharedPtr<class SFlowPalette> Palette;
-	
+
 public:
 	/**	The tab ids for all the tabs used */
 	static const FName DetailsTab;
@@ -59,7 +59,7 @@ public:
 	// --
 
 	virtual void HandleUndoTransaction();
-	
+
 	// FNotifyHook
 	virtual void NotifyPostChange(const FPropertyChangedEvent& PropertyChangedEvent, FProperty* PropertyThatChanged) override;
 	// --
@@ -81,20 +81,20 @@ private:
 
 public:
 	/** Edits the specified FlowAsset object */
-	void InitFlowAssetEditor(const EToolkitMode::Type Mode, const TSharedPtr< class IToolkitHost >& InitToolkitHost, UObject* ObjectToEdit);
+	void InitFlowAssetEditor(const EToolkitMode::Type Mode, const TSharedPtr<class IToolkitHost>& InitToolkitHost, UObject* ObjectToEdit);
 
 private:
 	void AddFlowAssetToolbar();
 	void BindAssetCommands();
-	
+
 	void AddPlayWorldToolbar() const;
-	
+
 	void CreateFlowDebugger();
 	void BindDebuggerCommands();
 
 protected:
 	virtual void RefreshAsset();
-	
+
 	virtual void GoToMasterInstance();
 	virtual bool CanGoToMasterInstance();
 
@@ -138,7 +138,7 @@ private:
 
 public:
 	void SelectSingleNode(UEdGraphNode* Node) const;
-	
+
 private:
 	void SelectAllNodes() const;
 	bool CanSelectAllNodes() const;
@@ -171,7 +171,7 @@ private:
 
 	void AddInput() const;
 	bool CanAddInput() const;
-	
+
 	void AddOutput() const;
 	bool CanAddOutput() const;
 

@@ -18,7 +18,7 @@ void SFlowInstanceList::Construct(const FArguments& InArgs, TWeakPtr<FFlowAssetE
 	FlowAssetEditor = InFlowAssetEditor;
 
 	// collect instance names of this Flow Asset
-	InstanceNames = { MakeShareable(new FName(*NoInstanceSelectedText.ToString())) };
+	InstanceNames = {MakeShareable(new FName(*NoInstanceSelectedText.ToString()))};
 	FlowAssetEditor.Pin()->GetFlowAsset()->GetInstanceDisplayNames(InstanceNames);
 
 	// select instance
@@ -48,13 +48,13 @@ void SFlowInstanceList::Construct(const FArguments& InArgs, TWeakPtr<FFlowAssetE
 		.Visibility_Static(&FFlowAssetEditor::GetDebuggerVisibility)
 		[
 			SNew(STextBlock)
-			.Text(this, &SFlowInstanceList::GetSelectedInstanceName)
+				.Text(this, &SFlowInstanceList::GetSelectedInstanceName)
 		];
 
 	ChildSlot
-		[
-			Dropdown.ToSharedRef()
-		];
+	[
+		Dropdown.ToSharedRef()
+	];
 }
 
 TSharedRef<SWidget> SFlowInstanceList::OnGenerateWidget(const TSharedPtr<FName> Item) const
@@ -93,26 +93,25 @@ void SFlowBreadcrumb::Construct(const FArguments& InArgs, TWeakPtr<FFlowAssetEdi
 		.DelimiterImage(FEditorStyle::GetBrush("Sequencer.BreadcrumbIcon"))
 		.PersistentBreadcrumbs(true)
 		.TextStyle(FEditorStyle::Get(), "Sequencer.BreadcrumbText");
-	
+
 	ChildSlot
 	[
 		SNew(SVerticalBox)
-
 		+ SVerticalBox::Slot()
-		.HAlign(HAlign_Right)
-		.VAlign(VAlign_Center)
-		.AutoHeight()
-		.Padding(25.0f, 0.0f)
-		[
-			BreadcrumbTrail.ToSharedRef()
-		]
+			.HAlign(HAlign_Right)
+			.VAlign(VAlign_Center)
+			.AutoHeight()
+			.Padding(25.0f, 0.0f)
+			[
+				BreadcrumbTrail.ToSharedRef()
+			]
 	];
 
 	// fill breadcrumb
 	BreadcrumbTrail->ClearCrumbs();
 	if (UFlowAsset* InspectedInstance = FlowAssetEditor.Pin()->GetFlowAsset()->GetInspectedInstance())
 	{
-		TArray<UFlowAsset*> InstancesFromRoot = { InspectedInstance };
+		TArray<UFlowAsset*> InstancesFromRoot = {InspectedInstance};
 
 		UFlowAsset* CheckedInstance = InspectedInstance;
 		while (UFlowAsset* MasterInstance = CheckedInstance->GetMasterInstance())
@@ -132,7 +131,7 @@ void SFlowBreadcrumb::Construct(const FArguments& InArgs, TWeakPtr<FFlowAssetEdi
 void SFlowBreadcrumb::OnCrumbClicked(const FFlowBreadcrumb& Item)
 {
 	ensure(FlowAssetEditor.Pin()->GetFlowAsset()->GetInspectedInstance());
-	
+
 	if (Item.InstanceName != FlowAssetEditor.Pin()->GetFlowAsset()->GetInspectedInstance()->GetDisplayName())
 	{
 		GEditor->GetEditorSubsystem<UAssetEditorSubsystem>()->OpenEditorForAsset(Item.AssetPathName);

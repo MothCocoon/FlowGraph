@@ -16,7 +16,7 @@ private:
 	
 #if WITH_EDITOR
 public:
-	virtual bool CanUserAddInput() const override { return true; };
+	virtual bool CanUserAddInput() const override { return true; }
 #endif
 
 protected:

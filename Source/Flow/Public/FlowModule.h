@@ -4,7 +4,7 @@
 
 DECLARE_LOG_CATEGORY_EXTERN(LogFlow, Log, All)
 
-class FFlowModule : public IModuleInterface
+class FFlowModule final : public IModuleInterface
 {
 public:
 	virtual void StartupModule() override;

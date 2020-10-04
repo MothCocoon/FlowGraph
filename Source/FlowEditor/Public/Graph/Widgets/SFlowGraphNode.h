@@ -31,8 +31,8 @@ protected:
 
 	// SGraphNode
 	virtual void UpdateGraphNode() override;
-	virtual const FSlateBrush * GetNodeBodyBrush() const override;
-	
+	virtual const FSlateBrush* GetNodeBodyBrush() const override;
+
 	virtual void CreateStandardPinWidget(UEdGraphPin* Pin) override;
 	virtual void CreateInputSideAddButton(TSharedPtr<SVerticalBox> OutputBox) override;
 	virtual void CreateOutputSideAddButton(TSharedPtr<SVerticalBox> OutputBox) override;
@@ -40,5 +40,5 @@ protected:
 	// --
 
 private:
-	UFlowGraphNode* FlowGraphNode;
+	UFlowGraphNode* FlowGraphNode = nullptr;
 };
