@@ -233,7 +233,7 @@ void UFlowAsset::InitInstance(UFlowAsset* InTemplateAsset)
 
 void UFlowAsset::PreloadNodes()
 {
-	TArray<UFlowNode*> GraphEntryNodes = { StartNode };
+	TArray<UFlowNode*> GraphEntryNodes = {StartNode};
 	for (const TPair<FName, UFlowNode_CustomEvent*>& CustomEvent : CustomEventNodes)
 	{
 		GraphEntryNodes.Emplace(CustomEvent.Value);
@@ -285,7 +285,7 @@ void UFlowAsset::StartFlow()
 		TemplateAsset->BroadcastRegenerateToolbars();
 	}
 #endif
-	
+
 	ensureAlways(StartNode);
 	RecordedNodes.Add(StartNode);
 	StartNode->TriggerFirstOutput(true);

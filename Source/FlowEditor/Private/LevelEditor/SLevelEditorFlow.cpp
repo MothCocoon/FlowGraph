@@ -12,7 +12,6 @@
 void SLevelEditorFlow::Construct(const FArguments& InArgs)
 {
 	CreateFlowWidget();
-
 	FEditorDelegates::OnMapOpened.AddRaw(this, &SLevelEditorFlow::OnMapOpened);
 }
 
@@ -31,23 +30,20 @@ void SLevelEditorFlow::CreateFlowWidget()
 		}
 	}
 
-	TSharedPtr<SObjectPropertyEntryBox> FlowPropertyBox = SNew(SObjectPropertyEntryBox)
-		.AllowedClass(UFlowAsset::StaticClass())
-		.DisplayThumbnail(false)
-		.OnObjectChanged(this, &SLevelEditorFlow::OnFlowChanged)
-		.ObjectPath(this, &SLevelEditorFlow::GetFlowPath);
-
-	const TSharedRef<SWidget> FlowWidget =
-		SNew(SHorizontalBox)
+	const TSharedRef<SWidget> FlowWidget = SNew(SHorizontalBox)
 		+ SHorizontalBox::Slot()
-		.AutoWidth()
-		[
-			FlowPropertyBox.ToSharedRef()
-		];
+			.AutoWidth()
+			[
+				SNew(SObjectPropertyEntryBox)
+					.AllowedClass(UFlowAsset::StaticClass())
+					.DisplayThumbnail(false)
+					.OnObjectChanged(this, &SLevelEditorFlow::OnFlowChanged)
+					.ObjectPath(this, &SLevelEditorFlow::GetFlowPath)
+			];
 
 	ChildSlot
-		[
-			SNew(SLevelOfDetailBranchNode)
+	[
+		SNew(SLevelOfDetailBranchNode)
 			.UseLowDetailSlot(FMultiBoxSettings::UseSmallToolBarIcons)
 			.LowDetail()
 			[
@@ -69,7 +65,7 @@ void SLevelEditorFlow::CreateFlowWidget()
 						FlowWidget
 					]
 			]
-		];
+	];
 }
 
 void SLevelEditorFlow::OnFlowChanged(const FAssetData& NewAsset)

@@ -10,9 +10,9 @@ UCLASS(NotBlueprintable, meta = (DisplayName = "OR"))
 class FLOW_API UFlowNode_LogicalOR final : public UFlowNode
 {
 	GENERATED_UCLASS_BODY()
-	
+
 #if WITH_EDITOR
-	virtual bool CanUserAddInput() const override { return true; };
+	virtual bool CanUserAddInput() const override { return true; }
 #endif
 
 protected:

@@ -6,7 +6,7 @@ class FFlowToolbarCommands final : public TCommands<FFlowToolbarCommands>
 {
 public:
 	FFlowToolbarCommands();
-	
+
 	TSharedPtr<FUICommandInfo> RefreshAsset;
 	TSharedPtr<FUICommandInfo> GoToMasterInstance;
 

@@ -14,7 +14,7 @@ USTRUCT()
 struct FFlowBreakpoint
 {
 	GENERATED_USTRUCT_BODY()
-	
+
 	UPROPERTY()
 	bool bHasBreakpoint;
 
@@ -48,10 +48,10 @@ UCLASS()
 class FLOWEDITOR_API UFlowGraphNode : public UEdGraphNode
 {
 	GENERATED_UCLASS_BODY()
-	
+
 //////////////////////////////////////////////////////////////////////////
 // Flow node
-	
+
 private:
 	UPROPERTY(Instanced)
 	UFlowNode* FlowNode;
@@ -94,13 +94,13 @@ public:
 	// UEdGraphNode
 	virtual void ReconstructNode() override;
 	virtual void AllocateDefaultPins() override;
-    // --
+	// --
 
 	// variants of K2Node methods
-    void RewireOldPinsToNewPins(TArray<UEdGraphPin*>& InOldPins);
+	void RewireOldPinsToNewPins(TArray<UEdGraphPin*>& InOldPins);
 	void ReconstructSinglePin(UEdGraphPin* NewPin, UEdGraphPin* OldPin);
 	// --
-	
+
 	// UEdGraphNode
 	virtual void GetNodeContextMenuActions(class UToolMenu* Menu, class UGraphNodeContextMenuContext* Context) const override;
 
@@ -117,7 +117,7 @@ public:
 public:
 	// short summary of node's content
 	FString GetNodeDescription() const;
-	
+
 	// get flow node for the inspected asset instance
 	UFlowNode* GetInspectedNodeInstance() const;
 
@@ -149,7 +149,7 @@ public:
 	void RemoveOrphanedPin(UEdGraphPin* Pin);
 
 	bool SupportsContextPins() const;
-	
+
 	bool CanUserAddInput() const;
 	bool CanUserAddOutput() const;
 

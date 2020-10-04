@@ -40,7 +40,7 @@ UEdGraph* UFlowGraph::CreateGraph(UFlowAsset* InFlowAsset)
 
 	InFlowAsset->FlowGraph = NewGraph;
 	NewGraph->GetSchema()->CreateDefaultNodesForGraph(*NewGraph);
-	
+
 	return NewGraph;
 }
 

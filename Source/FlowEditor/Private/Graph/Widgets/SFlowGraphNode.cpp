@@ -176,6 +176,7 @@ void SFlowGraphNode::GetPinBrush(const bool bLeftSide, const float WidgetWidth, 
 }
 
 BEGIN_SLATE_FUNCTION_BUILD_OPTIMIZATION
+
 void SFlowGraphNode::UpdateGraphNode()
 {
 	InputPins.Empty();
@@ -185,16 +186,15 @@ void SFlowGraphNode::UpdateGraphNode()
 	RightNodeBox.Reset();
 	LeftNodeBox.Reset();
 
-	//
-	//             ______________________
-	//            |      TITLE AREA      |
-	//            +-------+------+-------+
-	//            | (>) L |      | R (>) |
-	//            | (>) E |      | I (>) |
-	//            | (>) F |      | G (>) |
-	//            | (>) T |      | H (>) |
-	//            |       |      | T (>) |
-	//            |_______|______|_______|
+	//	     ______________________
+	//	    |      TITLE AREA      |
+	//	    +-------+------+-------+
+	//	    | (>) L |      | R (>) |
+	//	    | (>) E |      | I (>) |
+	//	    | (>) F |      | G (>) |
+	//	    | (>) T |      | H (>) |
+	//	    |       |      | T (>) |
+	//	    |_______|______|_______|
 	//
 	TSharedPtr<SVerticalBox> MainVerticalBox;
 	SetupErrorReporting();
@@ -209,98 +209,90 @@ void SFlowGraphNode::UpdateGraphNode()
 		IconBrush = GraphNode->GetIconAndTint(IconColor).GetOptionalIcon();
 	}
 
-	const TSharedRef<SOverlay> DefaultTitleAreaWidget =
-		SNew(SOverlay)
-
+	const TSharedRef<SOverlay> DefaultTitleAreaWidget = SNew(SOverlay)
 		+ SOverlay::Slot()
 			.HAlign(HAlign_Fill)
 			.VAlign(VAlign_Center)
 			[
 				SNew(SHorizontalBox)
-
 				+ SHorizontalBox::Slot()
-				.HAlign(HAlign_Fill)
-				[
-					SNew(SBorder)
-					.BorderImage(FFlowEditorStyle::GetBrush("Flow.Node.Title"))
-					// The extra margin on the right
-					// is for making the color spill stretch well past the node title
-					.Padding(FMargin(10, 5, 30, 3))
-					.BorderBackgroundColor(this, &SGraphNode::GetNodeTitleColor)
+					.HAlign(HAlign_Fill)
 					[
-						SNew(SHorizontalBox)
-
-						+ SHorizontalBox::Slot()
-						.VAlign(VAlign_Top)
-						.Padding(FMargin(0.f, 0.f, 4.f, 0.f))
-						.AutoWidth()
-						[
-							SNew(SImage)
-							.Image(IconBrush)
-							.ColorAndOpacity(this, &SGraphNode::GetNodeTitleIconColor)
-						]
-
-						+ SHorizontalBox::Slot()
-						[
-							SNew(SVerticalBox)
-							+ SVerticalBox::Slot()
-							.AutoHeight()
+						SNew(SBorder)
+							.BorderImage(FFlowEditorStyle::GetBrush("Flow.Node.Title"))
+							// The extra margin on the right is for making the color spill stretch well past the node title
+							.Padding(FMargin(10, 5, 30, 3))
+							.BorderBackgroundColor(this, &SGraphNode::GetNodeTitleColor)
 							[
-								CreateTitleWidget(NodeTitle)
+								SNew(SHorizontalBox)
+								+ SHorizontalBox::Slot()
+									.VAlign(VAlign_Top)
+									.Padding(FMargin(0.f, 0.f, 4.f, 0.f))
+									.AutoWidth()
+									[
+										SNew(SImage)
+											.Image(IconBrush)
+											.ColorAndOpacity(this, &SGraphNode::GetNodeTitleIconColor)
+									]
+								+ SHorizontalBox::Slot()
+									[
+										SNew(SVerticalBox)
+										+ SVerticalBox::Slot()
+											.AutoHeight()
+											[
+												CreateTitleWidget(NodeTitle)
+											]
+										+ SVerticalBox::Slot()
+											.AutoHeight()
+											[
+												NodeTitle.ToSharedRef()
+											]
+									]
 							]
-							+ SVerticalBox::Slot()
-							.AutoHeight()
-							[
-								NodeTitle.ToSharedRef()
-							]
-						]
 					]
-				]
-
 				+ SHorizontalBox::Slot()
-				.HAlign(HAlign_Right)
-				.VAlign(VAlign_Center)
-				.Padding(0, 0, 5, 0)
-				.AutoWidth()
-				[
-					CreateTitleRightWidget()
-				]
+					.HAlign(HAlign_Right)
+					.VAlign(VAlign_Center)
+					.Padding(0, 0, 5, 0)
+					.AutoWidth()
+					[
+						CreateTitleRightWidget()
+					]
 			]
-	
 		+ SOverlay::Slot()
-		.VAlign(VAlign_Top)
-		[
-			SNew(SBorder)
-			.Visibility(EVisibility::HitTestInvisible)
-			.BorderImage(FEditorStyle::GetBrush("Graph.Node.TitleHighlight"))
-			.BorderBackgroundColor(this, &SGraphNode::GetNodeTitleIconColor)
+			.VAlign(VAlign_Top)
 			[
-				SNew(SSpacer)
-				.Size(FVector2D(20, 20))
-			]
-		];
+				SNew(SBorder)
+					.Visibility(EVisibility::HitTestInvisible)
+					.BorderImage(FEditorStyle::GetBrush("Graph.Node.TitleHighlight"))
+					.BorderBackgroundColor(this, &SGraphNode::GetNodeTitleIconColor)
+					[
+						SNew(SSpacer)
+							.Size(FVector2D(20, 20))
+					]
+			];
 
 	SetDefaultTitleAreaWidget(DefaultTitleAreaWidget);
 
-	const TSharedRef<SWidget> TitleAreaWidget =
+	const TSharedRef<SWidget> TitleAreaWidget = 
 		SNew(SLevelOfDetailBranchNode)
-		.UseLowDetailSlot(this, &SFlowGraphNode::UseLowDetailNodeTitles)
-		.LowDetail()
-		[
-			SNew(SBorder)
-			.BorderImage(FFlowEditorStyle::GetBrush("Flow.Node.Title"))
-			.Padding(FMargin(75.0f, 22.0f)) // Saving enough space for a 'typical' title so the transition isn't quite so abrupt
-			.BorderBackgroundColor(this, &SGraphNode::GetNodeTitleColor)
-		]
-		.HighDetail()
-		[
-			DefaultTitleAreaWidget
-		];
+			.UseLowDetailSlot(this, &SFlowGraphNode::UseLowDetailNodeTitles)
+			.LowDetail()
+			[
+				SNew(SBorder)
+					.BorderImage(FFlowEditorStyle::GetBrush("Flow.Node.Title"))
+					.Padding(FMargin(75.0f, 22.0f)) // Saving enough space for a 'typical' title so the transition isn't quite so abrupt
+					.BorderBackgroundColor(this, &SGraphNode::GetNodeTitleColor)
+			]
+			.HighDetail()
+			[
+				DefaultTitleAreaWidget
+			];
 
 
 	if (!SWidget::GetToolTip().IsValid())
 	{
-		const TSharedRef<SToolTip> DefaultToolTip = IDocumentation::Get()->CreateToolTip(TAttribute< FText >(this, &SGraphNode::GetNodeTooltip), nullptr, GraphNode->GetDocumentationLink(), GraphNode->GetDocumentationExcerptName());
+		const TSharedRef<SToolTip> DefaultToolTip = IDocumentation::Get()->CreateToolTip(TAttribute<FText>(this, &SGraphNode::GetNodeTooltip), nullptr, GraphNode->GetDocumentationLink(), GraphNode->GetDocumentationExcerptName());
 		SetToolTip(DefaultToolTip);
 	}
 
@@ -312,21 +304,21 @@ void SFlowGraphNode::UpdateGraphNode()
 
 	TSharedPtr<SVerticalBox> InnerVerticalBox = SNew(SVerticalBox)
 		+ SVerticalBox::Slot()
-		.AutoHeight()
-		.HAlign(HAlign_Fill)
-		.VAlign(VAlign_Top)
-		.Padding(Settings->GetNonPinNodeBodyPadding())
-		[
-			TitleAreaWidget
-		]
+			.AutoHeight()
+			.HAlign(HAlign_Fill)
+			.VAlign(VAlign_Top)
+			.Padding(Settings->GetNonPinNodeBodyPadding())
+			[
+				TitleAreaWidget
+			]
 
 		+ SVerticalBox::Slot()
-		.AutoHeight()
-		.HAlign(HAlign_Fill)
-		.VAlign(VAlign_Top)
-		[
-			CreateNodeContentArea()
-		];
+			.AutoHeight()
+			.HAlign(HAlign_Fill)
+			.VAlign(VAlign_Top)
+			[
+				CreateNodeContentArea()
+			];
 
 	const TSharedPtr<SWidget> EnabledStateWidget = GetEnabledStateWidget();
 	if (EnabledStateWidget.IsValid())
@@ -354,22 +346,22 @@ void SFlowGraphNode::UpdateGraphNode()
 		[
 			SAssignNew(MainVerticalBox, SVerticalBox)
 			+ SVerticalBox::Slot()
-			.AutoHeight()
-			[
-				SNew(SOverlay)
-				.AddMetaData<FGraphNodeMetaData>(TagMeta)
-				+ SOverlay::Slot()
-				.Padding(Settings->GetNonPinNodeBodyPadding())
+				.AutoHeight()
 				[
-					SNew(SImage)
-					.Image(GetNodeBodyBrush())
-					.ColorAndOpacity(this, &SGraphNode::GetNodeBodyColor)
+					SNew(SOverlay)
+						.AddMetaData<FGraphNodeMetaData>(TagMeta)
+						+ SOverlay::Slot()
+							.Padding(Settings->GetNonPinNodeBodyPadding())
+							[
+								SNew(SImage)
+									.Image(GetNodeBodyBrush())
+									.ColorAndOpacity(this, &SGraphNode::GetNodeBodyColor)
+							]
+						+ SOverlay::Slot()
+							[
+								InnerVerticalBox.ToSharedRef()
+							]
 				]
-				+ SOverlay::Slot()
-				[
-					InnerVerticalBox.ToSharedRef()
-				]
-			]
 		];
 
 	bool SupportsBubble = true;
@@ -443,6 +435,7 @@ void SFlowGraphNode::CreateStandardPinWidget(UEdGraphPin* Pin)
 
 	this->AddPin(NewPin.ToSharedRef());
 }
+
 END_SLATE_FUNCTION_BUILD_OPTIMIZATION
 
 void SFlowGraphNode::CreateInputSideAddButton(TSharedPtr<SVerticalBox> OutputBox)
@@ -486,7 +479,7 @@ void SFlowGraphNode::CreateOutputSideAddButton(TSharedPtr<SVerticalBox> OutputBo
 			[
 				AddPinButton
 			];
-	}
+		}
 }
 
 FReply SFlowGraphNode::OnAddPin()

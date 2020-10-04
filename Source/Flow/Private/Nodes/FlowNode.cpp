@@ -50,8 +50,8 @@ UFlowNode::UFlowNode(const FObjectInitializer& ObjectInitializer)
 	NodeStyle = EFlowNodeStyle::Default;
 #endif
 
-	InputNames = { DefaultInputName };
-	OutputNames = { DefaultOutputName };
+	InputNames = {DefaultInputName};
+	OutputNames = {DefaultOutputName};
 }
 
 #if WITH_EDITOR
