@@ -21,7 +21,7 @@ protected:
 
 private:
 	FTimerHandle CompletionTimerHandle;
-	
+
 	FTimerHandle StepTimerHandle;
 	float SumOfSteps;
 

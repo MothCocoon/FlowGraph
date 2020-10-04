@@ -15,9 +15,9 @@ class FFlowAssetToolbar final : public TSharedFromThis<FFlowAssetToolbar>
 {
 public:
 	FFlowAssetToolbar(TSharedPtr<FFlowAssetEditor> InNodeEditor);
-	
+
 	void AddToolbar(FToolBarBuilder& ToolbarBuilder);
-	
+
 private:
 	TWeakPtr<FFlowAssetEditor> FlowAssetEditor;
 };

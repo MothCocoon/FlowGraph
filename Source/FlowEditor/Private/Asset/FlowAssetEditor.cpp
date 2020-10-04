@@ -108,19 +108,19 @@ void FFlowAssetEditor::RegisterTabSpawners(const TSharedRef<class FTabManager>& 
 	FAssetEditorToolkit::RegisterTabSpawners(InTabManager);
 
 	InTabManager->RegisterTabSpawner(GraphTab, FOnSpawnTab::CreateSP(this, &FFlowAssetEditor::SpawnTab_GraphCanvas))
-		.SetDisplayName(LOCTEXT("GraphTab", "Viewport"))
-		.SetGroup(WorkspaceMenuCategoryRef)
-		.SetIcon(FSlateIcon(FEditorStyle::GetStyleSetName(), "GraphEditor.EventGraph_16x"));
+				.SetDisplayName(LOCTEXT("GraphTab", "Viewport"))
+				.SetGroup(WorkspaceMenuCategoryRef)
+				.SetIcon(FSlateIcon(FEditorStyle::GetStyleSetName(), "GraphEditor.EventGraph_16x"));
 
 	InTabManager->RegisterTabSpawner(DetailsTab, FOnSpawnTab::CreateSP(this, &FFlowAssetEditor::SpawnTab_Details))
-		.SetDisplayName(LOCTEXT("DetailsTab", "Details"))
-		.SetGroup(WorkspaceMenuCategoryRef)
-		.SetIcon(FSlateIcon(FEditorStyle::GetStyleSetName(), "LevelEditor.Tabs.Details"));
+				.SetDisplayName(LOCTEXT("DetailsTab", "Details"))
+				.SetGroup(WorkspaceMenuCategoryRef)
+				.SetIcon(FSlateIcon(FEditorStyle::GetStyleSetName(), "LevelEditor.Tabs.Details"));
 
 	InTabManager->RegisterTabSpawner(PaletteTab, FOnSpawnTab::CreateSP(this, &FFlowAssetEditor::SpawnTab_Palette))
-		.SetDisplayName(LOCTEXT("PaletteTab", "Palette"))
-		.SetGroup(WorkspaceMenuCategoryRef)
-		.SetIcon(FSlateIcon(FEditorStyle::GetStyleSetName(), "Kismet.Tabs.Palette"));
+				.SetDisplayName(LOCTEXT("PaletteTab", "Palette"))
+				.SetGroup(WorkspaceMenuCategoryRef)
+				.SetIcon(FSlateIcon(FEditorStyle::GetStyleSetName(), "Kismet.Tabs.Palette"));
 }
 
 void FFlowAssetEditor::UnregisterTabSpawners(const TSharedRef<class FTabManager>& InTabManager)
@@ -166,12 +166,12 @@ TSharedRef<SDockTab> FFlowAssetEditor::SpawnTab_Palette(const FSpawnTabArgs& Arg
 	return SNew(SDockTab)
 		.Icon(FEditorStyle::GetBrush("Kismet.Tabs.Palette"))
 		.Label(LOCTEXT("FlowPaletteTitle", "Palette"))
-		[
-			Palette.ToSharedRef()
-		];
+	[
+		Palette.ToSharedRef()
+	];
 }
 
-void FFlowAssetEditor::InitFlowAssetEditor(const EToolkitMode::Type Mode, const TSharedPtr< class IToolkitHost >& InitToolkitHost, UObject* ObjectToEdit)
+void FFlowAssetEditor::InitFlowAssetEditor(const EToolkitMode::Type Mode, const TSharedPtr<class IToolkitHost>& InitToolkitHost, UObject* ObjectToEdit)
 {
 	FlowAsset = CastChecked<UFlowAsset>(ObjectToEdit);
 
@@ -179,8 +179,8 @@ void FFlowAssetEditor::InitFlowAssetEditor(const EToolkitMode::Type Mode, const 
 	FlowAsset->SetFlags(RF_Transactional);
 	GEditor->RegisterForUndo(this);
 
-    UFlowGraphSchema::SubscribeToAssetChanges();
-	
+	UFlowGraphSchema::SubscribeToAssetChanges();
+
 	FGraphEditorCommands::Register();
 	FFlowGraphCommands::Register();
 	FFlowSpawnNodeCommands::Register();
@@ -192,34 +192,34 @@ void FFlowAssetEditor::InitFlowAssetEditor(const EToolkitMode::Type Mode, const 
 		->AddArea
 		(
 			FTabManager::NewPrimaryArea()->SetOrientation(Orient_Vertical)
-			->Split
-			(
-				FTabManager::NewStack()
-				->SetSizeCoefficient(0.1f)
-				->AddTab(GetToolbarTabId(), ETabState::OpenedTab)->SetHideTabWell(true)
-			)
-			->Split
-			(
-				FTabManager::NewSplitter()->SetOrientation(Orient_Horizontal)->SetSizeCoefficient(0.9f)
 				->Split
-				(
-					FTabManager::NewStack()
-					->SetSizeCoefficient(0.225f)
-					->AddTab(DetailsTab, ETabState::OpenedTab)
-				)
+					(
+						FTabManager::NewStack()
+						->SetSizeCoefficient(0.1f)
+						->AddTab(GetToolbarTabId(), ETabState::OpenedTab)->SetHideTabWell(true)
+					)
 				->Split
-				(
-					FTabManager::NewStack()
-					->SetSizeCoefficient(0.65f)
-					->AddTab(GraphTab, ETabState::OpenedTab)->SetHideTabWell(true)
-				)
-				->Split
-				(
-					FTabManager::NewStack()
-					->SetSizeCoefficient(0.125f)
-					->AddTab(PaletteTab, ETabState::OpenedTab)
-				)
-			)
+					(
+						FTabManager::NewSplitter()->SetOrientation(Orient_Horizontal)->SetSizeCoefficient(0.9f)
+							->Split
+							(
+								FTabManager::NewStack()
+								->SetSizeCoefficient(0.225f)
+								->AddTab(DetailsTab, ETabState::OpenedTab)
+							)
+							->Split
+							(
+								FTabManager::NewStack()
+								->SetSizeCoefficient(0.65f)
+								->AddTab(GraphTab, ETabState::OpenedTab)->SetHideTabWell(true)
+							)
+							->Split
+							(
+								FTabManager::NewStack()
+								->SetSizeCoefficient(0.125f)
+								->AddTab(PaletteTab, ETabState::OpenedTab)
+							)
+					)
 		);
 
 	const bool bCreateDefaultStandaloneMenu = true;
@@ -227,7 +227,7 @@ void FFlowAssetEditor::InitFlowAssetEditor(const EToolkitMode::Type Mode, const 
 	FAssetEditorToolkit::InitAssetEditor(Mode, InitToolkitHost, TEXT("FlowEditorApp"), StandaloneDefaultLayout, bCreateDefaultStandaloneMenu, bCreateDefaultToolbar, ObjectToEdit, false);
 
 	FFlowToolbarCommands::Register();
-	
+
 	AddFlowAssetToolbar();
 	AddPlayWorldToolbar();
 	CreateFlowDebugger();
@@ -241,7 +241,7 @@ void FFlowAssetEditor::InitFlowAssetEditor(const EToolkitMode::Type Mode, const 
 void FFlowAssetEditor::AddFlowAssetToolbar()
 {
 	AssetToolbar = MakeShareable(new FFlowAssetToolbar(SharedThis(this)));
-	
+
 	BindAssetCommands();
 
 	TSharedPtr<FExtender> ToolbarExtender = MakeShareable(new FExtender);
@@ -283,7 +283,8 @@ void FFlowAssetEditor::AddPlayWorldToolbar() const
 		FToolMenuSection& Section = FoundMenu->AddSection("Debugging");
 		Section.InsertPosition = FToolMenuInsert("Asset", EToolMenuInsertType::After);
 
-		Section.AddDynamicEntry("DebuggingCommands", FNewToolMenuSectionDelegate::CreateLambda([](FToolMenuSection& InSection) {
+		Section.AddDynamicEntry("DebuggingCommands", FNewToolMenuSectionDelegate::CreateLambda([](FToolMenuSection& InSection)
+		{
 			FPlayWorldCommands::BuildToolbar(InSection);
 		}));
 	}

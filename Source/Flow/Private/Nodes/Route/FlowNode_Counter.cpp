@@ -3,6 +3,7 @@
 UFlowNode_Counter::UFlowNode_Counter(const FObjectInitializer& ObjectInitializer)
 	: Super(ObjectInitializer)
 	, Goal(2)
+	, CurrentSum(0)
 {
 #if WITH_EDITOR
 	Category = TEXT("Route");
@@ -24,7 +25,7 @@ UFlowNode_Counter::UFlowNode_Counter(const FObjectInitializer& ObjectInitializer
 void UFlowNode_Counter::ExecuteInput(const FName& PinName)
 {
 	if (PinName == TEXT("Increment"))
-	{		
+	{
 		CurrentSum++;
 		if (CurrentSum == Goal)
 		{

@@ -17,11 +17,10 @@
 // ------------------------------------------------------------------------------
 BEGIN_SLATE_FUNCTION_BUILD_OPTIMIZATION
 
-class SFlowNodeBlueprintCreateDialog : public SCompoundWidget
+class SFlowNodeBlueprintCreateDialog final : public SCompoundWidget
 {
 public:
-	SLATE_BEGIN_ARGS(SFlowNodeBlueprintCreateDialog){}
-
+	SLATE_BEGIN_ARGS(SFlowNodeBlueprintCreateDialog) {}
 	SLATE_END_ARGS()
 
 	/** Constructs this widget with InArgs */
@@ -31,60 +30,56 @@ public:
 		ParentClass = UFlowNode::StaticClass();
 
 		ChildSlot
-			[
-				SNew(SBorder)
+		[
+			SNew(SBorder)
 				.Visibility(EVisibility::Visible)
 				.BorderImage(FEditorStyle::GetBrush("Menu.Background"))
 				[
 					SNew(SBox)
-					.Visibility(EVisibility::Visible)
-					.WidthOverride(500.0f)
-					[
-						SNew(SVerticalBox)
-						+ SVerticalBox::Slot()
-						.FillHeight(1)
+						.Visibility(EVisibility::Visible)
+						.WidthOverride(500.0f)
 						[
-							SNew(SBorder)
-							.BorderImage(FEditorStyle::GetBrush("ToolPanel.GroupBorder"))
-							.Content()
-							[
-								SAssignNew(ParentClassContainer, SVerticalBox)
-							]
+							SNew(SVerticalBox)
+							+ SVerticalBox::Slot()
+								.FillHeight(1)
+								[
+									SNew(SBorder)
+										.BorderImage(FEditorStyle::GetBrush("ToolPanel.GroupBorder"))
+										.Content()
+										[
+											SAssignNew(ParentClassContainer, SVerticalBox)
+										]
+								]
+							+ SVerticalBox::Slot()
+								.AutoHeight()
+								.HAlign(HAlign_Right)
+								.VAlign(VAlign_Bottom)
+								.Padding(8)
+								[
+									SNew(SUniformGridPanel)
+										.SlotPadding(FEditorStyle::GetMargin("StandardDialog.SlotPadding"))
+										.MinDesiredSlotWidth(FEditorStyle::GetFloat("StandardDialog.MinDesiredSlotWidth"))
+										.MinDesiredSlotHeight(FEditorStyle::GetFloat("StandardDialog.MinDesiredSlotHeight"))
+										+ SUniformGridPanel::Slot(0, 0)
+											[
+												SNew(SButton)
+													.HAlign(HAlign_Center)
+													.ContentPadding(FEditorStyle::GetMargin("StandardDialog.ContentPadding"))
+													.OnClicked(this, &SFlowNodeBlueprintCreateDialog::OkClicked)
+													.Text(LOCTEXT("CreateFlowNodeBlueprintOk", "OK"))
+											]
+										+ SUniformGridPanel::Slot(1, 0)
+											[
+												SNew(SButton)
+													.HAlign(HAlign_Center)
+													.ContentPadding(FEditorStyle::GetMargin("StandardDialog.ContentPadding"))
+													.OnClicked(this, &SFlowNodeBlueprintCreateDialog::CancelClicked)
+													.Text(LOCTEXT("CreateFlowNodeBlueprintCancel", "Cancel"))
+											]
+								]
 						]
-
-						// Ok/Cancel buttons
-						+ SVerticalBox::Slot()
-						.AutoHeight()
-						.HAlign(HAlign_Right)
-						.VAlign(VAlign_Bottom)
-						.Padding(8)
-						[
-							SNew(SUniformGridPanel)
-							.SlotPadding(FEditorStyle::GetMargin("StandardDialog.SlotPadding"))
-							.MinDesiredSlotWidth(FEditorStyle::GetFloat("StandardDialog.MinDesiredSlotWidth"))
-							.MinDesiredSlotHeight(FEditorStyle::GetFloat("StandardDialog.MinDesiredSlotHeight"))
-
-							+ SUniformGridPanel::Slot(0, 0)
-							[
-								SNew(SButton)
-								.HAlign(HAlign_Center)
-								.ContentPadding(FEditorStyle::GetMargin("StandardDialog.ContentPadding"))
-								.OnClicked(this, &SFlowNodeBlueprintCreateDialog::OkClicked)
-								.Text(LOCTEXT("CreateFlowNodeBlueprintOk", "OK"))
-							]
-
-							+ SUniformGridPanel::Slot(1, 0)
-							[
-								SNew(SButton)
-								.HAlign(HAlign_Center)
-								.ContentPadding(FEditorStyle::GetMargin("StandardDialog.ContentPadding"))
-								.OnClicked(this, &SFlowNodeBlueprintCreateDialog::CancelClicked)
-								.Text(LOCTEXT("CreateFlowNodeBlueprintCancel", "Cancel"))
-							]
-						]
-					]
 				]
-			];
+		];
 
 			MakeParentClassPicker();
 		}

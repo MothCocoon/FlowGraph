@@ -8,7 +8,7 @@ UFlowNode_OnNotifyFromActor::UFlowNode_OnNotifyFromActor(const FObjectInitialize
 	NodeStyle = EFlowNodeStyle::Condition;
 #endif
 
-	OutputNames = { TEXT("Success") };
+	OutputNames = {TEXT("Success")};
 }
 
 void UFlowNode_OnNotifyFromActor::ExecuteInput(const FName& PinName)

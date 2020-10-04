@@ -54,7 +54,7 @@ class FLOW_API UFlowAsset : public UObject
 private:
 	UPROPERTY()
 	UEdGraph* FlowGraph;
-	
+
 	static TSharedPtr<IFlowGraphInterface> FlowGraphInterface;
 #endif
 
@@ -76,20 +76,20 @@ private:
 
 	UPROPERTY(EditDefaultsOnly, Category = "Flow")
 	TArray<FName> CustomEvents;
-	
+
 	UPROPERTY(EditDefaultsOnly, Category = "Flow")
 	TArray<FName> CustomOutputs;
 
 public:
 #if WITH_EDITOR
 	UFlowNode* CreateNode(const UClass* NodeClass, UEdGraphNode* GraphNode);
-	
+
 	void RegisterNode(const FGuid& NewGuid, UFlowNode* NewNode);
 	void UnregisterNode(const FGuid& NodeGuid);
 #endif
 
 	void HarvestNodeConnections();
-	
+
 	UFlowNode* GetNode(const FGuid& Guid) const;
 	TMap<FGuid, UFlowNode*> GetNodes() const { return Nodes; }
 
@@ -99,7 +99,7 @@ public:
 	/**
 	 * Recursively finds nodes of type T
 	 */
-	template<typename T>
+	template <typename T>
 	void RecursiveFindNodes(UFlowNode* Node, const uint8 Depth, TArray<UFlowNode*>& OutNodes)
 	{
 		if (Node)
@@ -149,13 +149,13 @@ public:
 
 #if WITH_EDITOR
 	void GetInstanceDisplayNames(TArray<TSharedPtr<FName>>& OutDisplayNames) const;
-	
+
 	void SetInspectedInstance(const FName& NewInspectedInstanceName);
 	UFlowAsset* GetInspectedInstance() const { return InspectedInstance.IsValid() ? InspectedInstance.Get() : nullptr; }
 
 	DECLARE_EVENT(UFlowAsset, FRegenerateToolbarsEvent);
 	FRegenerateToolbarsEvent& OnRegenerateToolbars() { return RenegateToolbarsEvent; }
-
+	
 	FRegenerateToolbarsEvent RenegateToolbarsEvent;
 
 private:
@@ -196,7 +196,7 @@ public:
 	void StartFlow();
 	void StartSubFlow(UFlowNode_SubGraph* SubGraphNode);
 	TWeakObjectPtr<UFlowAsset> GetFlowInstance(UFlowNode_SubGraph* SubGraphNode) const;
-	
+
 private:
 	void TriggerCustomEvent(UFlowNode_SubGraph* Node, const FName& EventName);
 	void TriggerCustomOutput(const FName& EventName) const;
@@ -209,7 +209,7 @@ private:
 public:
 	UFlowSubsystem* GetFlowSubsystem() const;
 	FName GetDisplayName() const;
-	
+
 	UFlowNode_SubGraph* GetNodeOwningThisAssetInstance() const;
 	UFlowAsset* GetMasterInstance() const;
 	UFlowNode* GetNodeInstance(const FGuid Guid) const;

@@ -17,8 +17,7 @@ class FFlowAssetEditor;
 class SFlowInstanceList final : public SCompoundWidget
 {
 public:
-	SLATE_BEGIN_ARGS(SFlowInstanceList)
-	{}
+	SLATE_BEGIN_ARGS(SFlowInstanceList) {}
 	SLATE_END_ARGS()
 
 	void Construct(const FArguments& InArgs, TWeakPtr<FFlowAssetEditor> InFlowAssetEditor);
@@ -30,7 +29,7 @@ private:
 
 	TWeakPtr<FFlowAssetEditor> FlowAssetEditor;
 	TSharedPtr<SComboBox<TSharedPtr<FName>>> Dropdown;
-	
+
 	TArray<TSharedPtr<FName>> InstanceNames;
 	TSharedPtr<FName> SelectedInstance;
 
@@ -52,7 +51,7 @@ struct FFlowBreadcrumb
 		: AssetPathName(FString())
 		, InstanceName(NAME_None)
 	{}
-	
+
 	FFlowBreadcrumb(const UFlowAsset* FlowAsset)
 		: AssetPathName(FlowAsset->TemplateAsset->GetPathName())
 		, InstanceName(FlowAsset->GetDisplayName())
@@ -62,16 +61,15 @@ struct FFlowBreadcrumb
 class SFlowBreadcrumb final : public SCompoundWidget
 {
 public:
-	SLATE_BEGIN_ARGS(SFlowInstanceList)
-	{}
+	SLATE_BEGIN_ARGS(SFlowInstanceList)	{}
 	SLATE_END_ARGS()
 
 	void Construct(const FArguments& InArgs, TWeakPtr<FFlowAssetEditor> InFlowAssetEditor);
-	
+
 private:
 	void OnCrumbClicked(const FFlowBreadcrumb& Item);
 	FText GetBreadcrumbText(const TWeakObjectPtr<UFlowAsset> FlowInstance) const;
-	
+
 	TWeakPtr<FFlowAssetEditor> FlowAssetEditor;
 	TSharedPtr<SBreadcrumbTrail<FFlowBreadcrumb>> BreadcrumbTrail;
 };
@@ -83,13 +81,13 @@ class FFlowDebuggerToolbar final : public TSharedFromThis<FFlowDebuggerToolbar>
 {
 public:
 	FFlowDebuggerToolbar(TSharedPtr<FFlowAssetEditor> InNodeEditor);
-	
+
 	void AddToolbar(FToolBarBuilder& ToolbarBuilder);
 	TSharedPtr<SFlowInstanceList> GetFlowInstanceList() const { return FlowInstanceList; }
-	
+
 private:
 	TWeakPtr<FFlowAssetEditor> FlowAssetEditor;
-	
+
 	TSharedPtr<SFlowInstanceList> FlowInstanceList;
 	TSharedPtr<SFlowBreadcrumb> FlowBreadcrumb;
 };

@@ -12,7 +12,7 @@ UCLASS(Abstract, NotBlueprintable)
 class FLOW_API UFlowNode_NotifyBase : public UFlowNode
 {
 	GENERATED_UCLASS_BODY()
-	
+
 protected:
 	UPROPERTY(EditDefaultsOnly, Category = "Notify")
 	FGameplayTag IdentityTag;

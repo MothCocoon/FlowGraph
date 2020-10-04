@@ -3,6 +3,7 @@
 
 AFlowWorldSettings::AFlowWorldSettings(const FObjectInitializer& ObjectInitializer)
 	: Super(ObjectInitializer)
+	, FlowAsset(nullptr)
 {
 }
 

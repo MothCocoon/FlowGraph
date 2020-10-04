@@ -15,18 +15,25 @@ struct FLOWEDITOR_API FFlowGraphSchemaAction_NewNode : public FEdGraphSchemaActi
 	UPROPERTY()
 	class UClass* NodeClass;
 
-	static FName StaticGetTypeId() { static FName Type("FFlowGraphSchemaAction_NewNode"); return Type; }
+	static FName StaticGetTypeId()
+	{
+		static FName Type("FFlowGraphSchemaAction_NewNode");
+		return Type;
+	}
+
 	virtual FName GetTypeId() const override { return StaticGetTypeId(); }
 
-	FFlowGraphSchemaAction_NewNode() 
+	FFlowGraphSchemaAction_NewNode()
 		: FEdGraphSchemaAction()
 		, NodeClass(nullptr)
-	{}
+	{
+	}
 
 	FFlowGraphSchemaAction_NewNode(FText InNodeCategory, FText InMenuDesc, FText InToolTip, const int32 InGrouping)
 		: FEdGraphSchemaAction(MoveTemp(InNodeCategory), MoveTemp(InMenuDesc), MoveTemp(InToolTip), InGrouping)
 		, NodeClass(nullptr)
-	{}
+	{
+	}
 
 	// FEdGraphSchemaAction
 	virtual UEdGraphNode* PerformAction(class UEdGraph* ParentGraph, UEdGraphPin* FromPin, const FVector2D Location, bool bSelectNewNode = true) override;
@@ -41,13 +48,15 @@ struct FLOWEDITOR_API FFlowGraphSchemaAction_Paste : public FEdGraphSchemaAction
 {
 	GENERATED_USTRUCT_BODY()
 
-	FFlowGraphSchemaAction_Paste() 
+	FFlowGraphSchemaAction_Paste()
 		: FEdGraphSchemaAction()
-	{}
+	{
+	}
 
 	FFlowGraphSchemaAction_Paste(FText InNodeCategory, FText InMenuDesc, FText InToolTip, const int32 InGrouping)
 		: FEdGraphSchemaAction(MoveTemp(InNodeCategory), MoveTemp(InMenuDesc), MoveTemp(InToolTip), InGrouping)
-	{}
+	{
+	}
 
 	// FEdGraphSchemaAction
 	virtual UEdGraphNode* PerformAction(class UEdGraph* ParentGraph, UEdGraphPin* FromPin, const FVector2D Location, bool bSelectNewNode = true) override;
@@ -61,16 +70,23 @@ struct FLOWEDITOR_API FFlowGraphSchemaAction_NewComment : public FEdGraphSchemaA
 	GENERATED_USTRUCT_BODY()
 
 	// Simple type info
-	static FName StaticGetTypeId() { static FName Type("FFlowGraphSchemaAction_NewComment"); return Type; }
+	static FName StaticGetTypeId()
+	{
+		static FName Type("FFlowGraphSchemaAction_NewComment");
+		return Type;
+	}
+
 	virtual FName GetTypeId() const override { return StaticGetTypeId(); }
-	
-	FFlowGraphSchemaAction_NewComment() 
+
+	FFlowGraphSchemaAction_NewComment()
 		: FEdGraphSchemaAction()
-	{}
+	{
+	}
 
 	FFlowGraphSchemaAction_NewComment(FText InNodeCategory, FText InMenuDesc, FText InToolTip, const int32 InGrouping)
 		: FEdGraphSchemaAction(MoveTemp(InNodeCategory), MoveTemp(InMenuDesc), MoveTemp(InToolTip), InGrouping)
-	{}
+	{
+	}
 
 	// FEdGraphSchemaAction
 	virtual UEdGraphNode* PerformAction(class UEdGraph* ParentGraph, UEdGraphPin* FromPin, const FVector2D Location, bool bSelectNewNode = true) override;

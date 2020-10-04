@@ -9,8 +9,8 @@ UFlowNode_ComponentObserver::UFlowNode_ComponentObserver(const FObjectInitialize
 	Category = TEXT("World");
 #endif
 
-	InputNames = { TEXT("Start"), TEXT("Stop") };
-	OutputNames = { TEXT("Success"), TEXT("Stopped") };
+	InputNames = {TEXT("Start"), TEXT("Stop")};
+	OutputNames = {TEXT("Success"), TEXT("Stopped")};
 }
 
 void UFlowNode_ComponentObserver::ExecuteInput(const FName& PinName)

@@ -30,7 +30,7 @@ void FFlowEditorStyle::Initialize()
 
 	StyleSet->Set("FlowToolbar.RefreshAsset", new IMAGE_BRUSH("Automation/RefreshTests", Icon40));
 	StyleSet->Set("FlowToolbar.RefreshAsset.Small", new IMAGE_BRUSH("Automation/RefreshTests", Icon20));
-	
+
 	StyleSet->Set("FlowToolbar.GoToMasterInstance", new IMAGE_BRUSH("Icons/icon_DebugStepOut_40x", Icon40));
 	StyleSet->Set("FlowToolbar.GoToMasterInstance.Small", new IMAGE_BRUSH("Icons/icon_DebugStepOut_40x", Icon20));
 

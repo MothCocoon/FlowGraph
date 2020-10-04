@@ -6,7 +6,7 @@
 class SLevelEditorFlow : public SCompoundWidget
 {
 public:
-	SLATE_BEGIN_ARGS(SLevelEditorFlow){}
+	SLATE_BEGIN_ARGS(SLevelEditorFlow) {}
 	SLATE_END_ARGS()
 
 	void Construct(const FArguments& InArgs);
