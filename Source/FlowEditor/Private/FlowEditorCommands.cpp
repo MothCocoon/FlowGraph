@@ -29,7 +29,7 @@ FFlowGraphCommands::FFlowGraphCommands()
 void FFlowGraphCommands::RegisterCommands()
 {
 	UI_COMMAND(RefreshContextPins, "Refresh context pins", "Refresh pins generated from the context asset", EUserInterfaceActionType::Button, FInputChord());
-	
+
 	UI_COMMAND(AddInput, "Add Input", "Adds an input to the node", EUserInterfaceActionType::Button, FInputChord());
 	UI_COMMAND(AddOutput, "Add Output", "Adds an output to the node", EUserInterfaceActionType::Button, FInputChord());
 	UI_COMMAND(RemovePin, "Remove Pin", "Removes a pin from the node", EUserInterfaceActionType::Button, FInputChord());
@@ -52,7 +52,7 @@ void FFlowSpawnNodeCommands::RegisterCommands()
 {
 	const FString ConfigSection = TEXT("FlowSpawnNodes");
 	const FString SettingName = TEXT("Node");
-	TArray< FString > NodeSpawns;
+	TArray<FString> NodeSpawns;
 	GConfig->GetArray(*ConfigSection, *SettingName, NodeSpawns, GEditorPerProjectIni);
 
 	for (int32 x = 0; x < NodeSpawns.Num(); ++x)
@@ -83,7 +83,7 @@ void FFlowSpawnNodeCommands::RegisterCommands()
 		}
 
 		// Setup a UI Command for key-binding
-		TSharedPtr< FUICommandInfo > CommandInfo;
+		TSharedPtr<FUICommandInfo> CommandInfo;
 
 		FKey Key;
 		bool bShift = false;

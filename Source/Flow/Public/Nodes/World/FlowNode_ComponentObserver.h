@@ -15,7 +15,7 @@ UCLASS(Abstract, NotBlueprintable)
 class FLOW_API UFlowNode_ComponentObserver : public UFlowNode
 {
 	GENERATED_UCLASS_BODY()
-	
+
 protected:
 	UPROPERTY(EditDefaultsOnly, Category = "ObservedComponent")
 	FGameplayTag IdentityTag;
@@ -23,18 +23,18 @@ protected:
 	TMap<TWeakObjectPtr<AActor>, TWeakObjectPtr<UFlowComponent>> RegisteredActors;
 
 	virtual void ExecuteInput(const FName& PinName) override;
-	
+
 	virtual void StartObserving();
 	virtual void StopObserving();
-	
+
 	virtual void OnComponentRegistered(UFlowComponent* Component);
 	virtual void OnComponentUnregistered(UFlowComponent* Component);
 
 	virtual void ObserveActor(TWeakObjectPtr<AActor> Actor, TWeakObjectPtr<UFlowComponent> Component) {}
 	virtual void ForgetActor(TWeakObjectPtr<AActor> Actor, TWeakObjectPtr<UFlowComponent> Component) {}
-	
+
 	virtual void Cleanup() override;
-	
+
 #if WITH_EDITOR
 public:
 	virtual FString GetNodeDescription() const override;

@@ -5,7 +5,7 @@
 class FFlowEditorStyle
 {
 public:
-	static TSharedPtr<ISlateStyle> Get() { return StyleSet; };
+	static TSharedPtr<ISlateStyle> Get() { return StyleSet; }
 	static FName GetStyleSetName();
 
 	static void Initialize();

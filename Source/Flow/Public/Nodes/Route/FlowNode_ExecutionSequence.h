@@ -10,9 +10,9 @@ UCLASS(NotBlueprintable, meta = (DisplayName = "Sequence"))
 class FLOW_API UFlowNode_ExecutionSequence final : public UFlowNode
 {
 	GENERATED_UCLASS_BODY()
-	
+
 #if WITH_EDITOR
-	virtual bool CanUserAddOutput() const override { return true; };
+	virtual bool CanUserAddOutput() const override { return true; }
 #endif
 
 protected:

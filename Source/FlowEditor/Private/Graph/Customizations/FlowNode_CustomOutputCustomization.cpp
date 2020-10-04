@@ -15,23 +15,23 @@ void FFlowNode_CustomOutputCustomization::CustomizeDetails(IDetailLayoutBuilder&
 
 	IDetailCategoryBuilder& Category = DetailLayout.EditCategory("CustomOutput", LOCTEXT("CustomEventsCategory", "Custom Output"));
 	Category.AddCustomRow(LOCTEXT("CustomRowName", "Event Name"))
-		.NameContent()
-		[
-			SNew(STextBlock)
-			.Text(LOCTEXT("EventName", "Event Name"))
-		]
-		.ValueContent()
-		.HAlign(HAlign_Fill)
-		[
-			SNew(SComboBox<TSharedPtr<FName>>)
-			.OptionsSource(&EventNames)
-			.OnGenerateWidget(this, &FFlowNode_CustomOutputCustomization::GenerateEventWidget)
-			.OnSelectionChanged(this, &FFlowNode_CustomOutputCustomization::PinSelectionChanged)
-			[
-				SNew(STextBlock)
-					.Text(this, &FFlowNode_CustomOutputCustomization::GetSelectedEventText)
-			]
-		];
+			.NameContent()
+				[
+					SNew(STextBlock)
+						.Text(LOCTEXT("EventName", "Event Name"))
+				]
+			.ValueContent()
+				.HAlign(HAlign_Fill)
+				[
+					SNew(SComboBox<TSharedPtr<FName>>)
+						.OptionsSource(&EventNames)
+						.OnGenerateWidget(this, &FFlowNode_CustomOutputCustomization::GenerateEventWidget)
+						.OnSelectionChanged(this, &FFlowNode_CustomOutputCustomization::PinSelectionChanged)
+						[
+							SNew(STextBlock)
+								.Text(this, &FFlowNode_CustomOutputCustomization::GetSelectedEventText)
+						]
+				];
 }
 
 void FFlowNode_CustomOutputCustomization::GetEventNames()
@@ -43,12 +43,12 @@ void FFlowNode_CustomOutputCustomization::GetEventNames()
 	{
 		const UFlowAsset* FlowAsset = Cast<UFlowAsset>(ObjectsBeingEdited[0].Get()->GetOuter());
 		TArray<FName> SortedNames = FlowAsset->GetCustomOutputs();
-		
-		SortedNames.Sort([](const FName& A, const FName& B) 
+
+		SortedNames.Sort([](const FName& A, const FName& B)
 		{
 			return A.LexicalLess(B);
 		});
-		
+
 		for (const FName& EventName : SortedNames)
 		{
 			if (!EventName.IsNone())

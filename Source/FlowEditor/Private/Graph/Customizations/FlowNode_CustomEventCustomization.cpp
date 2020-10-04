@@ -15,23 +15,23 @@ void FFlowNode_CustomEventCustomization::CustomizeDetails(IDetailLayoutBuilder& 
 
 	IDetailCategoryBuilder& Category = DetailLayout.EditCategory("CustomEvent", LOCTEXT("CustomEventCategory", "Custom Event"));
 	Category.AddCustomRow(LOCTEXT("CustomRowName", "Event Name"))
-		.NameContent()
-		[
-			SNew(STextBlock)
-			.Text(LOCTEXT("EventName", "Event Name"))
-		]
-		.ValueContent()
-		.HAlign(HAlign_Fill)
-		[
-			SNew(SComboBox<TSharedPtr<FName>>)
-			.OptionsSource(&EventNames)
-			.OnGenerateWidget(this, &FFlowNode_CustomEventCustomization::GenerateEventWidget)
-			.OnSelectionChanged(this, &FFlowNode_CustomEventCustomization::PinSelectionChanged)
-			[
-				SNew(STextBlock)
-					.Text(this, &FFlowNode_CustomEventCustomization::GetSelectedEventText)
-			]
-		];
+			.NameContent()
+				[
+					SNew(STextBlock)
+						.Text(LOCTEXT("EventName", "Event Name"))
+				]
+			.ValueContent()
+				.HAlign(HAlign_Fill)
+				[
+					SNew(SComboBox<TSharedPtr<FName>>)
+						.OptionsSource(&EventNames)
+						.OnGenerateWidget(this, &FFlowNode_CustomEventCustomization::GenerateEventWidget)
+						.OnSelectionChanged(this, &FFlowNode_CustomEventCustomization::PinSelectionChanged)
+						[
+							SNew(STextBlock)
+								.Text(this, &FFlowNode_CustomEventCustomization::GetSelectedEventText)
+						]
+				];
 }
 
 void FFlowNode_CustomEventCustomization::GetEventNames()
@@ -52,11 +52,11 @@ void FFlowNode_CustomEventCustomization::GetEventNames()
 			}
 		}
 
-		SortedNames.Sort([](const FName& A, const FName& B) 
+		SortedNames.Sort([](const FName& A, const FName& B)
 		{
 			return A.LexicalLess(B);
 		});
-		
+
 		for (const FName& EventName : SortedNames)
 		{
 			if (!EventName.IsNone())

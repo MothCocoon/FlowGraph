@@ -67,7 +67,7 @@ UObject* UFlowNode_SubGraph::GetAssetToOpen()
 TArray<FName> UFlowNode_SubGraph::GetContextInputs()
 {
 	TArray<FName> EventNames;
-	
+
 	if (!Asset.IsNull())
 	{
 		LoadAsset<UFlowAsset>(Asset);
@@ -80,7 +80,7 @@ TArray<FName> UFlowNode_SubGraph::GetContextInputs()
 TArray<FName> UFlowNode_SubGraph::GetContextOutputs()
 {
 	TArray<FName> EventNames;
-	
+
 	if (!Asset.IsNull())
 	{
 		LoadAsset<UFlowAsset>(Asset);

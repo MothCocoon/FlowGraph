@@ -50,33 +50,27 @@ void SFlowPaletteItem::Construct(const FArguments& InArgs, FCreateWidgetForActio
 
 	// Create the actual widget
 	this->ChildSlot
-		[
-			SNew(SHorizontalBox)
-
-			// Icon slot
-			+ SHorizontalBox::Slot()
+	[
+		SNew(SHorizontalBox)
+		+ SHorizontalBox::Slot()
 			.AutoWidth()
 			[
 				IconWidget
 			]
-
-			// Name slot
-			+ SHorizontalBox::Slot()
+		+ SHorizontalBox::Slot()
 			.FillWidth(1.f)
 			.VAlign(VAlign_Center)
 			.Padding(3, 0)
 			[
 				NameSlotWidget
 			]
-
-			// Hotkey slot
-			+ SHorizontalBox::Slot()
+		+ SHorizontalBox::Slot()
 			.AutoWidth()
 			.HAlign(HAlign_Right)
 			[
 				HotkeyDisplayWidget
 			]
-		];
+	];
 }
 
 TSharedRef<SWidget> SFlowPaletteItem::CreateHotkeyDisplayWidget(const FSlateFontInfo& NameFont, const TSharedPtr<const FInputChord> HotkeyChord) const
@@ -102,53 +96,45 @@ void SFlowPalette::Construct(const FArguments& InArgs, TWeakPtr<FFlowAssetEditor
 	FlowAssetEditorPtr = InFlowAssetEditor;
 
 	UpdateCategoryNames();
-    UFlowGraphSchema::OnNodeListChanged.AddSP(this, &SFlowPalette::Refresh);
-	
+	UFlowGraphSchema::OnNodeListChanged.AddSP(this, &SFlowPalette::Refresh);
+
 	this->ChildSlot
-		[
-			SNew(SBorder)
+	[
+		SNew(SBorder)
 			.Padding(2.0f)
 			.BorderImage(FEditorStyle::GetBrush("ToolPanel.GroupBorder"))
 			[
 				SNew(SVerticalBox)
-
-				// Filter UI
-				+ SVerticalBox::Slot()
-				.AutoHeight()
-				[
-					SNew(SHorizontalBox)
-
-					// Combo button to select a class
-					+ SHorizontalBox::Slot()
-					.VAlign(VAlign_Center)
+				+ SVerticalBox::Slot() // Filter UI
+					.AutoHeight()
 					[
-						SAssignNew(CategoryComboBox, STextComboBox)
-						.OptionsSource(&CategoryNames)
-						.OnSelectionChanged(this, &SFlowPalette::CategorySelectionChanged)
-						.InitiallySelectedItem(CategoryNames[0])
+						SNew(SHorizontalBox)
+						+ SHorizontalBox::Slot()
+							.VAlign(VAlign_Center)
+							[
+								SAssignNew(CategoryComboBox, STextComboBox)
+									.OptionsSource(&CategoryNames)
+									.OnSelectionChanged(this, &SFlowPalette::CategorySelectionChanged)
+									.InitiallySelectedItem(CategoryNames[0])
+							]
 					]
-				]
-
-				// Content list
-				+ SVerticalBox::Slot()
+				+ SVerticalBox::Slot() // Content list
 					[
 						SNew(SOverlay)
-
 						+ SOverlay::Slot()
-						.HAlign(HAlign_Fill)
-						.VAlign(VAlign_Fill)
-						[
-							// Old Expression and Function lists were auto expanded so do the same here for now
-							SAssignNew(GraphActionMenu, SGraphActionMenu)
-							.OnActionDragged(this, &SFlowPalette::OnActionDragged)
-							.OnActionSelected(this, &SFlowPalette::OnActionSelected)
-							.OnCreateWidgetForAction(this, &SFlowPalette::OnCreateWidgetForAction)
-							.OnCollectAllActions(this, &SFlowPalette::CollectAllActions)
-							.AutoExpandActionMenu(true)
-						]
-				]
+							.HAlign(HAlign_Fill)
+							.VAlign(VAlign_Fill)
+							[
+								SAssignNew(GraphActionMenu, SGraphActionMenu)
+									.OnActionDragged(this, &SFlowPalette::OnActionDragged)
+									.OnActionSelected(this, &SFlowPalette::OnActionSelected)
+									.OnCreateWidgetForAction(this, &SFlowPalette::OnCreateWidgetForAction)
+									.OnCollectAllActions(this, &SFlowPalette::CollectAllActions)
+									.AutoExpandActionMenu(true)
+							]
+					]
 			]
-		];
+	];
 }
 
 SFlowPalette::~SFlowPalette()
@@ -159,7 +145,7 @@ SFlowPalette::~SFlowPalette()
 void SFlowPalette::Refresh()
 {
 	const FString LastSelectedCategory = CategoryComboBox->GetSelectedItem().IsValid() ? *CategoryComboBox->GetSelectedItem().Get() : FString();
-	
+
 	UpdateCategoryNames();
 	RefreshActionsList(true);
 
@@ -182,13 +168,13 @@ void SFlowPalette::Refresh()
 
 void SFlowPalette::UpdateCategoryNames()
 {
-	CategoryNames = { MakeShareable(new FString(TEXT("All"))) };
+	CategoryNames = {MakeShareable(new FString(TEXT("All")))};
 	CategoryNames.Append(UFlowGraphSchema::GetFlowNodeCategories());
 }
 
 TSharedRef<SWidget> SFlowPalette::OnCreateWidgetForAction(FCreateWidgetForActionData* const InCreateData)
 {
-	return	SNew(SFlowPaletteItem, InCreateData);
+	return SNew(SFlowPaletteItem, InCreateData);
 }
 
 void SFlowPalette::CollectAllActions(FGraphActionListBuilderBase& OutAllActions)
@@ -215,7 +201,7 @@ void SFlowPalette::CategorySelectionChanged(TSharedPtr<FString> NewSelection, ES
 
 void SFlowPalette::OnActionSelected(const TArray<TSharedPtr<FEdGraphSchemaAction>>& InActions, ESelectInfo::Type InSelectionType)
 {
-	if (InSelectionType == ESelectInfo::OnMouseClick  || InSelectionType == ESelectInfo::OnKeyPress || InSelectionType == ESelectInfo::OnNavigation || InActions.Num() == 0)
+	if (InSelectionType == ESelectInfo::OnMouseClick || InSelectionType == ESelectInfo::OnKeyPress || InSelectionType == ESelectInfo::OnNavigation || InActions.Num() == 0)
 	{
 		TSharedPtr<FFlowAssetEditor> FlowAssetEditor = FlowAssetEditorPtr.Pin();
 		if (FlowAssetEditor)
