@@ -31,6 +31,7 @@ protected:
 
 	// SGraphNode
 	virtual void UpdateGraphNode() override;
+	virtual TSharedRef<SWidget> CreateNodeContentArea() override;
 	virtual const FSlateBrush* GetNodeBodyBrush() const override;
 
 	virtual void CreateStandardPinWidget(UEdGraphPin* Pin) override;
