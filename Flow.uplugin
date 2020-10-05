@@ -1,6 +1,6 @@
 {
 	"FileVersion" : 3,
-	"Version" : 1,
+	"Version" : 1.0,
 	"FriendlyName" : "Flow",
 	"Description" : "Node-based tool for scripting in-game events.",
 	"Category" : "Gameplay",
