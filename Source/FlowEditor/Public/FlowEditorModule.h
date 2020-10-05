@@ -37,7 +37,7 @@ public:
 	static EAssetTypeCategories::Type FlowAssetCategory;
 
 private:
-	TArray< TSharedRef<IAssetTypeActions>> RegisteredAssetActions;
+	TArray<TSharedRef<IAssetTypeActions>> RegisteredAssetActions;
 	TSet<FName> CustomClassLayouts;
 	TSharedPtr<FGraphPanelPinConnectionFactory> FlowGraphConnectionFactory;
 	FExtensibilityManagers FlowAssetExtensibility;
@@ -56,9 +56,11 @@ public:
 	TSharedPtr<FExtensibilityManager> GetFlowAssetMenuExtensibilityManager() const;
 	TSharedPtr<FExtensibilityManager> GetFlowAssetToolBarExtensibilityManager() const;
 
+	FDelegateHandle FlowTrackCreateEditorHandle;
+
 private:
 	void CreateFlowToolbar(FToolBarBuilder& ToolbarBuilder) const;
 
 public:
-	TSharedRef<FFlowAssetEditor> CreateFlowAssetEditor(const EToolkitMode::Type Mode, const TSharedPtr< IToolkitHost >& InitToolkitHost, UFlowAsset* FlowAsset);
+	TSharedRef<FFlowAssetEditor> CreateFlowAssetEditor(const EToolkitMode::Type Mode, const TSharedPtr<IToolkitHost>& InitToolkitHost, UFlowAsset* FlowAsset);
 };
