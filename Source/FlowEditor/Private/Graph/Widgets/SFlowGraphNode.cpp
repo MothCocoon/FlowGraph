@@ -311,7 +311,6 @@ void SFlowGraphNode::UpdateGraphNode()
 			[
 				TitleAreaWidget
 			]
-
 		+ SVerticalBox::Slot()
 			.AutoHeight()
 			.HAlign(HAlign_Fill)
@@ -364,13 +363,7 @@ void SFlowGraphNode::UpdateGraphNode()
 				]
 		];
 
-	bool SupportsBubble = true;
-	if (GraphNode)
-	{
-		SupportsBubble = GraphNode->SupportsCommentBubble();
-	}
-
-	if (SupportsBubble)
+	if (GraphNode && GraphNode->SupportsCommentBubble())
 	{
 		// Create comment bubble
 		TSharedPtr<SCommentBubble> CommentBubble;
@@ -404,6 +397,29 @@ void SFlowGraphNode::UpdateGraphNode()
 	CreateOutputSideAddButton(RightNodeBox);
 	CreateBelowPinControls(InnerVerticalBox);
 	CreateAdvancedViewArrow(InnerVerticalBox);
+}
+
+TSharedRef<SWidget> SFlowGraphNode::CreateNodeContentArea()
+{
+	return SNew(SBorder)
+		.BorderImage(FEditorStyle::GetBrush("NoBorder"))
+		.HAlign(HAlign_Fill)
+		.VAlign(VAlign_Fill)
+		[
+			SNew(SHorizontalBox)
+			+SHorizontalBox::Slot()
+			.HAlign(HAlign_Left)
+			.FillWidth(1.0f)
+			[
+				SAssignNew(LeftNodeBox, SVerticalBox)
+			]
+			+SHorizontalBox::Slot()
+			.AutoWidth()
+			.HAlign(HAlign_Right)
+			[
+				SAssignNew(RightNodeBox, SVerticalBox)
+			]
+		];
 }
 
 const FSlateBrush* SFlowGraphNode::GetNodeBodyBrush() const

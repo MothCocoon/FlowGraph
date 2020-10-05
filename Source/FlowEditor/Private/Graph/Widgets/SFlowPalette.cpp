@@ -9,7 +9,6 @@
 #include "EditorStyleSet.h"
 #include "Styling/CoreStyle.h"
 #include "Widgets/Input/STextComboBox.h"
-#include "Widgets/SOverlay.h"
 
 #define LOCTEXT_NAMESPACE "FlowGraphPalette"
 
@@ -119,19 +118,15 @@ void SFlowPalette::Construct(const FArguments& InArgs, TWeakPtr<FFlowAssetEditor
 							]
 					]
 				+ SVerticalBox::Slot() // Content list
+					.HAlign(HAlign_Fill)
+					.VAlign(VAlign_Fill)
 					[
-						SNew(SOverlay)
-						+ SOverlay::Slot()
-							.HAlign(HAlign_Fill)
-							.VAlign(VAlign_Fill)
-							[
-								SAssignNew(GraphActionMenu, SGraphActionMenu)
-									.OnActionDragged(this, &SFlowPalette::OnActionDragged)
-									.OnActionSelected(this, &SFlowPalette::OnActionSelected)
-									.OnCreateWidgetForAction(this, &SFlowPalette::OnCreateWidgetForAction)
-									.OnCollectAllActions(this, &SFlowPalette::CollectAllActions)
-									.AutoExpandActionMenu(true)
-							]
+						SAssignNew(GraphActionMenu, SGraphActionMenu)
+							.OnActionDragged(this, &SFlowPalette::OnActionDragged)
+							.OnActionSelected(this, &SFlowPalette::OnActionSelected)
+							.OnCreateWidgetForAction(this, &SFlowPalette::OnCreateWidgetForAction)
+							.OnCollectAllActions(this, &SFlowPalette::CollectAllActions)
+							.AutoExpandActionMenu(true)
 					]
 			]
 	];
