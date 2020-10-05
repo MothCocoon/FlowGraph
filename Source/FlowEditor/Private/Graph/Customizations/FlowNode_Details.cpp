@@ -1,7 +1,7 @@
-#include "FlowNode_Customization.h"
+#include "FlowNode_Details.h"
 #include "PropertyEditing.h"
 
-void FFlowNode_Customization::CustomizeDetails(IDetailLayoutBuilder& DetailLayout)
+void FFlowNode_Details::CustomizeDetails(IDetailLayoutBuilder& DetailLayout)
 {
 	// hide class properties while editing node instance placed in the graph
 	if (DetailLayout.HasClassDefaultObject() == false)

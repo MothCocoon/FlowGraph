@@ -1,4 +1,4 @@
-#include "FlowNode_CustomEventCustomization.h"
+#include "FlowNode_CustomEventDetails.h"
 #include "FlowAsset.h"
 #include "Nodes/Route/FlowNode_CustomEvent.h"
 
@@ -6,9 +6,9 @@
 #include "PropertyEditing.h"
 #include "UnrealEd.h"
 
-#define LOCTEXT_NAMESPACE "FlowNode_CustomEventCustomization"
+#define LOCTEXT_NAMESPACE "FlowNode_CustomEventDetails"
 
-void FFlowNode_CustomEventCustomization::CustomizeDetails(IDetailLayoutBuilder& DetailLayout)
+void FFlowNode_CustomEventDetails::CustomizeDetails(IDetailLayoutBuilder& DetailLayout)
 {
 	DetailLayout.GetObjectsBeingCustomized(ObjectsBeingEdited);
 	GetEventNames();
@@ -25,16 +25,16 @@ void FFlowNode_CustomEventCustomization::CustomizeDetails(IDetailLayoutBuilder& 
 				[
 					SNew(SComboBox<TSharedPtr<FName>>)
 						.OptionsSource(&EventNames)
-						.OnGenerateWidget(this, &FFlowNode_CustomEventCustomization::GenerateEventWidget)
-						.OnSelectionChanged(this, &FFlowNode_CustomEventCustomization::PinSelectionChanged)
+						.OnGenerateWidget(this, &FFlowNode_CustomEventDetails::GenerateEventWidget)
+						.OnSelectionChanged(this, &FFlowNode_CustomEventDetails::PinSelectionChanged)
 						[
 							SNew(STextBlock)
-								.Text(this, &FFlowNode_CustomEventCustomization::GetSelectedEventText)
+								.Text(this, &FFlowNode_CustomEventDetails::GetSelectedEventText)
 						]
 				];
 }
 
-void FFlowNode_CustomEventCustomization::GetEventNames()
+void FFlowNode_CustomEventDetails::GetEventNames()
 {
 	EventNames.Empty();
 	EventNames.Emplace(MakeShareable(new FName(NAME_None)));
@@ -67,12 +67,12 @@ void FFlowNode_CustomEventCustomization::GetEventNames()
 	}
 }
 
-TSharedRef<SWidget> FFlowNode_CustomEventCustomization::GenerateEventWidget(const TSharedPtr<FName> Item) const
+TSharedRef<SWidget> FFlowNode_CustomEventDetails::GenerateEventWidget(const TSharedPtr<FName> Item) const
 {
 	return SNew(STextBlock).Text(FText::FromName(*Item.Get()));
 }
 
-FText FFlowNode_CustomEventCustomization::GetSelectedEventText() const
+FText FFlowNode_CustomEventDetails::GetSelectedEventText() const
 {
 	FText PropertyValue;
 
@@ -85,7 +85,7 @@ FText FFlowNode_CustomEventCustomization::GetSelectedEventText() const
 	return PropertyValue;
 }
 
-void FFlowNode_CustomEventCustomization::PinSelectionChanged(const TSharedPtr<FName> Item, ESelectInfo::Type SelectInfo) const
+void FFlowNode_CustomEventDetails::PinSelectionChanged(const TSharedPtr<FName> Item, ESelectInfo::Type SelectInfo) const
 {
 	ensure(ObjectsBeingEdited[0].IsValid());
 	if (UFlowNode_CustomEvent* Node = Cast<UFlowNode_CustomEvent>(ObjectsBeingEdited[0].Get()))

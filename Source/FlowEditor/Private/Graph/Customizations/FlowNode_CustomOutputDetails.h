@@ -2,12 +2,12 @@
 
 #include "IDetailCustomization.h"
 
-class FFlowNode_CustomOutputCustomization final : public IDetailCustomization
+class FFlowNode_CustomOutputDetails final : public IDetailCustomization
 {
 public:
 	static TSharedRef<IDetailCustomization> MakeInstance()
 	{
-		return MakeShareable(new FFlowNode_CustomOutputCustomization());
+		return MakeShareable(new FFlowNode_CustomOutputDetails());
 	}
 
 	// IDetailCustomization
