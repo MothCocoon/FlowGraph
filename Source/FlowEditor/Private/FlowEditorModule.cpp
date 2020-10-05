@@ -3,16 +3,19 @@
 
 #include "Asset/AssetTypeActions_FlowAsset.h"
 #include "Asset/FlowAssetEditor.h"
-#include "Graph/Customizations/FlowNode_Customization.h"
-#include "Graph/Customizations/FlowNode_CustomEventCustomization.h"
-#include "Graph/Customizations/FlowNode_CustomOutputCustomization.h"
+#include "Graph/Customizations/FlowNode_Details.h"
+#include "Graph/Customizations/FlowNode_CustomEventDetails.h"
+#include "Graph/Customizations/FlowNode_CustomOutputDetails.h"
+#include "Graph/Customizations/FlowNode_PlayLevelSequenceDetails.h"
 #include "Graph/FlowGraphConnectionDrawingPolicy.h"
 #include "LevelEditor/SLevelEditorFlow.h"
+#include "MovieScene/FlowTrackEditor.h"
 #include "Nodes/AssetTypeActions_FlowNodeBlueprint.h"
 
 #include "FlowAsset.h"
 #include "Nodes/Route/FlowNode_CustomEvent.h"
 #include "Nodes/Route/FlowNode_CustomOutput.h"
+#include "Nodes/World/FlowNode_PlayLevelSequence.h"
 
 #include "AssetToolsModule.h"
 #include "EdGraphUtilities.h"
@@ -45,10 +48,16 @@ void FFlowEditorModule::StartupModule()
 		LevelEditorModule->GetToolBarExtensibilityManager()->AddExtender(MenuExtender);
 	}
 
+	// register Flow sequence track
+	// todo: see https://github.com/MothCocoon/Flow/issues/9
+	//ISequencerModule& SequencerModule = FModuleManager::Get().LoadModuleChecked<ISequencerModule>("Sequencer");
+	//FlowTrackCreateEditorHandle = SequencerModule.RegisterTrackEditor(FOnCreateTrackEditor::CreateStatic(&FFlowTrackEditor::CreateTrackEditor));
+
 	// register detail customizations
-	RegisterCustomClassLayout(UFlowNode::StaticClass(), FOnGetDetailCustomizationInstance::CreateStatic(&FFlowNode_Customization::MakeInstance));
-	RegisterCustomClassLayout(UFlowNode_CustomEvent::StaticClass(), FOnGetDetailCustomizationInstance::CreateStatic(&FFlowNode_CustomEventCustomization::MakeInstance));
-	RegisterCustomClassLayout(UFlowNode_CustomOutput::StaticClass(), FOnGetDetailCustomizationInstance::CreateStatic(&FFlowNode_CustomOutputCustomization::MakeInstance));
+	RegisterCustomClassLayout(UFlowNode::StaticClass(), FOnGetDetailCustomizationInstance::CreateStatic(&FFlowNode_Details::MakeInstance));
+	RegisterCustomClassLayout(UFlowNode_CustomEvent::StaticClass(), FOnGetDetailCustomizationInstance::CreateStatic(&FFlowNode_CustomEventDetails::MakeInstance));
+	RegisterCustomClassLayout(UFlowNode_CustomOutput::StaticClass(), FOnGetDetailCustomizationInstance::CreateStatic(&FFlowNode_CustomOutputDetails::MakeInstance));
+	RegisterCustomClassLayout(UFlowNode_PlayLevelSequence::StaticClass(), FOnGetDetailCustomizationInstance::CreateStatic(&FFlowNode_PlayLevelSequenceDetails::MakeInstance));
 
 	FPropertyEditorModule& PropertyModule = FModuleManager::GetModuleChecked<FPropertyEditorModule>("PropertyEditor");
 	PropertyModule.NotifyCustomizationModuleChanged();
@@ -68,6 +77,11 @@ void FFlowEditorModule::ShutdownModule()
 
 	// reset menu extensibility
 	FlowAssetExtensibility.Reset();
+
+	// unregister track editors
+	// todo: see https://github.com/MothCocoon/Flow/issues/9
+	//ISequencerModule& SequencerModule = FModuleManager::Get().LoadModuleChecked<ISequencerModule>("Sequencer");
+	//SequencerModule.UnRegisterTrackEditor(FlowTrackCreateEditorHandle);
 
 	// unregister details customizations
 	if (FModuleManager::Get().IsModuleLoaded("PropertyEditor"))
