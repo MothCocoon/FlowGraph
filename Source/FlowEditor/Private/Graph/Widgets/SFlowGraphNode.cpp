@@ -250,26 +250,6 @@ void SFlowGraphNode::UpdateGraphNode()
 									]
 							]
 					]
-				+ SHorizontalBox::Slot()
-					.HAlign(HAlign_Right)
-					.VAlign(VAlign_Center)
-					.Padding(0, 0, 5, 0)
-					.AutoWidth()
-					[
-						CreateTitleRightWidget()
-					]
-			]
-		+ SOverlay::Slot()
-			.VAlign(VAlign_Top)
-			[
-				SNew(SBorder)
-					.Visibility(EVisibility::HitTestInvisible)
-					.BorderImage(FEditorStyle::GetBrush("Graph.Node.TitleHighlight"))
-					.BorderBackgroundColor(this, &SGraphNode::GetNodeTitleIconColor)
-					[
-						SNew(SSpacer)
-							.Size(FVector2D(20, 20))
-					]
 			];
 
 	SetDefaultTitleAreaWidget(DefaultTitleAreaWidget);

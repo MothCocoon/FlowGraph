@@ -40,15 +40,15 @@ void FFlowEditorStyle::Initialize()
 	StyleSet->Set("FlowGraph.PinBreakpointHit", new IMAGE_BRUSH("Old/Kismet2/IP_Breakpoint", Icon30));
 
 	// Flow assets
-	StyleSet->SetContentRoot(IPluginManager::Get().FindPlugin(TEXT("Flow"))->GetContentDir());
+	StyleSet->SetContentRoot(IPluginManager::Get().FindPlugin(TEXT("Flow"))->GetBaseDir() / TEXT("Resources"));
 
 	StyleSet->Set("ClassIcon.FlowAsset", new IMAGE_BRUSH(TEXT("Icons/FlowAsset_16x"), Icon16));
 	StyleSet->Set("ClassThumbnail.FlowAsset", new IMAGE_BRUSH(TEXT("Icons/FlowAsset_64x"), Icon64));
 
-	StyleSet->Set("Flow.Node.Title", new BOX_BRUSH("Icons/FlowNode_Title", FMargin(8.0f / 64.0f, 3.0f / 32.0f, 0, 0)));
-	StyleSet->Set("Flow.Node.Body", new BOX_BRUSH("Icons/FlowNode_Body", FMargin(8.0f / 64.0f, 3.0f / 32.0f, 0, 0)));
-	StyleSet->Set("Flow.Node.ActiveShadow", new BOX_BRUSH("Icons/FlowNode_Shadow_Active", FMargin(18.0f / 64.0f)));
-	StyleSet->Set("Flow.Node.WasActiveShadow", new BOX_BRUSH("Icons/FlowNode_Shadow_WasActive", FMargin(18.0f / 64.0f)));
+	StyleSet->Set("Flow.Node.Title", new BOX_BRUSH("Icons/FlowNode_Title", FMargin(8.0f/64.0f, 0, 0, 0)));
+	StyleSet->Set("Flow.Node.Body", new BOX_BRUSH("Icons/FlowNode_Body", FMargin(16.f/64.f)));
+	StyleSet->Set("Flow.Node.ActiveShadow", new BOX_BRUSH("Icons/FlowNode_Shadow_Active", FMargin(18.0f/64.0f)));
+	StyleSet->Set("Flow.Node.WasActiveShadow", new BOX_BRUSH("Icons/FlowNode_Shadow_WasActive", FMargin(18.0f/64.0f)));
 
 	FSlateStyleRegistry::RegisterSlateStyle(*StyleSet.Get());
 };
