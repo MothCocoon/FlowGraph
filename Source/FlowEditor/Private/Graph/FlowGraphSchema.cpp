@@ -299,7 +299,7 @@ void UFlowGraphSchema::AddAsset(const FAssetData& AssetData, const bool bBatch)
 
 				if (NodeClass == nullptr)
 				{
-					// this should be fine - assuming that Flow Node blueprints should include references to heavy assets!
+					// this should be fine - assuming that Flow Node blueprints shouldn't include hard references to heavy assets!
 					NodeClass = LoadObject<UClass>(nullptr, *GeneratedClassPath);
 				}
 
@@ -307,7 +307,7 @@ void UFlowGraphSchema::AddAsset(const FAssetData& AssetData, const bool bBatch)
 				{
 					// filter out intermediate blueprint classes
 					const FString ClassName = NodeClass->GetName();
-					if (ClassName.StartsWith("SKEL_") || ClassName.StartsWith("REINST_"))
+					if (ClassName.StartsWith(TEXT("SKEL_")) || ClassName.StartsWith(TEXT("REINST_")))
 					{
 						return;
 					}
