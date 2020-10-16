@@ -20,6 +20,7 @@
 #include "ScopedTransaction.h"
 #include "UnrealEd.h"
 
+#undef LOCTEXT_NAMESPACE
 #define LOCTEXT_NAMESPACE "FlowGraphNode"
 
 //////////////////////////////////////////////////////////////////////////
@@ -601,7 +602,7 @@ void UFlowGraphNode::CreateOutputPin(const FName PinName, const int32 Index /*= 
 
 void UFlowGraphNode::RemoveOrphanedPin(UEdGraphPin* Pin)
 {
-	const FScopedTransaction Transaction(LOCTEXT("FlowEditorRemoveOrphanedPin", "Remove Orphaned Pin"));
+	const FScopedTransaction Transaction(LOCTEXT("RemoveOrphanedPin", "Remove Orphaned Pin"));
 	Modify();
 
 	PinBreakpoints.Remove(Pin);
@@ -650,7 +651,7 @@ void UFlowGraphNode::AddUserOutput()
 
 void UFlowGraphNode::AddInstancePin(const EEdGraphPinDirection Direction, const FName& PinName)
 {
-	const FScopedTransaction Transaction(LOCTEXT("FlowEditorAddPin", "Add Instance Pin"));
+	const FScopedTransaction Transaction(LOCTEXT("AddInstancePin", "Add Instance Pin"));
 	Modify();
 
 	if (Direction == EGPD_Input)
@@ -669,7 +670,7 @@ void UFlowGraphNode::AddInstancePin(const EEdGraphPinDirection Direction, const 
 
 void UFlowGraphNode::RemoveInstancePin(UEdGraphPin* Pin)
 {
-	const FScopedTransaction Transaction(LOCTEXT("FlowEditorRemoveInstancePin", "Remove Instance Pin"));
+	const FScopedTransaction Transaction(LOCTEXT("RemoveInstancePin", "Remove Instance Pin"));
 	Modify();
 
 	PinBreakpoints.Remove(Pin);
