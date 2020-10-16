@@ -192,17 +192,24 @@ void UFlowNode::TriggerOutput(const FName& PinName, const bool bFinish /*= false
 	ensureAlways(OutputNames.Num() > 0);
 
 #if !UE_BUILD_SHIPPING
-	// record for debugging, even if nothing is connected to this pin
-	TArray<FPinRecord>& Records = OutputRecords.FindOrAdd(PinName);
-	Records.Add(FPinRecord(FApp::GetCurrentTime()));
-#endif
+	if (OutputNames.Contains(PinName))
+	{
+		// record for debugging, even if nothing is connected to this pin
+		TArray<FPinRecord>& Records = OutputRecords.FindOrAdd(PinName);
+		Records.Add(FPinRecord(FApp::GetCurrentTime()));
 
 #if WITH_EDITOR
-	if (GetWorld()->WorldType != EWorldType::Game)
-	{
-		UFlowAsset::GetFlowGraphInterface()->OnOutputTriggered(GraphNode, OutputNames.IndexOfByKey(PinName));
+		if (GetWorld()->WorldType != EWorldType::Game)
+		{
+			UFlowAsset::GetFlowGraphInterface()->OnOutputTriggered(GraphNode, OutputNames.IndexOfByKey(PinName));
+		}
+#endif // WITH_EDITOR
 	}
-#endif
+	else
+	{
+		LogError(FString::Printf(TEXT("Output Pin name %s invalid"), *PinName.ToString()));
+	}
+#endif // UE_BUILD_SHIPPING
 
 	// clean up node, if needed
 	if (bFinish)
@@ -211,7 +218,7 @@ void UFlowNode::TriggerOutput(const FName& PinName, const bool bFinish /*= false
 	}
 
 	// call the next node
-	if (Connections.Contains(PinName))
+	if (OutputNames.Contains(PinName) && Connections.Contains(PinName))
 	{
 		const FConnectedPin FlowPin = GetConnection(PinName);
 		GetFlowAsset()->TriggerInput(FlowPin.NodeGuid, FlowPin.PinName);
