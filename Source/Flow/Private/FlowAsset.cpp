@@ -10,6 +10,11 @@
 
 UFlowAsset::UFlowAsset(const FObjectInitializer& ObjectInitializer)
 	: Super(ObjectInitializer)
+#if WITH_EDITOR
+	, FlowGraph(nullptr)
+#endif
+	, TemplateAsset(nullptr)
+	, StartNode(nullptr)
 {
 }
 
@@ -106,29 +111,6 @@ UFlowNode* UFlowAsset::GetNode(const FGuid& Guid) const
 	}
 
 	return nullptr;
-}
-
-void UFlowAsset::RecursiveFindNodesByClass(UFlowNode* Node, const TSubclassOf<UFlowNode> Class, uint8 Depth, TArray<UFlowNode*>& OutNodes) const
-{
-	if (Node)
-	{
-		// Record the node if it is the desired type
-		if (Node->GetClass() == Class)
-		{
-			OutNodes.AddUnique(Node);
-		}
-
-		if (OutNodes.Num() == Depth)
-		{
-			return;
-		}
-
-		// Recurse
-		for (UFlowNode* ConnectedNode : Node->GetConnectedNodes())
-		{
-			RecursiveFindNodesByClass(ConnectedNode, Class, Depth, OutNodes);
-		}
-	}
 }
 
 void UFlowAsset::AddInstance(UFlowAsset* NewInstance)
@@ -247,7 +229,7 @@ void UFlowAsset::PreloadNodes()
 			if (Node.Value > 0)
 			{
 				TArray<UFlowNode*> FoundNodes;
-				RecursiveFindNodesByClass(EntryNode, Node.Key, Node.Value, FoundNodes);
+				UFlowNode::RecursiveFindNodesByClass(EntryNode, Node.Key, Node.Value, FoundNodes);
 
 				for (UFlowNode* FoundNode : FoundNodes)
 				{
