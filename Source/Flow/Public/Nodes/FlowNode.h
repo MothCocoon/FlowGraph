@@ -135,8 +135,8 @@ public:
 #if WITH_EDITOR
 	virtual bool SupportsContextPins() const { return false; }
 
-	/** Enabling it might cause loading gigabytes of data as nodes would load all related data (i.e. Level Sequences)
-	/** This refresh needs to be enabled by UFlowEditorSettings::bRefreshContextPinsOnLoad */
+	// Enabling it might cause loading gigabytes of data as nodes would load all related data (i.e. Level Sequences)
+	// This refresh needs to be enabled by UFlowEditorSettings::bRefreshContextPinsOnLoad
 	virtual bool CanRefreshContextPinsOnLoad() const { return false; }
 
 	virtual TArray<FName> GetContextInputs() { return TArray<FName>(); }
@@ -166,6 +166,8 @@ public:
 	void SetConnections(TMap<FName, FConnectedPin>& InConnections) { Connections = InConnections; }
 	FConnectedPin GetConnection(const FName OutputName) const { return Connections.FindRef(OutputName); }
 	TSet<UFlowNode*> GetConnectedNodes() const;
+
+	static void RecursiveFindNodesByClass(UFlowNode* Node, const TSubclassOf<UFlowNode> Class, uint8 Depth, TArray<UFlowNode*>& OutNodes);
 
 //////////////////////////////////////////////////////////////////////////
 // Runtime

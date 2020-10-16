@@ -115,6 +115,29 @@ TSet<UFlowNode*> UFlowNode::GetConnectedNodes() const
 	return Result;
 }
 
+void UFlowNode::RecursiveFindNodesByClass(UFlowNode* Node, const TSubclassOf<UFlowNode> Class, uint8 Depth, TArray<UFlowNode*>& OutNodes)
+{
+	if (Node)
+	{
+		// Record the node if it is the desired type
+		if (Node->GetClass() == Class)
+		{
+			OutNodes.AddUnique(Node);
+		}
+
+		if (OutNodes.Num() == Depth)
+		{
+			return;
+		}
+
+		// Recurse
+		for (UFlowNode* ConnectedNode : Node->GetConnectedNodes())
+		{
+			RecursiveFindNodesByClass(ConnectedNode, Class, Depth, OutNodes);
+		}
+	}
+}
+
 UFlowSubsystem* UFlowNode::GetFlowSubsystem() const
 {
 	return GetFlowAsset() ? GetFlowAsset()->GetFlowSubsystem() : nullptr;
