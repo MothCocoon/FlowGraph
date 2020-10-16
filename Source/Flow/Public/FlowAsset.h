@@ -96,38 +96,6 @@ public:
 	TArray<FName> GetCustomEvents() const { return CustomEvents; }
 	TArray<FName> GetCustomOutputs() const { return CustomOutputs; }
 
-	/**
-	 * Recursively finds nodes of type T
-	 */
-	template <typename T>
-	void RecursiveFindNodes(UFlowNode* Node, const uint8 Depth, TArray<UFlowNode*>& OutNodes)
-	{
-		if (Node)
-		{
-			// Record the node if it is the desired type
-			if (T* FoundNode = Cast<T>(Node))
-			{
-				OutNodes.AddUnique(FoundNode);
-			}
-
-			if (OutNodes.Num() == Depth)
-			{
-				return;
-			}
-
-			// Recurse
-			for (const FGuid& Guid : Node->GetConnectedNodes())
-			{
-				if (UFlowNode* ConnectedNode = GetNode(Guid))
-				{
-					RecursiveFindNodes<T>(ConnectedNode, Depth, OutNodes);
-				}
-			}
-		}
-	}
-
-	void RecursiveFindNodesByClass(UFlowNode* Node, const TSubclassOf<UFlowNode> Class, uint8 Depth, TArray<UFlowNode*>& OutNodes) const;
-
 //////////////////////////////////////////////////////////////////////////
 // Instanced asset
 
