@@ -2,27 +2,17 @@
 #include "Graph/FlowGraphSchema.h"
 #include "Graph/Nodes/FlowGraphNode.h"
 
-#include "FlowAsset.h"
-#include "Nodes/FlowNode.h"
-
 #include "Kismet2/BlueprintEditorUtils.h"
 
-class FFlowGraphInterface : public IFlowGraphInterface
+void FFlowGraphInterface::OnInputTriggered(UEdGraphNode* GraphNode, const int32 Index) const
 {
-public:
-	FFlowGraphInterface() {}
-	~FFlowGraphInterface() {}
+	CastChecked<UFlowGraphNode>(GraphNode)->OnInputTriggered(Index);
+}
 
-	virtual void IFlowGraphInterface::OnInputTriggered(UEdGraphNode* GraphNode, const int32 Index) override
-	{
-		CastChecked<UFlowGraphNode>(GraphNode)->OnInputTriggered(Index);
-	}
-
-	virtual void IFlowGraphInterface::OnOutputTriggered(UEdGraphNode* GraphNode, const int32 Index) override
-	{
-		CastChecked<UFlowGraphNode>(GraphNode)->OnOutputTriggered(Index);
-	}
-};
+void FFlowGraphInterface::OnOutputTriggered(UEdGraphNode* GraphNode, const int32 Index) const
+{
+	CastChecked<UFlowGraphNode>(GraphNode)->OnOutputTriggered(Index);
+}
 
 UFlowGraph::UFlowGraph(const FObjectInitializer& ObjectInitializer)
 	: Super(ObjectInitializer)
