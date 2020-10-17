@@ -1,10 +1,18 @@
 #pragma once
 
 #include "EdGraph/EdGraph.h"
+
+#include "FlowAsset.h"
 #include "FlowGraph.generated.h"
 
-class UFlowNode;
-class UFlowAsset;
+class FLOWEDITOR_API FFlowGraphInterface final : public IFlowGraphInterface
+{
+public:
+	virtual ~FFlowGraphInterface() {}
+
+	virtual void OnInputTriggered(UEdGraphNode* GraphNode, const int32 Index) const override;
+	virtual void OnOutputTriggered(UEdGraphNode* GraphNode, const int32 Index) const override;
+};
 
 UCLASS()
 class FLOWEDITOR_API UFlowGraph : public UEdGraph
