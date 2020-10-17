@@ -12,17 +12,18 @@ class UFlowSubsystem;
 class UEdGraph;
 class UFlowAsset;
 
+#if WITH_EDITOR
 /** Interface for calling the graph editor methods */
-class IFlowGraphInterface
+class FLOW_API IFlowGraphInterface
 {
 public:
+	IFlowGraphInterface() {}
 	virtual ~IFlowGraphInterface() {}
 
-	virtual void OnInputTriggered(UEdGraphNode* GraphNode, const int32 Index) = 0;
-	virtual void OnOutputTriggered(UEdGraphNode* GraphNode, const int32 Index) = 0;
+	virtual void OnInputTriggered(UEdGraphNode* GraphNode, const int32 Index) const {}
+	virtual void OnOutputTriggered(UEdGraphNode* GraphNode, const int32 Index) const {}
 };
 
-#if WITH_EDITOR
 DECLARE_DELEGATE(FFlowAssetEvent);
 #endif
 
