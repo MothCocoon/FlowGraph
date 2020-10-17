@@ -180,19 +180,26 @@ void UFlowNode::TriggerInput(const FName& PinName)
 	ensureAlways(InputNames.Num() > 0);
 
 #if !UE_BUILD_SHIPPING
-	// record for debugging
-	TArray<FPinRecord>& Records = InputRecords.FindOrAdd(PinName);
-	Records.Add(FPinRecord(FApp::GetCurrentTime()));
+	if (InputNames.Contains(PinName))
+	{
+		// record for debugging
+		TArray<FPinRecord>& Records = InputRecords.FindOrAdd(PinName);
+		Records.Add(FPinRecord(FApp::GetCurrentTime()));
 
-	ActivationState = EFlowActivationState::Active;
-#endif
+		ActivationState = EFlowActivationState::Active;
 
 #if WITH_EDITOR
-	if (GetWorld()->WorldType != EWorldType::Game)
-	{
-		UFlowAsset::GetFlowGraphInterface()->OnInputTriggered(GraphNode, InputNames.IndexOfByKey(PinName));
+		if (GetWorld()->WorldType == EWorldType::PIE && UFlowAsset::GetFlowGraphInterface().IsValid())
+		{
+			UFlowAsset::GetFlowGraphInterface()->OnInputTriggered(GraphNode, InputNames.IndexOfByKey(PinName));
+		}
+#endif // WITH_EDITOR
 	}
-#endif
+	else
+	{
+		LogError(FString::Printf(TEXT("Input Pin name %s invalid"), *PinName.ToString()));
+	}
+#endif // UE_BUILD_SHIPPING
 
 	ExecuteInput(PinName);
 }
@@ -222,7 +229,7 @@ void UFlowNode::TriggerOutput(const FName& PinName, const bool bFinish /*= false
 		Records.Add(FPinRecord(FApp::GetCurrentTime()));
 
 #if WITH_EDITOR
-		if (GetWorld()->WorldType != EWorldType::Game)
+		if (GetWorld()->WorldType == EWorldType::PIE && UFlowAsset::GetFlowGraphInterface().IsValid())
 		{
 			UFlowAsset::GetFlowGraphInterface()->OnOutputTriggered(GraphNode, OutputNames.IndexOfByKey(PinName));
 		}
