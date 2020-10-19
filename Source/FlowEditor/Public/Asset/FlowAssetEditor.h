@@ -129,7 +129,7 @@ public:
 	static bool IsPIE();
 	static EVisibility GetDebuggerVisibility();
 
-	TSet<UObject*> GetSelectedNodes() const;
+	TSet<UFlowGraphNode*> GetSelectedFlowNodes() const;
 	int32 GetNumberOfSelectedNodes() const;
 	bool GetBoundsForSelectedNodes(class FSlateRect& Rect, float Padding) const;
 
