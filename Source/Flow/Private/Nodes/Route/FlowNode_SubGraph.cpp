@@ -10,6 +10,9 @@ UFlowNode_SubGraph::UFlowNode_SubGraph(const FObjectInitializer& ObjectInitializ
 	Category = TEXT("Route");
 	NodeStyle = EFlowNodeStyle::SubGraph;
 #endif
+
+	InputNames = {TEXT("Start")};
+	OutputNames = {TEXT("Finish")};
 }
 
 void UFlowNode_SubGraph::PreloadContent()
