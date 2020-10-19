@@ -40,7 +40,7 @@ void UFlowNode_SubGraph::ExecuteInput(const FName& PinName)
 	}
 	else
 	{
-		if (PinName == DefaultInputName)
+		if (PinName == TEXT("Start"))
 		{
 			GetFlowSubsystem()->StartSubFlow(this);
 		}

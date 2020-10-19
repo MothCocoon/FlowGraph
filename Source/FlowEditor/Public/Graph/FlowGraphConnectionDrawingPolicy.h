@@ -5,7 +5,9 @@
 
 struct FFlowGraphConnectionDrawingPolicyFactory : public FGraphPanelPinConnectionFactory
 {
-	virtual ~FFlowGraphConnectionDrawingPolicyFactory() {}
+	virtual ~FFlowGraphConnectionDrawingPolicyFactory()
+	{
+	}
 
 	virtual class FConnectionDrawingPolicy* CreateConnectionPolicy(const class UEdGraphSchema* Schema, int32 InBackLayerID, int32 InFrontLayerID, float ZoomFactor, const class FSlateRect& InClippingRect, class FSlateWindowElementList& InDrawElements, class UEdGraph* InGraphObj) const override;
 };
@@ -18,18 +20,21 @@ class FFlowGraphConnectionDrawingPolicy : public FConnectionDrawingPolicy
 {
 	float RecentWireDuration;
 
+	FLinearColor InactiveColor;
 	FLinearColor RecentColor;
 	FLinearColor RecordedColor;
-	FLinearColor InactiveColor;
+	FLinearColor SelectedColor;
 
+	float InactiveWireThickness;
 	float RecentWireThickness;
 	float RecordedWireThickness;
-	float InactiveWireThickness;
+	float SelectedWireThickness;
 
 	// runtime values
 	UEdGraph* GraphObj;
 	TMap<UEdGraphPin*, UEdGraphPin*> RecentPaths;
 	TMap<UEdGraphPin*, UEdGraphPin*> RecordedPaths;
+	TMap<UEdGraphPin*, UEdGraphPin*> SelectedPaths;
 
 public:
 	FFlowGraphConnectionDrawingPolicy(int32 InBackLayerID, int32 InFrontLayerID, float ZoomFactor, const FSlateRect& InClippingRect, FSlateWindowElementList& InDrawElements, UEdGraph* InGraphObj);

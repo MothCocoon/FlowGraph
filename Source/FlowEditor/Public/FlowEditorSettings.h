@@ -27,6 +27,9 @@ class UFlowEditorSettings final : public UDeveloperSettings
 	UPROPERTY(EditAnywhere, config, Category = "Nodes")
 	TMap<EFlowNodeStyle, FLinearColor> NodeTitleColors;
 
+	UPROPERTY(EditAnywhere, config, Category = "Nodes")
+	FLinearColor ExecPinColorModifier;
+
 	UPROPERTY(EditAnywhere, config, Category = "NodePopups")
 	FLinearColor NodeDescriptionBackground;
 
@@ -36,6 +39,12 @@ class UFlowEditorSettings final : public UDeveloperSettings
 	UPROPERTY(EditAnywhere, config, Category = "NodePopups")
 	FLinearColor NodePreloadedBackground;
 
+	UPROPERTY(EditAnywhere, config, Category = "Wires")
+	FLinearColor InactiveWireColor;
+
+	UPROPERTY(EditAnywhere, config, Category = "Wires", meta = (ClampMin = 0.0f))
+	float InactiveWireThickness;
+	
 	UPROPERTY(EditAnywhere, config, Category = "Wires", meta = (ClampMin = 1.0f))
 	float RecentWireDuration;
 
@@ -52,11 +61,12 @@ class UFlowEditorSettings final : public UDeveloperSettings
 	UPROPERTY(EditAnywhere, config, Category = "Wires", meta = (ClampMin = 0.0f))
 	float RecordedWireThickness;
 
-	/** The color to fade to for execution wires on release */
 	UPROPERTY(EditAnywhere, config, Category = "Wires")
-	FLinearColor InactiveWireColor;
+	bool bHighlightWiresOfSelectedNodes;
+	
+	UPROPERTY(EditAnywhere, config, Category = "Wires")
+	FLinearColor SelectedWireColor;
 
-	/** The thickness to drop down to during release for wires when debugging */
 	UPROPERTY(EditAnywhere, config, Category = "Wires", meta = (ClampMin = 0.0f))
-	float InactiveWireThickness;
+	float SelectedWireThickness;
 };
