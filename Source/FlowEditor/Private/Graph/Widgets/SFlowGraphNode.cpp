@@ -15,6 +15,17 @@
 
 #define LOCTEXT_NAMESPACE "SFlowGraphNode"
 
+SFlowGraphPinExec::SFlowGraphPinExec()
+{
+	PinColorModifier = UFlowEditorSettings::Get()->ExecPinColorModifier;
+}
+
+void SFlowGraphPinExec::Construct(const FArguments& InArgs, UEdGraphPin* InPin)
+{
+	SGraphPinExec::Construct(SGraphPinExec::FArguments(), InPin);
+	bUsePinColorForText = true;
+}
+
 void SFlowGraphPinExec::Tick(const FGeometry& AllottedGeometry, const double InCurrentTime, const float InDeltaTime)
 {
 	SGraphPinExec::Tick(AllottedGeometry, InCurrentTime, InDeltaTime);
