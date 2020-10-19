@@ -1,8 +1,10 @@
 #include "Graph/FlowGraphConnectionDrawingPolicy.h"
 
+#include "Asset/FlowAssetEditor.h"
 #include "FlowEditorSettings.h"
 #include "Graph/FlowGraph.h"
 #include "Graph/FlowGraphSchema.h"
+#include "Graph/FlowGraphUtils.h"
 #include "Graph/Nodes/FlowGraphNode.h"
 
 #include "FlowAsset.h"
@@ -31,13 +33,15 @@ FFlowGraphConnectionDrawingPolicy::FFlowGraphConnectionDrawingPolicy(int32 InBac
 	// Cache off the editor options
 	RecentWireDuration = UFlowEditorSettings::Get()->RecentWireDuration;
 
+	InactiveColor = UFlowEditorSettings::Get()->InactiveWireColor;
 	RecentColor = UFlowEditorSettings::Get()->RecentWireColor;
 	RecordedColor = UFlowEditorSettings::Get()->RecordedWireColor;
-	InactiveColor = UFlowEditorSettings::Get()->InactiveWireColor;
+	SelectedColor = UFlowEditorSettings::Get()->SelectedWireColor;
 
+	InactiveWireThickness = UFlowEditorSettings::Get()->InactiveWireThickness;
 	RecentWireThickness = UFlowEditorSettings::Get()->RecentWireThickness;
 	RecordedWireThickness = UFlowEditorSettings::Get()->RecordedWireThickness;
-	InactiveWireThickness = UFlowEditorSettings::Get()->InactiveWireThickness;
+	SelectedWireThickness = UFlowEditorSettings::Get()->SelectedWireThickness;
 
 	// Don't want to draw ending arrowheads
 	ArrowImage = nullptr;
@@ -63,12 +67,30 @@ void FFlowGraphConnectionDrawingPolicy::BuildPaths()
 					// check if Output pin is connected to anything
 					if (OutputPin->LinkedTo.Num() > 0)
 					{
-						RecordedPaths.Add(OutputPin, OutputPin->LinkedTo[0]);
+						RecordedPaths.Emplace(OutputPin, OutputPin->LinkedTo[0]);
 
 						if (CurrentTime < Record.Value.Time + RecentWireDuration)
 						{
-							RecentPaths.Add(OutputPin, OutputPin->LinkedTo[0]);
+							RecentPaths.Emplace(OutputPin, OutputPin->LinkedTo[0]);
 						}
+					}
+				}
+			}
+		}
+	}
+
+	if (UFlowEditorSettings::Get()->bHighlightWiresOfSelectedNodes && GraphObj)
+	{
+		const TSharedPtr<FFlowAssetEditor> FlowAssetEditor = FFlowGraphUtils::GetFlowAssetEditor(GraphObj);
+		if (FlowAssetEditor.IsValid())
+		{
+			for (UFlowGraphNode* SelectedNode : FlowAssetEditor->GetSelectedFlowNodes())
+			{
+				for (UEdGraphPin* Pin : SelectedNode->Pins)
+				{
+					for (UEdGraphPin* LinkedPin : Pin->LinkedTo)
+					{
+						SelectedPaths.Emplace(Pin, LinkedPin);
 					}
 				}
 			}
@@ -105,13 +127,22 @@ void FFlowGraphConnectionDrawingPolicy::DetermineWiringStyle(UEdGraphPin* Output
 
 		if (InputPin)
 		{
+			// selected paths
+			if ((SelectedPaths.Contains(OutputPin) && SelectedPaths[OutputPin] == InputPin)
+				|| SelectedPaths.Contains(InputPin) && SelectedPaths[InputPin] == OutputPin)
+			{
+				Params.WireColor = SelectedColor;
+				Params.WireThickness = SelectedWireThickness;
+				Params.bDrawBubbles = false;
+				return;
+			}
+
 			// recent paths
 			if (RecentPaths.Contains(OutputPin) && RecentPaths[OutputPin] == InputPin)
 			{
 				Params.WireColor = RecentColor;
 				Params.WireThickness = RecentWireThickness;
 				Params.bDrawBubbles = true;
-
 				return;
 			}
 
@@ -121,7 +152,6 @@ void FFlowGraphConnectionDrawingPolicy::DetermineWiringStyle(UEdGraphPin* Output
 				Params.WireColor = RecordedColor;
 				Params.WireThickness = RecordedWireThickness;
 				Params.bDrawBubbles = false;
-
 				return;
 			}
 

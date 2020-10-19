@@ -7,6 +7,14 @@
 
 class SFlowGraphPinExec final : public SGraphPinExec
 {
+public:
+	SFlowGraphPinExec();
+
+	SLATE_BEGIN_ARGS(SFlowGraphPinExec) {}
+	SLATE_END_ARGS()
+
+	void Construct(const FArguments& InArgs, UEdGraphPin* InPin);
+	
 	// SWidget
 	virtual void Tick(const FGeometry& AllottedGeometry, const double InCurrentTime, const float InDeltaTime) override;
 	// --
