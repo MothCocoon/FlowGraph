@@ -62,7 +62,10 @@ class UFlowEditorSettings final : public UDeveloperSettings
 	float RecordedWireThickness;
 
 	UPROPERTY(EditAnywhere, config, Category = "Wires")
-	bool bHighlightWiresOfSelectedNodes;
+	bool bHighlightInputWiresOfSelectedNodes;
+
+	UPROPERTY(EditAnywhere, config, Category = "Wires")
+	bool bHighlightOutputWiresOfSelectedNodes;
 	
 	UPROPERTY(EditAnywhere, config, Category = "Wires")
 	FLinearColor SelectedWireColor;
