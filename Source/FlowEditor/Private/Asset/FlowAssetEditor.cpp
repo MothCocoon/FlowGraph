@@ -349,9 +349,7 @@ void FFlowAssetEditor::CreateWidgets()
 	FocusedGraphEditor = CreateGraphWidget();
 
 	FDetailsViewArgs Args;
-	Args.bAllowSearch = false;
 	Args.bHideSelectionTip = true;
-	Args.bShowOptions = false;
 	Args.bShowPropertyMatrixButton = false;
 	Args.NotifyHook = this;
 
