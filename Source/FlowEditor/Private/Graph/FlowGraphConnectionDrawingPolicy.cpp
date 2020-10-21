@@ -79,7 +79,7 @@ void FFlowGraphConnectionDrawingPolicy::BuildPaths()
 		}
 	}
 
-	if (UFlowEditorSettings::Get()->bHighlightWiresOfSelectedNodes && GraphObj)
+	if (GraphObj && (UFlowEditorSettings::Get()->bHighlightInputWiresOfSelectedNodes || UFlowEditorSettings::Get()->bHighlightOutputWiresOfSelectedNodes))
 	{
 		const TSharedPtr<FFlowAssetEditor> FlowAssetEditor = FFlowGraphUtils::GetFlowAssetEditor(GraphObj);
 		if (FlowAssetEditor.IsValid())
@@ -88,9 +88,13 @@ void FFlowGraphConnectionDrawingPolicy::BuildPaths()
 			{
 				for (UEdGraphPin* Pin : SelectedNode->Pins)
 				{
-					for (UEdGraphPin* LinkedPin : Pin->LinkedTo)
+					if (Pin->Direction == EGPD_Input && UFlowEditorSettings::Get()->bHighlightInputWiresOfSelectedNodes
+						|| Pin->Direction == EGPD_Output && UFlowEditorSettings::Get()->bHighlightOutputWiresOfSelectedNodes)
 					{
-						SelectedPaths.Emplace(Pin, LinkedPin);
+						for (UEdGraphPin* LinkedPin : Pin->LinkedTo)
+						{
+							SelectedPaths.Emplace(Pin, LinkedPin);
+						}
 					}
 				}
 			}
@@ -128,8 +132,7 @@ void FFlowGraphConnectionDrawingPolicy::DetermineWiringStyle(UEdGraphPin* Output
 		if (InputPin)
 		{
 			// selected paths
-			if ((SelectedPaths.Contains(OutputPin) && SelectedPaths[OutputPin] == InputPin)
-				|| SelectedPaths.Contains(InputPin) && SelectedPaths[InputPin] == OutputPin)
+			if (SelectedPaths.Contains(OutputPin) || SelectedPaths.Contains(InputPin))
 			{
 				Params.WireColor = SelectedColor;
 				Params.WireThickness = SelectedWireThickness;

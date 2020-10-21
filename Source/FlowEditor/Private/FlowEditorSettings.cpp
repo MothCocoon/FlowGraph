@@ -15,7 +15,8 @@ UFlowEditorSettings::UFlowEditorSettings(const FObjectInitializer& ObjectInitial
 	, RecentWireThickness(6.0f)
 	, RecordedWireColor(FLinearColor(0.432f, 0.258f, 0.096f, 1.0f))
 	, RecordedWireThickness(3.5f)
-	, bHighlightWiresOfSelectedNodes(true)
+	, bHighlightInputWiresOfSelectedNodes(true)
+	, bHighlightOutputWiresOfSelectedNodes(false)
 	, SelectedWireColor(FLinearColor(0.984f, 0.482f, 0.010f, 1.0f))
 	, SelectedWireThickness(1.5f)
 {
