@@ -37,7 +37,6 @@ protected:
 public:
 #if WITH_EDITOR
 	virtual bool SupportsContextPins() const override { return true; }
-	virtual bool CanRefreshContextPinsOnLoad() const override { return false; }
 	virtual TArray<FName> GetContextOutputs() override;
 #endif
 

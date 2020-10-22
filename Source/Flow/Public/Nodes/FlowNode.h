@@ -50,6 +50,10 @@ private:
 };
 #endif
 
+#if WITH_EDITOR
+DECLARE_DELEGATE(FFlowNodeEvent);
+#endif
+
 /**
  * Base Flow Node class
  */
@@ -76,6 +80,9 @@ protected:
 
 	UPROPERTY(EditDefaultsOnly, Category = "FlowNode")
 	EFlowNodeStyle NodeStyle;
+
+public:
+	FFlowNodeEvent OnReconstructionRequested;
 #endif
 
 public:
@@ -135,8 +142,7 @@ public:
 #if WITH_EDITOR
 	virtual bool SupportsContextPins() const { return false; }
 
-	// Enabling it might cause loading gigabytes of data as nodes would load all related data (i.e. Level Sequences)
-	// This refresh needs to be enabled by UFlowEditorSettings::bRefreshContextPinsOnLoad
+	// Be careful, enabling it might cause loading gigabytes of data as nodes would load all related data (i.e. Level Sequences)
 	virtual bool CanRefreshContextPinsOnLoad() const { return false; }
 
 	virtual TArray<FName> GetContextInputs() { return TArray<FName>(); }
