@@ -12,6 +12,10 @@ class FLOW_API UFlowNode_SubGraph : public UFlowNode
 	GENERATED_UCLASS_BODY()
 	
 	friend class UFlowSubsystem;
+
+public:
+	static FName StartPinName;
+	static FName FinishPinName;
 	
 private:
 	UPROPERTY(EditDefaultsOnly, Category = "Graph")
@@ -31,8 +35,18 @@ public:
 	virtual UObject* GetAssetToOpen() override;
 
 	virtual bool SupportsContextPins() const override { return true; }
+	virtual bool CanRefreshContextPinsOnLoad() const override { return true; }
 
 	virtual TArray<FName> GetContextInputs() override;
 	virtual TArray<FName> GetContextOutputs() override;
+
+	// UObject
+	virtual void PostLoad() override;
+	virtual void PreEditChange(FProperty* PropertyAboutToChange) override;
+	virtual void PostEditChangeProperty(FPropertyChangedEvent& PropertyChangedEvent) override;
+	// --
+
+private:
+	void SubscribeToAssetChanges();
 #endif
 };

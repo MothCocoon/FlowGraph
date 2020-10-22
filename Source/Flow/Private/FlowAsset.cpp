@@ -27,6 +27,17 @@ void UFlowAsset::AddReferencedObjects(UObject* InThis, FReferenceCollector& Coll
 	Super::AddReferencedObjects(InThis, Collector);
 }
 
+void UFlowAsset::PostEditChangeProperty(FPropertyChangedEvent& PropertyChangedEvent)
+{
+	Super::PostEditChangeProperty(PropertyChangedEvent);
+
+	if (PropertyChangedEvent.Property && (PropertyChangedEvent.GetPropertyName() == GET_MEMBER_NAME_CHECKED(UFlowAsset, CustomEvents)
+			|| PropertyChangedEvent.GetPropertyName() == GET_MEMBER_NAME_CHECKED(UFlowAsset, CustomOutputs)))
+	{
+		OnSubGraphReconstructionRequested.ExecuteIfBound();
+	}
+}
+
 TSharedPtr<IFlowGraphInterface> UFlowAsset::FlowGraphInterface = nullptr;
 
 void UFlowAsset::SetFlowGraphInterface(TSharedPtr<IFlowGraphInterface> InFlowAssetEditor)
@@ -57,6 +68,14 @@ void UFlowAsset::UnregisterNode(const FGuid& NodeGuid)
 
 	HarvestNodeConnections();
 	MarkPackageDirty();
+}
+
+void UFlowAsset::ReconstructGraphNodes() const
+{
+	for (UEdGraphNode* GraphNode : FlowGraph->Nodes)
+	{
+		GraphNode->ReconstructNode();
+	}
 }
 #endif
 

@@ -2,6 +2,7 @@
 #include "FlowEditorStyle.h"
 
 #include "Asset/AssetTypeActions_FlowAsset.h"
+#include "Asset/FlowAssetDetails.h"
 #include "Asset/FlowAssetEditor.h"
 #include "Graph/Customizations/FlowNode_Details.h"
 #include "Graph/Customizations/FlowNode_CustomEventDetails.h"
@@ -54,6 +55,7 @@ void FFlowEditorModule::StartupModule()
 	//FlowTrackCreateEditorHandle = SequencerModule.RegisterTrackEditor(FOnCreateTrackEditor::CreateStatic(&FFlowTrackEditor::CreateTrackEditor));
 
 	// register detail customizations
+	RegisterCustomClassLayout(UFlowAsset::StaticClass(), FOnGetDetailCustomizationInstance::CreateStatic(&FFlowAssetDetails::MakeInstance));
 	RegisterCustomClassLayout(UFlowNode::StaticClass(), FOnGetDetailCustomizationInstance::CreateStatic(&FFlowNode_Details::MakeInstance));
 	RegisterCustomClassLayout(UFlowNode_CustomEvent::StaticClass(), FOnGetDetailCustomizationInstance::CreateStatic(&FFlowNode_CustomEventDetails::MakeInstance));
 	RegisterCustomClassLayout(UFlowNode_CustomOutput::StaticClass(), FOnGetDetailCustomizationInstance::CreateStatic(&FFlowNode_CustomOutputDetails::MakeInstance));
