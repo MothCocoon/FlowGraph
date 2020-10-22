@@ -39,6 +39,8 @@ class FLOW_API UFlowAsset : public UObject
 	friend class UFlowNode_CustomOutput;
 	friend class UFlowNode_SubGraph;
 
+	friend class FFlowAssetDetails;
+
 //////////////////////////////////////////////////////////////////////////
 // Graph
 
@@ -47,6 +49,7 @@ class FLOW_API UFlowAsset : public UObject
 
 	// UObject
 	static void AddReferencedObjects(UObject* InThis, FReferenceCollector& Collector);
+	virtual void PostEditChangeProperty(FPropertyChangedEvent& PropertyChangedEvent) override;
 	// --
 #endif
 
@@ -83,10 +86,14 @@ private:
 
 public:
 #if WITH_EDITOR
+	FFlowAssetEvent OnSubGraphReconstructionRequested;
+
 	UFlowNode* CreateNode(const UClass* NodeClass, UEdGraphNode* GraphNode);
 
 	void RegisterNode(const FGuid& NewGuid, UFlowNode* NewNode);
 	void UnregisterNode(const FGuid& NodeGuid);
+
+	void ReconstructGraphNodes() const;
 #endif
 
 	void HarvestNodeConnections();

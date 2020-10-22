@@ -3,6 +3,9 @@
 #include "FlowAsset.h"
 #include "FlowSubsystem.h"
 
+FName UFlowNode_SubGraph::StartPinName(TEXT("Start"));
+FName UFlowNode_SubGraph::FinishPinName(TEXT("Finish"));
+
 UFlowNode_SubGraph::UFlowNode_SubGraph(const FObjectInitializer& ObjectInitializer)
 	: Super(ObjectInitializer)
 {
@@ -11,8 +14,8 @@ UFlowNode_SubGraph::UFlowNode_SubGraph(const FObjectInitializer& ObjectInitializ
 	NodeStyle = EFlowNodeStyle::SubGraph;
 #endif
 
-	InputNames = {TEXT("Start")};
-	OutputNames = {TEXT("Finish")};
+	InputNames = {StartPinName};
+	OutputNames = {FinishPinName};
 }
 
 void UFlowNode_SubGraph::PreloadContent()
@@ -74,7 +77,13 @@ TArray<FName> UFlowNode_SubGraph::GetContextInputs()
 	if (!Asset.IsNull())
 	{
 		LoadAsset<UFlowAsset>(Asset);
-		EventNames = Asset.Get()->GetCustomEvents();
+		for (const FName& PinName : Asset.Get()->GetCustomEvents())
+		{
+			if (!PinName.IsNone())
+			{
+				EventNames.Emplace(PinName);
+			}
+		}
 	}
 
 	return EventNames;
@@ -87,9 +96,61 @@ TArray<FName> UFlowNode_SubGraph::GetContextOutputs()
 	if (!Asset.IsNull())
 	{
 		LoadAsset<UFlowAsset>(Asset);
-		EventNames = Asset.Get()->GetCustomOutputs();
+		for (const FName& PinName : Asset.Get()->GetCustomOutputs())
+		{
+			if (!PinName.IsNone())
+			{
+				EventNames.Emplace(PinName);
+			}
+		}
 	}
 
 	return EventNames;
+}
+
+void UFlowNode_SubGraph::PostLoad()
+{
+	Super::PostLoad();
+	
+	SubscribeToAssetChanges();
+}
+
+void UFlowNode_SubGraph::PreEditChange(FProperty* PropertyAboutToChange)
+{
+	Super::PreEditChange(PropertyAboutToChange);
+
+	if (PropertyAboutToChange->GetFName() == GET_MEMBER_NAME_CHECKED(UFlowNode_SubGraph, Asset))
+	{
+		if (Asset)
+		{
+			Asset->OnSubGraphReconstructionRequested.Unbind();
+		}
+	}
+}
+
+void UFlowNode_SubGraph::PostEditChangeProperty(FPropertyChangedEvent& PropertyChangedEvent)
+{
+	Super::PostEditChangeProperty(PropertyChangedEvent);
+
+	if (PropertyChangedEvent.Property && PropertyChangedEvent.GetPropertyName() == GET_MEMBER_NAME_CHECKED(UFlowNode_SubGraph, Asset))
+	{
+		OnReconstructionRequested.ExecuteIfBound();
+		SubscribeToAssetChanges();
+	}
+}
+
+void UFlowNode_SubGraph::SubscribeToAssetChanges()
+{
+	if (Asset)
+	{
+		TWeakObjectPtr<UFlowNode_SubGraph> SelfWeakPtr(this);
+		Asset->OnSubGraphReconstructionRequested.BindLambda([SelfWeakPtr]()
+		{
+			if (SelfWeakPtr.IsValid())
+			{
+				SelfWeakPtr->OnReconstructionRequested.ExecuteIfBound();
+			}
+		});
+	}
 }
 #endif
