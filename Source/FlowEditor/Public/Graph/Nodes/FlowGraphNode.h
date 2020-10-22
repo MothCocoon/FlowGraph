@@ -56,6 +56,8 @@ private:
 	UPROPERTY(Instanced)
 	UFlowNode* FlowNode;
 
+	bool bPendingReconstruction;
+
 public:
 	void SetFlowNode(UFlowNode* InFlowNode);
 	UFlowNode* GetFlowNode() const;
@@ -67,8 +69,8 @@ public:
 	void PostCopyNode();
 
 private:
-	void SubscribeToBlueprintChanges();
-	void OnBlueprintChanged();
+	void SubscribeToExternalChanges();
+	void OnExternalChange();
 
 //////////////////////////////////////////////////////////////////////////
 // Graph node

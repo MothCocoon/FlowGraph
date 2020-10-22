@@ -19,11 +19,6 @@ class UFlowEditorSettings final : public UDeveloperSettings
 	UPROPERTY(EditAnywhere, config, Category = "Nodes")
 	bool bShowDefaultPinNames;
 
-	/** Enabling it might cause loading gigabytes of data as nodes would load all related data (i.e. Level Sequences)
-	/** This Refresh can be disabled per node class */
-	UPROPERTY(EditAnywhere, config, Category = "Nodes")
-	bool bRefreshContextPinsOnLoad;
-
 	UPROPERTY(EditAnywhere, config, Category = "Nodes")
 	TMap<EFlowNodeStyle, FLinearColor> NodeTitleColors;
 

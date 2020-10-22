@@ -175,6 +175,9 @@ void FFlowAssetEditor::InitFlowAssetEditor(const EToolkitMode::Type Mode, const 
 {
 	FlowAsset = CastChecked<UFlowAsset>(ObjectToEdit);
 
+    // ensure nodes represent recent data
+	FlowAsset->ReconstructGraphNodes();
+
 	// Support undo/redo
 	FlowAsset->SetFlags(RF_Transactional);
 	GEditor->RegisterForUndo(this);

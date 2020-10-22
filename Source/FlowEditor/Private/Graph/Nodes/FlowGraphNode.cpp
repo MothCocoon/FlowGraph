@@ -95,6 +95,7 @@ void FFlowBreakpoint::ToggleBreakpoint()
 UFlowGraphNode::UFlowGraphNode(const FObjectInitializer& ObjectInitializer)
 	: Super(ObjectInitializer)
 	, FlowNode(nullptr)
+	, bPendingReconstruction(false)
 {
 	OrphanedPinSaveMode = ESaveOrphanPinMode::SaveAll;
 }
@@ -127,7 +128,7 @@ void UFlowGraphNode::PostLoad()
 	if (FlowNode)
 	{
 		FlowNode->SetGraphNode(this);
-		SubscribeToBlueprintChanges();
+		SubscribeToExternalChanges();
 	}
 
 	ReconstructNode();
@@ -146,7 +147,7 @@ void UFlowGraphNode::PostDuplicate(bool bDuplicateForPIE)
 void UFlowGraphNode::PostEditImport()
 {
 	PostCopyNode();
-	SubscribeToBlueprintChanges();
+	SubscribeToExternalChanges();
 }
 
 void UFlowGraphNode::PrepareForCopying()
@@ -175,17 +176,25 @@ void UFlowGraphNode::PostCopyNode()
 	}
 }
 
-void UFlowGraphNode::SubscribeToBlueprintChanges()
+void UFlowGraphNode::SubscribeToExternalChanges()
 {
-	if (FlowNode && FlowNode->GetClass()->ClassGeneratedBy && GEditor)
+	if (FlowNode)
 	{
-		GEditor->OnBlueprintCompiled().AddUObject(this, &UFlowGraphNode::OnBlueprintChanged);
-		GEditor->OnClassPackageLoadedOrUnloaded().AddUObject(this, &UFlowGraphNode::OnBlueprintChanged);
+		FlowNode->OnReconstructionRequested.BindUObject(this, &UFlowGraphNode::OnExternalChange);
+
+		// blueprint nodes
+		if (FlowNode->GetClass()->ClassGeneratedBy && GEditor)
+		{
+			GEditor->OnBlueprintCompiled().AddUObject(this, &UFlowGraphNode::OnExternalChange);
+			GEditor->OnClassPackageLoadedOrUnloaded().AddUObject(this, &UFlowGraphNode::OnExternalChange);
+		}
 	}
 }
 
-void UFlowGraphNode::OnBlueprintChanged()
+void UFlowGraphNode::OnExternalChange()
 {
+	bPendingReconstruction = true;
+
 	ReconstructNode();
 	GetGraph()->NotifyGraphChanged();
 }
@@ -277,11 +286,11 @@ void UFlowGraphNode::ReconstructNode()
 	OutputPins.Reset();
 
 	// Recreate pins
-	AllocateDefaultPins();
-	if (SupportsContextPins() && FlowNode->CanRefreshContextPinsOnLoad())
+	if (SupportsContextPins() && (FlowNode->CanRefreshContextPinsOnLoad() || bPendingReconstruction))
 	{
 		RefreshContextPins(false);
 	}
+	AllocateDefaultPins();
 	RewireOldPinsToNewPins(OldPins);
 
 	// Destroy old pins
@@ -291,6 +300,8 @@ void UFlowGraphNode::ReconstructNode()
 		OldPin->BreakAllPinLinks();
 		DestroyPin(OldPin);
 	}
+
+	bPendingReconstruction = false;
 }
 
 void UFlowGraphNode::AllocateDefaultPins()
