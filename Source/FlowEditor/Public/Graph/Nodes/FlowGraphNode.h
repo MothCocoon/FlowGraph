@@ -56,7 +56,7 @@ private:
 	UPROPERTY(Instanced)
 	UFlowNode* FlowNode;
 
-	bool bPendingReconstruction;
+	bool bNeedsFullReconstruction;
 
 public:
 	void SetFlowNode(UFlowNode* InFlowNode);
