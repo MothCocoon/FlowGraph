@@ -95,7 +95,7 @@ void FFlowBreakpoint::ToggleBreakpoint()
 UFlowGraphNode::UFlowGraphNode(const FObjectInitializer& ObjectInitializer)
 	: Super(ObjectInitializer)
 	, FlowNode(nullptr)
-	, bPendingReconstruction(false)
+	, bNeedsFullReconstruction(false)
 {
 	OrphanedPinSaveMode = ESaveOrphanPinMode::SaveAll;
 }
@@ -193,7 +193,7 @@ void UFlowGraphNode::SubscribeToExternalChanges()
 
 void UFlowGraphNode::OnExternalChange()
 {
-	bPendingReconstruction = true;
+	bNeedsFullReconstruction = true;
 
 	ReconstructNode();
 	GetGraph()->NotifyGraphChanged();
@@ -286,7 +286,7 @@ void UFlowGraphNode::ReconstructNode()
 	OutputPins.Reset();
 
 	// Recreate pins
-	if (SupportsContextPins() && (FlowNode->CanRefreshContextPinsOnLoad() || bPendingReconstruction))
+	if (SupportsContextPins() && (FlowNode->CanRefreshContextPinsOnLoad() || bNeedsFullReconstruction))
 	{
 		RefreshContextPins(false);
 	}
@@ -301,7 +301,7 @@ void UFlowGraphNode::ReconstructNode()
 		DestroyPin(OldPin);
 	}
 
-	bPendingReconstruction = false;
+	bNeedsFullReconstruction = false;
 }
 
 void UFlowGraphNode::AllocateDefaultPins()
