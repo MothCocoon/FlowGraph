@@ -32,7 +32,7 @@ void UFlowAsset::PostEditChangeProperty(FPropertyChangedEvent& PropertyChangedEv
 	Super::PostEditChangeProperty(PropertyChangedEvent);
 
 	if (PropertyChangedEvent.Property && (PropertyChangedEvent.GetPropertyName() == GET_MEMBER_NAME_CHECKED(UFlowAsset, CustomEvents)
-			|| PropertyChangedEvent.GetPropertyName() == GET_MEMBER_NAME_CHECKED(UFlowAsset, CustomOutputs)))
+		|| PropertyChangedEvent.GetPropertyName() == GET_MEMBER_NAME_CHECKED(UFlowAsset, CustomOutputs)))
 	{
 		OnSubGraphReconstructionRequested.ExecuteIfBound();
 	}
@@ -68,14 +68,6 @@ void UFlowAsset::UnregisterNode(const FGuid& NodeGuid)
 
 	HarvestNodeConnections();
 	MarkPackageDirty();
-}
-
-void UFlowAsset::ReconstructGraphNodes() const
-{
-	for (UEdGraphNode* GraphNode : FlowGraph->Nodes)
-	{
-		GraphNode->ReconstructNode();
-	}
 }
 #endif
 

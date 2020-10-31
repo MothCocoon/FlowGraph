@@ -10,6 +10,7 @@
 #include "FlowAsset.h"
 #include "Nodes/FlowNode.h"
 
+#include "AssetRegistryModule.h"
 #include "Developer/ToolMenus/Public/ToolMenus.h"
 #include "EdGraph/EdGraphSchema.h"
 #include "EdGraphSchema_K2.h"
@@ -89,6 +90,8 @@ void FFlowBreakpoint::ToggleBreakpoint()
 	}
 }
 
+bool UFlowGraphNode::bFlowAssetsLoaded = false;
+
 //////////////////////////////////////////////////////////////////////////
 // Flow Graph Node
 
@@ -129,6 +132,24 @@ void UFlowGraphNode::PostLoad()
 	{
 		FlowNode->SetGraphNode(this);
 		SubscribeToExternalChanges();
+	}
+
+	// without this reconstructing UFlowNode_SubGraph pins wouldn't work well
+	if (bFlowAssetsLoaded == false)
+	{
+		FAssetRegistryModule& AssetRegistryModule = FModuleManager::LoadModuleChecked<FAssetRegistryModule>(AssetRegistryConstants::ModuleName);
+		AssetRegistryModule.Get().SearchAllAssets(true);
+
+		TArray<FAssetData> FlowAssets;
+		AssetRegistryModule.Get().GetAssetsByClass(UFlowAsset::StaticClass()->GetFName(), FlowAssets, true);
+
+		for (FAssetData const& Asset : FlowAssets)
+		{
+			const FString AssetPath = Asset.ObjectPath.ToString();
+			StaticLoadObject(Asset.GetClass(), nullptr, *AssetPath);
+		}
+
+		bFlowAssetsLoaded = true;
 	}
 
 	ReconstructNode();

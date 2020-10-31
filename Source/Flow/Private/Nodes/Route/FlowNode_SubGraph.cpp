@@ -76,7 +76,7 @@ TArray<FName> UFlowNode_SubGraph::GetContextInputs()
 
 	if (!Asset.IsNull())
 	{
-		LoadAsset<UFlowAsset>(Asset);
+		Asset.LoadSynchronous();
 		for (const FName& PinName : Asset.Get()->GetCustomEvents())
 		{
 			if (!PinName.IsNone())
@@ -95,7 +95,7 @@ TArray<FName> UFlowNode_SubGraph::GetContextOutputs()
 
 	if (!Asset.IsNull())
 	{
-		LoadAsset<UFlowAsset>(Asset);
+		Asset.LoadSynchronous();
 		for (const FName& PinName : Asset.Get()->GetCustomOutputs())
 		{
 			if (!PinName.IsNone())
