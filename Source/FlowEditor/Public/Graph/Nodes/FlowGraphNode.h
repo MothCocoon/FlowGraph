@@ -57,15 +57,22 @@ private:
 	UFlowNode* FlowNode;
 
 	bool bNeedsFullReconstruction;
+	static bool bFlowAssetsLoaded;
 
 public:
 	void SetFlowNode(UFlowNode* InFlowNode);
 	UFlowNode* GetFlowNode() const;
 
+	// UObject
 	virtual void PostLoad() override;
 	virtual void PostDuplicate(bool bDuplicateForPIE) override;
 	virtual void PostEditImport() override;
+	// --
+
+	// UEdGraphNode
 	virtual void PrepareForCopying() override;
+    // --
+	
 	void PostCopyNode();
 
 private:
