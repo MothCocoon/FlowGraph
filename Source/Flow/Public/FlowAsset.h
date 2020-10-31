@@ -92,8 +92,6 @@ public:
 
 	void RegisterNode(const FGuid& NewGuid, UFlowNode* NewNode);
 	void UnregisterNode(const FGuid& NodeGuid);
-
-	void ReconstructGraphNodes() const;
 #endif
 
 	void HarvestNodeConnections();
