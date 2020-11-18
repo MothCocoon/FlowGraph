@@ -218,6 +218,12 @@ bool UFlowGraphSchema::IsFlowNodePlaceable(const UClass* Class)
 
 void UFlowGraphSchema::GatherFlowNodes()
 {
+	if (GEditor && GEditor->PlayWorld)
+	{
+		// prevent heavy asset crunching during PIE
+		return;
+	}
+	
 	FlowNodeClasses.Empty();
 
 	// collect C++ nodes only once per editor session
