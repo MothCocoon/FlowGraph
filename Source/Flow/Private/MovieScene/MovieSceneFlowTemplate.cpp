@@ -1,5 +1,6 @@
 #include "MovieScene/MovieSceneFlowTemplate.h"
 #include "MovieScene/MovieSceneFlowTrack.h"
+#include "Nodes/World/FlowNode_PlayLevelSequence.h"
 
 #include "Evaluation/MovieSceneEvaluation.h"
 #include "IMovieScenePlayer.h"
@@ -10,13 +11,11 @@ DECLARE_CYCLE_STAT(TEXT("Flow Track Token Execute"), MovieSceneEval_FlowTrack_To
 
 struct FFlowTrackExecutionToken final : IMovieSceneExecutionToken
 {
-	FFlowTrackExecutionToken(const FFlowEventExecution InEventDelegate, TArray<FString> InEventNames)
-		: EventDeletage(InEventDelegate)
-		, EventNames(MoveTemp(InEventNames))
+	FFlowTrackExecutionToken(TArray<FString> InEventNames)
+		: EventNames(MoveTemp(InEventNames))
 	{
 	}
 
-	FFlowEventExecution EventDeletage;
 	TArray<FString> EventNames;
 
 	virtual void Execute(const FMovieSceneContext& Context, const FMovieSceneEvaluationOperand& Operand, FPersistentEvaluationData& PersistentData, IMovieScenePlayer& Player) override
@@ -27,7 +26,10 @@ struct FFlowTrackExecutionToken final : IMovieSceneExecutionToken
 		{
 			for (UObject* EventReceiver : Player.GetEventContexts())
 			{
-				EventDeletage.ExecuteIfBound(EventReceiver, EventName);
+				if (UFlowNode_PlayLevelSequence* FlowNode = Cast<UFlowNode_PlayLevelSequence>(EventReceiver))
+				{
+					FlowNode->TriggerEvent(EventName);
+				}
 			}
 		}
 	}
@@ -96,7 +98,7 @@ void FMovieSceneFlowTriggerTemplate::EvaluateSwept(const FMovieSceneEvaluationOp
 
 	if (EventsToTrigger.Num())
 	{
-		ExecutionTokens.Add(FFlowTrackExecutionToken(OnEventExecutedDelegate, MoveTemp(EventsToTrigger)));
+		ExecutionTokens.Add(FFlowTrackExecutionToken(MoveTemp(EventsToTrigger)));
 	}
 }
 
@@ -121,7 +123,7 @@ void FMovieSceneFlowRepeaterTemplate::EvaluateSwept(const FMovieSceneEvaluationO
 
 	if ((!bBackwards && bFireEventsWhenForwards) || (bBackwards && bFireEventsWhenBackwards))
 	{
-		ExecutionTokens.Add(FFlowTrackExecutionToken(OnEventExecutedDelegate, {EventName}));
+		ExecutionTokens.Add(FFlowTrackExecutionToken({EventName}));
 	}
 }
 

@@ -3,10 +3,8 @@
 #include "MovieSceneSection.h"
 #include "MovieSceneFlowSectionBase.generated.h"
 
-DECLARE_DELEGATE_TwoParams(FFlowEventExecution, UObject* /*EventReceiver*/, const FString& /*EventName*/)
-
 /**
- * Base class for flow sections.
+ * Base class for flow sections
  */
 UCLASS()
 class FLOW_API UMovieSceneFlowSectionBase : public UMovieSceneSection
@@ -15,6 +13,4 @@ class FLOW_API UMovieSceneFlowSectionBase : public UMovieSceneSection
 
 public:
 	virtual TArrayView<FString> GetAllEntryPoints() { return TArrayView<FString>(); }
-
-	FFlowEventExecution OnEventExecuted;
 };

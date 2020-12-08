@@ -19,15 +19,12 @@ struct FMovieSceneFlowTemplateBase : public FMovieSceneEvalTemplate
 	}
 
 	FMovieSceneFlowTemplateBase(const UMovieSceneFlowTrack& InTrack, const UMovieSceneFlowSectionBase& InSection)
-		: OnEventExecutedDelegate(InSection.OnEventExecuted)
-		, bFireEventsWhenForwards(InTrack.bFireEventsWhenForwards)
+		: bFireEventsWhenForwards(InTrack.bFireEventsWhenForwards)
 		, bFireEventsWhenBackwards(InTrack.bFireEventsWhenBackwards)
 	{
 	}
 
 protected:
-	FFlowEventExecution OnEventExecutedDelegate;
-
 	UPROPERTY()
 	uint32 bFireEventsWhenForwards : 1;
 
