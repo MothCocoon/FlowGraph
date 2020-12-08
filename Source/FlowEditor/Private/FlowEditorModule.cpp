@@ -50,9 +50,8 @@ void FFlowEditorModule::StartupModule()
 	}
 
 	// register Flow sequence track
-	// todo: see https://github.com/MothCocoon/Flow/issues/9
-	//ISequencerModule& SequencerModule = FModuleManager::Get().LoadModuleChecked<ISequencerModule>("Sequencer");
-	//FlowTrackCreateEditorHandle = SequencerModule.RegisterTrackEditor(FOnCreateTrackEditor::CreateStatic(&FFlowTrackEditor::CreateTrackEditor));
+	ISequencerModule& SequencerModule = FModuleManager::Get().LoadModuleChecked<ISequencerModule>("Sequencer");
+	FlowTrackCreateEditorHandle = SequencerModule.RegisterTrackEditor(FOnCreateTrackEditor::CreateStatic(&FFlowTrackEditor::CreateTrackEditor));
 
 	// register detail customizations
 	RegisterCustomClassLayout(UFlowAsset::StaticClass(), FOnGetDetailCustomizationInstance::CreateStatic(&FFlowAssetDetails::MakeInstance));
@@ -81,9 +80,8 @@ void FFlowEditorModule::ShutdownModule()
 	FlowAssetExtensibility.Reset();
 
 	// unregister track editors
-	// todo: see https://github.com/MothCocoon/Flow/issues/9
-	//ISequencerModule& SequencerModule = FModuleManager::Get().LoadModuleChecked<ISequencerModule>("Sequencer");
-	//SequencerModule.UnRegisterTrackEditor(FlowTrackCreateEditorHandle);
+	ISequencerModule& SequencerModule = FModuleManager::Get().LoadModuleChecked<ISequencerModule>("Sequencer");
+	SequencerModule.UnRegisterTrackEditor(FlowTrackCreateEditorHandle);
 
 	// unregister details customizations
 	if (FModuleManager::Get().IsModuleLoaded("PropertyEditor"))
