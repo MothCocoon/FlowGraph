@@ -4,8 +4,8 @@
 #include "Nodes/FlowNode.h"
 #include "FlowNode_PlayLevelSequence.generated.h"
 
+class UFlowLevelSequencePlayer;
 class ULevelSequence;
-class ULevelSequencePlayer;
 
 DECLARE_MULTICAST_DELEGATE(FFlowNodeLevelSequenceEvent);
 
@@ -21,6 +21,8 @@ class FLOW_API UFlowNode_PlayLevelSequence : public UFlowNode
 {
 	GENERATED_UCLASS_BODY()
 
+	friend struct FFlowTrackExecutionToken;
+
 	static FFlowNodeLevelSequenceEvent OnPlaybackStarted;
 	static FFlowNodeLevelSequenceEvent OnPlaybackCompleted;
 
@@ -32,7 +34,7 @@ protected:
 	ULevelSequence* LoadedSequence;
 
 	UPROPERTY()
-	ULevelSequencePlayer* SequencePlayer;
+	UFlowLevelSequencePlayer* SequencePlayer;
 
 public:
 #if WITH_EDITOR
@@ -49,7 +51,6 @@ protected:
 	virtual void ExecuteInput(const FName& PinName) override;
 
 private:
-	static void OnSequenceEventExecuted(UObject* EventReceiver, const FString& EventName);
 	void TriggerEvent(const FString& EventName);
 
 public:
