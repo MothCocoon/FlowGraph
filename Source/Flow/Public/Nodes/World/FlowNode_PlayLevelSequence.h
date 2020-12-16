@@ -10,7 +10,7 @@ class ULevelSequence;
 DECLARE_MULTICAST_DELEGATE(FFlowNodeLevelSequenceEvent);
 
 /**
- * Order of triggering outputs
+ * Order of triggering outputs after calling Start
  * - PreStart, just before starting playback
  * - Started
  * - Out (always, even if Sequence is invalid)
@@ -40,6 +40,8 @@ public:
 #if WITH_EDITOR
 	virtual bool SupportsContextPins() const override { return true; }
 	virtual TArray<FName> GetContextOutputs() override;
+
+	virtual void PostEditChangeProperty(FPropertyChangedEvent& PropertyChangedEvent) override;
 #endif
 
 	virtual void PreloadContent() override;
