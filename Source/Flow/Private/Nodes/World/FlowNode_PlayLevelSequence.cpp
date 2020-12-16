@@ -23,9 +23,14 @@ UFlowNode_PlayLevelSequence::UFlowNode_PlayLevelSequence(const FObjectInitialize
 	NodeStyle = EFlowNodeStyle::Latent;
 #endif
 
+	InputNames.Empty();
+	InputNames.Add(TEXT("Start"));
+	InputNames.Add(TEXT("Stop"));
+
 	OutputNames.Add(TEXT("PreStart"));
 	OutputNames.Add(TEXT("Started"));
 	OutputNames.Add(TEXT("Completed"));
+	OutputNames.Add(TEXT("Stopped"));
 }
 
 #if WITH_EDITOR
@@ -63,6 +68,16 @@ TArray<FName> UFlowNode_PlayLevelSequence::GetContextOutputs()
 	}
 
 	return PinNames;
+}
+
+void UFlowNode_PlayLevelSequence::PostEditChangeProperty(FPropertyChangedEvent& PropertyChangedEvent)
+{
+	if (PropertyChangedEvent.Property && PropertyChangedEvent.GetPropertyName() == GET_MEMBER_NAME_CHECKED(UFlowNode_PlayLevelSequence, Sequence))
+	{
+		OnReconstructionRequested.ExecuteIfBound();
+	}
+
+	Super::PostEditChangeProperty(PropertyChangedEvent);
 }
 #endif
 
@@ -103,22 +118,33 @@ void UFlowNode_PlayLevelSequence::CreatePlayer(const FMovieSceneSequencePlayback
 
 void UFlowNode_PlayLevelSequence::ExecuteInput(const FName& PinName)
 {
-	const UWorld* World = GetFlowSubsystem()->GetWorld();
-	LoadedSequence = LoadAsset<ULevelSequence>(Sequence);
-
-	if (World && LoadedSequence)
+	if (PinName == TEXT("Start"))
 	{
-		CreatePlayer(FMovieSceneSequencePlaybackSettings());
+		LoadedSequence = LoadAsset<ULevelSequence>(Sequence);
 
-		TriggerOutput(TEXT("PreStart"));
+		if (GetFlowSubsystem()->GetWorld() && LoadedSequence)
+		{
+			CreatePlayer(FMovieSceneSequencePlaybackSettings());
 
-		SequencePlayer->OnFinished.AddDynamic(this, &UFlowNode_PlayLevelSequence::OnPlaybackFinished);
-		SequencePlayer->Play();
+			TriggerOutput(TEXT("PreStart"));
 
-		TriggerOutput(TEXT("Started"));
+			SequencePlayer->OnFinished.AddDynamic(this, &UFlowNode_PlayLevelSequence::OnPlaybackFinished);
+			SequencePlayer->Play();
+
+			TriggerOutput(TEXT("Started"));
+		}
+
+		TriggerFirstOutput(false);
 	}
+	else if (PinName == TEXT("Stop"))
+	{
+		if (SequencePlayer)
+		{
+			SequencePlayer->Stop();
+		}
 
-	TriggerFirstOutput(false);
+		TriggerOutput(TEXT("Stopped"), true);
+	}
 }
 
 void UFlowNode_PlayLevelSequence::TriggerEvent(const FString& EventName)
@@ -136,7 +162,7 @@ void UFlowNode_PlayLevelSequence::OnTimeDilationUpdate(const float NewTimeDilati
 
 void UFlowNode_PlayLevelSequence::OnPlaybackFinished()
 {
-	TriggerOutput(TEXT("Completed"));
+	TriggerOutput(TEXT("Completed"), true);
 }
 
 void UFlowNode_PlayLevelSequence::Cleanup()
