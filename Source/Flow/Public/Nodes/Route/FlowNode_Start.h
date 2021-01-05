@@ -4,7 +4,7 @@
 #include "FlowNode_Start.generated.h"
 
 /**
- * Start
+ * Execution of the graph always starts from this node
  */
 UCLASS(NotBlueprintable, NotPlaceable, meta = (DisplayName = "Start"))
 class FLOW_API UFlowNode_Start : public UFlowNode

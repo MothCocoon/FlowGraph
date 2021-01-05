@@ -4,7 +4,7 @@
 #include "FlowNode_ExecutionSequence.generated.h"
 
 /**
- * Execution Sequence
+ * Executes all outputs sequentially
  */
 UCLASS(NotBlueprintable, meta = (DisplayName = "Sequence"))
 class FLOW_API UFlowNode_ExecutionSequence final : public UFlowNode

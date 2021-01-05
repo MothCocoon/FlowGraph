@@ -5,6 +5,7 @@
 
 /**
  * Logical AND
+ * Output will be triggered only once
  */
 UCLASS(NotBlueprintable, meta = (DisplayName = "AND"))
 class FLOW_API UFlowNode_LogicalAND final : public UFlowNode

@@ -4,7 +4,7 @@
 #include "FlowNode_OnNotifyFromActor.generated.h"
 
 /**
- * On Notify From Actor
+ * Triggers output when Flow Component with matching Identity Tag calls NotifyGraph function with matching Notify Tag
  */
 UCLASS(NotBlueprintable, meta = (DisplayName = "On Notify From Actor"))
 class FLOW_API UFlowNode_OnNotifyFromActor : public UFlowNode_NotifyBase
