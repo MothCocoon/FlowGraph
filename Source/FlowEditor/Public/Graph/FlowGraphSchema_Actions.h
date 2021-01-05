@@ -3,6 +3,7 @@
 #include "EdGraph/EdGraphSchema.h"
 
 #include "Nodes/FlowGraphNode.h"
+#include "Nodes/FlowNode.h"
 #include "FlowGraphSchema_Actions.generated.h"
 
 /** Action to add a node to the graph */
@@ -29,8 +30,8 @@ struct FLOWEDITOR_API FFlowGraphSchemaAction_NewNode : public FEdGraphSchemaActi
 	{
 	}
 
-	FFlowGraphSchemaAction_NewNode(FText InNodeCategory, FText InMenuDesc, FText InToolTip, const int32 InGrouping)
-		: FEdGraphSchemaAction(MoveTemp(InNodeCategory), MoveTemp(InMenuDesc), MoveTemp(InToolTip), InGrouping)
+	FFlowGraphSchemaAction_NewNode(const UFlowNode* Node)
+		: FEdGraphSchemaAction(FText::FromString(Node->GetCategory()), Node->GetTitle(), Node->GetClass()->GetToolTipText(), 0)
 		, NodeClass(nullptr)
 	{
 	}
