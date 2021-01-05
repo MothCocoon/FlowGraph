@@ -183,15 +183,9 @@ void UFlowGraphSchema::GetFlowNodeActions(FGraphActionMenuBuilder& ActionMenuBui
 	for (UClass* FlowNodeClass : FlowNodeClasses)
 	{
 		const UFlowNode* FlowNode = FlowNodeClass->GetDefaultObject<UFlowNode>();
-
 		if (CategoryName.IsEmpty() || CategoryName.Equals(FlowNode->GetCategory()))
 		{
-			const FText Name = FlowNode->GetTitle();
-
-			FFormatNamedArguments Arguments;
-			Arguments.Add(TEXT("Name"), Name);
-			const FText AddToolTip = FText::Format(LOCTEXT("NewFlowNodeTooltip", "Adds {Name} node here"), Arguments);
-			TSharedPtr<FFlowGraphSchemaAction_NewNode> NewNodeAction(new FFlowGraphSchemaAction_NewNode(FText::FromString(FlowNode->GetCategory()), Name, AddToolTip, 0));
+			TSharedPtr<FFlowGraphSchemaAction_NewNode> NewNodeAction(new FFlowGraphSchemaAction_NewNode(FlowNode));
 			ActionMenuBuilder.AddAction(NewNodeAction);
 			NewNodeAction->NodeClass = FlowNodeClass;
 		}
