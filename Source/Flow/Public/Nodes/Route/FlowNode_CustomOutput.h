@@ -4,7 +4,8 @@
 #include "FlowNode_CustomOutput.generated.h"
 
 /**
- * Custom Output
+ * Triggers output on SubGraph node containing this graph
+ * Triggered output name matches EventName selected on this node
  */
 UCLASS(NotBlueprintable, meta = (DisplayName = "Custom Output"))
 class FLOW_API UFlowNode_CustomOutput final : public UFlowNode

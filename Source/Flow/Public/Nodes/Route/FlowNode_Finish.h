@@ -4,7 +4,8 @@
 #include "FlowNode_Finish.generated.h"
 
 /**
- * Finish
+ * Finish execution of this Flow Asset
+ * All active nodes and sub graphs will be deactivated
  */
 UCLASS(NotBlueprintable, meta = (DisplayName = "Finish"))
 class FLOW_API UFlowNode_Finish : public UFlowNode
