@@ -4,7 +4,7 @@
 #include "FlowNode_Timer.generated.h"
 
 /**
- * Timer
+ * Triggers outputs after time elapsed
  */
 UCLASS(NotBlueprintable, meta = (DisplayName = "Timer"))
 class FLOW_API UFlowNode_Timer final : public UFlowNode

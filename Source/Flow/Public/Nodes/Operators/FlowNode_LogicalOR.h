@@ -5,6 +5,7 @@
 
 /**
  * Logical OR
+ * Output will be triggered only once
  */
 UCLASS(NotBlueprintable, meta = (DisplayName = "OR"))
 class FLOW_API UFlowNode_LogicalOR final : public UFlowNode

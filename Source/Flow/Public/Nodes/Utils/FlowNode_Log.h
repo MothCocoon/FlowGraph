@@ -4,7 +4,8 @@
 #include "FlowNode_Log.generated.h"
 
 /**
- * Log
+ * Adds message to log
+ * Optionally shows message on screen
  */
 UCLASS(NotBlueprintable, meta = (DisplayName = "Log"))
 class FLOW_API UFlowNode_Log : public UFlowNode
