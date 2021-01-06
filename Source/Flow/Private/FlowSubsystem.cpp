@@ -18,7 +18,7 @@ void UFlowSubsystem::Initialize(FSubsystemCollectionBase& Collection)
 
 void UFlowSubsystem::Deinitialize()
 {
-	for (UFlowAsset* InstancedAsset : InstancedAssets)
+	for (UFlowAsset* InstancedAsset : InstancedTemplates)
 	{
 		if (InstancedAsset)
 		{
@@ -26,19 +26,25 @@ void UFlowSubsystem::Deinitialize()
 		}
 	}
 
-	InstancedAssets.Empty();
+	InstancedTemplates.Empty();
 	InstancedSubFlows.Empty();
 }
 
-void UFlowSubsystem::StartFlow(UFlowAsset* FlowAsset)
+void UFlowSubsystem::StartRootFlow(UObject* Owner, UFlowAsset* FlowAsset)
 {
 	UFlowAsset* NewFlow = CreateFlowInstance(FlowAsset);
+	RootInstances.Add(Owner, NewFlow);
+
 	NewFlow->StartFlow();
 }
 
-void UFlowSubsystem::EndFlow(UFlowAsset* FlowAsset)
+void UFlowSubsystem::FinishRootFlow(UObject* Owner, UFlowAsset* FlowAsset)
 {
-	// todo
+	if (UFlowAsset* Instance = RootInstances.FindRef(Owner))
+	{
+		RootInstances.Remove(FlowAsset);
+		Instance->FinishFlow(false);
+	}
 }
 
 void UFlowSubsystem::PreloadSubFlow(UFlowNode_SubGraph* SubFlow)
@@ -52,21 +58,6 @@ void UFlowSubsystem::PreloadSubFlow(UFlowNode_SubGraph* SubFlow)
 	}
 }
 
-void UFlowSubsystem::FlushPreload(UFlowNode_SubGraph* SubFlow)
-{
-	if (UFlowAsset* PreloadedAsset = InstancedSubFlows.FindRef(SubFlow))
-	{
-		PreloadedAsset->FlushPreload();
-		InstancedSubFlows.Remove(SubFlow);
-
-		const int32 ActiveInstancesLeft = SubFlow->Asset.Get()->RemoveInstance(PreloadedAsset);
-		if (ActiveInstancesLeft == 0)
-		{
-			InstancedAssets.Remove(SubFlow->Asset.Get());
-		}
-	}
-}
-
 void UFlowSubsystem::StartSubFlow(UFlowNode_SubGraph* SubFlow)
 {
 	if (!InstancedSubFlows.Contains(SubFlow))
@@ -76,7 +67,21 @@ void UFlowSubsystem::StartSubFlow(UFlowNode_SubGraph* SubFlow)
 	}
 
 	// get instanced asset from map - in case it was already instanced by PreloadSubFlow()
-	InstancedSubFlows[SubFlow]->StartSubFlow(SubFlow);
+	InstancedSubFlows[SubFlow]->StartAsSubFlow(SubFlow);
+}
+
+void UFlowSubsystem::FinishSubFlow(UFlowNode_SubGraph* SubFlow)
+{
+	if (UFlowAsset* Instance = InstancedSubFlows.FindRef(SubFlow))
+	{
+		InstancedSubFlows.Remove(SubFlow);
+		Instance->FinishFlow(false);
+	}
+}
+
+void UFlowSubsystem::RemoveInstancedTemplate(UFlowAsset* Template)
+{
+	InstancedTemplates.Remove(Template);
 }
 
 UFlowAsset* UFlowSubsystem::CreateFlowInstance(TSoftObjectPtr<UFlowAsset> FlowAsset)
@@ -89,7 +94,7 @@ UFlowAsset* UFlowSubsystem::CreateFlowInstance(TSoftObjectPtr<UFlowAsset> FlowAs
 		FlowAsset = Cast<UFlowAsset>(Streamable.LoadSynchronous(AssetRef, false));
 	}
 
-	InstancedAssets.Add(FlowAsset.Get());
+	InstancedTemplates.Add(FlowAsset.Get());
 
 #if WITH_EDITOR
 	if (GetWorld()->WorldType != EWorldType::Game)

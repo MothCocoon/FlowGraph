@@ -23,12 +23,16 @@ class FLOW_API UFlowSubsystem : public UGameInstanceSubsystem
 	UFlowSubsystem();
 
 	FStreamableManager Streamable;
-
-	// all instanced assets
+	
+	// all asset templates with active instances
 	UPROPERTY()
-	TSet<UFlowAsset*> InstancedAssets;
+	TSet<UFlowAsset*> InstancedTemplates;
 
-	// instanced assets "owned" by Sub Flow nodes
+	// asset instanced by object from another system like World Settings, not SubGraph node
+	UPROPERTY()
+	TMap<UObject*, UFlowAsset*> RootInstances;
+	
+	// assets instanced by Sub Graph nodes
 	UPROPERTY()
 	TMap<UFlowNode_SubGraph*, UFlowAsset*> InstancedSubFlows;
 
@@ -36,13 +40,17 @@ public:
 	virtual void Initialize(FSubsystemCollectionBase& Collection) override;
 	virtual void Deinitialize() override;
 
-	void StartFlow(UFlowAsset* FlowAsset);
-	void EndFlow(UFlowAsset* FlowAsset);
+	// Start the root Flow, graph that will eventually instantiate next Flow Graphs through the SubGraph node
+	void StartRootFlow(UObject* Owner, UFlowAsset* FlowAsset);
+
+	// Finish the root Flow, typically when closing world that created this flow
+	void FinishRootFlow(UObject* Owner, UFlowAsset* FlowAsset);
 
 	void PreloadSubFlow(UFlowNode_SubGraph* SubFlow);
-	void FlushPreload(UFlowNode_SubGraph* SubFlow);
-
 	void StartSubFlow(UFlowNode_SubGraph* SubFlow);
+	void FinishSubFlow(UFlowNode_SubGraph* SubFlow);
+
+	void RemoveInstancedTemplate(UFlowAsset* Template);
 
 private:
 	UFlowAsset* CreateFlowInstance(TSoftObjectPtr<UFlowAsset> FlowAsset);
