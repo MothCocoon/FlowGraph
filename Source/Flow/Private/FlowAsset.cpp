@@ -153,12 +153,7 @@ void UFlowAsset::ClearInstances()
 
 	for (UFlowAsset* Instance : ActiveInstances)
 	{
-		for (UFlowNode* Node : Instance->ActiveNodes)
-		{
-			Node->Cleanup();
-		}
-
-		Instance->ActiveNodes.Empty();
+		Instance->FinishFlow(false);
 	}
 
 	ActiveInstances.Empty();
@@ -255,15 +250,6 @@ void UFlowAsset::PreloadNodes()
 	}
 }
 
-void UFlowAsset::FlushPreload()
-{
-	for (UFlowNode* PreloadedNode : PreloadedNodes)
-	{
-		PreloadedNode->TriggerFlush();
-	}
-	PreloadedNodes.Empty();
-}
-
 void UFlowAsset::StartFlow()
 {
 	ResetNodes();
@@ -284,12 +270,48 @@ void UFlowAsset::StartFlow()
 	StartNode->TriggerFirstOutput(true);
 }
 
-void UFlowAsset::StartSubFlow(UFlowNode_SubGraph* SubGraphNode)
+void UFlowAsset::StartAsSubFlow(UFlowNode_SubGraph* SubGraphNode)
 {
 	NodeOwningThisAssetInstance = SubGraphNode;
 	NodeOwningThisAssetInstance->GetFlowAsset()->ActiveSubGraphs.Add(SubGraphNode, this);
 
 	StartFlow();
+}
+
+void UFlowAsset::FinishFlow(const bool bFlowCompleted)
+{
+	// end execution of this asset and all of its nodes
+	for (UFlowNode* Node : ActiveNodes)
+	{
+		Node->Deactivate();
+	}
+	ActiveNodes.Empty();
+
+	// flush preloaded content
+	for (UFlowNode* PreloadedNode : PreloadedNodes)
+	{
+		PreloadedNode->TriggerFlush();
+	}
+	PreloadedNodes.Empty();
+
+	// clear instance entries
+	const int32 ActiveInstancesLeft = TemplateAsset->RemoveInstance(this);
+	if (ActiveInstancesLeft == 0 && GetFlowSubsystem())
+	{
+		GetFlowSubsystem()->RemoveInstancedTemplate(TemplateAsset);
+	}
+
+	// if this instance was created by SubGraph node
+	if (NodeOwningThisAssetInstance.IsValid())
+	{
+		NodeOwningThisAssetInstance->GetFlowAsset()->ActiveSubGraphs.Remove(NodeOwningThisAssetInstance.Get());
+		if (bFlowCompleted)
+		{
+			NodeOwningThisAssetInstance.Get()->TriggerFirstOutput(true);
+		}
+
+		NodeOwningThisAssetInstance = nullptr;
+	}
 }
 
 TWeakObjectPtr<UFlowAsset> UFlowAsset::GetFlowInstance(UFlowNode_SubGraph* SubGraphNode) const
@@ -335,10 +357,9 @@ void UFlowAsset::FinishNode(UFlowNode* Node)
 	{
 		ActiveNodes.Remove(Node);
 
-		if (Node->GetClass()->IsChildOf(UFlowNode_Finish::StaticClass()) && NodeOwningThisAssetInstance.IsValid())
+		if (Node->GetClass()->IsChildOf(UFlowNode_Finish::StaticClass()))
 		{
-			NodeOwningThisAssetInstance.Get()->TriggerFirstOutput(true);
-			NodeOwningThisAssetInstance = nullptr;
+			FinishFlow(true);
 		}
 	}
 }

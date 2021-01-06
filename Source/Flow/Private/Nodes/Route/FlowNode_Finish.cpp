@@ -13,5 +13,6 @@ UFlowNode_Finish::UFlowNode_Finish(const FObjectInitializer& ObjectInitializer)
 
 void UFlowNode_Finish::ExecuteInput(const FName& PinName)
 {
-	TriggerFirstOutput(true);
+	// this will call FinishFlow()
+	Finish();
 }

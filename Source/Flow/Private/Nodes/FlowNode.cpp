@@ -257,12 +257,17 @@ void UFlowNode::TriggerOutput(const FName& PinName, const bool bFinish /*= false
 
 void UFlowNode::Finish()
 {
+	Deactivate();
+	GetFlowAsset()->FinishNode(this);
+}
+
+void UFlowNode::Deactivate()
+{
 #if !UE_BUILD_SHIPPING
 	ActivationState = EFlowActivationState::WasActive;
 #endif
 
 	Cleanup();
-	GetFlowAsset()->FinishNode(this);
 }
 
 void UFlowNode::Cleanup()

@@ -4,7 +4,7 @@
 #include "FlowNode_SubGraph.generated.h"
 
 /**
- * Sub Graph
+ * Creates instance of provided Flow Asset and starts its execution
  */
 UCLASS(NotBlueprintable, meta = (DisplayName = "Sub Graph"))
 class FLOW_API UFlowNode_SubGraph : public UFlowNode
@@ -13,7 +13,6 @@ class FLOW_API UFlowNode_SubGraph : public UFlowNode
 	
 	friend class UFlowSubsystem;
 
-public:
 	static FName StartPinName;
 	static FName FinishPinName;
 	
@@ -26,6 +25,7 @@ protected:
 	virtual void FlushContent() override;
 
 	virtual void ExecuteInput(const FName& PinName) override;
+	virtual void Cleanup() override;
 
 public:
 	virtual void ForceFinishNode() override;
