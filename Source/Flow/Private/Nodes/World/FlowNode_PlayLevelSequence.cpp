@@ -17,6 +17,7 @@ UFlowNode_PlayLevelSequence::UFlowNode_PlayLevelSequence(const FObjectInitialize
 	: Super(ObjectInitializer)
 	, LoadedSequence(nullptr)
 	, SequencePlayer(nullptr)
+	, StartTime(0.0f)
 {
 #if WITH_EDITOR
 	Category = TEXT("World");
@@ -113,6 +114,10 @@ void UFlowNode_PlayLevelSequence::CreatePlayer(const FMovieSceneSequencePlayback
 		ALevelSequenceActor* SequenceActor;
 		SequencePlayer = UFlowLevelSequencePlayer::CreateFlowLevelSequencePlayer(this, LoadedSequence, PlaybackSettings, SequenceActor);
 		SequencePlayer->SetFlowEventReceiver(this);
+
+		const FFrameRate FrameRate = LoadedSequence->GetMovieScene()->GetTickResolution();
+		const FFrameNumber PlaybackStartFrame = LoadedSequence->GetMovieScene()->GetPlaybackRange().GetLowerBoundValue();
+		StartTime = FQualifiedFrameTime(FFrameTime(PlaybackStartFrame, 0.0f), FrameRate).AsSeconds();
 	}
 }
 
@@ -176,6 +181,7 @@ void UFlowNode_PlayLevelSequence::Cleanup()
 	}
 
 	LoadedSequence = nullptr;
+	StartTime = 0.0f;
 
 #if ENABLE_VISUAL_LOG
 	UE_VLOG(this, LogFlow, Log, TEXT("Finished playback: %s"), *Sequence.ToString());
@@ -186,7 +192,7 @@ FString UFlowNode_PlayLevelSequence::GetPlaybackProgress() const
 {
 	if (SequencePlayer && SequencePlayer->IsPlaying())
 	{
-		return GetProgressAsString(SequencePlayer->GetCurrentTime().AsSeconds()) + TEXT(" / ") + GetProgressAsString(SequencePlayer->GetDuration().AsSeconds());
+		return GetProgressAsString(SequencePlayer->GetCurrentTime().AsSeconds() - StartTime) + TEXT(" / ") + GetProgressAsString(SequencePlayer->GetDuration().AsSeconds());
 	}
 
 	return FString();

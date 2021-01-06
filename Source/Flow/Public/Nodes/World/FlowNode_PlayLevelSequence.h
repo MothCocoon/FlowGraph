@@ -36,6 +36,8 @@ protected:
 	UPROPERTY()
 	UFlowLevelSequencePlayer* SequencePlayer;
 
+	float StartTime;
+
 public:
 #if WITH_EDITOR
 	virtual bool SupportsContextPins() const override { return true; }
