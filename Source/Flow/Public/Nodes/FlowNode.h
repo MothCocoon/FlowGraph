@@ -12,6 +12,7 @@ class UEdGraphNode;
 class UFlowAsset;
 class UFlowSubsystem;
 
+// Processing Flow Nodes creates map of connected pins
 USTRUCT()
 struct FLOW_API FConnectedPin
 {
@@ -36,6 +37,7 @@ struct FLOW_API FConnectedPin
 	}
 };
 
+// Every time pin is activated, we record it and display this data while user hovers mouse over pin
 #if !UE_BUILD_SHIPPING
 struct FLOW_API FPinRecord
 {
@@ -231,6 +233,8 @@ protected:
 	// Finish execution of node, it will call Cleanup
 	UFUNCTION(BlueprintCallable, Category = "FlowNode")
 	void Finish();
+
+	void Deactivate();
 
 	// Method called after node finished the work
 	virtual void Cleanup();

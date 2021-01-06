@@ -30,7 +30,7 @@ void UFlowNode_SubGraph::FlushContent()
 {
 	if (!Asset.IsNull())
 	{
-		GetFlowSubsystem()->FlushPreload(this);
+		GetFlowSubsystem()->FinishSubFlow(this);
 	}
 }
 
@@ -51,6 +51,14 @@ void UFlowNode_SubGraph::ExecuteInput(const FName& PinName)
 		{
 			GetFlowAsset()->TriggerCustomEvent(this, PinName);
 		}
+	}
+}
+
+void UFlowNode_SubGraph::Cleanup()
+{
+	if (!Asset.IsNull())
+	{
+		GetFlowSubsystem()->FinishSubFlow(this);
 	}
 }
 
