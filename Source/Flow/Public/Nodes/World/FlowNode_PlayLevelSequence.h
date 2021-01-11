@@ -64,6 +64,10 @@ protected:
 	UFUNCTION()
 	virtual void OnPlaybackFinished();
 
+public:
+	virtual void StopPlayback();
+
+protected:
 	virtual void Cleanup() override;
 
 public:

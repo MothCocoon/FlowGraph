@@ -17,7 +17,7 @@ UFlowNode_PlayLevelSequence::UFlowNode_PlayLevelSequence(const FObjectInitialize
 	: Super(ObjectInitializer)
 	, LoadedSequence(nullptr)
 	, SequencePlayer(nullptr)
-	, StartTime(0.0f)
+	, StartTime(0)
 {
 #if WITH_EDITOR
 	Category = TEXT("World");
@@ -143,12 +143,7 @@ void UFlowNode_PlayLevelSequence::ExecuteInput(const FName& PinName)
 	}
 	else if (PinName == TEXT("Stop"))
 	{
-		if (SequencePlayer)
-		{
-			SequencePlayer->Stop();
-		}
-
-		TriggerOutput(TEXT("Stopped"), true);
+		StopPlayback();
 	}
 }
 
@@ -168,6 +163,16 @@ void UFlowNode_PlayLevelSequence::OnTimeDilationUpdate(const float NewTimeDilati
 void UFlowNode_PlayLevelSequence::OnPlaybackFinished()
 {
 	TriggerOutput(TEXT("Completed"), true);
+}
+
+void UFlowNode_PlayLevelSequence::StopPlayback()
+{
+	if (SequencePlayer)
+	{
+		SequencePlayer->Stop();
+	}
+
+	TriggerOutput(TEXT("Stopped"), true);
 }
 
 void UFlowNode_PlayLevelSequence::Cleanup()
