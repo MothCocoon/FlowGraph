@@ -151,9 +151,12 @@ void UFlowAsset::ClearInstances()
 	}
 #endif
 
-	for (UFlowAsset* Instance : ActiveInstances)
+	for (int32 i = ActiveInstances.Num() - 1; i >= 0; i--)
 	{
-		Instance->FinishFlow(false);
+		if (ActiveInstances[i])
+		{
+			ActiveInstances[i]->FinishFlow(false);
+		}
 	}
 
 	ActiveInstances.Empty();
