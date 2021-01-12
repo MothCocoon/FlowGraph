@@ -3,8 +3,6 @@
 
 #include "Engine/World.h"
 
-FFlowComponentNotify UFlowComponent::OnNotifyFromComponent;
-
 UFlowComponent::UFlowComponent(const FObjectInitializer& ObjectInitializer)
 	: Super(ObjectInitializer)
 {
