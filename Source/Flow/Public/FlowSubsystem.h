@@ -26,7 +26,7 @@ class FLOW_API UFlowSubsystem : public UGameInstanceSubsystem
 	
 	// all asset templates with active instances
 	UPROPERTY()
-	TSet<UFlowAsset*> InstancedTemplates;
+	TArray<UFlowAsset*> InstancedTemplates;
 
 	// asset instanced by object from another system like World Settings, not SubGraph node
 	UPROPERTY()

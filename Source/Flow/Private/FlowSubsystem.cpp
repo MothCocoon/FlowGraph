@@ -18,14 +18,14 @@ void UFlowSubsystem::Initialize(FSubsystemCollectionBase& Collection)
 
 void UFlowSubsystem::Deinitialize()
 {
-	for (UFlowAsset* InstancedAsset : InstancedTemplates)
+	for (int32 i = InstancedTemplates.Num() - 1; i >= 0; i--)
 	{
-		if (InstancedAsset)
+		if (InstancedTemplates[i])
 		{
-			InstancedAsset->ClearInstances();
+			InstancedTemplates[i]->ClearInstances();
 		}
 	}
-
+	
 	InstancedTemplates.Empty();
 	InstancedSubFlows.Empty();
 }
