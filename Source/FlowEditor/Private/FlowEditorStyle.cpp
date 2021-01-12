@@ -39,6 +39,8 @@ void FFlowEditorStyle::Initialize()
 	StyleSet->Set("FlowGraph.BreakpointHit", new IMAGE_BRUSH("Old/Kismet2/IP_Breakpoint", Icon40));
 	StyleSet->Set("FlowGraph.PinBreakpointHit", new IMAGE_BRUSH("Old/Kismet2/IP_Breakpoint", Icon30));
 
+	StyleSet->Set( "GraphEditor.Sequence_16x", new IMAGE_BRUSH("Icons/icon_Blueprint_Sequence_16x", Icon16));
+
 	// Flow assets
 	StyleSet->SetContentRoot(IPluginManager::Get().FindPlugin(TEXT("Flow"))->GetBaseDir() / TEXT("Resources"));
 
