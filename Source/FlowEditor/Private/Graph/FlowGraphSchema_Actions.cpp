@@ -2,19 +2,12 @@
 
 #include "Asset/FlowAssetEditor.h"
 #include "Graph/FlowGraph.h"
+#include "Graph/FlowGraphSchema.h"
 #include "Graph/FlowGraphUtils.h"
-
 #include "Graph/Nodes/FlowGraphNode.h"
-#include "Graph/Nodes/FlowGraphNode_In.h"
-#include "Graph/Nodes/FlowGraphNode_Out.h"
-#include "Graph/Nodes/FlowGraphNode_Reroute.h"
 
 #include "FlowAsset.h"
 #include "Nodes/FlowNode.h"
-
-#include "Nodes/Route/FlowNode_Start.h"
-#include "Nodes/Route/FlowNode_Finish.h"
-#include "Nodes/Route/FlowNode_Reroute.h"
 
 #include "Developer/ToolMenus/Public/ToolMenus.h"
 #include "EdGraph/EdGraph.h"
@@ -36,25 +29,10 @@ UEdGraphNode* FFlowGraphSchemaAction_NewNode::PerformAction(class UEdGraph* Pare
 		return nullptr;
 	}
 
-	if (NodeClass->IsChildOf(UFlowNode_Start::StaticClass()))
-	{
-		return CreateNode(ParentGraph, FromPin, UFlowNode_Start::StaticClass(), UFlowGraphNode_In::StaticClass(), Location, bSelectNewNode);
-	}
-
-	if (NodeClass->IsChildOf(UFlowNode_Finish::StaticClass()))
-	{
-		return CreateNode(ParentGraph, FromPin, UFlowNode_Finish::StaticClass(), UFlowGraphNode_Out::StaticClass(), Location, bSelectNewNode);
-	}
-
-	if (NodeClass->IsChildOf(UFlowNode_Reroute::StaticClass()))
-	{
-		return CreateNode(ParentGraph, FromPin, UFlowNode_Reroute::StaticClass(), UFlowGraphNode_Reroute::StaticClass(), Location, bSelectNewNode);
-	}
-
-	return CreateNode(ParentGraph, FromPin, NodeClass, UFlowGraphNode::StaticClass(), Location, bSelectNewNode);
+	return CreateNode(ParentGraph, FromPin, NodeClass, Location, bSelectNewNode);
 }
 
-UFlowGraphNode* FFlowGraphSchemaAction_NewNode::CreateNode(UEdGraph* ParentGraph, UEdGraphPin* FromPin, UClass* NodeClass, UClass* GraphNodeClass, const FVector2D Location, const bool bSelectNewNode /*= true*/)
+UFlowGraphNode* FFlowGraphSchemaAction_NewNode::CreateNode(UEdGraph* ParentGraph, UEdGraphPin* FromPin, UClass* NodeClass, const FVector2D Location, const bool bSelectNewNode /*= true*/)
 {
 	check(NodeClass);
 
@@ -69,6 +47,7 @@ UFlowGraphNode* FFlowGraphSchemaAction_NewNode::CreateNode(UEdGraph* ParentGraph
 	UFlowAsset* FlowAsset = CastChecked<UFlowGraph>(ParentGraph)->GetFlowAsset();
 	FlowAsset->Modify();
 
+	const UClass* GraphNodeClass = UFlowGraphSchema::GetAssignedGraphNodeClass(NodeClass);
 	UFlowGraphNode* NewGraphNode = NewObject<UFlowGraphNode>(ParentGraph, GraphNodeClass, NAME_None, RF_Transactional);
 	NewGraphNode->CreateNewGuid();
 

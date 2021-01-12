@@ -149,8 +149,7 @@ TSharedPtr<FEdGraphSchemaAction> FFlowSpawnNodeCommands::GetActionByClass(UClass
 	}
 	else
 	{
-		TSharedPtr<FFlowGraphSchemaAction_NewNode> NewNodeAction(new FFlowGraphSchemaAction_NewNode);
-		NewNodeAction->NodeClass = NodeClass;
+		TSharedPtr<FFlowGraphSchemaAction_NewNode> NewNodeAction(new FFlowGraphSchemaAction_NewNode(NodeClass));
 		return NewNodeAction;
 	}
 }
