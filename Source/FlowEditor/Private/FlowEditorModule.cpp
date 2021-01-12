@@ -5,6 +5,7 @@
 #include "Asset/FlowAssetDetails.h"
 #include "Asset/FlowAssetEditor.h"
 #include "Graph/Customizations/FlowNode_Details.h"
+#include "Graph/Customizations/FlowNode_ComponentObserverDetails.h"
 #include "Graph/Customizations/FlowNode_CustomEventDetails.h"
 #include "Graph/Customizations/FlowNode_CustomOutputDetails.h"
 #include "Graph/Customizations/FlowNode_PlayLevelSequenceDetails.h"
@@ -16,6 +17,7 @@
 #include "FlowAsset.h"
 #include "Nodes/Route/FlowNode_CustomEvent.h"
 #include "Nodes/Route/FlowNode_CustomOutput.h"
+#include "Nodes/World/FlowNode_ComponentObserver.h"
 #include "Nodes/World/FlowNode_PlayLevelSequence.h"
 
 #include "AssetToolsModule.h"
@@ -56,6 +58,7 @@ void FFlowEditorModule::StartupModule()
 	// register detail customizations
 	RegisterCustomClassLayout(UFlowAsset::StaticClass(), FOnGetDetailCustomizationInstance::CreateStatic(&FFlowAssetDetails::MakeInstance));
 	RegisterCustomClassLayout(UFlowNode::StaticClass(), FOnGetDetailCustomizationInstance::CreateStatic(&FFlowNode_Details::MakeInstance));
+	RegisterCustomClassLayout(UFlowNode_ComponentObserver::StaticClass(), FOnGetDetailCustomizationInstance::CreateStatic(&FFlowNode_ComponentObserverDetails::MakeInstance));
 	RegisterCustomClassLayout(UFlowNode_CustomEvent::StaticClass(), FOnGetDetailCustomizationInstance::CreateStatic(&FFlowNode_CustomEventDetails::MakeInstance));
 	RegisterCustomClassLayout(UFlowNode_CustomOutput::StaticClass(), FOnGetDetailCustomizationInstance::CreateStatic(&FFlowNode_CustomOutputDetails::MakeInstance));
 	RegisterCustomClassLayout(UFlowNode_PlayLevelSequence::StaticClass(), FOnGetDetailCustomizationInstance::CreateStatic(&FFlowNode_PlayLevelSequenceDetails::MakeInstance));
