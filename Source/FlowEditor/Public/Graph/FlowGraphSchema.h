@@ -21,12 +21,13 @@ class FLOWEDITOR_API UFlowGraphSchema : public UEdGraphSchema
 	virtual bool ShouldHidePinDefaultValue(UEdGraphPin* Pin) const override;
 	virtual FLinearColor GetPinTypeColor(const FEdGraphPinType& PinType) const override;
 	virtual void BreakNodeLinks(UEdGraphNode& TargetNode) const override;
-	virtual void BreakPinLinks(UEdGraphPin& TargetPin, bool bSendsNodeNotifcation) const override;
+	virtual void BreakPinLinks(UEdGraphPin& TargetPin, bool bSendsNodeNotification) const override;
 	virtual int32 GetNodeSelectionCount(const UEdGraph* Graph) const override;
 	virtual TSharedPtr<FEdGraphSchemaAction> GetCreateCommentAction() const override;
 	// --
 
 	static TArray<TSharedPtr<FString>> GetFlowNodeCategories();
+	static UClass* GetAssignedGraphNodeClass(const UClass* FlowNodeClass);
 
 private:
 	static void GetFlowNodeActions(FGraphActionMenuBuilder& ActionMenuBuilder, const FString& CategoryName);
@@ -50,4 +51,6 @@ private:
 	static TMap<FString, UClass*> BlueprintFlowNodes;
 	static TArray<UClass*> FlowNodeClasses;
 	static TArray<TSharedPtr<FString>> FlowNodeCategories;
+
+	static TMap<UClass*, UClass*> AssignedGraphNodeClasses;
 };

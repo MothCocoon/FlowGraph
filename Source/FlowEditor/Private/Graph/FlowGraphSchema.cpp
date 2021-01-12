@@ -5,7 +5,6 @@
 #include "Graph/FlowGraphSchema_Actions.h"
 #include "Graph/FlowGraphUtils.h"
 #include "Graph/Nodes/FlowGraphNode.h"
-#include "Graph/Nodes/FlowGraphNode_In.h"
 
 #include "FlowAsset.h"
 #include "Nodes/FlowNode.h"
@@ -25,6 +24,8 @@ TArray<UClass*> UFlowGraphSchema::NativeFlowNodes;
 TMap<FString, UClass*> UFlowGraphSchema::BlueprintFlowNodes;
 TArray<UClass*> UFlowGraphSchema::FlowNodeClasses;
 TArray<TSharedPtr<FString>> UFlowGraphSchema::FlowNodeCategories;
+
+TMap<UClass*, UClass*> UFlowGraphSchema::AssignedGraphNodeClasses;
 
 FFlowGraphSchemaRefresh UFlowGraphSchema::OnNodeListChanged;
 
@@ -71,7 +72,7 @@ void UFlowGraphSchema::GetGraphContextActions(FGraphContextMenuBuilder& ContextM
 void UFlowGraphSchema::CreateDefaultNodesForGraph(UEdGraph& Graph) const
 {
 	// Start node
-	UFlowGraphNode* NewGraphNode = FFlowGraphSchemaAction_NewNode::CreateNode(&Graph, nullptr, UFlowNode_Start::StaticClass(), UFlowGraphNode_In::StaticClass(), FVector2D::ZeroVector);
+	UFlowGraphNode* NewGraphNode = FFlowGraphSchemaAction_NewNode::CreateNode(&Graph, nullptr, UFlowNode_Start::StaticClass(), FVector2D::ZeroVector);
 	SetNodeMetaData(NewGraphNode, FNodeMetadata::DefaultGraphNode);
 
 	CastChecked<UFlowGraph>(&Graph)->GetFlowAsset()->HarvestNodeConnections();
@@ -146,18 +147,18 @@ void UFlowGraphSchema::BreakNodeLinks(UEdGraphNode& TargetNode) const
 	TargetNode.GetGraph()->NotifyGraphChanged();
 }
 
-void UFlowGraphSchema::BreakPinLinks(UEdGraphPin& TargetPin, bool bSendsNodeNotifcation) const
+void UFlowGraphSchema::BreakPinLinks(UEdGraphPin& TargetPin, bool bSendsNodeNotification) const
 {
 	const FScopedTransaction Transaction(LOCTEXT("GraphEd_BreakPinLinks", "Break Pin Links"));
 
-	Super::BreakPinLinks(TargetPin, bSendsNodeNotifcation);
+	Super::BreakPinLinks(TargetPin, bSendsNodeNotification);
 
 	if (TargetPin.bOrphanedPin)
 	{
 		// this calls NotifyGraphChanged()
 		Cast<UFlowGraphNode>(TargetPin.GetOwningNode())->RemoveOrphanedPin(&TargetPin);
 	}
-	else if (bSendsNodeNotifcation)
+	else if (bSendsNodeNotification)
 	{
 		TargetPin.GetOwningNode()->GetGraph()->NotifyGraphChanged();
 	}
@@ -171,6 +172,16 @@ TArray<TSharedPtr<FString>> UFlowGraphSchema::GetFlowNodeCategories()
 	}
 
 	return FlowNodeCategories;
+}
+
+UClass* UFlowGraphSchema::GetAssignedGraphNodeClass(const UClass* FlowNodeClass)
+{
+	if (UClass* AssignedGraphNode = AssignedGraphNodeClasses.FindRef(FlowNodeClass))
+	{
+		return AssignedGraphNode;
+	}
+
+	return UFlowGraphNode::StaticClass();
 }
 
 void UFlowGraphSchema::GetFlowNodeActions(FGraphActionMenuBuilder& ActionMenuBuilder, const FString& CategoryName)
@@ -187,7 +198,6 @@ void UFlowGraphSchema::GetFlowNodeActions(FGraphActionMenuBuilder& ActionMenuBui
 		{
 			TSharedPtr<FFlowGraphSchemaAction_NewNode> NewNodeAction(new FFlowGraphSchemaAction_NewNode(FlowNode));
 			ActionMenuBuilder.AddAction(NewNodeAction);
-			NewNodeAction->NodeClass = FlowNodeClass;
 		}
 	}
 }
@@ -217,17 +227,31 @@ void UFlowGraphSchema::GatherFlowNodes()
 		// prevent heavy asset crunching during PIE
 		return;
 	}
-	
+
 	FlowNodeClasses.Empty();
 
-	// collect C++ nodes only once per editor session
+	// collect C++ nodes once per editor session
 	if (NativeFlowNodes.Num() == 0)
 	{
 		for (TObjectIterator<UClass> It; It; ++It)
 		{
-			if (It->ClassGeneratedBy == nullptr && It->IsChildOf(UFlowNode::StaticClass()) && IsFlowNodePlaceable(*It))
+			if (It->IsChildOf(UFlowNode::StaticClass()))
 			{
-				NativeFlowNodes.Emplace(*It);
+				if (It->ClassGeneratedBy == nullptr && IsFlowNodePlaceable(*It))
+				{
+					NativeFlowNodes.Emplace(*It);
+				}
+			}
+			else if (It->IsChildOf(UFlowGraphNode::StaticClass()))
+			{
+				const UFlowGraphNode* DefaultObject = It->GetDefaultObject<UFlowGraphNode>();
+				for (UClass* AssignedClass : DefaultObject->AssignedNodeClasses)
+				{
+					if (AssignedClass->IsChildOf(UFlowNode::StaticClass()))
+					{
+						AssignedGraphNodeClasses.Emplace(AssignedClass, *It);
+					}
+				}
 			}
 		}
 	}
