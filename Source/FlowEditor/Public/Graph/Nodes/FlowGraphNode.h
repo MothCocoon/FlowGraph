@@ -60,6 +60,11 @@ private:
 	static bool bFlowAssetsLoaded;
 
 public:
+	// actually, it would be intuitive to assign a custom Graph Node class in Flow Node class
+	// although we shouldn't assign class from editor module to runtime module class
+	UPROPERTY()
+	TArray<TSubclassOf<UFlowNode>> AssignedNodeClasses;
+	
 	void SetFlowNode(UFlowNode* InFlowNode);
 	UFlowNode* GetFlowNode() const;
 
@@ -117,6 +122,7 @@ public:
 	virtual FText GetNodeTitle(ENodeTitleType::Type TitleType) const override;
 	virtual FLinearColor GetNodeTitleColor() const override;
 	virtual FSlateIcon GetIconAndTint(FLinearColor& OutColor) const override;
+	virtual bool ShowPaletteIconOnNode() const override { return true; }
 	virtual FText GetTooltipText() const override;
 	// --
 
