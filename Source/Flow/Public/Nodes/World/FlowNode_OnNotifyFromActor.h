@@ -1,23 +1,27 @@
 #pragma once
 
-#include "Nodes/World/FlowNode_NotifyBase.h"
+#include "Nodes/World/FlowNode_ComponentObserver.h"
 #include "FlowNode_OnNotifyFromActor.generated.h"
 
 /**
  * Triggers output when Flow Component with matching Identity Tag calls NotifyGraph function with matching Notify Tag
  */
 UCLASS(NotBlueprintable, meta = (DisplayName = "On Notify From Actor"))
-class FLOW_API UFlowNode_OnNotifyFromActor : public UFlowNode_NotifyBase
+class FLOW_API UFlowNode_OnNotifyFromActor : public UFlowNode_ComponentObserver
 {
 	GENERATED_UCLASS_BODY()
 
 protected:
+	UPROPERTY(EditDefaultsOnly, Category = "ObservedComponent")
+	FGameplayTag NotifyTag;
+
 	virtual void ExecuteInput(const FName& PinName) override;
 
-private:
-	UFUNCTION()
-	void OnNotifyFromActor(class UFlowComponent* FlowComponent, const FGameplayTag& Tag);
+	virtual void ObserveActor(TWeakObjectPtr<AActor> Actor, TWeakObjectPtr<UFlowComponent> Component) override;
+	virtual void ForgetActor(TWeakObjectPtr<AActor> Actor, TWeakObjectPtr<UFlowComponent> Component) override;
 
-protected:
-	virtual void Cleanup() override;
+#if WITH_EDITOR
+public:
+	virtual FString GetNodeDescription() const override;
+#endif
 };
