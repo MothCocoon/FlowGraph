@@ -16,6 +16,8 @@ class FLOW_API UFlowNode_ComponentObserver : public UFlowNode
 {
 	GENERATED_UCLASS_BODY()
 
+    friend class FFlowNode_ComponentObserverDetails;
+	
 protected:
 	UPROPERTY(EditDefaultsOnly, Category = "ObservedComponent")
 	FGameplayTag IdentityTag;

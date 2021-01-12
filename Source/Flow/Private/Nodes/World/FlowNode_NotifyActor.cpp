@@ -7,6 +7,9 @@
 UFlowNode_NotifyActor::UFlowNode_NotifyActor(const FObjectInitializer& ObjectInitializer)
 	: Super(ObjectInitializer)
 {
+#if WITH_EDITOR
+	Category = TEXT("Notifies");
+#endif
 }
 
 void UFlowNode_NotifyActor::ExecuteInput(const FName& PinName)
@@ -21,3 +24,13 @@ void UFlowNode_NotifyActor::ExecuteInput(const FName& PinName)
 
 	TriggerFirstOutput(true);
 }
+
+#if WITH_EDITOR
+FString UFlowNode_NotifyActor::GetNodeDescription() const
+{
+	const FString IdentityString = IdentityTag.IsValid() ? IdentityTag.ToString() : TEXT("Missing Identity Tag!");
+	const FString NotifyString = NotifyTag.IsValid() ? NotifyTag.ToString() : TEXT("---");
+
+	return IdentityString + LINE_TERMINATOR + NotifyString;
+}
+#endif
