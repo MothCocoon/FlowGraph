@@ -2,6 +2,6 @@
 
 #include "Graph/Widgets/SFlowGraphNode.h"
 
-class SFlowGraphNode_In : public SFlowGraphNode
+class SFlowGraphNode_Finish : public SFlowGraphNode
 {
 };
