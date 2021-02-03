@@ -15,7 +15,7 @@ void AFlowWorldSettings::BeginPlay()
 	{
 		if (UFlowSubsystem* FlowSubsystem = GetWorld()->GetGameInstance()->GetSubsystem<UFlowSubsystem>())
 		{
-			FlowSubsystem->StartRootFlow(this, FlowAsset);
+			FlowSubsystem->StartRootFlow(GetWorld(), FlowAsset);
 		}
 	}
 }
@@ -26,7 +26,7 @@ void AFlowWorldSettings::EndPlay(const EEndPlayReason::Type EndPlayReason)
 	{
 		if (UFlowSubsystem* FlowSubsystem = GetWorld()->GetGameInstance()->GetSubsystem<UFlowSubsystem>())
 		{
-			FlowSubsystem->FinishRootFlow(this, FlowAsset);
+			FlowSubsystem->FinishRootFlow(GetWorld(), FlowAsset);
 		}
 	}
 
