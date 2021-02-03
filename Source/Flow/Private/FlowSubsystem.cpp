@@ -1,6 +1,7 @@
 #include "FlowSubsystem.h"
 #include "FlowAsset.h"
 #include "FlowComponent.h"
+#include "FlowModule.h"
 #include "Nodes/Route/FlowNode_SubGraph.h"
 
 #include "Engine/GameInstance.h"
@@ -32,6 +33,12 @@ void UFlowSubsystem::Deinitialize()
 
 void UFlowSubsystem::StartRootFlow(UObject* Owner, UFlowAsset* FlowAsset)
 {
+	if (RootInstances.Contains(Owner))
+	{
+		UE_LOG(LogFlow, Warning, TEXT("Attempted to start Root Flow again. Owner: %s. Flow Asset: %s."), *Owner->GetName(), *FlowAsset->GetName());
+		return;
+	}
+	
 	UFlowAsset* NewFlow = CreateFlowInstance(FlowAsset);
 	RootInstances.Add(Owner, NewFlow);
 
