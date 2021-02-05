@@ -162,6 +162,11 @@ void UFlowGraphNode::PostDuplicate(bool bDuplicateForPIE)
 	if (!bDuplicateForPIE)
 	{
 		CreateNewGuid();
+
+		if (FlowNode && FlowNode->GetFlowAsset())
+		{
+			FlowNode->GetFlowAsset()->RegisterNode(NodeGuid, FlowNode);
+		}
 	}
 }
 
