@@ -51,6 +51,7 @@ class FLOW_API UFlowAsset : public UObject
 	// UObject
 	static void AddReferencedObjects(UObject* InThis, FReferenceCollector& Collector);
 	virtual void PostEditChangeProperty(FPropertyChangedEvent& PropertyChangedEvent) override;
+	virtual void PostDuplicate(bool bDuplicateForPIE) override;
 	// --
 #endif
 
