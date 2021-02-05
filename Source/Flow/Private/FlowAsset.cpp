@@ -38,6 +38,16 @@ void UFlowAsset::PostEditChangeProperty(FPropertyChangedEvent& PropertyChangedEv
 	}
 }
 
+void UFlowAsset::PostDuplicate(bool bDuplicateForPIE)
+{
+	Super::PostDuplicate(bDuplicateForPIE);
+
+	if (!bDuplicateForPIE)
+	{
+		Nodes.Empty();
+	}
+}
+
 TSharedPtr<IFlowGraphInterface> UFlowAsset::FlowGraphInterface = nullptr;
 
 void UFlowAsset::SetFlowGraphInterface(TSharedPtr<IFlowGraphInterface> InFlowAssetEditor)
@@ -59,6 +69,8 @@ void UFlowAsset::RegisterNode(const FGuid& NewGuid, UFlowNode* NewNode)
 {
 	NewNode->SetGuid(NewGuid);
 	Nodes.Emplace(NewGuid, NewNode);
+
+	HarvestNodeConnections();
 }
 
 void UFlowAsset::UnregisterNode(const FGuid& NodeGuid)
