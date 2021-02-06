@@ -9,6 +9,7 @@
 	"DocsURL" : "https://github.com/MothCocoon/Flow",
 	"MarketplaceURL" : "",
 	"SupportURL" : "https://discord.com/channels/742802606874820619/752181877938323668",
+	"EngineVersion": "4.25.0",
 	"EnabledByDefault" : true,
 	"CanContainContent" : false,
 	"IsBetaVersion" : false,
