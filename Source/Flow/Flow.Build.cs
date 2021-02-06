@@ -10,6 +10,7 @@ public class Flow : ModuleRules
 		{
             "Core",
 			"CoreUObject",
+            "DeveloperSettings",
 			"Engine",
             "GameplayTags",
             "LevelSequence",
