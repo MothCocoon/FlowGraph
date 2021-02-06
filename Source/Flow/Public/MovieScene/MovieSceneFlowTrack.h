@@ -9,7 +9,9 @@ struct FMovieSceneEvaluationTrack;
  * Implements a movie scene track that triggers events in the Flow System during playback.
  */
 UCLASS()
-class FLOW_API UMovieSceneFlowTrack : public UMovieSceneNameableTrack
+class FLOW_API UMovieSceneFlowTrack
+	: public UMovieSceneNameableTrack
+	, public IMovieSceneTrackTemplateProducer
 {
 	GENERATED_BODY()
 
