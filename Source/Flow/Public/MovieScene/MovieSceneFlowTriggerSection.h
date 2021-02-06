@@ -1,6 +1,6 @@
 #pragma once
 
-#include "Sections/MovieSceneStringChannel.h"
+#include "Channels/MovieSceneStringChannel.h"
 
 #include "MovieSceneFlowSectionBase.h"
 #include "MovieSceneFlowTriggerSection.generated.h"
