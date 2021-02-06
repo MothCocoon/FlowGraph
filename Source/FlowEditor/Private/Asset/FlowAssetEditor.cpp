@@ -26,11 +26,11 @@
 #include "Kismet2/BlueprintEditorUtils.h"
 #include "Kismet2/DebuggerCommands.h"
 #include "LevelEditor.h"
+#include "MultiBoxBuilder.h"
 #include "Modules/ModuleManager.h"
 #include "PropertyEditorModule.h"
 #include "ScopedTransaction.h"
 #include "SNodePanel.h"
-#include "ToolMenus.h"
 #include "Widgets/Docking/SDockTab.h"
 
 #define LOCTEXT_NAMESPACE "FlowEditor"
@@ -228,7 +228,6 @@ void FFlowAssetEditor::InitFlowAssetEditor(const EToolkitMode::Type Mode, const 
 	FFlowToolbarCommands::Register();
 
 	AddFlowAssetToolbar();
-	AddPlayWorldToolbar();
 	CreateFlowDebugger();
 
 	FFlowEditorModule* FlowEditorModule = &FModuleManager::LoadModuleChecked<FFlowEditorModule>("FlowEditor");
@@ -260,34 +259,9 @@ void FFlowAssetEditor::BindAssetCommands()
 	ToolkitCommands->MapAction(NodeCommands.RefreshAsset,
 		FExecuteAction::CreateSP(this, &FFlowAssetEditor::RefreshAsset),
 		FCanExecuteAction::CreateStatic(&FFlowAssetEditor::CanEdit));
-}
 
-void FFlowAssetEditor::AddPlayWorldToolbar() const
-{
 	// Append play world commands
 	ToolkitCommands->Append(FPlayWorldCommands::GlobalPlayWorldActions.ToSharedRef());
-
-	const FName ToolBarName = GetToolMenuToolbarName();
-
-	UToolMenus* ToolMenus = UToolMenus::Get();
-	UToolMenu* FoundMenu = ToolMenus->FindMenu(ToolBarName);
-	if (!FoundMenu || !FoundMenu->IsRegistered())
-	{
-		FoundMenu = ToolMenus->RegisterMenu(ToolBarName, "AssetEditor.DefaultToolBar", EMultiBoxType::ToolBar);
-	}
-
-	if (FoundMenu)
-	{
-		FoundMenu->AddDynamicSection("Debugging", FNewToolBarDelegateLegacy::CreateLambda([](FToolBarBuilder& InBuilder, UToolMenu* InData)
-	    {
-	        InBuilder.BeginSection("Debugging");
-
-	        // Add the shared play-world commands that will be shown on the Kismet toolbar as well
-	        FPlayWorldCommands::BuildToolbar(InBuilder, false);
-
-	        InBuilder.EndSection();
-	    }));
-	}
 }
 
 void FFlowAssetEditor::CreateFlowDebugger()
@@ -299,7 +273,7 @@ void FFlowAssetEditor::CreateFlowDebugger()
 
 	TSharedPtr<FExtender> ToolbarExtender = MakeShareable(new FExtender);
 	ToolbarExtender->AddToolBarExtension(
-		"Debugging",
+		"Asset",
 		EExtensionHook::After,
 		GetToolkitCommands(),
 		FToolBarExtensionDelegate::CreateSP(DebuggerToolbar.Get(), &FFlowDebuggerToolbar::AddToolbar)
@@ -335,7 +309,7 @@ void FFlowAssetEditor::GoToMasterInstance()
 {
 	UFlowAsset* AssetThatInstancedThisAsset = FlowAsset->GetInspectedInstance()->GetMasterInstance();
 
-	GEditor->GetEditorSubsystem<UAssetEditorSubsystem>()->OpenEditorForAsset(AssetThatInstancedThisAsset->TemplateAsset);
+	FAssetEditorManager::Get().OpenEditorForAsset(AssetThatInstancedThisAsset->TemplateAsset);
 	AssetThatInstancedThisAsset->TemplateAsset->SetInspectedInstance(AssetThatInstancedThisAsset->GetDisplayName());
 }
 
@@ -934,7 +908,7 @@ void FFlowAssetEditor::OnNodeDoubleClicked(class UEdGraphNode* Node) const
 
 	if (UObject* AssetToOpen = FlowNode->GetAssetToOpen())
 	{
-		GEditor->GetEditorSubsystem<UAssetEditorSubsystem>()->OpenEditorForAsset(AssetToOpen);
+		FAssetEditorManager::Get().OpenEditorForAsset(AssetToOpen);
 
 		if (IsPIE())
 		{

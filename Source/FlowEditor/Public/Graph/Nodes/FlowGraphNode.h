@@ -1,6 +1,7 @@
 #pragma once
 
 #include "EdGraph/EdGraphNode.h"
+#include "EdGraph/EdGraphPin.h"
 
 #include "FlowTypes.h"
 #include "FlowGraphNode.generated.h"
@@ -116,7 +117,7 @@ public:
 	// --
 
 	// UEdGraphNode
-	virtual void GetNodeContextMenuActions(class UToolMenu* Menu, class UGraphNodeContextMenuContext* Context) const override;
+	virtual void GetContextMenuActions(const FGraphNodeContextMenuBuilder& Context) const override;
 
 	virtual TSharedPtr<SGraphNode> CreateVisualWidget() override;
 	virtual FText GetNodeTitle(ENodeTitleType::Type TitleType) const override;

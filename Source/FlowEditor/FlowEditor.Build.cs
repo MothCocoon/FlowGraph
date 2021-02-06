@@ -36,7 +36,6 @@ public class FlowEditor : ModuleRules
             "Sequencer",
             "Slate",
             "SlateCore",
-            "ToolMenus",
             "UnrealEd"
         });
     }

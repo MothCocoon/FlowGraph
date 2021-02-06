@@ -25,6 +25,7 @@
 #include "ISequencerChannelInterface.h"
 #include "ISequencerModule.h"
 #include "LevelEditor.h"
+#include "MultiBoxBuilder.h"
 #include "Modules/ModuleManager.h"
 
 #define LOCTEXT_NAMESPACE "FlowEditor"

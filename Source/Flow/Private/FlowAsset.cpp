@@ -56,7 +56,7 @@ void UFlowAsset::SetFlowGraphInterface(TSharedPtr<IFlowGraphInterface> InFlowAss
 	FlowGraphInterface = InFlowAssetEditor;
 }
 
-UFlowNode* UFlowAsset::CreateNode(const UClass* NodeClass, UEdGraphNode* GraphNode)
+UFlowNode* UFlowAsset::CreateNode(UClass* NodeClass, UEdGraphNode* GraphNode)
 {
 	UFlowNode* NewNode = NewObject<UFlowNode>(this, NodeClass, NAME_None, RF_Transactional);
 	NewNode->SetGraphNode(GraphNode);

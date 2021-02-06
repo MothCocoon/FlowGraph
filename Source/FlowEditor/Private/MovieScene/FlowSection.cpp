@@ -3,9 +3,9 @@
 #include "MovieScene/MovieSceneFlowTriggerSection.h"
 
 #include "CommonMovieSceneTools.h"
+#include "EditorStyleSet.h"
 #include "Fonts/FontMeasure.h"
 #include "Framework/Application/SlateApplication.h"
-#include "MovieSceneEventUtils.h"
 #include "MovieSceneTrack.h"
 #include "Rendering/DrawElements.h"
 #include "Sections/MovieSceneEventSection.h"

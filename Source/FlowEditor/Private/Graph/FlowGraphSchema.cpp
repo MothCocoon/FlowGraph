@@ -11,8 +11,8 @@
 #include "Nodes/Route/FlowNode_Start.h"
 
 #include "AssetRegistryModule.h"
-#include "Developer/ToolMenus/Public/ToolMenus.h"
 #include "EdGraph/EdGraph.h"
+#include "Engine/BlueprintGeneratedClass.h"
 #include "Misc/HotReloadInterface.h"
 #include "ScopedTransaction.h"
 #include "UObject/UObjectIterator.h"
@@ -383,7 +383,7 @@ void UFlowGraphSchema::RefreshNodeList()
 
 	// collect categories
 	TSet<FString> UnsortedCategories;
-	for (const UClass* FlowNodeClass : FlowNodeClasses)
+	for (UClass* FlowNodeClass : FlowNodeClasses)
 	{
 		const UFlowNode* DefaultObject = FlowNodeClass->GetDefaultObject<UFlowNode>();
 		UnsortedCategories.Emplace(DefaultObject->GetCategory());

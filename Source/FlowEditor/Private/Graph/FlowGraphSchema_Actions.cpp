@@ -9,7 +9,6 @@
 #include "FlowAsset.h"
 #include "Nodes/FlowNode.h"
 
-#include "Developer/ToolMenus/Public/ToolMenus.h"
 #include "EdGraph/EdGraph.h"
 #include "EdGraphNode_Comment.h"
 #include "Editor.h"
@@ -47,7 +46,7 @@ UFlowGraphNode* FFlowGraphSchemaAction_NewNode::CreateNode(UEdGraph* ParentGraph
 	UFlowAsset* FlowAsset = CastChecked<UFlowGraph>(ParentGraph)->GetFlowAsset();
 	FlowAsset->Modify();
 
-	const UClass* GraphNodeClass = UFlowGraphSchema::GetAssignedGraphNodeClass(NodeClass);
+	UClass* GraphNodeClass = UFlowGraphSchema::GetAssignedGraphNodeClass(NodeClass);
 	UFlowGraphNode* NewGraphNode = NewObject<UFlowGraphNode>(ParentGraph, GraphNodeClass, NAME_None, RF_Transactional);
 	NewGraphNode->CreateNewGuid();
 

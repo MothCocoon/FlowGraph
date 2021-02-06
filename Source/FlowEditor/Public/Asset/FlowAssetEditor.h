@@ -1,6 +1,7 @@
 #pragma once
 
 #include "EditorUndoClient.h"
+#include "GraphEditor.h"
 #include "Misc/NotifyHook.h"
 #include "Toolkits/AssetEditorToolkit.h"
 #include "Toolkits/IToolkitHost.h"
@@ -86,8 +87,6 @@ public:
 private:
 	void AddFlowAssetToolbar();
 	void BindAssetCommands();
-
-	void AddPlayWorldToolbar() const;
 
 	void CreateFlowDebugger();
 	void BindDebuggerCommands();

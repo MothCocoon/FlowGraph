@@ -10,6 +10,7 @@ class UFlowNode_SubGraph;
 class UFlowSubsystem;
 
 class UEdGraph;
+class UEdGraphNode;
 class UFlowAsset;
 
 #if WITH_EDITOR
@@ -98,7 +99,7 @@ public:
 #if WITH_EDITOR
 	FFlowAssetEvent OnSubGraphReconstructionRequested;
 
-	UFlowNode* CreateNode(const UClass* NodeClass, UEdGraphNode* GraphNode);
+	UFlowNode* CreateNode(UClass* NodeClass, UEdGraphNode* GraphNode);
 
 	void RegisterNode(const FGuid& NewGuid, UFlowNode* NewNode);
 	void UnregisterNode(const FGuid& NodeGuid);

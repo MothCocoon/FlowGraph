@@ -4,6 +4,8 @@
 
 #include "FlowAsset.h"
 
+#include "EditorStyleSet.h"
+#include "MultiBoxBuilder.h"
 #include "Widgets/Navigation/SBreadcrumbTrail.h"
 
 #define LOCTEXT_NAMESPACE "FlowDebuggerToolbar"
@@ -134,7 +136,7 @@ void SFlowBreadcrumb::OnCrumbClicked(const FFlowBreadcrumb& Item)
 
 	if (Item.InstanceName != FlowAssetEditor.Pin()->GetFlowAsset()->GetInspectedInstance()->GetDisplayName())
 	{
-		GEditor->GetEditorSubsystem<UAssetEditorSubsystem>()->OpenEditorForAsset(Item.AssetPathName);
+		FAssetEditorManager::Get().OpenEditorForAsset(Item.AssetPathName);
 	}
 }
 

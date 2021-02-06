@@ -11,7 +11,6 @@
 #include "Nodes/FlowNode.h"
 
 #include "AssetRegistryModule.h"
-#include "Developer/ToolMenus/Public/ToolMenus.h"
 #include "EdGraph/EdGraphSchema.h"
 #include "EdGraphSchema_K2.h"
 #include "Editor.h"
@@ -436,81 +435,92 @@ void UFlowGraphNode::ReconstructSinglePin(UEdGraphPin* NewPin, UEdGraphPin* OldP
 	}
 }
 
-void UFlowGraphNode::GetNodeContextMenuActions(class UToolMenu* Menu, class UGraphNodeContextMenuContext* Context) const
+void UFlowGraphNode::GetContextMenuActions(const FGraphNodeContextMenuBuilder& Context) const
 {
 	const FGenericCommands& GenericCommands = FGenericCommands::Get();
 	const FGraphEditorCommandsImpl& GraphCommands = FGraphEditorCommands::Get();
 	const FFlowGraphCommands& FlowGraphCommands = FFlowGraphCommands::Get();
 
-	if (Context->Pin)
+	if (Context.Pin)
 	{
 		{
-			FToolMenuSection& Section = Menu->AddSection("FlowGraphSchemaPinActions", LOCTEXT("PinActionsMenuHeader", "Pin Actions"));
-			if (Context->Pin->LinkedTo.Num() > 0)
+			Context.MenuBuilder->BeginSection("FlowGraphSchemaPinActions", LOCTEXT("PinActionsMenuHeader", "Pin Actions"));
 			{
-				Section.AddMenuEntry(GraphCommands.BreakPinLinks);
-			}
+				if (Context.Pin->LinkedTo.Num() > 0)
+				{
+					Context.MenuBuilder->AddMenuEntry(GraphCommands.BreakPinLinks);
+				}
 
-			if (Context->Pin->Direction == EGPD_Input && CanUserRemoveInput(Context->Pin))
-			{
-				Section.AddMenuEntry(FlowGraphCommands.RemovePin);
+				if (Context.Pin->Direction == EGPD_Input && CanUserRemoveInput(Context.Pin))
+				{
+					Context.MenuBuilder->AddMenuEntry(FlowGraphCommands.RemovePin);
+				}
+				else if (Context.Pin->Direction == EGPD_Output && CanUserRemoveOutput(Context.Pin))
+				{
+					Context.MenuBuilder->AddMenuEntry(FlowGraphCommands.RemovePin);
+				}
 			}
-			else if (Context->Pin->Direction == EGPD_Output && CanUserRemoveOutput(Context->Pin))
-			{
-				Section.AddMenuEntry(FlowGraphCommands.RemovePin);
-			}
+			Context.MenuBuilder->EndSection();
 		}
 
 		{
-			FToolMenuSection& Section = Menu->AddSection("FlowGraphNodePinBreakpoints", LOCTEXT("PinBreakpointsMenuHeader", "Pin Breakpoints"));
-			Section.AddMenuEntry(FlowGraphCommands.AddPinBreakpoint);
-			Section.AddMenuEntry(FlowGraphCommands.RemovePinBreakpoint);
-			Section.AddMenuEntry(FlowGraphCommands.EnablePinBreakpoint);
-			Section.AddMenuEntry(FlowGraphCommands.DisablePinBreakpoint);
-			Section.AddMenuEntry(FlowGraphCommands.TogglePinBreakpoint);
+			Context.MenuBuilder->BeginSection("FlowGraphNodePinBreakpoints", LOCTEXT("PinBreakpointsMenuHeader", "Pin Breakpoints"));
+			{
+				Context.MenuBuilder->AddMenuEntry(FlowGraphCommands.AddPinBreakpoint);
+				Context.MenuBuilder->AddMenuEntry(FlowGraphCommands.RemovePinBreakpoint);
+				Context.MenuBuilder->AddMenuEntry(FlowGraphCommands.EnablePinBreakpoint);
+				Context.MenuBuilder->AddMenuEntry(FlowGraphCommands.DisablePinBreakpoint);
+				Context.MenuBuilder->AddMenuEntry(FlowGraphCommands.TogglePinBreakpoint);
+			}
+			Context.MenuBuilder->EndSection();
 		}
 	}
-	else if (Context->Node)
+	else if (Context.Node)
 	{
 		{
-			FToolMenuSection& Section = Menu->AddSection("FlowGraphSchemaNodeActions", LOCTEXT("NodeActionsMenuHeader", "Node Actions"));
-			Section.AddMenuEntry(GenericCommands.Delete);
-			Section.AddMenuEntry(GenericCommands.Cut);
-			Section.AddMenuEntry(GenericCommands.Copy);
-			Section.AddMenuEntry(GenericCommands.Duplicate);
-
-			Section.AddMenuEntry(GraphCommands.BreakNodeLinks);
-
-			if (SupportsContextPins())
+			Context.MenuBuilder->BeginSection("FlowGraphSchemaNodeActions", LOCTEXT("NodeActionsMenuHeader", "Node Actions"));
 			{
-				Section.AddMenuEntry(FlowGraphCommands.RefreshContextPins);
-			}
+				Context.MenuBuilder->AddMenuEntry(GenericCommands.Delete);
+				Context.MenuBuilder->AddMenuEntry(GenericCommands.Cut);
+				Context.MenuBuilder->AddMenuEntry(GenericCommands.Copy);
+				Context.MenuBuilder->AddMenuEntry(GenericCommands.Duplicate);
 
-			if (CanUserAddInput())
-			{
-				Section.AddMenuEntry(FlowGraphCommands.AddInput);
+				Context.MenuBuilder->AddMenuEntry(GraphCommands.BreakNodeLinks);
+
+				if (SupportsContextPins())
+				{
+					Context.MenuBuilder->AddMenuEntry(FlowGraphCommands.RefreshContextPins);
+				}
+
+				if (CanUserAddInput())
+				{
+					Context.MenuBuilder->AddMenuEntry(FlowGraphCommands.AddInput);
+				}
+				if (CanUserAddOutput())
+				{
+					Context.MenuBuilder->AddMenuEntry(FlowGraphCommands.AddOutput);
+				}
 			}
-			if (CanUserAddOutput())
-			{
-				Section.AddMenuEntry(FlowGraphCommands.AddOutput);
-			}
+			Context.MenuBuilder->EndSection();
 		}
 
 		{
-			FToolMenuSection& Section = Menu->AddSection("FlowGraphNodeBreakpoints", LOCTEXT("NodeBreakpointsMenuHeader", "Node Breakpoints"));
-			Section.AddMenuEntry(GraphCommands.AddBreakpoint);
-			Section.AddMenuEntry(GraphCommands.RemoveBreakpoint);
-			Section.AddMenuEntry(GraphCommands.EnableBreakpoint);
-			Section.AddMenuEntry(GraphCommands.DisableBreakpoint);
-			Section.AddMenuEntry(GraphCommands.ToggleBreakpoint);
+			Context.MenuBuilder->BeginSection("FlowGraphNodeBreakpoints", LOCTEXT("NodeBreakpointsMenuHeader", "Node Breakpoints"));
+			Context.MenuBuilder->AddMenuEntry(GraphCommands.AddBreakpoint);
+			Context.MenuBuilder->AddMenuEntry(GraphCommands.RemoveBreakpoint);
+			Context.MenuBuilder->AddMenuEntry(GraphCommands.EnableBreakpoint);
+			Context.MenuBuilder->AddMenuEntry(GraphCommands.DisableBreakpoint);
+			Context.MenuBuilder->AddMenuEntry(GraphCommands.ToggleBreakpoint);
+			Context.MenuBuilder->EndSection();
 		}
 
 		{
-			FToolMenuSection& Section = Menu->AddSection("FlowGraphNodeExtras", LOCTEXT("NodeExtrasMenuHeader", "Node Extras"));
+			Context.MenuBuilder->BeginSection("FlowGraphNodeExtras", LOCTEXT("NodeExtrasMenuHeader", "Node Extras"));
 			if (CanFocusViewport())
 			{
-				Section.AddMenuEntry(FlowGraphCommands.FocusViewport);
+				Context.MenuBuilder->AddMenuEntry(FlowGraphCommands.FocusViewport);
 			}
+			Context.MenuBuilder->EndSection();
 		}
 	}
 }
