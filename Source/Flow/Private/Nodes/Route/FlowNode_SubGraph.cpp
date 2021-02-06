@@ -123,7 +123,7 @@ void UFlowNode_SubGraph::PostLoad()
 	SubscribeToAssetChanges();
 }
 
-void UFlowNode_SubGraph::PreEditChange(FProperty* PropertyAboutToChange)
+void UFlowNode_SubGraph::PreEditChange(UProperty* PropertyAboutToChange)
 {
 	Super::PreEditChange(PropertyAboutToChange);
 

@@ -59,7 +59,7 @@ TArray<FName> UFlowNode_PlayLevelSequence::GetContextOutputs()
 						{
 							if (!EventName.IsEmpty())
 							{
-								PinNames.Emplace(EventName);
+								PinNames.Emplace(*EventName);
 							}
 						}
 					}

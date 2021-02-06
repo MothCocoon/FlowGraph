@@ -354,7 +354,7 @@ void SFlowGraphNode::UpdateGraphNode()
 				]
 		];
 
-	if (GraphNode && GraphNode->SupportsCommentBubble())
+	if (GraphNode)
 	{
 		// Create comment bubble
 		TSharedPtr<SCommentBubble> CommentBubble;

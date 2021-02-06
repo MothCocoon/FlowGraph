@@ -4,6 +4,7 @@
 
 #include "PropertyCustomizationHelpers.h"
 #include "PropertyEditing.h"
+#include "Widgets/Text/SInlineEditableTextBlock.h"
 
 #define LOCTEXT_NAMESPACE "FlowAssetDetails"
 
@@ -39,7 +40,7 @@ void FFlowAssetDetails::GenerateCustomPinArray(TSharedRef<IPropertyHandle> Prope
 	PropertyRow.CustomWidget(false)
 		.ValueContent()
 		[
-			SNew(SEditableTextBox)
+			SNew(SInlineEditableTextBlock)
 				.Text(this, &FFlowAssetDetails::GetCustomPinText, PropertyHandle)
 				.OnVerifyTextChanged_Static(&FFlowAssetDetails::OnCustomPinTextVerifyChanged)
 				.OnTextCommitted(this, &FFlowAssetDetails::OnCustomPinTextCommited, PropertyHandle)

@@ -5,7 +5,6 @@
 #include "Asset/FlowDebuggerToolbar.h"
 #include "FlowEditorCommands.h"
 #include "FlowEditorModule.h"
-#include "Graph/FlowGraph.h"
 #include "Graph/FlowGraphSchema.h"
 #include "Graph/FlowGraphSchema_Actions.h"
 #include "Graph/Nodes/FlowGraphNode.h"
@@ -72,7 +71,7 @@ void FFlowAssetEditor::HandleUndoTransaction()
 	FSlateApplication::Get().DismissAllMenus();
 }
 
-void FFlowAssetEditor::NotifyPostChange(const FPropertyChangedEvent& PropertyChangedEvent, FProperty* PropertyThatChanged)
+void FFlowAssetEditor::NotifyPostChange(const FPropertyChangedEvent& PropertyChangedEvent, class UProperty* PropertyThatChanged)
 {
 	if (PropertyChangedEvent.ChangeType != EPropertyChangeType::Interactive)
 	{
@@ -268,25 +267,26 @@ void FFlowAssetEditor::AddPlayWorldToolbar() const
 	// Append play world commands
 	ToolkitCommands->Append(FPlayWorldCommands::GlobalPlayWorldActions.ToSharedRef());
 
-	FName ParentToolbarName;
-	const FName ToolBarName = GetToolMenuToolbarName(ParentToolbarName);
+	const FName ToolBarName = GetToolMenuToolbarName();
 
 	UToolMenus* ToolMenus = UToolMenus::Get();
 	UToolMenu* FoundMenu = ToolMenus->FindMenu(ToolBarName);
 	if (!FoundMenu || !FoundMenu->IsRegistered())
 	{
-		FoundMenu = ToolMenus->RegisterMenu(ToolBarName, ParentToolbarName, EMultiBoxType::ToolBar);
+		FoundMenu = ToolMenus->RegisterMenu(ToolBarName, "AssetEditor.DefaultToolBar", EMultiBoxType::ToolBar);
 	}
 
 	if (FoundMenu)
 	{
-		FToolMenuSection& Section = FoundMenu->AddSection("Debugging");
-		Section.InsertPosition = FToolMenuInsert("Asset", EToolMenuInsertType::After);
+		FoundMenu->AddDynamicSection("Debugging", FNewToolBarDelegateLegacy::CreateLambda([](FToolBarBuilder& InBuilder, UToolMenu* InData)
+	    {
+	        InBuilder.BeginSection("Debugging");
 
-		Section.AddDynamicEntry("DebuggingCommands", FNewToolMenuSectionDelegate::CreateLambda([](FToolMenuSection& InSection)
-		{
-			FPlayWorldCommands::BuildToolbar(InSection);
-		}));
+	        // Add the shared play-world commands that will be shown on the Kismet toolbar as well
+	        FPlayWorldCommands::BuildToolbar(InBuilder, false);
+
+	        InBuilder.EndSection();
+	    }));
 	}
 }
 

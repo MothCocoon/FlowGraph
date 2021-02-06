@@ -1,6 +1,8 @@
 #pragma once
 
 #include "IDetailCustomization.h"
+#include "PropertyHandle.h"
+#include "Widgets/Input/SEditableTextBox.h"
 
 class FFlowAssetDetails final : public IDetailCustomization
 {

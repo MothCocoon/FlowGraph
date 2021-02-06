@@ -61,7 +61,7 @@ public:
 	virtual void HandleUndoTransaction();
 
 	// FNotifyHook
-	virtual void NotifyPostChange(const FPropertyChangedEvent& PropertyChangedEvent, FProperty* PropertyThatChanged) override;
+	virtual void NotifyPostChange(const FPropertyChangedEvent& PropertyChangedEvent, class UProperty* PropertyThatChanged) override;
 	// --
 
 	// IToolkit
