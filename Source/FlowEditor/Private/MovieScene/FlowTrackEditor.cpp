@@ -168,7 +168,7 @@ void FFlowTrackEditor::HandleAddFlowTrackMenuEntryExecute(UClass* SectionType)
 	NewTracks.Add(NewMasterTrack);
 	if (GetSequencer().IsValid())
 	{
-		GetSequencer()->OnAddTrack(NewMasterTrack, FGuid());
+		GetSequencer()->OnAddTrack(NewMasterTrack);
 	}
 
 	check(NewTracks.Num() != 0);

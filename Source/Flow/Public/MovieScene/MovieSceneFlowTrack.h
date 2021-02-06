@@ -33,7 +33,6 @@ public:
 	virtual bool IsEmpty() const override;
 	virtual void RemoveAllAnimationData() override;
 	virtual void RemoveSection(UMovieSceneSection& Section) override;
-	virtual void RemoveSectionAt(int32 SectionIndex) override;
 	virtual FMovieSceneEvalTemplatePtr CreateTemplateForSection(const UMovieSceneSection& InSection) const override;
 	virtual void PostCompile(FMovieSceneEvaluationTrack& Track, const FMovieSceneTrackCompilerArgs& Args) const override;
 	virtual bool SupportsMultipleRows() const override { return true; }

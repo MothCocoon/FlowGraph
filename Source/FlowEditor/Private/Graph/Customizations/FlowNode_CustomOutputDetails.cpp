@@ -44,10 +44,7 @@ void FFlowNode_CustomOutputDetails::GetEventNames()
 		const UFlowAsset* FlowAsset = Cast<UFlowAsset>(ObjectsBeingEdited[0].Get()->GetOuter());
 		TArray<FName> SortedNames = FlowAsset->GetCustomOutputs();
 
-		SortedNames.Sort([](const FName& A, const FName& B)
-		{
-			return A.LexicalLess(B);
-		});
+		SortedNames.Sort();
 
 		for (const FName& EventName : SortedNames)
 		{

@@ -48,11 +48,6 @@ void UMovieSceneFlowTrack::RemoveSection(UMovieSceneSection& Section)
 	Sections.Remove(&Section);
 }
 
-void UMovieSceneFlowTrack::RemoveSectionAt(int32 SectionIndex)
-{
-	Sections.RemoveAt(SectionIndex);
-}
-
 FMovieSceneEvalTemplatePtr UMovieSceneFlowTrack::CreateTemplateForSection(const UMovieSceneSection& InSection) const
 {
 	if (const UMovieSceneFlowTriggerSection* TriggerSection = Cast<const UMovieSceneFlowTriggerSection>(&InSection))

@@ -40,7 +40,9 @@ protected:
 	// SGraphNode
 	virtual void UpdateGraphNode() override;
 	virtual TSharedRef<SWidget> CreateNodeContentArea() override;
-	virtual const FSlateBrush* GetNodeBodyBrush() const override;
+
+	// backported from 4.23
+	virtual const FSlateBrush* GetNodeBodyBrush() const;
 
 	virtual void CreateStandardPinWidget(UEdGraphPin* Pin) override;
 	virtual void CreateInputSideAddButton(TSharedPtr<SVerticalBox> OutputBox) override;

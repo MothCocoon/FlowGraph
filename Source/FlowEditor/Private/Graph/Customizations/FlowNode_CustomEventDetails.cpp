@@ -52,10 +52,7 @@ void FFlowNode_CustomEventDetails::GetEventNames()
 			}
 		}
 
-		SortedNames.Sort([](const FName& A, const FName& B)
-		{
-			return A.LexicalLess(B);
-		});
+		SortedNames.Sort();
 
 		for (const FName& EventName : SortedNames)
 		{

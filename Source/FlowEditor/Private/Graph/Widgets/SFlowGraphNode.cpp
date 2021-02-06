@@ -310,17 +310,34 @@ void SFlowGraphNode::UpdateGraphNode()
 				CreateNodeContentArea()
 			];
 
-	const TSharedPtr<SWidget> EnabledStateWidget = GetEnabledStateWidget();
-	if (EnabledStateWidget.IsValid())
+	if ((GraphNode->GetDesiredEnabledState() != ENodeEnabledState::Enabled) && !GraphNode->IsAutomaticallyPlacedGhostNode())
 	{
+		const bool bDevelopmentOnly = GraphNode->GetDesiredEnabledState() == ENodeEnabledState::DevelopmentOnly;
+		const FText StatusMessage = bDevelopmentOnly ? NSLOCTEXT("SGraphNode", "DevelopmentOnly", "Development Only") : NSLOCTEXT("SGraphNode", "DisabledNode", "Disabled");
+		const FText StatusMessageTooltip = bDevelopmentOnly ?
+            NSLOCTEXT("SGraphNode", "DevelopmentOnlyTooltip", "This node will only be executed in the editor and in Development builds in a packaged game (it will be treated as disabled in Shipping or Test builds cooked from a commandlet)") :
+            NSLOCTEXT("SGraphNode", "DisabledNodeTooltip", "This node is currently disabled and will not be executed");
+
 		InnerVerticalBox->AddSlot()
-			.AutoHeight()
-			.HAlign(HAlign_Fill)
-			.VAlign(VAlign_Top)
-			.Padding(FMargin(2, 0))
-			[
-				EnabledStateWidget.ToSharedRef()
-			];
+            .AutoHeight()
+            .HAlign(HAlign_Fill)
+            .VAlign(VAlign_Top)
+            .Padding(FMargin(2, 0))
+            [
+                SNew(SBorder)
+                .BorderImage(FEditorStyle::GetBrush(bDevelopmentOnly ? "Graph.Node.DevelopmentBanner" : "Graph.Node.DisabledBanner"))
+                .HAlign(HAlign_Fill)
+                .VAlign(VAlign_Fill)
+                [
+                    SNew(STextBlock)
+                    .Text(StatusMessage)
+                    .ToolTipText(StatusMessageTooltip)
+                    .Justification(ETextJustify::Center)
+                    .ColorAndOpacity(FLinearColor::White)
+                    .ShadowOffset(FVector2D::UnitVector)
+                    .Visibility(EVisibility::Visible)
+                ]
+            ];
 	}
 
 	InnerVerticalBox->AddSlot()
