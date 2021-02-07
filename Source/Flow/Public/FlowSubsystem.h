@@ -10,7 +10,7 @@
 class UFlowAsset;
 class UFlowNode_SubGraph;
 
-DECLARE_MULTICAST_DELEGATE_OneParam(FSimpleFlowComponentnEvent, UFlowComponent* /*Component*/);
+DECLARE_MULTICAST_DELEGATE_OneParam(FSimpleFlowComponentEvent, UFlowComponent* /*Component*/);
 
 /**
  * Flow Control System
@@ -69,8 +69,8 @@ public:
 	virtual void RegisterComponent(UFlowComponent* Component);
 	virtual void UnregisterComponent(UFlowComponent* Component);
 
-	FSimpleFlowComponentnEvent OnComponentRegistered;
-	FSimpleFlowComponentnEvent OnComponentUnregistered;
+	FSimpleFlowComponentEvent OnComponentRegistered;
+	FSimpleFlowComponentEvent OnComponentUnregistered;
 
 	template<class T>
 	TArray<TWeakObjectPtr<T>> GetComponents(const FGameplayTag& Tag) const
