@@ -13,7 +13,10 @@ class UFlowNode_SubGraph;
 DECLARE_MULTICAST_DELEGATE_OneParam(FSimpleFlowComponentEvent, UFlowComponent* /*Component*/);
 
 /**
- * Flow Control System
+ * Flow Subsystem
+ * - manages lifetime of Flow Graphs
+ * - connects Flow Graphs with actors containing the Flow Component
+ * - convenient base for project-specific systems
  */
 UCLASS()
 class FLOW_API UFlowSubsystem : public UGameInstanceSubsystem
