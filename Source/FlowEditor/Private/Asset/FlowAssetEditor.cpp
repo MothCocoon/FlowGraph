@@ -906,27 +906,30 @@ void FFlowAssetEditor::OnNodeDoubleClicked(class UEdGraphNode* Node) const
 {
 	UFlowNode* FlowNode = Cast<UFlowGraphNode>(Node)->GetFlowNode();
 
-	if (UObject* AssetToOpen = FlowNode->GetAssetToOpen())
+	if (FlowNode)
 	{
-		FAssetEditorManager::Get().OpenEditorForAsset(AssetToOpen);
-
-		if (IsPIE())
+		const FString AssetPath = FlowNode->GetAssetPath();
+		if (!AssetPath.IsEmpty())
 		{
-			if (UFlowNode_SubGraph* SubGraphNode = Cast<UFlowNode_SubGraph>(FlowNode))
+			FAssetEditorManager::Get().OpenEditorForAsset(AssetPath);
+		}
+		else if (UObject* AssetToEdit = FlowNode->GetAssetToEdit())
+		{
+			FAssetEditorManager::Get().OpenEditorForAsset(AssetToEdit);
+			
+			if (IsPIE())
 			{
-				const TWeakObjectPtr<UFlowAsset> SubFlowInstance = SubGraphNode->GetFlowAsset()->GetFlowInstance(SubGraphNode);
-				if (SubFlowInstance.IsValid())
+				if (UFlowNode_SubGraph* SubGraphNode = Cast<UFlowNode_SubGraph>(FlowNode))
 				{
-					SubGraphNode->GetFlowAsset()->TemplateAsset->SetInspectedInstance(SubFlowInstance->GetDisplayName());
+					const TWeakObjectPtr<UFlowAsset> SubFlowInstance = SubGraphNode->GetFlowAsset()->GetFlowInstance(SubGraphNode);
+					if (SubFlowInstance.IsValid())
+					{
+						SubGraphNode->GetFlowAsset()->TemplateAsset->SetInspectedInstance(SubFlowInstance->GetDisplayName());
+					}
 				}
 			}
 		}
 	}
-
-	/*if (ObjectsToView.Num() > 0)
-	{
-		GEditor->SyncBrowserToObjects(ObjectsToView);
-	}*/
 }
 
 void FFlowAssetEditor::OnNodeTitleCommitted(const FText& NewText, ETextCommit::Type CommitInfo, UEdGraphNode* NodeBeingChanged)

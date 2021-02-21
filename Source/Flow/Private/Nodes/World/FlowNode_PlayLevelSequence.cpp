@@ -214,7 +214,7 @@ FString UFlowNode_PlayLevelSequence::GetStatusString() const
 	return GetPlaybackProgress();
 }
 
-UObject* UFlowNode_PlayLevelSequence::GetAssetToOpen()
+UObject* UFlowNode_PlayLevelSequence::GetAssetToEdit()
 {
 	return Sequence.IsNull() ? nullptr : LoadAsset<UObject>(Sequence);
 }

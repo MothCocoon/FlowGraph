@@ -325,9 +325,14 @@ FString UFlowNode::GetStatusString() const
 	return K2_GetStatusString();
 }
 
-UObject* UFlowNode::GetAssetToOpen()
+FString UFlowNode::GetAssetPath()
 {
-	return K2_GetAssetToOpen();
+	return K2_GetAssetPath();
+}
+
+UObject* UFlowNode::GetAssetToEdit()
+{
+	return K2_GetAssetToEdit();
 }
 
 AActor* UFlowNode::GetActorToFocus()
