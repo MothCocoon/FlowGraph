@@ -145,7 +145,6 @@ public:
 	// check this to display information while node is preloaded
 	bool IsContentPreloaded() const;
 
-	UObject* GetAssetToOpen() const;
 	bool CanFocusViewport() const;
 
 //////////////////////////////////////////////////////////////////////////
