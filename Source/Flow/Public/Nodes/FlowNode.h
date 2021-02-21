@@ -269,7 +269,8 @@ public:
 	// Information displayed while node is working - displayed over node as NodeInfoPopup
 	virtual FString GetStatusString() const;
 
-	virtual UObject* GetAssetToOpen();
+	virtual FString GetAssetPath();
+	virtual UObject* GetAssetToEdit();
 	virtual AActor* GetActorToFocus();
 #endif
 
@@ -278,8 +279,11 @@ protected:
 	UFUNCTION(BlueprintImplementableEvent, Category = "FlowNode", meta = (DisplayName = "GetStatusString"))
 	FString K2_GetStatusString() const;
 
-	UFUNCTION(BlueprintImplementableEvent, Category = "FlowNode", meta = (DisplayName = "GetAssetToOpen"))
-	UObject* K2_GetAssetToOpen();
+	UFUNCTION(BlueprintImplementableEvent, Category = "FlowNode", meta = (DisplayName = "GetAssetPath"))
+    FString K2_GetAssetPath();
+	
+	UFUNCTION(BlueprintImplementableEvent, Category = "FlowNode", meta = (DisplayName = "GetAssetToEdit"))
+    UObject* K2_GetAssetToEdit();
 
 	UFUNCTION(BlueprintImplementableEvent, Category = "FlowNode", meta = (DisplayName = "GetActorToFocus"))
 	AActor* K2_GetActorToFocus();
