@@ -73,7 +73,7 @@ FString UFlowNode_SubGraph::GetNodeDescription() const
 	return Asset.IsNull() ? FString() : Asset.ToSoftObjectPath().GetAssetName();
 }
 
-UObject* UFlowNode_SubGraph::GetAssetToOpen()
+UObject* UFlowNode_SubGraph::GetAssetToEdit()
 {
 	return Asset.IsNull() ? nullptr : LoadAsset<UObject>(Asset);
 }

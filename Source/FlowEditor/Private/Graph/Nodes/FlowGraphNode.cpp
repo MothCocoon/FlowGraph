@@ -621,14 +621,9 @@ bool UFlowGraphNode::IsContentPreloaded() const
 	return false;
 }
 
-UObject* UFlowGraphNode::GetAssetToOpen() const
-{
-	return FlowNode ? FlowNode->GetAssetToOpen() : nullptr;
-}
-
 bool UFlowGraphNode::CanFocusViewport() const
 {
-	return FlowNode ? (GEditor->bIsSimulatingInEditor && FlowNode->GetAssetToOpen()) : false;
+	return FlowNode ? (GEditor->bIsSimulatingInEditor && FlowNode->GetActorToFocus()) : false;
 }
 
 void UFlowGraphNode::CreateInputPin(const FName& PinName, const int32 Index /*= INDEX_NONE*/)

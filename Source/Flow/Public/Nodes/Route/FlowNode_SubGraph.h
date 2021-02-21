@@ -32,7 +32,7 @@ public:
 
 #if WITH_EDITOR
 	virtual FString GetNodeDescription() const override;
-	virtual UObject* GetAssetToOpen() override;
+	virtual UObject* GetAssetToEdit() override;
 
 	virtual bool SupportsContextPins() const override { return true; }
 	virtual bool CanRefreshContextPinsOnLoad() const override { return true; }
