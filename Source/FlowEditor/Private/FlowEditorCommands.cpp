@@ -138,7 +138,7 @@ TSharedPtr<FEdGraphSchemaAction> FFlowSpawnNodeCommands::GetActionByChord(FInput
 		}
 	}
 
-	return nullptr;
+	return TSharedPtr<FEdGraphSchemaAction>();
 }
 
 TSharedPtr<FEdGraphSchemaAction> FFlowSpawnNodeCommands::GetActionByClass(UClass* NodeClass) const

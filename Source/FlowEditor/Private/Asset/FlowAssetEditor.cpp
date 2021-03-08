@@ -552,13 +552,15 @@ FReply FFlowAssetEditor::OnSpawnGraphNodeByShortcut(FInputChord InChord, const F
 {
 	UEdGraph* Graph = InGraph;
 
-	TSharedPtr<FEdGraphSchemaAction> Action = FFlowSpawnNodeCommands::Get().GetActionByChord(InChord);
-
-	if (Action.IsValid())
+	if (FFlowSpawnNodeCommands::IsRegistered())
 	{
-		TArray<UEdGraphPin*> DummyPins;
-		Action->PerformAction(Graph, DummyPins, InPosition);
-		return FReply::Handled();
+		TSharedPtr<FEdGraphSchemaAction> Action = FFlowSpawnNodeCommands::Get().GetActionByChord(InChord);
+        if (Action.IsValid())
+        {
+        	TArray<UEdGraphPin*> DummyPins;
+        	Action->PerformAction(Graph, DummyPins, InPosition);
+        	return FReply::Handled();
+        }
 	}
 
 	return FReply::Unhandled();
