@@ -28,7 +28,7 @@ void UFlowNode_NotifyActor::ExecuteInput(const FName& PinName)
 #if WITH_EDITOR
 FString UFlowNode_NotifyActor::GetNodeDescription() const
 {
-	const FString IdentityString = IdentityTag.IsValid() ? IdentityTag.ToString() : TEXT("Missing Identity Tag!");
+	const FString IdentityString = IdentityTag.IsValid() ? IdentityTag.ToString() : MissingIdentityTag;
 	const FString NotifyString = NotifyTag.IsValid() ? NotifyTag.ToString() : TEXT("---");
 
 	return IdentityString + LINE_TERMINATOR + NotifyString;

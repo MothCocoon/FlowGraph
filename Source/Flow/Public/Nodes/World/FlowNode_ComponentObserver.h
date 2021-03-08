@@ -24,6 +24,7 @@ protected:
 
 	TMap<TWeakObjectPtr<AActor>, TWeakObjectPtr<UFlowComponent>> RegisteredActors;
 
+protected:
 	virtual void ExecuteInput(const FName& PinName) override;
 
 	virtual void StartObserving();
@@ -40,5 +41,6 @@ protected:
 #if WITH_EDITOR
 public:
 	virtual FString GetNodeDescription() const override;
+	virtual FString GetStatusString() const override;
 #endif
 };

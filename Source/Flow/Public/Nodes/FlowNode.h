@@ -178,6 +178,12 @@ public:
 	static void RecursiveFindNodesByClass(UFlowNode* Node, const TSubclassOf<UFlowNode> Class, uint8 Depth, TArray<UFlowNode*>& OutNodes);
 
 //////////////////////////////////////////////////////////////////////////
+// Debugger
+protected:
+	static FString MissingIdentityTag;
+	static FString NoActorsFound;
+	
+//////////////////////////////////////////////////////////////////////////
 // Runtime
 
 public:
@@ -187,10 +193,12 @@ protected:
 	FStreamableManager StreamableManager;
 
 #if !UE_BUILD_SHIPPING
+protected:
+	EFlowActivationState ActivationState;
+	
 private:
 	TMap<FName, TArray<FPinRecord>> InputRecords;
 	TMap<FName, TArray<FPinRecord>> OutputRecords;
-	EFlowActivationState ActivationState;
 #endif
 
 public:
