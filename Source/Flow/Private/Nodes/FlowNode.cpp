@@ -11,6 +11,9 @@
 FName UFlowNode::DefaultInputName(TEXT("In"));
 FName UFlowNode::DefaultOutputName(TEXT("Out"));
 
+FString UFlowNode::MissingIdentityTag = TEXT("Missing Identity Tag!");
+FString UFlowNode::NoActorsFound = TEXT("No actors found!");
+
 #if !UE_BUILD_SHIPPING
 FPinRecord::FPinRecord()
 {

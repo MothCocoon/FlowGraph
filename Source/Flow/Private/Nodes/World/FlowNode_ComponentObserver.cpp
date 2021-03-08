@@ -28,7 +28,7 @@ void UFlowNode_ComponentObserver::ExecuteInput(const FName& PinName)
 	}
 	else
 	{
-		LogError("Missing Identity Tag");
+		LogError(MissingIdentityTag);
 	}
 }
 
@@ -81,5 +81,15 @@ void UFlowNode_ComponentObserver::Cleanup()
 FString UFlowNode_ComponentObserver::GetNodeDescription() const
 {
 	return IdentityTag.IsValid() ? IdentityTag.ToString() : TEXT("Missing Identity Tag!");
+}
+
+FString UFlowNode_ComponentObserver::GetStatusString() const
+{
+	if (ActivationState == EFlowActivationState::Active && RegisteredActors.Num() == 0)
+	{
+		return NoActorsFound;
+	}
+
+	return FString();
 }
 #endif
