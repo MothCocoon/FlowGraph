@@ -1,9 +1,9 @@
 #include "Graph/FlowGraphConnectionDrawingPolicy.h"
 
 #include "Asset/FlowAssetEditor.h"
-#include "FlowEditorSettings.h"
 #include "Graph/FlowGraph.h"
 #include "Graph/FlowGraphSchema.h"
+#include "Graph/FlowGraphSettings.h"
 #include "Graph/FlowGraphUtils.h"
 #include "Graph/Nodes/FlowGraphNode.h"
 
@@ -31,17 +31,17 @@ FFlowGraphConnectionDrawingPolicy::FFlowGraphConnectionDrawingPolicy(int32 InBac
 	, GraphObj(InGraphObj)
 {
 	// Cache off the editor options
-	RecentWireDuration = UFlowEditorSettings::Get()->RecentWireDuration;
+	RecentWireDuration = UFlowGraphSettings::Get()->RecentWireDuration;
 
-	InactiveColor = UFlowEditorSettings::Get()->InactiveWireColor;
-	RecentColor = UFlowEditorSettings::Get()->RecentWireColor;
-	RecordedColor = UFlowEditorSettings::Get()->RecordedWireColor;
-	SelectedColor = UFlowEditorSettings::Get()->SelectedWireColor;
+	InactiveColor = UFlowGraphSettings::Get()->InactiveWireColor;
+	RecentColor = UFlowGraphSettings::Get()->RecentWireColor;
+	RecordedColor = UFlowGraphSettings::Get()->RecordedWireColor;
+	SelectedColor = UFlowGraphSettings::Get()->SelectedWireColor;
 
-	InactiveWireThickness = UFlowEditorSettings::Get()->InactiveWireThickness;
-	RecentWireThickness = UFlowEditorSettings::Get()->RecentWireThickness;
-	RecordedWireThickness = UFlowEditorSettings::Get()->RecordedWireThickness;
-	SelectedWireThickness = UFlowEditorSettings::Get()->SelectedWireThickness;
+	InactiveWireThickness = UFlowGraphSettings::Get()->InactiveWireThickness;
+	RecentWireThickness = UFlowGraphSettings::Get()->RecentWireThickness;
+	RecordedWireThickness = UFlowGraphSettings::Get()->RecordedWireThickness;
+	SelectedWireThickness = UFlowGraphSettings::Get()->SelectedWireThickness;
 
 	// Don't want to draw ending arrowheads
 	ArrowImage = nullptr;
@@ -79,7 +79,7 @@ void FFlowGraphConnectionDrawingPolicy::BuildPaths()
 		}
 	}
 
-	if (GraphObj && (UFlowEditorSettings::Get()->bHighlightInputWiresOfSelectedNodes || UFlowEditorSettings::Get()->bHighlightOutputWiresOfSelectedNodes))
+	if (GraphObj && (UFlowGraphSettings::Get()->bHighlightInputWiresOfSelectedNodes || UFlowGraphSettings::Get()->bHighlightOutputWiresOfSelectedNodes))
 	{
 		const TSharedPtr<FFlowAssetEditor> FlowAssetEditor = FFlowGraphUtils::GetFlowAssetEditor(GraphObj);
 		if (FlowAssetEditor.IsValid())
@@ -88,8 +88,8 @@ void FFlowGraphConnectionDrawingPolicy::BuildPaths()
 			{
 				for (UEdGraphPin* Pin : SelectedNode->Pins)
 				{
-					if (Pin->Direction == EGPD_Input && UFlowEditorSettings::Get()->bHighlightInputWiresOfSelectedNodes
-						|| Pin->Direction == EGPD_Output && UFlowEditorSettings::Get()->bHighlightOutputWiresOfSelectedNodes)
+					if (Pin->Direction == EGPD_Input && UFlowGraphSettings::Get()->bHighlightInputWiresOfSelectedNodes
+						|| Pin->Direction == EGPD_Output && UFlowGraphSettings::Get()->bHighlightOutputWiresOfSelectedNodes)
 					{
 						for (UEdGraphPin* LinkedPin : Pin->LinkedTo)
 						{
