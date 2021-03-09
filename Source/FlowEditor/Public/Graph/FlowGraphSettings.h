@@ -3,17 +3,17 @@
 #include "Engine/DeveloperSettings.h"
 
 #include "FlowTypes.h"
-#include "FlowEditorSettings.generated.h"
+#include "FlowGraphSettings.generated.h"
 
 /**
  *
  */
-UCLASS(Config = Editor, defaultconfig, meta = (DisplayName = "Flow Editor"))
-class UFlowEditorSettings final : public UDeveloperSettings
+UCLASS(Config = Editor, defaultconfig, meta = (DisplayName = "Flow Graph"))
+class UFlowGraphSettings final : public UDeveloperSettings
 {
 	GENERATED_UCLASS_BODY()
 
-	static UFlowEditorSettings* Get() { return CastChecked<UFlowEditorSettings>(UFlowEditorSettings::StaticClass()->GetDefaultObject()); }
+	static UFlowGraphSettings* Get() { return CastChecked<UFlowGraphSettings>(UFlowGraphSettings::StaticClass()->GetDefaultObject()); }
 
 	/** Hide default pin names on simple nodes, reduces UI clutter */
 	UPROPERTY(EditAnywhere, config, Category = "Nodes")
