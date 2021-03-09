@@ -1,6 +1,6 @@
 #include "Graph/Widgets/SFlowGraphNode.h"
-#include "FlowEditorSettings.h"
 #include "FlowEditorStyle.h"
+#include "Graph/FlowGraphSettings.h"
 
 #include "Nodes/FlowNode.h"
 
@@ -17,7 +17,7 @@
 
 SFlowGraphPinExec::SFlowGraphPinExec()
 {
-	PinColorModifier = UFlowEditorSettings::Get()->ExecPinColorModifier;
+	PinColorModifier = UFlowGraphSettings::Get()->ExecPinColorModifier;
 }
 
 void SFlowGraphPinExec::Construct(const FArguments& InArgs, UEdGraphPin* InPin)
@@ -87,7 +87,7 @@ void SFlowGraphNode::GetNodeInfoPopups(FNodeInfoContext* Context, TArray<FGraphI
 	const FString Description = FlowGraphNode->GetNodeDescription();
 	if (!Description.IsEmpty())
 	{
-		const FGraphInformationPopupInfo DescriptionPopup = FGraphInformationPopupInfo(nullptr, UFlowEditorSettings::Get()->NodeDescriptionBackground, Description);
+		const FGraphInformationPopupInfo DescriptionPopup = FGraphInformationPopupInfo(nullptr, UFlowGraphSettings::Get()->NodeDescriptionBackground, Description);
 		Popups.Add(DescriptionPopup);
 	}
 
@@ -96,12 +96,12 @@ void SFlowGraphNode::GetNodeInfoPopups(FNodeInfoContext* Context, TArray<FGraphI
 		const FString Status = FlowGraphNode->GetStatusString();
 		if (!Status.IsEmpty())
 		{
-			const FGraphInformationPopupInfo DescriptionPopup = FGraphInformationPopupInfo(nullptr, UFlowEditorSettings::Get()->NodeStatusBackground, Status);
+			const FGraphInformationPopupInfo DescriptionPopup = FGraphInformationPopupInfo(nullptr, UFlowGraphSettings::Get()->NodeStatusBackground, Status);
 			Popups.Add(DescriptionPopup);
 		}
 		else if (FlowGraphNode->IsContentPreloaded())
 		{
-			const FGraphInformationPopupInfo DescriptionPopup = FGraphInformationPopupInfo(nullptr, UFlowEditorSettings::Get()->NodeStatusBackground, TEXT("Preloaded"));
+			const FGraphInformationPopupInfo DescriptionPopup = FGraphInformationPopupInfo(nullptr, UFlowGraphSettings::Get()->NodeStatusBackground, TEXT("Preloaded"));
 			Popups.Add(DescriptionPopup);
 		}
 	}
@@ -422,7 +422,7 @@ void SFlowGraphNode::CreateStandardPinWidget(UEdGraphPin* Pin)
 {
 	TSharedPtr<SGraphPin> NewPin = SNew(SFlowGraphPinExec, Pin);
 
-	if (!UFlowEditorSettings::Get()->bShowDefaultPinNames && FlowGraphNode->GetFlowNode())
+	if (!UFlowGraphSettings::Get()->bShowDefaultPinNames && FlowGraphNode->GetFlowNode())
 	{
 		if (Pin->Direction == EGPD_Input)
 		{
