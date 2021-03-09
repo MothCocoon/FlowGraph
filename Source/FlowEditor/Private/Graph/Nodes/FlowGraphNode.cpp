@@ -1,10 +1,10 @@
 #include "Graph/Nodes/FlowGraphNode.h"
 
-#include "FlowEditorSettings.h"
-#include "Graph/FlowGraph.h"
 #include "Asset/FlowDebugger.h"
 #include "FlowEditorCommands.h"
+#include "Graph/FlowGraph.h"
 #include "Graph/FlowGraphSchema.h"
+#include "Graph/FlowGraphSettings.h"
 #include "Graph/Widgets/SFlowGraphNode.h"
 
 #include "FlowAsset.h"
@@ -544,7 +544,7 @@ FLinearColor UFlowGraphNode::GetNodeTitleColor() const
 {
 	if (FlowNode)
 	{
-		if (const FLinearColor* Color = UFlowEditorSettings::Get()->NodeTitleColors.Find(FlowNode->GetNodeStyle()))
+		if (const FLinearColor* Color = UFlowGraphSettings::Get()->NodeTitleColors.Find(FlowNode->GetNodeStyle()))
 		{
 			return *Color;
 		}
