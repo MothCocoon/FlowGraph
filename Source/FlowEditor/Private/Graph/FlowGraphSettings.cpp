@@ -1,6 +1,6 @@
-#include "FlowEditorSettings.h"
+#include "Graph/FlowGraphSettings.h"
 
-UFlowEditorSettings::UFlowEditorSettings(const FObjectInitializer& ObjectInitializer)
+UFlowGraphSettings::UFlowGraphSettings(const FObjectInitializer& ObjectInitializer)
 	: Super(ObjectInitializer)
 	, bShowDefaultPinNames(false)
 	, ExecPinColorModifier(0.75f, 0.75f, 0.75f, 1.0f)
