@@ -26,7 +26,7 @@ void UFlowSubsystem::Deinitialize()
 			InstancedTemplates[i]->ClearInstances();
 		}
 	}
-	
+
 	InstancedTemplates.Empty();
 	InstancedSubFlows.Empty();
 }
@@ -38,7 +38,7 @@ void UFlowSubsystem::StartRootFlow(UObject* Owner, UFlowAsset* FlowAsset)
 		UE_LOG(LogFlow, Warning, TEXT("Attempted to start Root Flow again. Owner: %s. Flow Asset: %s."), *Owner->GetName(), *FlowAsset->GetName());
 		return;
 	}
-	
+
 	UFlowAsset* NewFlow = CreateFlowInstance(FlowAsset);
 	RootInstances.Add(Owner, NewFlow);
 
@@ -143,4 +143,55 @@ void UFlowSubsystem::UnregisterComponent(UFlowComponent* Component)
 	}
 
 	OnComponentUnregistered.Broadcast(Component);
+}
+
+TArray<UFlowComponent*> UFlowSubsystem::GetFlowComponents(const FGameplayTag& Tag) const
+{
+	TArray<TWeakObjectPtr<UFlowComponent>> FoundComponents;
+	FlowComponents.MultiFind(Tag, FoundComponents);
+
+	TArray<UFlowComponent*> ResultComponents;
+	for (const TWeakObjectPtr<UFlowComponent>& Component : FoundComponents)
+	{
+		if (Component.IsValid())
+		{
+			ResultComponents.Emplace(Component.Get());
+		}
+	}
+
+	return ResultComponents;
+}
+
+TArray<AActor*> UFlowSubsystem::GetFlowActors(const FGameplayTag& Tag) const
+{
+	TArray<TWeakObjectPtr<UFlowComponent>> FoundComponents;
+	FlowComponents.MultiFind(Tag, FoundComponents);
+
+	TArray<AActor*> ResultActors;
+	for (const TWeakObjectPtr<UFlowComponent>& Component : FoundComponents)
+	{
+		if (Component.IsValid())
+		{
+			ResultActors.Emplace(Component->GetOwner());
+		}
+	}
+
+	return ResultActors;
+}
+
+TMap<AActor*, UFlowComponent*> UFlowSubsystem::GetFlowActorsAndComponents(const FGameplayTag& Tag) const
+{
+	TArray<TWeakObjectPtr<UFlowComponent>> FoundComponents;
+	FlowComponents.MultiFind(Tag, FoundComponents);
+
+	TMap<AActor*, UFlowComponent*> ResultActors;
+	for (const TWeakObjectPtr<UFlowComponent>& Component : FoundComponents)
+	{
+		if (Component.IsValid())
+		{
+			ResultActors.Emplace(Component->GetOwner(), Component.Get());
+		}
+	}
+
+	return ResultActors;
 }
