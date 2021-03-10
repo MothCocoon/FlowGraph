@@ -30,7 +30,10 @@ protected:
 	virtual void StartObserving();
 	virtual void StopObserving();
 
+	UFUNCTION()
 	virtual void OnComponentRegistered(UFlowComponent* Component);
+
+	UFUNCTION()
 	virtual void OnComponentUnregistered(UFlowComponent* Component);
 
 	virtual void ObserveActor(TWeakObjectPtr<AActor> Actor, TWeakObjectPtr<UFlowComponent> Component) {}
