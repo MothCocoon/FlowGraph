@@ -10,7 +10,7 @@ DECLARE_DYNAMIC_MULTICAST_DELEGATE_TwoParams(FFlowComponentDynamicNotify, class 
 /**
 * Base component of Flow System - makes possible to communicate between Flow graph and actors
 */
-UCLASS(meta = (BlueprintSpawnableComponent))
+UCLASS(Blueprintable, meta = (BlueprintSpawnableComponent))
 class FLOW_API UFlowComponent : public UActorComponent
 {
 	GENERATED_UCLASS_BODY()
