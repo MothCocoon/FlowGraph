@@ -10,7 +10,7 @@
 class UFlowAsset;
 class UFlowNode_SubGraph;
 
-DECLARE_MULTICAST_DELEGATE_OneParam(FSimpleFlowComponentEvent, UFlowComponent* /*Component*/);
+DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FSimpleFlowComponentEvent, UFlowComponent*, Component);
 
 /**
  * Flow Subsystem
@@ -26,7 +26,7 @@ class FLOW_API UFlowSubsystem : public UGameInstanceSubsystem
 	UFlowSubsystem();
 
 	FStreamableManager Streamable;
-	
+
 	// all asset templates with active instances
 	UPROPERTY()
 	TArray<UFlowAsset*> InstancedTemplates;
@@ -34,7 +34,7 @@ class FLOW_API UFlowSubsystem : public UGameInstanceSubsystem
 	// asset instanced by object from another system like World Settings, not SubGraph node
 	UPROPERTY()
 	TMap<UObject*, UFlowAsset*> RootInstances;
-	
+
 	// assets instanced by Sub Graph nodes
 	UPROPERTY()
 	TMap<UFlowNode_SubGraph*, UFlowAsset*> InstancedSubFlows;
@@ -72,46 +72,63 @@ public:
 	virtual void RegisterComponent(UFlowComponent* Component);
 	virtual void UnregisterComponent(UFlowComponent* Component);
 
+	// Called when actor with Flow Component appears in the world
+	UPROPERTY(BlueprintAssignable, Category = "FlowSubsystem")
 	FSimpleFlowComponentEvent OnComponentRegistered;
+
+	// Called when actor with Flow Component disappears from the world
+	UPROPERTY(BlueprintAssignable, Category = "FlowSubsystem")
 	FSimpleFlowComponentEvent OnComponentUnregistered;
 
-	template<class T>
+	// Returns all registered Flow Components with given tag
+	UFUNCTION(BlueprintPure, Category = "FlowSubsystem")
+	TArray<UFlowComponent*> GetFlowComponents(const FGameplayTag& Tag) const;
+
+	// Returns all registered actors containing Flow Component with given tag
+	UFUNCTION(BlueprintPure, Category = "FlowSubsystem")
+	TArray<AActor*> GetFlowActors(const FGameplayTag& Tag) const;
+
+	// Returns all registered actors as pairs: Actor as key, its Flow Component as value
+	UFUNCTION(BlueprintPure, Category = "FlowSubsystem")
+	TMap<AActor*, UFlowComponent*> GetFlowActorsAndComponents(const FGameplayTag& Tag) const;
+
+	template <class T>
 	TArray<TWeakObjectPtr<T>> GetComponents(const FGameplayTag& Tag) const
 	{
 		static_assert(TPointerIsConvertibleFromTo<T, const UActorComponent>::Value, "'T' template parameter to GetComponents must be derived from UActorComponent");
-		
+
 		TArray<TWeakObjectPtr<UFlowComponent>> FoundComponents;
 		FlowComponents.MultiFind(Tag, FoundComponents);
 
-		TArray<TWeakObjectPtr<T>> ResultComponents;
+		TArray<TWeakObjectPtr<T>> Result;
 		for (const TWeakObjectPtr<UFlowComponent>& Component : FoundComponents)
 		{
 			if (Component->GetClass()->IsChildOf(T::StaticClass()))
 			{
-				ResultComponents.Emplace(Cast<T>(Component));
+				Result.Emplace(Cast<T>(Component));
 			}
 		}
 
-		return ResultComponents;
+		return Result;
 	}
 
-	template<class T>
+	template <class T>
 	TMap<TWeakObjectPtr<T>, TWeakObjectPtr<UFlowComponent>> GetActors(const FGameplayTag& Tag) const
 	{
 		static_assert(TPointerIsConvertibleFromTo<T, const AActor>::Value, "'T' template parameter to GetComponents must be derived from AActor");
-		
+
 		TArray<TWeakObjectPtr<UFlowComponent>> FoundComponents;
 		FlowComponents.MultiFind(Tag, FoundComponents);
 
-		TMap<TWeakObjectPtr<T>, TWeakObjectPtr<UFlowComponent>> ResultActors;
+		TMap<TWeakObjectPtr<T>, TWeakObjectPtr<UFlowComponent>> Result;
 		for (const TWeakObjectPtr<UFlowComponent>& Component : FoundComponents)
 		{
 			if (Component->GetOwner()->GetClass()->IsChildOf(T::StaticClass()))
 			{
-				ResultActors.Emplace(Cast<T>(Component->GetOwner()), Component);
+				Result.Emplace(Cast<T>(Component->GetOwner()), Component);
 			}
 		}
 
-		return ResultActors;
+		return Result;
 	}
 };
