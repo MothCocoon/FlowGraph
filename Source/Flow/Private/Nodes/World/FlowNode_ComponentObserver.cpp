@@ -39,8 +39,8 @@ void UFlowNode_ComponentObserver::StartObserving()
 		ObserveActor(FoundComponent->GetOwner(), FoundComponent);
 	}
 
-	GetFlowSubsystem()->OnComponentRegistered.AddUObject(this, &UFlowNode_ComponentObserver::OnComponentRegistered);
-	GetFlowSubsystem()->OnComponentUnregistered.AddUObject(this, &UFlowNode_ComponentObserver::OnComponentUnregistered);
+	GetFlowSubsystem()->OnComponentRegistered.AddDynamic(this, &UFlowNode_ComponentObserver::OnComponentRegistered);
+	GetFlowSubsystem()->OnComponentUnregistered.AddDynamic(this, &UFlowNode_ComponentObserver::OnComponentUnregistered);
 }
 
 void UFlowNode_ComponentObserver::StopObserving()
