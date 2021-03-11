@@ -162,10 +162,10 @@ TArray<UFlowComponent*> UFlowSubsystem::GetFlowComponentsByTag(const FGameplayTa
 	return Result;
 }
 
-TArray<UFlowComponent*> UFlowSubsystem::GetFlowComponentsByTags(const FGameplayTagContainer Tags) const
+TArray<UFlowComponent*> UFlowSubsystem::GetFlowComponentsByTags(const FGameplayTagContainer Tags, const EGameplayContainerMatchType MatchType) const
 {
 	TSet<TWeakObjectPtr<UFlowComponent>> FoundComponents;
-	FindComponents(Tags, FoundComponents);
+	FindComponents(Tags, FoundComponents, MatchType);
 
 	TArray<UFlowComponent*> Result;
 	for (const TWeakObjectPtr<UFlowComponent>& Component : FoundComponents)
@@ -196,10 +196,10 @@ TArray<AActor*> UFlowSubsystem::GetFlowActorsByTag(const FGameplayTag Tag) const
 	return Result;
 }
 
-TArray<AActor*> UFlowSubsystem::GetFlowActorsByTags(const FGameplayTagContainer Tags) const
+TArray<AActor*> UFlowSubsystem::GetFlowActorsByTags(const FGameplayTagContainer Tags, const EGameplayContainerMatchType MatchType) const
 {
 	TSet<TWeakObjectPtr<UFlowComponent>> FoundComponents;
-	FindComponents(Tags, FoundComponents);
+	FindComponents(Tags, FoundComponents, MatchType);
 
 	TArray<AActor*> Result;
 	for (const TWeakObjectPtr<UFlowComponent>& Component : FoundComponents)
@@ -230,10 +230,10 @@ TMap<AActor*, UFlowComponent*> UFlowSubsystem::GetFlowActorsAndComponentsByTag(c
 	return Result;
 }
 
-TMap<AActor*, UFlowComponent*> UFlowSubsystem::GetFlowActorsAndComponentsByTags(const FGameplayTagContainer Tags) const
+TMap<AActor*, UFlowComponent*> UFlowSubsystem::GetFlowActorsAndComponentsByTags(const FGameplayTagContainer Tags, const EGameplayContainerMatchType MatchType) const
 {
 	TSet<TWeakObjectPtr<UFlowComponent>> FoundComponents;
-	FindComponents(Tags, FoundComponents);
+	FindComponents(Tags, FoundComponents, MatchType);
 
 	TMap<AActor*, UFlowComponent*> Result;
 	for (const TWeakObjectPtr<UFlowComponent>& Component : FoundComponents)
@@ -247,12 +247,33 @@ TMap<AActor*, UFlowComponent*> UFlowSubsystem::GetFlowActorsAndComponentsByTags(
 	return Result;
 }
 
-void UFlowSubsystem::FindComponents(const FGameplayTagContainer& Tags, TSet<TWeakObjectPtr<UFlowComponent>>& OutComponents) const
+void UFlowSubsystem::FindComponents(const FGameplayTagContainer& Tags, TSet<TWeakObjectPtr<UFlowComponent>>& OutComponents, const EGameplayContainerMatchType MatchType) const
 {
-	for (const FGameplayTag& Tag : Tags)
+	if (MatchType == EGameplayContainerMatchType::Any)
 	{
-		TArray<TWeakObjectPtr<UFlowComponent>> ComponentsPerTag;
-		FlowComponents.MultiFind(Tag, ComponentsPerTag);
-		OutComponents.Append(ComponentsPerTag);
+		for (const FGameplayTag& Tag : Tags)
+		{
+			TArray<TWeakObjectPtr<UFlowComponent>> ComponentsPerTag;
+			FlowComponents.MultiFind(Tag, ComponentsPerTag);
+			OutComponents.Append(ComponentsPerTag);
+		}
+	}
+	else // EGameplayContainerMatchType::All
+	{
+		TSet<TWeakObjectPtr<UFlowComponent>> ComponentsWithAnyTag;
+		for (const FGameplayTag& Tag : Tags)
+		{
+			TArray<TWeakObjectPtr<UFlowComponent>> ComponentsPerTag;
+			FlowComponents.MultiFind(Tag, ComponentsPerTag);
+			ComponentsWithAnyTag.Append(ComponentsPerTag);
+		}
+		
+		for (const TWeakObjectPtr<UFlowComponent>& Component : ComponentsWithAnyTag)
+		{
+			if (Component.IsValid() && Component->IdentityTags.HasAllExact(Tags))
+			{
+				OutComponents.Emplace(Component);
+			}
+		}
 	}
 }
