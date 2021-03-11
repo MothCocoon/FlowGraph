@@ -168,16 +168,18 @@ private:
 	UPROPERTY()
 	TSet<UFlowNode*> PreloadedNodes;
 
+	// Nodes that have any work left, not marked as Finished yet
 	UPROPERTY()
 	TArray<UFlowNode*> ActiveNodes;
 
+	// All nodes active in the past, done their work
 	UPROPERTY()
 	TArray<UFlowNode*> RecordedNodes;
 
 public:
 	void InitInstance(UFlowAsset* InTemplateAsset);
 	void PreloadNodes();
-	
+
 	virtual void StartFlow();
 	virtual void StartAsSubFlow(UFlowNode_SubGraph* SubGraphNode);
 	virtual void FinishFlow(const bool bFlowCompleted);
@@ -201,7 +203,15 @@ public:
 	UFlowAsset* GetMasterInstance() const;
 	UFlowNode* GetNodeInstance(const FGuid Guid) const;
 
+	// Are there any active nodes?
+	UFUNCTION(BlueprintPure, Category = "Flow")
 	bool IsActive() const { return ActiveNodes.Num() > 0; }
-	void GetActiveNodes(TArray<UFlowNode*>& OutNodes) const { OutNodes = ActiveNodes; }
-	void GetRecordedNodes(TArray<UFlowNode*>& OutNodes) const { OutNodes = RecordedNodes; }
+
+	// Returns nodes that have any work left, not marked as Finished yet
+	UFUNCTION(BlueprintPure, Category = "Flow")
+	TArray<UFlowNode*> GetActiveNodes() const { return ActiveNodes; }
+
+	// Returns nodes active in the past, done their work
+	UFUNCTION(BlueprintPure, Category = "Flow")
+	TArray<UFlowNode*> GetRecordedNodes() const { return RecordedNodes; }
 };
