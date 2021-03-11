@@ -80,18 +80,31 @@ public:
 	UPROPERTY(BlueprintAssignable, Category = "FlowSubsystem")
 	FSimpleFlowComponentEvent OnComponentUnregistered;
 
-	// Returns all registered Flow Components with given tag
+	// Returns all registered Flow Components identified by given tag
 	UFUNCTION(BlueprintPure, Category = "FlowSubsystem")
-	TArray<UFlowComponent*> GetFlowComponents(const FGameplayTag& Tag) const;
+	TArray<UFlowComponent*> GetFlowComponentsByTag(const FGameplayTag Tag) const;
 
-	// Returns all registered actors containing Flow Component with given tag
+	// Returns all registered Flow Components identified by at least one of given tags
 	UFUNCTION(BlueprintPure, Category = "FlowSubsystem")
-	TArray<AActor*> GetFlowActors(const FGameplayTag& Tag) const;
+    TArray<UFlowComponent*> GetFlowComponentsByTags(const FGameplayTagContainer Tags, const EGameplayContainerMatchType MatchType) const;
+
+	// Returns all registered actors with Flow Component identified by given tag
+	UFUNCTION(BlueprintPure, Category = "FlowSubsystem")
+	TArray<AActor*> GetFlowActorsByTag(const FGameplayTag Tag) const;
+
+	// Returns all registered actors with Flow Component identified by at least one of given tags
+	UFUNCTION(BlueprintPure, Category = "FlowSubsystem")
+    TArray<AActor*> GetFlowActorsByTags(const FGameplayTagContainer Tags, const EGameplayContainerMatchType MatchType) const;
 
 	// Returns all registered actors as pairs: Actor as key, its Flow Component as value
 	UFUNCTION(BlueprintPure, Category = "FlowSubsystem")
-	TMap<AActor*, UFlowComponent*> GetFlowActorsAndComponents(const FGameplayTag& Tag) const;
+	TMap<AActor*, UFlowComponent*> GetFlowActorsAndComponentsByTag(const FGameplayTag Tag) const;
 
+	// Returns all registered actors as pairs: Actor as key, its Flow Component as value
+	UFUNCTION(BlueprintPure, Category = "FlowSubsystem")
+    TMap<AActor*, UFlowComponent*> GetFlowActorsAndComponentsByTags(const FGameplayTagContainer Tags, const EGameplayContainerMatchType MatchType) const;
+
+	// Returns all registered Flow Components identified by given tag
 	template <class T>
 	TArray<TWeakObjectPtr<T>> GetComponents(const FGameplayTag& Tag) const
 	{
@@ -103,7 +116,7 @@ public:
 		TArray<TWeakObjectPtr<T>> Result;
 		for (const TWeakObjectPtr<UFlowComponent>& Component : FoundComponents)
 		{
-			if (Component->GetClass()->IsChildOf(T::StaticClass()))
+			if (Component.IsValid() && Component->GetClass()->IsChildOf(T::StaticClass()))
 			{
 				Result.Emplace(Cast<T>(Component));
 			}
@@ -112,6 +125,28 @@ public:
 		return Result;
 	}
 
+	// Returns all registered Flow Components identified by at least one of given tags
+	template <class T>
+    TArray<TWeakObjectPtr<T>> GetComponents(const FGameplayTagContainer& Tags, const EGameplayContainerMatchType MatchType) const
+	{
+		static_assert(TPointerIsConvertibleFromTo<T, const UActorComponent>::Value, "'T' template parameter to GetComponents must be derived from UActorComponent");
+
+		TSet<TWeakObjectPtr<UFlowComponent>> FoundComponents;
+		FindComponents(Tags, FoundComponents, MatchType);
+
+		TArray<TWeakObjectPtr<T>> Result;
+		for (const TWeakObjectPtr<UFlowComponent>& Component : FoundComponents)
+		{
+			if (Component.IsValid() && Component->GetClass()->IsChildOf(T::StaticClass()))
+			{
+				Result.Emplace(Cast<T>(Component));
+			}
+		}
+
+		return Result;
+	}
+
+	// Returns all registered actors with Flow Component identified by given tag
 	template <class T>
 	TMap<TWeakObjectPtr<T>, TWeakObjectPtr<UFlowComponent>> GetActors(const FGameplayTag& Tag) const
 	{
@@ -123,7 +158,7 @@ public:
 		TMap<TWeakObjectPtr<T>, TWeakObjectPtr<UFlowComponent>> Result;
 		for (const TWeakObjectPtr<UFlowComponent>& Component : FoundComponents)
 		{
-			if (Component->GetOwner()->GetClass()->IsChildOf(T::StaticClass()))
+			if (Component.IsValid() && Component->GetOwner()->GetClass()->IsChildOf(T::StaticClass()))
 			{
 				Result.Emplace(Cast<T>(Component->GetOwner()), Component);
 			}
@@ -131,4 +166,28 @@ public:
 
 		return Result;
 	}
+
+	// Returns all registered actors with Flow Component identified by at least one of given tags
+	template <class T>
+    TMap<TWeakObjectPtr<T>, TWeakObjectPtr<UFlowComponent>> GetActors(const FGameplayTagContainer& Tags, const EGameplayContainerMatchType MatchType) const
+	{
+		static_assert(TPointerIsConvertibleFromTo<T, const AActor>::Value, "'T' template parameter to GetComponents must be derived from AActor");
+
+		TSet<TWeakObjectPtr<UFlowComponent>> FoundComponents;
+		FindComponents(Tags, FoundComponents, MatchType);
+
+		TMap<TWeakObjectPtr<T>, TWeakObjectPtr<UFlowComponent>> Result;
+		for (const TWeakObjectPtr<UFlowComponent>& Component : FoundComponents)
+		{
+			if (Component.IsValid() && Component->GetOwner()->GetClass()->IsChildOf(T::StaticClass()))
+			{
+				Result.Emplace(Cast<T>(Component->GetOwner()), Component);
+			}
+		}
+
+		return Result;
+	}
+
+private:
+	void FindComponents(const FGameplayTagContainer& Tags, TSet<TWeakObjectPtr<UFlowComponent>>& OutComponents, const EGameplayContainerMatchType MatchType) const;
 };
