@@ -58,6 +58,17 @@ UFlowNode::UFlowNode(const FObjectInitializer& ObjectInitializer)
 }
 
 #if WITH_EDITOR
+void UFlowNode::PostEditChangeProperty(FPropertyChangedEvent& PropertyChangedEvent)
+{
+	Super::PostEditChangeProperty(PropertyChangedEvent);
+
+	if (PropertyChangedEvent.Property
+		&& (PropertyChangedEvent.GetPropertyName() == GET_MEMBER_NAME_CHECKED(UFlowNode, InputNames) || PropertyChangedEvent.GetPropertyName() == GET_MEMBER_NAME_CHECKED(UFlowNode, OutputNames)))
+	{
+		OnReconstructionRequested.ExecuteIfBound();
+	}
+}
+
 void UFlowNode::SetGraphNode(UEdGraphNode* NewGraph)
 {
 	GraphNode = NewGraph;
