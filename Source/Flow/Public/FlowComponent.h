@@ -15,7 +15,7 @@ class FLOW_API UFlowComponent : public UActorComponent
 {
 	GENERATED_UCLASS_BODY()
 
-	UPROPERTY(EditAnywhere, Category = "Flow")
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Flow")
 	FGameplayTagContainer IdentityTags;
 
 	FFlowComponentNotify OnNotifyFromComponent;
