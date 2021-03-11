@@ -618,16 +618,26 @@ bool UFlowGraphNode::CanFocusViewport() const
 
 void UFlowGraphNode::CreateInputPin(const FName& PinName, const int32 Index /*= INDEX_NONE*/)
 {
+	if (PinName.IsNone())
+	{
+		return;
+	}
+	
 	const FEdGraphPinType PinType = FEdGraphPinType(UEdGraphSchema_K2::PC_Exec, FName(NAME_None), nullptr, EPinContainerType::None, false, FEdGraphTerminalType());
-	UEdGraphPin* NewPin = CreatePin(EGPD_Input, PinType, PinName.IsNone() ? UFlowNode::DefaultInputName : PinName, Index);
+	UEdGraphPin* NewPin = CreatePin(EGPD_Input, PinType, PinName, Index);
 
 	InputPins.Emplace(NewPin);
 }
 
 void UFlowGraphNode::CreateOutputPin(const FName PinName, const int32 Index /*= INDEX_NONE*/)
 {
+	if (PinName.IsNone())
+	{
+		return;
+	}
+	
 	const FEdGraphPinType PinType = FEdGraphPinType(UEdGraphSchema_K2::PC_Exec, FName(NAME_None), nullptr, EPinContainerType::None, false, FEdGraphTerminalType());
-	UEdGraphPin* NewPin = CreatePin(EGPD_Output, PinType, PinName.IsNone() ? UFlowNode::DefaultOutputName : PinName, Index);
+	UEdGraphPin* NewPin = CreatePin(EGPD_Output, PinType, PinName, Index);
 
 	OutputPins.Emplace(NewPin);
 }
