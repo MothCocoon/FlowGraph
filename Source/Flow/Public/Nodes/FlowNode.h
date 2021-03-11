@@ -88,6 +88,10 @@ public:
 #endif
 
 public:
+	// UObject
+	virtual void PostEditChangeProperty(FPropertyChangedEvent& PropertyChangedEvent) override;
+	// --
+	
 	UEdGraphNode* GetGraphNode() const { return GraphNode; }
 	
 #if WITH_EDITOR
