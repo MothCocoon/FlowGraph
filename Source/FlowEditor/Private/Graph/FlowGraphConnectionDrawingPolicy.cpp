@@ -54,9 +54,7 @@ void FFlowGraphConnectionDrawingPolicy::BuildPaths()
 	{
 		const double CurrentTime = FApp::GetCurrentTime();
 
-		TArray<UFlowNode*> Nodes;
-		FlowInstance->GetRecordedNodes(Nodes);
-		for (const UFlowNode* Node : Nodes)
+		for (const UFlowNode* Node : FlowInstance->GetRecordedNodes())
 		{
 			const UFlowGraphNode* FlowGraphNode = Cast<UFlowGraphNode>(Node->GetGraphNode());
 
