@@ -13,6 +13,11 @@ UFlowSubsystem::UFlowSubsystem()
 {
 }
 
+bool UFlowSubsystem::ShouldCreateSubsystem(UObject* Outer) const
+{
+	return Outer->GetWorld()->GetNetMode() < NM_Client && Outer->GetWorld()->IsServer();
+}
+
 void UFlowSubsystem::Initialize(FSubsystemCollectionBase& Collection)
 {
 }
