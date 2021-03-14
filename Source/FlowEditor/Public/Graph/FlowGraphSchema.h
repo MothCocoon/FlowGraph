@@ -46,7 +46,6 @@ public:
 	static FFlowGraphSchemaRefresh OnNodeListChanged;
 
 private:
-	static FName FlowNodeClassName;
 	static TArray<UClass*> NativeFlowNodes;
 	static TMap<FString, UClass*> BlueprintFlowNodes;
 	static TArray<UClass*> FlowNodeClasses;
