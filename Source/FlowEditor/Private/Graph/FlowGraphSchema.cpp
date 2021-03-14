@@ -19,7 +19,6 @@
 
 #define LOCTEXT_NAMESPACE "FlowGraphSchema"
 
-FName UFlowGraphSchema::FlowNodeClassName = TEXT("FlowNode");
 TArray<UClass*> UFlowGraphSchema::NativeFlowNodes;
 TMap<FString, UClass*> UFlowGraphSchema::BlueprintFlowNodes;
 TArray<UClass*> UFlowGraphSchema::FlowNodeClasses;
@@ -309,7 +308,7 @@ void UFlowGraphSchema::AddAsset(const FAssetData& AssetData, const bool bBatch)
 		UClass* NativeParentClass = FindObject<UClass>(ANY_PACKAGE, *NativeParentClassPath);
 
 		// accept only Flow Node blueprints
-		if (NativeParentClass && NativeParentClass->GetFName() == FlowNodeClassName)
+		if (NativeParentClass && NativeParentClass->IsChildOf(UFlowNode::StaticClass()))
 		{
 			FString GeneratedClassPath;
 			AssetData.GetTagValue(FBlueprintTags::GeneratedClassPath, GeneratedClassPath);
