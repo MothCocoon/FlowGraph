@@ -150,12 +150,12 @@ void UFlowSubsystem::UnregisterComponent(UFlowComponent* Component)
 	OnComponentUnregistered.Broadcast(Component);
 }
 
-TArray<UFlowComponent*> UFlowSubsystem::GetFlowComponentsByTag(const FGameplayTag Tag) const
+TSet<UFlowComponent*> UFlowSubsystem::GetFlowComponentsByTag(const FGameplayTag Tag) const
 {
 	TArray<TWeakObjectPtr<UFlowComponent>> FoundComponents;
 	FlowComponents.MultiFind(Tag, FoundComponents);
 
-	TArray<UFlowComponent*> Result;
+	TSet<UFlowComponent*> Result;
 	for (const TWeakObjectPtr<UFlowComponent>& Component : FoundComponents)
 	{
 		if (Component.IsValid())
@@ -167,12 +167,12 @@ TArray<UFlowComponent*> UFlowSubsystem::GetFlowComponentsByTag(const FGameplayTa
 	return Result;
 }
 
-TArray<UFlowComponent*> UFlowSubsystem::GetFlowComponentsByTags(const FGameplayTagContainer Tags, const EGameplayContainerMatchType MatchType) const
+TSet<UFlowComponent*> UFlowSubsystem::GetFlowComponentsByTags(const FGameplayTagContainer Tags, const EGameplayContainerMatchType MatchType) const
 {
 	TSet<TWeakObjectPtr<UFlowComponent>> FoundComponents;
 	FindComponents(Tags, FoundComponents, MatchType);
 
-	TArray<UFlowComponent*> Result;
+	TSet<UFlowComponent*> Result;
 	for (const TWeakObjectPtr<UFlowComponent>& Component : FoundComponents)
 	{
 		if (Component.IsValid())
@@ -184,12 +184,12 @@ TArray<UFlowComponent*> UFlowSubsystem::GetFlowComponentsByTags(const FGameplayT
 	return Result;
 }
 
-TArray<AActor*> UFlowSubsystem::GetFlowActorsByTag(const FGameplayTag Tag) const
+TSet<AActor*> UFlowSubsystem::GetFlowActorsByTag(const FGameplayTag Tag) const
 {
 	TArray<TWeakObjectPtr<UFlowComponent>> FoundComponents;
 	FlowComponents.MultiFind(Tag, FoundComponents);
 
-	TArray<AActor*> Result;
+	TSet<AActor*> Result;
 	for (const TWeakObjectPtr<UFlowComponent>& Component : FoundComponents)
 	{
 		if (Component.IsValid())
@@ -201,12 +201,12 @@ TArray<AActor*> UFlowSubsystem::GetFlowActorsByTag(const FGameplayTag Tag) const
 	return Result;
 }
 
-TArray<AActor*> UFlowSubsystem::GetFlowActorsByTags(const FGameplayTagContainer Tags, const EGameplayContainerMatchType MatchType) const
+TSet<AActor*> UFlowSubsystem::GetFlowActorsByTags(const FGameplayTagContainer Tags, const EGameplayContainerMatchType MatchType) const
 {
 	TSet<TWeakObjectPtr<UFlowComponent>> FoundComponents;
 	FindComponents(Tags, FoundComponents, MatchType);
 
-	TArray<AActor*> Result;
+	TSet<AActor*> Result;
 	for (const TWeakObjectPtr<UFlowComponent>& Component : FoundComponents)
 	{
 		if (Component.IsValid())
