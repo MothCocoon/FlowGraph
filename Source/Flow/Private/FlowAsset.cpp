@@ -48,6 +48,20 @@ void UFlowAsset::PostDuplicate(bool bDuplicateForPIE)
 	}
 }
 
+EDataValidationResult UFlowAsset::IsDataValid(TArray<FText>& ValidationErrors)
+{
+	for (const TPair<FGuid, UFlowNode*>& NodePair : Nodes)
+	{
+		EDataValidationResult Result = NodePair.Value->IsDataValid(ValidationErrors);
+		if (Result == EDataValidationResult::Invalid)
+		{
+			return EDataValidationResult::Invalid;
+		}
+	}
+
+	return EDataValidationResult::Valid;
+}
+
 TSharedPtr<IFlowGraphInterface> UFlowAsset::FlowGraphInterface = nullptr;
 
 void UFlowAsset::SetFlowGraphInterface(TSharedPtr<IFlowGraphInterface> InFlowAssetEditor)
