@@ -74,7 +74,7 @@ class FLOW_API UFlowNode : public UObject, public IVisualLoggerDebugSnapshotInte
 private:
 	UPROPERTY()
 	UEdGraphNode* GraphNode;
-	
+
 #if WITH_EDITORONLY_DATA
 protected:
 	UPROPERTY(EditDefaultsOnly, Category = "FlowNode")
@@ -88,12 +88,14 @@ public:
 #endif
 
 public:
+#if WITH_EDITOR
 	// UObject
 	virtual void PostEditChangeProperty(FPropertyChangedEvent& PropertyChangedEvent) override;
 	// --
-	
+#endif
+
 	UEdGraphNode* GetGraphNode() const { return GraphNode; }
-	
+
 #if WITH_EDITOR
 	void SetGraphNode(UEdGraphNode* NewGraph);
 
@@ -186,7 +188,7 @@ public:
 protected:
 	static FString MissingIdentityTag;
 	static FString NoActorsFound;
-	
+
 //////////////////////////////////////////////////////////////////////////
 // Runtime
 
@@ -199,7 +201,7 @@ protected:
 #if !UE_BUILD_SHIPPING
 protected:
 	EFlowActivationState ActivationState;
-	
+
 private:
 	TMap<FName, TArray<FPinRecord>> InputRecords;
 	TMap<FName, TArray<FPinRecord>> OutputRecords;
@@ -292,10 +294,10 @@ protected:
 	FString K2_GetStatusString() const;
 
 	UFUNCTION(BlueprintImplementableEvent, Category = "FlowNode", meta = (DisplayName = "GetAssetPath"))
-    FString K2_GetAssetPath();
-	
+	FString K2_GetAssetPath();
+
 	UFUNCTION(BlueprintImplementableEvent, Category = "FlowNode", meta = (DisplayName = "GetAssetToEdit"))
-    UObject* K2_GetAssetToEdit();
+	UObject* K2_GetAssetToEdit();
 
 	UFUNCTION(BlueprintImplementableEvent, Category = "FlowNode", meta = (DisplayName = "GetActorToFocus"))
 	AActor* K2_GetActorToFocus();
