@@ -1,5 +1,8 @@
 #include "Nodes/Route/FlowNode_Timer.h"
 
+#include "Engine/World.h"
+#include "TimerManager.h"
+
 UFlowNode_Timer::UFlowNode_Timer(const FObjectInitializer& ObjectInitializer)
 	: Super(ObjectInitializer)
 	, CompletionTime(1.0f)

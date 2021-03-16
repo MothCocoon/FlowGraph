@@ -1,6 +1,7 @@
 #include "FlowComponent.h"
 #include "FlowSubsystem.h"
 
+#include "Engine/GameInstance.h"
 #include "Engine/World.h"
 
 UFlowComponent::UFlowComponent(const FObjectInitializer& ObjectInitializer)
