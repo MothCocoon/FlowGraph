@@ -20,8 +20,9 @@
 #define LOCTEXT_NAMESPACE "FlowGraphSchema"
 
 TArray<UClass*> UFlowGraphSchema::NativeFlowNodes;
-TMap<FString, UClass*> UFlowGraphSchema::BlueprintFlowNodes;
-TArray<UClass*> UFlowGraphSchema::FlowNodeClasses;
+TMap<FName, FAssetData> UFlowGraphSchema::BlueprintFlowNodes;
+
+TSet<FString> UFlowGraphSchema::UnsortedCategories;
 TArray<TSharedPtr<FString>> UFlowGraphSchema::FlowNodeCategories;
 
 TMap<UClass*, UClass*> UFlowGraphSchema::AssignedGraphNodeClasses;
@@ -163,6 +164,16 @@ void UFlowGraphSchema::BreakPinLinks(UEdGraphPin& TargetPin, bool bSendsNodeNoti
 	}
 }
 
+int32 UFlowGraphSchema::GetNodeSelectionCount(const UEdGraph* Graph) const
+{
+	return FFlowGraphUtils::GetFlowAssetEditor(Graph)->GetNumberOfSelectedNodes();
+}
+
+TSharedPtr<FEdGraphSchemaAction> UFlowGraphSchema::GetCreateCommentAction() const
+{
+	return TSharedPtr<FEdGraphSchemaAction>(static_cast<FEdGraphSchemaAction*>(new FFlowGraphSchemaAction_NewComment));
+}
+
 TArray<TSharedPtr<FString>> UFlowGraphSchema::GetFlowNodeCategories()
 {
 	if (FlowNodeCategories.Num() == 0)
@@ -185,17 +196,27 @@ UClass* UFlowGraphSchema::GetAssignedGraphNodeClass(const UClass* FlowNodeClass)
 
 void UFlowGraphSchema::GetFlowNodeActions(FGraphActionMenuBuilder& ActionMenuBuilder, const FString& CategoryName)
 {
-	if (FlowNodeClasses.Num() == 0)
+	if (NativeFlowNodes.Num() == 0)
 	{
 		GatherFlowNodes();
 	}
 
-	for (UClass* FlowNodeClass : FlowNodeClasses)
+	for (UClass* FlowNodeClass : NativeFlowNodes)
 	{
 		const UFlowNode* FlowNode = FlowNodeClass->GetDefaultObject<UFlowNode>();
-		if (CategoryName.IsEmpty() || CategoryName.Equals(FlowNode->GetCategory()))
+		if (CategoryName.IsEmpty() || CategoryName.Equals(FlowNode->GetNativeCategory()))
 		{
 			TSharedPtr<FFlowGraphSchemaAction_NewNode> NewNodeAction(new FFlowGraphSchemaAction_NewNode(FlowNode));
+			ActionMenuBuilder.AddAction(NewNodeAction);
+		}
+	}
+
+	for (const TPair<FName, FAssetData>& AssetData : BlueprintFlowNodes)
+	{
+		UBlueprint* Blueprint = GetNodeBlueprint(AssetData.Value);
+		if (CategoryName.IsEmpty() || CategoryName.Equals(Blueprint->BlueprintCategory))
+		{
+			TSharedPtr<FFlowGraphSchemaAction_NewNode> NewNodeAction(new FFlowGraphSchemaAction_NewNode(Blueprint));
 			ActionMenuBuilder.AddAction(NewNodeAction);
 		}
 	}
@@ -227,8 +248,6 @@ void UFlowGraphSchema::GatherFlowNodes()
 		return;
 	}
 
-	FlowNodeClasses.Empty();
-
 	// collect C++ nodes once per editor session
 	if (NativeFlowNodes.Num() == 0)
 	{
@@ -239,6 +258,9 @@ void UFlowGraphSchema::GatherFlowNodes()
 				if (It->ClassGeneratedBy == nullptr && IsFlowNodePlaceable(*It))
 				{
 					NativeFlowNodes.Emplace(*It);
+
+					const UFlowNode* DefaultObject = It->GetDefaultObject<UFlowNode>();
+					UnsortedCategories.Emplace(DefaultObject->GetNativeCategory());
 				}
 			}
 			else if (It->IsChildOf(UFlowGraphNode::StaticClass()))
@@ -254,7 +276,6 @@ void UFlowGraphSchema::GatherFlowNodes()
 			}
 		}
 	}
-	FlowNodeClasses.Append(NativeFlowNodes);
 
 	// retrieve all blueprint nodes
 	FAssetRegistryModule& AssetRegistryModule = FModuleManager::LoadModuleChecked<FAssetRegistryModule>(AssetRegistryConstants::ModuleName);
@@ -286,62 +307,42 @@ void UFlowGraphSchema::OnAssetAdded(const FAssetData& AssetData)
 
 void UFlowGraphSchema::AddAsset(const FAssetData& AssetData, const bool bBatch)
 {
-	FAssetRegistryModule& AssetRegistryModule = FModuleManager::LoadModuleChecked<FAssetRegistryModule>(AssetRegistryConstants::ModuleName);
-	if (AssetRegistryModule.Get().IsLoadingAssets())
+	if (!BlueprintFlowNodes.Contains(AssetData.PackageName))
 	{
-		return;
-	}
-
-	TArray<FName> AncestorClassNames;
-	AssetRegistryModule.Get().GetAncestorClassNames(AssetData.AssetClass, AncestorClassNames);
-	if (!AncestorClassNames.Contains(UBlueprintCore::StaticClass()->GetFName()))
-	{
-		return;
-	}
-
-	FString NativeParentClassPath;
-	AssetData.GetTagValue(FBlueprintTags::NativeParentClassPath, NativeParentClassPath);
-	if (!NativeParentClassPath.IsEmpty())
-	{
-		UObject* Outer = nullptr;
-		ResolveName(Outer, NativeParentClassPath, false, false);
-		UClass* NativeParentClass = FindObject<UClass>(ANY_PACKAGE, *NativeParentClassPath);
-
-		// accept only Flow Node blueprints
-		if (NativeParentClass && NativeParentClass->IsChildOf(UFlowNode::StaticClass()))
+		FAssetRegistryModule& AssetRegistryModule = FModuleManager::LoadModuleChecked<FAssetRegistryModule>(AssetRegistryConstants::ModuleName);
+		if (AssetRegistryModule.Get().IsLoadingAssets())
 		{
-			FString GeneratedClassPath;
-			AssetData.GetTagValue(FBlueprintTags::GeneratedClassPath, GeneratedClassPath);
+			return;
+		}
 
-			// add class once
-			if (!GeneratedClassPath.IsEmpty())
+		TArray<FName> AncestorClassNames;
+		AssetRegistryModule.Get().GetAncestorClassNames(AssetData.AssetClass, AncestorClassNames);
+		if (!AncestorClassNames.Contains(UBlueprintCore::StaticClass()->GetFName()))
+		{
+			return;
+		}
+
+		FString NativeParentClassPath;
+		AssetData.GetTagValue(FBlueprintTags::NativeParentClassPath, NativeParentClassPath);
+		if (!NativeParentClassPath.IsEmpty())
+		{
+			UObject* Outer = nullptr;
+			ResolveName(Outer, NativeParentClassPath, false, false);
+			UClass* NativeParentClass = FindObject<UClass>(ANY_PACKAGE, *NativeParentClassPath);
+
+			// accept only Flow Node blueprints
+			if (NativeParentClass && NativeParentClass->IsChildOf(UFlowNode::StaticClass()))
 			{
-				UObject* NodeOuter = nullptr;
-				ResolveName(NodeOuter, GeneratedClassPath, false, false);
-				UClass* NodeClass = FindObject<UClass>(ANY_PACKAGE, *GeneratedClassPath);
-
-				if (NodeClass == nullptr)
+				UBlueprint* Blueprint = GetNodeBlueprint(AssetData);
+				if (Blueprint && IsFlowNodePlaceable(Blueprint->GeneratedClass))
 				{
-					// this should be fine - assuming that Flow Node blueprints shouldn't include hard references to heavy assets!
-					NodeClass = LoadObject<UClass>(nullptr, *GeneratedClassPath);
-				}
+					BlueprintFlowNodes.Emplace(AssetData.PackageName, AssetData);
+					UnsortedCategories.Emplace(Blueprint->BlueprintCategory);
 
-				if (NodeClass && IsFlowNodePlaceable(NodeClass) && FlowNodeClasses.Contains(NodeClass) == false)
-				{
-					// filter out intermediate blueprint classes
-					const FString ClassName = NodeClass->GetName();
-					if (ClassName.StartsWith(TEXT("SKEL_")) || ClassName.StartsWith(TEXT("REINST_")))
+					if (!bBatch)
 					{
-						return;
+						RefreshNodeList();
 					}
-
-					BlueprintFlowNodes.Emplace(GeneratedClassPath, NodeClass);
-					FlowNodeClasses.Emplace(NodeClass);
-				}
-
-				if (!bBatch)
-				{
-					RefreshNodeList();
 				}
 			}
 		}
@@ -350,26 +351,10 @@ void UFlowGraphSchema::AddAsset(const FAssetData& AssetData, const bool bBatch)
 
 void UFlowGraphSchema::RemoveAsset(const FAssetData& AssetData)
 {
-	FString GeneratedClassPath;
-	if (AssetData.GetTagValue(FBlueprintTags::GeneratedClassPath, GeneratedClassPath))
+	if (BlueprintFlowNodes.Contains(AssetData.PackageName))
 	{
-		GeneratedClassPath = FPackageName::ExportTextPathToObjectPath(GeneratedClassPath);
-
-		if (GeneratedClassPath == TEXT("None"))
-		{
-			// This can happen if the generated class was already deleted prior to the notification being sent
-			// Let's try to reconstruct the generated class name from the object path.
-			GeneratedClassPath = AssetData.ObjectPath.ToString() + TEXT("_C");
-		}
-	}
-
-	if (BlueprintFlowNodes.Contains(GeneratedClassPath))
-	{
-		FlowNodeClasses.Remove(BlueprintFlowNodes[GeneratedClassPath]);
-		FlowNodeClasses.Shrink();
-
-		BlueprintFlowNodes.Remove(GeneratedClassPath);
-		BlueprintFlowNodes.Compact();
+		BlueprintFlowNodes.Remove(AssetData.PackageName);
+		BlueprintFlowNodes.Shrink();
 
 		RefreshNodeList();
 	}
@@ -377,17 +362,7 @@ void UFlowGraphSchema::RemoveAsset(const FAssetData& AssetData)
 
 void UFlowGraphSchema::RefreshNodeList()
 {
-	// sort node classes
-	FlowNodeClasses.Sort();
-
-	// collect categories
-	TSet<FString> UnsortedCategories;
-	for (UClass* FlowNodeClass : FlowNodeClasses)
-	{
-		const UFlowNode* DefaultObject = FlowNodeClass->GetDefaultObject<UFlowNode>();
-		UnsortedCategories.Emplace(DefaultObject->GetCategory());
-	}
-
+	// sort categories
 	TArray<FString> SortedCategories = UnsortedCategories.Array();
 	SortedCategories.Sort();
 
@@ -401,14 +376,9 @@ void UFlowGraphSchema::RefreshNodeList()
 	OnNodeListChanged.Broadcast();
 }
 
-int32 UFlowGraphSchema::GetNodeSelectionCount(const UEdGraph* Graph) const
+UBlueprint* UFlowGraphSchema::GetNodeBlueprint(const FAssetData& AssetData)
 {
-	return FFlowGraphUtils::GetFlowAssetEditor(Graph)->GetNumberOfSelectedNodes();
-}
-
-TSharedPtr<FEdGraphSchemaAction> UFlowGraphSchema::GetCreateCommentAction() const
-{
-	return TSharedPtr<FEdGraphSchemaAction>(static_cast<FEdGraphSchemaAction*>(new FFlowGraphSchemaAction_NewComment));
+	return Cast<UBlueprint>(StaticLoadObject(AssetData.GetClass(), /*Outer =*/nullptr, *AssetData.ObjectPath.ToString(), nullptr, LOAD_NoWarn | LOAD_DisableCompileOnLoad));
 }
 
 #undef LOCTEXT_NAMESPACE
