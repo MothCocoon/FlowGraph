@@ -209,4 +209,7 @@ private:
 
 	void FocusViewport() const;
 	bool CanFocusViewport() const;
+
+	void JumpToNodeDefinition() const;
+	bool CanJumpToNodeDefinition() const;
 };

@@ -41,6 +41,7 @@ void FFlowGraphCommands::RegisterCommands()
 	UI_COMMAND(TogglePinBreakpoint, "Toggle Pin Breakpoint", "Toggles a breakpoint on the pin", EUserInterfaceActionType::Button, FInputChord());
 
 	UI_COMMAND(FocusViewport, "Focus Viewport", "Focus viewport on actor assigned to the node", EUserInterfaceActionType::Button, FInputChord());
+	UI_COMMAND(JumpToNodeDefinition, "Jump to Node Definition", "Jump tp the node definition", EUserInterfaceActionType::Button, FInputChord());
 }
 
 FFlowSpawnNodeCommands::FFlowSpawnNodeCommands()
