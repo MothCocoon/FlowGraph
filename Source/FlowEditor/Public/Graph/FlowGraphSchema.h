@@ -10,6 +10,16 @@ class FLOWEDITOR_API UFlowGraphSchema : public UEdGraphSchema
 {
 	GENERATED_UCLASS_BODY()
 
+private:
+	static TArray<UClass*> NativeFlowNodes;
+	static TMap<FName, FAssetData> BlueprintFlowNodes;
+	
+	static TSet<FString> UnsortedCategories;
+	static TArray<TSharedPtr<FString>> FlowNodeCategories;
+
+	static TMap<UClass*, UClass*> AssignedGraphNodeClasses;
+
+public:
 	static void SubscribeToAssetChanges();
 	static void GetPaletteActions(FGraphActionMenuBuilder& ActionMenuBuilder, const FString& CategoryName);
 
@@ -44,12 +54,5 @@ private:
 
 public:
 	static FFlowGraphSchemaRefresh OnNodeListChanged;
-
-private:
-	static TArray<UClass*> NativeFlowNodes;
-	static TMap<FString, UClass*> BlueprintFlowNodes;
-	static TArray<UClass*> FlowNodeClasses;
-	static TArray<TSharedPtr<FString>> FlowNodeCategories;
-
-	static TMap<UClass*, UClass*> AssignedGraphNodeClasses;
+	static UBlueprint* GetNodeBlueprint(const FAssetData& AssetData);
 };
