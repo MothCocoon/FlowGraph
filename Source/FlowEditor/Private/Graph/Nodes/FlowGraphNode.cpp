@@ -172,12 +172,23 @@ void UFlowGraphNode::PostDuplicate(bool bDuplicateForPIE)
 
 void UFlowGraphNode::PostEditImport()
 {
+	Super::PostEditImport();
+	
 	PostCopyNode();
+	SubscribeToExternalChanges();
+}
+
+void UFlowGraphNode::PostPlacedNewNode()
+{
+	Super::PostPlacedNewNode();
+
 	SubscribeToExternalChanges();
 }
 
 void UFlowGraphNode::PrepareForCopying()
 {
+	Super::PrepareForCopying();
+	
 	if (FlowNode)
 	{
 		// Temporarily take ownership of the FlowNode, so that it is not deleted when cutting
