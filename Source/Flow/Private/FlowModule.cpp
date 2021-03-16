@@ -1,5 +1,7 @@
 #include "FlowModule.h"
 
+#include "Modules/ModuleManager.h"
+
 #define LOCTEXT_NAMESPACE "Flow"
 
 void FFlowModule::StartupModule()
