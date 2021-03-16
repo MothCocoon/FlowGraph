@@ -5,6 +5,7 @@
 #include "FlowSubsystem.h"
 #include "FlowTypes.h"
 
+#include "Engine/Engine.h"
 #include "Engine/World.h"
 #include "Misc/App.h"
 
