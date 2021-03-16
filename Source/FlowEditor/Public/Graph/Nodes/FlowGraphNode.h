@@ -76,6 +76,7 @@ public:
 	// --
 
 	// UEdGraphNode
+	virtual void PostPlacedNewNode() override;
 	virtual void PrepareForCopying() override;
     // --
 	
