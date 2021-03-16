@@ -12,9 +12,11 @@ struct FLOWEDITOR_API FFlowGraphSchemaAction_NewNode : public FEdGraphSchemaActi
 {
 	GENERATED_USTRUCT_BODY()
 
-	/** Class of node we want to create */
 	UPROPERTY()
-	class UClass* NodeClass;
+	class UClass* NativeNodeClass;
+
+	UPROPERTY()
+	class UBlueprint* Blueprint;
 
 	static FName StaticGetTypeId()
 	{
@@ -26,19 +28,29 @@ struct FLOWEDITOR_API FFlowGraphSchemaAction_NewNode : public FEdGraphSchemaActi
 
 	FFlowGraphSchemaAction_NewNode()
 		: FEdGraphSchemaAction()
-		, NodeClass(nullptr)
+		, NativeNodeClass(nullptr)
+		, Blueprint(nullptr)
 	{
 	}
 
 	FFlowGraphSchemaAction_NewNode(UClass* Node)
 		: FEdGraphSchemaAction()
-		, NodeClass(Node)
+		, NativeNodeClass(Node)
+		, Blueprint(nullptr)
 	{
 	}
 
 	FFlowGraphSchemaAction_NewNode(const UFlowNode* Node)
-		: FEdGraphSchemaAction(FText::FromString(Node->GetCategory()), Node->GetTitle(), Node->GetClass()->GetToolTipText(), 0)
-		, NodeClass(Node->GetClass())
+		: FEdGraphSchemaAction(FText::FromString(Node->GetNativeCategory()), Node->GetTitle(), Node->GetClass()->GetToolTipText(), 0)
+		, NativeNodeClass(Node->GetClass())
+		, Blueprint(nullptr)
+	{
+	}
+
+	FFlowGraphSchemaAction_NewNode(UBlueprint* InBlueprint)
+        : FEdGraphSchemaAction(FText::FromString(InBlueprint->BlueprintCategory), FText::FromString(InBlueprint->BlueprintDisplayName), FText::FromString(InBlueprint->BlueprintDescription), 0)
+		, NativeNodeClass(nullptr)
+		, Blueprint(InBlueprint)
 	{
 	}
 
