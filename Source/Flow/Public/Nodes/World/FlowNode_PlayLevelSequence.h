@@ -1,5 +1,6 @@
 #pragma once
 
+#include "EngineDefines.h"
 #include "MovieSceneSequencePlayer.h"
 #include "Nodes/FlowNode.h"
 #include "FlowNode_PlayLevelSequence.generated.h"
