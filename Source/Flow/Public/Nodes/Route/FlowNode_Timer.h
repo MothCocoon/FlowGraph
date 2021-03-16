@@ -1,5 +1,6 @@
 #pragma once
 
+#include "Engine/EngineTypes.h"
 #include "Nodes/FlowNode.h"
 #include "FlowNode_Timer.generated.h"
 
