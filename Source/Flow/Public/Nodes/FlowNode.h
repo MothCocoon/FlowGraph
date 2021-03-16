@@ -77,7 +77,7 @@ private:
 
 #if WITH_EDITORONLY_DATA
 protected:
-	UPROPERTY(EditDefaultsOnly, Category = "FlowNode")
+	UPROPERTY()
 	FString Category;
 
 	UPROPERTY(EditDefaultsOnly, Category = "FlowNode")
@@ -99,7 +99,7 @@ public:
 #if WITH_EDITOR
 	void SetGraphNode(UEdGraphNode* NewGraph);
 
-	FString GetCategory() const { return Category; }
+	FString GetNativeCategory() const { return Category; }
 	EFlowNodeStyle GetNodeStyle() const { return NodeStyle; }
 
 	virtual FText GetTitle() const { return GetClass()->GetDisplayNameText(); }
