@@ -527,7 +527,7 @@ void UFlowGraphNode::GetContextMenuActions(const FGraphNodeContextMenuBuilder& C
 		}
 
 		{
-			Context.MenuBuilder->BeginSection("FlowGraphNodeExtras", LOCTEXT("NodeExtrasMenuHeader", "Node Extras"));
+			Context.MenuBuilder->BeginSection("FlowGraphNodeJumps", LOCTEXT("NodeJumpsMenuHeader", "Jumps"));
 			if (CanFocusViewport())
 			{
 				Context.MenuBuilder->AddMenuEntry(FlowGraphCommands.FocusViewport);
