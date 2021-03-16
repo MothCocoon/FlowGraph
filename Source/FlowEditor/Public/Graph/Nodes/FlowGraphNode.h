@@ -149,6 +149,11 @@ public:
 
 	bool CanFocusViewport() const;
 
+	// UEdGraphNode
+	virtual bool CanJumpToDefinition() const override;
+	virtual void JumpToDefinition() const override;
+	// --
+
 //////////////////////////////////////////////////////////////////////////
 // Pins
 

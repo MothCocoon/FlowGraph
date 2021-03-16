@@ -506,10 +506,14 @@ void FFlowAssetEditor::BindGraphCommands()
 		FIsActionButtonVisible::CreateSP(this, &FFlowAssetEditor::CanTogglePinBreakpoint)
 	);
 
-	// Extra debug commands
+	// Jump commands
 	ToolkitCommands->MapAction(FlowGraphCommands.FocusViewport,
 		FExecuteAction::CreateSP(this, &FFlowAssetEditor::FocusViewport),
 		FCanExecuteAction::CreateSP(this, &FFlowAssetEditor::CanFocusViewport));
+
+	ToolkitCommands->MapAction(FlowGraphCommands.JumpToNodeDefinition,
+        FExecuteAction::CreateSP(this, &FFlowAssetEditor::JumpToNodeDefinition),
+        FCanExecuteAction::CreateSP(this, &FFlowAssetEditor::CanJumpToNodeDefinition));
 }
 
 void FFlowAssetEditor::UndoGraphAction()
@@ -1278,6 +1282,21 @@ void FFlowAssetEditor::FocusViewport() const
 }
 
 bool FFlowAssetEditor::CanFocusViewport() const
+{
+	return GetSelectedFlowNodes().Num() == 1;
+}
+
+void FFlowAssetEditor::JumpToNodeDefinition() const
+{
+	// Iterator used but should only contain one node
+	for (UFlowGraphNode* SelectedNode : GetSelectedFlowNodes())
+	{
+		SelectedNode->JumpToDefinition();
+		return;
+	}
+}
+
+bool FFlowAssetEditor::CanJumpToNodeDefinition() const
 {
 	return GetSelectedFlowNodes().Num() == 1;
 }

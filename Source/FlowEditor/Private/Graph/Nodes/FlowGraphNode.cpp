@@ -17,10 +17,11 @@
 #include "Editor/EditorEngine.h"
 #include "Framework/Commands/GenericCommands.h"
 #include "GraphEditorActions.h"
+#include "Kismet2/KismetEditorUtilities.h"
 #include "ScopedTransaction.h"
+#include "SourceCodeNavigation.h"
 #include "UnrealEd.h"
 
-#undef LOCTEXT_NAMESPACE
 #define LOCTEXT_NAMESPACE "FlowGraphNode"
 
 //////////////////////////////////////////////////////////////////////////
@@ -172,7 +173,7 @@ void UFlowGraphNode::PostDuplicate(bool bDuplicateForPIE)
 void UFlowGraphNode::PostEditImport()
 {
 	Super::PostEditImport();
-	
+
 	PostCopyNode();
 	SubscribeToExternalChanges();
 }
@@ -187,7 +188,7 @@ void UFlowGraphNode::PostPlacedNewNode()
 void UFlowGraphNode::PrepareForCopying()
 {
 	Super::PrepareForCopying();
-	
+
 	if (FlowNode)
 	{
 		// Temporarily take ownership of the FlowNode, so that it is not deleted when cutting
@@ -531,6 +532,10 @@ void UFlowGraphNode::GetContextMenuActions(const FGraphNodeContextMenuBuilder& C
 			{
 				Context.MenuBuilder->AddMenuEntry(FlowGraphCommands.FocusViewport);
 			}
+			if (CanJumpToDefinition())
+			{
+				Context.MenuBuilder->AddMenuEntry(FlowGraphCommands.JumpToNodeDefinition);
+			}
 			Context.MenuBuilder->EndSection();
 		}
 	}
@@ -637,13 +642,49 @@ bool UFlowGraphNode::CanFocusViewport() const
 	return FlowNode ? (GEditor->bIsSimulatingInEditor && FlowNode->GetActorToFocus()) : false;
 }
 
+bool UFlowGraphNode::CanJumpToDefinition() const
+{
+	return FlowNode != nullptr;
+}
+
+void UFlowGraphNode::JumpToDefinition() const
+{
+	if (FlowNode)
+	{
+		if (FlowNode->GetClass()->IsNative())
+		{
+			if (FSourceCodeNavigation::CanNavigateToClass(FlowNode->GetClass()))
+			{
+				const bool bSucceeded = FSourceCodeNavigation::NavigateToClass(FlowNode->GetClass());
+				if (bSucceeded)
+				{
+					return;
+				}
+			}
+
+			// Failing that, fall back to the older method which will still get the file open assuming it exists
+			FString NativeParentClassHeaderPath;
+			const bool bFileFound = FSourceCodeNavigation::FindClassHeaderPath(FlowNode->GetClass(), NativeParentClassHeaderPath) && (IFileManager::Get().FileSize(*NativeParentClassHeaderPath) != INDEX_NONE);
+			if (bFileFound)
+			{
+				const FString AbsNativeParentClassHeaderPath = FPaths::ConvertRelativePathToFull(NativeParentClassHeaderPath);
+				FSourceCodeNavigation::OpenSourceFile(AbsNativeParentClassHeaderPath);
+			}
+		}
+		else
+		{
+			FKismetEditorUtilities::BringKismetToFocusAttentionOnObject(FlowNode->GetClass());
+		}
+	}
+}
+
 void UFlowGraphNode::CreateInputPin(const FName& PinName, const int32 Index /*= INDEX_NONE*/)
 {
 	if (PinName.IsNone())
 	{
 		return;
 	}
-	
+
 	const FEdGraphPinType PinType = FEdGraphPinType(UEdGraphSchema_K2::PC_Exec, FName(NAME_None), nullptr, EPinContainerType::None, false, FEdGraphTerminalType());
 	UEdGraphPin* NewPin = CreatePin(EGPD_Input, PinType, PinName, Index);
 
@@ -656,7 +697,7 @@ void UFlowGraphNode::CreateOutputPin(const FName PinName, const int32 Index /*= 
 	{
 		return;
 	}
-	
+
 	const FEdGraphPinType PinType = FEdGraphPinType(UEdGraphSchema_K2::PC_Exec, FName(NAME_None), nullptr, EPinContainerType::None, false, FEdGraphTerminalType());
 	UEdGraphPin* NewPin = CreatePin(EGPD_Output, PinType, PinName, Index);
 
