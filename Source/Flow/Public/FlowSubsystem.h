@@ -59,7 +59,7 @@ public:
 	void RemoveInstancedTemplate(UFlowAsset* Template);
 
 private:
-	UFlowAsset* CreateFlowInstance(TSoftObjectPtr<UFlowAsset> FlowAsset);
+	UFlowAsset* CreateFlowInstance(UObject* Owner, TSoftObjectPtr<UFlowAsset> FlowAsset);
 
 public:
 	// Returns assets instanced by object from another system like World Settings
