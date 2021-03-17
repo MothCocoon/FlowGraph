@@ -162,6 +162,9 @@ private:
 	TMap<TWeakObjectPtr<UFlowNode_SubGraph>, TWeakObjectPtr<UFlowAsset>> ActiveSubGraphs;
 
 	UPROPERTY()
+	UObject* Owner;
+
+	UPROPERTY()
 	UFlowNode_Start* StartNode;
 
 	UPROPERTY()
@@ -179,13 +182,14 @@ private:
 	TArray<UFlowNode*> RecordedNodes;
 
 public:
-	void InitInstance(UFlowAsset* InTemplateAsset);
+	void InitInstance(UObject* InOwner, UFlowAsset* InTemplateAsset);
 	void PreloadNodes();
 
 	virtual void StartFlow();
 	virtual void StartAsSubFlow(UFlowNode_SubGraph* SubGraphNode);
 	virtual void FinishFlow(const bool bFlowCompleted);
 
+	UObject* GetOwner() const;
 	TWeakObjectPtr<UFlowAsset> GetFlowInstance(UFlowNode_SubGraph* SubGraphNode) const;
 
 private:

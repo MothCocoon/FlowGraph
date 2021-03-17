@@ -222,8 +222,9 @@ void UFlowAsset::SetInspectedInstance(const FName& NewInspectedInstanceName)
 }
 #endif
 
-void UFlowAsset::InitInstance(UFlowAsset* InTemplateAsset)
+void UFlowAsset::InitInstance(UObject* InOwner, UFlowAsset* InTemplateAsset)
 {
+	Owner = InOwner;
 	TemplateAsset = InTemplateAsset;
 
 	for (TPair<FGuid, UFlowNode*>& Node : Nodes)
@@ -341,6 +342,11 @@ void UFlowAsset::FinishFlow(const bool bFlowCompleted)
 
 		NodeOwningThisAssetInstance = nullptr;
 	}
+}
+
+UObject* UFlowAsset::GetOwner() const
+{
+	return Owner;
 }
 
 TWeakObjectPtr<UFlowAsset> UFlowAsset::GetFlowInstance(UFlowNode_SubGraph* SubGraphNode) const
