@@ -2,6 +2,7 @@
 #include "FlowAsset.h"
 #include "FlowComponent.h"
 #include "FlowModule.h"
+#include "FlowSettings.h"
 #include "Nodes/Route/FlowNode_SubGraph.h"
 
 #include "Engine/GameInstance.h"
@@ -15,6 +16,12 @@ UFlowSubsystem::UFlowSubsystem()
 
 bool UFlowSubsystem::ShouldCreateSubsystem(UObject* Outer) const
 {
+	// in this case, we simply create subsystem for every instance of the game
+	if (UFlowSettings::Get()->bCreateFlowSubsystemOnClients)
+	{
+		return true;
+	}
+
 	return Outer->GetWorld()->GetNetMode() < NM_Client && Outer->GetWorld()->IsServer();
 }
 
@@ -274,7 +281,7 @@ void UFlowSubsystem::FindComponents(const FGameplayTagContainer& Tags, TSet<TWea
 			FlowComponents.MultiFind(Tag, ComponentsPerTag);
 			ComponentsWithAnyTag.Append(ComponentsPerTag);
 		}
-		
+
 		for (const TWeakObjectPtr<UFlowComponent>& Component : ComponentsWithAnyTag)
 		{
 			if (Component.IsValid() && Component->IdentityTags.HasAllExact(Tags))
