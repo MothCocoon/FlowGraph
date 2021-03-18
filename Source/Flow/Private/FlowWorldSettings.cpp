@@ -11,7 +11,7 @@ void AFlowWorldSettings::BeginPlay()
 {
 	Super::BeginPlay();
 
-	if (FlowAsset)
+	if (FlowAsset && HasAuthority())
 	{
 		if (UFlowSubsystem* FlowSubsystem = GetWorld()->GetGameInstance()->GetSubsystem<UFlowSubsystem>())
 		{
@@ -22,7 +22,7 @@ void AFlowWorldSettings::BeginPlay()
 
 void AFlowWorldSettings::EndPlay(const EEndPlayReason::Type EndPlayReason)
 {
-	if (FlowAsset)
+	if (FlowAsset && HasAuthority())
 	{
 		if (UFlowSubsystem* FlowSubsystem = GetWorld()->GetGameInstance()->GetSubsystem<UFlowSubsystem>())
 		{
