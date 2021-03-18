@@ -8,6 +8,7 @@
 #include "Engine/Engine.h"
 #include "Engine/World.h"
 #include "Misc/App.h"
+#include "Misc/Paths.h"
 
 FName UFlowNode::DefaultInputName(TEXT("In"));
 FName UFlowNode::DefaultOutputName(TEXT("Out"));
