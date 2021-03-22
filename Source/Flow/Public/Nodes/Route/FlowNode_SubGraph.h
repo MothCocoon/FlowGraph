@@ -35,7 +35,6 @@ public:
 	virtual UObject* GetAssetToEdit() override;
 
 	virtual bool SupportsContextPins() const override { return true; }
-	virtual bool CanRefreshContextPinsOnLoad() const override { return true; }
 
 	virtual TArray<FName> GetContextInputs() override;
 	virtual TArray<FName> GetContextOutputs() override;
