@@ -85,7 +85,7 @@ TArray<FName> UFlowNode_SubGraph::GetContextInputs()
 	if (!Asset.IsNull())
 	{
 		Asset.LoadSynchronous();
-		for (const FName& PinName : Asset.Get()->GetCustomEvents())
+		for (const FName& PinName : Asset.Get()->GetCustomInputs())
 		{
 			if (!PinName.IsNone())
 			{

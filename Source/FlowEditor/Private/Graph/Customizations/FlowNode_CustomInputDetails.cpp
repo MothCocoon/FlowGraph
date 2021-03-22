@@ -1,19 +1,19 @@
-#include "FlowNode_CustomEventDetails.h"
+#include "FlowNode_CustomInputDetails.h"
 #include "FlowAsset.h"
-#include "Nodes/Route/FlowNode_CustomEvent.h"
+#include "Nodes/Route/FlowNode_CustomInput.h"
 
 #include "DetailWidgetRow.h"
 #include "PropertyEditing.h"
 #include "UnrealEd.h"
 
-#define LOCTEXT_NAMESPACE "FlowNode_CustomEventDetails"
+#define LOCTEXT_NAMESPACE "FlowNode_CustomInputDetails"
 
-void FFlowNode_CustomEventDetails::CustomizeDetails(IDetailLayoutBuilder& DetailLayout)
+void FFlowNode_CustomInputDetails::CustomizeDetails(IDetailLayoutBuilder& DetailLayout)
 {
 	DetailLayout.GetObjectsBeingCustomized(ObjectsBeingEdited);
 	GetEventNames();
 
-	IDetailCategoryBuilder& Category = DetailLayout.EditCategory("CustomEvent", LOCTEXT("CustomEventCategory", "Custom Event"));
+	IDetailCategoryBuilder& Category = DetailLayout.EditCategory("CustomInput", LOCTEXT("CustomInputCategory", "Custom Event"));
 	Category.AddCustomRow(LOCTEXT("CustomRowName", "Event Name"))
 			.NameContent()
 				[
@@ -25,16 +25,16 @@ void FFlowNode_CustomEventDetails::CustomizeDetails(IDetailLayoutBuilder& Detail
 				[
 					SNew(SComboBox<TSharedPtr<FName>>)
 						.OptionsSource(&EventNames)
-						.OnGenerateWidget(this, &FFlowNode_CustomEventDetails::GenerateEventWidget)
-						.OnSelectionChanged(this, &FFlowNode_CustomEventDetails::PinSelectionChanged)
+						.OnGenerateWidget(this, &FFlowNode_CustomInputDetails::GenerateEventWidget)
+						.OnSelectionChanged(this, &FFlowNode_CustomInputDetails::PinSelectionChanged)
 						[
 							SNew(STextBlock)
-								.Text(this, &FFlowNode_CustomEventDetails::GetSelectedEventText)
+								.Text(this, &FFlowNode_CustomInputDetails::GetSelectedEventText)
 						]
 				];
 }
 
-void FFlowNode_CustomEventDetails::GetEventNames()
+void FFlowNode_CustomInputDetails::GetEventNames()
 {
 	EventNames.Empty();
 	EventNames.Emplace(MakeShareable(new FName(NAME_None)));
@@ -42,13 +42,13 @@ void FFlowNode_CustomEventDetails::GetEventNames()
 	if (ObjectsBeingEdited[0].IsValid() && ObjectsBeingEdited[0].Get()->GetOuter())
 	{
 		const UFlowAsset* FlowAsset = Cast<UFlowAsset>(ObjectsBeingEdited[0].Get()->GetOuter());
-		TArray<FName> SortedNames = FlowAsset->GetCustomEvents();
+		TArray<FName> SortedNames = FlowAsset->GetCustomInputs();
 
 		for (const TPair<FGuid, UFlowNode*>& Node : FlowAsset->GetNodes())
 		{
-			if (Node.Value->GetClass()->IsChildOf(UFlowNode_CustomEvent::StaticClass()))
+			if (Node.Value->GetClass()->IsChildOf(UFlowNode_CustomInput::StaticClass()))
 			{
-				SortedNames.Remove(Cast<UFlowNode_CustomEvent>(Node.Value)->EventName);
+				SortedNames.Remove(Cast<UFlowNode_CustomInput>(Node.Value)->EventName);
 			}
 		}
 
@@ -64,17 +64,17 @@ void FFlowNode_CustomEventDetails::GetEventNames()
 	}
 }
 
-TSharedRef<SWidget> FFlowNode_CustomEventDetails::GenerateEventWidget(const TSharedPtr<FName> Item) const
+TSharedRef<SWidget> FFlowNode_CustomInputDetails::GenerateEventWidget(const TSharedPtr<FName> Item) const
 {
 	return SNew(STextBlock).Text(FText::FromName(*Item.Get()));
 }
 
-FText FFlowNode_CustomEventDetails::GetSelectedEventText() const
+FText FFlowNode_CustomInputDetails::GetSelectedEventText() const
 {
 	FText PropertyValue;
 
 	ensure(ObjectsBeingEdited[0].IsValid());
-	if (const UFlowNode_CustomEvent* Node = Cast<UFlowNode_CustomEvent>(ObjectsBeingEdited[0].Get()))
+	if (const UFlowNode_CustomInput* Node = Cast<UFlowNode_CustomInput>(ObjectsBeingEdited[0].Get()))
 	{
 		PropertyValue = FText::FromName(Node->EventName);
 	}
@@ -82,10 +82,10 @@ FText FFlowNode_CustomEventDetails::GetSelectedEventText() const
 	return PropertyValue;
 }
 
-void FFlowNode_CustomEventDetails::PinSelectionChanged(const TSharedPtr<FName> Item, ESelectInfo::Type SelectInfo) const
+void FFlowNode_CustomInputDetails::PinSelectionChanged(const TSharedPtr<FName> Item, ESelectInfo::Type SelectInfo) const
 {
 	ensure(ObjectsBeingEdited[0].IsValid());
-	if (UFlowNode_CustomEvent* Node = Cast<UFlowNode_CustomEvent>(ObjectsBeingEdited[0].Get()))
+	if (UFlowNode_CustomInput* Node = Cast<UFlowNode_CustomInput>(ObjectsBeingEdited[0].Get()))
 	{
 		Node->EventName = *Item.Get();
 	}
