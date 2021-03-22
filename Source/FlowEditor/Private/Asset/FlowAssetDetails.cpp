@@ -12,7 +12,7 @@ void FFlowAssetDetails::CustomizeDetails(IDetailLayoutBuilder& DetailLayout)
 {
 	IDetailCategoryBuilder& FlowAssetCategory = DetailLayout.EditCategory("FlowAsset", LOCTEXT("FlowAssetCategory", "FlowAsset"));
 	
-	const TSharedPtr<IPropertyHandle> EventsPropertyHandle = DetailLayout.GetProperty(GET_MEMBER_NAME_CHECKED(UFlowAsset, CustomEvents));
+	const TSharedPtr<IPropertyHandle> EventsPropertyHandle = DetailLayout.GetProperty(GET_MEMBER_NAME_CHECKED(UFlowAsset, CustomInputs));
 	if (EventsPropertyHandle.IsValid())
 	{
 		TSharedRef<FDetailArrayBuilder> EventsArrayBuilder = MakeShareable(new FDetailArrayBuilder(EventsPropertyHandle.ToSharedRef()));

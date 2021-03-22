@@ -1,13 +1,13 @@
 #pragma once
 
 #include "Nodes/FlowNode.h"
-#include "FlowNode_CustomEvent.generated.h"
+#include "FlowNode_CustomInput.generated.h"
 
 /**
  * Triggers output upon activation of Input (matching this EventName) on the SubGraph node containing this graph
  */
-UCLASS(NotBlueprintable, meta = (DisplayName = "Custom Event"))
-class FLOW_API UFlowNode_CustomEvent : public UFlowNode
+UCLASS(NotBlueprintable, meta = (DisplayName = "Custom Input"))
+class FLOW_API UFlowNode_CustomInput : public UFlowNode
 {
 	GENERATED_UCLASS_BODY()
 

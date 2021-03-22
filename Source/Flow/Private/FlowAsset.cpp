@@ -3,7 +3,7 @@
 #include "FlowSubsystem.h"
 
 #include "Nodes/FlowNode.h"
-#include "Nodes/Route/FlowNode_CustomEvent.h"
+#include "Nodes/Route/FlowNode_CustomInput.h"
 #include "Nodes/Route/FlowNode_Start.h"
 #include "Nodes/Route/FlowNode_Finish.h"
 #include "Nodes/Route/FlowNode_SubGraph.h"
@@ -31,7 +31,7 @@ void UFlowAsset::PostEditChangeProperty(FPropertyChangedEvent& PropertyChangedEv
 {
 	Super::PostEditChangeProperty(PropertyChangedEvent);
 
-	if (PropertyChangedEvent.Property && (PropertyChangedEvent.GetPropertyName() == GET_MEMBER_NAME_CHECKED(UFlowAsset, CustomEvents)
+	if (PropertyChangedEvent.Property && (PropertyChangedEvent.GetPropertyName() == GET_MEMBER_NAME_CHECKED(UFlowAsset, CustomInputs)
 		|| PropertyChangedEvent.GetPropertyName() == GET_MEMBER_NAME_CHECKED(UFlowAsset, CustomOutputs)))
 	{
 		OnSubGraphReconstructionRequested.ExecuteIfBound();
@@ -238,7 +238,7 @@ void UFlowAsset::InitInstance(UObject* InOwner, UFlowAsset* InTemplateAsset)
 			StartNode = InNode;
 		}
 
-		if (UFlowNode_CustomEvent* CustomEvent = Cast<UFlowNode_CustomEvent>(NewInstance))
+		if (UFlowNode_CustomInput* CustomEvent = Cast<UFlowNode_CustomInput>(NewInstance))
 		{
 			const FName& EventName = CustomEvent->EventName;
 			if (!EventName.IsNone() && !CustomEventNodes.Contains(CustomEvent->EventName))
@@ -252,7 +252,7 @@ void UFlowAsset::InitInstance(UObject* InOwner, UFlowAsset* InTemplateAsset)
 void UFlowAsset::PreloadNodes()
 {
 	TArray<UFlowNode*> GraphEntryNodes = {StartNode};
-	for (const TPair<FName, UFlowNode_CustomEvent*>& CustomEvent : CustomEventNodes)
+	for (const TPair<FName, UFlowNode_CustomInput*>& CustomEvent : CustomEventNodes)
 	{
 		GraphEntryNodes.Emplace(CustomEvent.Value);
 	}
@@ -359,7 +359,7 @@ void UFlowAsset::TriggerCustomEvent(UFlowNode_SubGraph* Node, const FName& Event
 	const TWeakObjectPtr<UFlowAsset> FlowInstance = ActiveSubGraphs.FindRef(Node);
 	if (FlowInstance.IsValid())
 	{
-		if (UFlowNode_CustomEvent* CustomEvent = FlowInstance->CustomEventNodes.FindRef(EventName))
+		if (UFlowNode_CustomInput* CustomEvent = FlowInstance->CustomEventNodes.FindRef(EventName))
 		{
 			RecordedNodes.Add(CustomEvent);
 			CustomEvent->TriggerFirstOutput(true);
