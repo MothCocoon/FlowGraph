@@ -4,7 +4,7 @@
 #include "FlowAsset.generated.h"
 
 class UFlowNode;
-class UFlowNode_CustomEvent;
+class UFlowNode_CustomInput;
 class UFlowNode_Start;
 class UFlowNode_SubGraph;
 class UFlowSubsystem;
@@ -83,11 +83,11 @@ private:
 	TMap<FGuid, UFlowNode*> Nodes;
 
 	/**
-	 * Custom Events define custom entry points in graph, it's similar to blueprint Custom Events
+	 * Custom Inputs define custom entry points in graph, it's similar to blueprint Custom Events
 	 * Sub Graph node using this Flow Asset will generate context Input Pin for every valid Event name on this list
 	 */
 	UPROPERTY(EditDefaultsOnly, Category = "Flow")
-	TArray<FName> CustomEvents;
+	TArray<FName> CustomInputs;
 
 	/**
 	 * Custom Outputs define custom graph outputs, this allow to send signals to the parent graph while executing this graph
@@ -112,7 +112,7 @@ public:
 	UFlowNode* GetNode(const FGuid& Guid) const;
 	TMap<FGuid, UFlowNode*> GetNodes() const { return Nodes; }
 
-	TArray<FName> GetCustomEvents() const { return CustomEvents; }
+	TArray<FName> GetCustomInputs() const { return CustomInputs; }
 	TArray<FName> GetCustomOutputs() const { return CustomOutputs; }
 
 //////////////////////////////////////////////////////////////////////////
@@ -168,7 +168,7 @@ private:
 	UFlowNode_Start* StartNode;
 
 	UPROPERTY()
-	TMap<FName, UFlowNode_CustomEvent*> CustomEventNodes;
+	TMap<FName, UFlowNode_CustomInput*> CustomEventNodes;
 
 	UPROPERTY()
 	TSet<UFlowNode*> PreloadedNodes;
