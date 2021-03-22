@@ -17,7 +17,7 @@ FFlowToolbarCommands::FFlowToolbarCommands()
 
 void FFlowToolbarCommands::RegisterCommands()
 {
-	UI_COMMAND(RefreshAsset, "Refresh Asset", "Refresh this asset", EUserInterfaceActionType::Button, FInputChord());
+	UI_COMMAND(RefreshAsset, "Refresh Asset", "Refresh asset and all nodes", EUserInterfaceActionType::Button, FInputChord());
 	UI_COMMAND(GoToMasterInstance, "Go To Master", "Open editor for the Flow Asset that created this Flow instance", EUserInterfaceActionType::Button, FInputChord());
 }
 
@@ -76,11 +76,12 @@ void FFlowSpawnNodeCommands::RegisterCommands()
 			{
 				NodeClass = UFlowNode::StaticClass();
 			}
-			else
-			{
-				// Matching node not found
-				continue;
-			}
+		}
+
+		if (NodeClass == nullptr)
+		{
+			// Matching node not found
+			continue;
 		}
 
 		// Setup a UI Command for key-binding
