@@ -86,8 +86,8 @@ void FFlowGraphConnectionDrawingPolicy::BuildPaths()
 			{
 				for (UEdGraphPin* Pin : SelectedNode->Pins)
 				{
-					if (Pin->Direction == EGPD_Input && UFlowGraphSettings::Get()->bHighlightInputWiresOfSelectedNodes
-						|| Pin->Direction == EGPD_Output && UFlowGraphSettings::Get()->bHighlightOutputWiresOfSelectedNodes)
+					if ((Pin->Direction == EGPD_Input && UFlowGraphSettings::Get()->bHighlightInputWiresOfSelectedNodes)
+						|| (Pin->Direction == EGPD_Output && UFlowGraphSettings::Get()->bHighlightOutputWiresOfSelectedNodes))
 					{
 						for (UEdGraphPin* LinkedPin : Pin->LinkedTo)
 						{
