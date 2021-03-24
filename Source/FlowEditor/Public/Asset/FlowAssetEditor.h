@@ -15,6 +15,7 @@ class IDetailsView;
 class SDockableTab;
 class SGraphEditor;
 class UEdGraphNode;
+struct FSlateBrush;
 struct FPropertyChangedEvent;
 struct Rect;
 

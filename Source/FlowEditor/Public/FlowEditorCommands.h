@@ -2,6 +2,8 @@
 
 #include "EdGraph/EdGraphSchema.h"
 #include "Framework/Commands/Commands.h"
+#include "Framework/Commands/UICommandInfo.h"
+#include "Templates/SharedPointer.h"
 
 class FFlowToolbarCommands final : public TCommands<FFlowToolbarCommands>
 {
