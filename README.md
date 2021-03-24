@@ -19,6 +19,11 @@ It's s design-agnostic event node editor.
 * Quickly build your own Quest system, Dialogue system or any other custom system that would control the flow of events in the game.
 * Expand it, build Articy:draft equivalent right in the Unreal Engine.
 
+## In-depth video presentation
+This 24-minute presentation breaks down the concept of the Flow Graph. It goes through everything written in this ReadMe but in greater detail.
+
+[![Introducing Flow Graph for Unreal Engine](https://img.youtube.com/vi/Rj76JP1f-I4/0.jpg)](https://www.youtube.com/watch?v=Rj76JP1f-I4)
+
 ## Getting started
 In Releases, you can find an example project called Flower, so you can easily check how this plug-in works.
 
@@ -30,11 +35,6 @@ You can include this plugin repository as dependency of your own Git project. It
 ```
 git submodule add -b 4.26 https://github.com/MothCocoon/FlowGraph.git Plugins/Flow
 ```
-
-## In-depth video presentation
-This 24-minute presentation breaks down the concept of the Flow Graph. It goes through everything written in this ReadMe but in greater detail.
-
-[![Introducing Flow Graph for Unreal Engine](https://img.youtube.com/vi/Rj76JP1f-I4/0.jpg)](https://www.youtube.com/watch?v=Rj76JP1f-I4)
 
 ## Simplicity is a key
 * It's all about simplifying the cooperation between gameplay programmers and content designers by providing a clean interface between "code of systems" and "using systems".
