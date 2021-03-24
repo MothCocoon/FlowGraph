@@ -26,6 +26,10 @@ And if you'd decide to use Flow in your project...
 1. Unpack plug-in to the Plugins folder in your project folder. If you don't have such a folder yet, simply create it.
 2. Open Project Settings in the editor. Change World Settings to the Flow World Settings class and restart the editor. This class starts the Flow Graph assigned to the map.
 
+You can include this plugin repository as dependency of your own Git project. It can be done by using Git submodules. 
+Example command:
+  git submodule add -b 4.26 https://github.com/MothCocoon/FlowGraph.git Plugins/Flow
+
 ## In-depth video presentation
 This 24-minute presentation breaks down the concept of the Flow Graph. It goes through everything written in this ReadMe but in greater detail.
 
