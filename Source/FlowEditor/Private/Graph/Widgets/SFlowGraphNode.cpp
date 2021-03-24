@@ -4,14 +4,26 @@
 
 #include "Nodes/FlowNode.h"
 
+#include "EdGraph/EdGraphPin.h"
 #include "Editor.h"
 #include "GraphEditorSettings.h"
 #include "IDocumentation.h"
+#include "Input/Reply.h"
+#include "Layout/Margin.h"
+#include "Misc/Attribute.h"
 #include "SCommentBubble.h"
-#include "SlateOptMacros.h"
+#include "SGraphNode.h"
+#include "SGraphPin.h"
 #include "SLevelOfDetailBranchNode.h"
+#include "SNodePanel.h"
+#include "SlateOptMacros.h"
+#include "Styling/SlateColor.h"
 #include "TutorialMetaData.h"
+#include "Widgets/Images/SImage.h"
+#include "Widgets/Layout/SBorder.h"
 #include "Widgets/SBoxPanel.h"
+#include "Widgets/SOverlay.h"
+#include "Widgets/SToolTip.h"
 
 #define LOCTEXT_NAMESPACE "SFlowGraphNode"
 

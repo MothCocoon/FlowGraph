@@ -2,9 +2,12 @@
 #include "FlowAsset.h"
 #include "Nodes/Route/FlowNode_CustomOutput.h"
 
+#include "DetailCategoryBuilder.h"
 #include "DetailWidgetRow.h"
 #include "PropertyEditing.h"
 #include "UnrealEd.h"
+#include "Widgets/Input/SComboBox.h"
+#include "Widgets/Text/STextBlock.h"
 
 #define LOCTEXT_NAMESPACE "FlowNode_CustomOutputDetails"
 

@@ -10,6 +10,7 @@
 #include "FlowAsset.h"
 #include "Nodes/FlowNode.h"
 
+#include "AssetData.h"
 #include "AssetRegistryModule.h"
 #include "EdGraph/EdGraphSchema.h"
 #include "EdGraphSchema_K2.h"
@@ -18,8 +19,10 @@
 #include "Framework/Commands/GenericCommands.h"
 #include "GraphEditorActions.h"
 #include "Kismet2/KismetEditorUtilities.h"
+#include "Modules/ModuleManager.h"
 #include "ScopedTransaction.h"
 #include "SourceCodeNavigation.h"
+#include "Textures/SlateIcon.h"
 #include "UnrealEd.h"
 
 #define LOCTEXT_NAMESPACE "FlowGraphNode"

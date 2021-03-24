@@ -3,7 +3,7 @@
 #include "DebuggerCommands.h"
 #include "FlowEditorCommands.h"
 
-#include "MultiBoxBuilder.h"
+#include "Framework/MultiBox/MultiBoxBuilder.h"
 
 #define LOCTEXT_NAMESPACE "FlowAssetToolbar"
 
