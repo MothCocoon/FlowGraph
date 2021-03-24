@@ -1,6 +1,7 @@
 #pragma once
 
 #include "EdGraph/EdGraphSchema.h"
+#include "Engine/Blueprint.h"
 
 #include "Nodes/FlowGraphNode.h"
 #include "Nodes/FlowNode.h"

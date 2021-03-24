@@ -22,6 +22,7 @@
 
 #include "AssetToolsModule.h"
 #include "EdGraphUtilities.h"
+#include "Framework/Multibox/MultiBoxBuilder.h"
 #include "ISequencerChannelInterface.h"
 #include "ISequencerModule.h"
 #include "LevelEditor.h"
