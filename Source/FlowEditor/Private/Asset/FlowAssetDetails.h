@@ -2,7 +2,12 @@
 
 #include "IDetailCustomization.h"
 #include "PropertyHandle.h"
-#include "Widgets/Input/SEditableTextBox.h"
+#include "Templates/SharedPointer.h"
+#include "Types/SlateEnums.h"
+
+class IDetailChildrenBuilder;
+class IDetailLayoutBuilder;
+class IPropertyHandle;
 
 class FFlowAssetDetails final : public IDetailCustomization
 {

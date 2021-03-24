@@ -2,6 +2,7 @@
 
 #include "CoreMinimal.h"
 #include "Widgets/Input/SComboBox.h"
+#include "Widgets/Navigation/SBreadcrumbTrail.h"
 
 #include "FlowAsset.h"
 
