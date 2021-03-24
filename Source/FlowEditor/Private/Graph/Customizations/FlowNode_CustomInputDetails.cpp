@@ -7,7 +7,7 @@
 #include "PropertyEditing.h"
 #include "UnrealEd.h"
 #include "Widgets/Input/SComboBox.h"
-#include "Widgets/Input/STextBlock.h"
+#include "Widgets/Text/STextBlock.h"
 
 #define LOCTEXT_NAMESPACE "FlowNode_CustomInputDetails"
 
