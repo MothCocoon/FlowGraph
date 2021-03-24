@@ -1,6 +1,8 @@
 #pragma once
 
 #include "IDetailCustomization.h"
+#include "Templates/SharedPointer.h"
+#include "Widgets/SWidget.h"
 
 class FFlowNode_CustomInputDetails final : public IDetailCustomization
 {
