@@ -1,4 +1,8 @@
 #include "Asset/FlowDebugger.h"
+
+#include "Engine/Engine.h"
+#include "Engine/World.h"
+#include "Templates/Function.h"
 #include "UnrealEd.h"
 
 FFlowDebugger::FFlowDebugger()
