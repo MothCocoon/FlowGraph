@@ -2,6 +2,8 @@
 #include "Asset/FlowAssetEditor.h"
 #include "FlowEditorCommands.h"
 
+#include "Framework/MultiBox/MultiBoxBuilder.h"
+
 #define LOCTEXT_NAMESPACE "FlowAssetToolbar"
 
 FFlowAssetToolbar::FFlowAssetToolbar(TSharedPtr<FFlowAssetEditor> InNodeEditor)

@@ -3,6 +3,8 @@
 
 #include "FlowAsset.h"
 
+#include "Toolkits/IToolkit.h"
+
 #define LOCTEXT_NAMESPACE "AssetTypeActions_FlowAsset"
 
 FText FAssetTypeActions_FlowAsset::GetName() const

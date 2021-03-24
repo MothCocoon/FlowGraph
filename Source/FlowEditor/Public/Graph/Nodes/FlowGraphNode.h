@@ -1,11 +1,12 @@
 #pragma once
 
 #include "EdGraph/EdGraphNode.h"
+#include "EdGraph/EdGraphPin.h"
+#include "Templates/SubclassOf.h"
 
 #include "FlowTypes.h"
 #include "FlowGraphNode.generated.h"
 
-class UEdGraphPin;
 class UEdGraphSchema;
 
 class UFlowNode;
