@@ -1,6 +1,8 @@
 #include "Graph/Nodes/FlowGraphNode_ExecutionSequence.h"
 #include "Nodes/Route/FlowNode_ExecutionSequence.h"
 
+#include "Textures/SlateIcon.h"
+
 UFlowGraphNode_ExecutionSequence::UFlowGraphNode_ExecutionSequence(const FObjectInitializer& ObjectInitializer)
 	: Super(ObjectInitializer)
 {
