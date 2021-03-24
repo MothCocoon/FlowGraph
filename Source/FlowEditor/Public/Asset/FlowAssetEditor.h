@@ -1,6 +1,7 @@
 #pragma once
 
 #include "EditorUndoClient.h"
+#include "GraphEditor.h"
 #include "Misc/NotifyHook.h"
 #include "Toolkits/AssetEditorToolkit.h"
 #include "Toolkits/IToolkitHost.h"

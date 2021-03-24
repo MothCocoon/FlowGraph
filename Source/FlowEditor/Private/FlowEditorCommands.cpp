@@ -6,6 +6,7 @@
 
 #include "Nodes/FlowNode.h"
 
+#include "EditorStyleSet.h"
 #include "Misc/ConfigCacheIni.h"
 
 #define LOCTEXT_NAMESPACE "FlowGraphCommands"

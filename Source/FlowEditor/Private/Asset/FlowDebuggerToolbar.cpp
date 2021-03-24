@@ -4,7 +4,13 @@
 
 #include "FlowAsset.h"
 
-#include "Widgets/Navigation/SBreadcrumbTrail.h"
+#include "EditorStyleSet.h"
+#include "Framework/MultiBox/MultiBoxBuilder.h"
+#include "Misc/Attribute.h"
+#include "Subsystems/AssetEditorSubsystem.h"
+#include "Widgets/Input/SComboBox.h"
+#include "Widgets/SBoxPanel.h"
+#include "Widgets/Text/STextBlock.h"
 
 #define LOCTEXT_NAMESPACE "FlowDebuggerToolbar"
 

@@ -1,6 +1,7 @@
 #pragma once
 
 #include "EdGraph/EdGraphSchema.h"
+#include "Framework/Commands/Commands.h"
 
 class FFlowToolbarCommands final : public TCommands<FFlowToolbarCommands>
 {

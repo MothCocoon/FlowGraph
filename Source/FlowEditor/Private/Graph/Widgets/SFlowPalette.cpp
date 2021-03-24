@@ -8,7 +8,12 @@
 
 #include "EditorStyleSet.h"
 #include "Styling/CoreStyle.h"
+#include "Styling/SlateBrush.h"
+#include "Styling/SlateColor.h"
+#include "Widgets/Input/STextBlock.h"
 #include "Widgets/Input/STextComboBox.h"
+#include "Widgets/Layout/SBorder.h"
+#include "Widgets/SBoxPanel.h"
 
 #define LOCTEXT_NAMESPACE "FlowGraphPalette"
 
