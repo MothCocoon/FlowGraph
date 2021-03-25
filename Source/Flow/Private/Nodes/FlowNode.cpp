@@ -286,6 +286,11 @@ void UFlowNode::Deactivate()
 	Cleanup();
 }
 
+void UFlowNode::Init()
+{
+	K2_Init();
+}
+
 void UFlowNode::Cleanup()
 {
 	K2_Cleanup();

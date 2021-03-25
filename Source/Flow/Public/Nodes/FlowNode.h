@@ -250,6 +250,13 @@ protected:
 
 	void Deactivate();
 
+	// Method called when the flow asset containing this node is being initialized
+	virtual void Init();
+
+	// Event called when the flow asset containing this node is being initialized
+	UFUNCTION(BlueprintImplementableEvent, Category = "FlowNode", meta = (DisplayName = "Init"))
+	void K2_Init();
+
 	// Method called after node finished the work
 	virtual void Cleanup();
 

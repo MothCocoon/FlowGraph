@@ -246,6 +246,8 @@ void UFlowAsset::InitInstance(UObject* InOwner, UFlowAsset* InTemplateAsset)
 				CustomEventNodes.Emplace(CustomEvent->EventName, CustomEvent);
 			}
 		}
+
+		NewInstance->Init();
 	}
 }
 
