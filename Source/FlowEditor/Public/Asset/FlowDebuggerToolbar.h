@@ -54,7 +54,7 @@ struct FFlowBreadcrumb
 	{}
 
 	FFlowBreadcrumb(const UFlowAsset* FlowAsset)
-		: AssetPathName(FlowAsset->TemplateAsset->GetPathName())
+		: AssetPathName(FlowAsset->GetTemplateAsset()->GetPathName())
 		, InstanceName(FlowAsset->GetDisplayName())
 	{}
 };
