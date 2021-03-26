@@ -116,7 +116,7 @@ public:
 	TArray<FName> GetCustomOutputs() const { return CustomOutputs; }
 
 //////////////////////////////////////////////////////////////////////////
-// Instanced asset
+// Instances of the template asset
 
 private:
 	// Original object holds references to instances
@@ -141,9 +141,7 @@ public:
 	UFlowAsset* GetInspectedInstance() const { return InspectedInstance.IsValid() ? InspectedInstance.Get() : nullptr; }
 
 	DECLARE_EVENT(UFlowAsset, FRegenerateToolbarsEvent);
-
 	FRegenerateToolbarsEvent& OnRegenerateToolbars() { return RegenerateToolbarsEvent; }
-
 	FRegenerateToolbarsEvent RegenerateToolbarsEvent;
 
 private:
@@ -151,24 +149,29 @@ private:
 #endif
 
 //////////////////////////////////////////////////////////////////////////
-// Executing graph
+// Executing asset instance
 
-public:
+private:
 	UPROPERTY()
 	UFlowAsset* TemplateAsset;
 
-private:
+	// Object that spawned Root Flow instance, i.e. World Settings or Player Controller
+	// This pointer is passed to child instances: Flow Asset instances created by the SubGraph nodes
+	TWeakObjectPtr<UObject> Owner;
+
+	// SubGraph node that created this Flow Asset instance
 	TWeakObjectPtr<UFlowNode_SubGraph> NodeOwningThisAssetInstance;
+
+	// Flow Asset instances created by SubGraph nodes placed in the current graph
 	TMap<TWeakObjectPtr<UFlowNode_SubGraph>, TWeakObjectPtr<UFlowAsset>> ActiveSubGraphs;
 
-	UPROPERTY()
-	UObject* Owner;
-
+	// Execution of the graph always starts from this node, there can be only one StartNode in the graph
 	UPROPERTY()
 	UFlowNode_Start* StartNode;
 
+	// Optional entry points to the graph, similar to blueprint Custom Events
 	UPROPERTY()
-	TMap<FName, UFlowNode_CustomInput*> CustomEventNodes;
+	TMap<FName, UFlowNode_CustomInput*> CustomInputNodes;
 
 	UPROPERTY()
 	TSet<UFlowNode*> PreloadedNodes;
@@ -182,14 +185,28 @@ private:
 	TArray<UFlowNode*> RecordedNodes;
 
 public:
-	void InitInstance(UObject* InOwner, UFlowAsset* InTemplateAsset);
-	void PreloadNodes();
+	void InitializeInstance(const TWeakObjectPtr<UObject> InOwner, UFlowAsset* InTemplateAsset);
+
+	UFlowAsset* GetTemplateAsset() const { return TemplateAsset; }
+	
+	// Object that spawned Root Flow instance, i.e. World Settings or Player Controller
+	// This pointer is passed to child instances: Flow Asset instances created by the SubGraph nodes
+	UFUNCTION(BlueprintPure, Category = "Flow")
+	UObject* GetOwner() const { return Owner.Get(); }
+
+	template <class T>
+	TWeakObjectPtr<T*> GetOwner() const
+	{
+		return Owner.IsValid() ? Cast<T>(Owner) : nullptr;
+	}
+
+	virtual void PreloadNodes();
 
 	virtual void StartFlow();
 	virtual void StartAsSubFlow(UFlowNode_SubGraph* SubGraphNode);
 	virtual void FinishFlow(const bool bFlowCompleted);
 
-	UObject* GetOwner() const;
+	// Get Flow Asset instance created by the given SubGraph node
 	TWeakObjectPtr<UFlowAsset> GetFlowInstance(UFlowNode_SubGraph* SubGraphNode) const;
 
 private:
