@@ -169,6 +169,11 @@ UWorld* UFlowNode::GetWorld() const
 	return nullptr;
 }
 
+void UFlowNode::InitializeInstance()
+{
+	K2_InitializeInstance();
+}
+
 void UFlowNode::TriggerPreload()
 {
 	bPreloaded = true;
