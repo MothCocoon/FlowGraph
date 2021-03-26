@@ -246,6 +246,8 @@ void UFlowAsset::InitializeInstance(const TWeakObjectPtr<UObject> InOwner, UFlow
 				CustomInputNodes.Emplace(CustomInput->EventName, CustomInput);
 			}
 		}
+
+		NewNodeInstance->InitializeInstance();
 	}
 }
 
