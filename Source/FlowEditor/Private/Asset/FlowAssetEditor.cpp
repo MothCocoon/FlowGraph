@@ -309,8 +309,8 @@ void FFlowAssetEditor::GoToMasterInstance()
 {
 	UFlowAsset* AssetThatInstancedThisAsset = FlowAsset->GetInspectedInstance()->GetMasterInstance();
 
-	FAssetEditorManager::Get().OpenEditorForAsset(AssetThatInstancedThisAsset->TemplateAsset);
-	AssetThatInstancedThisAsset->TemplateAsset->SetInspectedInstance(AssetThatInstancedThisAsset->GetDisplayName());
+	FAssetEditorManager::Get().OpenEditorForAsset(AssetThatInstancedThisAsset->GetTemplateAsset());
+	AssetThatInstancedThisAsset->GetTemplateAsset()->SetInspectedInstance(AssetThatInstancedThisAsset->GetDisplayName());
 }
 
 bool FFlowAssetEditor::CanGoToMasterInstance()
@@ -930,7 +930,7 @@ void FFlowAssetEditor::OnNodeDoubleClicked(class UEdGraphNode* Node) const
 					const TWeakObjectPtr<UFlowAsset> SubFlowInstance = SubGraphNode->GetFlowAsset()->GetFlowInstance(SubGraphNode);
 					if (SubFlowInstance.IsValid())
 					{
-						SubGraphNode->GetFlowAsset()->TemplateAsset->SetInspectedInstance(SubFlowInstance->GetDisplayName());
+						SubGraphNode->GetFlowAsset()->GetTemplateAsset()->SetInspectedInstance(SubFlowInstance->GetDisplayName());
 					}
 				}
 			}
