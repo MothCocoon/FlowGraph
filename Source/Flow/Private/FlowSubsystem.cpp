@@ -66,46 +66,37 @@ void UFlowSubsystem::FinishRootFlow(UObject* Owner, UFlowAsset* FlowAsset)
 	}
 }
 
-void UFlowSubsystem::PreloadSubFlow(UFlowNode_SubGraph* SubFlow)
+void UFlowSubsystem::StartSubFlow(UFlowNode_SubGraph* SubGraphNode, const bool bPreloading /* = false */)
 {
-	if (!InstancedSubFlows.Contains(SubFlow))
+	if (!InstancedSubFlows.Contains(SubGraphNode))
 	{
-		UObject* Owner = SubFlow->Asset.IsNull() ? nullptr : SubFlow->Asset->GetOwner();
-		UFlowAsset* NewFlow = CreateFlowInstance(Owner, SubFlow->Asset);
-		InstancedSubFlows.Add(SubFlow, NewFlow);
+		const TWeakObjectPtr<UObject> Owner = SubGraphNode->GetFlowAsset() ? SubGraphNode->GetFlowAsset()->GetOwner() : nullptr;
+		UFlowAsset* NewFlow = CreateFlowInstance(Owner, SubGraphNode->Asset);
+		InstancedSubFlows.Add(SubGraphNode, NewFlow);
 
-		NewFlow->PreloadNodes();
+		if (bPreloading)
+		{
+			NewFlow->PreloadNodes();
+		}
+	}
+
+	if (!bPreloading)
+	{
+		// get instanced asset from map - in case it was already instanced by calling StartSubFlow() with bPreloading == true
+		InstancedSubFlows[SubGraphNode]->StartAsSubFlow(SubGraphNode);
 	}
 }
 
-void UFlowSubsystem::StartSubFlow(UFlowNode_SubGraph* SubFlow)
+void UFlowSubsystem::FinishSubFlow(UFlowNode_SubGraph* SubGraphNode)
 {
-	if (!InstancedSubFlows.Contains(SubFlow))
+	if (UFlowAsset* Instance = InstancedSubFlows.FindRef(SubGraphNode))
 	{
-		UObject* Owner = SubFlow->Asset.IsNull() ? nullptr : SubFlow->Asset->GetOwner();
-		UFlowAsset* NewFlow = CreateFlowInstance(Owner, SubFlow->Asset);
-		InstancedSubFlows.Add(SubFlow, NewFlow);
-	}
-
-	// get instanced asset from map - in case it was already instanced by PreloadSubFlow()
-	InstancedSubFlows[SubFlow]->StartAsSubFlow(SubFlow);
-}
-
-void UFlowSubsystem::FinishSubFlow(UFlowNode_SubGraph* SubFlow)
-{
-	if (UFlowAsset* Instance = InstancedSubFlows.FindRef(SubFlow))
-	{
-		InstancedSubFlows.Remove(SubFlow);
+		InstancedSubFlows.Remove(SubGraphNode);
 		Instance->FinishFlow(false);
 	}
 }
 
-void UFlowSubsystem::RemoveInstancedTemplate(UFlowAsset* Template)
-{
-	InstancedTemplates.Remove(Template);
-}
-
-UFlowAsset* UFlowSubsystem::CreateFlowInstance(UObject* Owner, TSoftObjectPtr<UFlowAsset> FlowAsset)
+UFlowAsset* UFlowSubsystem::CreateFlowInstance(const TWeakObjectPtr<UObject> Owner, TSoftObjectPtr<UFlowAsset> FlowAsset)
 {
 	check(!FlowAsset.IsNull());
 
@@ -127,11 +118,26 @@ UFlowAsset* UFlowSubsystem::CreateFlowInstance(UObject* Owner, TSoftObjectPtr<UF
 
 	const FString NewInstanceName = FPaths::GetBaseFilename(FlowAsset.Get()->GetPathName()) + TEXT("_") + FString::FromInt(FlowAsset.Get()->GetInstancesNum());
 	UFlowAsset* NewInstance = NewObject<UFlowAsset>(this, FlowAsset->GetClass(), *NewInstanceName, RF_Transient, FlowAsset.Get(), false, nullptr);
-	NewInstance->InitInstance(Owner, FlowAsset.Get());
+	NewInstance->InitializeInstance(Owner, FlowAsset.Get());
 
 	FlowAsset.Get()->AddInstance(NewInstance);
 
 	return NewInstance;
+}
+
+void UFlowSubsystem::RemoveInstancedTemplate(UFlowAsset* Template)
+{
+	InstancedTemplates.Remove(Template);
+}
+
+TMap<UObject*, UFlowAsset*> UFlowSubsystem::GetRootInstances() const
+{
+	TMap<UObject*, UFlowAsset*> Result;
+	for (const TPair<TWeakObjectPtr<UObject>, UFlowAsset*>& Pair : RootInstances)
+	{
+		Result.Emplace(Pair.Key.Get(), Pair.Value);
+	}
+	return Result;
 }
 
 UWorld* UFlowSubsystem::GetWorld() const
