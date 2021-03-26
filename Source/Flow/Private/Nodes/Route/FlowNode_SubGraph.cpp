@@ -22,7 +22,7 @@ void UFlowNode_SubGraph::PreloadContent()
 {
 	if (!Asset.IsNull())
 	{
-		GetFlowSubsystem()->PreloadSubFlow(this);
+		GetFlowSubsystem()->StartSubFlow(this, true);
 	}
 }
 

@@ -52,7 +52,7 @@ EDataValidationResult UFlowAsset::IsDataValid(TArray<FText>& ValidationErrors)
 {
 	for (const TPair<FGuid, UFlowNode*>& NodePair : Nodes)
 	{
-		EDataValidationResult Result = NodePair.Value->IsDataValid(ValidationErrors);
+		const EDataValidationResult Result = NodePair.Value->IsDataValid(ValidationErrors);
 		if (Result == EDataValidationResult::Invalid)
 		{
 			return EDataValidationResult::Invalid;
@@ -222,28 +222,28 @@ void UFlowAsset::SetInspectedInstance(const FName& NewInspectedInstanceName)
 }
 #endif
 
-void UFlowAsset::InitInstance(UObject* InOwner, UFlowAsset* InTemplateAsset)
+void UFlowAsset::InitializeInstance(const TWeakObjectPtr<UObject> InOwner, UFlowAsset* InTemplateAsset)
 {
 	Owner = InOwner;
 	TemplateAsset = InTemplateAsset;
 
 	for (TPair<FGuid, UFlowNode*>& Node : Nodes)
 	{
-		UFlowNode* NewInstance = NewObject<UFlowNode>(this, Node.Value->GetClass(), NAME_None, RF_Transient, Node.Value, false, nullptr);
-		Node.Value = NewInstance;
+		UFlowNode* NewNodeInstance = NewObject<UFlowNode>(this, Node.Value->GetClass(), NAME_None, RF_Transient, Node.Value, false, nullptr);
+		Node.Value = NewNodeInstance;
 
 		// there can be only one, automatically added while creating graph
-		if (UFlowNode_Start* InNode = Cast<UFlowNode_Start>(NewInstance))
+		if (UFlowNode_Start* InNode = Cast<UFlowNode_Start>(NewNodeInstance))
 		{
 			StartNode = InNode;
 		}
 
-		if (UFlowNode_CustomInput* CustomEvent = Cast<UFlowNode_CustomInput>(NewInstance))
+		if (UFlowNode_CustomInput* CustomInput = Cast<UFlowNode_CustomInput>(NewNodeInstance))
 		{
-			const FName& EventName = CustomEvent->EventName;
-			if (!EventName.IsNone() && !CustomEventNodes.Contains(CustomEvent->EventName))
+			const FName& EventName = CustomInput->EventName;
+			if (!EventName.IsNone() && !CustomInputNodes.Contains(CustomInput->EventName))
 			{
-				CustomEventNodes.Emplace(CustomEvent->EventName, CustomEvent);
+				CustomInputNodes.Emplace(CustomInput->EventName, CustomInput);
 			}
 		}
 	}
@@ -252,7 +252,7 @@ void UFlowAsset::InitInstance(UObject* InOwner, UFlowAsset* InTemplateAsset)
 void UFlowAsset::PreloadNodes()
 {
 	TArray<UFlowNode*> GraphEntryNodes = {StartNode};
-	for (const TPair<FName, UFlowNode_CustomInput*>& CustomEvent : CustomEventNodes)
+	for (const TPair<FName, UFlowNode_CustomInput*>& CustomEvent : CustomInputNodes)
 	{
 		GraphEntryNodes.Emplace(CustomEvent.Value);
 	}
@@ -344,11 +344,6 @@ void UFlowAsset::FinishFlow(const bool bFlowCompleted)
 	}
 }
 
-UObject* UFlowAsset::GetOwner() const
-{
-	return Owner;
-}
-
 TWeakObjectPtr<UFlowAsset> UFlowAsset::GetFlowInstance(UFlowNode_SubGraph* SubGraphNode) const
 {
 	return ActiveSubGraphs.FindRef(SubGraphNode);
@@ -359,7 +354,7 @@ void UFlowAsset::TriggerCustomEvent(UFlowNode_SubGraph* Node, const FName& Event
 	const TWeakObjectPtr<UFlowAsset> FlowInstance = ActiveSubGraphs.FindRef(Node);
 	if (FlowInstance.IsValid())
 	{
-		if (UFlowNode_CustomInput* CustomEvent = FlowInstance->CustomEventNodes.FindRef(EventName))
+		if (UFlowNode_CustomInput* CustomEvent = FlowInstance->CustomInputNodes.FindRef(EventName))
 		{
 			RecordedNodes.Add(CustomEvent);
 			CustomEvent->TriggerFirstOutput(true);

@@ -26,19 +26,22 @@ class FLOW_API UFlowSubsystem : public UGameInstanceSubsystem
 
 	UFlowSubsystem();
 
-	FStreamableManager Streamable;
-
+	friend class UFlowAsset;
+	friend class UFlowNode_SubGraph;
+	
 	// All asset templates with active instances
 	UPROPERTY()
 	TArray<UFlowAsset*> InstancedTemplates;
 
-	// Assets instanced by object from another system like World Settings, not SubGraph node
+	// Assets instanced by object from another system, i.e. World Settings or Player Controller
 	UPROPERTY()
-	TMap<UObject*, UFlowAsset*> RootInstances;
+	TMap<TWeakObjectPtr<UObject>, UFlowAsset*> RootInstances;
 
 	// Assets instanced by Sub Graph nodes
 	UPROPERTY()
 	TMap<UFlowNode_SubGraph*, UFlowAsset*> InstancedSubFlows;
+
+	FStreamableManager Streamable;
 
 public:
 	virtual bool ShouldCreateSubsystem(UObject* Outer) const override;
@@ -47,24 +50,28 @@ public:
 	virtual void Deinitialize() override;
 
 	// Start the root Flow, graph that will eventually instantiate next Flow Graphs through the SubGraph node
+	UFUNCTION(BlueprintCallable, Category = "FlowSubsystem")
 	void StartRootFlow(UObject* Owner, UFlowAsset* FlowAsset);
 
 	// Finish the root Flow, typically when closing world that created this flow
+	UFUNCTION(BlueprintCallable, Category = "FlowSubsystem")
 	void FinishRootFlow(UObject* Owner, UFlowAsset* FlowAsset);
 
-	void PreloadSubFlow(UFlowNode_SubGraph* SubFlow);
-	void StartSubFlow(UFlowNode_SubGraph* SubFlow);
-	void FinishSubFlow(UFlowNode_SubGraph* SubFlow);
+private:
+	void StartSubFlow(UFlowNode_SubGraph* SubGraphNode, const bool bPreloading = false);
+	void FinishSubFlow(UFlowNode_SubGraph* SubGraphNode);
 
+	UFlowAsset* CreateFlowInstance(const TWeakObjectPtr<UObject> Owner, TSoftObjectPtr<UFlowAsset> FlowAsset);
 	void RemoveInstancedTemplate(UFlowAsset* Template);
 
-private:
-	UFlowAsset* CreateFlowInstance(UObject* Owner, TSoftObjectPtr<UFlowAsset> FlowAsset);
-
 public:
+	// Returns asset instanced by object from another system like World Settings
+	UFUNCTION(BlueprintPure, Category = "FlowSubsystem")
+    UFlowAsset* GetRootFlow(UObject* Owner) const { return RootInstances.FindRef(Owner); }
+	
 	// Returns assets instanced by object from another system like World Settings
 	UFUNCTION(BlueprintPure, Category = "FlowSubsystem")
-	TMap<UObject*, UFlowAsset*> GetRootInstances() const { return RootInstances; }
+    TMap<UObject*, UFlowAsset*> GetRootInstances() const;
 
 	// Returns assets instanced by Sub Graph nodes
 	UFUNCTION(BlueprintPure, Category = "FlowSubsystem")
