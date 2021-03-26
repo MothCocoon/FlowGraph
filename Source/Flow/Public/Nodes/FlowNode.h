@@ -190,7 +190,7 @@ protected:
 	static FString NoActorsFound;
 
 //////////////////////////////////////////////////////////////////////////
-// Runtime
+// Executing node instance
 
 public:
 	bool bPreloaded;
@@ -213,6 +213,17 @@ public:
 
 	virtual UWorld* GetWorld() const override;
 
+protected:
+	// Method called just after creating the node instance, while initialize Flow Asset instance
+	// This happens before executing graph, only called during gameplay
+	virtual void InitializeInstance();
+
+	// Event called just after creating the node instance, while initialize Flow Asset instance
+	// This happens before executing graph, only called during gameplay
+	UFUNCTION(BlueprintImplementableEvent, Category = "FlowNode", meta = (DisplayName = "InitInstance"))
+    void K2_InitializeInstance();
+
+public:
 	void TriggerPreload();
 	void TriggerFlush();
 
