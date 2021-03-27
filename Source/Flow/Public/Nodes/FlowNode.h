@@ -214,11 +214,11 @@ public:
 	virtual UWorld* GetWorld() const override;
 
 protected:
-	// Method called just after creating the node instance, while initialize Flow Asset instance
+	// Method called just after creating the node instance, while initializing the Flow Asset instance
 	// This happens before executing graph, only called during gameplay
 	virtual void InitializeInstance();
 
-	// Event called just after creating the node instance, while initialize Flow Asset instance
+	// Event called just after creating the node instance, while initializing the Flow Asset instance
 	// This happens before executing graph, only called during gameplay
 	UFUNCTION(BlueprintImplementableEvent, Category = "FlowNode", meta = (DisplayName = "InitInstance"))
     void K2_InitializeInstance();
