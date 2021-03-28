@@ -74,7 +74,7 @@ Flow Graph communicates with actors in the world by using [Gameplay Tags](https:
 * Flow editor and runtime system are ready for production.
 * Plugin and the code of the sample project are available for every engine version since 4.22. I'm not planning on backporting code to older engine versions since the runtime code relies on [programming subsystems](https://docs.unrealengine.com/en-US/ProgrammingAndScripting/Subsystems/index.html) introduced with UE 4.22.
 * Currently, the example content is... modest. I hope to prepare better samples in the future.
-* Development continues. Check [Issues](https://github.com/MothCocoon/Flow/issues) for a list of useful things I'm hoping to work on in the future.
+* Development continues. Check [Issues](https://github.com/MothCocoon/FlowGraph/issues) for a list of useful things I'm hoping to work on in the future.
 * Your feedback is much welcome! It's all about developing a toolset for any kind of game.
 * In the short term, code might need a bit of love to support creating multiple flow-based systems without modifying the plugin code at all. For example, the quest and dialogue system based on the Flow Subsystem. It's not a huge work, plugin was designed for it. I just need time to create a few different systems, play with it, update the plugin where's needed. 
 * I'm planning to release the Flow plugin on the Marketplace, so more people could discover it and conveniently add it to their asset libraries. It will be free of charge, obviously.
