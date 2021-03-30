@@ -31,6 +31,86 @@ void UFlowComponent::EndPlay(const EEndPlayReason::Type EndPlayReason)
 	Super::EndPlay(EndPlayReason);
 }
 
+void UFlowComponent::AddIdentityTag(const FGameplayTag Tag)
+{
+	ensure(GetOwner()->HasAuthority());
+
+	if (Tag.IsValid() && !IdentityTags.HasTagExact(Tag))
+	{
+		IdentityTags.AddTag(Tag);
+
+		if (HasBegunPlay())
+		{
+			if (UFlowSubsystem* FlowSubsystem = GetWorld()->GetGameInstance()->GetSubsystem<UFlowSubsystem>())
+			{
+				FlowSubsystem->OnIdentityTagAdded(this, Tag);
+			}
+		}
+	}
+}
+
+void UFlowComponent::AddIdentityTags(FGameplayTagContainer Tags)
+{
+	ensure(GetOwner()->HasAuthority());
+
+	// todo: iterator and remove invalid tags
+	for (const FGameplayTag& Tag : Tags)
+	{
+		if (Tag.IsValid() && !IdentityTags.HasTagExact(Tag))
+		{
+			IdentityTags.AddTag(Tag);
+		}
+	}
+
+	if (Tags.Num() > 0 && HasBegunPlay())
+	{
+		if (UFlowSubsystem* FlowSubsystem = GetWorld()->GetGameInstance()->GetSubsystem<UFlowSubsystem>())
+		{
+			FlowSubsystem->OnIdentityTagsAdded(this, Tags);
+		}
+	}
+}
+
+void UFlowComponent::RemoveIdentityTag(const FGameplayTag Tag)
+{
+	ensure(GetOwner()->HasAuthority());
+
+	if (Tag.IsValid() && IdentityTags.HasTagExact(Tag))
+	{
+		IdentityTags.RemoveTag(Tag);
+
+		if (HasBegunPlay())
+		{
+			if (UFlowSubsystem* FlowSubsystem = GetWorld()->GetGameInstance()->GetSubsystem<UFlowSubsystem>())
+			{
+				FlowSubsystem->OnIdentityTagRemoved(this, Tag);
+			}
+		}
+	}
+}
+
+void UFlowComponent::RemoveIdentityTags(FGameplayTagContainer Tags)
+{
+	ensure(GetOwner()->HasAuthority());
+
+	// todo: iterator and remove invalid tags
+	for (const FGameplayTag& Tag : Tags)
+	{
+		if (Tag.IsValid() && IdentityTags.HasTagExact(Tag))
+		{
+			IdentityTags.RemoveTag(Tag);
+		}
+	}
+
+	if (Tags.Num() > 0 && HasBegunPlay())
+	{
+		if (UFlowSubsystem* FlowSubsystem = GetWorld()->GetGameInstance()->GetSubsystem<UFlowSubsystem>())
+		{
+			FlowSubsystem->OnIdentityTagsRemoved(this, Tags);
+		}
+	}
+}
+
 void UFlowComponent::NotifyGraph(const FGameplayTag NotifyTag)
 {
 	OnNotifyFromComponent.Broadcast(this, NotifyTag);
@@ -50,4 +130,14 @@ void UFlowComponent::NotifyActor(const FGameplayTag ActorTag, const FGameplayTag
 			Component->ReceiveNotify.Broadcast(this, NotifyTag);
 		}
 	}
+}
+
+UFlowSubsystem* UFlowComponent::GetFlowSubsystem() const
+{
+	if (GetOwner()->GetGameInstance())
+	{
+		return GetOwner()->GetGameInstance()->GetSubsystem<UFlowSubsystem>();
+	}
+
+	return nullptr;
 }
