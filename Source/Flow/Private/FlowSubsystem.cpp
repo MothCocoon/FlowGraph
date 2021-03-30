@@ -149,26 +149,98 @@ void UFlowSubsystem::RegisterComponent(UFlowComponent* Component)
 {
 	for (const FGameplayTag& Tag : Component->IdentityTags)
 	{
-		FlowComponents.Emplace(Tag, Component);
+		if (Tag.IsValid())
+		{
+			FlowComponentRegistry.Emplace(Tag, Component);
+		}
 	}
 
 	OnComponentRegistered.Broadcast(Component);
+}
+
+void UFlowSubsystem::OnIdentityTagAdded(UFlowComponent* Component, const FGameplayTag& AddedTag)
+{
+	FlowComponentRegistry.Emplace(AddedTag, Component);
+
+	// broadcast OnComponentRegistered only if this component wasn't present in the registry previously
+	if (Component->IdentityTags.Num() > 1)
+	{
+		OnComponentTagAdded.Broadcast(Component, FGameplayTagContainer(AddedTag));
+	}
+	else
+	{
+		OnComponentRegistered.Broadcast(Component);
+	}
+}
+
+void UFlowSubsystem::OnIdentityTagsAdded(UFlowComponent* Component, const FGameplayTagContainer& AddedTags)
+{
+	for (const FGameplayTag& Tag : AddedTags)
+	{
+		FlowComponentRegistry.Emplace(Tag, Component);
+	}
+
+	// broadcast OnComponentRegistered only if this component wasn't present in the registry previously
+	if (Component->IdentityTags.Num() > AddedTags.Num())
+	{
+		OnComponentTagAdded.Broadcast(Component, AddedTags);
+	}
+	else
+	{
+		OnComponentRegistered.Broadcast(Component);
+	}
 }
 
 void UFlowSubsystem::UnregisterComponent(UFlowComponent* Component)
 {
 	for (const FGameplayTag& Tag : Component->IdentityTags)
 	{
-		FlowComponents.Remove(Tag, Component);
+		if (Tag.IsValid())
+		{
+			FlowComponentRegistry.Remove(Tag, Component);
+		}
 	}
 
 	OnComponentUnregistered.Broadcast(Component);
 }
 
+void UFlowSubsystem::OnIdentityTagRemoved(UFlowComponent* Component, const FGameplayTag& RemovedTag)
+{
+	FlowComponentRegistry.Emplace(RemovedTag, Component);
+
+	// broadcast OnComponentUnregistered only if this component isn't present in the registry anymore
+	if (Component->IdentityTags.Num() > 0)
+	{
+		OnComponentTagRemoved.Broadcast(Component, FGameplayTagContainer(RemovedTag));
+	}
+	else
+	{
+		OnComponentUnregistered.Broadcast(Component);
+	}
+}
+
+void UFlowSubsystem::OnIdentityTagsRemoved(UFlowComponent* Component, const FGameplayTagContainer& RemovedTags)
+{
+	for (const FGameplayTag& Tag : RemovedTags)
+	{
+		FlowComponentRegistry.Remove(Tag, Component);
+	}
+
+	// broadcast OnComponentUnregistered only if this component isn't present in the registry anymore
+	if (Component->IdentityTags.Num() > 0)
+	{
+		OnComponentTagRemoved.Broadcast(Component, RemovedTags);
+	}
+	else
+	{
+		OnComponentUnregistered.Broadcast(Component);
+	}
+}
+
 TSet<UFlowComponent*> UFlowSubsystem::GetFlowComponentsByTag(const FGameplayTag Tag) const
 {
 	TArray<TWeakObjectPtr<UFlowComponent>> FoundComponents;
-	FlowComponents.MultiFind(Tag, FoundComponents);
+	FlowComponentRegistry.MultiFind(Tag, FoundComponents);
 
 	TSet<UFlowComponent*> Result;
 	for (const TWeakObjectPtr<UFlowComponent>& Component : FoundComponents)
@@ -202,7 +274,7 @@ TSet<UFlowComponent*> UFlowSubsystem::GetFlowComponentsByTags(const FGameplayTag
 TSet<AActor*> UFlowSubsystem::GetFlowActorsByTag(const FGameplayTag Tag) const
 {
 	TArray<TWeakObjectPtr<UFlowComponent>> FoundComponents;
-	FlowComponents.MultiFind(Tag, FoundComponents);
+	FlowComponentRegistry.MultiFind(Tag, FoundComponents);
 
 	TSet<AActor*> Result;
 	for (const TWeakObjectPtr<UFlowComponent>& Component : FoundComponents)
@@ -236,7 +308,7 @@ TSet<AActor*> UFlowSubsystem::GetFlowActorsByTags(const FGameplayTagContainer Ta
 TMap<AActor*, UFlowComponent*> UFlowSubsystem::GetFlowActorsAndComponentsByTag(const FGameplayTag Tag) const
 {
 	TArray<TWeakObjectPtr<UFlowComponent>> FoundComponents;
-	FlowComponents.MultiFind(Tag, FoundComponents);
+	FlowComponentRegistry.MultiFind(Tag, FoundComponents);
 
 	TMap<AActor*, UFlowComponent*> Result;
 	for (const TWeakObjectPtr<UFlowComponent>& Component : FoundComponents)
@@ -274,7 +346,7 @@ void UFlowSubsystem::FindComponents(const FGameplayTagContainer& Tags, TSet<TWea
 		for (const FGameplayTag& Tag : Tags)
 		{
 			TArray<TWeakObjectPtr<UFlowComponent>> ComponentsPerTag;
-			FlowComponents.MultiFind(Tag, ComponentsPerTag);
+			FlowComponentRegistry.MultiFind(Tag, ComponentsPerTag);
 			OutComponents.Append(ComponentsPerTag);
 		}
 	}
@@ -284,7 +356,7 @@ void UFlowSubsystem::FindComponents(const FGameplayTagContainer& Tags, TSet<TWea
 		for (const FGameplayTag& Tag : Tags)
 		{
 			TArray<TWeakObjectPtr<UFlowComponent>> ComponentsPerTag;
-			FlowComponents.MultiFind(Tag, ComponentsPerTag);
+			FlowComponentRegistry.MultiFind(Tag, ComponentsPerTag);
 			ComponentsWithAnyTag.Append(ComponentsPerTag);
 		}
 
