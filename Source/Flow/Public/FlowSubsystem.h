@@ -12,6 +12,7 @@ class UFlowAsset;
 class UFlowNode_SubGraph;
 
 DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FSimpleFlowComponentEvent, UFlowComponent*, Component);
+DECLARE_DYNAMIC_MULTICAST_DELEGATE_TwoParams(FTaggedFlowComponentEvent, UFlowComponent*, Component, const FGameplayTagContainer&, Tags);
 
 /**
  * Flow Subsystem
@@ -27,6 +28,7 @@ class FLOW_API UFlowSubsystem : public UGameInstanceSubsystem
 	UFlowSubsystem();
 
 	friend class UFlowAsset;
+	friend class UFlowComponent;
 	friend class UFlowNode_SubGraph;
 	
 	// All asset templates with active instances
@@ -84,19 +86,35 @@ public:
 
 private:
 	// All the Flow Components currently existing in the world
-	TMultiMap<FGameplayTag, TWeakObjectPtr<UFlowComponent>> FlowComponents;
+	TMultiMap<FGameplayTag, TWeakObjectPtr<UFlowComponent>> FlowComponentRegistry;
+
+protected:
+	virtual void RegisterComponent(UFlowComponent* Component);
+	virtual void OnIdentityTagAdded(UFlowComponent* Component, const FGameplayTag& AddedTag);
+	virtual void OnIdentityTagsAdded(UFlowComponent* Component, const FGameplayTagContainer& AddedTags);
+	
+	virtual void UnregisterComponent(UFlowComponent* Component);
+	virtual void OnIdentityTagRemoved(UFlowComponent* Component, const FGameplayTag& RemovedTag);
+	virtual void OnIdentityTagsRemoved(UFlowComponent* Component, const FGameplayTagContainer& RemovedTags);
 
 public:
-	virtual void RegisterComponent(UFlowComponent* Component);
-	virtual void UnregisterComponent(UFlowComponent* Component);
-
 	// Called when actor with Flow Component appears in the world
 	UPROPERTY(BlueprintAssignable, Category = "FlowSubsystem")
 	FSimpleFlowComponentEvent OnComponentRegistered;
 
+	// Called after adding Identity Tags to already registered Flow Component
+	// This can happen only after Begin Play occured in the component
+	UPROPERTY(BlueprintAssignable, Category = "FlowSubsystem")
+	FTaggedFlowComponentEvent OnComponentTagAdded;
+
 	// Called when actor with Flow Component disappears from the world
 	UPROPERTY(BlueprintAssignable, Category = "FlowSubsystem")
 	FSimpleFlowComponentEvent OnComponentUnregistered;
+
+	// Called after removing Identity Tags from the Flow Component, if component still has some Identity Tags
+	// This can happen only after Begin Play occured in the component
+	UPROPERTY(BlueprintAssignable, Category = "FlowSubsystem")
+	FTaggedFlowComponentEvent OnComponentTagRemoved;
 
 	// Returns all registered Flow Components identified by given tag
 	UFUNCTION(BlueprintPure, Category = "FlowSubsystem")
@@ -129,7 +147,7 @@ public:
 		static_assert(TPointerIsConvertibleFromTo<T, const UActorComponent>::Value, "'T' template parameter to GetComponents must be derived from UActorComponent");
 
 		TArray<TWeakObjectPtr<UFlowComponent>> FoundComponents;
-		FlowComponents.MultiFind(Tag, FoundComponents);
+		FlowComponentRegistry.MultiFind(Tag, FoundComponents);
 
 		TSet<TWeakObjectPtr<T>> Result;
 		for (const TWeakObjectPtr<UFlowComponent>& Component : FoundComponents)
@@ -171,7 +189,7 @@ public:
 		static_assert(TPointerIsConvertibleFromTo<T, const AActor>::Value, "'T' template parameter to GetComponents must be derived from AActor");
 
 		TArray<TWeakObjectPtr<UFlowComponent>> FoundComponents;
-		FlowComponents.MultiFind(Tag, FoundComponents);
+		FlowComponentRegistry.MultiFind(Tag, FoundComponents);
 
 		TMap<TWeakObjectPtr<T>, TWeakObjectPtr<UFlowComponent>> Result;
 		for (const TWeakObjectPtr<UFlowComponent>& Component : FoundComponents)

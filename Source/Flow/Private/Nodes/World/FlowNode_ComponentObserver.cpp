@@ -40,7 +40,10 @@ void UFlowNode_ComponentObserver::StartObserving()
 	}
 
 	GetFlowSubsystem()->OnComponentRegistered.AddDynamic(this, &UFlowNode_ComponentObserver::OnComponentRegistered);
+	GetFlowSubsystem()->OnComponentTagAdded.AddDynamic(this, &UFlowNode_ComponentObserver::OnComponentTagAdded);
+	
 	GetFlowSubsystem()->OnComponentUnregistered.AddDynamic(this, &UFlowNode_ComponentObserver::OnComponentUnregistered);
+	GetFlowSubsystem()->OnComponentTagRemoved.AddDynamic(this, &UFlowNode_ComponentObserver::OnComponentTagRemoved);
 }
 
 void UFlowNode_ComponentObserver::StopObserving()
@@ -51,7 +54,15 @@ void UFlowNode_ComponentObserver::StopObserving()
 
 void UFlowNode_ComponentObserver::OnComponentRegistered(UFlowComponent* Component)
 {
-	if (Component->IdentityTags.HasTagExact(IdentityTag))
+	if (!RegisteredActors.Contains(Component->GetOwner()) && Component->IdentityTags.HasTagExact(IdentityTag))
+	{
+		ObserveActor(Component->GetOwner(), Component);
+	}
+}
+
+void UFlowNode_ComponentObserver::OnComponentTagAdded(UFlowComponent* Component, const FGameplayTagContainer& AddedTags)
+{
+	if (!RegisteredActors.Contains(Component->GetOwner()) && AddedTags.HasTagExact(IdentityTag))
 	{
 		ObserveActor(Component->GetOwner(), Component);
 	}
@@ -60,6 +71,15 @@ void UFlowNode_ComponentObserver::OnComponentRegistered(UFlowComponent* Componen
 void UFlowNode_ComponentObserver::OnComponentUnregistered(UFlowComponent* Component)
 {
 	if (RegisteredActors.Contains(Component->GetOwner()) && Component->IdentityTags.HasTagExact(IdentityTag))
+	{
+		RegisteredActors.Remove(Component->GetOwner());
+		ForgetActor(Component->GetOwner(), Component);
+	}
+}
+
+void UFlowNode_ComponentObserver::OnComponentTagRemoved(UFlowComponent* Component, const FGameplayTagContainer& RemovedTags)
+{
+	if (RegisteredActors.Contains(Component->GetOwner()) && RemovedTags.HasTagExact(IdentityTag))
 	{
 		RegisteredActors.Remove(Component->GetOwner());
 		ForgetActor(Component->GetOwner(), Component);
