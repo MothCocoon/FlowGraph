@@ -34,7 +34,13 @@ protected:
 	virtual void OnComponentRegistered(UFlowComponent* Component);
 
 	UFUNCTION()
+    virtual void OnComponentTagAdded(UFlowComponent* Component, const FGameplayTagContainer& AddedTags);
+
+	UFUNCTION()
 	virtual void OnComponentUnregistered(UFlowComponent* Component);
+
+	UFUNCTION()
+    virtual void OnComponentTagRemoved(UFlowComponent* Component, const FGameplayTagContainer& RemovedTags);
 
 	virtual void ObserveActor(TWeakObjectPtr<AActor> Actor, TWeakObjectPtr<UFlowComponent> Component) {}
 	virtual void ForgetActor(TWeakObjectPtr<AActor> Actor, TWeakObjectPtr<UFlowComponent> Component) {}
