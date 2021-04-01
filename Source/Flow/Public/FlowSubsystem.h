@@ -120,7 +120,7 @@ public:
 	UFUNCTION(BlueprintPure, Category = "FlowSubsystem")
 	TSet<UFlowComponent*> GetFlowComponentsByTag(const FGameplayTag Tag) const;
 
-	// Returns all registered Flow Components identified by at least one of given tags
+	// Returns all registered Flow Components identified by Any or All provided tags
 	UFUNCTION(BlueprintPure, Category = "FlowSubsystem")
 	TSet<UFlowComponent*> GetFlowComponentsByTags(const FGameplayTagContainer Tags, const EGameplayContainerMatchType MatchType) const;
 
@@ -128,7 +128,7 @@ public:
 	UFUNCTION(BlueprintPure, Category = "FlowSubsystem")
 	TSet<AActor*> GetFlowActorsByTag(const FGameplayTag Tag) const;
 
-	// Returns all registered actors with Flow Component identified by at least one of given tags
+	// Returns all registered actors with Flow Component identified by Any or All provided tags
 	UFUNCTION(BlueprintPure, Category = "FlowSubsystem")
 	TSet<AActor*> GetFlowActorsByTags(const FGameplayTagContainer Tags, const EGameplayContainerMatchType MatchType) const;
 
@@ -161,7 +161,7 @@ public:
 		return Result;
 	}
 
-	// Returns all registered Flow Components identified by at least one of given tags
+	// Returns all registered Flow Components identified by Any or All provided tags
 	template <class T>
 	TSet<TWeakObjectPtr<T>> GetComponents(const FGameplayTagContainer& Tags, const EGameplayContainerMatchType MatchType) const
 	{

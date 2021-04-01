@@ -2,6 +2,7 @@
 
 #include "CoreMinimal.h"
 #include "Engine/StreamableManager.h"
+#include "GameplayTagContainer.h"
 #include "VisualLogger/VisualLoggerDebugSnapshotInterface.h"
 
 #include "FlowTypes.h"
@@ -187,6 +188,7 @@ public:
 // Debugger
 protected:
 	static FString MissingIdentityTag;
+	static FString MissingNotifyTag;
 	static FString NoActorsFound;
 
 //////////////////////////////////////////////////////////////////////////
@@ -328,6 +330,12 @@ protected:
 	}
 
 public:
+	UFUNCTION(BlueprintPure, Category = "FlowNode")
+    static FString GetIdentityDescription(const FGameplayTagContainer& Tags);
+	
+	UFUNCTION(BlueprintPure, Category = "FlowNode")
+	static FString GetNotifyDescription(const FGameplayTagContainer& Tags);
+	
 	UFUNCTION(BlueprintPure, Category = "FlowNode")
 	static FString GetProgressAsString(float Value);
 
