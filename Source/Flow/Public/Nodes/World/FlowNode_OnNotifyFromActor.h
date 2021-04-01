@@ -15,7 +15,7 @@ protected:
 	UPROPERTY(EditDefaultsOnly, Category = "ObservedComponent")
 	FGameplayTagContainer NotifyTags;
 
-	void PostLoad() override;
+	virtual void PostLoad() override;
 
 	virtual void ExecuteInput(const FName& PinName) override;
 
@@ -26,6 +26,7 @@ protected:
 public:
 	virtual FString GetNodeDescription() const override;
 #endif
+
 private:
 	UPROPERTY()
 	FGameplayTag NotifyTag_DEPRECATED;
