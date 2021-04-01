@@ -13,9 +13,20 @@ UFlowNode_ComponentObserver::UFlowNode_ComponentObserver(const FObjectInitialize
 	OutputNames = {TEXT("Success"), TEXT("Stopped")};
 }
 
+void UFlowNode_ComponentObserver::PostLoad()
+{
+	Super::PostLoad();
+
+	if (IdentityTag_DEPRECATED.IsValid())
+	{
+		IdentityTags = FGameplayTagContainer(IdentityTag_DEPRECATED);
+		IdentityTag_DEPRECATED = FGameplayTag();
+	}
+}
+
 void UFlowNode_ComponentObserver::ExecuteInput(const FName& PinName)
 {
-	if (IdentityTag.IsValid())
+	if (IdentityTags.IsValid())
 	{
 		if (PinName == TEXT("Start"))
 		{
@@ -34,7 +45,7 @@ void UFlowNode_ComponentObserver::ExecuteInput(const FName& PinName)
 
 void UFlowNode_ComponentObserver::StartObserving()
 {
-	for (const TWeakObjectPtr<UFlowComponent>& FoundComponent : GetFlowSubsystem()->GetComponents<UFlowComponent>(IdentityTag))
+	for (const TWeakObjectPtr<UFlowComponent>& FoundComponent : GetFlowSubsystem()->GetComponents<UFlowComponent>(IdentityTags, EGameplayContainerMatchType::Any))
 	{
 		ObserveActor(FoundComponent->GetOwner(), FoundComponent);
 	}
@@ -54,7 +65,7 @@ void UFlowNode_ComponentObserver::StopObserving()
 
 void UFlowNode_ComponentObserver::OnComponentRegistered(UFlowComponent* Component)
 {
-	if (!RegisteredActors.Contains(Component->GetOwner()) && Component->IdentityTags.HasTagExact(IdentityTag))
+	if (!RegisteredActors.Contains(Component->GetOwner()) && Component->IdentityTags.HasAnyExact(IdentityTags))
 	{
 		ObserveActor(Component->GetOwner(), Component);
 	}
@@ -62,7 +73,7 @@ void UFlowNode_ComponentObserver::OnComponentRegistered(UFlowComponent* Componen
 
 void UFlowNode_ComponentObserver::OnComponentTagAdded(UFlowComponent* Component, const FGameplayTagContainer& AddedTags)
 {
-	if (!RegisteredActors.Contains(Component->GetOwner()) && AddedTags.HasTagExact(IdentityTag))
+	if (!RegisteredActors.Contains(Component->GetOwner()) && AddedTags.HasAnyExact(IdentityTags))
 	{
 		ObserveActor(Component->GetOwner(), Component);
 	}
@@ -70,7 +81,7 @@ void UFlowNode_ComponentObserver::OnComponentTagAdded(UFlowComponent* Component,
 
 void UFlowNode_ComponentObserver::OnComponentUnregistered(UFlowComponent* Component)
 {
-	if (RegisteredActors.Contains(Component->GetOwner()) && Component->IdentityTags.HasTagExact(IdentityTag))
+	if (RegisteredActors.Contains(Component->GetOwner()) && Component->IdentityTags.HasAnyExact(IdentityTags))
 	{
 		RegisteredActors.Remove(Component->GetOwner());
 		ForgetActor(Component->GetOwner(), Component);
@@ -79,7 +90,7 @@ void UFlowNode_ComponentObserver::OnComponentUnregistered(UFlowComponent* Compon
 
 void UFlowNode_ComponentObserver::OnComponentTagRemoved(UFlowComponent* Component, const FGameplayTagContainer& RemovedTags)
 {
-	if (RegisteredActors.Contains(Component->GetOwner()) && RemovedTags.HasTagExact(IdentityTag))
+	if (RegisteredActors.Contains(Component->GetOwner()) && RemovedTags.HasAnyExact(IdentityTags))
 	{
 		RegisteredActors.Remove(Component->GetOwner());
 		ForgetActor(Component->GetOwner(), Component);
@@ -100,7 +111,7 @@ void UFlowNode_ComponentObserver::Cleanup()
 #if WITH_EDITOR
 FString UFlowNode_ComponentObserver::GetNodeDescription() const
 {
-	return IdentityTag.IsValid() ? IdentityTag.ToString() : TEXT("Missing Identity Tag!");
+	return GetIdentityDescription(IdentityTags);
 }
 
 FString UFlowNode_ComponentObserver::GetStatusString() const
