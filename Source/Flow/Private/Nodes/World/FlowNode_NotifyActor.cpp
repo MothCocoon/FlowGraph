@@ -12,13 +12,30 @@ UFlowNode_NotifyActor::UFlowNode_NotifyActor(const FObjectInitializer& ObjectIni
 #endif
 }
 
+void UFlowNode_NotifyActor::PostLoad()
+{
+	Super::PostLoad();
+
+	if (IdentityTag_DEPRECATED.IsValid())
+	{
+		IdentityTags = FGameplayTagContainer(IdentityTag_DEPRECATED);
+		IdentityTag_DEPRECATED = FGameplayTag();
+	}
+	
+	if (NotifyTag_DEPRECATED.IsValid())
+	{
+		NotifyTags = FGameplayTagContainer(NotifyTag_DEPRECATED);
+		NotifyTag_DEPRECATED = FGameplayTag();
+	}
+}
+
 void UFlowNode_NotifyActor::ExecuteInput(const FName& PinName)
 {
 	if (UFlowSubsystem* FlowSubsystem = GetWorld()->GetGameInstance()->GetSubsystem<UFlowSubsystem>())
 	{
-		for (TWeakObjectPtr<UFlowComponent>& Component : FlowSubsystem->GetComponents<UFlowComponent>(IdentityTag))
+		for (TWeakObjectPtr<UFlowComponent>& Component : FlowSubsystem->GetComponents<UFlowComponent>(IdentityTags, EGameplayContainerMatchType::Any))
 		{
-			Component->NotifyFromGraph(NotifyTag);
+			Component->NotifyFromGraph(NotifyTags);
 		}
 	}
 
@@ -28,9 +45,6 @@ void UFlowNode_NotifyActor::ExecuteInput(const FName& PinName)
 #if WITH_EDITOR
 FString UFlowNode_NotifyActor::GetNodeDescription() const
 {
-	const FString IdentityString = IdentityTag.IsValid() ? IdentityTag.ToString() : MissingIdentityTag;
-	const FString NotifyString = NotifyTag.IsValid() ? NotifyTag.ToString() : TEXT("---");
-
-	return IdentityString + LINE_TERMINATOR + NotifyString;
+	return GetIdentityDescription(IdentityTags) + LINE_TERMINATOR + GetNotifyDescription(NotifyTags);
 }
 #endif

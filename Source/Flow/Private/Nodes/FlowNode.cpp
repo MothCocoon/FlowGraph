@@ -14,6 +14,7 @@ FName UFlowNode::DefaultInputName(TEXT("In"));
 FName UFlowNode::DefaultOutputName(TEXT("Out"));
 
 FString UFlowNode::MissingIdentityTag = TEXT("Missing Identity Tag!");
+FString UFlowNode::MissingNotifyTag = TEXT("Missing Notify Tag!");
 FString UFlowNode::NoActorsFound = TEXT("No actors found!");
 
 #if !UE_BUILD_SHIPPING
@@ -361,6 +362,16 @@ AActor* UFlowNode::GetActorToFocus()
 	return K2_GetActorToFocus();
 }
 #endif
+
+FString UFlowNode::GetIdentityDescription(const FGameplayTagContainer& Tags)
+{
+	return Tags.IsEmpty() ? MissingIdentityTag : FString::JoinBy(Tags, LINE_TERMINATOR, [](const FGameplayTag& Tag) { return Tag.ToString(); });
+}
+
+FString UFlowNode::GetNotifyDescription(const FGameplayTagContainer& Tags)
+{
+	return Tags.IsEmpty() ? MissingNotifyTag : FString::JoinBy(Tags, LINE_TERMINATOR, [](const FGameplayTag& Tag) { return Tag.ToString(); });
+}
 
 FString UFlowNode::GetProgressAsString(float Value)
 {
