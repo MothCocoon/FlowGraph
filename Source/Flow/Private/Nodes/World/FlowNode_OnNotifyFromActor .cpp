@@ -17,6 +17,7 @@ void UFlowNode_OnNotifyFromActor::PostLoad()
 	if (NotifyTag_DEPRECATED.IsValid())
 	{
 		NotifyTags = FGameplayTagContainer(NotifyTag_DEPRECATED);
+		NotifyTag_DEPRECATED = FGameplayTag();
 	}
 }
 
@@ -34,7 +35,7 @@ void UFlowNode_OnNotifyFromActor::ObserveActor(TWeakObjectPtr<AActor> Actor, TWe
 		TWeakObjectPtr<UFlowNode_OnNotifyFromActor> SelfWeakPtr(this);
 		Component->OnNotifyFromComponent.AddWeakLambda(this, [SelfWeakPtr](UFlowComponent* FlowComponent, const FGameplayTag& Tag)
 		{
-			if (SelfWeakPtr.IsValid() && FlowComponent->IdentityTags.HasTagExact(SelfWeakPtr.Get()->IdentityTag)
+			if (SelfWeakPtr.IsValid() && FlowComponent->IdentityTags.HasAnyExact(SelfWeakPtr.Get()->IdentityTags)
 				&& (!SelfWeakPtr.Get()->NotifyTags.IsValid() || SelfWeakPtr.Get()->NotifyTags.HasTagExact(Tag)))
 			{
 				SelfWeakPtr->TriggerFirstOutput(true);
@@ -51,10 +52,6 @@ void UFlowNode_OnNotifyFromActor::ForgetActor(TWeakObjectPtr<AActor> Actor, TWea
 #if WITH_EDITOR
 FString UFlowNode_OnNotifyFromActor::GetNodeDescription() const
 {
-	const FString IdentityString = IdentityTag.IsValid() ? IdentityTag.ToString() : MissingIdentityTag;
-	const FString NotifyString = !NotifyTags.IsValid() ? TEXT("---") :
-		FString::JoinBy(NotifyTags, LINE_TERMINATOR, [](const FGameplayTag& Tag) { return Tag.ToString(); });
-
-	return IdentityString + LINE_TERMINATOR + NotifyString;
+	return GetIdentityDescription(IdentityTags) + LINE_TERMINATOR + GetNotifyDescription(NotifyTags);
 }
 #endif

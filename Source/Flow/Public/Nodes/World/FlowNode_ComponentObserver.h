@@ -20,11 +20,13 @@ class FLOW_API UFlowNode_ComponentObserver : public UFlowNode
 	
 protected:
 	UPROPERTY(EditDefaultsOnly, Category = "ObservedComponent")
-	FGameplayTag IdentityTag;
-
+	FGameplayTagContainer IdentityTags;
+	
 	TMap<TWeakObjectPtr<AActor>, TWeakObjectPtr<UFlowComponent>> RegisteredActors;
 
 protected:
+	virtual void PostLoad() override;
+	
 	virtual void ExecuteInput(const FName& PinName) override;
 
 	virtual void StartObserving();
@@ -52,4 +54,8 @@ public:
 	virtual FString GetNodeDescription() const override;
 	virtual FString GetStatusString() const override;
 #endif
+
+private:
+	UPROPERTY()
+	FGameplayTag IdentityTag_DEPRECATED;
 };

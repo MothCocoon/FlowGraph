@@ -116,9 +116,12 @@ void UFlowComponent::NotifyGraph(const FGameplayTag NotifyTag)
 	OnNotifyFromComponent.Broadcast(this, NotifyTag);
 }
 
-void UFlowComponent::NotifyFromGraph(const FGameplayTag NotifyTag)
+void UFlowComponent::NotifyFromGraph(const FGameplayTagContainer& NotifyTags)
 {
-	ReceiveNotify.Broadcast(nullptr, NotifyTag);
+	for (const FGameplayTag& NotifyTag : NotifyTags)
+	{
+		ReceiveNotify.Broadcast(nullptr, NotifyTag);
+	}
 }
 
 void UFlowComponent::NotifyActor(const FGameplayTag ActorTag, const FGameplayTag NotifyTag)
