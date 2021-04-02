@@ -17,7 +17,6 @@ void UFlowNode_OnNotifyFromActor::PostLoad()
 	if (NotifyTag_DEPRECATED.IsValid())
 	{
 		NotifyTags = FGameplayTagContainer(NotifyTag_DEPRECATED);
-		NotifyTag_DEPRECATED = FGameplayTag();
 	}
 }
 
