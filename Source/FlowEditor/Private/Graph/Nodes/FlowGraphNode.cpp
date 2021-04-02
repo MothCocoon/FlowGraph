@@ -139,13 +139,13 @@ void UFlowGraphNode::PostLoad()
 		SubscribeToExternalChanges();
 	}
 
+	// todo: verify if we still need this workaround
 	// without this reconstructing UFlowNode_SubGraph pins wouldn't work well
 	if (bFlowAssetsLoaded == false)
 	{
-		FAssetRegistryModule& AssetRegistryModule = FModuleManager::LoadModuleChecked<FAssetRegistryModule>(AssetRegistryConstants::ModuleName);
-		AssetRegistryModule.Get().SearchAllAssets(true);
-
 		TArray<FAssetData> FlowAssets;
+
+		FAssetRegistryModule& AssetRegistryModule = FModuleManager::LoadModuleChecked<FAssetRegistryModule>(AssetRegistryConstants::ModuleName);
 		AssetRegistryModule.Get().GetAssetsByClass(UFlowAsset::StaticClass()->GetFName(), FlowAssets, true);
 
 		for (FAssetData const& Asset : FlowAssets)
