@@ -1,5 +1,6 @@
 #include "LevelEditor/SLevelEditorFlow.h"
 #include "FlowAsset.h"
+#include "FlowGraphComponent.h"
 #include "FlowWorldSettings.h"
 
 #include "Editor.h"
@@ -26,7 +27,7 @@ void SLevelEditorFlow::CreateFlowWidget()
 	{
 		if (const AFlowWorldSettings* WorldSettings = Cast<AFlowWorldSettings>(World->GetWorldSettings()))
 		{
-			FlowPath = WorldSettings->FlowAsset ? FName(*WorldSettings->FlowAsset->GetPathName()) : FName();
+			FlowPath = WorldSettings->FlowGraph->FlowAsset ? FName(*WorldSettings->FlowGraph->FlowAsset->GetPathName()) : FName();
 		}
 	}
 
@@ -78,14 +79,15 @@ void SLevelEditorFlow::OnFlowChanged(const FAssetData& NewAsset)
 		{
 			if (UObject* NewObject = NewAsset.GetAsset())
 			{
-				WorldSettings->FlowAsset = Cast<UFlowAsset>(NewObject);
+				WorldSettings->FlowGraph->FlowAsset = Cast<UFlowAsset>(NewObject);
 			}
 			else
 			{
-				WorldSettings->FlowAsset = nullptr;
+				WorldSettings->FlowGraph->FlowAsset = nullptr;
 			}
 
-			WorldSettings->MarkPackageDirty();
+			bool bSucceeded = WorldSettings->MarkPackageDirty();
+			ensure(bSucceeded);
 		}
 	}
 }

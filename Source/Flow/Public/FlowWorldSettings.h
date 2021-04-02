@@ -3,6 +3,8 @@
 #include "GameFramework/WorldSettings.h"
 #include "FlowWorldSettings.generated.h"
 
+class UFlowGraphComponent;
+
 /**
  * World Settings used to start a Flow for this world
  */
@@ -11,9 +13,7 @@ class FLOW_API AFlowWorldSettings : public AWorldSettings
 {
 	GENERATED_UCLASS_BODY()
 
+public:	
 	UPROPERTY(EditAnywhere, Category = "Flow")
-	class UFlowAsset* FlowAsset;
-
-	virtual void BeginPlay() override;
-	virtual void EndPlay(const EEndPlayReason::Type EndPlayReason) override;
+	UFlowGraphComponent* FlowGraph;
 };
