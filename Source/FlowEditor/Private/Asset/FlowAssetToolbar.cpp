@@ -1,9 +1,9 @@
 #include "Asset/FlowAssetToolbar.h"
 #include "Asset/FlowAssetEditor.h"
-#include "DebuggerCommands.h"
 #include "FlowEditorCommands.h"
 
 #include "Framework/MultiBox/MultiBoxBuilder.h"
+#include "Kismet2/DebuggerCommands.h"
 
 #define LOCTEXT_NAMESPACE "FlowAssetToolbar"
 
