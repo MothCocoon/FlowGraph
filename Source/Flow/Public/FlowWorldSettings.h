@@ -3,6 +3,8 @@
 #include "GameFramework/WorldSettings.h"
 #include "FlowWorldSettings.generated.h"
 
+class UFlowComponent;
+
 /**
  * World Settings used to start a Flow for this world
  */
@@ -11,9 +13,16 @@ class FLOW_API AFlowWorldSettings : public AWorldSettings
 {
 	GENERATED_UCLASS_BODY()
 
-	UPROPERTY(EditAnywhere, Category = "Flow")
-	class UFlowAsset* FlowAsset;
+private:
+	UPROPERTY(BlueprintReadOnly, VisibleAnywhere, Category = "Flow", meta = (AllowPrivateAccess = "true"))
+	UFlowComponent* FlowComponent;
 
-	virtual void BeginPlay() override;
-	virtual void EndPlay(const EEndPlayReason::Type EndPlayReason) override;
+public:
+	UFlowComponent* GetFlowComponent() const { return FlowComponent; }
+
+	virtual void PostLoad() override;
+
+private:
+	UPROPERTY()
+	class UFlowAsset* FlowAsset_DEPRECATED;
 };
