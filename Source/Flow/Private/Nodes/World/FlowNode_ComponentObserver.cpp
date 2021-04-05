@@ -3,6 +3,8 @@
 
 UFlowNode_ComponentObserver::UFlowNode_ComponentObserver(const FObjectInitializer& ObjectInitializer)
 	: Super(ObjectInitializer)
+	, SuccessLimit(1)
+	, SuccessCount(0)
 {
 #if WITH_EDITOR
 	NodeStyle = EFlowNodeStyle::Condition;
@@ -10,7 +12,7 @@ UFlowNode_ComponentObserver::UFlowNode_ComponentObserver(const FObjectInitialize
 #endif
 
 	InputNames = {TEXT("Start"), TEXT("Stop")};
-	OutputNames = {TEXT("Success"), TEXT("Stopped")};
+	OutputNames = {TEXT("Success"), TEXT("Completed"), TEXT("Stopped")};
 }
 
 void UFlowNode_ComponentObserver::PostLoad()
@@ -51,7 +53,7 @@ void UFlowNode_ComponentObserver::StartObserving()
 
 	GetFlowSubsystem()->OnComponentRegistered.AddDynamic(this, &UFlowNode_ComponentObserver::OnComponentRegistered);
 	GetFlowSubsystem()->OnComponentTagAdded.AddDynamic(this, &UFlowNode_ComponentObserver::OnComponentTagAdded);
-	
+
 	GetFlowSubsystem()->OnComponentUnregistered.AddDynamic(this, &UFlowNode_ComponentObserver::OnComponentUnregistered);
 	GetFlowSubsystem()->OnComponentTagRemoved.AddDynamic(this, &UFlowNode_ComponentObserver::OnComponentTagRemoved);
 }
@@ -96,6 +98,17 @@ void UFlowNode_ComponentObserver::OnComponentTagRemoved(UFlowComponent* Componen
 	}
 }
 
+void UFlowNode_ComponentObserver::OnEventReceived()
+{
+	TriggerFirstOutput(false);
+	
+	SuccessCount++;
+	if (SuccessLimit > 0 && SuccessCount == SuccessLimit)
+	{
+		TriggerOutput(TEXT("Completed"), true);
+	}
+}
+
 void UFlowNode_ComponentObserver::Cleanup()
 {
 	StopObserving();
@@ -105,6 +118,8 @@ void UFlowNode_ComponentObserver::Cleanup()
 		ForgetActor(RegisteredActor.Key, RegisteredActor.Value);
 	}
 	RegisteredActors.Empty();
+
+	SuccessCount = 0;
 }
 
 #if WITH_EDITOR
