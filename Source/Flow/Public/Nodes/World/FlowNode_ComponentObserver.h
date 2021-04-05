@@ -21,6 +21,15 @@ class FLOW_API UFlowNode_ComponentObserver : public UFlowNode
 protected:
 	UPROPERTY(EditDefaultsOnly, Category = "ObservedComponent")
 	FGameplayTagContainer IdentityTags;
+
+	// This node will become Completed, if Success Limit > 0 and Success Count reaches this limit
+	// Set this to zero, if you'd like receive events indefinitely (node would finish work only if explicitly Stopped)
+	UPROPERTY(EditDefaultsOnly, Category = "Lifetime", meta = (ClampMin = 0))
+	int32 SuccessLimit;
+
+	// This node will become Completed, if Success Limit > 0 and Success Count reaches this limit
+	UPROPERTY(VisibleAnywhere, Category = "Lifetime")
+	int32 SuccessCount;
 	
 	TMap<TWeakObjectPtr<AActor>, TWeakObjectPtr<UFlowComponent>> RegisteredActors;
 
@@ -46,6 +55,9 @@ protected:
 
 	virtual void ObserveActor(TWeakObjectPtr<AActor> Actor, TWeakObjectPtr<UFlowComponent> Component) {}
 	virtual void ForgetActor(TWeakObjectPtr<AActor> Actor, TWeakObjectPtr<UFlowComponent> Component) {}
+
+	UFUNCTION()
+	virtual void OnEventReceived();
 
 	virtual void Cleanup() override;
 
