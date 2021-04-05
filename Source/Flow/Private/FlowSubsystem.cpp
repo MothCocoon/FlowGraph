@@ -31,16 +31,19 @@ void UFlowSubsystem::Initialize(FSubsystemCollectionBase& Collection)
 
 void UFlowSubsystem::Deinitialize()
 {
-	for (int32 i = InstancedTemplates.Num() - 1; i >= 0; i--)
+	if (InstancedTemplates.Num() > 0)
 	{
-		if (InstancedTemplates[i])
+		for (int32 i = InstancedTemplates.Num() - 1; i >= 0; i--)
 		{
-			InstancedTemplates[i]->ClearInstances();
+			if (InstancedTemplates.IsValidIndex(i))
+			{
+				InstancedTemplates[i]->ClearInstances();
+			}
 		}
-	}
 
-	InstancedTemplates.Empty();
-	InstancedSubFlows.Empty();
+		InstancedTemplates.Empty();
+		InstancedSubFlows.Empty();
+	}
 }
 
 void UFlowSubsystem::StartRootFlow(UObject* Owner, UFlowAsset* FlowAsset)
