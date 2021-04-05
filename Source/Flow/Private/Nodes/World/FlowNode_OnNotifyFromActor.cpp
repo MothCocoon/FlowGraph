@@ -37,7 +37,7 @@ void UFlowNode_OnNotifyFromActor::ObserveActor(TWeakObjectPtr<AActor> Actor, TWe
 			if (SelfWeakPtr.IsValid() && FlowComponent->IdentityTags.HasAnyExact(SelfWeakPtr.Get()->IdentityTags)
 				&& (!SelfWeakPtr.Get()->NotifyTags.IsValid() || SelfWeakPtr.Get()->NotifyTags.HasTagExact(Tag)))
 			{
-				SelfWeakPtr->TriggerFirstOutput(true);
+				SelfWeakPtr->OnEventReceived();
 			}
 		});
 	}
