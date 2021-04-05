@@ -2,15 +2,18 @@
 
 #include "Components/ActorComponent.h"
 #include "GameplayTagContainer.h"
+
+#include "FlowTypes.h"
 #include "FlowComponent.generated.h"
 
+class UFlowAsset;
 class UFlowSubsystem;
 
 DECLARE_MULTICAST_DELEGATE_TwoParams(FFlowComponentNotify, class UFlowComponent*, const FGameplayTag&);
 DECLARE_DYNAMIC_MULTICAST_DELEGATE_TwoParams(FFlowComponentDynamicNotify, class UFlowComponent*, FlowComponent, const FGameplayTag&, NotifyTag);
 
 /**
-* Base component of Flow System - makes possible to communicate between Flow graph and actors
+* Base component of Flow System - makes possible to communicate between Actor, Flow Subsystem and Flow Graphs
 */
 UCLASS(Blueprintable, meta = (BlueprintSpawnableComponent))
 class FLOW_API UFlowComponent : public UActorComponent
@@ -58,6 +61,36 @@ class FLOW_API UFlowComponent : public UActorComponent
 	UFUNCTION(BlueprintCallable, Category = "Flow")
 	virtual void NotifyActor(const FGameplayTag ActorTag, const FGameplayTag NotifyTag);
 
-protected:
+//////////////////////////////////////////////////////////////////////////
+// Root Flow
+
+public:
+	// Asset that might instantiated as "Root Flow" 
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "RootFlow")
+	UFlowAsset* RootFlow;
+
+	// If true, component will start Root Flow on Begin Play
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "RootFlow")
+	bool bAutoStartRootFlow;
+
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "RootFlow")
+	EFlowNetMode RootFlowMode;
+
+	// This will instantiate Flow Asset assigned on this component.
+	// Created Flow Asset instance will be a "root flow", as additional Flow Assets can be instantiated via Sub Graph node
+	UFUNCTION(BlueprintCallable, Category = "RootFlow")
+	void StartRootFlow() const;
+
+	// This will destroy instantiated Flow Asset - created from asset assigned on this component.
+	UFUNCTION(BlueprintCallable, Category = "RootFlow")
+	void FinishRootFlow() const;
+
+	UFUNCTION(BlueprintPure, Category = "RootFlow")
+	UFlowAsset* GetRootFlowInstance();
+
+//////////////////////////////////////////////////////////////////////////
+// Helpers
+	
 	UFlowSubsystem* GetFlowSubsystem() const;
+	bool IsFlowNetMode(const EFlowNetMode NetMode) const;
 };

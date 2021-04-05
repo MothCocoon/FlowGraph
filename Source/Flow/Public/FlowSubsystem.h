@@ -57,7 +57,7 @@ public:
 
 	// Finish the root Flow, typically when closing world that created this flow
 	UFUNCTION(BlueprintCallable, Category = "FlowSubsystem")
-	void FinishRootFlow(UObject* Owner, UFlowAsset* FlowAsset);
+	void FinishRootFlow(UObject* Owner);
 
 private:
 	void StartSubFlow(UFlowNode_SubGraph* SubGraphNode, const bool bPreloading = false);
