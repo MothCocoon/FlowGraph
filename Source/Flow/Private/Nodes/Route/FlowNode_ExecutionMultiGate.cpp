@@ -28,10 +28,14 @@ void UFlowNode_ExecutionMultiGate::ExecuteInput(const FName& PinName)
 	}
 
 	if (Completed.Num() == 0)
+	{
 		Completed.Init(false, OutputNames.Num());
+	}
 
 	if (!Completed.Contains(false))
+	{
 		return;
+	}
 
 	const bool bUseStartIndex = !Completed.Contains(true) && Completed.IsValidIndex(StartIndex);
 	
@@ -39,15 +43,21 @@ void UFlowNode_ExecutionMultiGate::ExecuteInput(const FName& PinName)
 	{
 		int32 Index = INDEX_NONE;
 		if (bUseStartIndex)
+		{
 			Index = StartIndex;
+		}
 		else
 		{
 			TArray<int32> AvailableIndexes;
 			AvailableIndexes.Reserve(Completed.Num());
-			
-			for (auto It = Completed.CreateConstIterator(); It; ++It)
-				if (*It == false)
-					AvailableIndexes.Add(It.GetIndex());
+
+			for (int32 Idx = 0; Idx < Completed.Num(); Idx++)
+			{
+				if (Completed[Idx] == false)
+				{
+					AvailableIndexes.Add(Idx);
+				}
+			}
 
 			const int32 Random = FMath::RandRange(0, AvailableIndexes.Num() - 1);
 			Index = AvailableIndexes[Random];
@@ -59,7 +69,9 @@ void UFlowNode_ExecutionMultiGate::ExecuteInput(const FName& PinName)
 	else
 	{
 		if (bUseStartIndex)
+		{
 			NextOutput = StartIndex;
+		}
 
 		const int32 CurrentOutput = NextOutput;
 		//We have to calculate NextOutput before TriggerOutput(..)
@@ -71,7 +83,9 @@ void UFlowNode_ExecutionMultiGate::ExecuteInput(const FName& PinName)
 	}
 
 	if (!Completed.Contains(false) && bLoop)
+	{
 		Finish();
+	}
 }
 
 void UFlowNode_ExecutionMultiGate::Cleanup()

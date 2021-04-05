@@ -32,7 +32,10 @@ protected:
 	virtual FString GetNodeDescription() const override;
 #endif
 
+	UPROPERTY()
 	int32 NextOutput;
+
+	UPROPERTY()
 	TArray<bool> Completed;
 
 	static const FName ResetInputName;
