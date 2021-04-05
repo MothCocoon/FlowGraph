@@ -57,11 +57,11 @@ void UFlowSubsystem::StartRootFlow(UObject* Owner, UFlowAsset* FlowAsset)
 	NewFlow->StartFlow();
 }
 
-void UFlowSubsystem::FinishRootFlow(UObject* Owner, UFlowAsset* FlowAsset)
+void UFlowSubsystem::FinishRootFlow(UObject* Owner)
 {
 	if (UFlowAsset* Instance = RootInstances.FindRef(Owner))
 	{
-		RootInstances.Remove(FlowAsset);
+		RootInstances.Remove(Owner);
 		Instance->FinishFlow(false);
 	}
 }
@@ -193,6 +193,9 @@ void UFlowSubsystem::OnIdentityTagsAdded(UFlowComponent* Component, const FGamep
 
 void UFlowSubsystem::UnregisterComponent(UFlowComponent* Component)
 {
+	// first, remove Flow Assets instantiated by this component
+	FinishRootFlow(Component);
+
 	for (const FGameplayTag& Tag : Component->IdentityTags)
 	{
 		if (Tag.IsValid())
