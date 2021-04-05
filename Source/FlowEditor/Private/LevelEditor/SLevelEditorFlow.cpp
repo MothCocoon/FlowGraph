@@ -1,5 +1,6 @@
 #include "LevelEditor/SLevelEditorFlow.h"
 #include "FlowAsset.h"
+#include "FlowComponent.h"
 #include "FlowWorldSettings.h"
 
 #include "Editor.h"
@@ -22,12 +23,14 @@ void SLevelEditorFlow::OnMapOpened(const FString& Filename, bool bAsTemplate)
 
 void SLevelEditorFlow::CreateFlowWidget()
 {
-	if (UWorld* World = GEditor->GetEditorWorldContext().World())
+	UFlowComponent* FlowComponent = FindFlowComponent();
+	if (FlowComponent && FlowComponent->RootFlow)
 	{
-		if (const AFlowWorldSettings* WorldSettings = Cast<AFlowWorldSettings>(World->GetWorldSettings()))
-		{
-			FlowPath = WorldSettings->FlowAsset ? FName(*WorldSettings->FlowAsset->GetPathName()) : FName();
-		}
+		FlowPath = FName(*FlowComponent->RootFlow->GetPathName());
+	}
+	else
+	{
+		FlowPath = FName();
 	}
 
 	const TSharedRef<SWidget> FlowWidget = SNew(SHorizontalBox)
@@ -72,27 +75,43 @@ void SLevelEditorFlow::OnFlowChanged(const FAssetData& NewAsset)
 {
 	FlowPath = NewAsset.ObjectPath;
 
-	if (UWorld* World = GEditor->GetEditorWorldContext().World())
+	UFlowComponent* FlowComponent = FindFlowComponent();
+	if (FlowComponent && FlowComponent->RootFlow)
 	{
-		if (AFlowWorldSettings* WorldSettings = Cast<AFlowWorldSettings>(World->GetWorldSettings()))
+		if (UObject* NewObject = NewAsset.GetAsset())
 		{
-			if (UObject* NewObject = NewAsset.GetAsset())
-			{
-				WorldSettings->FlowAsset = Cast<UFlowAsset>(NewObject);
-			}
-			else
-			{
-				WorldSettings->FlowAsset = nullptr;
-			}
-
-			WorldSettings->MarkPackageDirty();
+			FlowComponent->RootFlow = Cast<UFlowAsset>(NewObject);
 		}
+		else
+		{
+			FlowComponent->RootFlow = nullptr;
+		}
+
+		const bool bSuccess = FlowComponent->MarkPackageDirty();
+		ensureMsgf(bSuccess, TEXT("World Settings couldn't be marked dirty while changing the assigned Flow Asset."));
 	}
 }
 
 FString SLevelEditorFlow::GetFlowPath() const
 {
 	return FlowPath.IsValid() ? FlowPath.ToString() : FString();
+}
+
+UFlowComponent* SLevelEditorFlow::FindFlowComponent() const
+{
+	if (UWorld* World = GEditor->GetEditorWorldContext().World())
+	{
+		if (const AWorldSettings* WorldSettings = World->GetWorldSettings())
+		{
+			UActorComponent* FoundComponent = WorldSettings->GetComponentByClass(UFlowComponent::StaticClass());
+			if (FoundComponent)
+			{
+				return Cast<UFlowComponent>(FoundComponent);
+			}
+		}
+	}
+
+	return nullptr;
 }
 
 #undef LOCTEXT_NAMESPACE

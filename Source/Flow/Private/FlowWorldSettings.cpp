@@ -1,34 +1,18 @@
 #include "FlowWorldSettings.h"
-#include "FlowSubsystem.h"
+#include "FlowComponent.h"
 
 AFlowWorldSettings::AFlowWorldSettings(const FObjectInitializer& ObjectInitializer)
 	: Super(ObjectInitializer)
-	, FlowAsset(nullptr)
 {
+	FlowComponent = CreateDefaultSubobject<UFlowComponent>(TEXT("FlowComponent"));
 }
 
-void AFlowWorldSettings::BeginPlay()
+void AFlowWorldSettings::PostLoad()
 {
-	Super::BeginPlay();
+	Super::PostLoad();
 
-	if (FlowAsset && HasAuthority())
+	if (FlowAsset_DEPRECATED)
 	{
-		if (UFlowSubsystem* FlowSubsystem = GetWorld()->GetGameInstance()->GetSubsystem<UFlowSubsystem>())
-		{
-			FlowSubsystem->StartRootFlow(GetWorld(), FlowAsset);
-		}
+		FlowComponent->RootFlow = FlowAsset_DEPRECATED;
 	}
-}
-
-void AFlowWorldSettings::EndPlay(const EEndPlayReason::Type EndPlayReason)
-{
-	if (FlowAsset && HasAuthority())
-	{
-		if (UFlowSubsystem* FlowSubsystem = GetWorld()->GetGameInstance()->GetSubsystem<UFlowSubsystem>())
-		{
-			FlowSubsystem->FinishRootFlow(GetWorld(), FlowAsset);
-		}
-	}
-
-	Super::EndPlay(EndPlayReason);
 }

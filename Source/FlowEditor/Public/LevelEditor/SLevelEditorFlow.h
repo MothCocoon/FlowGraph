@@ -21,5 +21,7 @@ private:
 	void OnFlowChanged(const FAssetData& NewAsset);
 	FString GetFlowPath() const;
 
+	class UFlowComponent* FindFlowComponent() const;
+	
 	FName FlowPath;
 };
