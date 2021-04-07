@@ -72,7 +72,7 @@ Flow Graph communicates with actors in the world by using [Gameplay Tags](https:
 
 ## Contact
 * Catch me on Twitter: [@MothDoctor](https://twitter.com/MothDoctor)
-* Discuss things related to plugin on the Discord server named Flow.
+* Discuss things related to the plugin on dedicated [Discord server](https://discord.gg/zMtMQ2vUUa).
 
 ## Acknowledgements
 I feel it's important to mention that I didn't invent anything new here, with the Flow Graph. It's an old and proven concept. I'm only the one who decided it would be crazy useful to adopt it for Unreal Engine. And make it publically available as my humble contribution to the open-source community.
