@@ -73,17 +73,22 @@ public:
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "RootFlow")
 	bool bAutoStartRootFlow;
 
+	// Networking mode for creating this Root Flow
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "RootFlow")
 	EFlowNetMode RootFlowMode;
 
+	// If false, another Root Flow instance won't be created from this component, if this Flow Asset is already instantiated
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "RootFlow")
+	bool bAllowMultipleInstances;
+	
 	// This will instantiate Flow Asset assigned on this component.
 	// Created Flow Asset instance will be a "root flow", as additional Flow Assets can be instantiated via Sub Graph node
 	UFUNCTION(BlueprintCallable, Category = "RootFlow")
-	void StartRootFlow() const;
+	void StartRootFlow();
 
 	// This will destroy instantiated Flow Asset - created from asset assigned on this component.
 	UFUNCTION(BlueprintCallable, Category = "RootFlow")
-	void FinishRootFlow() const;
+	void FinishRootFlow();
 
 	UFUNCTION(BlueprintPure, Category = "RootFlow")
 	UFlowAsset* GetRootFlowInstance();
