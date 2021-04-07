@@ -26,16 +26,7 @@ This 24-minute presentation breaks down the concept of the Flow Graph. It goes t
 [![Introducing Flow Graph for Unreal Engine](https://img.youtube.com/vi/Rj76JP1f-I4/0.jpg)](https://www.youtube.com/watch?v=Rj76JP1f-I4)
 
 ## Getting started
-In Releases, you can find an example project called Flower, so you can easily check how this plug-in works.
-
-And if you'd decide to use Flow in your project...
-1. Unpack plug-in to the Plugins folder in your project folder. If you don't have such a folder yet, simply create it.
-2. Open Project Settings in the editor. Change World Settings to the Flow World Settings class and restart the editor. This class starts the Flow Graph assigned to the map.
-
-You can include this plugin repository as dependency of your own Git project. It can be done by using Git submodules. 
-```
-git submodule add -b 4.26 https://github.com/MothCocoon/FlowGraph.git Plugins/Flow
-```
+It's simple, follow this short [Getting Started guide](https://github.com/MothCocoon/FlowGraph/wiki/Getting-Started).
 
 ## Simplicity is a key
 * It's all about simplifying the cooperation between gameplay programmers and content designers by providing a clean interface between "code of systems" and "using systems".
