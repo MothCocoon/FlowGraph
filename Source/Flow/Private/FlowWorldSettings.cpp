@@ -5,6 +5,10 @@ AFlowWorldSettings::AFlowWorldSettings(const FObjectInitializer& ObjectInitializ
 	: Super(ObjectInitializer)
 {
 	FlowComponent = CreateDefaultSubobject<UFlowComponent>(TEXT("FlowComponent"));
+
+	// We need this if project uses custom AWorldSettings classed inherited after this one
+	// In this case engine would call BeginPlay multiple times... for AFlowWorldSettings and every inherited AWorldSettings class...
+	FlowComponent->bAllowMultipleInstances = false;
 }
 
 void AFlowWorldSettings::PostLoad()
