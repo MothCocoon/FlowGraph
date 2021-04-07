@@ -26,7 +26,7 @@ This 24-minute presentation breaks down the concept of the Flow Graph. It goes t
 [![Introducing Flow Graph for Unreal Engine](https://img.youtube.com/vi/Rj76JP1f-I4/0.jpg)](https://www.youtube.com/watch?v=Rj76JP1f-I4)
 
 ## Getting started
-It's simple, follow this short [Getting Started guide](https://github.com/MothCocoon/FlowGraph/wiki/Getting-Started).
+It's simple, follow this short [Getting Started](https://github.com/MothCocoon/FlowGraph/wiki/Getting-Started) guide.
 
 ## Simplicity is a key
 * It's all about simplifying the cooperation between gameplay programmers and content designers by providing a clean interface between "code of systems" and "using systems".
