@@ -9,6 +9,7 @@ UFlowComponent::UFlowComponent(const FObjectInitializer& ObjectInitializer)
 	: Super(ObjectInitializer)
 	, RootFlow(nullptr)
 	, bAutoStartRootFlow(true)
+	, bAllowMultipleInstances(true)
 	, RootFlowMode(EFlowNetMode::Authority)
 {
 	PrimaryComponentTick.bCanEverTick = false;
@@ -34,6 +35,7 @@ void UFlowComponent::EndPlay(const EEndPlayReason::Type EndPlayReason)
 {
 	if (UFlowSubsystem* FlowSubsystem = GetFlowSubsystem())
 	{
+		FlowSubsystem->FinishRootFlow(this);
 		FlowSubsystem->UnregisterComponent(this);
 	}
 
@@ -144,22 +146,22 @@ void UFlowComponent::NotifyActor(const FGameplayTag ActorTag, const FGameplayTag
 	}
 }
 
-void UFlowComponent::StartRootFlow() const
+void UFlowComponent::StartRootFlow()
 {
 	if (RootFlow && IsFlowNetMode(RootFlowMode))
 	{
 		if (UFlowSubsystem* FlowSubsystem = GetFlowSubsystem())
 		{
-			FlowSubsystem->StartRootFlow(GetOwner(), RootFlow);
+			FlowSubsystem->StartRootFlow(this, RootFlow, bAllowMultipleInstances);
 		}
 	}
 }
 
-void UFlowComponent::FinishRootFlow() const
+void UFlowComponent::FinishRootFlow()
 {
 	if (UFlowSubsystem* FlowSubsystem = GetFlowSubsystem())
 	{
-		FlowSubsystem->FinishRootFlow(GetOwner());
+		FlowSubsystem->FinishRootFlow(this);
 	}
 }
 

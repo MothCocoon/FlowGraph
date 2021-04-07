@@ -46,11 +46,17 @@ void UFlowSubsystem::Deinitialize()
 	}
 }
 
-void UFlowSubsystem::StartRootFlow(UObject* Owner, UFlowAsset* FlowAsset)
+void UFlowSubsystem::StartRootFlow(UObject* Owner, UFlowAsset* FlowAsset, const bool bAllowMultipleInstances /* = true */)
 {
 	if (RootInstances.Contains(Owner))
 	{
-		UE_LOG(LogFlow, Warning, TEXT("Attempted to start Root Flow again. Owner: %s. Flow Asset: %s."), *Owner->GetName(), *FlowAsset->GetName());
+		UE_LOG(LogFlow, Warning, TEXT("Attempted to start Root Flow for the same Owner again. Owner: %s. Flow Asset: %s."), *Owner->GetName(), *FlowAsset->GetName());
+		return;
+	}
+
+	if (!bAllowMultipleInstances && InstancedTemplates.Contains(FlowAsset))
+	{
+		UE_LOG(LogFlow, Warning, TEXT("Attempted to start Root Flow, although there can be only a single instance. Owner: %s. Flow Asset: %s."), *Owner->GetName(), *FlowAsset->GetName());
 		return;
 	}
 
@@ -196,9 +202,6 @@ void UFlowSubsystem::OnIdentityTagsAdded(UFlowComponent* Component, const FGamep
 
 void UFlowSubsystem::UnregisterComponent(UFlowComponent* Component)
 {
-	// first, remove Flow Assets instantiated by this component
-	FinishRootFlow(Component);
-
 	for (const FGameplayTag& Tag : Component->IdentityTags)
 	{
 		if (Tag.IsValid())
