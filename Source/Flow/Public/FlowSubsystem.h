@@ -53,7 +53,7 @@ public:
 
 	// Start the root Flow, graph that will eventually instantiate next Flow Graphs through the SubGraph node
 	UFUNCTION(BlueprintCallable, Category = "FlowSubsystem")
-	void StartRootFlow(UObject* Owner, UFlowAsset* FlowAsset);
+	void StartRootFlow(UObject* Owner, UFlowAsset* FlowAsset, const bool bAllowMultipleInstances = true);
 
 	// Finish the root Flow, typically when closing world that created this flow
 	UFUNCTION(BlueprintCallable, Category = "FlowSubsystem")
