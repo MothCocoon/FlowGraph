@@ -15,6 +15,11 @@ protected:
 	UPROPERTY(EditDefaultsOnly, Category = "ObservedComponent")
 	FGameplayTagContainer NotifyTags;
 
+	// If true, node will check given Notify Tag is present in the Recently Sent Notify Tags
+	// This might be helpful in multiplayer, if client-side Flow Node started work after server sent the notify
+	UPROPERTY(EditDefaultsOnly, Category = "ObservedComponent")
+	bool bRetroactive;
+
 	virtual void PostLoad() override;
 
 	virtual void ExecuteInput(const FName& PinName) override;
@@ -22,6 +27,8 @@ protected:
 	virtual void ObserveActor(TWeakObjectPtr<AActor> Actor, TWeakObjectPtr<UFlowComponent> Component) override;
 	virtual void ForgetActor(TWeakObjectPtr<AActor> Actor, TWeakObjectPtr<UFlowComponent> Component) override;
 
+	virtual void OnNotifyFromComponent(UFlowComponent* Component, const FGameplayTag& Tag);
+	
 #if WITH_EDITOR
 public:
 	virtual FString GetNodeDescription() const override;

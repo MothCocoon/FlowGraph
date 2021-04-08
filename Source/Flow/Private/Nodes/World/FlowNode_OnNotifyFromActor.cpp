@@ -3,6 +3,7 @@
 
 UFlowNode_OnNotifyFromActor::UFlowNode_OnNotifyFromActor(const FObjectInitializer& ObjectInitializer)
 	: Super(ObjectInitializer)
+	, bRetroactive(false)
 {
 #if WITH_EDITOR
 	Category = TEXT("Notifies");
@@ -30,22 +31,26 @@ void UFlowNode_OnNotifyFromActor::ObserveActor(TWeakObjectPtr<AActor> Actor, TWe
 	if (!RegisteredActors.Contains(Actor))
 	{
 		RegisteredActors.Emplace(Actor, Component);
+		Component->OnNotifyFromComponent.AddUObject(this, &UFlowNode_OnNotifyFromActor::OnNotifyFromComponent);
 
-		TWeakObjectPtr<UFlowNode_OnNotifyFromActor> SelfWeakPtr(this);
-		Component->OnNotifyFromComponent.AddWeakLambda(this, [SelfWeakPtr](UFlowComponent* FlowComponent, const FGameplayTag& Tag)
+		if (bRetroactive && Component->GetRecentlySentNotifyTags().HasAnyExact(NotifyTags))
 		{
-			if (SelfWeakPtr.IsValid() && FlowComponent->IdentityTags.HasAnyExact(SelfWeakPtr.Get()->IdentityTags)
-				&& (!SelfWeakPtr.Get()->NotifyTags.IsValid() || SelfWeakPtr.Get()->NotifyTags.HasTagExact(Tag)))
-			{
-				SelfWeakPtr->OnEventReceived();
-			}
-		});
+			OnEventReceived();
+		}
 	}
 }
 
 void UFlowNode_OnNotifyFromActor::ForgetActor(TWeakObjectPtr<AActor> Actor, TWeakObjectPtr<UFlowComponent> Component)
 {
 	Component->OnNotifyFromComponent.RemoveAll(this);
+}
+
+void UFlowNode_OnNotifyFromActor::OnNotifyFromComponent(UFlowComponent* Component, const FGameplayTag& Tag)
+{
+	if (Component->IdentityTags.HasAnyExact(IdentityTags) && (!NotifyTags.IsValid() || NotifyTags.HasTagExact(Tag)))
+	{
+		OnEventReceived();
+	}
 }
 
 #if WITH_EDITOR
