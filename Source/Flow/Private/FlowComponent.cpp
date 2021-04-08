@@ -16,7 +16,7 @@ UFlowComponent::UFlowComponent(const FObjectInitializer& ObjectInitializer)
 	PrimaryComponentTick.bCanEverTick = false;
 	PrimaryComponentTick.bStartWithTickEnabled = false;
 
-	SetIsReplicatedByDefault(true);
+	bReplicates = true;
 }
 
 void UFlowComponent::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const
