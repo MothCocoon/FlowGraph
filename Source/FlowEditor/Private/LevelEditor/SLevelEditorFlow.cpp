@@ -76,7 +76,7 @@ void SLevelEditorFlow::OnFlowChanged(const FAssetData& NewAsset)
 	FlowPath = NewAsset.ObjectPath;
 
 	UFlowComponent* FlowComponent = FindFlowComponent();
-	if (FlowComponent && FlowComponent->RootFlow)
+	if (FlowComponent)
 	{
 		if (UObject* NewObject = NewAsset.GetAsset())
 		{
