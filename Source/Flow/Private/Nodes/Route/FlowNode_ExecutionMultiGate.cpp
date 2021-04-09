@@ -119,7 +119,7 @@ FString UFlowNode_ExecutionMultiGate::GetNodeDescription() const
 
 		if (OutputNames.IsValidIndex(StartIndex))
 		{
-			Result.Appendf(TEXT("Start Index: %d"), StartIndex);
+			Result.Append(TEXT("Start Index: ")).Append(FString::FromInt(StartIndex));
 		}
 		else
 		{
