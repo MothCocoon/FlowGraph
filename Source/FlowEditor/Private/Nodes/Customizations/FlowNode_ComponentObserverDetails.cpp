@@ -1,4 +1,4 @@
-#include "Graph/Customizations/FlowNode_ComponentObserverDetails.h"
+#include "FlowNode_ComponentObserverDetails.h"
 #include "Nodes/World/FlowNode_ComponentObserver.h"
 
 #include "DetailCategoryBuilder.h"
