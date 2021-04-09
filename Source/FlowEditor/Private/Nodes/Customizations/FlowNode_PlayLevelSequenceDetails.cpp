@@ -1,4 +1,4 @@
-#include "Graph/Customizations/FlowNode_PlayLevelSequenceDetails.h"
+#include "FlowNode_PlayLevelSequenceDetails.h"
 #include "Nodes/World/FlowNode_PlayLevelSequence.h"
 
 #include "DetailCategoryBuilder.h"
