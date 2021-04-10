@@ -58,7 +58,7 @@ DECLARE_DELEGATE(FFlowNodeEvent);
 #endif
 
 /**
- * Base Flow Node class
+ * A Flow Node is UObject-based node designed to handle entire gameplay feature within single node.
  */
 UCLASS(Abstract, Blueprintable, HideCategories = Object)
 class FLOW_API UFlowNode : public UObject, public IVisualLoggerDebugSnapshotInterface
@@ -157,12 +157,19 @@ public:
 	virtual TArray<FName> GetContextInputs() { return TArray<FName>(); }
 	virtual TArray<FName> GetContextOutputs() { return TArray<FName>(); }
 
-	virtual bool CanUserAddInput() const { return false; }
-	virtual bool CanUserAddOutput() const { return false; }
+	virtual bool CanUserAddInput() const;
+	virtual bool CanUserAddOutput() const;
 
 	void RemoveUserInput();
 	void RemoveUserOutput();
 #endif
+
+protected:
+	UFUNCTION(BlueprintImplementableEvent, Category = "FlowNode", meta = (DisplayName = "CanUserAddInput"))
+	bool K2_CanUserAddInput() const;
+
+	UFUNCTION(BlueprintImplementableEvent, Category = "FlowNode", meta = (DisplayName = "CanUserAddOutput"))
+	bool K2_CanUserAddOutput() const;
 
 protected:
 	// always use default range for nodes with user-created outputs i.e. Execution Sequence
@@ -223,7 +230,7 @@ protected:
 	// Event called just after creating the node instance, while initializing the Flow Asset instance
 	// This happens before executing graph, only called during gameplay
 	UFUNCTION(BlueprintImplementableEvent, Category = "FlowNode", meta = (DisplayName = "InitInstance"))
-    void K2_InitializeInstance();
+	void K2_InitializeInstance();
 
 public:
 	void TriggerPreload();
@@ -331,11 +338,11 @@ protected:
 
 public:
 	UFUNCTION(BlueprintPure, Category = "FlowNode")
-    static FString GetIdentityDescription(const FGameplayTagContainer& Tags);
-	
+	static FString GetIdentityDescription(const FGameplayTagContainer& Tags);
+
 	UFUNCTION(BlueprintPure, Category = "FlowNode")
 	static FString GetNotifyDescription(const FGameplayTagContainer& Tags);
-	
+
 	UFUNCTION(BlueprintPure, Category = "FlowNode")
 	static FString GetProgressAsString(float Value);
 
