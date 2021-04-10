@@ -2,7 +2,10 @@
 
 Flow plug-in for Unreal Engine provides a graph editor tailored for scripting flow of events in virtual worlds. It's based on a decade of experience with designing and implementing narrative in video games. All we need here is simplicity.
 * Licensed under MIT license. You are free to use it for commercial projects, modify it however you see fit, and distribute it further.
-* This a fresh repository, extracted plugin itself from [the legacy repository](https://github.com/MothCocoon/Flow). Also created the 2nd repository where I gonna put sample modues containting quest or dialogue systems: [FlowSamples](https://github.com/MothCocoon/FlowSamples)
+
+## Getting started
+* It's easy to include pluing in your own project, follow this short [Getting Started](https://github.com/MothCocoon/FlowGraph/wiki/Getting-Started) guide.
+* The [legacy repository](https://github.com/MothCocoon/Flow) gonna be upgraded in future, so it would includ FlowGraph (this repo) and FlowSamples as git submodules.
 
 ## Concept
 It's s design-agnostic event node editor.
@@ -24,9 +27,6 @@ It's s design-agnostic event node editor.
 This 24-minute presentation breaks down the concept of the Flow Graph. It goes through everything written in this ReadMe but in greater detail.
 
 [![Introducing Flow Graph for Unreal Engine](https://img.youtube.com/vi/Rj76JP1f-I4/0.jpg)](https://www.youtube.com/watch?v=Rj76JP1f-I4)
-
-## Getting started
-It's simple, follow this short [Getting Started](https://github.com/MothCocoon/FlowGraph/wiki/Getting-Started) guide.
 
 ## Simplicity is a key
 * It's all about simplifying the cooperation between gameplay programmers and content designers by providing a clean interface between "code of systems" and "using systems".
