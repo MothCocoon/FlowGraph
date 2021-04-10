@@ -88,6 +88,16 @@ UFlowAsset* UFlowNode::GetFlowAsset() const
 	return GetOuter() ? Cast<UFlowAsset>(GetOuter()) : nullptr;
 }
 
+bool UFlowNode::CanUserAddInput() const
+{
+	return K2_CanUserAddInput();
+}
+
+bool UFlowNode::CanUserAddOutput() const
+{
+	return K2_CanUserAddOutput();
+}
+
 #if WITH_EDITOR
 void UFlowNode::RemoveUserInput()
 {
