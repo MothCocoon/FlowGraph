@@ -5,6 +5,7 @@
 
 UFlowNode_Log::UFlowNode_Log(const FObjectInitializer& ObjectInitializer)
 	: Super(ObjectInitializer)
+	, Message(TEXT("Log!"))
 	, bPrintToScreen(true)
 	, Duration(5.0f)
 	, TextColor(FColor::Yellow)
