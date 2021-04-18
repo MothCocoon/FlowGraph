@@ -868,7 +868,7 @@ void UFlowGraphNode::GetPinHoverText(const UEdGraphPin& Pin, FString& HoverTextO
 				for (int32 i = 0; i < PinRecords.Num(); i++)
 				{
 					HoverTextOut.Append(LINE_TERMINATOR);
-					HoverTextOut.Appendf(TEXT("%d) %s"), i + 1, *PinRecords[i].HumanReadableTime);
+					HoverTextOut.Append(FString::FromInt(i + 1)).Append(TEXT(") ")).Append(PinRecords[i].HumanReadableTime);
 				}
 			}
 		}
