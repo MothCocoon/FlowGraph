@@ -8,7 +8,7 @@ UFlowNode_LogicalOR::UFlowNode_LogicalOR(const FObjectInitializer& ObjectInitial
 	NodeStyle = EFlowNodeStyle::Logic;
 #endif
 
-	SetNumericalInputs(0, 1);
+	SetNumberedInputPins(0, 1);
 }
 
 void UFlowNode_LogicalOR::ExecuteInput(const FName& PinName)

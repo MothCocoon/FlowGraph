@@ -3,8 +3,8 @@
 #include "FlowAsset.h"
 #include "FlowSubsystem.h"
 
-FName UFlowNode_SubGraph::StartPinName(TEXT("Start"));
-FName UFlowNode_SubGraph::FinishPinName(TEXT("Finish"));
+FFlowPin UFlowNode_SubGraph::StartPin(TEXT("Start"));
+FFlowPin UFlowNode_SubGraph::FinishPin(TEXT("Finish"));
 
 UFlowNode_SubGraph::UFlowNode_SubGraph(const FObjectInitializer& ObjectInitializer)
 	: Super(ObjectInitializer)
@@ -14,8 +14,8 @@ UFlowNode_SubGraph::UFlowNode_SubGraph(const FObjectInitializer& ObjectInitializ
 	NodeStyle = EFlowNodeStyle::SubGraph;
 #endif
 
-	InputNames = {StartPinName};
-	OutputNames = {FinishPinName};
+	InputPins = {StartPin};
+	OutputPins = {FinishPin};
 }
 
 void UFlowNode_SubGraph::PreloadContent()

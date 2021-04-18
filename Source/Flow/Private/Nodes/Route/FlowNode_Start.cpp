@@ -8,7 +8,7 @@ UFlowNode_Start::UFlowNode_Start(const FObjectInitializer& ObjectInitializer)
 	NodeStyle = EFlowNodeStyle::InOut;
 #endif
 
-	InputNames = {};
+	InputPins = {};
 }
 
 void UFlowNode_Start::ExecuteInput(const FName& PinName)

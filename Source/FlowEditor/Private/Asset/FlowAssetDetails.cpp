@@ -43,8 +43,8 @@ void FFlowAssetDetails::GenerateCustomPinArray(TSharedRef<IPropertyHandle> Prope
 		[
 			SNew(SEditableTextBox)
 				.Text(this, &FFlowAssetDetails::GetCustomPinText, PropertyHandle)
-				.OnVerifyTextChanged_Static(&FFlowAssetDetails::OnCustomPinTextVerifyChanged)
-				.OnTextCommitted(this, &FFlowAssetDetails::OnCustomPinTextCommited, PropertyHandle)
+				.OnTextCommitted_Static(&FFlowAssetDetails::OnCustomPinTextCommitted, PropertyHandle)
+				.OnVerifyTextChanged_Static(&FFlowAssetDetails::VerifyNewCustomPinText)
 		];
 }
 
@@ -56,23 +56,23 @@ FText FFlowAssetDetails::GetCustomPinText(TSharedRef<IPropertyHandle> PropertyHa
 	return PropertyValue;
 }
 
-bool FFlowAssetDetails::OnCustomPinTextVerifyChanged(const FText& InNewText, FText& OutErrorMessage)
+void FFlowAssetDetails::OnCustomPinTextCommitted(const FText& InText, ETextCommit::Type InCommitType, TSharedRef<IPropertyHandle> PropertyHandle)
+{
+	const FPropertyAccess::Result SetValueResult = PropertyHandle->SetValueFromFormattedString(InText.ToString());
+	ensure(SetValueResult == FPropertyAccess::Success);
+}
+
+bool FFlowAssetDetails::VerifyNewCustomPinText(const FText& InNewText, FText& OutErrorMessage)
 {
 	const FName NewString = *InNewText.ToString();
 
-	if (NewString == UFlowNode_SubGraph::StartPinName || NewString == UFlowNode_SubGraph::FinishPinName)
+	if (NewString == UFlowNode_SubGraph::StartPin.PinName || NewString == UFlowNode_SubGraph::FinishPin.PinName)
 	{
 		OutErrorMessage = LOCTEXT("VerifyTextFailed", "This is a standard pin name of Sub Graph node!");
 		return false;
 	}
 
 	return true;
-}
-
-void FFlowAssetDetails::OnCustomPinTextCommited(const FText& InText, ETextCommit::Type InCommitType, TSharedRef<IPropertyHandle> PropertyHandle)
-{
-	const FPropertyAccess::Result SetValueResult = PropertyHandle->SetValueFromFormattedString(InText.ToString());
-	ensure(SetValueResult == FPropertyAccess::Success);
 }
 
 #undef LOCTEXT_NAMESPACE

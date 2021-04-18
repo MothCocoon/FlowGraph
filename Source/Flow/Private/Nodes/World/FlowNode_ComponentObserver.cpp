@@ -11,8 +11,8 @@ UFlowNode_ComponentObserver::UFlowNode_ComponentObserver(const FObjectInitialize
 	Category = TEXT("World");
 #endif
 
-	InputNames = {TEXT("Start"), TEXT("Stop")};
-	OutputNames = {TEXT("Success"), TEXT("Completed"), TEXT("Stopped")};
+	InputPins = {FFlowPin(TEXT("Start")), FFlowPin(TEXT("Stop"))};
+	OutputPins = {FFlowPin(TEXT("Success")), FFlowPin(TEXT("Completed")), FFlowPin(TEXT("Stopped"))};
 }
 
 void UFlowNode_ComponentObserver::PostLoad()
@@ -125,7 +125,7 @@ void UFlowNode_ComponentObserver::Cleanup()
 #if WITH_EDITOR
 FString UFlowNode_ComponentObserver::GetNodeDescription() const
 {
-	return GetIdentityDescription(IdentityTags);
+	return GetIdentityTagsDescription(IdentityTags);
 }
 
 FString UFlowNode_ComponentObserver::GetStatusString() const

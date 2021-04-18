@@ -11,7 +11,7 @@ UFlowNode_CustomOutput::UFlowNode_CustomOutput(const FObjectInitializer& ObjectI
 	NodeStyle = EFlowNodeStyle::InOut;
 #endif
 
-	OutputNames.Empty();
+	OutputPins.Empty();
 }
 
 void UFlowNode_CustomOutput::ExecuteInput(const FName& PinName)
