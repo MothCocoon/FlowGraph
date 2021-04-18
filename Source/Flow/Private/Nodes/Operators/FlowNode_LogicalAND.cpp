@@ -8,14 +8,14 @@ UFlowNode_LogicalAND::UFlowNode_LogicalAND(const FObjectInitializer& ObjectIniti
 	NodeStyle = EFlowNodeStyle::Logic;
 #endif
 
-	SetNumericalInputs(0, 1);
+	SetNumberedInputPins(0, 1);
 }
 
 void UFlowNode_LogicalAND::ExecuteInput(const FName& PinName)
 {
 	ExecutedInputNames.Add(PinName);
 
-	if (ExecutedInputNames.Num() == InputNames.Num())
+	if (ExecutedInputNames.Num() == InputPins.Num())
 	{
 		TriggerFirstOutput(true);
 	}

@@ -14,6 +14,8 @@
 #include "Nodes/Customizations/FlowNode_CustomOutputDetails.h"
 #include "Nodes/Customizations/FlowNode_PlayLevelSequenceDetails.h"
 
+#include "Nodes/Customizations/FlowPinCustomization.h"
+
 #include "FlowAsset.h"
 #include "Nodes/Route/FlowNode_CustomInput.h"
 #include "Nodes/Route/FlowNode_CustomOutput.h"
@@ -55,6 +57,8 @@ void FFlowEditorModule::StartupModule()
 	// register Flow sequence track
 	ISequencerModule& SequencerModule = FModuleManager::Get().LoadModuleChecked<ISequencerModule>("Sequencer");
 	FlowTrackCreateEditorHandle = SequencerModule.RegisterTrackEditor(FOnCreateTrackEditor::CreateStatic(&FFlowTrackEditor::CreateTrackEditor));
+
+	RegisterPropertyCustomizations();
 
 	// register detail customizations
 	RegisterCustomClassLayout(UFlowAsset::StaticClass(), FOnGetDetailCustomizationInstance::CreateStatic(&FFlowAssetDetails::MakeInstance));
@@ -128,6 +132,16 @@ void FFlowEditorModule::UnregisterAssets()
 	}
 
 	RegisteredAssetActions.Empty();
+}
+
+void FFlowEditorModule::RegisterPropertyCustomizations() const
+{
+	FPropertyEditorModule& PropertyModule = FModuleManager::LoadModuleChecked<FPropertyEditorModule>("PropertyEditor");
+
+	PropertyModule.RegisterCustomPropertyTypeLayout("FlowPin", FOnGetPropertyTypeCustomizationInstance::CreateStatic(&FFlowPinCustomization::MakeInstance));
+
+	// notify on customization change
+	PropertyModule.NotifyCustomizationModuleChanged();
 }
 
 void FFlowEditorModule::RegisterCustomClassLayout(const TSubclassOf<UObject> Class, const FOnGetDetailCustomizationInstance DetailLayout)

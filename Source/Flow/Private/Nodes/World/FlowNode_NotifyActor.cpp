@@ -44,6 +44,6 @@ void UFlowNode_NotifyActor::ExecuteInput(const FName& PinName)
 #if WITH_EDITOR
 FString UFlowNode_NotifyActor::GetNodeDescription() const
 {
-	return GetIdentityDescription(IdentityTags) + LINE_TERMINATOR + GetNotifyDescription(NotifyTags);
+	return GetIdentityTagsDescription(IdentityTags) + LINE_TERMINATOR + GetNotifyTagsDescription(NotifyTags);
 }
 #endif

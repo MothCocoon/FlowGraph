@@ -24,14 +24,14 @@ UFlowNode_PlayLevelSequence::UFlowNode_PlayLevelSequence(const FObjectInitialize
 	NodeStyle = EFlowNodeStyle::Latent;
 #endif
 
-	InputNames.Empty();
-	InputNames.Add(TEXT("Start"));
-	InputNames.Add(TEXT("Stop"));
+	InputPins.Empty();
+	InputPins.Add(FFlowPin(TEXT("Start")));
+	InputPins.Add(FFlowPin(TEXT("Stop")));
 
-	OutputNames.Add(TEXT("PreStart"));
-	OutputNames.Add(TEXT("Started"));
-	OutputNames.Add(TEXT("Completed"));
-	OutputNames.Add(TEXT("Stopped"));
+	OutputPins.Add(FFlowPin(TEXT("PreStart")));
+	OutputPins.Add(FFlowPin(TEXT("Started")));
+	OutputPins.Add(FFlowPin(TEXT("Completed")));
+	OutputPins.Add(FFlowPin(TEXT("Stopped")));
 }
 
 #if WITH_EDITOR
