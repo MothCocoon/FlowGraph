@@ -8,7 +8,7 @@ UFlowNode_CustomInput::UFlowNode_CustomInput(const FObjectInitializer& ObjectIni
 	NodeStyle = EFlowNodeStyle::InOut;
 #endif
 
-	InputNames.Empty();
+	InputPins.Empty();
 }
 
 void UFlowNode_CustomInput::ExecuteInput(const FName& PinName)

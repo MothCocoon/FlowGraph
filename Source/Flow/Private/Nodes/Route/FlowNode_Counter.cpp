@@ -10,16 +10,16 @@ UFlowNode_Counter::UFlowNode_Counter(const FObjectInitializer& ObjectInitializer
 	NodeStyle = EFlowNodeStyle::Condition;
 #endif
 
-	InputNames.Empty();
-	InputNames.Add(TEXT("Increment"));
-	InputNames.Add(TEXT("Decrement"));
-	InputNames.Add(TEXT("Skip"));
+	InputPins.Empty();
+	InputPins.Add(FFlowPin(TEXT("Increment")));
+	InputPins.Add(FFlowPin(TEXT("Decrement")));
+	InputPins.Add(FFlowPin(TEXT("Skip")));
 
-	OutputNames.Empty();
-	OutputNames.Add(TEXT("Zero"));
-	OutputNames.Add(TEXT("Step"));
-	OutputNames.Add(TEXT("Goal"));
-	OutputNames.Add(TEXT("Skipped"));
+	OutputPins.Empty();
+	OutputPins.Add(FFlowPin(TEXT("Zero")));
+	OutputPins.Add(FFlowPin(TEXT("Step")));
+	OutputPins.Add(FFlowPin(TEXT("Goal")));
+	OutputPins.Add(FFlowPin(TEXT("Skipped")));
 }
 
 void UFlowNode_Counter::ExecuteInput(const FName& PinName)

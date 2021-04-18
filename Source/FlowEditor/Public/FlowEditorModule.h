@@ -51,6 +51,7 @@ private:
 	void RegisterAssets();
 	void UnregisterAssets();
 
+	void RegisterPropertyCustomizations() const;
 	void RegisterCustomClassLayout(const TSubclassOf<UObject> Class, const FOnGetDetailCustomizationInstance DetailLayout);
 
 public:

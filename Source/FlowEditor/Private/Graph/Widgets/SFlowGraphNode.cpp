@@ -38,53 +38,6 @@ void SFlowGraphPinExec::Construct(const FArguments& InArgs, UEdGraphPin* InPin)
 	bUsePinColorForText = true;
 }
 
-void SFlowGraphPinExec::Tick(const FGeometry& AllottedGeometry, const double InCurrentTime, const float InDeltaTime)
-{
-	SGraphPinExec::Tick(AllottedGeometry, InCurrentTime, InDeltaTime);
-
-	if (IsHovered())
-	{
-		if (GEditor->PlayWorld)
-		{
-			UFlowGraphNode* GraphNode = Cast<UFlowGraphNode>(GraphPinObj->GetOwningNode());
-			if (UFlowNode* FlowNode = GraphNode->GetInspectedNodeInstance())
-			{
-				TArray<FPinRecord> PinRecords;
-				if (GetDirection() == EGPD_Input)
-				{
-					PinRecords = FlowNode->GetInputRecords(GetPinObj()->PinName);
-				}
-				else
-				{
-					PinRecords = FlowNode->GetOutputRecords(GetPinObj()->PinName);
-				}
-
-				if (PinRecords.Num() > 0)
-				{
-					FString TooltipString = FString();
-					for (int32 i = 0; i < PinRecords.Num(); i++)
-					{
-						TooltipString += FString::FromInt(i + 1) + TEXT(") ") + PinRecords[i].HumanReadableTime;
-						if (i < PinRecords.Num() - 1)
-						{
-							TooltipString += LINE_TERMINATOR;
-						}
-					}
-					GraphPinObj->PinToolTip = TooltipString;
-				}
-				else
-				{
-					GraphPinObj->PinToolTip = TEXT("0 calls");
-				}
-			}
-		}
-		else
-		{
-			GraphPinObj->PinToolTip = FString();
-		}
-	}
-}
-
 void SFlowGraphNode::Construct(const FArguments& InArgs, UFlowGraphNode* InNode)
 {
 	GraphNode = InNode;
@@ -438,14 +391,14 @@ void SFlowGraphNode::CreateStandardPinWidget(UEdGraphPin* Pin)
 	{
 		if (Pin->Direction == EGPD_Input)
 		{
-			if (FlowGraphNode->GetFlowNode()->GetInputNames().Num() == 1 && Pin->PinName == UFlowNode::DefaultInputName)
+			if (FlowGraphNode->GetFlowNode()->GetInputPins().Num() == 1 && Pin->PinName == UFlowNode::DefaultInputPin.PinName)
 			{
 				NewPin->SetShowLabel(false);
 			}
 		}
 		else
 		{
-			if (FlowGraphNode->GetFlowNode()->GetOutputNames().Num() == 1 && Pin->PinName == UFlowNode::DefaultOutputName)
+			if (FlowGraphNode->GetFlowNode()->GetOutputPins().Num() == 1 && Pin->PinName == UFlowNode::DefaultOutputPin.PinName)
 			{
 				NewPin->SetShowLabel(false);
 			}

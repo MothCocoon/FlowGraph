@@ -8,14 +8,14 @@ UFlowNode_ExecutionSequence::UFlowNode_ExecutionSequence(const FObjectInitialize
 	NodeStyle = EFlowNodeStyle::Logic;
 #endif
 
-	SetNumericalOutputs(0, 1);
+	SetNumberedOutputPins(0, 1);
 }
 
 void UFlowNode_ExecutionSequence::ExecuteInput(const FName& PinName)
 {
-	for (const FName& Output : OutputNames)
+	for (const FFlowPin& Output : OutputPins)
 	{
-		TriggerOutput(Output, false);
+		TriggerOutput(Output.PinName, false);
 	}
 
 	Finish();
