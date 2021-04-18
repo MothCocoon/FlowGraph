@@ -10,7 +10,6 @@
 #include "FlowAsset.h"
 #include "Nodes/FlowNode.h"
 
-#include "AssetData.h"
 #include "AssetRegistryModule.h"
 #include "Developer/ToolMenus/Public/ToolMenus.h"
 #include "EdGraph/EdGraphSchema.h"
@@ -132,10 +131,9 @@ void UFlowGraphNode::PostLoad()
 {
 	Super::PostLoad();
 
-	// Fix any node pointers that may be out of date
 	if (FlowNode)
 	{
-		FlowNode->SetGraphNode(this);
+		FlowNode->FixNode(this);
 		SubscribeToExternalChanges();
 	}
 
@@ -352,14 +350,14 @@ void UFlowGraphNode::AllocateDefaultPins()
 
 	if (FlowNode)
 	{
-		for (const FName& InputName : FlowNode->InputNames)
+		for (const FFlowPin& InputPin : FlowNode->InputPins)
 		{
-			CreateInputPin(InputName);
+			CreateInputPin(InputPin);
 		}
 
-		for (const FName& OutputName : FlowNode->OutputNames)
+		for (const FFlowPin& OutputPin : FlowNode->OutputPins)
 		{
-			CreateOutputPin(OutputName);
+			CreateOutputPin(OutputPin);
 		}
 	}
 }
@@ -678,28 +676,32 @@ void UFlowGraphNode::JumpToDefinition() const
 	}
 }
 
-void UFlowGraphNode::CreateInputPin(const FName& PinName, const int32 Index /*= INDEX_NONE*/)
+void UFlowGraphNode::CreateInputPin(const FFlowPin& FlowPin, const int32 Index /*= INDEX_NONE*/)
 {
-	if (PinName.IsNone())
+	if (FlowPin.PinName.IsNone())
 	{
 		return;
 	}
 
 	const FEdGraphPinType PinType = FEdGraphPinType(UEdGraphSchema_K2::PC_Exec, FName(NAME_None), nullptr, EPinContainerType::None, false, FEdGraphTerminalType());
-	UEdGraphPin* NewPin = CreatePin(EGPD_Input, PinType, PinName, Index);
+	UEdGraphPin* NewPin = CreatePin(EGPD_Input, PinType, FlowPin.PinName, Index);
+	check(NewPin);
+	NewPin->PinToolTip = FlowPin.PinToolTip;
 
 	InputPins.Emplace(NewPin);
 }
 
-void UFlowGraphNode::CreateOutputPin(const FName PinName, const int32 Index /*= INDEX_NONE*/)
+void UFlowGraphNode::CreateOutputPin(const FFlowPin& FlowPin, const int32 Index /*= INDEX_NONE*/)
 {
-	if (PinName.IsNone())
+	if (FlowPin.PinName.IsNone())
 	{
 		return;
 	}
 
 	const FEdGraphPinType PinType = FEdGraphPinType(UEdGraphSchema_K2::PC_Exec, FName(NAME_None), nullptr, EPinContainerType::None, false, FEdGraphTerminalType());
-	UEdGraphPin* NewPin = CreatePin(EGPD_Output, PinType, PinName, Index);
+	UEdGraphPin* NewPin = CreatePin(EGPD_Output, PinType, FlowPin.PinName, Index);
+	check(NewPin);
+	NewPin->PinToolTip = FlowPin.PinToolTip;
 
 	OutputPins.Emplace(NewPin);
 }
@@ -735,12 +737,12 @@ bool UFlowGraphNode::CanUserAddOutput() const
 
 bool UFlowGraphNode::CanUserRemoveInput(const UEdGraphPin* Pin) const
 {
-	return FlowNode && FlowNode->InputNames.Num() > FlowNode->GetClass()->GetDefaultObject<UFlowNode>()->InputNames.Num();
+	return FlowNode && FlowNode->InputPins.Num() > FlowNode->GetClass()->GetDefaultObject<UFlowNode>()->InputPins.Num();
 }
 
 bool UFlowGraphNode::CanUserRemoveOutput(const UEdGraphPin* Pin) const
 {
-	return FlowNode && FlowNode->OutputNames.Num() > FlowNode->GetClass()->GetDefaultObject<UFlowNode>()->OutputNames.Num();
+	return FlowNode && FlowNode->OutputPins.Num() > FlowNode->GetClass()->GetDefaultObject<UFlowNode>()->OutputPins.Num();
 }
 
 void UFlowGraphNode::AddUserInput()
@@ -760,13 +762,13 @@ void UFlowGraphNode::AddInstancePin(const EEdGraphPinDirection Direction, const 
 
 	if (Direction == EGPD_Input)
 	{
-		FlowNode->InputNames.Add(PinName);
-		CreateInputPin(PinName);
+		FlowNode->InputPins.Emplace(PinName);
+		CreateInputPin(FlowNode->InputPins.Last());
 	}
 	else
 	{
-		FlowNode->OutputNames.Add(PinName);
-		CreateOutputPin(PinName);
+		FlowNode->OutputPins.Emplace(PinName);
+		CreateOutputPin(FlowNode->OutputPins.Last());
 	}
 
 	GetGraph()->NotifyGraphChanged();
@@ -816,17 +818,50 @@ void UFlowGraphNode::RefreshContextPins(const bool bReconstructNode)
 		const UFlowNode* NodeDefaults = FlowNode->GetClass()->GetDefaultObject<UFlowNode>();
 
 		// recreate inputs
-		FlowNode->InputNames = NodeDefaults->InputNames;
-		FlowNode->InputNames.Append(FlowNode->GetContextInputs());
+		FlowNode->InputPins = NodeDefaults->InputPins;
+		FlowNode->AddInputPins(FlowNode->GetContextInputs());
 
 		// recreate outputs
-		FlowNode->OutputNames = NodeDefaults->OutputNames;
-		FlowNode->OutputNames.Append(FlowNode->GetContextOutputs());
+		FlowNode->OutputPins = NodeDefaults->OutputPins;
+		FlowNode->AddOutputPins(FlowNode->GetContextOutputs());
 
 		if (bReconstructNode)
 		{
 			ReconstructNode();
 			GetGraph()->NotifyGraphChanged();
+		}
+	}
+}
+
+void UFlowGraphNode::GetPinHoverText(const UEdGraphPin& Pin, FString& HoverTextOut) const
+{
+	// start with the default hover text (from the pin's tool-tip)
+	Super::GetPinHoverText(Pin, HoverTextOut);
+
+	// add information on pin activations
+	if (GEditor->PlayWorld)
+	{
+		if (UFlowNode* InspectedNodeInstance = GetInspectedNodeInstance())
+		{
+			if (!HoverTextOut.IsEmpty())
+			{
+				HoverTextOut.Append(LINE_TERMINATOR).Append(LINE_TERMINATOR);
+			}
+			
+			const TArray<FPinRecord>& PinRecords = InspectedNodeInstance->GetPinRecords(Pin.PinName, Pin.Direction);
+			if (PinRecords.Num() == 0)
+			{
+				HoverTextOut.Append(FPinRecord::NoActivations);
+			}
+			else
+			{
+				HoverTextOut.Append(FPinRecord::PinActivations);
+				for (int32 i = 0; i < PinRecords.Num(); i++)
+				{
+					HoverTextOut.Append(LINE_TERMINATOR);
+					HoverTextOut.Appendf(TEXT("%d) %s"), i + 1, *PinRecords[i].HumanReadableTime);
+				}
+			}
 		}
 	}
 }

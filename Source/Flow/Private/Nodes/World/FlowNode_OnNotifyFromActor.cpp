@@ -56,6 +56,6 @@ void UFlowNode_OnNotifyFromActor::OnNotifyFromComponent(UFlowComponent* Componen
 #if WITH_EDITOR
 FString UFlowNode_OnNotifyFromActor::GetNodeDescription() const
 {
-	return GetIdentityDescription(IdentityTags) + LINE_TERMINATOR + GetNotifyDescription(NotifyTags);
+	return GetIdentityTagsDescription(IdentityTags) + LINE_TERMINATOR + GetNotifyTagsDescription(NotifyTags);
 }
 #endif

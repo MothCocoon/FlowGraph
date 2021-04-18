@@ -6,52 +6,13 @@
 #include "VisualLogger/VisualLoggerDebugSnapshotInterface.h"
 
 #include "FlowTypes.h"
+#include "Nodes/FlowPin.h"
 #include "FlowNode.generated.h"
 
 class UEdGraphNode;
 
 class UFlowAsset;
 class UFlowSubsystem;
-
-// Processing Flow Nodes creates map of connected pins
-USTRUCT()
-struct FLOW_API FConnectedPin
-{
-	GENERATED_USTRUCT_BODY()
-
-	UPROPERTY()
-	FGuid NodeGuid;
-
-	UPROPERTY()
-	FName PinName;
-
-	FConnectedPin()
-	{
-		NodeGuid = FGuid();
-		PinName = NAME_None;
-	}
-
-	FConnectedPin(const FGuid InNodeId, const FName& InPinName)
-	{
-		NodeGuid = InNodeId;
-		PinName = InPinName;
-	}
-};
-
-// Every time pin is activated, we record it and display this data while user hovers mouse over pin
-#if !UE_BUILD_SHIPPING
-struct FLOW_API FPinRecord
-{
-	double Time;
-	FString HumanReadableTime;
-
-	FPinRecord();
-	FPinRecord(const double InTime);
-
-private:
-	FORCEINLINE static FString DoubleDigit(const int32 Number);
-};
-#endif
 
 #if WITH_EDITOR
 DECLARE_DELEGATE(FFlowNodeEvent);
@@ -90,9 +51,12 @@ public:
 
 public:
 #if WITH_EDITOR
-	// UObject
+	// UObject	
 	virtual void PostEditChangeProperty(FPropertyChangedEvent& PropertyChangedEvent) override;
 	// --
+
+	// Opportunity to update node's data before UFlowGraphNode would call ReconstructNode()
+	virtual void FixNode(UEdGraphNode* NewGraph);
 #endif
 
 	UEdGraphNode* GetGraphNode() const { return GraphNode; }
@@ -132,23 +96,33 @@ public:
 // All created pins (default, class-specific and added by user)
 
 public:
-	static FName DefaultInputName;
-	static FName DefaultOutputName;
+	static FFlowPin DefaultInputPin;
+	static FFlowPin DefaultOutputPin;
 
 protected:
 	// Class-specific and user-added inputs
 	UPROPERTY(EditDefaultsOnly, Category = "FlowNode")
-	TArray<FName> InputNames;
+	TArray<FFlowPin> InputPins;
 
 	// Class-specific and user-added outputs
 	UPROPERTY(EditDefaultsOnly, Category = "FlowNode")
-	TArray<FName> OutputNames;
+	TArray<FFlowPin> OutputPins;
+
+	void AddInputPins(TArray<FName> PinNames);
+	void AddOutputPins(TArray<FName> PinNames);
+
+	// always use default range for nodes with user-created outputs i.e. Execution Sequence
+	void SetNumberedInputPins(const uint8 FirstNumber = 0, const uint8 LastNumber = 1);
+	void SetNumberedOutputPins(const uint8 FirstNumber = 0, const uint8 LastNumber = 1);
+
+	TArray<FFlowPin> GetInputPins() const { return InputPins; }
+	TArray<FFlowPin> GetOutputPins() const { return OutputPins; }
 
 	UFUNCTION(BlueprintPure, Category = "FlowNode")
-	TArray<FName> GetInputNames() const { return InputNames; }
+	TArray<FName> GetInputNames() const;
 
 	UFUNCTION(BlueprintPure, Category = "FlowNode")
-	TArray<FName> GetOutputNames() const { return OutputNames; }
+	TArray<FName> GetOutputNames() const;
 
 public:
 #if WITH_EDITOR
@@ -174,11 +148,6 @@ protected:
 	UFUNCTION(BlueprintImplementableEvent, Category = "FlowNode", meta = (DisplayName = "CanUserAddOutput"))
 	bool K2_CanUserAddOutput() const;
 
-protected:
-	// always use default range for nodes with user-created outputs i.e. Execution Sequence
-	void SetNumericalInputs(const uint8 FirstNumber = 0, const uint8 LastNumber = 1);
-	void SetNumericalOutputs(const uint8 FirstNumber = 0, const uint8 LastNumber = 1);
-
 //////////////////////////////////////////////////////////////////////////
 // Connections to other nodes
 
@@ -199,6 +168,7 @@ public:
 protected:
 	static FString MissingIdentityTag;
 	static FString MissingNotifyTag;
+	static FString MissingClass;
 	static FString NoActorsFound;
 
 //////////////////////////////////////////////////////////////////////////
@@ -267,6 +237,10 @@ protected:
 	UFUNCTION(BlueprintCallable, Category = "FlowNode")
 	void TriggerOutput(const FName& PinName, const bool bFinish = false);
 
+	void TriggerOutput(const FString& PinName, const bool bFinish = false);
+	void TriggerOutput(const FText& PinName, const bool bFinish = false);
+	void TriggerOutput(const TCHAR* PinName, const bool bFinish = false);
+
 	// Finish execution of node, it will call Cleanup
 	UFUNCTION(BlueprintCallable, Category = "FlowNode")
 	void Finish();
@@ -300,8 +274,7 @@ public:
 	EFlowActivationState GetActivationState() const { return ActivationState; }
 
 	TMap<uint8, FPinRecord> GetWireRecords() const;
-	TArray<FPinRecord> GetInputRecords(const FName& PinName) const;
-	TArray<FPinRecord> GetOutputRecords(const FName& PinName) const;
+	TArray<FPinRecord> GetPinRecords(const FName& PinName, const EEdGraphPinDirection PinDirection) const;
 
 	// Information displayed while node is working - displayed over node as NodeInfoPopup
 	virtual FString GetStatusString() const;
@@ -341,14 +314,27 @@ protected:
 
 public:
 	UFUNCTION(BlueprintPure, Category = "FlowNode")
-	static FString GetIdentityDescription(const FGameplayTagContainer& Tags);
+	static FString GetIdentityTagDescription(const FGameplayTag& Tag);
 
 	UFUNCTION(BlueprintPure, Category = "FlowNode")
-	static FString GetNotifyDescription(const FGameplayTagContainer& Tags);
+	static FString GetIdentityTagsDescription(const FGameplayTagContainer& Tags);
+
+	UFUNCTION(BlueprintPure, Category = "FlowNode")
+	static FString GetNotifyTagsDescription(const FGameplayTagContainer& Tags);
+
+	UFUNCTION(BlueprintPure, Category = "FlowNode")
+	static FString GetClassDescription(const TSubclassOf<UObject> Class);
 
 	UFUNCTION(BlueprintPure, Category = "FlowNode")
 	static FString GetProgressAsString(float Value);
 
 	UFUNCTION(BlueprintCallable, Category = "FlowNode")
 	void LogError(FString Message);
+
+private:
+	UPROPERTY()
+	TArray<FName> InputNames_DEPRECATED;
+
+	UPROPERTY()
+	TArray<FName> OutputNames_DEPRECATED;
 };
