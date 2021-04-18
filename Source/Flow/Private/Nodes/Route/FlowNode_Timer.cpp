@@ -14,12 +14,12 @@ UFlowNode_Timer::UFlowNode_Timer(const FObjectInitializer& ObjectInitializer)
 	NodeStyle = EFlowNodeStyle::Latent;
 #endif
 
-	InputNames.Add(TEXT("Skip"));
+	InputPins.Add(FFlowPin(TEXT("Skip")));
 
-	OutputNames.Empty();
-	OutputNames.Add(TEXT("Completed"));
-	OutputNames.Add(TEXT("Step"));
-	OutputNames.Add(TEXT("Skipped"));
+	OutputPins.Empty();
+	OutputPins.Add(FFlowPin(TEXT("Completed")));
+	OutputPins.Add(FFlowPin(TEXT("Step")));
+	OutputPins.Add(FFlowPin(TEXT("Skipped")));
 }
 
 void UFlowNode_Timer::ExecuteInput(const FName& PinName)
