@@ -2,6 +2,7 @@
 #include "Nodes/FlowPin.h"
 
 #include "PropertyEditing.h"
+#include "Widgets/Text/SInlineEditableTextBlock.h"
 
 #define LOCTEXT_NAMESPACE "FlowPinCustomization"
 
@@ -36,7 +37,7 @@ void FFlowPinCustomization::CustomizeChildren(TSharedRef<IPropertyHandle> Struct
 	                        .MinDesiredWidth(125.0f)
 	                        .MaxDesiredWidth(125.0f)
 	                        [
-		                        SNew(SEditableTextBox)
+		                        SNew(SInlineEditableTextBlock)
 		                            .Text(FText::FromName(FlowPin->PinName))
 		                            .OnTextCommitted_Static(&FFlowPinCustomization::OnPinNameCommitted, ChildHandle.ToSharedRef())
 		                            .OnVerifyTextChanged_Static(&FFlowPinCustomization::VerifyNewPinName)
