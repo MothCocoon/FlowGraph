@@ -9,17 +9,21 @@ UFlowNode_ExecutionMultiGate::UFlowNode_ExecutionMultiGate(const FObjectInitiali
 	NodeStyle = EFlowNodeStyle::Logic;
 #endif
 
-	InputNames.Add(TEXT("Reset"));
-	SetNumericalOutputs(0, 1);
+	FString ResetPinTooltip = TEXT("Finish work of this node.");
+	ResetPinTooltip += LINE_TERMINATOR;
+	ResetPinTooltip += TEXT("Calling In input will start triggering output pins once again.");
+
+	InputPins.Add(FFlowPin(TEXT("Reset"), ResetPinTooltip));
+	SetNumberedOutputPins(0, 1);
 }
 
 void UFlowNode_ExecutionMultiGate::ExecuteInput(const FName& PinName)
 {
-	if (PinName == DefaultInputName)
+	if (PinName == DefaultInputPin.PinName)
 	{
 		if (Completed.Num() == 0)
 		{
-			Completed.Init(false, OutputNames.Num());
+			Completed.Init(false, OutputPins.Num());
 		}
 
 		if (!Completed.Contains(false))
@@ -54,7 +58,7 @@ void UFlowNode_ExecutionMultiGate::ExecuteInput(const FName& PinName)
 			}
 
 			Completed[Index] = true;
-			TriggerOutput(OutputNames[Index], false);
+			TriggerOutput(OutputPins[Index].PinName, false);
 		}
 		else
 		{
@@ -66,10 +70,10 @@ void UFlowNode_ExecutionMultiGate::ExecuteInput(const FName& PinName)
 			const int32 CurrentOutput = NextOutput;
 			// We have to calculate NextOutput before TriggerOutput(..)
 			// TriggerOutput may call Reset and Cleanup
-			NextOutput = ++NextOutput % OutputNames.Num();
+			NextOutput = ++NextOutput % OutputPins.Num();
 
 			Completed[CurrentOutput] = true;
-			TriggerOutput(OutputNames[CurrentOutput], false);
+			TriggerOutput(OutputPins[CurrentOutput].PinName, false);
 		}
 
 		if (!Completed.Contains(false) && bLoop)
@@ -117,7 +121,7 @@ FString UFlowNode_ExecutionMultiGate::GetNodeDescription() const
 			Result.Append(TEXT(", "));
 		}
 
-		if (OutputNames.IsValidIndex(StartIndex))
+		if (OutputPins.IsValidIndex(StartIndex))
 		{
 			Result.Appendf(TEXT("Start Index: %d"), StartIndex);
 		}
