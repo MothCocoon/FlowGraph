@@ -117,28 +117,28 @@ public:
 	FTaggedFlowComponentEvent OnComponentTagRemoved;
 
 	// Returns all registered Flow Components identified by given tag
-	UFUNCTION(BlueprintPure, Category = "FlowSubsystem")
-	TSet<UFlowComponent*> GetFlowComponentsByTag(const FGameplayTag Tag) const;
+	UFUNCTION(BlueprintPure, Category = "FlowSubsystem", meta = (DeterminesOutputType = "ComponentClass"))
+	TSet<UFlowComponent*> GetFlowComponentsByTag(const FGameplayTag Tag, const TSubclassOf<UFlowComponent> ComponentClass) const;
 
 	// Returns all registered Flow Components identified by Any or All provided tags
-	UFUNCTION(BlueprintPure, Category = "FlowSubsystem")
-	TSet<UFlowComponent*> GetFlowComponentsByTags(const FGameplayTagContainer Tags, const EGameplayContainerMatchType MatchType) const;
+	UFUNCTION(BlueprintPure, Category = "FlowSubsystem", meta = (DeterminesOutputType = "ComponentClass"))
+	TSet<UFlowComponent*> GetFlowComponentsByTags(const FGameplayTagContainer Tags, const EGameplayContainerMatchType MatchType, const TSubclassOf<UFlowComponent> ComponentClass) const;
 
 	// Returns all registered actors with Flow Component identified by given tag
-	UFUNCTION(BlueprintPure, Category = "FlowSubsystem")
-	TSet<AActor*> GetFlowActorsByTag(const FGameplayTag Tag) const;
+	UFUNCTION(BlueprintPure, Category = "FlowSubsystem", meta = (DeterminesOutputType = "ActorClass"))
+	TSet<AActor*> GetFlowActorsByTag(const FGameplayTag Tag, const TSubclassOf<AActor> ActorClass) const;
 
 	// Returns all registered actors with Flow Component identified by Any or All provided tags
-	UFUNCTION(BlueprintPure, Category = "FlowSubsystem")
-	TSet<AActor*> GetFlowActorsByTags(const FGameplayTagContainer Tags, const EGameplayContainerMatchType MatchType) const;
+	UFUNCTION(BlueprintPure, Category = "FlowSubsystem", meta = (DeterminesOutputType = "ActorClass"))
+	TSet<AActor*> GetFlowActorsByTags(const FGameplayTagContainer Tags, const EGameplayContainerMatchType MatchType, const TSubclassOf<AActor> ActorClass) const;
 
 	// Returns all registered actors as pairs: Actor as key, its Flow Component as value
-	UFUNCTION(BlueprintPure, Category = "FlowSubsystem")
-	TMap<AActor*, UFlowComponent*> GetFlowActorsAndComponentsByTag(const FGameplayTag Tag) const;
+	UFUNCTION(BlueprintPure, Category = "FlowSubsystem", meta = (DeterminesOutputType = "ActorClass"))
+	TMap<AActor*, UFlowComponent*> GetFlowActorsAndComponentsByTag(const FGameplayTag Tag, const TSubclassOf<AActor> ActorClass) const;
 
 	// Returns all registered actors as pairs: Actor as key, its Flow Component as value
-	UFUNCTION(BlueprintPure, Category = "FlowSubsystem")
-	TMap<AActor*, UFlowComponent*> GetFlowActorsAndComponentsByTags(const FGameplayTagContainer Tags, const EGameplayContainerMatchType MatchType) const;
+	UFUNCTION(BlueprintPure, Category = "FlowSubsystem", meta = (DeterminesOutputType = "ActorClass"))
+	TMap<AActor*, UFlowComponent*> GetFlowActorsAndComponentsByTags(const FGameplayTagContainer Tags, const EGameplayContainerMatchType MatchType, const TSubclassOf<AActor> ActorClass) const;
 
 	// Returns all registered Flow Components identified by given tag
 	template <class T>
