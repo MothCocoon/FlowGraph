@@ -246,7 +246,7 @@ void UFlowSubsystem::OnIdentityTagsRemoved(UFlowComponent* Component, const FGam
 	}
 }
 
-TSet<UFlowComponent*> UFlowSubsystem::GetFlowComponentsByTag(const FGameplayTag Tag) const
+TSet<UFlowComponent*> UFlowSubsystem::GetFlowComponentsByTag(const FGameplayTag Tag, const TSubclassOf<UFlowComponent> ComponentClass) const
 {
 	TArray<TWeakObjectPtr<UFlowComponent>> FoundComponents;
 	FlowComponentRegistry.MultiFind(Tag, FoundComponents);
@@ -254,7 +254,7 @@ TSet<UFlowComponent*> UFlowSubsystem::GetFlowComponentsByTag(const FGameplayTag 
 	TSet<UFlowComponent*> Result;
 	for (const TWeakObjectPtr<UFlowComponent>& Component : FoundComponents)
 	{
-		if (Component.IsValid())
+		if (Component.IsValid() && Component->GetClass()->IsChildOf(ComponentClass))
 		{
 			Result.Emplace(Component.Get());
 		}
@@ -263,7 +263,7 @@ TSet<UFlowComponent*> UFlowSubsystem::GetFlowComponentsByTag(const FGameplayTag 
 	return Result;
 }
 
-TSet<UFlowComponent*> UFlowSubsystem::GetFlowComponentsByTags(const FGameplayTagContainer Tags, const EGameplayContainerMatchType MatchType) const
+TSet<UFlowComponent*> UFlowSubsystem::GetFlowComponentsByTags(const FGameplayTagContainer Tags, const EGameplayContainerMatchType MatchType, const TSubclassOf<UFlowComponent> ComponentClass) const
 {
 	TSet<TWeakObjectPtr<UFlowComponent>> FoundComponents;
 	FindComponents(Tags, FoundComponents, MatchType);
@@ -271,7 +271,7 @@ TSet<UFlowComponent*> UFlowSubsystem::GetFlowComponentsByTags(const FGameplayTag
 	TSet<UFlowComponent*> Result;
 	for (const TWeakObjectPtr<UFlowComponent>& Component : FoundComponents)
 	{
-		if (Component.IsValid())
+		if (Component.IsValid() && Component->GetClass()->IsChildOf(ComponentClass))
 		{
 			Result.Emplace(Component.Get());
 		}
@@ -280,7 +280,7 @@ TSet<UFlowComponent*> UFlowSubsystem::GetFlowComponentsByTags(const FGameplayTag
 	return Result;
 }
 
-TSet<AActor*> UFlowSubsystem::GetFlowActorsByTag(const FGameplayTag Tag) const
+TSet<AActor*> UFlowSubsystem::GetFlowActorsByTag(const FGameplayTag Tag, const TSubclassOf<AActor> ActorClass) const
 {
 	TArray<TWeakObjectPtr<UFlowComponent>> FoundComponents;
 	FlowComponentRegistry.MultiFind(Tag, FoundComponents);
@@ -288,7 +288,7 @@ TSet<AActor*> UFlowSubsystem::GetFlowActorsByTag(const FGameplayTag Tag) const
 	TSet<AActor*> Result;
 	for (const TWeakObjectPtr<UFlowComponent>& Component : FoundComponents)
 	{
-		if (Component.IsValid())
+		if (Component.IsValid() && Component->GetOwner()->GetClass()->IsChildOf(ActorClass))
 		{
 			Result.Emplace(Component->GetOwner());
 		}
@@ -297,7 +297,7 @@ TSet<AActor*> UFlowSubsystem::GetFlowActorsByTag(const FGameplayTag Tag) const
 	return Result;
 }
 
-TSet<AActor*> UFlowSubsystem::GetFlowActorsByTags(const FGameplayTagContainer Tags, const EGameplayContainerMatchType MatchType) const
+TSet<AActor*> UFlowSubsystem::GetFlowActorsByTags(const FGameplayTagContainer Tags, const EGameplayContainerMatchType MatchType, const TSubclassOf<AActor> ActorClass) const
 {
 	TSet<TWeakObjectPtr<UFlowComponent>> FoundComponents;
 	FindComponents(Tags, FoundComponents, MatchType);
@@ -305,7 +305,7 @@ TSet<AActor*> UFlowSubsystem::GetFlowActorsByTags(const FGameplayTagContainer Ta
 	TSet<AActor*> Result;
 	for (const TWeakObjectPtr<UFlowComponent>& Component : FoundComponents)
 	{
-		if (Component.IsValid())
+		if (Component.IsValid() && Component->GetOwner()->GetClass()->IsChildOf(ActorClass))
 		{
 			Result.Emplace(Component->GetOwner());
 		}
@@ -314,7 +314,7 @@ TSet<AActor*> UFlowSubsystem::GetFlowActorsByTags(const FGameplayTagContainer Ta
 	return Result;
 }
 
-TMap<AActor*, UFlowComponent*> UFlowSubsystem::GetFlowActorsAndComponentsByTag(const FGameplayTag Tag) const
+TMap<AActor*, UFlowComponent*> UFlowSubsystem::GetFlowActorsAndComponentsByTag(const FGameplayTag Tag, const TSubclassOf<AActor> ActorClass) const
 {
 	TArray<TWeakObjectPtr<UFlowComponent>> FoundComponents;
 	FlowComponentRegistry.MultiFind(Tag, FoundComponents);
@@ -322,7 +322,7 @@ TMap<AActor*, UFlowComponent*> UFlowSubsystem::GetFlowActorsAndComponentsByTag(c
 	TMap<AActor*, UFlowComponent*> Result;
 	for (const TWeakObjectPtr<UFlowComponent>& Component : FoundComponents)
 	{
-		if (Component.IsValid())
+		if (Component.IsValid() && Component->GetOwner()->GetClass()->IsChildOf(ActorClass))
 		{
 			Result.Emplace(Component->GetOwner(), Component.Get());
 		}
@@ -331,7 +331,7 @@ TMap<AActor*, UFlowComponent*> UFlowSubsystem::GetFlowActorsAndComponentsByTag(c
 	return Result;
 }
 
-TMap<AActor*, UFlowComponent*> UFlowSubsystem::GetFlowActorsAndComponentsByTags(const FGameplayTagContainer Tags, const EGameplayContainerMatchType MatchType) const
+TMap<AActor*, UFlowComponent*> UFlowSubsystem::GetFlowActorsAndComponentsByTags(const FGameplayTagContainer Tags, const EGameplayContainerMatchType MatchType, const TSubclassOf<AActor> ActorClass) const
 {
 	TSet<TWeakObjectPtr<UFlowComponent>> FoundComponents;
 	FindComponents(Tags, FoundComponents, MatchType);
@@ -339,7 +339,7 @@ TMap<AActor*, UFlowComponent*> UFlowSubsystem::GetFlowActorsAndComponentsByTags(
 	TMap<AActor*, UFlowComponent*> Result;
 	for (const TWeakObjectPtr<UFlowComponent>& Component : FoundComponents)
 	{
-		if (Component.IsValid())
+		if (Component.IsValid() && Component->GetOwner()->GetClass()->IsChildOf(ActorClass))
 		{
 			Result.Emplace(Component->GetOwner(), Component.Get());
 		}
