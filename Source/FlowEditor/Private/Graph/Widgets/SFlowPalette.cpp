@@ -34,7 +34,7 @@ void SFlowPaletteItem::Construct(const FArguments& InArgs, FCreateWidgetForActio
 	{
 		if (GraphAction->GetTypeId() == FFlowGraphSchemaAction_NewNode::StaticGetTypeId())
 		{
-			UClass* FlowNodeClass = StaticCastSharedPtr<FFlowGraphSchemaAction_NewNode>(GraphAction)->NativeNodeClass;
+			UClass* FlowNodeClass = StaticCastSharedPtr<FFlowGraphSchemaAction_NewNode>(GraphAction)->NodeClass;
 			HotkeyChord = FFlowSpawnNodeCommands::Get().GetChordByClass(FlowNodeClass);
 		}
 		else if (GraphAction->GetTypeId() == FFlowGraphSchemaAction_NewComment::StaticGetTypeId())

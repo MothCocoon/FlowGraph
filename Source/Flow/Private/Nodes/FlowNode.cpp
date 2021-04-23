@@ -76,6 +76,48 @@ void UFlowNode::SetGraphNode(UEdGraphNode* NewGraph)
 	GraphNode = NewGraph;
 }
 
+FString UFlowNode::GetNodeCategory() const
+{
+	if (GetClass()->ClassGeneratedBy)
+	{
+		const FString& BlueprintCategory = Cast<UBlueprint>(GetClass()->ClassGeneratedBy)->BlueprintCategory;
+		if (!BlueprintCategory.IsEmpty())
+		{
+			return BlueprintCategory;
+		}
+	}
+
+	return Category;
+}
+
+FText UFlowNode::GetNodeTitle() const
+{
+	if (GetClass()->ClassGeneratedBy)
+	{
+		const FString& BlueprintTitle = Cast<UBlueprint>(GetClass()->ClassGeneratedBy)->BlueprintDisplayName;
+		if (!BlueprintTitle.IsEmpty())
+		{
+			return FText::FromString(BlueprintTitle);
+		}
+	}
+
+	return GetClass()->GetDisplayNameText();
+}
+
+FText UFlowNode::GetNodeToolTip() const
+{
+	if (GetClass()->ClassGeneratedBy)
+	{
+		const FString& BlueprintToolTip = Cast<UBlueprint>(GetClass()->ClassGeneratedBy)->BlueprintDescription;
+		if (!BlueprintToolTip.IsEmpty())
+		{
+			return FText::FromString(BlueprintToolTip);
+		}
+	}
+
+	return GetClass()->GetToolTipText();
+}
+
 FString UFlowNode::GetNodeDescription() const
 {
 	return K2_GetNodeDescription();
