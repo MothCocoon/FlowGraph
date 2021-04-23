@@ -49,10 +49,21 @@ void UFlowNode::PostEditChangeProperty(FPropertyChangedEvent& PropertyChangedEve
 	}
 }
 
+void UFlowNode::PostLoad()
+{
+	Super::PostLoad();
+
+	// fix Class Default Object
+	FixNode(nullptr);
+}
+
 void UFlowNode::FixNode(UEdGraphNode* NewGraph)
 {
 	// Fix any node pointers that may be out of date
-	GraphNode = NewGraph;
+	if (NewGraph)
+	{
+		GraphNode = NewGraph;
+	}
 
 	// v1.1 upgraded pins to be defined as structs
 	if (InputNames_DEPRECATED.Num() > InputPins.Num())
