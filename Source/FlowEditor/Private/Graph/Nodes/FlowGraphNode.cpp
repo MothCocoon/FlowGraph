@@ -133,7 +133,7 @@ void UFlowGraphNode::PostLoad()
 
 	if (FlowNode)
 	{
-		FlowNode->FixNode(this);
+		FlowNode->FixNode(this); // fix already created nodes
 		SubscribeToExternalChanges();
 	}
 
