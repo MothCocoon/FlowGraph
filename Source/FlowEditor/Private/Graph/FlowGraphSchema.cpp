@@ -201,22 +201,24 @@ void UFlowGraphSchema::GetFlowNodeActions(FGraphActionMenuBuilder& ActionMenuBui
 		GatherFlowNodes();
 	}
 
+	TArray<UFlowNode*> FlowNodes;
+	FlowNodes.Reserve(NativeFlowNodes.Num() + BlueprintFlowNodes.Num());
+
 	for (UClass* FlowNodeClass : NativeFlowNodes)
 	{
-		const UFlowNode* FlowNode = FlowNodeClass->GetDefaultObject<UFlowNode>();
-		if (CategoryName.IsEmpty() || CategoryName.Equals(FlowNode->GetNativeCategory()))
-		{
-			TSharedPtr<FFlowGraphSchemaAction_NewNode> NewNodeAction(new FFlowGraphSchemaAction_NewNode(FlowNode));
-			ActionMenuBuilder.AddAction(NewNodeAction);
-		}
+		FlowNodes.Emplace(FlowNodeClass->GetDefaultObject<UFlowNode>());
 	}
-
 	for (const TPair<FName, FAssetData>& AssetData : BlueprintFlowNodes)
 	{
 		UBlueprint* Blueprint = GetNodeBlueprint(AssetData.Value);
-		if (CategoryName.IsEmpty() || CategoryName.Equals(Blueprint->BlueprintCategory))
+		FlowNodes.Emplace(Blueprint->GeneratedClass->GetDefaultObject<UFlowNode>());
+	}
+
+	for (const UFlowNode* FlowNode : FlowNodes)
+	{
+		if (CategoryName.IsEmpty() || CategoryName.Equals(FlowNode->GetNodeCategory()))
 		{
-			TSharedPtr<FFlowGraphSchemaAction_NewNode> NewNodeAction(new FFlowGraphSchemaAction_NewNode(Blueprint));
+			TSharedPtr<FFlowGraphSchemaAction_NewNode> NewNodeAction(new FFlowGraphSchemaAction_NewNode(FlowNode));
 			ActionMenuBuilder.AddAction(NewNodeAction);
 		}
 	}
@@ -260,7 +262,7 @@ void UFlowGraphSchema::GatherFlowNodes()
 					NativeFlowNodes.Emplace(*It);
 
 					const UFlowNode* DefaultObject = It->GetDefaultObject<UFlowNode>();
-					UnsortedCategories.Emplace(DefaultObject->GetNativeCategory());
+					UnsortedCategories.Emplace(DefaultObject->GetNodeCategory());
 				}
 			}
 			else if (It->IsChildOf(UFlowGraphNode::StaticClass()))

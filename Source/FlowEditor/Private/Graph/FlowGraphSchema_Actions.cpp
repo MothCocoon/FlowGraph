@@ -29,14 +29,9 @@ UEdGraphNode* FFlowGraphSchemaAction_NewNode::PerformAction(class UEdGraph* Pare
 		return nullptr;
 	}
 
-	if (NativeNodeClass)
+	if (NodeClass)
 	{
-		return CreateNode(ParentGraph, FromPin, NativeNodeClass, Location, bSelectNewNode);
-	}
-
-	if (Blueprint)
-	{
-		return CreateNode(ParentGraph, FromPin, Blueprint->GeneratedClass, Location, bSelectNewNode);	
+		return CreateNode(ParentGraph, FromPin, NodeClass, Location, bSelectNewNode);
 	}
 
 	return nullptr;
