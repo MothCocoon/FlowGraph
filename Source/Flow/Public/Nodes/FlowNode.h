@@ -53,6 +53,7 @@ public:
 #if WITH_EDITOR
 	// UObject	
 	virtual void PostEditChangeProperty(FPropertyChangedEvent& PropertyChangedEvent) override;
+	virtual void PostLoad() override;
 	// --
 
 	// Opportunity to update node's data before UFlowGraphNode would call ReconstructNode()
