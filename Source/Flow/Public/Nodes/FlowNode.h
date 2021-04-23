@@ -64,13 +64,14 @@ public:
 #if WITH_EDITOR
 	void SetGraphNode(UEdGraphNode* NewGraph);
 
-	FString GetNativeCategory() const { return Category; }
-	EFlowNodeStyle GetNodeStyle() const { return NodeStyle; }
-
-	virtual FText GetTitle() const { return GetClass()->GetDisplayNameText(); }
-
+	virtual FString GetNodeCategory() const;
+	virtual FText GetNodeTitle() const;
+	virtual FText GetNodeToolTip() const;
+	
 	// This method allows to have different for every node instance, i.e. Red if node represents enemy, Green if node represents a friend
 	virtual bool GetNodeTitleColor(FLinearColor& OutColor) const { return false; }
+
+	EFlowNodeStyle GetNodeStyle() const { return NodeStyle; }
 
 	// Short summary of node's content - displayed over node as NodeInfoPopup
 	virtual FString GetNodeDescription() const;

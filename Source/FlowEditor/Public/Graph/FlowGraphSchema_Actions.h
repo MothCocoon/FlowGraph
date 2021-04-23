@@ -1,7 +1,6 @@
 #pragma once
 
 #include "EdGraph/EdGraphSchema.h"
-#include "Engine/Blueprint.h"
 
 #include "Nodes/FlowGraphNode.h"
 #include "Nodes/FlowNode.h"
@@ -14,10 +13,7 @@ struct FLOWEDITOR_API FFlowGraphSchemaAction_NewNode : public FEdGraphSchemaActi
 	GENERATED_USTRUCT_BODY()
 
 	UPROPERTY()
-	class UClass* NativeNodeClass;
-
-	UPROPERTY()
-	class UBlueprint* Blueprint;
+	class UClass* NodeClass;
 
 	static FName StaticGetTypeId()
 	{
@@ -29,29 +25,19 @@ struct FLOWEDITOR_API FFlowGraphSchemaAction_NewNode : public FEdGraphSchemaActi
 
 	FFlowGraphSchemaAction_NewNode()
 		: FEdGraphSchemaAction()
-		, NativeNodeClass(nullptr)
-		, Blueprint(nullptr)
+		, NodeClass(nullptr)
 	{
 	}
 
 	FFlowGraphSchemaAction_NewNode(UClass* Node)
 		: FEdGraphSchemaAction()
-		, NativeNodeClass(Node)
-		, Blueprint(nullptr)
+		, NodeClass(Node)
 	{
 	}
 
 	FFlowGraphSchemaAction_NewNode(const UFlowNode* Node)
-		: FEdGraphSchemaAction(FText::FromString(Node->GetNativeCategory()), Node->GetTitle(), Node->GetClass()->GetToolTipText(), 0)
-		, NativeNodeClass(Node->GetClass())
-		, Blueprint(nullptr)
-	{
-	}
-
-	FFlowGraphSchemaAction_NewNode(UBlueprint* InBlueprint)
-        : FEdGraphSchemaAction(FText::FromString(InBlueprint->BlueprintCategory), FText::FromString(InBlueprint->BlueprintDisplayName), FText::FromString(InBlueprint->BlueprintDescription), 0)
-		, NativeNodeClass(nullptr)
-		, Blueprint(InBlueprint)
+		: FEdGraphSchemaAction(FText::FromString(Node->GetNodeCategory()), Node->GetNodeTitle(), Node->GetNodeToolTip(), 0)
+		, NodeClass(Node->GetClass())
 	{
 	}
 
