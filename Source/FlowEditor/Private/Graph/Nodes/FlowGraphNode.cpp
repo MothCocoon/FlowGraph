@@ -542,7 +542,7 @@ FText UFlowGraphNode::GetNodeTitle(ENodeTitleType::Type TitleType) const
 {
 	if (FlowNode)
 	{
-		return FlowNode->GetTitle();
+		return FlowNode->GetNodeTitle();
 	}
 
 	return Super::GetNodeTitle(TitleType);
