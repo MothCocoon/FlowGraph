@@ -13,16 +13,16 @@ class FLOW_API UFlowNode_Log : public UFlowNode
 	GENERATED_UCLASS_BODY()
 	
 private:
-	UPROPERTY(EditDefaultsOnly, Category = "Flow")
+	UPROPERTY(EditAnywhere, Category = "Flow")
 	FString Message;
 
-	UPROPERTY(EditDefaultsOnly, Category = "Flow")
+	UPROPERTY(EditAnywhere, Category = "Flow")
 	bool bPrintToScreen;
 
-	UPROPERTY(EditDefaultsOnly, Category = "Flow", meta = (EditCondition = "bPrintToScreen"))
+	UPROPERTY(EditAnywhere, Category = "Flow", meta = (EditCondition = "bPrintToScreen"))
 	float Duration;
 
-	UPROPERTY(EditDefaultsOnly, Category = "Flow", meta = (EditCondition = "bPrintToScreen"))
+	UPROPERTY(EditAnywhere, Category = "Flow", meta = (EditCondition = "bPrintToScreen"))
 	FColor TextColor;
 
 protected:

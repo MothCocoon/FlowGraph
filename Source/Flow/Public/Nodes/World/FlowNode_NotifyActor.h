@@ -14,10 +14,10 @@ class FLOW_API UFlowNode_NotifyActor : public UFlowNode
 	GENERATED_UCLASS_BODY()
 
 protected:
-	UPROPERTY(EditDefaultsOnly, Category = "ObservedComponent")
+	UPROPERTY(EditAnywhere, Category = "ObservedComponent")
 	FGameplayTagContainer IdentityTags;
 	
-	UPROPERTY(EditDefaultsOnly, Category = "ObservedComponent")
+	UPROPERTY(EditAnywhere, Category = "ObservedComponent")
 	FGameplayTagContainer NotifyTags;
 
 	virtual void PostLoad() override;

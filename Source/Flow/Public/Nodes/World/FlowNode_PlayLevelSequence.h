@@ -27,7 +27,7 @@ class FLOW_API UFlowNode_PlayLevelSequence : public UFlowNode
 	static FFlowNodeLevelSequenceEvent OnPlaybackStarted;
 	static FFlowNodeLevelSequenceEvent OnPlaybackCompleted;
 
-	UPROPERTY(EditDefaultsOnly, Category = "Sequence")
+	UPROPERTY(EditAnywhere, Category = "Sequence")
 	TSoftObjectPtr<ULevelSequence> Sequence;
 
 protected:
