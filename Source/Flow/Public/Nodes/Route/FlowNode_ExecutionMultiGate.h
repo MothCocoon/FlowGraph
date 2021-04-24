@@ -11,15 +11,15 @@ class FLOW_API UFlowNode_ExecutionMultiGate final : public UFlowNode
 {
 	GENERATED_UCLASS_BODY()
 
-	UPROPERTY(EditDefaultsOnly, Category = "MultiGate")
+	UPROPERTY(EditAnywhere, Category = "MultiGate")
 	bool bRandom;
 
 	// Allow executing output pins again, without triggering Reset pin
 	// If set to False, every output pin can be triggered only once
-	UPROPERTY(EditDefaultsOnly, Category = "MultiGate")
+	UPROPERTY(EditAnywhere, Category = "MultiGate")
 	bool bLoop;
 
-	UPROPERTY(EditDefaultsOnly, Category = "MultiGate")
+	UPROPERTY(EditAnywhere, Category = "MultiGate")
 	int32 StartIndex;
 
 private:

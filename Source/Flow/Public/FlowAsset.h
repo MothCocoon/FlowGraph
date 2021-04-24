@@ -86,14 +86,14 @@ private:
 	 * Custom Inputs define custom entry points in graph, it's similar to blueprint Custom Events
 	 * Sub Graph node using this Flow Asset will generate context Input Pin for every valid Event name on this list
 	 */
-	UPROPERTY(EditDefaultsOnly, Category = "Flow")
+	UPROPERTY(EditAnywhere, Category = "Flow")
 	TArray<FName> CustomInputs;
 
 	/**
 	 * Custom Outputs define custom graph outputs, this allow to send signals to the parent graph while executing this graph
 	 * Sub Graph node using this Flow Asset will generate context Output Pin for every valid Event name on this list
 	 */
-	UPROPERTY(EditDefaultsOnly, Category = "Flow")
+	UPROPERTY(EditAnywhere, Category = "Flow")
 	TArray<FName> CustomOutputs;
 
 public:

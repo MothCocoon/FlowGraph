@@ -351,10 +351,12 @@ void FFlowAssetEditor::CreateWidgets()
 	FDetailsViewArgs Args;
 	Args.bHideSelectionTip = true;
 	Args.bShowPropertyMatrixButton = false;
+	Args.DefaultsOnlyVisibility = EEditDefaultsOnlyNodeVisibility::Hide;
 	Args.NotifyHook = this;
 
 	FPropertyEditorModule& PropertyModule = FModuleManager::LoadModuleChecked<FPropertyEditorModule>("PropertyEditor");
 	DetailsView = PropertyModule.CreateDetailView(Args);
+	DetailsView->SetIsPropertyEditingEnabledDelegate(FIsPropertyEditingEnabled::CreateStatic(&FFlowAssetEditor::CanEdit));
 	DetailsView->SetObject(FlowAsset);
 
 	Palette = SNew(SFlowPalette, SharedThis(this));
