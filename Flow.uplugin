@@ -19,7 +19,7 @@
 		{
 			"Name" : "Flow",
 			"Type" : "Runtime",
-			"LoadingPhase" : "Default"
+			"LoadingPhase" : "PreDefault"
 		},
 		{
 			"Name" : "FlowEditor",
