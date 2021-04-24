@@ -19,12 +19,12 @@ class FLOW_API UFlowNode_ComponentObserver : public UFlowNode
     friend class FFlowNode_ComponentObserverDetails;
 	
 protected:
-	UPROPERTY(EditDefaultsOnly, Category = "ObservedComponent")
+	UPROPERTY(EditAnywhere, Category = "ObservedComponent")
 	FGameplayTagContainer IdentityTags;
 
 	// This node will become Completed, if Success Limit > 0 and Success Count reaches this limit
 	// Set this to zero, if you'd like receive events indefinitely (node would finish work only if explicitly Stopped)
-	UPROPERTY(EditDefaultsOnly, Category = "Lifetime", meta = (ClampMin = 0))
+	UPROPERTY(EditAnywhere, Category = "Lifetime", meta = (ClampMin = 0))
 	int32 SuccessLimit;
 
 	// This node will become Completed, if Success Limit > 0 and Success Count reaches this limit

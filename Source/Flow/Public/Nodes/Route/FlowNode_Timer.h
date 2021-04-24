@@ -13,11 +13,11 @@ class FLOW_API UFlowNode_Timer final : public UFlowNode
 	GENERATED_UCLASS_BODY()
 
 protected:
-	UPROPERTY(EditDefaultsOnly, Category = "Timer", meta = (ClampMin = 0.0f))
+	UPROPERTY(EditAnywhere, Category = "Timer", meta = (ClampMin = 0.0f))
 	float CompletionTime;
 
 	// this allows to trigger other nodes multiple times before completing the Timer
-	UPROPERTY(EditDefaultsOnly, Category = "Timer", meta = (ClampMin = 0.0f))
+	UPROPERTY(EditAnywhere, Category = "Timer", meta = (ClampMin = 0.0f))
 	float StepTime;
 
 private:

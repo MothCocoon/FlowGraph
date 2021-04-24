@@ -17,7 +17,7 @@ class FLOW_API UFlowNode_SubGraph : public UFlowNode
 	static FFlowPin FinishPin;
 	
 private:
-	UPROPERTY(EditDefaultsOnly, Category = "Graph")
+	UPROPERTY(EditAnywhere, Category = "Graph")
 	TSoftObjectPtr<UFlowAsset> Asset;
 
 protected:
