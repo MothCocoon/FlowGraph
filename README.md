@@ -5,7 +5,7 @@ Flow plug-in for Unreal Engine provides a graph editor tailored for scripting fl
 
 ## Getting started
 * It's easy to include pluing in your own project, follow this short [Getting Started](https://github.com/MothCocoon/FlowGraph/wiki/Getting-Started) guide.
-* The [legacy repository](https://github.com/MothCocoon/Flow) gonna be upgraded in future, so it would includ FlowGraph (this repo) and FlowSamples as git submodules.
+* The [legacy repository](https://github.com/MothCocoon/Flow) gonna be upgraded in future, so it would includ FlowGraph (this repo) and [FlowSamples](https://github.com/MothCocoon/FlowSamples) as git submodules.
 
 ## Concept
 It's s design-agnostic event node editor.

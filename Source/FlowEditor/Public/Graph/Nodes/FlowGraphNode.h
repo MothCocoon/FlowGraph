@@ -5,6 +5,7 @@
 #include "Templates/SubclassOf.h"
 
 #include "FlowTypes.h"
+#include "Nodes/FlowPin.h"
 #include "FlowGraphNode.generated.h"
 
 class UEdGraphSchema;
@@ -164,8 +165,8 @@ public:
 	UPROPERTY()
 	TMap<FEdGraphPinReference, FFlowBreakpoint> PinBreakpoints;
 
-	void CreateInputPin(const FName& PinName, const int32 Index = INDEX_NONE);
-	void CreateOutputPin(const FName PinName, const int32 Index = INDEX_NONE);
+	void CreateInputPin(const FFlowPin& FlowPin, const int32 Index = INDEX_NONE);
+	void CreateOutputPin(const FFlowPin& FlowPin, const int32 Index = INDEX_NONE);
 
 	void RemoveOrphanedPin(UEdGraphPin* Pin);
 
@@ -188,6 +189,10 @@ public:
 
 	// Create pins from the context asset, i.e. Sequencer events
 	void RefreshContextPins(const bool bReconstructNode);
+
+	// UEdGraphNode
+	virtual void GetPinHoverText(const UEdGraphPin& Pin, FString& HoverTextOut) const override;
+	// --
 
 //////////////////////////////////////////////////////////////////////////
 // Breakpoints

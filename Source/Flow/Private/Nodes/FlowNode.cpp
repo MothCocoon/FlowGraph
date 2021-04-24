@@ -10,36 +10,13 @@
 #include "Misc/App.h"
 #include "Misc/Paths.h"
 
-FName UFlowNode::DefaultInputName(TEXT("In"));
-FName UFlowNode::DefaultOutputName(TEXT("Out"));
+FFlowPin UFlowNode::DefaultInputPin(TEXT("In"));
+FFlowPin UFlowNode::DefaultOutputPin(TEXT("Out"));
 
 FString UFlowNode::MissingIdentityTag = TEXT("Missing Identity Tag!");
 FString UFlowNode::MissingNotifyTag = TEXT("Missing Notify Tag!");
+FString UFlowNode::MissingClass = TEXT("Missing class!");
 FString UFlowNode::NoActorsFound = TEXT("No actors found!");
-
-#if !UE_BUILD_SHIPPING
-FPinRecord::FPinRecord()
-{
-	Time = 0.0f;
-	HumanReadableTime = FString();
-}
-
-FPinRecord::FPinRecord(const double InTime)
-{
-	Time = InTime;
-
-	const FDateTime SystemTime(FDateTime::Now());
-	HumanReadableTime = DoubleDigit(SystemTime.GetHour()) + TEXT(".")
-		+ DoubleDigit(SystemTime.GetMinute()) + TEXT(".")
-		+ DoubleDigit(SystemTime.GetSecond()) + TEXT(":")
-		+ DoubleDigit(SystemTime.GetMillisecond()).Left(3);
-}
-
-FORCEINLINE FString FPinRecord::DoubleDigit(const int32 Number)
-{
-	return Number > 9 ? FString::FromInt(Number) : TEXT("0") + FString::FromInt(Number);
-}
-#endif
 
 UFlowNode::UFlowNode(const FObjectInitializer& ObjectInitializer)
 	: Super(ObjectInitializer)
@@ -56,8 +33,8 @@ UFlowNode::UFlowNode(const FObjectInitializer& ObjectInitializer)
 	NodeStyle = EFlowNodeStyle::Default;
 #endif
 
-	InputNames = {DefaultInputName};
-	OutputNames = {DefaultOutputName};
+	InputPins = {DefaultInputPin};
+	OutputPins = {DefaultOutputPin};
 }
 
 #if WITH_EDITOR
@@ -66,15 +43,90 @@ void UFlowNode::PostEditChangeProperty(FPropertyChangedEvent& PropertyChangedEve
 	Super::PostEditChangeProperty(PropertyChangedEvent);
 
 	if (PropertyChangedEvent.Property
-		&& (PropertyChangedEvent.GetPropertyName() == GET_MEMBER_NAME_CHECKED(UFlowNode, InputNames) || PropertyChangedEvent.GetPropertyName() == GET_MEMBER_NAME_CHECKED(UFlowNode, OutputNames)))
+		&& (PropertyChangedEvent.GetPropertyName() == GET_MEMBER_NAME_CHECKED(UFlowNode, InputPins) || PropertyChangedEvent.GetPropertyName() == GET_MEMBER_NAME_CHECKED(UFlowNode, OutputPins)))
 	{
 		OnReconstructionRequested.ExecuteIfBound();
+	}
+}
+
+void UFlowNode::PostLoad()
+{
+	Super::PostLoad();
+
+	// fix Class Default Object
+	FixNode(nullptr);
+}
+
+void UFlowNode::FixNode(UEdGraphNode* NewGraph)
+{
+	// Fix any node pointers that may be out of date
+	if (NewGraph)
+	{
+		GraphNode = NewGraph;
+	}
+
+	// v1.1 upgraded pins to be defined as structs
+	if (InputNames_DEPRECATED.Num() > InputPins.Num())
+	{
+		for (int32 i = InputPins.Num(); i < InputNames_DEPRECATED.Num(); i++)
+		{
+			InputPins.Emplace(InputNames_DEPRECATED[i]);
+		}
+	}
+	if (OutputNames_DEPRECATED.Num() > OutputPins.Num())
+	{
+		for (int32 i = OutputPins.Num(); i < OutputNames_DEPRECATED.Num(); i++)
+		{
+			OutputPins.Emplace(OutputNames_DEPRECATED[i]);
+		}
 	}
 }
 
 void UFlowNode::SetGraphNode(UEdGraphNode* NewGraph)
 {
 	GraphNode = NewGraph;
+}
+
+FString UFlowNode::GetNodeCategory() const
+{
+	if (GetClass()->ClassGeneratedBy)
+	{
+		const FString& BlueprintCategory = Cast<UBlueprint>(GetClass()->ClassGeneratedBy)->BlueprintCategory;
+		if (!BlueprintCategory.IsEmpty())
+		{
+			return BlueprintCategory;
+		}
+	}
+
+	return Category;
+}
+
+FText UFlowNode::GetNodeTitle() const
+{
+	if (GetClass()->ClassGeneratedBy)
+	{
+		const FString& BlueprintTitle = Cast<UBlueprint>(GetClass()->ClassGeneratedBy)->BlueprintDisplayName;
+		if (!BlueprintTitle.IsEmpty())
+		{
+			return FText::FromString(BlueprintTitle);
+		}
+	}
+
+	return GetClass()->GetDisplayNameText();
+}
+
+FText UFlowNode::GetNodeToolTip() const
+{
+	if (GetClass()->ClassGeneratedBy)
+	{
+		const FString& BlueprintToolTip = Cast<UBlueprint>(GetClass()->ClassGeneratedBy)->BlueprintDescription;
+		if (!BlueprintToolTip.IsEmpty())
+		{
+			return FText::FromString(BlueprintToolTip);
+		}
+	}
+
+	return GetClass()->GetToolTipText();
 }
 
 FString UFlowNode::GetNodeDescription() const
@@ -86,6 +138,68 @@ FString UFlowNode::GetNodeDescription() const
 UFlowAsset* UFlowNode::GetFlowAsset() const
 {
 	return GetOuter() ? Cast<UFlowAsset>(GetOuter()) : nullptr;
+}
+
+void UFlowNode::AddInputPins(TArray<FName> PinNames)
+{
+	for (const FName& PinName : PinNames)
+	{
+		InputPins.Emplace(PinName);
+	}
+}
+
+void UFlowNode::AddOutputPins(TArray<FName> PinNames)
+{
+	for (const FName& PinName : PinNames)
+	{
+		OutputPins.Emplace(PinName);
+	}
+}
+
+void UFlowNode::SetNumberedInputPins(const uint8 FirstNumber, const uint8 LastNumber)
+{
+	InputPins.Empty();
+
+	for (uint8 i = FirstNumber; i <= LastNumber; i++)
+	{
+		InputPins.Emplace(i);
+	}
+}
+
+void UFlowNode::SetNumberedOutputPins(const uint8 FirstNumber /*= 0*/, const uint8 LastNumber /*= 1*/)
+{
+	OutputPins.Empty();
+
+	for (uint8 i = FirstNumber; i <= LastNumber; i++)
+	{
+		OutputPins.Emplace(i);
+	}
+}
+
+TArray<FName> UFlowNode::GetInputNames() const
+{
+	TArray<FName> Result;
+	for (const FFlowPin& Pin : InputPins)
+	{
+		if (!Pin.PinName.IsNone())
+		{
+			Result.Emplace(Pin.PinName);
+		}
+	}
+	return Result;
+}
+
+TArray<FName> UFlowNode::GetOutputNames() const
+{
+	TArray<FName> Result;
+	for (const FFlowPin& Pin : OutputPins)
+	{
+		if (!Pin.PinName.IsNone())
+		{
+			Result.Emplace(Pin.PinName);
+		}
+	}
+	return Result;
 }
 
 #if WITH_EDITOR
@@ -102,35 +216,15 @@ bool UFlowNode::CanUserAddOutput() const
 void UFlowNode::RemoveUserInput()
 {
 	Modify();
-	InputNames.RemoveAt(InputNames.Num() - 1);
+	InputPins.RemoveAt(InputPins.Num() - 1);
 }
 
 void UFlowNode::RemoveUserOutput()
 {
 	Modify();
-	OutputNames.RemoveAt(OutputNames.Num() - 1);
+	OutputPins.RemoveAt(OutputPins.Num() - 1);
 }
 #endif
-
-void UFlowNode::SetNumericalInputs(const uint8 FirstNumber, const uint8 LastNumber)
-{
-	InputNames.Empty();
-
-	for (uint8 i = FirstNumber; i <= LastNumber; i++)
-	{
-		InputNames.Emplace(FName(*FString::FromInt(i)));
-	}
-}
-
-void UFlowNode::SetNumericalOutputs(const uint8 FirstNumber /*= 0*/, const uint8 LastNumber /*= 1*/)
-{
-	OutputNames.Empty();
-
-	for (uint8 i = FirstNumber; i <= LastNumber; i++)
-	{
-		OutputNames.Emplace(FName(*FString::FromInt(i)));
-	}
-}
 
 TSet<UFlowNode*> UFlowNode::GetConnectedNodes() const
 {
@@ -209,10 +303,10 @@ void UFlowNode::FlushContent()
 
 void UFlowNode::TriggerInput(const FName& PinName)
 {
-	ensureAlways(InputNames.Num() > 0);
+	ensureAlways(InputPins.Num() > 0);
 
 #if !UE_BUILD_SHIPPING
-	if (InputNames.Contains(PinName))
+	if (InputPins.Contains(PinName))
 	{
 		// record for debugging
 		TArray<FPinRecord>& Records = InputRecords.FindOrAdd(PinName);
@@ -223,7 +317,7 @@ void UFlowNode::TriggerInput(const FName& PinName)
 #if WITH_EDITOR
 		if (GetWorld()->WorldType == EWorldType::PIE && UFlowAsset::GetFlowGraphInterface().IsValid())
 		{
-			UFlowAsset::GetFlowGraphInterface()->OnInputTriggered(GraphNode, InputNames.IndexOfByKey(PinName));
+			UFlowAsset::GetFlowGraphInterface()->OnInputTriggered(GraphNode, InputPins.IndexOfByKey(PinName));
 		}
 #endif // WITH_EDITOR
 	}
@@ -243,18 +337,18 @@ void UFlowNode::ExecuteInput(const FName& PinName)
 
 void UFlowNode::TriggerFirstOutput(const bool bFinish)
 {
-	if (OutputNames.Num() > 0)
+	if (OutputPins.Num() > 0)
 	{
-		TriggerOutput(OutputNames[0], bFinish);
+		TriggerOutput(OutputPins[0].PinName, bFinish);
 	}
 }
 
 void UFlowNode::TriggerOutput(const FName& PinName, const bool bFinish /*= false*/)
 {
-	ensureAlways(OutputNames.Num() > 0);
+	ensureAlways(OutputPins.Num() > 0);
 
 #if !UE_BUILD_SHIPPING
-	if (OutputNames.Contains(PinName))
+	if (OutputPins.Contains(PinName))
 	{
 		// record for debugging, even if nothing is connected to this pin
 		TArray<FPinRecord>& Records = OutputRecords.FindOrAdd(PinName);
@@ -263,7 +357,7 @@ void UFlowNode::TriggerOutput(const FName& PinName, const bool bFinish /*= false
 #if WITH_EDITOR
 		if (GetWorld()->WorldType == EWorldType::PIE && UFlowAsset::GetFlowGraphInterface().IsValid())
 		{
-			UFlowAsset::GetFlowGraphInterface()->OnOutputTriggered(GraphNode, OutputNames.IndexOfByKey(PinName));
+			UFlowAsset::GetFlowGraphInterface()->OnOutputTriggered(GraphNode, OutputPins.IndexOfByKey(PinName));
 		}
 #endif // WITH_EDITOR
 	}
@@ -280,11 +374,26 @@ void UFlowNode::TriggerOutput(const FName& PinName, const bool bFinish /*= false
 	}
 
 	// call the next node
-	if (OutputNames.Contains(PinName) && Connections.Contains(PinName))
+	if (OutputPins.Contains(PinName) && Connections.Contains(PinName))
 	{
 		const FConnectedPin FlowPin = GetConnection(PinName);
 		GetFlowAsset()->TriggerInput(FlowPin.NodeGuid, FlowPin.PinName);
 	}
+}
+
+void UFlowNode::TriggerOutput(const FString& PinName, const bool bFinish)
+{
+	TriggerOutput(*PinName, bFinish);
+}
+
+void UFlowNode::TriggerOutput(const FText& PinName, const bool bFinish)
+{
+	TriggerOutput(*PinName.ToString(), bFinish);
+}
+
+void UFlowNode::TriggerOutput(const TCHAR* PinName, const bool bFinish)
+{
+	TriggerOutput(FName(PinName), bFinish);
 }
 
 void UFlowNode::Finish()
@@ -337,19 +446,22 @@ TMap<uint8, FPinRecord> UFlowNode::GetWireRecords() const
 	TMap<uint8, FPinRecord> Result;
 	for (const TPair<FName, TArray<FPinRecord>>& Record : OutputRecords)
 	{
-		Result.Emplace(OutputNames.IndexOfByKey(Record.Key), Record.Value.Last());
+		Result.Emplace(OutputPins.IndexOfByKey(Record.Key), Record.Value.Last());
 	}
 	return Result;
 }
 
-TArray<FPinRecord> UFlowNode::GetInputRecords(const FName& PinName) const
+TArray<FPinRecord> UFlowNode::GetPinRecords(const FName& PinName, const EEdGraphPinDirection PinDirection) const
 {
-	return InputRecords.FindRef(PinName);
-}
-
-TArray<FPinRecord> UFlowNode::GetOutputRecords(const FName& PinName) const
-{
-	return OutputRecords.FindRef(PinName);
+	switch (PinDirection)
+	{
+		case EGPD_Input:
+			return InputRecords.FindRef(PinName);
+		case EGPD_Output:
+			return OutputRecords.FindRef(PinName);
+		default:
+			return TArray<FPinRecord>();
+	}
 }
 
 FString UFlowNode::GetStatusString() const
@@ -373,14 +485,24 @@ AActor* UFlowNode::GetActorToFocus()
 }
 #endif
 
-FString UFlowNode::GetIdentityDescription(const FGameplayTagContainer& Tags)
+FString UFlowNode::GetIdentityTagDescription(const FGameplayTag& Tag)
+{
+	return Tag.IsValid() ? Tag.ToString() : MissingIdentityTag;
+}
+
+FString UFlowNode::GetIdentityTagsDescription(const FGameplayTagContainer& Tags)
 {
 	return Tags.IsEmpty() ? MissingIdentityTag : FString::JoinBy(Tags, LINE_TERMINATOR, [](const FGameplayTag& Tag) { return Tag.ToString(); });
 }
 
-FString UFlowNode::GetNotifyDescription(const FGameplayTagContainer& Tags)
+FString UFlowNode::GetNotifyTagsDescription(const FGameplayTagContainer& Tags)
 {
 	return Tags.IsEmpty() ? MissingNotifyTag : FString::JoinBy(Tags, LINE_TERMINATOR, [](const FGameplayTag& Tag) { return Tag.ToString(); });
+}
+
+FString UFlowNode::GetClassDescription(const TSubclassOf<UObject> Class)
+{
+	return Class ? Class->GetName() : MissingClass;
 }
 
 FString UFlowNode::GetProgressAsString(float Value)

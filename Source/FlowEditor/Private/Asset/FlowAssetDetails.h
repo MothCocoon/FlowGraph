@@ -24,6 +24,6 @@ private:
 	void GenerateCustomPinArray(TSharedRef<IPropertyHandle> PropertyHandle, int32 ArrayIndex, IDetailChildrenBuilder& ChildrenBuilder);
 
 	FText GetCustomPinText(TSharedRef<IPropertyHandle> PropertyHandle) const;
-	static bool OnCustomPinTextVerifyChanged(const FText& InNewText, FText& OutErrorMessage);
-	void OnCustomPinTextCommited(const FText& InText, ETextCommit::Type InCommitType, TSharedRef<IPropertyHandle> PropertyHandle);
+	static void OnCustomPinTextCommitted(const FText& InText, ETextCommit::Type InCommitType, TSharedRef<IPropertyHandle> PropertyHandle);
+	static bool VerifyNewCustomPinText(const FText& InNewText, FText& OutErrorMessage);
 };
