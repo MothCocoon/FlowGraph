@@ -236,6 +236,11 @@ TSet<UFlowNode*> UFlowNode::GetConnectedNodes() const
 	return Result;
 }
 
+bool UFlowNode::IsOutputConnected(const FName& PinName) const
+{
+	return OutputPins.Contains(PinName) && Connections.Contains(PinName);
+}
+
 void UFlowNode::RecursiveFindNodesByClass(UFlowNode* Node, const TSubclassOf<UFlowNode> Class, uint8 Depth, TArray<UFlowNode*>& OutNodes)
 {
 	if (Node)
