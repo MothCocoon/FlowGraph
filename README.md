@@ -11,6 +11,7 @@ It's s design-agnostic event node editor.
 * Developers creating a Flow Node can call the execution of pins any way they need. API is extremely simple.
 * Editor supports convenient displaying debug information on nodes and wires while playing a game. You simply provide what kind of message would be displayed over active Flow Nodes - you can't have that with blueprint functions.
 * It's up to you to add game-specific functionalities by writing your nodes and editor customizations. It's not like a marketplace providing the very specific implementation of systems. It's a convenient base for building systems tailored to fit your needs.
+* Read documentation on the project wiki. I'd recommend starting from reading about [design philosophy](https://github.com/MothCocoon/FlowGraph/wiki).
 
 ## In-depth video presentation
 This 24-minute presentation breaks down the concept of the Flow Graph. It goes through everything written in this ReadMe but in greater detail.
@@ -22,7 +23,6 @@ This 24-minute presentation breaks down the concept of the Flow Graph. It goes t
 * The [legacy repository](https://github.com/MothCocoon/Flow) gonna be upgraded in future, so it would includ FlowGraph (this repo) and [FlowSamples](https://github.com/MothCocoon/FlowSamples) as git submodules.
 * Plugin and the code of the sample project are available for every engine version since 4.22. I'm not planning on backporting code to older engine versions since the runtime code relies on [programming subsystems](https://docs.unrealengine.com/en-US/ProgrammingAndScripting/Subsystems/index.html) introduced with UE 4.22.
 * I'm planning to release the Flow plugin on the Marketplace, so more people could discover it and conveniently add it to their asset libraries. It will be free of charge, obviously.
-* Read documentation (in progress) on the project wiki. I'd recommend starting from reading about [design philosophy](https://github.com/MothCocoon/FlowGraph/wiki).
 
 ## Acknowledgements
 I feel it's important to mention that I didn't invent anything new here, with the Flow Graph. It's an old and proven concept. I'm only the one who decided it would be crazy useful to adopt it for Unreal Engine. And make it publically available as my humble contribution to the open-source community.
