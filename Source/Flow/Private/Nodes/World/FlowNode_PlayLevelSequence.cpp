@@ -32,6 +32,9 @@ UFlowNode_PlayLevelSequence::UFlowNode_PlayLevelSequence(const FObjectInitialize
 	OutputPins.Add(FFlowPin(TEXT("Started")));
 	OutputPins.Add(FFlowPin(TEXT("Completed")));
 	OutputPins.Add(FFlowPin(TEXT("Stopped")));
+
+	bOverrideAspectRatioAxisConstraint = false;
+	AspectRatioAxisConstraint = EAspectRatioAxisConstraint::AspectRatio_MaintainXFOV;
 }
 
 #if WITH_EDITOR
@@ -114,6 +117,20 @@ void UFlowNode_PlayLevelSequence::CreatePlayer(const FMovieSceneSequencePlayback
 		ALevelSequenceActor* SequenceActor;
 		SequencePlayer = UFlowLevelSequencePlayer::CreateFlowLevelSequencePlayer(this, LoadedSequence, PlaybackSettings, SequenceActor);
 		SequencePlayer->SetFlowEventReceiver(this);
+
+		SequenceActor->CameraSettings.AspectRatioAxisConstraint = AspectRatioAxisConstraint;
+		SequenceActor->CameraSettings.bOverrideAspectRatioAxisConstraint = bOverrideAspectRatioAxisConstraint;
+
+		for (auto Element : ObjectBindings)
+		{
+			TSet<AActor *> Actors = GetFlowSubsystem()->GetFlowActorsByTags(Element.Value.GameplayTags, Element.Value.MatchType, Element.Value.ActorClass);
+			
+			SequenceActor->SetBindingByTag(
+				Element.Key,
+				Actors.Array(),
+				Element.Value.AllowBindingsFromAsset
+				);
+		}
 
 		const FFrameRate FrameRate = LoadedSequence->GetMovieScene()->GetTickResolution();
 		const FFrameNumber PlaybackStartFrame = LoadedSequence->GetMovieScene()->GetPlaybackRange().GetLowerBoundValue();

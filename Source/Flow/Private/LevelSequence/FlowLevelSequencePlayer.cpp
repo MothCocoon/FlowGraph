@@ -33,6 +33,7 @@ UFlowLevelSequencePlayer* UFlowLevelSequencePlayer::CreateFlowLevelSequencePlaye
 
 	Actor->PlaybackSettings = Settings;
 	Actor->LevelSequence = InLevelSequence;
+	Actor->CameraSettings.bOverrideAspectRatioAxisConstraint = false;
 
 	Actor->InitializePlayer();
 	OutActor = Actor;

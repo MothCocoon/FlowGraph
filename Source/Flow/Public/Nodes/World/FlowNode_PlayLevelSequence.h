@@ -17,6 +17,28 @@ DECLARE_MULTICAST_DELEGATE(FFlowNodeLevelSequenceEvent);
  * - Out (always, even if Sequence is invalid)
  * - Completed
  */
+
+
+USTRUCT(BlueprintType)
+struct FFlowNodeLevelSequenceBinding
+{
+	GENERATED_BODY()
+
+	UPROPERTY(EditAnywhere)
+	FGameplayTagContainer GameplayTags;
+
+	UPROPERTY(EditAnywhere)
+	EGameplayContainerMatchType MatchType;
+
+	UPROPERTY(EditAnywhere)
+	TSubclassOf<AActor> ActorClass;
+
+	UPROPERTY(EditAnywhere)
+	bool AllowBindingsFromAsset = false;
+};
+
+
+
 UCLASS(NotBlueprintable, meta = (DisplayName = "Play Level Sequence"))
 class FLOW_API UFlowNode_PlayLevelSequence : public UFlowNode
 {
@@ -29,6 +51,15 @@ class FLOW_API UFlowNode_PlayLevelSequence : public UFlowNode
 
 	UPROPERTY(EditAnywhere, Category = "Sequence")
 	TSoftObjectPtr<ULevelSequence> Sequence;
+
+	UPROPERTY(EditAnywhere, Category = "Aspect Ratio")
+	bool bOverrideAspectRatioAxisConstraint = false;
+
+	UPROPERTY(EditAnywhere, Category = "Aspect Ratio", meta = (EditCondition = bOverrideAspectRatioAxisConstraint))
+	TEnumAsByte<enum EAspectRatioAxisConstraint> AspectRatioAxisConstraint = EAspectRatioAxisConstraint::AspectRatio_MaintainXFOV;
+
+	UPROPERTY(EditAnywhere, Category = "Bindings")
+	TMap<FName, FFlowNodeLevelSequenceBinding> ObjectBindings;
 
 protected:
 	UPROPERTY()
