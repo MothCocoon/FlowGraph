@@ -66,6 +66,8 @@ UFlowGraphNode* FFlowGraphSchemaAction_NewNode::CreateNode(UEdGraph* ParentGraph
 	NewGraphNode->PostPlacedNewNode();
 	NewGraphNode->AllocateDefaultPins();
 
+	NewGraphNode->AutowireNewNode(FromPin);
+	
 	ParentGraph->NotifyGraphChanged();
 
 	const TSharedPtr<FFlowAssetEditor> FlowEditor = FFlowGraphUtils::GetFlowAssetEditor(ParentGraph);
