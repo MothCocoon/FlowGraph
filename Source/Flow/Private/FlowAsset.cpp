@@ -193,6 +193,10 @@ void UFlowAsset::GetInstanceDisplayNames(TArray<TSharedPtr<FName>>& OutDisplayNa
 {
 	for (UFlowAsset* Instance : ActiveInstances)
 	{
+		// Sometimes the engine will crash, because there were null pointer instances
+		if(!Instance)
+			continue;
+		
 		OutDisplayNames.Emplace(MakeShareable(new FName(Instance->GetDisplayName())));
 	}
 }
