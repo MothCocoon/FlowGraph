@@ -1,7 +1,7 @@
 ## Concept
 Flow plug-in for Unreal Engine provides a graph editor tailored for scripting flow of events in virtual worlds. It's based on a decade of experience with designing and implementing narrative in video games. All we need here is simplicity.
 
-It's s design-agnostic event node editor.
+It's a design-agnostic event node editor.
 
 ![Flow101](https://user-images.githubusercontent.com/5065057/103543817-6d924080-4e9f-11eb-87d9-15ab092c3875.png)
 
@@ -25,7 +25,7 @@ This 24-minute presentation breaks down the concept of the Flow Graph. It goes t
 * I'm planning to release the Flow plugin on the Marketplace, so more people could discover it and conveniently add it to their asset libraries. It will be free of charge, obviously.
 
 ## Acknowledgements
-I feel it's important to mention that I didn't invent anything new here, with the Flow Graph. It's an old and proven concept. I'm only the one who decided it would be crazy useful to adopt it for Unreal Engine. And make it publically available as my humble contribution to the open-source community.
+I feel it's important to mention that I didn't invent anything new here, with the Flow Graph. It's an old and proven concept. I'm just one of many developers who decided it would be crazy useful to adopt it for Unreal Engine. And this time, also to make it publically available as the open-source project.
 * Such simple graph-based tools for scripting game screenplay are utilized for a long time. Traditionally, RPG games needed such tools as there a lot of stories, quests, dialogues.
 * The best narrative toolset I had the opportunity to work with is what CD Projekt RED built for The Witcher series. Sadly, you can't download the modding toolkit for The Witcher 2 - yeah, it was publically available for some time. Still... you can watch the GDC talk by Piotr Tomsiński on [Cinematic Dialogues in The Witcher 3: Wild Hunt](https://www.youtube.com/watch?v=chf3REzAjgI) - it includes a brief presentation how Quest and Dialogue editors look like. It wouldn't be possible to create such an amazing narrative game without this kind of toolset. I did miss that so much when I moved to the Unreal Engine...
 * Finally got an opportunity to work on something like this at [Reikon Games](http://www.reikongames.com/). They badly wanted to build a better tool for implementing game flow than level blueprints or existing Marketplace plug-ins. I was very much interested in this since the studio was just starting with the production of the new title. And we did exactly that, created a node editor dedicated to scripting game flow. Kudos to Dariusz Murawski - a programmer who spent a few months with me to establish the working system and editor. And who had to endure my never-ending feedback and requests.
