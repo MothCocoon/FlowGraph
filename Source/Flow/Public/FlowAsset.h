@@ -1,6 +1,7 @@
 #pragma once
 
 #include "CoreMinimal.h"
+#include "FlowSave.h"
 #include "FlowAsset.generated.h"
 
 class UFlowNode;
@@ -202,8 +203,10 @@ public:
 
 	virtual void PreloadNodes();
 
+	virtual void PreStartFlow();
 	virtual void StartFlow();
 	virtual void StartAsSubFlow(UFlowNode_SubGraph* SubGraphNode);
+	
 	virtual void FinishFlow(const bool bFlowCompleted);
 
 	// Get Flow Asset instance created by the given SubGraph node
@@ -237,4 +240,10 @@ public:
 	// Returns nodes active in the past, done their work
 	UFUNCTION(BlueprintPure, Category = "Flow")
 	TArray<UFlowNode*> GetRecordedNodes() const { return RecordedNodes; }
+
+	UFUNCTION(BlueprintCallable, Category = "Flow")
+	FFlowAssetSaveData SaveInstance();
+
+	UFUNCTION(BlueprintCallable, Category = "Flow")
+	void LoadInstance(const FFlowAssetSaveData& AssetRecord);
 };

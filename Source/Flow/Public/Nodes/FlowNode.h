@@ -185,10 +185,10 @@ public:
 protected:
 	FStreamableManager StreamableManager;
 
-#if !UE_BUILD_SHIPPING
-protected:
+	UPROPERTY(SaveGame)
 	EFlowActivationState ActivationState;
-
+	
+#if !UE_BUILD_SHIPPING
 private:
 	TMap<FName, TArray<FPinRecord>> InputRecords;
 	TMap<FName, TArray<FPinRecord>> OutputRecords;
@@ -335,6 +335,19 @@ public:
 
 	UFUNCTION(BlueprintCallable, Category = "FlowNode")
 	void LogError(FString Message);
+
+	UFUNCTION(BlueprintCallable, Category = "FlowNode")
+	void SaveInstance(FFlowNodeSaveData& NodeRecord);
+
+	UFUNCTION(BlueprintCallable, Category = "FlowNode")
+	void LoadInstance(const FFlowNodeSaveData& NodeRecord);
+
+protected:
+	UFUNCTION(BlueprintNativeEvent, Category = "FlowNode")
+	void PrepareSaveData();
+	
+	UFUNCTION(BlueprintNativeEvent, Category = "FlowNode")
+	void OnSaveDataLoaded();
 
 private:
 	UPROPERTY()

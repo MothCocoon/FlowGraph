@@ -8,6 +8,9 @@
 #include "Nodes/Route/FlowNode_Finish.h"
 #include "Nodes/Route/FlowNode_SubGraph.h"
 
+#include "Serialization/MemoryReader.h"
+#include "Serialization/MemoryWriter.h"
+
 UFlowAsset::UFlowAsset(const FObjectInitializer& ObjectInitializer)
 	: Super(ObjectInitializer)
 #if WITH_EDITOR
@@ -286,7 +289,7 @@ void UFlowAsset::PreloadNodes()
 	}
 }
 
-void UFlowAsset::StartFlow()
+void UFlowAsset::PreStartFlow()
 {
 	ResetNodes();
 
@@ -300,6 +303,11 @@ void UFlowAsset::StartFlow()
 		TemplateAsset->BroadcastRegenerateToolbars();
 	}
 #endif
+}
+
+void UFlowAsset::StartFlow()
+{
+	PreStartFlow();
 
 	ensureAlways(StartNode);
 	RecordedNodes.Add(StartNode);
@@ -435,4 +443,48 @@ UFlowAsset* UFlowAsset::GetMasterInstance() const
 UFlowNode* UFlowAsset::GetNodeInstance(const FGuid Guid) const
 {
 	return Nodes.FindRef(Guid);
+}
+
+FFlowAssetSaveData UFlowAsset::SaveInstance()
+{
+	FFlowAssetSaveData AssetRecord;
+
+	//FSoftObjectPtr<UFlowAsset> FlowAsset;
+	//FArchiveUObject::SerializeSoftObjectPtr(AssetRecord.AssetClass, FlowAsset);
+	AssetRecord.AssetPath = GetPathName();
+	AssetRecord.InstanceName = GetName();
+
+	for (const TPair<FGuid, UFlowNode*>& Node : Nodes)
+	{
+		if (Node.Value && Node.Value->ActivationState == EFlowActivationState::Active)
+		{
+			FFlowNodeSaveData NodeRecord;
+			Node.Value->SaveInstance(NodeRecord);
+
+			AssetRecord.NodeRecords.Emplace(NodeRecord);
+		}
+	}
+
+	FMemoryWriter MemoryWriter(AssetRecord.AssetData, true);
+	FFlowArchive Ar(MemoryWriter);
+	Serialize(Ar);
+
+	return AssetRecord;
+}
+
+void UFlowAsset::LoadInstance(const FFlowAssetSaveData& AssetRecord)
+{
+	FMemoryReader MemoryReader(AssetRecord.AssetData, true);
+	FFlowArchive Ar(MemoryReader);
+	Serialize(Ar);
+
+	PreStartFlow();
+	
+	for (const FFlowNodeSaveData& NodeRecord : AssetRecord.NodeRecords)
+	{
+		if (UFlowNode* Node = Nodes.FindRef(NodeRecord.NodeGuid))
+		{
+			Node->LoadInstance(NodeRecord);
+		}
+	}
 }

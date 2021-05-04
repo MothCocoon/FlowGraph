@@ -1,10 +1,14 @@
 #include "FlowComponent.h"
+
+#include "FlowAsset.h"
 #include "FlowSettings.h"
 #include "FlowSubsystem.h"
 
 #include "Engine/GameInstance.h"
 #include "Engine/World.h"
 #include "Net/UnrealNetwork.h"
+#include "Serialization/MemoryReader.h"
+#include "Serialization/MemoryWriter.h"
 
 UFlowComponent::UFlowComponent(const FObjectInitializer& ObjectInitializer)
 	: Super(ObjectInitializer)
@@ -37,12 +41,28 @@ void UFlowComponent::BeginPlay()
 
 	if (UFlowSubsystem* FlowSubsystem = GetFlowSubsystem())
 	{
-		FlowSubsystem->RegisterComponent(this);
-	}
+		bool bComponentLoadedFromSaveGame = false;
+		if (GetFlowSubsystem()->IsSaveGameLoaded())
+		{
+			bComponentLoadedFromSaveGame = LoadInstance();
+		}
 
-	if (RootFlow && bAutoStartRootFlow)
-	{
-		StartRootFlow();
+		FlowSubsystem->RegisterComponent(this);
+
+		if (RootFlow)
+		{
+			if (bComponentLoadedFromSaveGame)
+			{
+				LoadRootFlow();
+			}
+			else
+			{
+				if (bAutoStartRootFlow)
+				{
+					StartRootFlow();
+				}
+			}
+		}
 	}
 }
 
@@ -330,6 +350,71 @@ UFlowAsset* UFlowComponent::GetRootFlowInstance()
 	}
 
 	return nullptr;
+}
+
+FFlowAssetSaveData UFlowComponent::SaveRootFlow()
+{
+	if (UFlowAsset* FlowAssetInstance = GetRootFlowInstance())
+	{
+		const FFlowAssetSaveData AssetRecord = FlowAssetInstance->SaveInstance();
+		SavedAssetInstanceName = AssetRecord.InstanceName;
+		return AssetRecord;
+	}
+
+	return FFlowAssetSaveData();
+}
+
+void UFlowComponent::LoadRootFlow()
+{
+	if (RootFlow && GetFlowSubsystem())
+	{
+		GetFlowSubsystem()->LoadRootFlow(this, RootFlow, SavedAssetInstanceName);
+	}
+}
+
+FFlowComponentSaveData UFlowComponent::SaveInstance()
+{
+	FFlowComponentSaveData ComponentRecord;
+	ComponentRecord.WorldName = GetWorld()->GetName();
+	ComponentRecord.ActorInstanceName = GetOwner()->GetName();
+
+	PrepareSaveData();
+
+	FMemoryWriter MemoryWriter(ComponentRecord.ComponentData, true);
+	FFlowArchive Ar(MemoryWriter);
+	Serialize(Ar);
+
+	return ComponentRecord;
+}
+
+bool UFlowComponent::LoadInstance()
+{
+	const FFlowSaveData SaveData = GetFlowSubsystem()->GetLoadedSaveGame();
+	if (SaveData.SavedFlowComponents.Num() > 0)
+	{
+		for (const FFlowComponentSaveData& ComponentRecord : SaveData.SavedFlowComponents)
+		{
+			if (ComponentRecord.WorldName == GetWorld()->GetName() && ComponentRecord.ActorInstanceName == GetOwner()->GetName())
+			{
+				FMemoryReader MemoryReader(ComponentRecord.ComponentData, true);
+				FFlowArchive Ar(MemoryReader);
+				Serialize(Ar);
+
+				OnSaveDataLoaded();
+				return true;
+			}
+		}
+	}
+
+	return false;
+}
+
+void UFlowComponent::OnSaveDataLoaded_Implementation()
+{
+}
+
+void UFlowComponent::PrepareSaveData_Implementation()
+{
 }
 
 UFlowSubsystem* UFlowComponent::GetFlowSubsystem() const

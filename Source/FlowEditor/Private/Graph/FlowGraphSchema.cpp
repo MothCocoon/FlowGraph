@@ -3,6 +3,7 @@
 #include "Asset/FlowAssetEditor.h"
 #include "Graph/FlowGraph.h"
 #include "Graph/FlowGraphSchema_Actions.h"
+#include "Graph/FlowGraphSettings.h"
 #include "Graph/FlowGraphUtils.h"
 #include "Graph/Nodes/FlowGraphNode.h"
 
@@ -216,7 +217,7 @@ void UFlowGraphSchema::GetFlowNodeActions(FGraphActionMenuBuilder& ActionMenuBui
 
 	for (const UFlowNode* FlowNode : FlowNodes)
 	{
-		if (CategoryName.IsEmpty() || CategoryName.Equals(FlowNode->GetNodeCategory()))
+		if ((CategoryName.IsEmpty() || CategoryName.Equals(FlowNode->GetNodeCategory())) && !UFlowGraphSettings::Get()->NodesHiddenFromPalette.Contains(FlowNode->GetClass()))
 		{
 			TSharedPtr<FFlowGraphSchemaAction_NewNode> NewNodeAction(new FFlowGraphSchemaAction_NewNode(FlowNode));
 			ActionMenuBuilder.AddAction(NewNodeAction);

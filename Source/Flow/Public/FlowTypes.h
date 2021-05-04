@@ -1,5 +1,6 @@
 #pragma once
 
+#include "FlowSave.h"
 #include "FlowTypes.generated.h"
 
 #if WITH_EDITORONLY_DATA
@@ -15,14 +16,13 @@ enum class EFlowNodeStyle : uint8
 };
 #endif
 
-#if !UE_BUILD_SHIPPING
+UENUM(BlueprintType)
 enum class EFlowActivationState : uint8
 {
 	NeverActivated,
 	Active,
 	WasActive
 };
-#endif
 
 UENUM(BlueprintType)
 enum class EFlowNetMode : uint8
