@@ -337,17 +337,17 @@ public:
 	void LogError(FString Message);
 
 	UFUNCTION(BlueprintCallable, Category = "FlowNode")
-	void SaveInstance(FFlowNodeSaveData& NodeRecord);
+	void SaveInstance(FFlowNodeSaveData& NodeRecord, TArray<FFlowAssetSaveData>& SavedFlowInstances);
 
 	UFUNCTION(BlueprintCallable, Category = "FlowNode")
 	void LoadInstance(const FFlowNodeSaveData& NodeRecord);
 
 protected:
 	UFUNCTION(BlueprintNativeEvent, Category = "FlowNode")
-	void PrepareSaveData();
+	void PrepareGameSave();
 	
 	UFUNCTION(BlueprintNativeEvent, Category = "FlowNode")
-	void OnSaveDataLoaded();
+	void OnGameSaveLoaded();
 
 private:
 	UPROPERTY()

@@ -241,9 +241,19 @@ public:
 	UFUNCTION(BlueprintPure, Category = "Flow")
 	TArray<UFlowNode*> GetRecordedNodes() const { return RecordedNodes; }
 
+//////////////////////////////////////////////////////////////////////////
+// SaveGame
+	
 	UFUNCTION(BlueprintCallable, Category = "Flow")
-	FFlowAssetSaveData SaveInstance();
+	FFlowAssetSaveData SaveInstance(TArray<FFlowAssetSaveData>& SavedFlowInstances);
 
 	UFUNCTION(BlueprintCallable, Category = "Flow")
 	void LoadInstance(const FFlowAssetSaveData& AssetRecord);
+
+protected:
+	UFUNCTION(BlueprintNativeEvent, Category = "SaveGame")
+	void PrepareGameSave();
+	
+	UFUNCTION(BlueprintNativeEvent, Category = "SaveGame")
+	void OnGameSaveLoaded();
 };

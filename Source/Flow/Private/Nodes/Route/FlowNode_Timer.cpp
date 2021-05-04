@@ -98,7 +98,7 @@ void UFlowNode_Timer::Cleanup()
 	SumOfSteps = 0.0f;
 }
 
-void UFlowNode_Timer::PrepareSaveData_Implementation()
+void UFlowNode_Timer::PrepareGameSave_Implementation()
 {
 	if (GetWorld())
 	{
@@ -114,7 +114,7 @@ void UFlowNode_Timer::PrepareSaveData_Implementation()
 	}
 }
 
-void UFlowNode_Timer::OnSaveDataLoaded_Implementation()
+void UFlowNode_Timer::OnGameSaveLoaded_Implementation()
 {
 	if (RemainingStepTime > 0.0f)
 	{

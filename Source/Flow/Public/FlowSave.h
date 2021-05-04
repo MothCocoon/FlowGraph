@@ -25,7 +25,6 @@ struct FLOW_API FFlowAssetSaveData
 {
 	GENERATED_USTRUCT_BODY()
 
-	FString AssetPath;
 	FString InstanceName;
 	TArray<uint8> AssetData;
 	
@@ -34,7 +33,6 @@ struct FLOW_API FFlowAssetSaveData
 
 	friend FArchive& operator<<(FArchive& Ar, FFlowAssetSaveData& InAssetData)
 	{
-		Ar << InAssetData.AssetPath;
 		Ar << InAssetData.InstanceName;
 		Ar << InAssetData.AssetData;
 		Ar << InAssetData.NodeRecords;
@@ -78,18 +76,18 @@ struct FLOW_API FFlowSaveData
 
 	FDateTime Timestamp;
 	TArray<FFlowComponentSaveData> SavedFlowComponents;
-	TArray<FFlowAssetSaveData> SavedRootFlowInstances;
+	TArray<FFlowAssetSaveData> SavedFlowInstances;
 
 	friend FArchive& operator<<(FArchive& Ar, FFlowSaveData& FlowData)
 	{
 		Ar << FlowData.Timestamp;
 		Ar << FlowData.SavedFlowComponents;
-		Ar << FlowData.SavedRootFlowInstances;
+		Ar << FlowData.SavedFlowInstances;
 		return Ar;
 	}
 
 	bool IsValid() const
 	{
-		return SavedRootFlowInstances.Num() > 0;
+		return SavedFlowInstances.Num() > 0;
 	}
 };
