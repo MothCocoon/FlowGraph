@@ -22,21 +22,32 @@ protected:
 
 private:
 	FTimerHandle CompletionTimerHandle;
-
+	
 	FTimerHandle StepTimerHandle;
 	float SumOfSteps;
+
+	UPROPERTY(SaveGame)
+	float RemainingCompletionTime;
+
+	UPROPERTY(SaveGame)
+	float RemainingStepTime;
 
 protected:
 	virtual void ExecuteInput(const FName& PinName) override;
 
+private:
 	UFUNCTION()
 	void OnStep();
 
 	UFUNCTION()
 	void OnCompletion();
 
+protected:
 	virtual void Cleanup() override;
 
+	virtual void PrepareSaveData_Implementation() override;
+	virtual void OnSaveDataLoaded_Implementation() override;
+	
 #if WITH_EDITOR
 	virtual FString GetNodeDescription() const override;
 	virtual FString GetStatusString() const override;

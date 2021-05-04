@@ -20,6 +20,9 @@ class UFlowSettings final : public UDeveloperSettings
 	// And you don't access to the Flow Component registry on clients
 	UPROPERTY(Config, EditAnywhere, Category = "Networking")
 	bool bCreateFlowSubsystemOnClients;
+
+	UPROPERTY(Config, EditAnywhere, Category = "Networking")
+	FString SaveFolderName;
 	
 	// How many nodes of given class should be preloaded with the Flow Asset instance?
 	UPROPERTY(Config, EditAnywhere, Category = "Preload")
