@@ -191,11 +191,11 @@ void UFlowSubsystem::SaveGame()
 		{
 			if (UFlowComponent* FlowComponent = Cast<UFlowComponent>(Pair.Key))
 			{
-				SaveGameData.SavedRootFlowInstances.Emplace(FlowComponent->SaveRootFlow());
+				FlowComponent->SaveRootFlow(SaveGameData.SavedFlowInstances);
 			}
 			else
 			{
-				SaveGameData.SavedRootFlowInstances.Emplace(Pair.Value->SaveInstance());
+				Pair.Value->SaveInstance(SaveGameData.SavedFlowInstances);
 			}
 		}
 	}
@@ -255,7 +255,7 @@ void UFlowSubsystem::LoadRootFlow(UObject* Owner, UFlowAsset* FlowAsset, const F
 		return;
 	}
 	
-	for (const FFlowAssetSaveData& AssetRecord : LoadedSaveGame.SavedRootFlowInstances)
+	for (const FFlowAssetSaveData& AssetRecord : LoadedSaveGame.SavedFlowInstances)
 	{
 		if (AssetRecord.InstanceName == SavedAssetInstanceName)
 		{
@@ -269,12 +269,19 @@ void UFlowSubsystem::LoadRootFlow(UObject* Owner, UFlowAsset* FlowAsset, const F
 	}
 }
 
-void UFlowSubsystem::LoadSubFlow(UFlowNode_SubGraph* SubGraphNode, const FFlowAssetSaveData AssetRecord)
+void UFlowSubsystem::LoadSubFlow(UFlowNode_SubGraph* SubGraphNode, const FString& SavedAssetInstanceName)
 {
-	UFlowAsset* LoadedInstance = StartSubFlow(SubGraphNode, AssetRecord.InstanceName);
-	if (LoadedInstance)
+	for (const FFlowAssetSaveData& AssetRecord : LoadedSaveGame.SavedFlowInstances)
 	{
-		LoadedInstance->LoadInstance(AssetRecord);
+		if (AssetRecord.InstanceName == SavedAssetInstanceName)
+		{
+			UFlowAsset* LoadedInstance = StartSubFlow(SubGraphNode, SavedAssetInstanceName);
+			if (LoadedInstance)
+			{
+				LoadedInstance->LoadInstance(AssetRecord);
+			}
+			return;
+		}
 	}
 }
 
