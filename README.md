@@ -12,7 +12,7 @@ It's a design-agnostic event node editor.
 * Editor supports convenient displaying debug information on nodes and wires while playing a game. You simply provide what kind of message would be displayed over active Flow Nodes - you can't have that with blueprint functions.
 * It's up to you to add game-specific functionalities by writing your nodes and editor customizations. It's not like a marketplace providing the very specific implementation of systems. It's a convenient base for building systems tailored to fit your needs.
 * Read documentation on the project wiki. I'd recommend starting from reading about [design philosophy](https://github.com/MothCocoon/FlowGraph/wiki).
-* It's easy to include pluing in your own project, follow this short [Getting Started](https://github.com/MothCocoon/FlowGraph/wiki/Getting-Started) guide.
+* It's easy to include plugin in your own project, follow this short [Getting Started](https://github.com/MothCocoon/FlowGraph/wiki/Getting-Started) guide.
 
 ## In-depth video presentation
 This 24-minute presentation breaks down the concept of the Flow Graph. It goes through everything written in this ReadMe but in greater detail.
