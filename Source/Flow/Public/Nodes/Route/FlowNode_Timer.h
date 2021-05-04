@@ -45,8 +45,8 @@ private:
 protected:
 	virtual void Cleanup() override;
 
-	virtual void PrepareSaveData_Implementation() override;
-	virtual void OnSaveDataLoaded_Implementation() override;
+	virtual void PrepareGameSave_Implementation() override;
+	virtual void OnGameSaveLoaded_Implementation() override;
 	
 #if WITH_EDITOR
 	virtual FString GetNodeDescription() const override;

@@ -10,7 +10,8 @@ UCLASS(NotBlueprintable, meta = (DisplayName = "Sub Graph"))
 class FLOW_API UFlowNode_SubGraph : public UFlowNode
 {
 	GENERATED_UCLASS_BODY()
-	
+
+	friend class UFlowAsset;
 	friend class UFlowSubsystem;
 
 	static FFlowPin StartPin;
@@ -21,7 +22,7 @@ private:
 	TSoftObjectPtr<UFlowAsset> Asset;
 
 	UPROPERTY(SaveGame)
-	FFlowAssetSaveData SavedAssetInstance;
+	FString SavedAssetInstanceName;
 
 protected:
 	virtual void PreloadContent() override;
@@ -34,8 +35,7 @@ public:
 	virtual void ForceFinishNode() override;
 
 protected:
-	virtual void PrepareSaveData_Implementation() override;
-	virtual void OnSaveDataLoaded_Implementation() override;
+	virtual void OnGameSaveLoaded_Implementation() override;
 
 public:
 #if WITH_EDITOR
