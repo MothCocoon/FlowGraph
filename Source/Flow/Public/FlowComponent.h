@@ -178,7 +178,7 @@ public:
 	bool bAllowMultipleInstances;
 
 	UPROPERTY(SaveGame)
-	FFlowAssetSaveData SavedAssetInstance;
+	FString SavedAssetInstanceName;
 	
 	// This will instantiate Flow Asset assigned on this component.
 	// Created Flow Asset instance will be a "root flow", as additional Flow Assets can be instantiated via Sub Graph node
