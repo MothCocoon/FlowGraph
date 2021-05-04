@@ -11,6 +11,7 @@
 class UFlowAsset;
 class UFlowNode_SubGraph;
 
+DECLARE_DYNAMIC_MULTICAST_DELEGATE(FSimpleFlowEvent);
 DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FSimpleFlowComponentEvent, UFlowComponent*, Component);
 DECLARE_DYNAMIC_MULTICAST_DELEGATE_TwoParams(FTaggedFlowComponentEvent, UFlowComponent*, Component, const FGameplayTagContainer&, Tags);
 
@@ -44,6 +45,7 @@ class FLOW_API UFlowSubsystem : public UGameInstanceSubsystem
 	TMap<UFlowNode_SubGraph*, UFlowAsset*> InstancedSubFlows;
 
 	FStreamableManager Streamable;
+	FFlowSaveData LoadedSaveGame;
 
 public:
 	virtual bool ShouldCreateSubsystem(UObject* Outer) const override;
@@ -53,17 +55,17 @@ public:
 
 	// Start the root Flow, graph that will eventually instantiate next Flow Graphs through the SubGraph node
 	UFUNCTION(BlueprintCallable, Category = "FlowSubsystem")
-	void StartRootFlow(UObject* Owner, UFlowAsset* FlowAsset, const bool bAllowMultipleInstances = true);
+	UFlowAsset* StartRootFlow(UObject* Owner, UFlowAsset* FlowAsset, const bool bAllowMultipleInstances = true);
 
 	// Finish the root Flow, typically when closing world that created this flow
 	UFUNCTION(BlueprintCallable, Category = "FlowSubsystem")
 	void FinishRootFlow(UObject* Owner);
 
 private:
-	void StartSubFlow(UFlowNode_SubGraph* SubGraphNode, const bool bPreloading = false);
+	UFlowAsset* StartSubFlow(UFlowNode_SubGraph* SubGraphNode, const FString NewInstanceName = FString(), const bool bPreloading = false);
 	void FinishSubFlow(UFlowNode_SubGraph* SubGraphNode);
 
-	UFlowAsset* CreateFlowInstance(const TWeakObjectPtr<UObject> Owner, TSoftObjectPtr<UFlowAsset> FlowAsset);
+	UFlowAsset* CreateFlowInstance(const TWeakObjectPtr<UObject> Owner, TSoftObjectPtr<UFlowAsset> FlowAsset, FString NewInstanceName = FString());
 	void RemoveInstancedTemplate(UFlowAsset* Template);
 
 public:
@@ -78,8 +80,32 @@ public:
 	// Returns assets instanced by Sub Graph nodes
 	UFUNCTION(BlueprintPure, Category = "FlowSubsystem")
     TMap<UFlowNode_SubGraph*, UFlowAsset*> GetInstancedSubFlows() const { return InstancedSubFlows; }
-
+	
 	virtual UWorld* GetWorld() const override;
+	
+//////////////////////////////////////////////////////////////////////////
+// SaveGame
+
+	UPROPERTY(BlueprintAssignable, Category = "FlowSubsystem")
+	FSimpleFlowEvent OnSaveGame;
+	
+	UFUNCTION(BlueprintCallable, Category = "FlowSubsystem")
+	virtual void SaveGame();
+
+	UFUNCTION(BlueprintCallable, Category = "FlowSubsystem")
+	virtual void LoadGame();
+
+	virtual void LoadRootFlow(UObject* Owner, UFlowAsset* FlowAsset, const FFlowAssetSaveData AssetRecord);
+	virtual void LoadSubFlow(UFlowNode_SubGraph* SubGraphNode, const FFlowAssetSaveData AssetRecord);
+
+	UFUNCTION(BlueprintPure, Category = "FlowSubsystem")
+	bool IsSaveGameLoaded() const { return LoadedSaveGame.IsValid(); }
+	
+	UFUNCTION(BlueprintPure, Category = "FlowSubsystem")
+	FFlowSaveData GetLoadedSaveGame() const { return LoadedSaveGame; }
+
+	UFUNCTION(BlueprintPure, Category = "FlowSubsystem")
+	static FString GetSaveFolderDir();
 
 //////////////////////////////////////////////////////////////////////////
 // Component Registry

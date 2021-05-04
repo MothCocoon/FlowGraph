@@ -22,7 +22,7 @@ void UFlowNode_SubGraph::PreloadContent()
 {
 	if (!Asset.IsNull())
 	{
-		GetFlowSubsystem()->StartSubFlow(this, true);
+		GetFlowSubsystem()->StartSubFlow(this, FString(), true);
 	}
 }
 
@@ -65,6 +65,30 @@ void UFlowNode_SubGraph::Cleanup()
 void UFlowNode_SubGraph::ForceFinishNode()
 {
 	TriggerFirstOutput(true);
+}
+
+void UFlowNode_SubGraph::PrepareSaveData_Implementation()
+{
+	if (GetFlowAsset())
+	{
+		const TWeakObjectPtr<UFlowAsset> FlowInstance = GetFlowAsset()->GetFlowInstance(this);
+		if (FlowInstance.IsValid())
+		{
+			SavedAssetInstance = FlowInstance->SaveInstance();
+			return;
+		}
+	}
+
+	SavedAssetInstance = FFlowAssetSaveData();
+}
+
+void UFlowNode_SubGraph::OnSaveDataLoaded_Implementation()
+{
+	if (!SavedAssetInstance.InstanceName.IsEmpty() && !Asset.IsNull())
+	{
+		GetFlowSubsystem()->LoadSubFlow(this, SavedAssetInstance);
+		SavedAssetInstance = FFlowAssetSaveData();
+	}
 }
 
 #if WITH_EDITOR
