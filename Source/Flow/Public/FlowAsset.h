@@ -203,8 +203,10 @@ public:
 
 	virtual void PreloadNodes();
 
+	virtual void PreStartFlow();
 	virtual void StartFlow();
 	virtual void StartAsSubFlow(UFlowNode_SubGraph* SubGraphNode);
+	
 	virtual void FinishFlow(const bool bFlowCompleted);
 
 	// Get Flow Asset instance created by the given SubGraph node
