@@ -1,5 +1,6 @@
 #pragma once
 
+#include "FlowSave.h"
 #include "FlowTypes.generated.h"
 
 #if WITH_EDITORONLY_DATA
