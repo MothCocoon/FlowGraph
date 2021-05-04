@@ -12,8 +12,12 @@ UCLASS(Config = Editor, defaultconfig, meta = (DisplayName = "Flow Graph"))
 class UFlowGraphSettings final : public UDeveloperSettings
 {
 	GENERATED_UCLASS_BODY()
-
 	static UFlowGraphSettings* Get() { return CastChecked<UFlowGraphSettings>(UFlowGraphSettings::StaticClass()->GetDefaultObject()); }
+
+	/** Hide specific nodes from the Flow Palette without changing the source code.
+	* Requires restart after making a change. */
+	UPROPERTY(EditAnywhere, config, Category = "Nodes")
+	TArray<TSubclassOf<class UFlowNode>> NodesHiddenFromPalette;
 
 	/** Hide default pin names on simple nodes, reduces UI clutter */
 	UPROPERTY(EditAnywhere, config, Category = "Nodes")
@@ -39,7 +43,7 @@ class UFlowGraphSettings final : public UDeveloperSettings
 
 	UPROPERTY(EditAnywhere, config, Category = "Wires", meta = (ClampMin = 0.0f))
 	float InactiveWireThickness;
-	
+
 	UPROPERTY(EditAnywhere, config, Category = "Wires", meta = (ClampMin = 1.0f))
 	float RecentWireDuration;
 
@@ -61,7 +65,7 @@ class UFlowGraphSettings final : public UDeveloperSettings
 
 	UPROPERTY(EditAnywhere, config, Category = "Wires")
 	bool bHighlightOutputWiresOfSelectedNodes;
-	
+
 	UPROPERTY(EditAnywhere, config, Category = "Wires")
 	FLinearColor SelectedWireColor;
 
