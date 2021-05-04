@@ -441,21 +441,32 @@ UFlowNode* UFlowAsset::GetNodeInstance(const FGuid Guid) const
 	return Nodes.FindRef(Guid);
 }
 
-FFlowAssetSaveData UFlowAsset::SaveInstance()
+FFlowAssetSaveData UFlowAsset::SaveInstance(TArray<FFlowAssetSaveData>& SavedFlowInstances)
 {
 	FFlowAssetSaveData AssetRecord;
 
 	//FSoftObjectPtr<UFlowAsset> FlowAsset;
 	//FArchiveUObject::SerializeSoftObjectPtr(AssetRecord.AssetClass, FlowAsset);
-	AssetRecord.AssetPath = GetPathName();
 	AssetRecord.InstanceName = GetName();
+
+	PrepareGameSave();
 
 	for (const TPair<FGuid, UFlowNode*>& Node : Nodes)
 	{
 		if (Node.Value && Node.Value->ActivationState == EFlowActivationState::Active)
 		{
+			if (UFlowNode_SubGraph* SubGraphNode = Cast<UFlowNode_SubGraph>(Node.Value))
+			{
+				const TWeakObjectPtr<UFlowAsset> SubFlowInstance = GetFlowInstance(SubGraphNode);
+				if (SubFlowInstance.IsValid())
+				{
+					const FFlowAssetSaveData SubAssetRecord = SubFlowInstance->SaveInstance(SavedFlowInstances);
+					SubGraphNode->SavedAssetInstanceName = SubAssetRecord.InstanceName;
+				}
+			}
+
 			FFlowNodeSaveData NodeRecord;
-			Node.Value->SaveInstance(NodeRecord);
+			Node.Value->SaveInstance(NodeRecord, SavedFlowInstances);
 
 			AssetRecord.NodeRecords.Emplace(NodeRecord);
 		}
@@ -465,6 +476,7 @@ FFlowAssetSaveData UFlowAsset::SaveInstance()
 	FFlowArchive Ar(MemoryWriter);
 	Serialize(Ar);
 
+	SavedFlowInstances.Emplace(AssetRecord);
 	return AssetRecord;
 }
 
@@ -475,7 +487,7 @@ void UFlowAsset::LoadInstance(const FFlowAssetSaveData& AssetRecord)
 	Serialize(Ar);
 
 	PreStartFlow();
-	
+
 	for (const FFlowNodeSaveData& NodeRecord : AssetRecord.NodeRecords)
 	{
 		if (UFlowNode* Node = Nodes.FindRef(NodeRecord.NodeGuid))
@@ -483,4 +495,14 @@ void UFlowAsset::LoadInstance(const FFlowAssetSaveData& AssetRecord)
 			Node->LoadInstance(NodeRecord);
 		}
 	}
+
+	OnGameSaveLoaded();
+}
+
+void UFlowAsset::PrepareGameSave_Implementation()
+{
+}
+
+void UFlowAsset::OnGameSaveLoaded_Implementation()
+{
 }
