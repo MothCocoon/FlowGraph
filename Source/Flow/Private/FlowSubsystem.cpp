@@ -12,6 +12,8 @@
 #include "Misc/FileHelper.h"
 #include "Misc/Paths.h"
 #include "Serialization/BufferArchive.h"
+#include "Serialization/MemoryReader.h"
+#include "Serialization/MemoryWriter.h"
 
 UFlowSubsystem::UFlowSubsystem()
 	: UGameInstanceSubsystem()
