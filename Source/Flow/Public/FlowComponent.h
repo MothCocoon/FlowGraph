@@ -196,7 +196,7 @@ public:
 // SaveGame
 
 	UFUNCTION(BlueprintCallable, Category = "SaveGame")
-	virtual FFlowAssetSaveData SaveRootFlow();
+	virtual void SaveRootFlow(TArray<FFlowAssetSaveData>& SavedFlowInstances);
 
 	UFUNCTION(BlueprintCallable, Category = "SaveGame")
 	virtual void LoadRootFlow();
@@ -209,10 +209,10 @@ public:
 
 protected:
 	UFUNCTION(BlueprintNativeEvent, Category = "SaveGame")
-	void PrepareSaveData();
+	void PrepareGameSave();
 	
 	UFUNCTION(BlueprintNativeEvent, Category = "SaveGame")
-	void OnSaveDataLoaded();
+	void OnGameSaveLoaded();
 	
 //////////////////////////////////////////////////////////////////////////
 // Helpers
