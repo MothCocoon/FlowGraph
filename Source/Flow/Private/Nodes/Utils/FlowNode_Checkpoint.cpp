@@ -15,4 +15,6 @@ void UFlowNode_Checkpoint::ExecuteInput(const FName& PinName)
 	{
 		GetFlowSubsystem()->SaveGame();
 	}
+
+	TriggerFirstOutput(true);
 }

@@ -34,7 +34,7 @@ bool UFlowSubsystem::ShouldCreateSubsystem(UObject* Outer) const
 void UFlowSubsystem::Initialize(FSubsystemCollectionBase& Collection)
 {
 	// temp for testing, game should control this
-	LoadGame();
+	//LoadGame();
 }
 
 void UFlowSubsystem::Deinitialize()
@@ -54,7 +54,16 @@ void UFlowSubsystem::Deinitialize()
 	}
 }
 
-UFlowAsset* UFlowSubsystem::StartRootFlow(UObject* Owner, UFlowAsset* FlowAsset, const bool bAllowMultipleInstances /* = true */)
+void UFlowSubsystem::StartRootFlow(UObject* Owner, UFlowAsset* FlowAsset, const bool bAllowMultipleInstances /* = true */)
+{
+	UFlowAsset* NewFlow = CreateRootFlow(Owner, FlowAsset, bAllowMultipleInstances);
+	if (NewFlow)
+	{
+		NewFlow->StartFlow();
+	}
+}
+
+UFlowAsset* UFlowSubsystem::CreateRootFlow(UObject* Owner, UFlowAsset* FlowAsset, const bool bAllowMultipleInstances)
 {
 	if (RootInstances.Contains(Owner))
 	{
@@ -71,7 +80,6 @@ UFlowAsset* UFlowSubsystem::StartRootFlow(UObject* Owner, UFlowAsset* FlowAsset,
 	UFlowAsset* NewFlow = CreateFlowInstance(Owner, FlowAsset);
 	RootInstances.Add(Owner, NewFlow);
 
-	NewFlow->StartFlow();
 	return NewFlow;
 }
 
@@ -197,11 +205,7 @@ void UFlowSubsystem::SaveGame()
 	const TSet<TWeakObjectPtr<UFlowComponent>> FlowComponents = TSet<TWeakObjectPtr<UFlowComponent>>(ComponentsArray);
 	for (TWeakObjectPtr<UFlowComponent> FlowComponent : FlowComponents)
 	{
-		// temp hack, checking if Flow Component is inside World Settings
-		if (FlowComponent->bAllowMultipleInstances == false)
-		{
-			SaveGameData.SavedFlowComponents.Emplace(FlowComponent->SaveInstance());
-		}
+		SaveGameData.SavedFlowComponents.Emplace(FlowComponent->SaveInstance());
 	}
 
 	FBufferArchive BinaryData;
@@ -244,16 +248,34 @@ void UFlowSubsystem::LoadGame()
 	}
 }
 
-void UFlowSubsystem::LoadRootFlow(UObject* Owner, UFlowAsset* FlowAsset, const FFlowAssetSaveData AssetRecord)
+void UFlowSubsystem::LoadRootFlow(UObject* Owner, UFlowAsset* FlowAsset, const FString& SavedAssetInstanceName)
 {
-	UFlowAsset* LoadedInstance = StartRootFlow(Owner, FlowAsset, false);
-	LoadedInstance->LoadInstance(AssetRecord);
+	if (SavedAssetInstanceName.IsEmpty())
+	{
+		return;
+	}
+	
+	for (const FFlowAssetSaveData& AssetRecord : LoadedSaveGame.SavedRootFlowInstances)
+	{
+		if (AssetRecord.InstanceName == SavedAssetInstanceName)
+		{
+			UFlowAsset* LoadedInstance = CreateRootFlow(Owner, FlowAsset, false);
+			if (LoadedInstance)
+			{
+				LoadedInstance->LoadInstance(AssetRecord);
+			}
+			return;
+		}
+	}
 }
 
 void UFlowSubsystem::LoadSubFlow(UFlowNode_SubGraph* SubGraphNode, const FFlowAssetSaveData AssetRecord)
 {
 	UFlowAsset* LoadedInstance = StartSubFlow(SubGraphNode, AssetRecord.InstanceName);
-	LoadedInstance->LoadInstance(AssetRecord);
+	if (LoadedInstance)
+	{
+		LoadedInstance->LoadInstance(AssetRecord);
+	}
 }
 
 FString UFlowSubsystem::GetSaveFolderDir()

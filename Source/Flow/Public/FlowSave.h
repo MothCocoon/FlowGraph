@@ -48,15 +48,15 @@ struct FLOW_API FFlowComponentSaveData
 {
 	GENERATED_USTRUCT_BODY()
 
-	FString AssetPath;
-	FString InstanceName;
+	FString WorldName;
+	FString ActorInstanceName;
 
 	TArray<uint8> ComponentData;
 
 	friend FArchive& operator<<(FArchive& Ar, FFlowComponentSaveData& InComponentData)
 	{
-		Ar << InComponentData.AssetPath;
-		Ar << InComponentData.InstanceName;
+		Ar << InComponentData.WorldName;
+		Ar << InComponentData.ActorInstanceName;
 		Ar << InComponentData.ComponentData;
 		return Ar;
 	}
@@ -83,6 +83,7 @@ struct FLOW_API FFlowSaveData
 	friend FArchive& operator<<(FArchive& Ar, FFlowSaveData& FlowData)
 	{
 		Ar << FlowData.Timestamp;
+		Ar << FlowData.SavedFlowComponents;
 		Ar << FlowData.SavedRootFlowInstances;
 		return Ar;
 	}

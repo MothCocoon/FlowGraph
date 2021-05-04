@@ -285,7 +285,7 @@ void UFlowAsset::PreloadNodes()
 	}
 }
 
-void UFlowAsset::StartFlow()
+void UFlowAsset::PreStartFlow()
 {
 	ResetNodes();
 
@@ -299,6 +299,11 @@ void UFlowAsset::StartFlow()
 		TemplateAsset->BroadcastRegenerateToolbars();
 	}
 #endif
+}
+
+void UFlowAsset::StartFlow()
+{
+	PreStartFlow();
 
 	ensureAlways(StartNode);
 	RecordedNodes.Add(StartNode);
@@ -447,7 +452,7 @@ FFlowAssetSaveData UFlowAsset::SaveInstance()
 
 	for (const TPair<FGuid, UFlowNode*>& Node : Nodes)
 	{
-		if (Node.Value)
+		if (Node.Value && Node.Value->ActivationState == EFlowActivationState::Active)
 		{
 			FFlowNodeSaveData NodeRecord;
 			Node.Value->SaveInstance(NodeRecord);
@@ -469,6 +474,8 @@ void UFlowAsset::LoadInstance(const FFlowAssetSaveData& AssetRecord)
 	FFlowArchive Ar(MemoryReader);
 	Serialize(Ar);
 
+	PreStartFlow();
+	
 	for (const FFlowNodeSaveData& NodeRecord : AssetRecord.NodeRecords)
 	{
 		if (UFlowNode* Node = Nodes.FindRef(NodeRecord.NodeGuid))
