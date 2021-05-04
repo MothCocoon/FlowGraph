@@ -44,11 +44,7 @@ void UFlowComponent::BeginPlay()
 		bool bComponentLoadedFromSaveGame = false;
 		if (GetFlowSubsystem()->IsSaveGameLoaded())
 		{
-			// temp hack, checking if Flow Component is inside World Settings
-			if (bAllowMultipleInstances == false)
-			{
-				bComponentLoadedFromSaveGame = LoadInstance();
-			}
+			bComponentLoadedFromSaveGame = LoadInstance();
 		}
 
 		FlowSubsystem->RegisterComponent(this);
@@ -358,27 +354,30 @@ UFlowAsset* UFlowComponent::GetRootFlowInstance()
 
 FFlowAssetSaveData UFlowComponent::SaveRootFlow()
 {
-	SavedAssetInstance = FFlowAssetSaveData();
-
 	if (UFlowAsset* FlowAssetInstance = GetRootFlowInstance())
 	{
-		SavedAssetInstance = FlowAssetInstance->SaveInstance();
+		const FFlowAssetSaveData AssetRecord = FlowAssetInstance->SaveInstance();
+		SavedAssetInstanceName = AssetRecord.InstanceName;
+		return AssetRecord;
 	}
 
-	return SavedAssetInstance;
+	return FFlowAssetSaveData();
 }
 
 void UFlowComponent::LoadRootFlow()
 {
 	if (RootFlow && GetFlowSubsystem())
 	{
-		GetFlowSubsystem()->LoadRootFlow(this, RootFlow, SavedAssetInstance);
+		GetFlowSubsystem()->LoadRootFlow(this, RootFlow, SavedAssetInstanceName);
 	}
 }
 
 FFlowComponentSaveData UFlowComponent::SaveInstance()
 {
 	FFlowComponentSaveData ComponentRecord;
+	ComponentRecord.WorldName = GetWorld()->GetName();
+	ComponentRecord.ActorInstanceName = GetOwner()->GetName();
+
 	PrepareSaveData();
 
 	FMemoryWriter MemoryWriter(ComponentRecord.ComponentData, true);
@@ -393,15 +392,18 @@ bool UFlowComponent::LoadInstance()
 	const FFlowSaveData SaveData = GetFlowSubsystem()->GetLoadedSaveGame();
 	if (SaveData.SavedFlowComponents.Num() > 0)
 	{
-		// temp hack, checking if Flow Component is inside World Settings
-		const FFlowComponentSaveData& ComponentRecord = SaveData.SavedFlowComponents[0];
+		for (const FFlowComponentSaveData& ComponentRecord : SaveData.SavedFlowComponents)
+		{
+			if (ComponentRecord.WorldName == GetWorld()->GetName() && ComponentRecord.ActorInstanceName == GetOwner()->GetName())
+			{
+				FMemoryReader MemoryReader(ComponentRecord.ComponentData, true);
+				FFlowArchive Ar(MemoryReader);
+				Serialize(Ar);
 
-		FMemoryReader MemoryReader(ComponentRecord.ComponentData, true);
-		FFlowArchive Ar(MemoryReader);
-		Serialize(Ar);
-
-		OnSaveDataLoaded();
-		return true;
+				OnSaveDataLoaded();
+				return true;
+			}
+		}
 	}
 
 	return false;

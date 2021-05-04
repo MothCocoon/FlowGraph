@@ -185,10 +185,10 @@ public:
 protected:
 	FStreamableManager StreamableManager;
 
-#if !UE_BUILD_SHIPPING
-protected:
+	UPROPERTY(SaveGame)
 	EFlowActivationState ActivationState;
-
+	
+#if !UE_BUILD_SHIPPING
 private:
 	TMap<FName, TArray<FPinRecord>> InputRecords;
 	TMap<FName, TArray<FPinRecord>> OutputRecords;

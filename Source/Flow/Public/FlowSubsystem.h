@@ -55,8 +55,12 @@ public:
 
 	// Start the root Flow, graph that will eventually instantiate next Flow Graphs through the SubGraph node
 	UFUNCTION(BlueprintCallable, Category = "FlowSubsystem")
-	UFlowAsset* StartRootFlow(UObject* Owner, UFlowAsset* FlowAsset, const bool bAllowMultipleInstances = true);
+	void StartRootFlow(UObject* Owner, UFlowAsset* FlowAsset, const bool bAllowMultipleInstances = true);
 
+protected:
+	UFlowAsset* CreateRootFlow(UObject* Owner, UFlowAsset* FlowAsset, const bool bAllowMultipleInstances = true);
+
+public:
 	// Finish the root Flow, typically when closing world that created this flow
 	UFUNCTION(BlueprintCallable, Category = "FlowSubsystem")
 	void FinishRootFlow(UObject* Owner);
@@ -95,7 +99,7 @@ public:
 	UFUNCTION(BlueprintCallable, Category = "FlowSubsystem")
 	virtual void LoadGame();
 
-	virtual void LoadRootFlow(UObject* Owner, UFlowAsset* FlowAsset, const FFlowAssetSaveData AssetRecord);
+	virtual void LoadRootFlow(UObject* Owner, UFlowAsset* FlowAsset, const FString& SavedAssetInstanceName);
 	virtual void LoadSubFlow(UFlowNode_SubGraph* SubGraphNode, const FFlowAssetSaveData AssetRecord);
 
 	UFUNCTION(BlueprintPure, Category = "FlowSubsystem")
