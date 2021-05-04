@@ -336,6 +336,19 @@ public:
 	UFUNCTION(BlueprintCallable, Category = "FlowNode")
 	void LogError(FString Message);
 
+	UFUNCTION(BlueprintCallable, Category = "FlowNode")
+	void SaveInstance(FFlowNodeSaveData& NodeRecord);
+
+	UFUNCTION(BlueprintCallable, Category = "FlowNode")
+	void LoadInstance(const FFlowNodeSaveData& NodeRecord);
+
+protected:
+	UFUNCTION(BlueprintNativeEvent, Category = "FlowNode")
+	void PrepareSaveData();
+	
+	UFUNCTION(BlueprintNativeEvent, Category = "FlowNode")
+	void OnSaveDataLoaded();
+
 private:
 	UPROPERTY()
 	TArray<FName> InputNames_DEPRECATED;

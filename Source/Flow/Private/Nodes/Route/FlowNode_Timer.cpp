@@ -8,6 +8,8 @@ UFlowNode_Timer::UFlowNode_Timer(const FObjectInitializer& ObjectInitializer)
 	, CompletionTime(1.0f)
 	, StepTime(0.0f)
 	, SumOfSteps(0.0f)
+	, RemainingCompletionTime(0.0f)
+	, RemainingStepTime(0.0f)
 {
 #if WITH_EDITOR
 	Category = TEXT("Route");
@@ -94,6 +96,35 @@ void UFlowNode_Timer::Cleanup()
 	StepTimerHandle.Invalidate();
 
 	SumOfSteps = 0.0f;
+}
+
+void UFlowNode_Timer::PrepareSaveData_Implementation()
+{
+	if (GetWorld())
+	{
+		if (CompletionTimerHandle.IsValid())
+		{
+			RemainingCompletionTime = GetWorld()->GetTimerManager().GetTimerRemaining(CompletionTimerHandle);
+		}
+
+		if (StepTimerHandle.IsValid())
+		{
+			RemainingStepTime = GetWorld()->GetTimerManager().GetTimerRemaining(StepTimerHandle);
+		}
+	}
+}
+
+void UFlowNode_Timer::OnSaveDataLoaded_Implementation()
+{
+	if (RemainingStepTime > 0.0f)
+	{
+		GetWorld()->GetTimerManager().SetTimer(StepTimerHandle, this, &UFlowNode_Timer::OnStep, RemainingStepTime, true);
+	}
+
+	GetWorld()->GetTimerManager().SetTimer(CompletionTimerHandle, this, &UFlowNode_Timer::OnCompletion, RemainingCompletionTime, false);
+
+	RemainingStepTime = 0.0f;
+	RemainingCompletionTime = 0.0f;
 }
 
 #if WITH_EDITOR

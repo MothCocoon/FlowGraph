@@ -554,3 +554,30 @@ void UFlowNode::LogError(FString Message)
 	GEngine->AddOnScreenDebugMessage(-1, 2.0f, FColor::Red, Message);
 	UE_LOG(LogFlow, Error, TEXT("%s"), *Message);
 }
+
+void UFlowNode::SaveInstance(FFlowNodeSaveData& NodeRecord)
+{
+	NodeRecord.NodeGuid = NodeGuid;
+	PrepareSaveData();
+ 
+	FMemoryWriter MemoryWriter(NodeRecord.NodeData, true);
+	FFlowArchive Ar(MemoryWriter);
+	Serialize(Ar);
+}
+
+void UFlowNode::LoadInstance(const FFlowNodeSaveData& NodeRecord)
+{
+	FMemoryReader MemoryReader(NodeRecord.NodeData, true);
+	FFlowArchive Ar(MemoryReader);
+	Serialize(Ar);
+
+	OnSaveDataLoaded();
+}
+
+void UFlowNode::OnSaveDataLoaded_Implementation()
+{
+}
+
+void UFlowNode::PrepareSaveData_Implementation()
+{
+}

@@ -20,6 +20,9 @@ private:
 	UPROPERTY(EditAnywhere, Category = "Graph")
 	TSoftObjectPtr<UFlowAsset> Asset;
 
+	UPROPERTY(SaveGame)
+	FFlowAssetSaveData SavedAssetInstance;
+
 protected:
 	virtual void PreloadContent() override;
 	virtual void FlushContent() override;
@@ -30,6 +33,11 @@ protected:
 public:
 	virtual void ForceFinishNode() override;
 
+protected:
+	virtual void PrepareSaveData_Implementation() override;
+	virtual void OnSaveDataLoaded_Implementation() override;
+
+public:
 #if WITH_EDITOR
 	virtual FString GetNodeDescription() const override;
 	virtual UObject* GetAssetToEdit() override;

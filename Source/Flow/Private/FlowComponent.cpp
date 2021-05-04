@@ -1,4 +1,6 @@
 #include "FlowComponent.h"
+
+#include "FlowAsset.h"
 #include "FlowSettings.h"
 #include "FlowSubsystem.h"
 
@@ -37,12 +39,32 @@ void UFlowComponent::BeginPlay()
 
 	if (UFlowSubsystem* FlowSubsystem = GetFlowSubsystem())
 	{
-		FlowSubsystem->RegisterComponent(this);
-	}
+		bool bComponentLoadedFromSaveGame = false;
+		if (GetFlowSubsystem()->IsSaveGameLoaded())
+		{
+			// temp hack, checking if Flow Component is inside World Settings
+			if (bAllowMultipleInstances == false)
+			{
+				bComponentLoadedFromSaveGame = LoadInstance();
+			}
+		}
 
-	if (RootFlow && bAutoStartRootFlow)
-	{
-		StartRootFlow();
+		FlowSubsystem->RegisterComponent(this);
+
+		if (RootFlow)
+		{
+			if (bComponentLoadedFromSaveGame)
+			{
+				LoadRootFlow();
+			}
+			else
+			{
+				if (bAutoStartRootFlow)
+				{
+					StartRootFlow();
+				}
+			}
+		}
 	}
 }
 
@@ -330,6 +352,65 @@ UFlowAsset* UFlowComponent::GetRootFlowInstance()
 	}
 
 	return nullptr;
+}
+
+FFlowAssetSaveData UFlowComponent::SaveRootFlow()
+{
+	SavedAssetInstance = FFlowAssetSaveData();
+
+	if (UFlowAsset* FlowAssetInstance = GetRootFlowInstance())
+	{
+		SavedAssetInstance = FlowAssetInstance->SaveInstance();
+	}
+
+	return SavedAssetInstance;
+}
+
+void UFlowComponent::LoadRootFlow()
+{
+	if (RootFlow && GetFlowSubsystem())
+	{
+		GetFlowSubsystem()->LoadRootFlow(this, RootFlow, SavedAssetInstance);
+	}
+}
+
+FFlowComponentSaveData UFlowComponent::SaveInstance()
+{
+	FFlowComponentSaveData ComponentRecord;
+	PrepareSaveData();
+
+	FMemoryWriter MemoryWriter(ComponentRecord.ComponentData, true);
+	FFlowArchive Ar(MemoryWriter);
+	Serialize(Ar);
+
+	return ComponentRecord;
+}
+
+bool UFlowComponent::LoadInstance()
+{
+	const FFlowSaveData SaveData = GetFlowSubsystem()->GetLoadedSaveGame();
+	if (SaveData.SavedFlowComponents.Num() > 0)
+	{
+		// temp hack, checking if Flow Component is inside World Settings
+		const FFlowComponentSaveData& ComponentRecord = SaveData.SavedFlowComponents[0];
+
+		FMemoryReader MemoryReader(ComponentRecord.ComponentData, true);
+		FFlowArchive Ar(MemoryReader);
+		Serialize(Ar);
+
+		OnSaveDataLoaded();
+		return true;
+	}
+
+	return false;
+}
+
+void UFlowComponent::OnSaveDataLoaded_Implementation()
+{
+}
+
+void UFlowComponent::PrepareSaveData_Implementation()
+{
 }
 
 UFlowSubsystem* UFlowComponent::GetFlowSubsystem() const
