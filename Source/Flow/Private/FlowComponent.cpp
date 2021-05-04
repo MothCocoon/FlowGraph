@@ -55,12 +55,9 @@ void UFlowComponent::BeginPlay()
 			{
 				LoadRootFlow();
 			}
-			else
+			else if (bAutoStartRootFlow)
 			{
-				if (bAutoStartRootFlow)
-				{
-					StartRootFlow();
-				}
+				StartRootFlow();
 			}
 		}
 	}
@@ -352,23 +349,24 @@ UFlowAsset* UFlowComponent::GetRootFlowInstance()
 	return nullptr;
 }
 
-FFlowAssetSaveData UFlowComponent::SaveRootFlow()
+void UFlowComponent::SaveRootFlow(TArray<FFlowAssetSaveData>& SavedFlowInstances)
 {
 	if (UFlowAsset* FlowAssetInstance = GetRootFlowInstance())
 	{
-		const FFlowAssetSaveData AssetRecord = FlowAssetInstance->SaveInstance();
+		const FFlowAssetSaveData AssetRecord = FlowAssetInstance->SaveInstance(SavedFlowInstances);
 		SavedAssetInstanceName = AssetRecord.InstanceName;
-		return AssetRecord;
+		return;
 	}
 
-	return FFlowAssetSaveData();
+	SavedAssetInstanceName = FString();
 }
 
 void UFlowComponent::LoadRootFlow()
 {
-	if (RootFlow && GetFlowSubsystem())
+	if (RootFlow && !SavedAssetInstanceName.IsEmpty() && GetFlowSubsystem())
 	{
 		GetFlowSubsystem()->LoadRootFlow(this, RootFlow, SavedAssetInstanceName);
+		SavedAssetInstanceName = FString();
 	}
 }
 
@@ -378,7 +376,7 @@ FFlowComponentSaveData UFlowComponent::SaveInstance()
 	ComponentRecord.WorldName = GetWorld()->GetName();
 	ComponentRecord.ActorInstanceName = GetOwner()->GetName();
 
-	PrepareSaveData();
+	PrepareGameSave();
 
 	FMemoryWriter MemoryWriter(ComponentRecord.ComponentData, true);
 	FFlowArchive Ar(MemoryWriter);
@@ -400,7 +398,7 @@ bool UFlowComponent::LoadInstance()
 				FFlowArchive Ar(MemoryReader);
 				Serialize(Ar);
 
-				OnSaveDataLoaded();
+				OnGameSaveLoaded();
 				return true;
 			}
 		}
@@ -409,11 +407,11 @@ bool UFlowComponent::LoadInstance()
 	return false;
 }
 
-void UFlowComponent::OnSaveDataLoaded_Implementation()
+void UFlowComponent::PrepareGameSave_Implementation()
 {
 }
 
-void UFlowComponent::PrepareSaveData_Implementation()
+void UFlowComponent::OnGameSaveLoaded_Implementation()
 {
 }
 

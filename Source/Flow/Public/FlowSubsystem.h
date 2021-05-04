@@ -100,7 +100,7 @@ public:
 	virtual void LoadGame();
 
 	virtual void LoadRootFlow(UObject* Owner, UFlowAsset* FlowAsset, const FString& SavedAssetInstanceName);
-	virtual void LoadSubFlow(UFlowNode_SubGraph* SubGraphNode, const FFlowAssetSaveData AssetRecord);
+	virtual void LoadSubFlow(UFlowNode_SubGraph* SubGraphNode, const FString& SavedAssetInstanceName);
 
 	UFUNCTION(BlueprintPure, Category = "FlowSubsystem")
 	bool IsSaveGameLoaded() const { return LoadedSaveGame.IsValid(); }
