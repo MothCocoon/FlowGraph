@@ -45,7 +45,9 @@ class FLOW_API UFlowSubsystem : public UGameInstanceSubsystem
 	TMap<UFlowNode_SubGraph*, UFlowAsset*> InstancedSubFlows;
 
 	FStreamableManager Streamable;
-	FFlowSaveData LoadedSaveGame;
+
+	UPROPERTY()
+	UFlowSaveGame* LoadedSaveGame;
 
 public:
 	virtual bool ShouldCreateSubsystem(UObject* Outer) const override;
@@ -92,24 +94,18 @@ public:
 
 	UPROPERTY(BlueprintAssignable, Category = "FlowSubsystem")
 	FSimpleFlowEvent OnSaveGame;
-	
-	UFUNCTION(BlueprintCallable, Category = "FlowSubsystem")
-	virtual void SaveGame();
 
 	UFUNCTION(BlueprintCallable, Category = "FlowSubsystem")
-	virtual void LoadGame();
+	virtual void OnGameSaved(UFlowSaveGame* SaveGame);
+
+	UFUNCTION(BlueprintCallable, Category = "FlowSubsystem")
+	virtual void OnGameLoaded(UFlowSaveGame* SaveGame);
 
 	virtual void LoadRootFlow(UObject* Owner, UFlowAsset* FlowAsset, const FString& SavedAssetInstanceName);
 	virtual void LoadSubFlow(UFlowNode_SubGraph* SubGraphNode, const FString& SavedAssetInstanceName);
-
-	UFUNCTION(BlueprintPure, Category = "FlowSubsystem")
-	bool IsSaveGameLoaded() const { return LoadedSaveGame.IsValid(); }
 	
 	UFUNCTION(BlueprintPure, Category = "FlowSubsystem")
-	FFlowSaveData GetLoadedSaveGame() const { return LoadedSaveGame; }
-
-	UFUNCTION(BlueprintPure, Category = "FlowSubsystem")
-	static FString GetSaveFolderDir();
+	UFlowSaveGame* GetLoadedSaveGame() const { return LoadedSaveGame; }
 
 //////////////////////////////////////////////////////////////////////////
 // Component Registry

@@ -37,6 +37,7 @@ protected:
 	virtual void PostLoad() override;
 	
 	virtual void ExecuteInput(const FName& PinName) override;
+	virtual void OnLoad_Implementation() override;
 
 	virtual void StartObserving();
 	virtual void StopObserving();
@@ -58,7 +59,7 @@ protected:
 
 	UFUNCTION()
 	virtual void OnEventReceived();
-
+	
 	virtual void Cleanup() override;
 
 #if WITH_EDITOR
