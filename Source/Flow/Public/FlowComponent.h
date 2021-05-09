@@ -209,10 +209,10 @@ public:
 
 protected:
 	UFUNCTION(BlueprintNativeEvent, Category = "SaveGame")
-	void PrepareGameSave();
+	void OnSave();
 	
 	UFUNCTION(BlueprintNativeEvent, Category = "SaveGame")
-	void OnGameSaveLoaded();
+	void OnLoad();
 	
 //////////////////////////////////////////////////////////////////////////
 // Helpers

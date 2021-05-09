@@ -449,7 +449,7 @@ FFlowAssetSaveData UFlowAsset::SaveInstance(TArray<FFlowAssetSaveData>& SavedFlo
 	//FArchiveUObject::SerializeSoftObjectPtr(AssetRecord.AssetClass, FlowAsset);
 	AssetRecord.InstanceName = GetName();
 
-	PrepareGameSave();
+	OnSave();
 
 	for (const TPair<FGuid, UFlowNode*>& Node : Nodes)
 	{
@@ -466,7 +466,7 @@ FFlowAssetSaveData UFlowAsset::SaveInstance(TArray<FFlowAssetSaveData>& SavedFlo
 			}
 
 			FFlowNodeSaveData NodeRecord;
-			Node.Value->SaveInstance(NodeRecord, SavedFlowInstances);
+			Node.Value->SaveInstance(NodeRecord);
 
 			AssetRecord.NodeRecords.Emplace(NodeRecord);
 		}
@@ -496,13 +496,13 @@ void UFlowAsset::LoadInstance(const FFlowAssetSaveData& AssetRecord)
 		}
 	}
 
-	OnGameSaveLoaded();
+	OnLoad();
 }
 
-void UFlowAsset::PrepareGameSave_Implementation()
+void UFlowAsset::OnSave_Implementation()
 {
 }
 
-void UFlowAsset::OnGameSaveLoaded_Implementation()
+void UFlowAsset::OnLoad_Implementation()
 {
 }

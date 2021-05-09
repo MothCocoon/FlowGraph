@@ -16,6 +16,7 @@ protected:
 	int32 Goal;
 
 private:
+	UPROPERTY(SaveGame)
 	int32 CurrentSum;
 
 protected:

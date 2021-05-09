@@ -37,7 +37,14 @@ protected:
 	UPROPERTY()
 	UFlowLevelSequencePlayer* SequencePlayer;
 
+	UPROPERTY(SaveGame)
 	float StartTime;
+
+	UPROPERTY(SaveGame)
+	float ElapsedTime;
+
+	UPROPERTY(SaveGame)
+	float TimeDilation;
 
 public:
 #if WITH_EDITOR
@@ -54,12 +61,15 @@ public:
 
 protected:
 	virtual void ExecuteInput(const FName& PinName) override;
+	
+	virtual void OnSave_Implementation() override;
+	virtual void OnLoad_Implementation() override;
 
 private:
 	void TriggerEvent(const FString& EventName);
 
 public:
-	void OnTimeDilationUpdate(const float NewTimeDilation) const;
+	void OnTimeDilationUpdate(const float NewTimeDilation);
 
 protected:
 	UFUNCTION()

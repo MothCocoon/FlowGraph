@@ -1,6 +1,8 @@
 ﻿#include "Nodes/Utils/FlowNode_Checkpoint.h"
 #include "FlowSubsystem.h"
 
+#include "Kismet/GameplayStatics.h"
+
 UFlowNode_Checkpoint::UFlowNode_Checkpoint(const FObjectInitializer& ObjectInitializer)
 	: Super(ObjectInitializer)
 {
@@ -13,8 +15,16 @@ void UFlowNode_Checkpoint::ExecuteInput(const FName& PinName)
 {
 	if (GetFlowSubsystem())
 	{
-		GetFlowSubsystem()->SaveGame();
+		UFlowSaveGame* NewSaveGame = Cast<UFlowSaveGame>(UGameplayStatics::CreateSaveGameObject(UFlowSaveGame::StaticClass()));
+		GetFlowSubsystem()->OnGameSaved(NewSaveGame);
+
+		UGameplayStatics::SaveGameToSlot(NewSaveGame, NewSaveGame->SaveSlotName, 0);
 	}
 
+	TriggerFirstOutput(true);
+}
+
+void UFlowNode_Checkpoint::OnLoad_Implementation()
+{
 	TriggerFirstOutput(true);
 }
