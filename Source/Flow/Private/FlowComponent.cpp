@@ -42,7 +42,7 @@ void UFlowComponent::BeginPlay()
 	if (UFlowSubsystem* FlowSubsystem = GetFlowSubsystem())
 	{
 		bool bComponentLoadedFromSaveGame = false;
-		if (GetFlowSubsystem()->IsSaveGameLoaded())
+		if (GetFlowSubsystem()->GetLoadedSaveGame())
 		{
 			bComponentLoadedFromSaveGame = LoadInstance();
 		}
@@ -376,7 +376,7 @@ FFlowComponentSaveData UFlowComponent::SaveInstance()
 	ComponentRecord.WorldName = GetWorld()->GetName();
 	ComponentRecord.ActorInstanceName = GetOwner()->GetName();
 
-	PrepareGameSave();
+	OnSave();
 
 	FMemoryWriter MemoryWriter(ComponentRecord.ComponentData, true);
 	FFlowArchive Ar(MemoryWriter);
@@ -387,10 +387,10 @@ FFlowComponentSaveData UFlowComponent::SaveInstance()
 
 bool UFlowComponent::LoadInstance()
 {
-	const FFlowSaveData SaveData = GetFlowSubsystem()->GetLoadedSaveGame();
-	if (SaveData.SavedFlowComponents.Num() > 0)
+	const UFlowSaveGame* SaveGame = GetFlowSubsystem()->GetLoadedSaveGame();
+	if (SaveGame->FlowComponents.Num() > 0)
 	{
-		for (const FFlowComponentSaveData& ComponentRecord : SaveData.SavedFlowComponents)
+		for (const FFlowComponentSaveData& ComponentRecord : SaveGame->FlowComponents)
 		{
 			if (ComponentRecord.WorldName == GetWorld()->GetName() && ComponentRecord.ActorInstanceName == GetOwner()->GetName())
 			{
@@ -398,7 +398,7 @@ bool UFlowComponent::LoadInstance()
 				FFlowArchive Ar(MemoryReader);
 				Serialize(Ar);
 
-				OnGameSaveLoaded();
+				OnLoad();
 				return true;
 			}
 		}
@@ -407,11 +407,11 @@ bool UFlowComponent::LoadInstance()
 	return false;
 }
 
-void UFlowComponent::PrepareGameSave_Implementation()
+void UFlowComponent::OnSave_Implementation()
 {
 }
 
-void UFlowComponent::OnGameSaveLoaded_Implementation()
+void UFlowComponent::OnLoad_Implementation()
 {
 }
 

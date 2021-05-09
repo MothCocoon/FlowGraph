@@ -17,7 +17,9 @@ UFlowNode_PlayLevelSequence::UFlowNode_PlayLevelSequence(const FObjectInitialize
 	: Super(ObjectInitializer)
 	, LoadedSequence(nullptr)
 	, SequencePlayer(nullptr)
-	, StartTime(0)
+	, StartTime(0.0f)
+	, ElapsedTime(0.0f)
+	, TimeDilation(1.0f)
 {
 #if WITH_EDITOR
 	Category = TEXT("World");
@@ -147,15 +149,42 @@ void UFlowNode_PlayLevelSequence::ExecuteInput(const FName& PinName)
 	}
 }
 
+void UFlowNode_PlayLevelSequence::OnSave_Implementation()
+{
+	if (SequencePlayer)
+	{
+		ElapsedTime = SequencePlayer->GetCurrentTime().AsSeconds();
+	}
+}
+
+void UFlowNode_PlayLevelSequence::OnLoad_Implementation()
+{
+	if (ElapsedTime != 0.0f)
+	{
+		LoadedSequence = LoadAsset<ULevelSequence>(Sequence);
+
+		if (GetFlowSubsystem()->GetWorld() && LoadedSequence)
+		{
+			CreatePlayer(FMovieSceneSequencePlaybackSettings());
+			SequencePlayer->OnFinished.AddDynamic(this, &UFlowNode_PlayLevelSequence::OnPlaybackFinished);
+
+			SequencePlayer->SetPlayRate(TimeDilation);
+			SequencePlayer->SetPlaybackPosition(FMovieSceneSequencePlaybackParams(ElapsedTime, EUpdatePositionMethod::Jump));
+			SequencePlayer->Play();
+		}
+	}
+}
+
 void UFlowNode_PlayLevelSequence::TriggerEvent(const FString& EventName)
 {
 	TriggerOutput(*EventName, false);
 }
 
-void UFlowNode_PlayLevelSequence::OnTimeDilationUpdate(const float NewTimeDilation) const
+void UFlowNode_PlayLevelSequence::OnTimeDilationUpdate(const float NewTimeDilation)
 {
 	if (SequencePlayer)
 	{
+		TimeDilation = NewTimeDilation;
 		SequencePlayer->SetPlayRate(NewTimeDilation);
 	}
 }
@@ -187,6 +216,8 @@ void UFlowNode_PlayLevelSequence::Cleanup()
 
 	LoadedSequence = nullptr;
 	StartTime = 0.0f;
+	ElapsedTime = 0.0f;
+	TimeDilation = 1.0f;
 
 #if ENABLE_VISUAL_LOG
 	UE_VLOG(this, LogFlow, Log, TEXT("Finished playback: %s"), *Sequence.ToString());
