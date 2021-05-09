@@ -35,7 +35,7 @@ public:
 	virtual void ForceFinishNode() override;
 
 protected:
-	virtual void OnGameSaveLoaded_Implementation() override;
+	virtual void OnLoad_Implementation() override;
 
 public:
 #if WITH_EDITOR

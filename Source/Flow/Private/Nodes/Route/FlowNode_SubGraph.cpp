@@ -67,7 +67,7 @@ void UFlowNode_SubGraph::ForceFinishNode()
 	TriggerFirstOutput(true);
 }
 
-void UFlowNode_SubGraph::OnGameSaveLoaded_Implementation()
+void UFlowNode_SubGraph::OnLoad_Implementation()
 {
 	if (!SavedAssetInstanceName.IsEmpty() && !Asset.IsNull())
 	{

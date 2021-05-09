@@ -23,10 +23,10 @@ class FLOW_API UFlowNode_ExecutionMultiGate final : public UFlowNode
 	int32 StartIndex;
 
 private:
-	UPROPERTY()
+	UPROPERTY(SaveGame)
 	int32 NextOutput;
 
-	UPROPERTY()
+	UPROPERTY(SaveGame)
 	TArray<bool> Completed;
 
 public:

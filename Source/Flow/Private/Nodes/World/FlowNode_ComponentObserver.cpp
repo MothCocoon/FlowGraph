@@ -44,6 +44,14 @@ void UFlowNode_ComponentObserver::ExecuteInput(const FName& PinName)
 	}
 }
 
+void UFlowNode_ComponentObserver::OnLoad_Implementation()
+{
+	if (IdentityTags.IsValid())
+	{
+		StartObserving();
+	}
+}
+
 void UFlowNode_ComponentObserver::StartObserving()
 {
 	for (const TWeakObjectPtr<UFlowComponent>& FoundComponent : GetFlowSubsystem()->GetComponents<UFlowComponent>(IdentityTags, EGameplayContainerMatchType::Any))
