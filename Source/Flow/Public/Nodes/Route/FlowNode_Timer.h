@@ -22,8 +22,9 @@ protected:
 
 private:
 	FTimerHandle CompletionTimerHandle;
-	
 	FTimerHandle StepTimerHandle;
+
+	UPROPERTY(SaveGame)
 	float SumOfSteps;
 
 	UPROPERTY(SaveGame)
@@ -45,8 +46,8 @@ private:
 protected:
 	virtual void Cleanup() override;
 
-	virtual void PrepareGameSave_Implementation() override;
-	virtual void OnGameSaveLoaded_Implementation() override;
+	virtual void OnSave_Implementation() override;
+	virtual void OnLoad_Implementation() override;
 	
 #if WITH_EDITOR
 	virtual FString GetNodeDescription() const override;

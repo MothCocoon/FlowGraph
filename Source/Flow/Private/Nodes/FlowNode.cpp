@@ -555,10 +555,10 @@ void UFlowNode::LogError(FString Message)
 	UE_LOG(LogFlow, Error, TEXT("%s"), *Message);
 }
 
-void UFlowNode::SaveInstance(FFlowNodeSaveData& NodeRecord, TArray<FFlowAssetSaveData>& SavedFlowInstances)
+void UFlowNode::SaveInstance(FFlowNodeSaveData& NodeRecord)
 {
 	NodeRecord.NodeGuid = NodeGuid;
-	PrepareGameSave();
+	OnSave();
 
 	FMemoryWriter MemoryWriter(NodeRecord.NodeData, true);
 	FFlowArchive Ar(MemoryWriter);
@@ -571,13 +571,13 @@ void UFlowNode::LoadInstance(const FFlowNodeSaveData& NodeRecord)
 	FFlowArchive Ar(MemoryReader);
 	Serialize(Ar);
 
-	OnGameSaveLoaded();
+	OnLoad();
 }
 
-void UFlowNode::PrepareGameSave_Implementation()
+void UFlowNode::OnSave_Implementation()
 {
 }
 
-void UFlowNode::OnGameSaveLoaded_Implementation()
+void UFlowNode::OnLoad_Implementation()
 {
 }
