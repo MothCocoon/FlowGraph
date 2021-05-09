@@ -169,7 +169,7 @@ void UFlowNode_PlayLevelSequence::OnLoad_Implementation()
 			SequencePlayer->OnFinished.AddDynamic(this, &UFlowNode_PlayLevelSequence::OnPlaybackFinished);
 
 			SequencePlayer->SetPlayRate(TimeDilation);
-			SequencePlayer->SetPlaybackPosition(FMovieSceneSequencePlaybackParams(ElapsedTime, EUpdatePositionMethod::Jump));
+			SequencePlayer->SetPlaybackPosition(ElapsedTime);
 			SequencePlayer->Play();
 		}
 	}
