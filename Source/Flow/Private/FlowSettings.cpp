@@ -3,6 +3,5 @@
 UFlowSettings::UFlowSettings(const FObjectInitializer& ObjectInitializer)
 	: Super(ObjectInitializer)
 	, bCreateFlowSubsystemOnClients(true)
-	, SaveFolderName(TEXT("Saves"))
 {
 }
