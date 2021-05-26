@@ -1,6 +1,7 @@
 #pragma once
 
 #include "CoreMinimal.h"
+#include "EdGraph/EdGraphNode.h"
 #include "Engine/StreamableManager.h"
 #include "GameplayTagContainer.h"
 #include "VisualLogger/VisualLoggerDebugSnapshotInterface.h"
@@ -8,8 +9,6 @@
 #include "FlowTypes.h"
 #include "Nodes/FlowPin.h"
 #include "FlowNode.generated.h"
-
-class UEdGraphNode;
 
 class UFlowAsset;
 class UFlowSubsystem;

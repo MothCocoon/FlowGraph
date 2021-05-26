@@ -2,6 +2,7 @@
 #include "Nodes/FlowPin.h"
 
 #include "PropertyEditing.h"
+#include "Widgets/Input/SEditableTextBox.h"
 
 #define LOCTEXT_NAMESPACE "FlowPinCustomization"
 
