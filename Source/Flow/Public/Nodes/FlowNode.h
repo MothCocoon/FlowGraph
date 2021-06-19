@@ -334,7 +334,7 @@ public:
 	static FString GetProgressAsString(float Value);
 
 	UFUNCTION(BlueprintCallable, Category = "FlowNode")
-	void LogError(FString Message);
+	void LogError(FString Message) const;
 
 	UFUNCTION(BlueprintCallable, Category = "FlowNode")
 	void SaveInstance(FFlowNodeSaveData& NodeRecord);
