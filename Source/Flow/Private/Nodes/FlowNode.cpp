@@ -546,7 +546,7 @@ FString UFlowNode::GetProgressAsString(float Value)
 	return TempString;
 }
 
-void UFlowNode::LogError(FString Message)
+void UFlowNode::LogError(FString Message) const
 {
 	const FString TemplatePath = GetFlowAsset()->TemplateAsset->GetPathName();
 	Message += TEXT(" in node ") + GetName() + TEXT(", asset ") + FPaths::GetPath(TemplatePath) + TEXT("/") + FPaths::GetBaseFilename(TemplatePath);
