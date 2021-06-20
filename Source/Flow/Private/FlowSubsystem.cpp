@@ -38,7 +38,7 @@ void UFlowSubsystem::Deinitialize()
 	{
 		for (int32 i = InstancedTemplates.Num() - 1; i >= 0; i--)
 		{
-			if (InstancedTemplates.IsValidIndex(i))
+			if (InstancedTemplates.IsValidIndex(i) && InstancedTemplates[i])
 			{
 				InstancedTemplates[i]->ClearInstances();
 			}
