@@ -2,6 +2,7 @@
 
 #include "CoreMinimal.h"
 #include "FlowSave.h"
+#include "FlowTypes.h"
 #include "FlowAsset.generated.h"
 
 class UFlowNode;
@@ -41,6 +42,7 @@ class FLOW_API UFlowAsset : public UObject
 	friend class UFlowNode;
 	friend class UFlowNode_CustomOutput;
 	friend class UFlowNode_SubGraph;
+	friend class UFlowSubsystem;
 
 	friend class FFlowAssetDetails;
 
@@ -185,6 +187,8 @@ private:
 	UPROPERTY()
 	TArray<UFlowNode*> RecordedNodes;
 
+	EFlowFinishPolicy FinishPolicy;
+
 public:
 	void InitializeInstance(const TWeakObjectPtr<UObject> InOwner, UFlowAsset* InTemplateAsset);
 
@@ -205,9 +209,8 @@ public:
 
 	virtual void PreStartFlow();
 	virtual void StartFlow();
-	virtual void StartAsSubFlow(UFlowNode_SubGraph* SubGraphNode);
 	
-	virtual void FinishFlow(const bool bFlowCompleted);
+	virtual void FinishFlow(const EFlowFinishPolicy InFinishPolicy);
 
 	// Get Flow Asset instance created by the given SubGraph node
 	TWeakObjectPtr<UFlowAsset> GetFlowInstance(UFlowNode_SubGraph* SubGraphNode) const;

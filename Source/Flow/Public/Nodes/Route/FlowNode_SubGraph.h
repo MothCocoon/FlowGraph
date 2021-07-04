@@ -21,6 +21,8 @@ private:
 	UPROPERTY(EditAnywhere, Category = "Graph")
 	TSoftObjectPtr<UFlowAsset> Asset;
 
+	TWeakObjectPtr<UFlowAsset> AssetInstance;
+	
 	UPROPERTY(SaveGame)
 	FString SavedAssetInstanceName;
 
