@@ -185,7 +185,7 @@ protected:
 	FStreamableManager StreamableManager;
 
 	UPROPERTY(SaveGame)
-	EFlowActivationState ActivationState;
+	EFlowNodeState ActivationState;
 	
 #if !UE_BUILD_SHIPPING
 private:
@@ -267,15 +267,13 @@ protected:
 	UFUNCTION(BlueprintImplementableEvent, Category = "FlowNode", meta = (DisplayName = "ForceFinishNode"))
 	void K2_ForceFinishNode();
 
-#if !UE_BUILD_SHIPPING
 private:
 	void ResetRecords();
-#endif
 
 #if WITH_EDITOR
 public:
 	UFlowNode* GetInspectedInstance() const;
-	EFlowActivationState GetActivationState() const { return ActivationState; }
+	EFlowNodeState GetActivationState() const { return ActivationState; }
 
 	TMap<uint8, FPinRecord> GetWireRecords() const;
 	TArray<FPinRecord> GetPinRecords(const FName& PinName, const EEdGraphPinDirection PinDirection) const;

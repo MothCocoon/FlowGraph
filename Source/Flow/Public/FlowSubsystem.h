@@ -31,7 +31,7 @@ class FLOW_API UFlowSubsystem : public UGameInstanceSubsystem
 	friend class UFlowAsset;
 	friend class UFlowComponent;
 	friend class UFlowNode_SubGraph;
-	
+
 	// All asset templates with active instances
 	UPROPERTY()
 	TArray<UFlowAsset*> InstancedTemplates;
@@ -55,6 +55,8 @@ public:
 	virtual void Initialize(FSubsystemCollectionBase& Collection) override;
 	virtual void Deinitialize() override;
 
+	virtual void AbortActiveFlows();
+
 	// Start the root Flow, graph that will eventually instantiate next Flow Graphs through the SubGraph node
 	UFUNCTION(BlueprintCallable, Category = "FlowSubsystem")
 	void StartRootFlow(UObject* Owner, UFlowAsset* FlowAsset, const bool bAllowMultipleInstances = true);
@@ -65,11 +67,11 @@ protected:
 public:
 	// Finish the root Flow, typically when closing world that created this flow
 	UFUNCTION(BlueprintCallable, Category = "FlowSubsystem")
-	void FinishRootFlow(UObject* Owner);
+	void FinishRootFlow(UObject* Owner, const EFlowFinishPolicy FinishPolicy);
 
 private:
-	UFlowAsset* StartSubFlow(UFlowNode_SubGraph* SubGraphNode, const FString NewInstanceName = FString(), const bool bPreloading = false);
-	void FinishSubFlow(UFlowNode_SubGraph* SubGraphNode);
+	UFlowAsset* CreateSubFlow(UFlowNode_SubGraph* SubGraphNode, const FString NewInstanceName = FString(), const bool bPreloading = false);
+	void RemoveSubFlow(UFlowNode_SubGraph* SubGraphNode, const EFlowFinishPolicy FinishPolicy);
 
 	UFlowAsset* CreateFlowInstance(const TWeakObjectPtr<UObject> Owner, TSoftObjectPtr<UFlowAsset> FlowAsset, FString NewInstanceName = FString());
 	void RemoveInstancedTemplate(UFlowAsset* Template);

@@ -67,7 +67,7 @@ void UFlowComponent::EndPlay(const EEndPlayReason::Type EndPlayReason)
 {
 	if (UFlowSubsystem* FlowSubsystem = GetFlowSubsystem())
 	{
-		FlowSubsystem->FinishRootFlow(this);
+		FlowSubsystem->FinishRootFlow(this, EFlowFinishPolicy::Keep);
 		FlowSubsystem->UnregisterComponent(this);
 	}
 
@@ -331,11 +331,11 @@ void UFlowComponent::StartRootFlow()
 	}
 }
 
-void UFlowComponent::FinishRootFlow()
+void UFlowComponent::FinishRootFlow(const EFlowFinishPolicy FinishPolicy)
 {
 	if (UFlowSubsystem* FlowSubsystem = GetFlowSubsystem())
 	{
-		FlowSubsystem->FinishRootFlow(this);
+		FlowSubsystem->FinishRootFlow(this, FinishPolicy);
 	}
 }
 
