@@ -30,7 +30,7 @@ void UFlowNode_SubGraph::FlushContent()
 {
 	if (!Asset.IsNull() && GetFlowSubsystem())
 	{
-		GetFlowSubsystem()->RemoveSubFlow(this, EFlowFinishPolicy::Revert);
+		GetFlowSubsystem()->RemoveSubFlow(this, EFlowFinishPolicy::Abort);
 	}
 }
 
