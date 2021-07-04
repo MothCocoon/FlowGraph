@@ -26,9 +26,7 @@ UFlowNode::UFlowNode(const FObjectInitializer& ObjectInitializer)
 	, GraphNode(nullptr)
 #endif
 	, bPreloaded(false)
-#if !UE_BUILD_SHIPPING
-	, ActivationState(EFlowActivationState::NeverActivated)
-#endif
+	, ActivationState(EFlowNodeState::NeverActivated)
 {
 #if WITH_EDITOR
 	Category = TEXT("Uncategorized");
@@ -310,16 +308,15 @@ void UFlowNode::FlushContent()
 
 void UFlowNode::TriggerInput(const FName& PinName)
 {
-	ensureAlways(InputPins.Num() > 0);
-
-#if !UE_BUILD_SHIPPING
 	if (InputPins.Contains(PinName))
 	{
+		ActivationState = EFlowNodeState::Active;
+
+#if !UE_BUILD_SHIPPING
 		// record for debugging
 		TArray<FPinRecord>& Records = InputRecords.FindOrAdd(PinName);
 		Records.Add(FPinRecord(FApp::GetCurrentTime()));
-
-		ActivationState = EFlowActivationState::Active;
+#endif // UE_BUILD_SHIPPING
 
 #if WITH_EDITOR
 		if (GetWorld()->WorldType == EWorldType::PIE && UFlowAsset::GetFlowGraphInterface().IsValid())
@@ -330,9 +327,11 @@ void UFlowNode::TriggerInput(const FName& PinName)
 	}
 	else
 	{
+#if !UE_BUILD_SHIPPING
 		LogError(FString::Printf(TEXT("Input Pin name %s invalid"), *PinName.ToString()));
-	}
 #endif // UE_BUILD_SHIPPING
+		return;
+	}
 
 	ExecuteInput(PinName);
 }
@@ -352,8 +351,12 @@ void UFlowNode::TriggerFirstOutput(const bool bFinish)
 
 void UFlowNode::TriggerOutput(const FName& PinName, const bool bFinish /*= false*/)
 {
-	ensureAlways(OutputPins.Num() > 0);
-
+	// clean up node, if needed
+	if (bFinish)
+	{
+		Finish();
+	}
+	
 #if !UE_BUILD_SHIPPING
 	if (OutputPins.Contains(PinName))
 	{
@@ -373,12 +376,6 @@ void UFlowNode::TriggerOutput(const FName& PinName, const bool bFinish /*= false
 		LogError(FString::Printf(TEXT("Output Pin name %s invalid"), *PinName.ToString()));
 	}
 #endif // UE_BUILD_SHIPPING
-
-	// clean up node, if needed
-	if (bFinish)
-	{
-		Finish();
-	}
 
 	// call the next node
 	if (OutputPins.Contains(PinName) && Connections.Contains(PinName))
@@ -411,9 +408,15 @@ void UFlowNode::Finish()
 
 void UFlowNode::Deactivate()
 {
-#if !UE_BUILD_SHIPPING
-	ActivationState = EFlowActivationState::WasActive;
-#endif
+	if (GetFlowAsset()->FinishPolicy == EFlowFinishPolicy::Revert)
+	{
+		// this happens when the Flow progress should be reverted, i.e. prior to loading SaveGame
+		ActivationState = EFlowNodeState::Aborted;
+	}
+	else
+	{
+		ActivationState = EFlowNodeState::Completed;
+	}
 
 	Cleanup();
 }
@@ -428,14 +431,15 @@ void UFlowNode::ForceFinishNode()
 	K2_ForceFinishNode();
 }
 
-#if !UE_BUILD_SHIPPING
 void UFlowNode::ResetRecords()
 {
+	ActivationState = EFlowNodeState::NeverActivated;
+
+#if !UE_BUILD_SHIPPING
 	InputRecords.Empty();
 	OutputRecords.Empty();
-	ActivationState = EFlowActivationState::NeverActivated;
-}
 #endif
+}
 
 #if WITH_EDITOR
 UFlowNode* UFlowNode::GetInspectedInstance() const
