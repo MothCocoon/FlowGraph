@@ -34,6 +34,11 @@ void UFlowSubsystem::Initialize(FSubsystemCollectionBase& Collection)
 
 void UFlowSubsystem::Deinitialize()
 {
+	AbortActiveFlows();
+}
+
+void UFlowSubsystem::AbortActiveFlows()
+{
 	if (InstancedTemplates.Num() > 0)
 	{
 		for (int32 i = InstancedTemplates.Num() - 1; i >= 0; i--)
@@ -43,10 +48,10 @@ void UFlowSubsystem::Deinitialize()
 				InstancedTemplates[i]->ClearInstances();
 			}
 		}
-
-		InstancedTemplates.Empty();
-		InstancedSubFlows.Empty();
 	}
+
+	InstancedTemplates.Empty();
+	InstancedSubFlows.Empty();
 }
 
 void UFlowSubsystem::StartRootFlow(UObject* Owner, UFlowAsset* FlowAsset, const bool bAllowMultipleInstances /* = true */)
@@ -78,46 +83,56 @@ UFlowAsset* UFlowSubsystem::CreateRootFlow(UObject* Owner, UFlowAsset* FlowAsset
 	return NewFlow;
 }
 
-void UFlowSubsystem::FinishRootFlow(UObject* Owner)
+void UFlowSubsystem::FinishRootFlow(UObject* Owner, const EFlowFinishPolicy FinishPolicy)
 {
 	if (UFlowAsset* Instance = RootInstances.FindRef(Owner))
 	{
 		RootInstances.Remove(Owner);
-		Instance->FinishFlow(false);
+		Instance->FinishFlow(FinishPolicy);
 	}
 }
 
-UFlowAsset* UFlowSubsystem::StartSubFlow(UFlowNode_SubGraph* SubGraphNode, const FString NewInstanceName, const bool bPreloading /* = false */)
+UFlowAsset* UFlowSubsystem::CreateSubFlow(UFlowNode_SubGraph* SubGraphNode, const FString NewInstanceName, const bool bPreloading /* = false */)
 {
-	UFlowAsset* NewFlow = nullptr;
+	UFlowAsset* NewInstance = nullptr;
 
 	if (!InstancedSubFlows.Contains(SubGraphNode))
 	{
 		const TWeakObjectPtr<UObject> Owner = SubGraphNode->GetFlowAsset() ? SubGraphNode->GetFlowAsset()->GetOwner() : nullptr;
-		NewFlow = CreateFlowInstance(Owner, SubGraphNode->Asset, NewInstanceName);
-		InstancedSubFlows.Add(SubGraphNode, NewFlow);
+		NewInstance = CreateFlowInstance(Owner, SubGraphNode->Asset, NewInstanceName);
+		InstancedSubFlows.Add(SubGraphNode, NewInstance);
 
 		if (bPreloading)
 		{
-			NewFlow->PreloadNodes();
+			NewInstance->PreloadNodes();
 		}
 	}
 
 	if (!bPreloading)
 	{
-		// get instanced asset from map - in case it was already instanced by calling StartSubFlow() with bPreloading == true
-		InstancedSubFlows[SubGraphNode]->StartAsSubFlow(SubGraphNode);
+		// get instanced asset from map - in case it was already instanced by calling CreateSubFlow() with bPreloading == true
+		UFlowAsset* AssetInstance = InstancedSubFlows[SubGraphNode];
+		
+		AssetInstance->NodeOwningThisAssetInstance = SubGraphNode;
+		SubGraphNode->GetFlowAsset()->ActiveSubGraphs.Add(SubGraphNode, AssetInstance);
+		
+		AssetInstance->StartFlow();
 	}
 
-	return NewFlow;
+	return NewInstance;
 }
 
-void UFlowSubsystem::FinishSubFlow(UFlowNode_SubGraph* SubGraphNode)
+void UFlowSubsystem::RemoveSubFlow(UFlowNode_SubGraph* SubGraphNode, const EFlowFinishPolicy FinishPolicy)
 {
-	if (UFlowAsset* Instance = InstancedSubFlows.FindRef(SubGraphNode))
+	if (InstancedSubFlows.Contains(SubGraphNode))
 	{
+		UFlowAsset* AssetInstance = InstancedSubFlows[SubGraphNode];
+		AssetInstance->NodeOwningThisAssetInstance = nullptr;
+
+		SubGraphNode->GetFlowAsset()->ActiveSubGraphs.Remove(SubGraphNode);
 		InstancedSubFlows.Remove(SubGraphNode);
-		Instance->FinishFlow(false);
+
+		AssetInstance->FinishFlow(FinishPolicy);
 	}
 }
 
@@ -235,7 +250,7 @@ void UFlowSubsystem::LoadSubFlow(UFlowNode_SubGraph* SubGraphNode, const FString
 	{
 		if (AssetRecord.InstanceName == SavedAssetInstanceName)
 		{
-			UFlowAsset* LoadedInstance = StartSubFlow(SubGraphNode, SavedAssetInstanceName);
+			UFlowAsset* LoadedInstance = CreateSubFlow(SubGraphNode, SavedAssetInstanceName);
 			if (LoadedInstance)
 			{
 				LoadedInstance->LoadInstance(AssetRecord);
