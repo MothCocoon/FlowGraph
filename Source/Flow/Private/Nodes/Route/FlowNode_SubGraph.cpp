@@ -20,17 +20,17 @@ UFlowNode_SubGraph::UFlowNode_SubGraph(const FObjectInitializer& ObjectInitializ
 
 void UFlowNode_SubGraph::PreloadContent()
 {
-	if (!Asset.IsNull())
+	if (!Asset.IsNull() && GetFlowSubsystem())
 	{
-		GetFlowSubsystem()->StartSubFlow(this, FString(), true);
+		GetFlowSubsystem()->CreateSubFlow(this, FString(), true);
 	}
 }
 
 void UFlowNode_SubGraph::FlushContent()
 {
-	if (!Asset.IsNull())
+	if (!Asset.IsNull() && GetFlowSubsystem())
 	{
-		GetFlowSubsystem()->FinishSubFlow(this);
+		GetFlowSubsystem()->RemoveSubFlow(this, EFlowFinishPolicy::Revert);
 	}
 }
 
@@ -45,7 +45,10 @@ void UFlowNode_SubGraph::ExecuteInput(const FName& PinName)
 	{
 		if (PinName == TEXT("Start"))
 		{
-			GetFlowSubsystem()->StartSubFlow(this);
+			if (GetFlowSubsystem())
+			{
+				GetFlowSubsystem()->CreateSubFlow(this);
+			}
 		}
 		else
 		{
@@ -56,9 +59,9 @@ void UFlowNode_SubGraph::ExecuteInput(const FName& PinName)
 
 void UFlowNode_SubGraph::Cleanup()
 {
-	if (!Asset.IsNull())
+	if (!Asset.IsNull() && GetFlowSubsystem())
 	{
-		GetFlowSubsystem()->FinishSubFlow(this);
+		GetFlowSubsystem()->RemoveSubFlow(this, EFlowFinishPolicy::Keep);
 	}
 }
 
@@ -128,7 +131,7 @@ TArray<FName> UFlowNode_SubGraph::GetContextOutputs()
 void UFlowNode_SubGraph::PostLoad()
 {
 	Super::PostLoad();
-	
+
 	SubscribeToAssetChanges();
 }
 

@@ -78,12 +78,14 @@ const FSlateBrush* SFlowGraphNode::GetShadowBrush(bool bSelected) const
 	{
 		switch (FlowGraphNode->GetActivationState())
 		{
-			case EFlowActivationState::NeverActivated:
+			case EFlowNodeState::NeverActivated:
 				return SGraphNode::GetShadowBrush(bSelected);
-			case EFlowActivationState::Active:
+			case EFlowNodeState::Active:
 				return FFlowEditorStyle::Get()->GetBrush(TEXT("Flow.Node.ActiveShadow"));
-			case EFlowActivationState::WasActive:
+			case EFlowNodeState::Completed:
+			case EFlowNodeState::Aborted:
 				return FFlowEditorStyle::Get()->GetBrush(TEXT("Flow.Node.WasActiveShadow"));
+			default: ;
 		}
 	}
 

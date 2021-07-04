@@ -17,11 +17,19 @@ enum class EFlowNodeStyle : uint8
 #endif
 
 UENUM(BlueprintType)
-enum class EFlowActivationState : uint8
+enum class EFlowNodeState : uint8
 {
 	NeverActivated,
 	Active,
-	WasActive
+	Completed,
+	Aborted
+};
+
+UENUM(BlueprintType)
+enum class EFlowFinishPolicy : uint8
+{
+	Keep,
+	Revert
 };
 
 UENUM(BlueprintType)
