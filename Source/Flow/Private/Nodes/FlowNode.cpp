@@ -408,9 +408,8 @@ void UFlowNode::Finish()
 
 void UFlowNode::Deactivate()
 {
-	if (GetFlowAsset()->FinishPolicy == EFlowFinishPolicy::Revert)
+	if (GetFlowAsset()->FinishPolicy == EFlowFinishPolicy::Abort)
 	{
-		// this happens when the Flow progress should be reverted, i.e. prior to loading SaveGame
 		ActivationState = EFlowNodeState::Aborted;
 	}
 	else
