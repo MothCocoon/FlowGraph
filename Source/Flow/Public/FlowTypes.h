@@ -29,7 +29,7 @@ UENUM(BlueprintType)
 enum class EFlowFinishPolicy : uint8
 {
 	Keep,
-	Revert
+	Abort
 };
 
 UENUM(BlueprintType)
