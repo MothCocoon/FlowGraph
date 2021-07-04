@@ -596,7 +596,7 @@ UFlowNode* UFlowGraphNode::GetInspectedNodeInstance() const
 	return FlowNode ? FlowNode->GetInspectedInstance() : nullptr;
 }
 
-EFlowActivationState UFlowGraphNode::GetActivationState() const
+EFlowNodeState UFlowGraphNode::GetActivationState() const
 {
 	if (FlowNode)
 	{
@@ -606,7 +606,7 @@ EFlowActivationState UFlowGraphNode::GetActivationState() const
 		}
 	}
 
-	return EFlowActivationState::NeverActivated;
+	return EFlowNodeState::NeverActivated;
 }
 
 FString UFlowGraphNode::GetStatusString() const

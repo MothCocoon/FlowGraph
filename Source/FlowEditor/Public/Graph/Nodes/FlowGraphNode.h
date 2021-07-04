@@ -140,7 +140,7 @@ public:
 	UFlowNode* GetInspectedNodeInstance() const;
 
 	// used for highlighting active nodes of the inspected asset instance
-	EFlowActivationState GetActivationState() const;
+	EFlowNodeState GetActivationState() const;
 
 	// information displayed while node is active
 	FString GetStatusString() const;
