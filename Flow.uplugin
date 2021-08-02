@@ -9,7 +9,7 @@
 	"DocsURL" : "https://github.com/MothCocoon/FlowGraph/wiki",
 	"MarketplaceURL" : "",
 	"SupportURL": "https://discord.gg/zMtMQ2vUUa",
-	"EngineVersion": "4.26.0",
+	"EngineVersion": "4.27.0",
 	"EnabledByDefault" : true,
 	"CanContainContent" : false,
 	"IsBetaVersion" : false,
