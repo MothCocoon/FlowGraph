@@ -60,9 +60,9 @@ void UFlowNode_ComponentObserver::StartObserving()
 	}
 
 	GetFlowSubsystem()->OnComponentRegistered.AddDynamic(this, &UFlowNode_ComponentObserver::OnComponentRegistered);
-	GetFlowSubsystem()->OnComponentTagAdded.AddDynamic(this, &UFlowNode_ComponentObserver::OnComponentTagAdded);
-
 	GetFlowSubsystem()->OnComponentUnregistered.AddDynamic(this, &UFlowNode_ComponentObserver::OnComponentUnregistered);
+
+	GetFlowSubsystem()->OnComponentTagAdded.AddDynamic(this, &UFlowNode_ComponentObserver::OnComponentTagAdded);
 	GetFlowSubsystem()->OnComponentTagRemoved.AddDynamic(this, &UFlowNode_ComponentObserver::OnComponentTagRemoved);
 }
 
@@ -70,6 +70,9 @@ void UFlowNode_ComponentObserver::StopObserving()
 {
 	GetFlowSubsystem()->OnComponentRegistered.RemoveAll(this);
 	GetFlowSubsystem()->OnComponentUnregistered.RemoveAll(this);
+
+	GetFlowSubsystem()->OnComponentTagAdded.RemoveAll(this);
+	GetFlowSubsystem()->OnComponentTagRemoved.RemoveAll(this);
 }
 
 void UFlowNode_ComponentObserver::OnComponentRegistered(UFlowComponent* Component)
@@ -109,7 +112,7 @@ void UFlowNode_ComponentObserver::OnComponentTagRemoved(UFlowComponent* Componen
 void UFlowNode_ComponentObserver::OnEventReceived()
 {
 	TriggerFirstOutput(false);
-	
+
 	SuccessCount++;
 	if (SuccessLimit > 0 && SuccessCount == SuccessLimit)
 	{
@@ -121,9 +124,12 @@ void UFlowNode_ComponentObserver::Cleanup()
 {
 	StopObserving();
 
-	for (const TPair<TWeakObjectPtr<AActor>, TWeakObjectPtr<UFlowComponent>>& RegisteredActor : RegisteredActors)
+	if (RegisteredActors.Num() > 0)
 	{
-		ForgetActor(RegisteredActor.Key, RegisteredActor.Value);
+		for (const TPair<TWeakObjectPtr<AActor>, TWeakObjectPtr<UFlowComponent>>& RegisteredActor : RegisteredActors)
+		{
+			ForgetActor(RegisteredActor.Key, RegisteredActor.Value);
+		}
 	}
 	RegisteredActors.Empty();
 
