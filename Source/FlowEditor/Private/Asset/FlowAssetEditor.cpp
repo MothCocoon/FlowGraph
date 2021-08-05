@@ -188,43 +188,33 @@ void FFlowAssetEditor::InitFlowAssetEditor(const EToolkitMode::Type Mode, const 
 	CreateWidgets();
 	BindGraphCommands();
 
-	const TSharedRef<FTabManager::FLayout> StandaloneDefaultLayout = FTabManager::NewLayout("FlowAssetEditor_Layout_v2")
+	const TSharedRef<FTabManager::FLayout> StandaloneDefaultLayout = FTabManager::NewLayout("FlowAssetEditor_Layout_v3")
 		->AddArea
 		(
-			FTabManager::NewPrimaryArea()->SetOrientation(Orient_Vertical)
+			FTabManager::NewPrimaryArea()->SetOrientation(Orient_Horizontal)
 				->Split
-					(
-						FTabManager::NewStack()
-						->SetSizeCoefficient(0.1f)
-						->AddTab(GetToolbarTabId(), ETabState::OpenedTab)->SetHideTabWell(true)
-					)
+				(
+					FTabManager::NewStack()
+					->SetSizeCoefficient(0.225f)
+					->AddTab(DetailsTab, ETabState::OpenedTab)
+				)
 				->Split
-					(
-						FTabManager::NewSplitter()->SetOrientation(Orient_Horizontal)->SetSizeCoefficient(0.9f)
-							->Split
-							(
-								FTabManager::NewStack()
-								->SetSizeCoefficient(0.225f)
-								->AddTab(DetailsTab, ETabState::OpenedTab)
-							)
-							->Split
-							(
-								FTabManager::NewStack()
-								->SetSizeCoefficient(0.65f)
-								->AddTab(GraphTab, ETabState::OpenedTab)->SetHideTabWell(true)
-							)
-							->Split
-							(
-								FTabManager::NewStack()
-								->SetSizeCoefficient(0.125f)
-								->AddTab(PaletteTab, ETabState::OpenedTab)
-							)
-					)
+				(
+					FTabManager::NewStack()
+					->SetSizeCoefficient(0.65f)
+					->AddTab(GraphTab, ETabState::OpenedTab)->SetHideTabWell(true)
+				)
+				->Split
+				(
+					FTabManager::NewStack()
+					->SetSizeCoefficient(0.125f)
+					->AddTab(PaletteTab, ETabState::OpenedTab)
+				)
 		);
 
 	const bool bCreateDefaultStandaloneMenu = true;
 	const bool bCreateDefaultToolbar = true;
-	FAssetEditorToolkit::InitAssetEditor(Mode, InitToolkitHost, TEXT("FlowEditorApp"), StandaloneDefaultLayout, bCreateDefaultStandaloneMenu, bCreateDefaultToolbar, ObjectToEdit, false);
+	InitAssetEditor(Mode, InitToolkitHost, TEXT("FlowEditorApp"), StandaloneDefaultLayout, bCreateDefaultStandaloneMenu, bCreateDefaultToolbar, ObjectToEdit, false);
 
 	FFlowToolbarCommands::Register();
 
