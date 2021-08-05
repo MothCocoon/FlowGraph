@@ -4,9 +4,7 @@
 #include "FlowWorldSettings.h"
 
 #include "Editor.h"
-#include "Framework/MultiBox/MultiBoxDefs.h"
 #include "PropertyCustomizationHelpers.h"
-#include "SLevelOfDetailBranchNode.h"
 
 #define LOCTEXT_NAMESPACE "SLevelEditorFlow"
 
@@ -33,7 +31,9 @@ void SLevelEditorFlow::CreateFlowWidget()
 		FlowPath = FName();
 	}
 
-	const TSharedRef<SWidget> FlowWidget = SNew(SHorizontalBox)
+	ChildSlot
+	[
+		SNew(SHorizontalBox)
 		+ SHorizontalBox::Slot()
 			.AutoWidth()
 			[
@@ -42,31 +42,6 @@ void SLevelEditorFlow::CreateFlowWidget()
 					.DisplayThumbnail(false)
 					.OnObjectChanged(this, &SLevelEditorFlow::OnFlowChanged)
 					.ObjectPath(this, &SLevelEditorFlow::GetFlowPath)
-			];
-
-	ChildSlot
-	[
-		SNew(SLevelOfDetailBranchNode)
-			.UseLowDetailSlot(FMultiBoxSettings::UseSmallToolBarIcons)
-			.LowDetail()
-			[
-				SNew(SHorizontalBox)
-				+ SHorizontalBox::Slot()
-					.AutoWidth()
-					[
-						FlowWidget
-					]
-			]
-			.HighDetail()
-			[
-				SNew(SVerticalBox)
-				+ SVerticalBox::Slot()
-					.AutoHeight()
-					.VAlign(VAlign_Top)
-					.Padding(5.0f)
-					[
-						FlowWidget
-					]
 			]
 	];
 }
