@@ -38,6 +38,9 @@ class UFlowGraphSettings final : public UDeveloperSettings
 	UPROPERTY(EditAnywhere, config, Category = "NodePopups")
 	FLinearColor NodePreloadedBackground;
 
+	UPROPERTY(EditAnywhere, config, Category = "World")
+	bool bShowAssetToolbarAboveLevelEditor;
+	
 	UPROPERTY(EditAnywhere, config, Category = "Wires")
 	FLinearColor InactiveWireColor;
 
