@@ -5,6 +5,7 @@
 #include "Asset/FlowAssetDetails.h"
 #include "Asset/FlowAssetEditor.h"
 #include "Graph/FlowGraphConnectionDrawingPolicy.h"
+#include "Graph/FlowGraphSettings.h"
 #include "LevelEditor/SLevelEditorFlow.h"
 #include "MovieScene/FlowTrackEditor.h"
 #include "Nodes/AssetTypeActions_FlowNodeBlueprint.h"
@@ -47,11 +48,14 @@ void FFlowEditorModule::StartupModule()
 	FlowAssetExtensibility.Init();
 
 	// add Flow Toolbar
-	if (FLevelEditorModule* LevelEditorModule = FModuleManager::GetModulePtr<FLevelEditorModule>(TEXT("LevelEditor")))
+	if (UFlowGraphSettings::Get()->bShowAssetToolbarAboveLevelEditor)
 	{
-		TSharedPtr<FExtender> MenuExtender = MakeShareable(new FExtender());
-		MenuExtender->AddToolBarExtension("Game", EExtensionHook::After, nullptr, FToolBarExtensionDelegate::CreateRaw(this, &FFlowEditorModule::CreateFlowToolbar));
-		LevelEditorModule->GetToolBarExtensibilityManager()->AddExtender(MenuExtender);
+		if (FLevelEditorModule* LevelEditorModule = FModuleManager::GetModulePtr<FLevelEditorModule>(TEXT("LevelEditor")))
+		{
+			TSharedPtr<FExtender> MenuExtender = MakeShareable(new FExtender());
+			MenuExtender->AddToolBarExtension("Game", EExtensionHook::After, nullptr, FToolBarExtensionDelegate::CreateRaw(this, &FFlowEditorModule::CreateFlowToolbar));
+			LevelEditorModule->GetToolBarExtensibilityManager()->AddExtender(MenuExtender);
+		}
 	}
 
 	// register Flow sequence track
