@@ -107,7 +107,7 @@ void SFlowBreadcrumb::Construct(const FArguments& InArgs, TWeakPtr<FFlowAssetEdi
 			.HAlign(HAlign_Right)
 			.VAlign(VAlign_Center)
 			.AutoHeight()
-			.Padding(25.0f, 0.0f)
+			.Padding(25.0f, 10.0f)
 			[
 				BreadcrumbTrail.ToSharedRef()
 			]
