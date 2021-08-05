@@ -53,7 +53,7 @@ void FFlowEditorModule::StartupModule()
 		if (FLevelEditorModule* LevelEditorModule = FModuleManager::GetModulePtr<FLevelEditorModule>(TEXT("LevelEditor")))
 		{
 			TSharedPtr<FExtender> MenuExtender = MakeShareable(new FExtender());
-			MenuExtender->AddToolBarExtension("Game", EExtensionHook::After, nullptr, FToolBarExtensionDelegate::CreateRaw(this, &FFlowEditorModule::CreateFlowToolbar));
+			MenuExtender->AddToolBarExtension("Play", EExtensionHook::After, nullptr, FToolBarExtensionDelegate::CreateRaw(this, &FFlowEditorModule::CreateFlowToolbar));
 			LevelEditorModule->GetToolBarExtensibilityManager()->AddExtender(MenuExtender);
 		}
 	}
