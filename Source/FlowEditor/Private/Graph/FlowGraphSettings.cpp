@@ -7,6 +7,7 @@ UFlowGraphSettings::UFlowGraphSettings(const FObjectInitializer& ObjectInitializ
 	, NodeDescriptionBackground(FLinearColor(0.0625f, 0.0625f, 0.0625f, 1.0f))
 	, NodeStatusBackground(FLinearColor(0.12f, 0.12f, 0.12f, 1.0f))
 	, NodePreloadedBackground(FLinearColor(0.12f, 0.12f, 0.12f, 1.0f))
+	, bShowAssetToolbarAboveLevelEditor(true)
 	, InactiveWireColor(FLinearColor(0.364f, 0.364f, 0.364f, 1.0f))
 	, InactiveWireThickness(1.5f)
 	, RecentWireDuration(3.0f)
