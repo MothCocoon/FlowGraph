@@ -137,7 +137,6 @@ TSharedRef<SDockTab> FFlowAssetEditor::SpawnTab_Details(const FSpawnTabArgs& Arg
 	check(Args.GetTabId() == DetailsTab);
 
 	return SNew(SDockTab)
-		.Icon(FEditorStyle::GetBrush("LevelEditor.Tabs.Details"))
 		.Label(LOCTEXT("FlowDetailsTitle", "Details"))
 		[
 			DetailsView.ToSharedRef()
@@ -164,11 +163,10 @@ TSharedRef<SDockTab> FFlowAssetEditor::SpawnTab_Palette(const FSpawnTabArgs& Arg
 	check(Args.GetTabId() == PaletteTab);
 
 	return SNew(SDockTab)
-		.Icon(FEditorStyle::GetBrush("Kismet.Tabs.Palette"))
 		.Label(LOCTEXT("FlowPaletteTitle", "Palette"))
-	[
-		Palette.ToSharedRef()
-	];
+		[
+			Palette.ToSharedRef()
+		];
 }
 
 void FFlowAssetEditor::InitFlowAssetEditor(const EToolkitMode::Type Mode, const TSharedPtr<class IToolkitHost>& InitToolkitHost, UObject* ObjectToEdit)

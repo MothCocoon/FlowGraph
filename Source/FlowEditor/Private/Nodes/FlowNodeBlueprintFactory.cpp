@@ -147,7 +147,7 @@ private:
 		Options.DisplayMode = EClassViewerDisplayMode::TreeView;
 		Options.bIsBlueprintBaseOnly = true;
 
-		TSharedPtr<FFlowNodeBlueprintParentFilter> Filter = MakeShareable(new FFlowNodeBlueprintParentFilter);
+		const TSharedPtr<FFlowNodeBlueprintParentFilter> Filter = MakeShareable(new FFlowNodeBlueprintParentFilter);
 
 		// All child child classes of UFlowNode are valid
 		Filter->AllowedChildrenOfClasses.Add(UFlowNode::StaticClass());
@@ -240,7 +240,7 @@ UFlowNodeBlueprintFactory::UFlowNodeBlueprintFactory(const FObjectInitializer& O
 
 bool UFlowNodeBlueprintFactory::ConfigureProperties()
 {
-	TSharedRef<SFlowNodeBlueprintCreateDialog> Dialog = SNew(SFlowNodeBlueprintCreateDialog);
+	const TSharedRef<SFlowNodeBlueprintCreateDialog> Dialog = SNew(SFlowNodeBlueprintCreateDialog);
 	return Dialog->ConfigureProperties(this);
 }
 
