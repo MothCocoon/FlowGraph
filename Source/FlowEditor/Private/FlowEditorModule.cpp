@@ -15,8 +15,6 @@
 #include "Nodes/Customizations/FlowNode_CustomOutputDetails.h"
 #include "Nodes/Customizations/FlowNode_PlayLevelSequenceDetails.h"
 
-#include "Nodes/Customizations/FlowPinCustomization.h"
-
 #include "FlowAsset.h"
 #include "Nodes/Route/FlowNode_CustomInput.h"
 #include "Nodes/Route/FlowNode_CustomOutput.h"
@@ -52,7 +50,7 @@ void FFlowEditorModule::StartupModule()
 	{
 		if (FLevelEditorModule* LevelEditorModule = FModuleManager::GetModulePtr<FLevelEditorModule>(TEXT("LevelEditor")))
 		{
-			TSharedPtr<FExtender> MenuExtender = MakeShareable(new FExtender());
+			const TSharedPtr<FExtender> MenuExtender = MakeShareable(new FExtender());
 			MenuExtender->AddToolBarExtension("Game", EExtensionHook::After, nullptr, FToolBarExtensionDelegate::CreateRaw(this, &FFlowEditorModule::CreateFlowToolbar));
 			LevelEditorModule->GetToolBarExtensibilityManager()->AddExtender(MenuExtender);
 		}
@@ -141,8 +139,6 @@ void FFlowEditorModule::UnregisterAssets()
 void FFlowEditorModule::RegisterPropertyCustomizations() const
 {
 	FPropertyEditorModule& PropertyModule = FModuleManager::LoadModuleChecked<FPropertyEditorModule>("PropertyEditor");
-
-	PropertyModule.RegisterCustomPropertyTypeLayout("FlowPin", FOnGetPropertyTypeCustomizationInstance::CreateStatic(&FFlowPinCustomization::MakeInstance));
 
 	// notify on customization change
 	PropertyModule.NotifyCustomizationModuleChanged();
