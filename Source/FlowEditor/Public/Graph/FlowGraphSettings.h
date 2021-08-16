@@ -14,6 +14,21 @@ class UFlowGraphSettings final : public UDeveloperSettings
 	GENERATED_UCLASS_BODY()
 	static UFlowGraphSettings* Get() { return CastChecked<UFlowGraphSettings>(UFlowGraphSettings::StaticClass()->GetDefaultObject()); }
 
+	/** Show Flow Asset in Flow category of "Create Asset" menu?
+	* Requires restart after making a change. */
+	UPROPERTY(EditAnywhere, config, Category = "Default UI")
+	bool bExposeFlowAssetCreation;
+
+	/** Show Flow Node blueprint in Flow category of "Create Asset" menu?
+	* Requires restart after making a change. */
+	UPROPERTY(EditAnywhere, config, Category = "Default UI")
+	bool bExposeFlowNodeCreation;
+	
+	/** Show Flow Asset toolbar?
+	* Requires restart after making a change. */
+	UPROPERTY(EditAnywhere, config, Category = "Default UI")
+	bool bShowAssetToolbarAboveLevelEditor;
+	
 	/** Hide specific nodes from the Flow Palette without changing the source code.
 	* Requires restart after making a change. */
 	UPROPERTY(EditAnywhere, config, Category = "Nodes")
@@ -37,9 +52,6 @@ class UFlowGraphSettings final : public UDeveloperSettings
 
 	UPROPERTY(EditAnywhere, config, Category = "NodePopups")
 	FLinearColor NodePreloadedBackground;
-
-	UPROPERTY(EditAnywhere, config, Category = "World")
-	bool bShowAssetToolbarAboveLevelEditor;
 	
 	UPROPERTY(EditAnywhere, config, Category = "Wires")
 	FLinearColor InactiveWireColor;
