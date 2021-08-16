@@ -1,6 +1,7 @@
 #include "Nodes/AssetTypeActions_FlowNodeBlueprint.h"
 #include "Nodes/FlowNodeBlueprintFactory.h"
 #include "FlowEditorModule.h"
+#include "Graph/FlowGraphSettings.h"
 
 #include "Nodes/FlowNodeBlueprint.h"
 
@@ -13,7 +14,7 @@ FText FAssetTypeActions_FlowNodeBlueprint::GetName() const
 
 uint32 FAssetTypeActions_FlowNodeBlueprint::GetCategories()
 {
-	return FFlowEditorModule::FlowAssetCategory;
+	return UFlowGraphSettings::Get()->bExposeFlowNodeCreation ? FFlowEditorModule::FlowAssetCategory : 0;
 }
 
 UClass* FAssetTypeActions_FlowNodeBlueprint::GetSupportedClass() const
