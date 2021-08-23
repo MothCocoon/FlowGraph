@@ -6,6 +6,7 @@
 #include "FlowTypes.h"
 
 #include "Engine/Engine.h"
+#include "Engine/ViewportStatsSubsystem.h"
 #include "Engine/World.h"
 #include "Misc/App.h"
 #include "Misc/Paths.h"
@@ -15,10 +16,10 @@
 FFlowPin UFlowNode::DefaultInputPin(TEXT("In"));
 FFlowPin UFlowNode::DefaultOutputPin(TEXT("Out"));
 
-FString UFlowNode::MissingIdentityTag = TEXT("Missing Identity Tag!");
-FString UFlowNode::MissingNotifyTag = TEXT("Missing Notify Tag!");
-FString UFlowNode::MissingClass = TEXT("Missing class!");
-FString UFlowNode::NoActorsFound = TEXT("No actors found!");
+FString UFlowNode::MissingIdentityTag = TEXT("Missing Identity Tag");
+FString UFlowNode::MissingNotifyTag = TEXT("Missing Notify Tag");
+FString UFlowNode::MissingClass = TEXT("Missing class");
+FString UFlowNode::NoActorsFound = TEXT("No actors found");
 
 UFlowNode::UFlowNode(const FObjectInitializer& ObjectInitializer)
 	: Super(ObjectInitializer)
@@ -356,7 +357,7 @@ void UFlowNode::TriggerOutput(const FName& PinName, const bool bFinish /*= false
 	{
 		Finish();
 	}
-	
+
 #if !UE_BUILD_SHIPPING
 	if (OutputPins.Contains(PinName))
 	{
@@ -551,12 +552,31 @@ FString UFlowNode::GetProgressAsString(float Value)
 	return TempString;
 }
 
-void UFlowNode::LogError(FString Message) const
+void UFlowNode::LogError(FString Message, const EFlowOnScreenMessageType OnScreenMessageType) const
 {
 	const FString TemplatePath = GetFlowAsset()->TemplateAsset->GetPathName();
 	Message += TEXT(" in node ") + GetName() + TEXT(", asset ") + FPaths::GetPath(TemplatePath) + TEXT("/") + FPaths::GetBaseFilename(TemplatePath);
 
-	GEngine->AddOnScreenDebugMessage(-1, 2.0f, FColor::Red, Message);
+	if (OnScreenMessageType == EFlowOnScreenMessageType::Permanent)
+	{
+		if (GetWorld())
+		{
+			if (UViewportStatsSubsystem* StatsSubsystem = GetWorld()->GetSubsystem<UViewportStatsSubsystem>())
+			{
+				StatsSubsystem->AddDisplayDelegate([this, Message](FText& OutText, FLinearColor& OutColor)
+				{
+					OutText = FText::FromString(Message);
+					OutColor = FLinearColor::Red;
+					return !IsPendingKill() && ActivationState != EFlowNodeState::NeverActivated;
+				});
+			}
+		}
+	}
+	else
+	{
+		GEngine->AddOnScreenDebugMessage(-1, 2.0f, FColor::Red, Message);
+	}
+
 	UE_LOG(LogFlow, Error, TEXT("%s"), *Message);
 }
 
