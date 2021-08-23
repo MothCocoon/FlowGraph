@@ -41,3 +41,10 @@ enum class EFlowNetMode : uint8
 	ServerOnly			UMETA(ToolTip = "Executed on the server"),
 	SinglePlayerOnly	UMETA(ToolTip = "Executed only in the single player, not available in multiplayer.")
 };
+
+UENUM(BlueprintType)
+enum class EFlowOnScreenMessageType : uint8
+{
+	Temporary,
+	Permanent
+};
