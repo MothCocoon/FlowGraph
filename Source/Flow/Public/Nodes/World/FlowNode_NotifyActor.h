@@ -20,6 +20,9 @@ protected:
 	UPROPERTY(EditAnywhere, Category = "ObservedComponent")
 	FGameplayTagContainer NotifyTags;
 
+	UPROPERTY(EditAnywhere, Category = "ObservedComponent")
+	EFlowNetMode NetMode;
+
 	virtual void PostLoad() override;
 	
 	virtual void ExecuteInput(const FName& PinName) override;
