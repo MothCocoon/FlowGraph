@@ -321,7 +321,7 @@ void UFlowSubsystem::UnregisterComponent(UFlowComponent* Component)
 
 void UFlowSubsystem::OnIdentityTagRemoved(UFlowComponent* Component, const FGameplayTag& RemovedTag)
 {
-	FlowComponentRegistry.Emplace(RemovedTag, Component);
+	FlowComponentRegistry.Remove(RemovedTag, Component);
 
 	// broadcast OnComponentUnregistered only if this component isn't present in the registry anymore
 	if (Component->IdentityTags.Num() > 0)
