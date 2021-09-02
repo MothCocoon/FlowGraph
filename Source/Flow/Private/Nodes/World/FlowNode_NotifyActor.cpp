@@ -6,6 +6,7 @@
 
 UFlowNode_NotifyActor::UFlowNode_NotifyActor(const FObjectInitializer& ObjectInitializer)
 	: Super(ObjectInitializer)
+	, NetMode(EFlowNetMode::Authority)
 {
 #if WITH_EDITOR
 	Category = TEXT("Notifies");
@@ -30,11 +31,11 @@ void UFlowNode_NotifyActor::PostLoad()
 
 void UFlowNode_NotifyActor::ExecuteInput(const FName& PinName)
 {
-	if (UFlowSubsystem* FlowSubsystem = GetWorld()->GetGameInstance()->GetSubsystem<UFlowSubsystem>())
+	if (const UFlowSubsystem* FlowSubsystem = GetWorld()->GetGameInstance()->GetSubsystem<UFlowSubsystem>())
 	{
-		for (TWeakObjectPtr<UFlowComponent>& Component : FlowSubsystem->GetComponents<UFlowComponent>(IdentityTags, EGameplayContainerMatchType::Any))
+		for (const TWeakObjectPtr<UFlowComponent>& Component : FlowSubsystem->GetComponents<UFlowComponent>(IdentityTags, EGameplayContainerMatchType::Any))
 		{
-			Component->NotifyFromGraph(NotifyTags);
+			Component->NotifyFromGraph(NotifyTags, NetMode);
 		}
 	}
 
