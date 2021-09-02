@@ -290,9 +290,9 @@ void UFlowComponent::NotifyActor(const FGameplayTag ActorTag, const FGameplayTag
 {
 	if (IsFlowNetMode(NetMode) && NotifyTag.IsValid() && HasBegunPlay())
 	{
-		if (UFlowSubsystem* FlowSubsystem = GetFlowSubsystem())
+		if (const UFlowSubsystem* FlowSubsystem = GetFlowSubsystem())
 		{
-			for (TWeakObjectPtr<UFlowComponent>& Component : FlowSubsystem->GetComponents<UFlowComponent>(ActorTag))
+			for (const TWeakObjectPtr<UFlowComponent>& Component : FlowSubsystem->GetComponents<UFlowComponent>(ActorTag))
 			{
 				Component->ReceiveNotify.Broadcast(this, NotifyTag);
 			}
@@ -308,11 +308,11 @@ void UFlowComponent::NotifyActor(const FGameplayTag ActorTag, const FGameplayTag
 
 void UFlowComponent::OnRep_NotifyTagsFromAnotherComponent()
 {
-	if (UFlowSubsystem* FlowSubsystem = GetFlowSubsystem())
+	if (const UFlowSubsystem* FlowSubsystem = GetFlowSubsystem())
 	{
 		for (const FNotifyTagReplication& Notify : NotifyTagsFromAnotherComponent)
 		{
-			for (TWeakObjectPtr<UFlowComponent>& Component : FlowSubsystem->GetComponents<UFlowComponent>(Notify.ActorTag))
+			for (const TWeakObjectPtr<UFlowComponent>& Component : FlowSubsystem->GetComponents<UFlowComponent>(Notify.ActorTag))
 			{
 				Component->ReceiveNotify.Broadcast(this, Notify.NotifyTag);
 			}
@@ -341,7 +341,7 @@ void UFlowComponent::FinishRootFlow(const EFlowFinishPolicy FinishPolicy)
 
 UFlowAsset* UFlowComponent::GetRootFlowInstance()
 {
-	if (UFlowSubsystem* FlowSubsystem = GetFlowSubsystem())
+	if (const UFlowSubsystem* FlowSubsystem = GetFlowSubsystem())
 	{
 		return FlowSubsystem->GetRootFlow(this);
 	}
