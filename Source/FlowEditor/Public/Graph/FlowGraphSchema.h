@@ -45,7 +45,7 @@ private:
 
 	static bool IsFlowNodePlaceable(const UClass* Class);
 	static void GatherFlowNodes();
-	static void OnHotReload(bool bWasTriggeredAutomatically);
+	static void OnHotReload(EReloadCompleteReason ReloadCompleteReason);
 
 	static void OnAssetAdded(const FAssetData& AssetData);
 	static void AddAsset(const FAssetData& AssetData, const bool bBatch);

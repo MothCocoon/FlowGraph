@@ -151,7 +151,7 @@ private:
 
 		// All child child classes of UFlowNode are valid
 		Filter->AllowedChildrenOfClasses.Add(UFlowNode::StaticClass());
-		Options.ClassFilter = Filter;
+		Options.ClassFilters = {Filter.ToSharedRef()};
 
 		ParentClassContainer->ClearChildren();
 		ParentClassContainer->AddSlot()

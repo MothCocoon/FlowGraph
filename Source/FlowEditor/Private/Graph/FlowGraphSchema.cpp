@@ -14,7 +14,6 @@
 #include "AssetRegistryModule.h"
 #include "Developer/ToolMenus/Public/ToolMenus.h"
 #include "EdGraph/EdGraph.h"
-#include "Misc/HotReloadInterface.h"
 #include "ScopedTransaction.h"
 #include "UObject/UObjectIterator.h"
 
@@ -42,8 +41,7 @@ void UFlowGraphSchema::SubscribeToAssetChanges()
 	AssetRegistry.Get().OnAssetAdded().AddStatic(&UFlowGraphSchema::OnAssetAdded);
 	AssetRegistry.Get().OnAssetRemoved().AddStatic(&UFlowGraphSchema::RemoveAsset);
 
-	IHotReloadInterface& HotReloadSupport = FModuleManager::LoadModuleChecked<IHotReloadInterface>("HotReload");
-	HotReloadSupport.OnHotReload().AddStatic(&UFlowGraphSchema::OnHotReload);
+	FCoreUObjectDelegates::ReloadCompleteDelegate.AddStatic(&UFlowGraphSchema::OnHotReload);
 
 	if (GEditor)
 	{
@@ -298,7 +296,7 @@ void UFlowGraphSchema::GatherFlowNodes()
 	RefreshNodeList();
 }
 
-void UFlowGraphSchema::OnHotReload(bool bWasTriggeredAutomatically)
+void UFlowGraphSchema::OnHotReload(EReloadCompleteReason ReloadCompleteReason)
 {
 	GatherFlowNodes();
 }
