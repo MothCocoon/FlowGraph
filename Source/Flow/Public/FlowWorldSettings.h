@@ -21,6 +21,7 @@ public:
 	UFlowComponent* GetFlowComponent() const { return FlowComponent; }
 
 	virtual void PostLoad() override;
+	virtual void PostInitializeComponents() override;
 
 private:
 	UPROPERTY()
