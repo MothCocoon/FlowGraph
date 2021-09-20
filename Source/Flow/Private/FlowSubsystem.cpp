@@ -354,8 +354,7 @@ void UFlowSubsystem::OnIdentityTagsRemoved(UFlowComponent* Component, const FGam
 
 TSet<UFlowComponent*> UFlowSubsystem::GetFlowComponentsByTag(const FGameplayTag Tag, const TSubclassOf<UFlowComponent> ComponentClass) const
 {
-	TArray<TWeakObjectPtr<UFlowComponent>> FoundComponents;
-	FlowComponentRegistry.MultiFind(Tag, FoundComponents);
+	TArray<TWeakObjectPtr<UFlowComponent>> FoundComponents = FindComponents(Tag);
 
 	TSet<UFlowComponent*> Result;
 	for (const TWeakObjectPtr<UFlowComponent>& Component : FoundComponents)
@@ -388,8 +387,7 @@ TSet<UFlowComponent*> UFlowSubsystem::GetFlowComponentsByTags(const FGameplayTag
 
 TSet<AActor*> UFlowSubsystem::GetFlowActorsByTag(const FGameplayTag Tag, const TSubclassOf<AActor> ActorClass) const
 {
-	TArray<TWeakObjectPtr<UFlowComponent>> FoundComponents;
-	FlowComponentRegistry.MultiFind(Tag, FoundComponents);
+	TArray<TWeakObjectPtr<UFlowComponent>> FoundComponents = FindComponents(Tag);
 
 	TSet<AActor*> Result;
 	for (const TWeakObjectPtr<UFlowComponent>& Component : FoundComponents)
@@ -422,8 +420,7 @@ TSet<AActor*> UFlowSubsystem::GetFlowActorsByTags(const FGameplayTagContainer Ta
 
 TMap<AActor*, UFlowComponent*> UFlowSubsystem::GetFlowActorsAndComponentsByTag(const FGameplayTag Tag, const TSubclassOf<AActor> ActorClass) const
 {
-	TArray<TWeakObjectPtr<UFlowComponent>> FoundComponents;
-	FlowComponentRegistry.MultiFind(Tag, FoundComponents);
+	TArray<TWeakObjectPtr<UFlowComponent>> FoundComponents = FindComponents(Tag);
 
 	TMap<AActor*, UFlowComponent*> Result;
 	for (const TWeakObjectPtr<UFlowComponent>& Component : FoundComponents)
@@ -460,8 +457,7 @@ void UFlowSubsystem::FindComponents(const FGameplayTagContainer& Tags, TSet<TWea
 	{
 		for (const FGameplayTag& Tag : Tags)
 		{
-			TArray<TWeakObjectPtr<UFlowComponent>> ComponentsPerTag;
-			FlowComponentRegistry.MultiFind(Tag, ComponentsPerTag);
+			TArray<TWeakObjectPtr<UFlowComponent>> ComponentsPerTag = FindComponents(Tag);
 			OutComponents.Append(ComponentsPerTag);
 		}
 	}
@@ -470,8 +466,7 @@ void UFlowSubsystem::FindComponents(const FGameplayTagContainer& Tags, TSet<TWea
 		TSet<TWeakObjectPtr<UFlowComponent>> ComponentsWithAnyTag;
 		for (const FGameplayTag& Tag : Tags)
 		{
-			TArray<TWeakObjectPtr<UFlowComponent>> ComponentsPerTag;
-			FlowComponentRegistry.MultiFind(Tag, ComponentsPerTag);
+			TArray<TWeakObjectPtr<UFlowComponent>> ComponentsPerTag = FindComponents(Tag);
 			ComponentsWithAnyTag.Append(ComponentsPerTag);
 		}
 
@@ -483,4 +478,11 @@ void UFlowSubsystem::FindComponents(const FGameplayTagContainer& Tags, TSet<TWea
 			}
 		}
 	}
+}
+
+TArray<TWeakObjectPtr<UFlowComponent>> UFlowSubsystem::FindComponents(const FGameplayTag& Tag) const
+{
+	TArray<TWeakObjectPtr<UFlowComponent>> ComponentsPerTag;
+	FlowComponentRegistry.MultiFind(Tag, ComponentsPerTag);
+	return ComponentsPerTag;
 }

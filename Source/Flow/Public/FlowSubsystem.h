@@ -174,8 +174,7 @@ public:
 	{
 		static_assert(TPointerIsConvertibleFromTo<T, const UActorComponent>::Value, "'T' template parameter to GetComponents must be derived from UActorComponent");
 
-		TArray<TWeakObjectPtr<UFlowComponent>> FoundComponents;
-		FlowComponentRegistry.MultiFind(Tag, FoundComponents);
+		TArray<TWeakObjectPtr<UFlowComponent>> FoundComponents = FindComponents(Tag);
 
 		TSet<TWeakObjectPtr<T>> Result;
 		for (const TWeakObjectPtr<UFlowComponent>& Component : FoundComponents)
@@ -216,8 +215,7 @@ public:
 	{
 		static_assert(TPointerIsConvertibleFromTo<T, const AActor>::Value, "'T' template parameter to GetComponents must be derived from AActor");
 
-		TArray<TWeakObjectPtr<UFlowComponent>> FoundComponents;
-		FlowComponentRegistry.MultiFind(Tag, FoundComponents);
+		TArray<TWeakObjectPtr<UFlowComponent>> FoundComponents = FindComponents(Tag);
 
 		TMap<TWeakObjectPtr<T>, TWeakObjectPtr<UFlowComponent>> Result;
 		for (const TWeakObjectPtr<UFlowComponent>& Component : FoundComponents)
@@ -254,4 +252,6 @@ public:
 
 private:
 	void FindComponents(const FGameplayTagContainer& Tags, TSet<TWeakObjectPtr<UFlowComponent>>& OutComponents, const EGameplayContainerMatchType MatchType) const;
+
+	TArray<TWeakObjectPtr<UFlowComponent>> FindComponents(const FGameplayTag& Tag) const;
 };
