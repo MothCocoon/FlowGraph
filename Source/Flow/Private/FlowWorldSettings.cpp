@@ -20,3 +20,20 @@ void AFlowWorldSettings::PostLoad()
 		FlowComponent->RootFlow = FlowAsset_DEPRECATED;
 	}
 }
+
+void AFlowWorldSettings::PostInitializeComponents()
+{
+	Super::PostInitializeComponents();
+
+	Super::PostInitializeComponents();
+
+	if (const UWorld* World = GetWorld())
+	{
+		// prevent starting Flow from the obsolete AWorldSettings actor that still exists in the world
+		// i.e. instance of class that is parent to the class set in Project Settings
+		if (World->GetWorldSettings() != this)
+		{
+			GetFlowComponent()->bAutoStartRootFlow = false;
+		}
+	}
+}
