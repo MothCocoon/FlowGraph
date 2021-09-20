@@ -7,6 +7,7 @@
 #include "FlowSettings.h"
 #include "Nodes/Route/FlowNode_SubGraph.h"
 
+#include "Algo/Transform.h"
 #include "Engine/GameInstance.h"
 #include "Engine/World.h"
 #include "Misc/FileHelper.h"
@@ -483,6 +484,16 @@ void UFlowSubsystem::FindComponents(const FGameplayTagContainer& Tags, TSet<TWea
 TArray<TWeakObjectPtr<UFlowComponent>> UFlowSubsystem::FindComponents(const FGameplayTag& Tag) const
 {
 	TArray<TWeakObjectPtr<UFlowComponent>> ComponentsPerTag;
-	FlowComponentRegistry.MultiFind(Tag, ComponentsPerTag);
+
+	Algo::TransformIf(FlowComponentRegistry, ComponentsPerTag,
+		[&Tag](auto& TagComponentPair)
+	{
+		return TagComponentPair.Key.MatchesTag(Tag);
+	},
+		[](auto& TagComponentPair)
+	{
+		return TagComponentPair.Value;
+	});
+
 	return ComponentsPerTag;
 }
