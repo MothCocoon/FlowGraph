@@ -25,8 +25,6 @@ void AFlowWorldSettings::PostInitializeComponents()
 {
 	Super::PostInitializeComponents();
 
-	Super::PostInitializeComponents();
-
 	if (const UWorld* World = GetWorld())
 	{
 		// prevent starting Flow from the obsolete AWorldSettings actor that still exists in the world
