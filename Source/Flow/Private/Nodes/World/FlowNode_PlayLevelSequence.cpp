@@ -108,7 +108,7 @@ void UFlowNode_PlayLevelSequence::FlushContent()
 	}
 }
 
-void UFlowNode_PlayLevelSequence::CreatePlayer(const FMovieSceneSequencePlaybackSettings& PlaybackSettings)
+void UFlowNode_PlayLevelSequence::CreatePlayer()
 {
 	LoadedSequence = LoadAsset<ULevelSequence>(Sequence);
 	if (LoadedSequence)
@@ -131,7 +131,7 @@ void UFlowNode_PlayLevelSequence::ExecuteInput(const FName& PinName)
 
 		if (GetFlowSubsystem()->GetWorld() && LoadedSequence)
 		{
-			CreatePlayer(FMovieSceneSequencePlaybackSettings());
+			CreatePlayer();
 
 			TriggerOutput(TEXT("PreStart"));
 
@@ -165,7 +165,7 @@ void UFlowNode_PlayLevelSequence::OnLoad_Implementation()
 
 		if (GetFlowSubsystem()->GetWorld() && LoadedSequence)
 		{
-			CreatePlayer(FMovieSceneSequencePlaybackSettings());
+			CreatePlayer();
 			SequencePlayer->OnFinished.AddDynamic(this, &UFlowNode_PlayLevelSequence::OnPlaybackFinished);
 
 			SequencePlayer->SetPlayRate(TimeDilation);
