@@ -567,7 +567,7 @@ void UFlowNode::LogError(FString Message, const EFlowOnScreenMessageType OnScree
 				{
 					OutText = FText::FromString(Message);
 					OutColor = FLinearColor::Red;
-					return !IsPendingKill() && ActivationState != EFlowNodeState::NeverActivated;
+					return IsValid(this) && ActivationState != EFlowNodeState::NeverActivated;
 				});
 			}
 		}
