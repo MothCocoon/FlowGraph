@@ -2,7 +2,7 @@
 
 UFlowGraphSettings::UFlowGraphSettings(const FObjectInitializer& ObjectInitializer)
 	: Super(ObjectInitializer)
-	, ConnectionDrawType(EFlowConnectionDrawType::Circuit)
+	, ConnectionDrawType(EFlowConnectionDrawType::Default)
 	, ConnectionAngle(45.f)
 	, ConnectionSpacing(FVector2D(30.f))
 	, bExposeFlowAssetCreation(true)
