@@ -42,9 +42,6 @@ void FFlowEditorModule::StartupModule()
 	// register visual utilities
 	FEdGraphUtilities::RegisterVisualPinConnectionFactory(MakeShareable(new FFlowGraphConnectionDrawingPolicyFactory));
 
-	// init menu extensibility
-	FlowAssetExtensibility.Init();
-
 	// add Flow Toolbar
 	if (UFlowGraphSettings::Get()->bShowAssetToolbarAboveLevelEditor)
 	{
@@ -85,9 +82,6 @@ void FFlowEditorModule::ShutdownModule()
 	{
 		FEdGraphUtilities::UnregisterVisualPinConnectionFactory(FlowGraphConnectionFactory);
 	}
-
-	// reset menu extensibility
-	FlowAssetExtensibility.Reset();
 
 	// unregister track editors
 	ISequencerModule& SequencerModule = FModuleManager::Get().LoadModuleChecked<ISequencerModule>("Sequencer");
@@ -153,16 +147,6 @@ void FFlowEditorModule::RegisterCustomClassLayout(const TSubclassOf<UObject> Cla
 		FPropertyEditorModule& PropertyModule = FModuleManager::GetModuleChecked<FPropertyEditorModule>("PropertyEditor");
 		PropertyModule.RegisterCustomClassLayout(Class->GetFName(), DetailLayout);
 	}
-}
-
-TSharedPtr<FExtensibilityManager> FFlowEditorModule::GetFlowAssetMenuExtensibilityManager() const
-{
-	return FlowAssetExtensibility.MenuExtensibilityManager;
-}
-
-TSharedPtr<FExtensibilityManager> FFlowEditorModule::GetFlowAssetToolBarExtensibilityManager() const
-{
-	return FlowAssetExtensibility.ToolBarExtensibilityManager;
 }
 
 void FFlowEditorModule::CreateFlowToolbar(FToolBarBuilder& ToolbarBuilder) const
