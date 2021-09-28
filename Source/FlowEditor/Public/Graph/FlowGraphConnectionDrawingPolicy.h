@@ -3,6 +3,13 @@
 #include "ConnectionDrawingPolicy.h"
 #include "EdGraphUtilities.h"
 
+UENUM()
+enum class EFlowConnectionDrawType : uint8
+{
+	Default,
+	Circuit
+};
+
 struct FFlowGraphConnectionDrawingPolicyFactory : public FGraphPanelPinConnectionFactory
 {
 	virtual ~FFlowGraphConnectionDrawingPolicyFactory()
@@ -42,7 +49,13 @@ public:
 	void BuildPaths();
 
 	// FConnectionDrawingPolicy interface
+	virtual void DrawConnection(int32 LayerId, const FVector2D& Start, const FVector2D& End, const FConnectionParams& Params) override;
 	virtual void Draw(TMap<TSharedRef<SWidget>, FArrangedWidget>& PinGeometries, FArrangedChildren& ArrangedNodes) override;
 	virtual void DetermineWiringStyle(UEdGraphPin* OutputPin, UEdGraphPin* InputPin, FConnectionParams& Params) override;
 	// End of FConnectionDrawingPolicy interface
+
+private:
+
+	void Internal_DrawCircuitSpline(const int32& LayerId, const FVector2D& Start, const FVector2D& End, const FConnectionParams& Params) const;
+	FVector2D Internal_GetControlPoint(const FVector2D& Source, const FVector2D& Target) const;
 };
