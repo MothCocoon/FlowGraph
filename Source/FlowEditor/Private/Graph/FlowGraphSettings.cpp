@@ -4,7 +4,7 @@ UFlowGraphSettings::UFlowGraphSettings(const FObjectInitializer& ObjectInitializ
 	: Super(ObjectInitializer)
 	, ConnectionDrawType(EFlowConnectionDrawType::Default)
 	, ConnectionAngle(45.f)
-	, ConnectionSpacing(FVector2D(30.f))
+	, ConnectionSpacing(FVector2D(30.f, 30.0f))
 	, bExposeFlowAssetCreation(true)
 	, bExposeFlowNodeCreation(true)
 	, bShowAssetToolbarAboveLevelEditor(true)
