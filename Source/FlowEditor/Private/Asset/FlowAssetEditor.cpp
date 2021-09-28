@@ -2,9 +2,9 @@
 
 #include "Asset/FlowAssetToolbar.h"
 #include "Asset/FlowDebugger.h"
-#include "Asset/FlowDebuggerToolbar.h"
 #include "FlowEditorCommands.h"
 #include "FlowEditorModule.h"
+#include "Graph/FlowGraph.h"
 #include "Graph/FlowGraphSchema.h"
 #include "Graph/FlowGraphSchema_Actions.h"
 #include "Graph/Nodes/FlowGraphNode.h"
@@ -178,13 +178,13 @@ void FFlowAssetEditor::InitFlowAssetEditor(const EToolkitMode::Type Mode, const 
 	GEditor->RegisterForUndo(this);
 
 	UFlowGraphSchema::SubscribeToAssetChanges();
+	FlowDebugger = MakeShareable(new FFlowDebugger);
 
-	FGraphEditorCommands::Register();
-	FFlowGraphCommands::Register();
-	FFlowSpawnNodeCommands::Register();
+	BindToolbarCommands();
+	CreateToolbar();
 
-	CreateWidgets();
 	BindGraphCommands();
+	CreateWidgets();
 
 	const TSharedRef<FTabManager::FLayout> StandaloneDefaultLayout = FTabManager::NewLayout("FlowAssetEditor_Layout_v2")
 		->AddArea
@@ -220,73 +220,45 @@ void FFlowAssetEditor::InitFlowAssetEditor(const EToolkitMode::Type Mode, const 
 					)
 		);
 
-	const bool bCreateDefaultStandaloneMenu = true;
-	const bool bCreateDefaultToolbar = true;
-	FAssetEditorToolkit::InitAssetEditor(Mode, InitToolkitHost, TEXT("FlowEditorApp"), StandaloneDefaultLayout, bCreateDefaultStandaloneMenu, bCreateDefaultToolbar, ObjectToEdit, false);
+	constexpr bool bCreateDefaultStandaloneMenu = true;
+	constexpr bool bCreateDefaultToolbar = true;
+	InitAssetEditor(Mode, InitToolkitHost, TEXT("FlowEditorApp"), StandaloneDefaultLayout, bCreateDefaultStandaloneMenu, bCreateDefaultToolbar, ObjectToEdit, false);
 
-	FFlowToolbarCommands::Register();
-
-	AddFlowAssetToolbar();
-	CreateFlowDebugger();
-
-	FFlowEditorModule* FlowEditorModule = &FModuleManager::LoadModuleChecked<FFlowEditorModule>("FlowEditor");
-	AddMenuExtender(FlowEditorModule->GetFlowAssetMenuExtensibilityManager()->GetAllExtenders(GetToolkitCommands(), GetEditingObjects()));
-
+	RegenerateMenusAndToolbars();
 	FlowAsset->OnRegenerateToolbars().AddSP(this, &FFlowAssetEditor::RegenerateMenusAndToolbars);
 }
 
-void FFlowAssetEditor::AddFlowAssetToolbar()
+void FFlowAssetEditor::CreateToolbar()
 {
-	AssetToolbar = MakeShareable(new FFlowAssetToolbar(SharedThis(this)));
+	const FName ToolBarName = GetToolMenuToolbarName();
+	UToolMenus* ToolMenus = UToolMenus::Get();
+	UToolMenu* FoundMenu = ToolMenus->FindMenu(ToolBarName);
+	if (!FoundMenu || !FoundMenu->IsRegistered())
+	{
+		FoundMenu = ToolMenus->RegisterMenu(ToolBarName, "AssetEditor.DefaultToolBar", EMultiBoxType::ToolBar);
+	}
 
-	BindAssetCommands();
-
-	TSharedPtr<FExtender> ToolbarExtender = MakeShareable(new FExtender);
-	ToolbarExtender->AddToolBarExtension(
-		"Asset",
-		EExtensionHook::After,
-		GetToolkitCommands(),
-		FToolBarExtensionDelegate::CreateSP(AssetToolbar.Get(), &FFlowAssetToolbar::AddToolbar)
-	);
-	AddToolbarExtender(ToolbarExtender);
+	if (FoundMenu)
+	{
+		AssetToolbar = MakeShareable(new FFlowAssetToolbar(SharedThis(this), FoundMenu));
+	}
 }
 
-void FFlowAssetEditor::BindAssetCommands()
+void FFlowAssetEditor::BindToolbarCommands()
 {
-	const FFlowToolbarCommands& NodeCommands = FFlowToolbarCommands::Get();
+	FFlowToolbarCommands::Register();
+	const FFlowToolbarCommands& ToolbarCommands = FFlowToolbarCommands::Get();
 
-	ToolkitCommands->MapAction(NodeCommands.RefreshAsset,
+	// Editing
+	ToolkitCommands->MapAction(ToolbarCommands.RefreshAsset,
 		FExecuteAction::CreateSP(this, &FFlowAssetEditor::RefreshAsset),
 		FCanExecuteAction::CreateStatic(&FFlowAssetEditor::CanEdit));
 
-	// Append play world commands
+	// Engine's Play commands
 	ToolkitCommands->Append(FPlayWorldCommands::GlobalPlayWorldActions.ToSharedRef());
-}
 
-void FFlowAssetEditor::CreateFlowDebugger()
-{
-	Debugger = MakeShareable(new FFlowDebugger);
-	DebuggerToolbar = MakeShareable(new FFlowDebuggerToolbar(SharedThis(this)));
-
-	BindDebuggerCommands();
-
-	TSharedPtr<FExtender> ToolbarExtender = MakeShareable(new FExtender);
-	ToolbarExtender->AddToolBarExtension(
-		"Asset",
-		EExtensionHook::After,
-		GetToolkitCommands(),
-		FToolBarExtensionDelegate::CreateSP(DebuggerToolbar.Get(), &FFlowDebuggerToolbar::AddToolbar)
-	);
-	AddToolbarExtender(ToolbarExtender);
-
-	RegenerateMenusAndToolbars();
-}
-
-void FFlowAssetEditor::BindDebuggerCommands()
-{
-	const FFlowToolbarCommands& NodeCommands = FFlowToolbarCommands::Get();
-
-	ToolkitCommands->MapAction(NodeCommands.GoToMasterInstance,
+	// Debugging
+	ToolkitCommands->MapAction(ToolbarCommands.GoToMasterInstance,
 		FExecuteAction::CreateSP(this, &FFlowAssetEditor::GoToMasterInstance),
 		FCanExecuteAction::CreateSP(this, &FFlowAssetEditor::CanGoToMasterInstance),
 		FIsActionChecked(),
@@ -306,7 +278,7 @@ void FFlowAssetEditor::RefreshAsset()
 
 void FFlowAssetEditor::GoToMasterInstance()
 {
-	UFlowAsset* AssetThatInstancedThisAsset = FlowAsset->GetInspectedInstance()->GetMasterInstance();
+	const UFlowAsset* AssetThatInstancedThisAsset = FlowAsset->GetInspectedInstance()->GetMasterInstance();
 
 	FAssetEditorManager::Get().OpenEditorForAsset(AssetThatInstancedThisAsset->GetTemplateAsset());
 	AssetThatInstancedThisAsset->GetTemplateAsset()->SetInspectedInstance(AssetThatInstancedThisAsset->GetDisplayName());
@@ -341,7 +313,7 @@ TSharedRef<SGraphEditor> FFlowAssetEditor::CreateGraphWidget()
 	InEvents.OnSelectionChanged = SGraphEditor::FOnSelectionChanged::CreateSP(this, &FFlowAssetEditor::OnSelectedNodesChanged);
 	InEvents.OnNodeDoubleClicked = FSingleNodeEvent::CreateSP(this, &FFlowAssetEditor::OnNodeDoubleClicked);
 	InEvents.OnTextCommitted = FOnNodeTextCommitted::CreateSP(this, &FFlowAssetEditor::OnNodeTitleCommitted);
-	InEvents.OnSpawnNodeByShortcut = SGraphEditor::FOnSpawnNodeByShortcut::CreateSP(this, &FFlowAssetEditor::OnSpawnGraphNodeByShortcut, static_cast<UEdGraph*>(FlowAsset->GetGraph()));
+	InEvents.OnSpawnNodeByShortcut = SGraphEditor::FOnSpawnNodeByShortcut::CreateStatic(&FFlowAssetEditor::OnSpawnGraphNodeByShortcut, static_cast<UEdGraph*>(FlowAsset->GetGraph()));
 
 	return SNew(SGraphEditor)
 		.AdditionalCommands(ToolkitCommands)
@@ -358,7 +330,7 @@ FGraphAppearanceInfo FFlowAssetEditor::GetGraphAppearanceInfo() const
 	FGraphAppearanceInfo AppearanceInfo;
 	AppearanceInfo.CornerText = GetCornerText();
 
-	if (Debugger.IsValid() && FFlowDebugger::IsPlaySessionPaused())
+	if (FlowDebugger.IsValid() && FFlowDebugger::IsPlaySessionPaused())
 	{
 		AppearanceInfo.PIENotifyText = LOCTEXT("PausedLabel", "PAUSED");
 	}
@@ -373,6 +345,10 @@ FText FFlowAssetEditor::GetCornerText() const
 
 void FFlowAssetEditor::BindGraphCommands()
 {
+	FGraphEditorCommands::Register();
+	FFlowGraphCommands::Register();
+	FFlowSpawnNodeCommands::Register();
+	
 	const FGenericCommands& GenericCommands = FGenericCommands::Get();
 	const FGraphEditorCommandsImpl& GraphCommands = FGraphEditorCommands::Get();
 	const FFlowGraphCommands& FlowGraphCommands = FFlowGraphCommands::Get();
@@ -387,11 +363,11 @@ void FFlowAssetEditor::BindGraphCommands()
 
 	// Generic Node commands
 	ToolkitCommands->MapAction(GenericCommands.Undo,
-		FExecuteAction::CreateSP(this, &FFlowAssetEditor::UndoGraphAction),
+		FExecuteAction::CreateStatic(&FFlowAssetEditor::UndoGraphAction),
 		FCanExecuteAction::CreateStatic(&FFlowAssetEditor::CanEdit));
 
 	ToolkitCommands->MapAction(GenericCommands.Redo,
-		FExecuteAction::CreateSP(this, &FFlowAssetEditor::RedoGraphAction),
+		FExecuteAction::CreateStatic(&FFlowAssetEditor::RedoGraphAction),
 		FCanExecuteAction::CreateStatic(&FFlowAssetEditor::CanEdit));
 
 	ToolkitCommands->MapAction(GenericCommands.SelectAll,
@@ -533,7 +509,7 @@ FReply FFlowAssetEditor::OnSpawnGraphNodeByShortcut(FInputChord InChord, const F
 
 	if (FFlowSpawnNodeCommands::IsRegistered())
 	{
-		TSharedPtr<FEdGraphSchemaAction> Action = FFlowSpawnNodeCommands::Get().GetActionByChord(InChord);
+		const TSharedPtr<FEdGraphSchemaAction> Action = FFlowSpawnNodeCommands::Get().GetActionByChord(InChord);
         if (Action.IsValid())
         {
         	TArray<UEdGraphPin*> DummyPins;
@@ -631,7 +607,7 @@ void FFlowAssetEditor::OnSelectedNodesChanged(const TSet<UObject*>& Nodes)
 
 		for (TSet<UObject*>::TConstIterator SetIt(Nodes); SetIt; ++SetIt)
 		{
-			if (UFlowGraphNode* GraphNode = Cast<UFlowGraphNode>(*SetIt))
+			if (const UFlowGraphNode* GraphNode = Cast<UFlowGraphNode>(*SetIt))
 			{
 				SelectedObjects.Add(Cast<UObject>(GraphNode->GetFlowNode()));
 			}
@@ -682,7 +658,7 @@ void FFlowAssetEditor::DeleteSelectedNodes()
 
 		if (Node->CanUserDeleteNode())
 		{
-			if (UFlowGraphNode* FlowGraphNode = Cast<UFlowGraphNode>(Node))
+			if (const UFlowGraphNode* FlowGraphNode = Cast<UFlowGraphNode>(Node))
 			{
 				if (FlowGraphNode->GetFlowNode())
 				{
@@ -698,7 +674,7 @@ void FFlowAssetEditor::DeleteSelectedNodes()
 	}
 }
 
-void FFlowAssetEditor::DeleteSelectedDuplicatableNodes()
+void FFlowAssetEditor::DeleteSelectedDuplicableNodes()
 {
 	// Cache off the old selection
 	const FGraphPanelSelectionSet OldSelectedNodes = FocusedGraphEditor->GetSelectedNodes();
@@ -722,7 +698,7 @@ void FFlowAssetEditor::DeleteSelectedDuplicatableNodes()
 		}
 	}
 
-	// Delete the duplicatable nodes
+	// Delete the duplicable nodes
 	DeleteSelectedNodes();
 
 	for (FGraphPanelSelectionSet::TConstIterator SelectedIt(RemainingNodes); SelectedIt; ++SelectedIt)
@@ -761,7 +737,7 @@ void FFlowAssetEditor::CutSelectedNodes()
 	CopySelectedNodes();
 
 	// Cut should only delete nodes that can be duplicated
-	DeleteSelectedDuplicatableNodes();
+	DeleteSelectedDuplicableNodes();
 }
 
 bool FFlowAssetEditor::CanCutNodes() const
@@ -842,7 +818,7 @@ void FFlowAssetEditor::PasteNodesHere(const FVector2D& Location)
 
 	for (TSet<UEdGraphNode*>::TIterator It(PastedNodes); It; ++It)
 	{
-		UEdGraphNode* Node = *It;
+		const UEdGraphNode* Node = *It;
 		AvgNodePosition.X += Node->NodePosX;
 		AvgNodePosition.Y += Node->NodePosY;
 	}
@@ -861,7 +837,7 @@ void FFlowAssetEditor::PasteNodesHere(const FVector2D& Location)
 		// Give new node a different Guid from the old one
 		Node->CreateNewGuid();
 
-		if (UFlowGraphNode* FlowGraphNode = Cast<UFlowGraphNode>(Node))
+		if (const UFlowGraphNode* FlowGraphNode = Cast<UFlowGraphNode>(Node))
 		{
 			FlowAsset->RegisterNode(Node->NodeGuid, FlowGraphNode->GetFlowNode());
 		}
@@ -961,7 +937,7 @@ bool FFlowAssetEditor::CanRefreshContextPins() const
 {
 	if (CanEdit() && GetSelectedFlowNodes().Num() == 1)
 	{
-		for (UFlowGraphNode* SelectedNode : GetSelectedFlowNodes())
+		for (const UFlowGraphNode* SelectedNode : GetSelectedFlowNodes())
 		{
 			return SelectedNode->SupportsContextPins();
 		}
@@ -982,7 +958,7 @@ bool FFlowAssetEditor::CanAddInput() const
 {
 	if (CanEdit() && GetSelectedFlowNodes().Num() == 1)
 	{
-		for (UFlowGraphNode* SelectedNode : GetSelectedFlowNodes())
+		for (const UFlowGraphNode* SelectedNode : GetSelectedFlowNodes())
 		{
 			return SelectedNode->CanUserAddInput();
 		}
@@ -1003,7 +979,7 @@ bool FFlowAssetEditor::CanAddOutput() const
 {
 	if (CanEdit() && GetSelectedFlowNodes().Num() == 1)
 	{
-		for (UFlowGraphNode* SelectedNode : GetSelectedFlowNodes())
+		for (const UFlowGraphNode* SelectedNode : GetSelectedFlowNodes())
 		{
 			return SelectedNode->CanUserAddOutput();
 		}
@@ -1027,9 +1003,9 @@ bool FFlowAssetEditor::CanRemovePin() const
 {
 	if (CanEdit() && GetSelectedFlowNodes().Num() == 1)
 	{
-		if (UEdGraphPin* Pin = FocusedGraphEditor->GetGraphPinForMenu())
+		if (const UEdGraphPin* Pin = FocusedGraphEditor->GetGraphPinForMenu())
 		{
-			if (UFlowGraphNode* GraphNode = Cast<UFlowGraphNode>(Pin->GetOwningNode()))
+			if (const UFlowGraphNode* GraphNode = Cast<UFlowGraphNode>(Pin->GetOwningNode()))
 			{
 				if (Pin->Direction == EGPD_Input)
 				{
@@ -1068,7 +1044,7 @@ void FFlowAssetEditor::OnAddPinBreakpoint() const
 
 bool FFlowAssetEditor::CanAddBreakpoint() const
 {
-	for (UFlowGraphNode* SelectedNode : GetSelectedFlowNodes())
+	for (const UFlowGraphNode* SelectedNode : GetSelectedFlowNodes())
 	{
 		return !SelectedNode->NodeBreakpoint.HasBreakpoint();
 	}
@@ -1110,7 +1086,7 @@ void FFlowAssetEditor::OnRemovePinBreakpoint() const
 
 bool FFlowAssetEditor::CanRemoveBreakpoint() const
 {
-	for (UFlowGraphNode* SelectedNode : GetSelectedFlowNodes())
+	for (const UFlowGraphNode* SelectedNode : GetSelectedFlowNodes())
 	{
 		return SelectedNode->NodeBreakpoint.HasBreakpoint();
 	}
@@ -1122,7 +1098,7 @@ bool FFlowAssetEditor::CanRemovePinBreakpoint() const
 {
 	if (UEdGraphPin* Pin = FocusedGraphEditor->GetGraphPinForMenu())
 	{
-		if (UFlowGraphNode* GraphNode = Cast<UFlowGraphNode>(Pin->GetOwningNode()))
+		if (const UFlowGraphNode* GraphNode = Cast<UFlowGraphNode>(Pin->GetOwningNode()))
 		{
 			return GraphNode->PinBreakpoints.Contains(Pin);
 		}
@@ -1154,13 +1130,13 @@ bool FFlowAssetEditor::CanEnableBreakpoint() const
 {
 	if (UEdGraphPin* Pin = FocusedGraphEditor->GetGraphPinForMenu())
 	{
-		if (UFlowGraphNode* GraphNode = Cast<UFlowGraphNode>(Pin->GetOwningNode()))
+		if (const UFlowGraphNode* GraphNode = Cast<UFlowGraphNode>(Pin->GetOwningNode()))
 		{
 			return GraphNode->PinBreakpoints.Contains(Pin);
 		}
 	}
 
-	for (UFlowGraphNode* SelectedNode : GetSelectedFlowNodes())
+	for (const UFlowGraphNode* SelectedNode : GetSelectedFlowNodes())
 	{
 		return SelectedNode->NodeBreakpoint.CanEnableBreakpoint();
 	}
@@ -1202,7 +1178,7 @@ void FFlowAssetEditor::OnDisablePinBreakpoint() const
 
 bool FFlowAssetEditor::CanDisableBreakpoint() const
 {
-	for (UFlowGraphNode* SelectedNode : GetSelectedFlowNodes())
+	for (const UFlowGraphNode* SelectedNode : GetSelectedFlowNodes())
 	{
 		return SelectedNode->NodeBreakpoint.IsBreakpointEnabled();
 	}
@@ -1258,7 +1234,7 @@ void FFlowAssetEditor::FocusViewport() const
 	// Iterator used but should only contain one node
 	for (UFlowGraphNode* SelectedNode : GetSelectedFlowNodes())
 	{
-		UFlowNode* FlowNode = Cast<UFlowGraphNode>(SelectedNode)->GetFlowNode();
+		const UFlowNode* FlowNode = Cast<UFlowGraphNode>(SelectedNode)->GetFlowNode();
 		if (UFlowNode* NodeInstance = FlowNode->GetInspectedInstance())
 		{
 			if (AActor* ActorToFocus = NodeInstance->GetActorToFocus())
@@ -1269,8 +1245,8 @@ void FFlowAssetEditor::FocusViewport() const
 
 				GEditor->MoveViewportCamerasToActor(*ActorToFocus, false);
 
-				FLevelEditorModule& LevelEditorModule = FModuleManager::LoadModuleChecked<FLevelEditorModule>("LevelEditor");
-				TSharedPtr<SDockTab> LevelEditorTab = LevelEditorModule.GetLevelEditorInstanceTab().Pin();
+				const FLevelEditorModule& LevelEditorModule = FModuleManager::LoadModuleChecked<FLevelEditorModule>("LevelEditor");
+				const TSharedPtr<SDockTab> LevelEditorTab = LevelEditorModule.GetLevelEditorInstanceTab().Pin();
 				if (LevelEditorTab.IsValid())
 				{
 					LevelEditorTab->DrawAttention();
@@ -1290,7 +1266,7 @@ bool FFlowAssetEditor::CanFocusViewport() const
 void FFlowAssetEditor::JumpToNodeDefinition() const
 {
 	// Iterator used but should only contain one node
-	for (UFlowGraphNode* SelectedNode : GetSelectedFlowNodes())
+	for (const UFlowGraphNode* SelectedNode : GetSelectedFlowNodes())
 	{
 		SelectedNode->JumpToDefinition();
 		return;
