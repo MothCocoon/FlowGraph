@@ -1,5 +1,6 @@
 #pragma once
 
+#include "FlowGraphConnectionDrawingPolicy.h"
 #include "Engine/DeveloperSettings.h"
 
 #include "FlowTypes.h"
@@ -13,6 +14,15 @@ class UFlowGraphSettings final : public UDeveloperSettings
 {
 	GENERATED_UCLASS_BODY()
 	static UFlowGraphSettings* Get() { return CastChecked<UFlowGraphSettings>(UFlowGraphSettings::StaticClass()->GetDefaultObject()); }
+
+	UPROPERTY(config, EditAnywhere, Category = "Flow Graph")
+	EFlowConnectionDrawType ConnectionDrawType;
+
+	UPROPERTY(config, EditAnywhere, Category = "Flow Graph", meta = (EditCondition = "ConnectionDrawType == EFlowConnectionDrawType::Circuit"))
+	float ConnectionAngle;
+
+	UPROPERTY(config, EditAnywhere, Category = "Flow Graph", meta = (EditCondition = "ConnectionDrawType == EFlowConnectionDrawType::Circuit"))
+	FVector2D ConnectionSpacing;
 
 	/** Show Flow Asset in Flow category of "Create Asset" menu?
 	* Requires restart after making a change. */

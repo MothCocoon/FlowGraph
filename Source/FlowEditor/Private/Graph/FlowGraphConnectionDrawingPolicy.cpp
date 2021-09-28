@@ -100,6 +100,18 @@ void FFlowGraphConnectionDrawingPolicy::BuildPaths()
 	}
 }
 
+void FFlowGraphConnectionDrawingPolicy::DrawConnection(int32 LayerId, const FVector2D& Start, const FVector2D& End,
+	const FConnectionParams& Params)
+{
+	if (UFlowGraphSettings::Get()->ConnectionDrawType == EFlowConnectionDrawType::Default)
+	{
+		FConnectionDrawingPolicy::DrawConnection(LayerId, Start, End, Params);
+		return;
+	}
+	
+	Internal_DrawCircuitSpline(LayerId, Start, End, Params);
+}
+
 void FFlowGraphConnectionDrawingPolicy::Draw(TMap<TSharedRef<SWidget>, FArrangedWidget>& InPinGeometries, FArrangedChildren& ArrangedNodes)
 {
 	BuildPaths();
@@ -161,4 +173,50 @@ void FFlowGraphConnectionDrawingPolicy::DetermineWiringStyle(UEdGraphPin* Output
 			Params.WireThickness = InactiveWireThickness;
 		}
 	}
+}
+
+void FFlowGraphConnectionDrawingPolicy::Internal_DrawCircuitSpline(const int32& LayerId, const FVector2D& Start, const FVector2D& End, const FConnectionParams& Params) const
+{
+	const FVector2D StartingPoint =  FVector2D(Start.X + UFlowGraphSettings::Get()->ConnectionSpacing.X, Start.Y);
+	const FVector2D EndPoint = FVector2D(End.X - UFlowGraphSettings::Get()->ConnectionSpacing.Y, End.Y);
+	const FVector2D ControlPoint = Internal_GetControlPoint(StartingPoint, EndPoint);
+	
+	const FVector2D StartDirection = (Params.StartDirection == EGPD_Output) ? FVector2D(1.0f, 0.0f) : FVector2D(-1.0f, 0.0f);
+	const FVector2D EndDirection = (Params.EndDirection == EGPD_Input) ? FVector2D(1.0f, 0.0f) : FVector2D(-1.0f, 0.0f);
+
+	FSlateDrawElement::MakeDrawSpaceSpline(DrawElementsList, LayerId, Start, StartDirection, StartingPoint, EndDirection, Params.WireThickness, ESlateDrawEffect::None, Params.WireColor);
+	FSlateDrawElement::MakeDrawSpaceSpline(DrawElementsList, LayerId, StartingPoint, StartDirection, ControlPoint, EndDirection, Params.WireThickness, ESlateDrawEffect::None, Params.WireColor);
+	FSlateDrawElement::MakeDrawSpaceSpline(DrawElementsList, LayerId, ControlPoint, StartDirection, EndPoint, EndDirection, Params.WireThickness, ESlateDrawEffect::None, Params.WireColor);
+	FSlateDrawElement::MakeDrawSpaceSpline(DrawElementsList, LayerId, EndPoint, StartDirection, End, EndDirection, Params.WireThickness, ESlateDrawEffect::None, Params.WireColor);
+}
+
+FVector2D FFlowGraphConnectionDrawingPolicy::Internal_GetControlPoint(const FVector2D& Source, const FVector2D& Target) const
+{
+	const FVector2D Delta = Target - Source;
+	const float Tangent = FMath::Tan(UFlowGraphSettings::Get()->ConnectionAngle * (PI / 180.f));
+
+	const float DX = FMath::Abs(Delta.X);
+	const float DY = FMath::Abs(Delta.Y);
+
+	const float SlopeWidth = DY / Tangent;
+	if (DX > SlopeWidth)
+	{
+		return Delta.X > 0.f ? FVector2D(Target.X - SlopeWidth, Source.Y) : FVector2D(Source.X - SlopeWidth, Target.Y);
+	}
+
+	const float SlopeHeight = DX * Tangent;
+	if (DY > SlopeHeight)
+	{
+		if (Delta.Y > 0.f)
+		{
+			return Delta.X < 0.f ? FVector2D(Source.X, Target.Y - SlopeHeight) : FVector2D(Target.X, Source.Y + SlopeHeight);
+		}
+
+		if (Delta.X < 0.f)
+		{
+			return FVector2D(Source.X, Target.Y + SlopeHeight);
+		}
+	}
+
+	return FVector2D(Target.X, Source.Y - SlopeHeight);
 }
