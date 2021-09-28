@@ -28,7 +28,7 @@ void ForEachGameWorld(const TFunction<void(UWorld*)>& Func)
 bool AreAllGameWorldPaused()
 {
 	bool bPaused = true;
-	ForEachGameWorld([&](const UWorld* World)
+	ForEachGameWorld([&](UWorld* World)
 	{
 		bPaused = bPaused && World->bDebugPauseExecution;
 	});

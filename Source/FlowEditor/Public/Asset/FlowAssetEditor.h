@@ -19,13 +19,17 @@ struct FSlateBrush;
 struct FPropertyChangedEvent;
 struct Rect;
 
-class FFlowAssetEditor : public FAssetEditorToolkit, public FEditorUndoClient, public FGCObject, public FNotifyHook
+class FFlowAssetEditor : public FAssetEditorToolkit,
+						public FEditorUndoClient,
+						public FGCObject,
+						public FNotifyHook
 {
 	/** The FlowAsset asset being inspected */
 	UFlowAsset* FlowAsset;
 
 	TSharedPtr<class FFlowAssetToolbar> AssetToolbar;
-	TSharedPtr<class FFlowDebugger> FlowDebugger;
+	TSharedPtr<class FFlowDebugger> Debugger;
+	TSharedPtr<class FFlowDebuggerToolbar> DebuggerToolbar;
 
 	TSharedPtr<SGraphEditor> FocusedGraphEditor;
 	TSharedPtr<class IDetailsView> DetailsView;
@@ -43,7 +47,7 @@ private:
 
 public:
 	FFlowAssetEditor();
-	virtual ~FFlowAssetEditor() override;
+	virtual ~FFlowAssetEditor();
 
 	UFlowAsset* GetFlowAsset() const { return FlowAsset; };
 
@@ -81,27 +85,35 @@ public:
 	/** Edits the specified FlowAsset object */
 	void InitFlowAssetEditor(const EToolkitMode::Type Mode, const TSharedPtr<class IToolkitHost>& InitToolkitHost, UObject* ObjectToEdit);
 
-protected:
-	virtual void CreateToolbar();
+private:
+	void AddFlowAssetToolbar();
+	void BindAssetCommands();
 
-	virtual void BindToolbarCommands();
+	void AddPlayWorldToolbar() const;
+
+	void CreateFlowDebugger();
+	void BindDebuggerCommands();
+
+protected:
 	virtual void RefreshAsset();
+
 	virtual void GoToMasterInstance();
 	virtual bool CanGoToMasterInstance();
 
-	virtual void CreateWidgets();
+private:
+	void CreateWidgets();
+	TSharedRef<SGraphEditor> CreateGraphWidget();
 
-	virtual TSharedRef<SGraphEditor> CreateGraphWidget();
-	virtual FGraphAppearanceInfo GetGraphAppearanceInfo() const;
+protected:
+	FGraphAppearanceInfo GetGraphAppearanceInfo() const;
 	virtual FText GetCornerText() const;
 
-	virtual void BindGraphCommands();
-
 private:
-	static void UndoGraphAction();
-	static void RedoGraphAction();
+	void BindGraphCommands();
+	void UndoGraphAction();
+	void RedoGraphAction();
 
-	static FReply OnSpawnGraphNodeByShortcut(FInputChord InChord, const FVector2D& InPosition, UEdGraph* InGraph);
+	FReply OnSpawnGraphNodeByShortcut(FInputChord InChord, const FVector2D& InPosition, UEdGraph* InGraph);
 
 public:
 	/** Gets the UI selection state of this editor */
@@ -123,43 +135,42 @@ public:
 	int32 GetNumberOfSelectedNodes() const;
 	bool GetBoundsForSelectedNodes(class FSlateRect& Rect, float Padding) const;
 
-protected:
-	virtual void OnSelectedNodesChanged(const TSet<UObject*>& Nodes);
+private:
+	void OnSelectedNodesChanged(const TSet<UObject*>& Nodes);
 
 public:
-	virtual void SelectSingleNode(UEdGraphNode* Node) const;
-
-protected:
-	virtual void SelectAllNodes() const;
-	virtual bool CanSelectAllNodes() const;
-
-	virtual void DeleteSelectedNodes();
-	virtual void DeleteSelectedDuplicableNodes();
-	virtual bool CanDeleteNodes() const;
-
-	virtual void CopySelectedNodes() const;
-	virtual bool CanCopyNodes() const;
-
-	virtual void CutSelectedNodes();
-	virtual bool CanCutNodes() const;
-
-	virtual void PasteNodes();
-
-public:
-	virtual void PasteNodesHere(const FVector2D& Location);
-	virtual bool CanPasteNodes() const;
-
-protected:
-	virtual void DuplicateNodes();
-	virtual bool CanDuplicateNodes() const;
-
-	virtual void OnNodeDoubleClicked(class UEdGraphNode* Node) const;
-	virtual void OnNodeTitleCommitted(const FText& NewText, ETextCommit::Type CommitInfo, UEdGraphNode* NodeBeingChanged);
-
-	virtual void RefreshContextPins() const;
-	virtual bool CanRefreshContextPins() const;
+	void SelectSingleNode(UEdGraphNode* Node) const;
 
 private:
+	void SelectAllNodes() const;
+	bool CanSelectAllNodes() const;
+
+	void DeleteSelectedNodes();
+	void DeleteSelectedDuplicatableNodes();
+	bool CanDeleteNodes() const;
+
+	void CopySelectedNodes() const;
+	bool CanCopyNodes() const;
+
+	void CutSelectedNodes();
+	bool CanCutNodes() const;
+
+	void PasteNodes();
+
+public:
+	void PasteNodesHere(const FVector2D& Location);
+	bool CanPasteNodes() const;
+
+private:
+	void DuplicateNodes();
+	bool CanDuplicateNodes() const;
+
+	void OnNodeDoubleClicked(class UEdGraphNode* Node) const;
+	void OnNodeTitleCommitted(const FText& NewText, ETextCommit::Type CommitInfo, UEdGraphNode* NodeBeingChanged);
+
+	void RefreshContextPins() const;
+	bool CanRefreshContextPins() const;
+
 	void AddInput() const;
 	bool CanAddInput() const;
 
