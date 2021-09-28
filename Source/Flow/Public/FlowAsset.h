@@ -131,7 +131,7 @@ private:
 #endif
 
 public:
-	void AddInstance(UFlowAsset* NewInstance);
+	void AddInstance(UFlowAsset* Instance);
 	int32 RemoveInstance(UFlowAsset* Instance);
 
 	void ClearInstances();
