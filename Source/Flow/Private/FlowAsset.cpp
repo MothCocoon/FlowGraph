@@ -124,7 +124,7 @@ void UFlowAsset::HarvestNodeConnections()
 		{
 			if (ThisPin->Direction == EGPD_Output && ThisPin->LinkedTo.Num() > 0)
 			{
-				if (UEdGraphPin* LinkedPin = ThisPin->LinkedTo[0])
+				if (const UEdGraphPin* LinkedPin = ThisPin->LinkedTo[0])
 				{
 					const UEdGraphNode* LinkedNode = LinkedPin->GetOwningNode();
 					Connections.Add(ThisPin->PinName, FConnectedPin(LinkedNode->NodeGuid, LinkedPin->PinName));
@@ -154,9 +154,9 @@ UFlowNode* UFlowAsset::GetNode(const FGuid& Guid) const
 	return nullptr;
 }
 
-void UFlowAsset::AddInstance(UFlowAsset* NewInstance)
+void UFlowAsset::AddInstance(UFlowAsset* Instance)
 {
-	ActiveInstances.Add(NewInstance);
+	ActiveInstances.Add(Instance);
 }
 
 int32 UFlowAsset::RemoveInstance(UFlowAsset* Instance)
@@ -195,7 +195,7 @@ void UFlowAsset::ClearInstances()
 #if WITH_EDITOR
 void UFlowAsset::GetInstanceDisplayNames(TArray<TSharedPtr<FName>>& OutDisplayNames) const
 {
-	for (UFlowAsset* Instance : ActiveInstances)
+	for (const UFlowAsset* Instance : ActiveInstances)
 	{
 		OutDisplayNames.Emplace(MakeShareable(new FName(Instance->GetDisplayName())));
 	}
