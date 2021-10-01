@@ -475,6 +475,19 @@ TSharedPtr<SToolTip> SFlowGraphNode::GetComplexTooltip()
 			const UFlowAsset* AssetToEdit = Cast<UFlowAsset>(MySubGraphNode->GetAssetToEdit());
 			if (AssetToEdit && AssetToEdit->GetGraph())
 			{
+				TSharedPtr<SWidget> TitleBarWidget = SNullWidget::NullWidget;
+				if (UFlowGraphSettings::Get()->bShowGraphPathInPreview)
+				{
+					const FString AssetName = FString::Printf(TEXT(".%s"), *AssetToEdit->GetName());
+					const FString AssetPath = AssetToEdit->GetPathName().Replace(*AssetName, TEXT(""));
+					TitleBarWidget = SNew(SBox)
+					.Padding(10.f)
+					[
+						SNew(STextBlock)
+						.Text(FText::FromString(AssetPath))
+					];
+				}
+				
 				return SNew(SToolTip)
 				[
 					SNew(SBox)
@@ -487,6 +500,7 @@ TSharedPtr<SToolTip> SFlowGraphNode::GetComplexTooltip()
 							SNew(SGraphPreviewer, AssetToEdit->GetGraph())
 							.CornerOverlayText(LOCTEXT("FlowNodePreviewGraphOverlayText", "FLOW PREVIEW"))
 							.ShowGraphStateOverlay(false)
+							.TitleBar(TitleBarWidget)
 						]
 					]
 				];

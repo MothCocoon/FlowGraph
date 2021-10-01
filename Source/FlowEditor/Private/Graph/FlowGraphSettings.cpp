@@ -6,6 +6,7 @@ UFlowGraphSettings::UFlowGraphSettings(const FObjectInitializer& ObjectInitializ
 	, ConnectionAngle(45.f)
 	, ConnectionSpacing(FVector2D(30.f))
 	, bShowGraphPreview(true)
+	, bShowGraphPathInPreview(true)
 	, GraphPreviewSize(FVector2D(640.f, 360.f))
 	, bExposeFlowAssetCreation(true)
 	, bExposeFlowNodeCreation(true)
