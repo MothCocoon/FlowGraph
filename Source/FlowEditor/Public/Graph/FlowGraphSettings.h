@@ -24,6 +24,15 @@ class UFlowGraphSettings final : public UDeveloperSettings
 	UPROPERTY(config, EditAnywhere, Category = "Flow Graph", meta = (EditCondition = "ConnectionDrawType == EFlowConnectionDrawType::Circuit"))
 	FVector2D ConnectionSpacing;
 
+	UPROPERTY(config, EditAnywhere, Category = "Flow Graph")
+	bool bShowGraphPreview;
+
+	UPROPERTY(config, EditAnywhere, Category = "Flow Graph", meta = (EditCondition = "bShowGraphPreview"))
+	bool bShowGraphPathInPreview;
+	
+	UPROPERTY(config, EditAnywhere, Category = "Flow Graph", meta = (EditCondition = "bShowGraphPreview"))
+	FVector2D GraphPreviewSize;
+
 	/** Show Flow Asset in Flow category of "Create Asset" menu?
 	* Requires restart after making a change. */
 	UPROPERTY(EditAnywhere, config, Category = "Default UI")
