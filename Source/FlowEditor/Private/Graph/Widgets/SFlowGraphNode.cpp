@@ -19,6 +19,9 @@
 #include "SlateOptMacros.h"
 #include "Styling/SlateColor.h"
 #include "TutorialMetaData.h"
+#include "FlowAsset.h"
+#include "SGraphPreviewer.h"
+#include "Nodes/Route/FlowNode_SubGraph.h"
 #include "Widgets/Images/SImage.h"
 #include "Widgets/Layout/SBorder.h"
 #include "Widgets/SBoxPanel.h"
@@ -247,13 +250,6 @@ void SFlowGraphNode::UpdateGraphNode()
 				DefaultTitleAreaWidget
 			];
 
-
-	if (!SWidget::GetToolTip().IsValid())
-	{
-		const TSharedRef<SToolTip> DefaultToolTip = IDocumentation::Get()->CreateToolTip(TAttribute<FText>(this, &SGraphNode::GetNodeTooltip), nullptr, GraphNode->GetDocumentationLink(), GraphNode->GetDocumentationExcerptName());
-		SetToolTip(DefaultToolTip);
-	}
-
 	// Setup a meta tag for this node
 	FGraphNodeMetaData TagMeta(TEXT("FlowGraphNode"));
 	PopulateMetaTag(&TagMeta);
@@ -468,6 +464,51 @@ FReply SFlowGraphNode::OnAddPin()
 	}
 
 	return FReply::Handled();
+}
+
+TSharedPtr<SToolTip> SFlowGraphNode::GetComplexTooltip()
+{
+	if (UFlowGraphSettings::Get()->bShowGraphPreview)
+	{
+		if (UFlowNode_SubGraph* MySubGraphNode = Cast<UFlowNode_SubGraph>(FlowGraphNode->GetFlowNode()))
+		{
+			const UFlowAsset* AssetToEdit = Cast<UFlowAsset>(MySubGraphNode->GetAssetToEdit());
+			if (AssetToEdit && AssetToEdit->GetGraph())
+			{
+				TSharedPtr<SWidget> TitleBarWidget = SNullWidget::NullWidget;
+				if (UFlowGraphSettings::Get()->bShowGraphPathInPreview)
+				{
+					const FString AssetName = FString::Printf(TEXT(".%s"), *AssetToEdit->GetName());
+					const FString AssetPath = AssetToEdit->GetPathName().Replace(*AssetName, TEXT(""));
+					TitleBarWidget = SNew(SBox)
+					.Padding(10.f)
+					[
+						SNew(STextBlock)
+						.Text(FText::FromString(AssetPath))
+					];
+				}
+				
+				return SNew(SToolTip)
+				[
+					SNew(SBox)
+					.WidthOverride(UFlowGraphSettings::Get()->GraphPreviewSize.X)
+					.HeightOverride(UFlowGraphSettings::Get()->GraphPreviewSize.Y)
+					[
+						SNew(SOverlay)
+						+SOverlay::Slot()
+						[
+							SNew(SGraphPreviewer, AssetToEdit->GetGraph())
+							.CornerOverlayText(LOCTEXT("FlowNodePreviewGraphOverlayText", "FLOW PREVIEW"))
+							.ShowGraphStateOverlay(false)
+							.TitleBar(TitleBarWidget)
+						]
+					]
+				];
+			}
+		}
+	}
+
+	return IDocumentation::Get()->CreateToolTip(TAttribute<FText>(this, &SGraphNode::GetNodeTooltip), nullptr, GraphNode->GetDocumentationLink(), GraphNode->GetDocumentationExcerptName());
 }
 
 #undef LOCTEXT_NAMESPACE
