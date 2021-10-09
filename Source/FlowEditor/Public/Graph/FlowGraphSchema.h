@@ -49,7 +49,8 @@ private:
 
 	static void OnAssetAdded(const FAssetData& AssetData);
 	static void AddAsset(const FAssetData& AssetData, const bool bBatch);
-	static void RemoveAsset(const FAssetData& AssetData);
+	static void OnAssetRemoved(const FAssetData& AssetData);
+	
 	static void RefreshNodeList();
 
 public:
