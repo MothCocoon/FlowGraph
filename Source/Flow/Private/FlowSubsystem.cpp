@@ -11,9 +11,6 @@
 #include "Engine/World.h"
 #include "Misc/FileHelper.h"
 #include "Misc/Paths.h"
-#include "Serialization/BufferArchive.h"
-#include "Serialization/MemoryReader.h"
-#include "Serialization/MemoryWriter.h"
 
 UFlowSubsystem::UFlowSubsystem()
 	: UGameInstanceSubsystem()
@@ -33,25 +30,28 @@ bool UFlowSubsystem::ShouldCreateSubsystem(UObject* Outer) const
 
 void UFlowSubsystem::Initialize(FSubsystemCollectionBase& Collection)
 {
-	// temp for testing, game should control this
-	//LoadGame();
 }
 
 void UFlowSubsystem::Deinitialize()
+{
+	AbortActiveFlows();
+}
+
+void UFlowSubsystem::AbortActiveFlows()
 {
 	if (InstancedTemplates.Num() > 0)
 	{
 		for (int32 i = InstancedTemplates.Num() - 1; i >= 0; i--)
 		{
-			if (InstancedTemplates.IsValidIndex(i))
+			if (InstancedTemplates.IsValidIndex(i) && InstancedTemplates[i])
 			{
 				InstancedTemplates[i]->ClearInstances();
 			}
 		}
-
-		InstancedTemplates.Empty();
-		InstancedSubFlows.Empty();
 	}
+
+	InstancedTemplates.Empty();
+	InstancedSubFlows.Empty();
 }
 
 void UFlowSubsystem::StartRootFlow(UObject* Owner, UFlowAsset* FlowAsset, const bool bAllowMultipleInstances /* = true */)
@@ -83,46 +83,56 @@ UFlowAsset* UFlowSubsystem::CreateRootFlow(UObject* Owner, UFlowAsset* FlowAsset
 	return NewFlow;
 }
 
-void UFlowSubsystem::FinishRootFlow(UObject* Owner)
+void UFlowSubsystem::FinishRootFlow(UObject* Owner, const EFlowFinishPolicy FinishPolicy)
 {
 	if (UFlowAsset* Instance = RootInstances.FindRef(Owner))
 	{
 		RootInstances.Remove(Owner);
-		Instance->FinishFlow(false);
+		Instance->FinishFlow(FinishPolicy);
 	}
 }
 
-UFlowAsset* UFlowSubsystem::StartSubFlow(UFlowNode_SubGraph* SubGraphNode, const FString NewInstanceName, const bool bPreloading /* = false */)
+UFlowAsset* UFlowSubsystem::CreateSubFlow(UFlowNode_SubGraph* SubGraphNode, const FString NewInstanceName, const bool bPreloading /* = false */)
 {
-	UFlowAsset* NewFlow = nullptr;
+	UFlowAsset* NewInstance = nullptr;
 
 	if (!InstancedSubFlows.Contains(SubGraphNode))
 	{
 		const TWeakObjectPtr<UObject> Owner = SubGraphNode->GetFlowAsset() ? SubGraphNode->GetFlowAsset()->GetOwner() : nullptr;
-		NewFlow = CreateFlowInstance(Owner, SubGraphNode->Asset, NewInstanceName);
-		InstancedSubFlows.Add(SubGraphNode, NewFlow);
+		NewInstance = CreateFlowInstance(Owner, SubGraphNode->Asset, NewInstanceName);
+		InstancedSubFlows.Add(SubGraphNode, NewInstance);
 
 		if (bPreloading)
 		{
-			NewFlow->PreloadNodes();
+			NewInstance->PreloadNodes();
 		}
 	}
 
 	if (!bPreloading)
 	{
-		// get instanced asset from map - in case it was already instanced by calling StartSubFlow() with bPreloading == true
-		InstancedSubFlows[SubGraphNode]->StartAsSubFlow(SubGraphNode);
+		// get instanced asset from map - in case it was already instanced by calling CreateSubFlow() with bPreloading == true
+		UFlowAsset* AssetInstance = InstancedSubFlows[SubGraphNode];
+		
+		AssetInstance->NodeOwningThisAssetInstance = SubGraphNode;
+		SubGraphNode->GetFlowAsset()->ActiveSubGraphs.Add(SubGraphNode, AssetInstance);
+		
+		AssetInstance->StartFlow();
 	}
 
-	return NewFlow;
+	return NewInstance;
 }
 
-void UFlowSubsystem::FinishSubFlow(UFlowNode_SubGraph* SubGraphNode)
+void UFlowSubsystem::RemoveSubFlow(UFlowNode_SubGraph* SubGraphNode, const EFlowFinishPolicy FinishPolicy)
 {
-	if (UFlowAsset* Instance = InstancedSubFlows.FindRef(SubGraphNode))
+	if (InstancedSubFlows.Contains(SubGraphNode))
 	{
+		UFlowAsset* AssetInstance = InstancedSubFlows[SubGraphNode];
+		AssetInstance->NodeOwningThisAssetInstance = nullptr;
+
+		SubGraphNode->GetFlowAsset()->ActiveSubGraphs.Remove(SubGraphNode);
 		InstancedSubFlows.Remove(SubGraphNode);
-		Instance->FinishFlow(false);
+
+		AssetInstance->FinishFlow(FinishPolicy);
 	}
 }
 
@@ -180,72 +190,37 @@ UWorld* UFlowSubsystem::GetWorld() const
 	return GetGameInstance()->GetWorld();
 }
 
-void UFlowSubsystem::SaveGame()
+void UFlowSubsystem::OnGameSaved(UFlowSaveGame* SaveGame)
 {
-	FFlowSaveData SaveGameData;
-	SaveGameData.Timestamp = FDateTime::Now();
-
+	// save graphs with nodes
 	for (const TPair<TWeakObjectPtr<UObject>, UFlowAsset*>& Pair : RootInstances)
 	{
 		if (Pair.Key.IsValid() && Pair.Value)
 		{
 			if (UFlowComponent* FlowComponent = Cast<UFlowComponent>(Pair.Key))
 			{
-				FlowComponent->SaveRootFlow(SaveGameData.SavedFlowInstances);
+				FlowComponent->SaveRootFlow(SaveGame->FlowInstances);
 			}
 			else
 			{
-				Pair.Value->SaveInstance(SaveGameData.SavedFlowInstances);
+				Pair.Value->SaveInstance(SaveGame->FlowInstances);
 			}
 		}
 	}
 
+	// save components
 	TArray<TWeakObjectPtr<UFlowComponent>> ComponentsArray;
 	FlowComponentRegistry.GenerateValueArray(ComponentsArray);
 	const TSet<TWeakObjectPtr<UFlowComponent>> FlowComponents = TSet<TWeakObjectPtr<UFlowComponent>>(ComponentsArray);
 	for (TWeakObjectPtr<UFlowComponent> FlowComponent : FlowComponents)
 	{
-		SaveGameData.SavedFlowComponents.Emplace(FlowComponent->SaveInstance());
+		SaveGame->FlowComponents.Emplace(FlowComponent->SaveInstance());
 	}
-
-	FBufferArchive BinaryData;
-	BinaryData << SaveGameData;
-
-	const FString SaveFolder = GetSaveFolderDir() + FString("TestSave.sav");
-	if (FFileHelper::SaveArrayToFile(BinaryData, *SaveFolder))
-	{
-		UE_LOG(LogFlow, Warning, TEXT("Save Success! %s"), FPlatformProcess::BaseDir());
-	}
-	else
-	{
-		UE_LOG(LogFlow, Warning, TEXT("Save Failed!"));
-	}
-
-	BinaryData.FlushCache();
-	BinaryData.Empty();
 }
 
-void UFlowSubsystem::LoadGame()
+void UFlowSubsystem::OnGameLoaded(UFlowSaveGame* SaveGame)
 {
-	const FString SaveFolder = GetSaveFolderDir() + FString("TestSave.sav");
-	TArray<uint8> BinaryData;
-
-	if (FFileHelper::LoadFileToArray(BinaryData, *SaveFolder))
-	{
-		UE_LOG(LogFlow, Warning, TEXT("Load Succeeded!"));
-
-		FMemoryReader FromBinary = FMemoryReader(BinaryData, true);
-		FromBinary.Seek(0);
-		FromBinary << LoadedSaveGame;;
-
-		FromBinary.FlushCache();
-		BinaryData.Empty();
-		FromBinary.Close();
-	}
-	else
-	{
-		UE_LOG(LogFlow, Warning, TEXT("Load Failed!"));
-	}
+	LoadedSaveGame = SaveGame;
 }
 
 void UFlowSubsystem::LoadRootFlow(UObject* Owner, UFlowAsset* FlowAsset, const FString& SavedAssetInstanceName)
@@ -254,8 +229,8 @@ void UFlowSubsystem::LoadRootFlow(UObject* Owner, UFlowAsset* FlowAsset, const F
 	{
 		return;
 	}
-	
-	for (const FFlowAssetSaveData& AssetRecord : LoadedSaveGame.SavedFlowInstances)
+
+	for (const FFlowAssetSaveData& AssetRecord : LoadedSaveGame->FlowInstances)
 	{
 		if (AssetRecord.InstanceName == SavedAssetInstanceName)
 		{
@@ -271,11 +246,11 @@ void UFlowSubsystem::LoadRootFlow(UObject* Owner, UFlowAsset* FlowAsset, const F
 
 void UFlowSubsystem::LoadSubFlow(UFlowNode_SubGraph* SubGraphNode, const FString& SavedAssetInstanceName)
 {
-	for (const FFlowAssetSaveData& AssetRecord : LoadedSaveGame.SavedFlowInstances)
+	for (const FFlowAssetSaveData& AssetRecord : LoadedSaveGame->FlowInstances)
 	{
 		if (AssetRecord.InstanceName == SavedAssetInstanceName)
 		{
-			UFlowAsset* LoadedInstance = StartSubFlow(SubGraphNode, SavedAssetInstanceName);
+			UFlowAsset* LoadedInstance = CreateSubFlow(SubGraphNode, SavedAssetInstanceName);
 			if (LoadedInstance)
 			{
 				LoadedInstance->LoadInstance(AssetRecord);
@@ -283,11 +258,6 @@ void UFlowSubsystem::LoadSubFlow(UFlowNode_SubGraph* SubGraphNode, const FString
 			return;
 		}
 	}
-}
-
-FString UFlowSubsystem::GetSaveFolderDir()
-{
-	return FPaths::ProjectSavedDir() + UFlowSettings::Get()->SaveFolderName + TEXT("/");
 }
 
 void UFlowSubsystem::RegisterComponent(UFlowComponent* Component)
@@ -351,7 +321,7 @@ void UFlowSubsystem::UnregisterComponent(UFlowComponent* Component)
 
 void UFlowSubsystem::OnIdentityTagRemoved(UFlowComponent* Component, const FGameplayTag& RemovedTag)
 {
-	FlowComponentRegistry.Emplace(RemovedTag, Component);
+	FlowComponentRegistry.Remove(RemovedTag, Component);
 
 	// broadcast OnComponentUnregistered only if this component isn't present in the registry anymore
 	if (Component->IdentityTags.Num() > 0)

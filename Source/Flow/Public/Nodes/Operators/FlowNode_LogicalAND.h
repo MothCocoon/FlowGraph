@@ -13,6 +13,7 @@ class FLOW_API UFlowNode_LogicalAND final : public UFlowNode
 	GENERATED_UCLASS_BODY()
 
 private:
+	UPROPERTY(SaveGame)
 	TSet<FName> ExecutedInputNames;
 	
 #if WITH_EDITOR

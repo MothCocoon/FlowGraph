@@ -1,6 +1,7 @@
 #pragma once
 
 #include "CoreMinimal.h"
+#include "EdGraph/EdGraphNode.h"
 #include "Engine/StreamableManager.h"
 #include "GameplayTagContainer.h"
 #include "VisualLogger/VisualLoggerDebugSnapshotInterface.h"
@@ -8,8 +9,6 @@
 #include "FlowTypes.h"
 #include "Nodes/FlowPin.h"
 #include "FlowNode.generated.h"
-
-class UEdGraphNode;
 
 class UFlowAsset;
 class UFlowSubsystem;
@@ -186,7 +185,7 @@ protected:
 	FStreamableManager StreamableManager;
 
 	UPROPERTY(SaveGame)
-	EFlowActivationState ActivationState;
+	EFlowNodeState ActivationState;
 	
 #if !UE_BUILD_SHIPPING
 private:
@@ -268,15 +267,13 @@ protected:
 	UFUNCTION(BlueprintImplementableEvent, Category = "FlowNode", meta = (DisplayName = "ForceFinishNode"))
 	void K2_ForceFinishNode();
 
-#if !UE_BUILD_SHIPPING
 private:
 	void ResetRecords();
-#endif
 
 #if WITH_EDITOR
 public:
 	UFlowNode* GetInspectedInstance() const;
-	EFlowActivationState GetActivationState() const { return ActivationState; }
+	EFlowNodeState GetActivationState() const { return ActivationState; }
 
 	TMap<uint8, FPinRecord> GetWireRecords() const;
 	TArray<FPinRecord> GetPinRecords(const FName& PinName, const EEdGraphPinDirection PinDirection) const;
@@ -334,20 +331,20 @@ public:
 	static FString GetProgressAsString(float Value);
 
 	UFUNCTION(BlueprintCallable, Category = "FlowNode")
-	void LogError(FString Message);
+	void LogError(FString Message, const EFlowOnScreenMessageType OnScreenMessageType = EFlowOnScreenMessageType::Permanent) const;
 
 	UFUNCTION(BlueprintCallable, Category = "FlowNode")
-	void SaveInstance(FFlowNodeSaveData& NodeRecord, TArray<FFlowAssetSaveData>& SavedFlowInstances);
+	void SaveInstance(FFlowNodeSaveData& NodeRecord);
 
 	UFUNCTION(BlueprintCallable, Category = "FlowNode")
 	void LoadInstance(const FFlowNodeSaveData& NodeRecord);
 
 protected:
 	UFUNCTION(BlueprintNativeEvent, Category = "FlowNode")
-	void PrepareGameSave();
+	void OnSave();
 	
 	UFUNCTION(BlueprintNativeEvent, Category = "FlowNode")
-	void OnGameSaveLoaded();
+	void OnLoad();
 
 private:
 	UPROPERTY()

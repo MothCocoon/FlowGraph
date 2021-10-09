@@ -1,5 +1,6 @@
 #include "Asset/AssetTypeActions_FlowAsset.h"
 #include "FlowEditorModule.h"
+#include "Graph/FlowGraphSettings.h"
 
 #include "FlowAsset.h"
 
@@ -14,7 +15,7 @@ FText FAssetTypeActions_FlowAsset::GetName() const
 
 uint32 FAssetTypeActions_FlowAsset::GetCategories()
 {
-	return FFlowEditorModule::FlowAssetCategory;
+	return UFlowGraphSettings::Get()->bExposeFlowAssetCreation ? FFlowEditorModule::FlowAssetCategory : 0;
 }
 
 UClass* FAssetTypeActions_FlowAsset::GetSupportedClass() const

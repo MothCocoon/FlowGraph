@@ -187,7 +187,7 @@ public:
 
 	// This will destroy instantiated Flow Asset - created from asset assigned on this component.
 	UFUNCTION(BlueprintCallable, Category = "RootFlow")
-	void FinishRootFlow();
+	void FinishRootFlow(const EFlowFinishPolicy FinishPolicy);
 
 	UFUNCTION(BlueprintPure, Category = "RootFlow")
 	UFlowAsset* GetRootFlowInstance();
@@ -209,10 +209,10 @@ public:
 
 protected:
 	UFUNCTION(BlueprintNativeEvent, Category = "SaveGame")
-	void PrepareGameSave();
+	void OnSave();
 	
 	UFUNCTION(BlueprintNativeEvent, Category = "SaveGame")
-	void OnGameSaveLoaded();
+	void OnLoad();
 	
 //////////////////////////////////////////////////////////////////////////
 // Helpers

@@ -42,7 +42,7 @@ void UFlowComponent::BeginPlay()
 	if (UFlowSubsystem* FlowSubsystem = GetFlowSubsystem())
 	{
 		bool bComponentLoadedFromSaveGame = false;
-		if (GetFlowSubsystem()->IsSaveGameLoaded())
+		if (GetFlowSubsystem()->GetLoadedSaveGame())
 		{
 			bComponentLoadedFromSaveGame = LoadInstance();
 		}
@@ -67,7 +67,7 @@ void UFlowComponent::EndPlay(const EEndPlayReason::Type EndPlayReason)
 {
 	if (UFlowSubsystem* FlowSubsystem = GetFlowSubsystem())
 	{
-		FlowSubsystem->FinishRootFlow(this);
+		FlowSubsystem->FinishRootFlow(this, EFlowFinishPolicy::Keep);
 		FlowSubsystem->UnregisterComponent(this);
 	}
 
@@ -290,9 +290,9 @@ void UFlowComponent::NotifyActor(const FGameplayTag ActorTag, const FGameplayTag
 {
 	if (IsFlowNetMode(NetMode) && NotifyTag.IsValid() && HasBegunPlay())
 	{
-		if (UFlowSubsystem* FlowSubsystem = GetFlowSubsystem())
+		if (const UFlowSubsystem* FlowSubsystem = GetFlowSubsystem())
 		{
-			for (TWeakObjectPtr<UFlowComponent>& Component : FlowSubsystem->GetComponents<UFlowComponent>(ActorTag))
+			for (const TWeakObjectPtr<UFlowComponent>& Component : FlowSubsystem->GetComponents<UFlowComponent>(ActorTag))
 			{
 				Component->ReceiveNotify.Broadcast(this, NotifyTag);
 			}
@@ -308,11 +308,11 @@ void UFlowComponent::NotifyActor(const FGameplayTag ActorTag, const FGameplayTag
 
 void UFlowComponent::OnRep_NotifyTagsFromAnotherComponent()
 {
-	if (UFlowSubsystem* FlowSubsystem = GetFlowSubsystem())
+	if (const UFlowSubsystem* FlowSubsystem = GetFlowSubsystem())
 	{
 		for (const FNotifyTagReplication& Notify : NotifyTagsFromAnotherComponent)
 		{
-			for (TWeakObjectPtr<UFlowComponent>& Component : FlowSubsystem->GetComponents<UFlowComponent>(Notify.ActorTag))
+			for (const TWeakObjectPtr<UFlowComponent>& Component : FlowSubsystem->GetComponents<UFlowComponent>(Notify.ActorTag))
 			{
 				Component->ReceiveNotify.Broadcast(this, Notify.NotifyTag);
 			}
@@ -331,17 +331,17 @@ void UFlowComponent::StartRootFlow()
 	}
 }
 
-void UFlowComponent::FinishRootFlow()
+void UFlowComponent::FinishRootFlow(const EFlowFinishPolicy FinishPolicy)
 {
 	if (UFlowSubsystem* FlowSubsystem = GetFlowSubsystem())
 	{
-		FlowSubsystem->FinishRootFlow(this);
+		FlowSubsystem->FinishRootFlow(this, FinishPolicy);
 	}
 }
 
 UFlowAsset* UFlowComponent::GetRootFlowInstance()
 {
-	if (UFlowSubsystem* FlowSubsystem = GetFlowSubsystem())
+	if (const UFlowSubsystem* FlowSubsystem = GetFlowSubsystem())
 	{
 		return FlowSubsystem->GetRootFlow(this);
 	}
@@ -376,7 +376,7 @@ FFlowComponentSaveData UFlowComponent::SaveInstance()
 	ComponentRecord.WorldName = GetWorld()->GetName();
 	ComponentRecord.ActorInstanceName = GetOwner()->GetName();
 
-	PrepareGameSave();
+	OnSave();
 
 	FMemoryWriter MemoryWriter(ComponentRecord.ComponentData, true);
 	FFlowArchive Ar(MemoryWriter);
@@ -387,10 +387,10 @@ FFlowComponentSaveData UFlowComponent::SaveInstance()
 
 bool UFlowComponent::LoadInstance()
 {
-	const FFlowSaveData SaveData = GetFlowSubsystem()->GetLoadedSaveGame();
-	if (SaveData.SavedFlowComponents.Num() > 0)
+	const UFlowSaveGame* SaveGame = GetFlowSubsystem()->GetLoadedSaveGame();
+	if (SaveGame->FlowComponents.Num() > 0)
 	{
-		for (const FFlowComponentSaveData& ComponentRecord : SaveData.SavedFlowComponents)
+		for (const FFlowComponentSaveData& ComponentRecord : SaveGame->FlowComponents)
 		{
 			if (ComponentRecord.WorldName == GetWorld()->GetName() && ComponentRecord.ActorInstanceName == GetOwner()->GetName())
 			{
@@ -398,7 +398,7 @@ bool UFlowComponent::LoadInstance()
 				FFlowArchive Ar(MemoryReader);
 				Serialize(Ar);
 
-				OnGameSaveLoaded();
+				OnLoad();
 				return true;
 			}
 		}
@@ -407,11 +407,11 @@ bool UFlowComponent::LoadInstance()
 	return false;
 }
 
-void UFlowComponent::PrepareGameSave_Implementation()
+void UFlowComponent::OnSave_Implementation()
 {
 }
 
-void UFlowComponent::OnGameSaveLoaded_Implementation()
+void UFlowComponent::OnLoad_Implementation()
 {
 }
 
