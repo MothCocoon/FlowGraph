@@ -205,7 +205,7 @@ void UFlowGraphSchema::GetFlowNodeActions(FGraphActionMenuBuilder& ActionMenuBui
 	TArray<UFlowNode*> FlowNodes;
 	FlowNodes.Reserve(NativeFlowNodes.Num() + BlueprintFlowNodes.Num());
 
-	for (const UClass* FlowNodeClass : NativeFlowNodes)
+	for (UClass* FlowNodeClass : NativeFlowNodes)
 	{
 		FlowNodes.Emplace(FlowNodeClass->GetDefaultObject<UFlowNode>());
 	}
