@@ -38,7 +38,7 @@ void SLevelEditorFlow::CreateFlowWidget()
 			.AutoWidth()
 			[
 				SNew(SObjectPropertyEntryBox)
-					.AllowedClass(UFlowAsset::StaticClass())
+					.AllowedClass(UFlowGraphSettings::Get()->WorldAssetClass)
 					.DisplayThumbnail(false)
 					.OnObjectChanged(this, &SLevelEditorFlow::OnFlowChanged)
 					.ObjectPath(this, &SLevelEditorFlow::GetFlowPath)
