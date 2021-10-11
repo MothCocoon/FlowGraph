@@ -1,5 +1,7 @@
 #include "Graph/FlowGraphSettings.h"
 
+#include "FlowAsset.h"
+
 UFlowGraphSettings::UFlowGraphSettings(const FObjectInitializer& ObjectInitializer)
 	: Super(ObjectInitializer)
 	, ConnectionDrawType(EFlowConnectionDrawType::Default)
@@ -11,6 +13,7 @@ UFlowGraphSettings::UFlowGraphSettings(const FObjectInitializer& ObjectInitializ
 	, bExposeFlowAssetCreation(true)
 	, bExposeFlowNodeCreation(true)
 	, bShowAssetToolbarAboveLevelEditor(true)
+	, WorldAssetClass(UFlowAsset::StaticClass())
 	, bShowDefaultPinNames(false)
 	, ExecPinColorModifier(0.75f, 0.75f, 0.75f, 1.0f)
 	, NodeDescriptionBackground(FLinearColor(0.0625f, 0.0625f, 0.0625f, 1.0f))
