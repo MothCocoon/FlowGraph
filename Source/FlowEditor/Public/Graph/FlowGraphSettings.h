@@ -47,6 +47,10 @@ class UFlowGraphSettings final : public UDeveloperSettings
 	* Requires restart after making a change. */
 	UPROPERTY(EditAnywhere, config, Category = "Default UI")
 	bool bShowAssetToolbarAboveLevelEditor;
+
+	/** Flow Asset class allowed to be assigned via Level Editor toolbar*/
+	UPROPERTY(EditAnywhere, config, Category = "Default UI", meta = (EditCondition = "bShowAssetToolbarAboveLevelEditor"))
+	TSubclassOf<class UFlowAsset> WorldAssetClass;
 	
 	/** Hide specific nodes from the Flow Palette without changing the source code.
 	* Requires restart after making a change. */
