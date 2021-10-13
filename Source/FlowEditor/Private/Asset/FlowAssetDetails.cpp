@@ -11,12 +11,12 @@
 
 void FFlowAssetDetails::CustomizeDetails(IDetailLayoutBuilder& DetailLayout)
 {
-	IDetailCategoryBuilder& FlowAssetCategory = DetailLayout.EditCategory("FlowAsset", LOCTEXT("FlowAssetCategory", "FlowAsset"));
+	IDetailCategoryBuilder& FlowAssetCategory = DetailLayout.EditCategory("FlowAsset", LOCTEXT("FlowAssetCategory", "Flow Asset"));
 	
 	const TSharedPtr<IPropertyHandle> InputsPropertyHandle = DetailLayout.GetProperty(GET_MEMBER_NAME_CHECKED(UFlowAsset, CustomInputs));
 	if (InputsPropertyHandle.IsValid() && InputsPropertyHandle->AsArray().IsValid())
 	{
-		TSharedRef<FDetailArrayBuilder> InputsArrayBuilder = MakeShareable(new FDetailArrayBuilder(InputsPropertyHandle.ToSharedRef()));
+		const TSharedRef<FDetailArrayBuilder> InputsArrayBuilder = MakeShareable(new FDetailArrayBuilder(InputsPropertyHandle.ToSharedRef()));
 		InputsArrayBuilder->OnGenerateArrayElementWidget(FOnGenerateArrayElementWidget::CreateSP(this, &FFlowAssetDetails::GenerateCustomPinArray));
 
 		FlowAssetCategory.AddCustomBuilder(InputsArrayBuilder);
@@ -25,7 +25,7 @@ void FFlowAssetDetails::CustomizeDetails(IDetailLayoutBuilder& DetailLayout)
 	const TSharedPtr<IPropertyHandle> OutputsPropertyHandle = DetailLayout.GetProperty(GET_MEMBER_NAME_CHECKED(UFlowAsset, CustomOutputs));
 	if (OutputsPropertyHandle.IsValid() && OutputsPropertyHandle->AsArray().IsValid())
 	{
-		TSharedRef<FDetailArrayBuilder> OutputsArrayBuilder = MakeShareable(new FDetailArrayBuilder(OutputsPropertyHandle.ToSharedRef()));
+		const TSharedRef<FDetailArrayBuilder> OutputsArrayBuilder = MakeShareable(new FDetailArrayBuilder(OutputsPropertyHandle.ToSharedRef()));
 		OutputsArrayBuilder->OnGenerateArrayElementWidget(FOnGenerateArrayElementWidget::CreateSP(this, &FFlowAssetDetails::GenerateCustomPinArray));
 
 		FlowAssetCategory.AddCustomBuilder(OutputsArrayBuilder);
