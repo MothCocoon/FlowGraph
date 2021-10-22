@@ -331,6 +331,17 @@ void UFlowComponent::StartRootFlow()
 	}
 }
 
+void UFlowComponent::StartCustomFlow(const FName PinName)
+{
+	if (RootFlow && IsFlowNetMode(RootFlowMode))
+	{
+		if (UFlowSubsystem* FlowSubsystem = GetFlowSubsystem())
+		{
+			FlowSubsystem->StartCustomFlow(this, RootFlow, PinName, bAllowMultipleInstances);
+		}
+	}
+}
+
 void UFlowComponent::FinishRootFlow(const EFlowFinishPolicy FinishPolicy)
 {
 	if (UFlowSubsystem* FlowSubsystem = GetFlowSubsystem())

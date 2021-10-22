@@ -61,6 +61,9 @@ public:
 	UFUNCTION(BlueprintCallable, Category = "FlowSubsystem")
 	void StartRootFlow(UObject* Owner, UFlowAsset* FlowAsset, const bool bAllowMultipleInstances = true);
 
+	UFUNCTION(BlueprintCallable, Category = "FlowSubsystem")
+	void StartCustomFlow(UObject* Owner, UFlowAsset* FlowAsset, const FName& PinName, const bool bAllowMultipleInstances = true);
+
 protected:
 	UFlowAsset* CreateRootFlow(UObject* Owner, UFlowAsset* FlowAsset, const bool bAllowMultipleInstances = true);
 

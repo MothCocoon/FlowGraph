@@ -209,6 +209,7 @@ public:
 
 	virtual void PreStartFlow();
 	virtual void StartFlow();
+	virtual void StartCustomFlow(const FName& InPinName);
 	
 	virtual void FinishFlow(const EFlowFinishPolicy InFinishPolicy);
 

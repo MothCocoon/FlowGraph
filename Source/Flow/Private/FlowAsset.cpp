@@ -311,6 +311,20 @@ void UFlowAsset::StartFlow()
 	StartNode->TriggerFirstOutput(true);
 }
 
+void UFlowAsset::StartCustomFlow(const FName& InPinName)
+{
+	PreStartFlow();
+	for (const auto& It : CustomInputNodes)
+	{
+		if (It.Key.IsEqual(InPinName))
+		{
+			ensureAlways(It.Value);
+			RecordedNodes.Add(It.Value);
+			It.Value->TriggerFirstOutput(true);
+		}
+	}
+}
+
 void UFlowAsset::FinishFlow(const EFlowFinishPolicy InFinishPolicy)
 {
 	FinishPolicy = InFinishPolicy;

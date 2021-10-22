@@ -185,6 +185,10 @@ public:
 	UFUNCTION(BlueprintCallable, Category = "RootFlow")
 	void StartRootFlow();
 
+	// This will instantiate Flow Asset assigned on this component and executes the given pin name.
+	UFUNCTION(BlueprintCallable, Category = "RootFlow")
+	void StartCustomFlow(const FName PinName);
+
 	// This will destroy instantiated Flow Asset - created from asset assigned on this component.
 	UFUNCTION(BlueprintCallable, Category = "RootFlow")
 	void FinishRootFlow(const EFlowFinishPolicy FinishPolicy);

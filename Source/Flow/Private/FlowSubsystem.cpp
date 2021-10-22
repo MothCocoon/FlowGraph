@@ -63,6 +63,17 @@ void UFlowSubsystem::StartRootFlow(UObject* Owner, UFlowAsset* FlowAsset, const 
 	}
 }
 
+void UFlowSubsystem::StartCustomFlow(UObject* Owner, UFlowAsset* FlowAsset, const FName& PinName, const bool bAllowMultipleInstances)
+{
+	UFlowAsset* NewFlow = RootInstances.FindRef(Owner);
+	if (NewFlow == nullptr)
+	{
+		NewFlow = CreateRootFlow(Owner, FlowAsset, bAllowMultipleInstances);
+	}
+
+	NewFlow->StartCustomFlow(PinName);
+}
+
 UFlowAsset* UFlowSubsystem::CreateRootFlow(UObject* Owner, UFlowAsset* FlowAsset, const bool bAllowMultipleInstances)
 {
 	if (RootInstances.Contains(Owner))
