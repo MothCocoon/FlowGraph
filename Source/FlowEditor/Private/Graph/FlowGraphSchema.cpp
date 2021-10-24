@@ -22,10 +22,6 @@
 
 TArray<UClass*> UFlowGraphSchema::NativeFlowNodes;
 TMap<FName, FAssetData> UFlowGraphSchema::BlueprintFlowNodes;
-
-TSet<FString> UFlowGraphSchema::UnsortedCategories;
-TArray<TSharedPtr<FString>> UFlowGraphSchema::FlowNodeCategories;
-
 TMap<UClass*, UClass*> UFlowGraphSchema::AssignedGraphNodeClasses;
 
 FFlowGraphSchemaRefresh UFlowGraphSchema::OnNodeListChanged;
@@ -177,12 +173,42 @@ TSharedPtr<FEdGraphSchemaAction> UFlowGraphSchema::GetCreateCommentAction() cons
 
 TArray<TSharedPtr<FString>> UFlowGraphSchema::GetFlowNodeCategories()
 {
-	if (FlowNodeCategories.Num() == 0)
+	if (NativeFlowNodes.Num() == 0)
 	{
 		GatherFlowNodes();
 	}
 
-	return FlowNodeCategories;
+	TSet<FString> UnsortedCategories;
+	for (const UClass* FlowNodeClass : NativeFlowNodes)
+	{
+		if (const UFlowNode* DefaultObject = FlowNodeClass->GetDefaultObject<UFlowNode>())
+		{
+			UnsortedCategories.Emplace(DefaultObject->GetNodeCategory());
+		}
+	}
+
+	for (const TPair<FName, FAssetData>& AssetData : BlueprintFlowNodes)
+	{
+		if (const UBlueprint* Blueprint = GetPlaceableNodeBlueprint(AssetData.Value))
+		{
+			UnsortedCategories.Emplace(Blueprint->BlueprintCategory);
+		}
+	}
+
+	TArray<FString> SortedCategories = UnsortedCategories.Array();
+	SortedCategories.Sort();
+
+	// create list of categories
+	TArray<TSharedPtr<FString>> Result;
+	for (const FString& Category : SortedCategories)
+	{
+		if (!Category.IsEmpty())
+		{
+			Result.Emplace(MakeShareable(new FString(Category)));
+		}
+	}
+
+	return Result;
 }
 
 UClass* UFlowGraphSchema::GetAssignedGraphNodeClass(const UClass* FlowNodeClass)
@@ -211,7 +237,7 @@ void UFlowGraphSchema::GetFlowNodeActions(FGraphActionMenuBuilder& ActionMenuBui
 	}
 	for (const TPair<FName, FAssetData>& AssetData : BlueprintFlowNodes)
 	{
-		if (const UBlueprint* Blueprint = GetNodeBlueprint(AssetData.Value))
+		if (const UBlueprint* Blueprint = GetPlaceableNodeBlueprint(AssetData.Value))
 		{
 			FlowNodes.Emplace(Blueprint->GeneratedClass->GetDefaultObject<UFlowNode>());
 		}
@@ -263,9 +289,6 @@ void UFlowGraphSchema::GatherFlowNodes()
 			if (Class->ClassGeneratedBy == nullptr && IsFlowNodePlaceable(Class))
 			{
 				NativeFlowNodes.Emplace(Class);
-
-				const UFlowNode* DefaultObject = Class->GetDefaultObject<UFlowNode>();
-				UnsortedCategories.Emplace(DefaultObject->GetNodeCategory());
 			}
 		}
 
@@ -299,7 +322,7 @@ void UFlowGraphSchema::GatherFlowNodes()
 		AddAsset(AssetData, true);
 	}
 
-	RefreshNodeList();
+	OnNodeListChanged.Broadcast();
 }
 
 void UFlowGraphSchema::OnHotReload(bool bWasTriggeredAutomatically)
@@ -340,16 +363,11 @@ void UFlowGraphSchema::AddAsset(const FAssetData& AssetData, const bool bBatch)
 			// accept only Flow Node blueprints
 			if (NativeParentClass && NativeParentClass->IsChildOf(UFlowNode::StaticClass()))
 			{
-				UBlueprint* Blueprint = GetNodeBlueprint(AssetData);
-				if (Blueprint && IsFlowNodePlaceable(Blueprint->GeneratedClass))
-				{
-					BlueprintFlowNodes.Emplace(AssetData.PackageName, AssetData);
-					UnsortedCategories.Emplace(Blueprint->BlueprintCategory);
+				BlueprintFlowNodes.Emplace(AssetData.PackageName, AssetData);
 
-					if (!bBatch)
-					{
-						RefreshNodeList();
-					}
+				if (!bBatch)
+				{
+					OnNodeListChanged.Broadcast();
 				}
 			}
 		}
@@ -363,29 +381,19 @@ void UFlowGraphSchema::OnAssetRemoved(const FAssetData& AssetData)
 		BlueprintFlowNodes.Remove(AssetData.PackageName);
 		BlueprintFlowNodes.Shrink();
 
-		RefreshNodeList();
+		OnNodeListChanged.Broadcast();
 	}
 }
 
-void UFlowGraphSchema::RefreshNodeList()
+UBlueprint* UFlowGraphSchema::GetPlaceableNodeBlueprint(const FAssetData& AssetData)
 {
-	// sort categories
-	TArray<FString> SortedCategories = UnsortedCategories.Array();
-	SortedCategories.Sort();
-
-	// create list of categories
-	FlowNodeCategories.Empty();
-	for (const FString& Category : SortedCategories)
+	UBlueprint* Blueprint = Cast<UBlueprint>(AssetData.GetAsset());
+	if (Blueprint && IsFlowNodePlaceable(Blueprint->GeneratedClass))
 	{
-		FlowNodeCategories.Emplace(MakeShareable(new FString(Category)));
+		return Blueprint;
 	}
 
-	OnNodeListChanged.Broadcast();
-}
-
-UBlueprint* UFlowGraphSchema::GetNodeBlueprint(const FAssetData& AssetData)
-{
-	return Cast<UBlueprint>(StaticLoadObject(AssetData.GetClass(), /*Outer =*/nullptr, *AssetData.ObjectPath.ToString(), nullptr, LOAD_NoWarn | LOAD_DisableCompileOnLoad));
+	return nullptr;
 }
 
 #undef LOCTEXT_NAMESPACE
