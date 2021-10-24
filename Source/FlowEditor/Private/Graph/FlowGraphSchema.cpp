@@ -24,6 +24,8 @@ TArray<UClass*> UFlowGraphSchema::NativeFlowNodes;
 TMap<FName, FAssetData> UFlowGraphSchema::BlueprintFlowNodes;
 TMap<UClass*, UClass*> UFlowGraphSchema::AssignedGraphNodeClasses;
 
+bool UFlowGraphSchema::bBlueprintCompilationPending;
+
 FFlowGraphSchemaRefresh UFlowGraphSchema::OnNodeListChanged;
 
 UFlowGraphSchema::UFlowGraphSchema(const FObjectInitializer& ObjectInitializer)
@@ -43,8 +45,8 @@ void UFlowGraphSchema::SubscribeToAssetChanges()
 
 	if (GEditor)
 	{
-		GEditor->OnBlueprintCompiled().AddStatic(&UFlowGraphSchema::GatherFlowNodes);
-		GEditor->OnClassPackageLoadedOrUnloaded().AddStatic(&UFlowGraphSchema::GatherFlowNodes);
+		GEditor->OnBlueprintPreCompile().AddStatic(&UFlowGraphSchema::OnBlueprintPreCompile);
+		GEditor->OnBlueprintCompiled().AddStatic(&UFlowGraphSchema::OnBlueprintCompiled);
 	}
 }
 
@@ -271,11 +273,29 @@ bool UFlowGraphSchema::IsFlowNodePlaceable(const UClass* Class)
 	return !Class->HasAnyClassFlags(CLASS_Abstract) && !Class->HasAnyClassFlags(CLASS_NotPlaceable) && !Class->HasAnyClassFlags(CLASS_Deprecated);
 }
 
+void UFlowGraphSchema::OnBlueprintPreCompile(UBlueprint* Blueprint)
+{
+	if (Blueprint && Blueprint->GeneratedClass && Blueprint->GeneratedClass->IsChildOf(UFlowNode::StaticClass()))
+	{
+		bBlueprintCompilationPending = true;
+	}
+}
+
+void UFlowGraphSchema::OnBlueprintCompiled()
+{
+	if (bBlueprintCompilationPending)
+	{
+		GatherFlowNodes();
+	}
+
+	bBlueprintCompilationPending = false;
+}
+
 void UFlowGraphSchema::GatherFlowNodes()
 {
+	// prevent asset crunching during PIE
 	if (GEditor && GEditor->PlayWorld)
 	{
-		// prevent heavy asset crunching during PIE
 		return;
 	}
 
