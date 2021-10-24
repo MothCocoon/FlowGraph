@@ -179,9 +179,9 @@ TArray<TSharedPtr<FString>> UFlowGraphSchema::GetFlowNodeCategories()
 	}
 
 	TSet<FString> UnsortedCategories;
-	for (const UClass* FlowNodeClass : NativeFlowNodes)
+	for (UClass* FlowNodeClass : NativeFlowNodes)
 	{
-		if (UFlowNode* DefaultObject = FlowNodeClass->GetDefaultObject<UFlowNode>())
+		if (const UFlowNode* DefaultObject = FlowNodeClass->GetDefaultObject<UFlowNode>())
 		{
 			UnsortedCategories.Emplace(DefaultObject->GetNodeCategory());
 		}
