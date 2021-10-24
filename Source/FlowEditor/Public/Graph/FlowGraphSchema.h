@@ -13,10 +13,6 @@ class FLOWEDITOR_API UFlowGraphSchema : public UEdGraphSchema
 private:
 	static TArray<UClass*> NativeFlowNodes;
 	static TMap<FName, FAssetData> BlueprintFlowNodes;
-	
-	static TSet<FString> UnsortedCategories;
-	static TArray<TSharedPtr<FString>> FlowNodeCategories;
-
 	static TMap<UClass*, UClass*> AssignedGraphNodeClasses;
 
 public:
@@ -50,10 +46,8 @@ private:
 	static void OnAssetAdded(const FAssetData& AssetData);
 	static void AddAsset(const FAssetData& AssetData, const bool bBatch);
 	static void OnAssetRemoved(const FAssetData& AssetData);
-	
-	static void RefreshNodeList();
 
 public:
 	static FFlowGraphSchemaRefresh OnNodeListChanged;
-	static UBlueprint* GetNodeBlueprint(const FAssetData& AssetData);
+	static UBlueprint* GetPlaceableNodeBlueprint(const FAssetData& AssetData);
 };
