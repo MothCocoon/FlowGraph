@@ -102,6 +102,7 @@ bool UFlowGraphNode::bFlowAssetsLoaded = false;
 UFlowGraphNode::UFlowGraphNode(const FObjectInitializer& ObjectInitializer)
 	: Super(ObjectInitializer)
 	, FlowNode(nullptr)
+	, bBlueprintCompilationPending(false)
 	, bNeedsFullReconstruction(false)
 {
 	OrphanedPinSaveMode = ESaveOrphanPinMode::SaveAll;
@@ -225,10 +226,28 @@ void UFlowGraphNode::SubscribeToExternalChanges()
 		// blueprint nodes
 		if (FlowNode->GetClass()->ClassGeneratedBy && GEditor)
 		{
-			GEditor->OnBlueprintCompiled().AddUObject(this, &UFlowGraphNode::OnExternalChange);
-			GEditor->OnClassPackageLoadedOrUnloaded().AddUObject(this, &UFlowGraphNode::OnExternalChange);
+			GEditor->OnBlueprintPreCompile().AddUObject(this, &UFlowGraphNode::OnBlueprintPreCompile);
+			GEditor->OnBlueprintCompiled().AddUObject(this, &UFlowGraphNode::OnBlueprintCompiled);
 		}
 	}
+}
+
+void UFlowGraphNode::OnBlueprintPreCompile(UBlueprint* Blueprint)
+{
+	if (Blueprint && Blueprint == FlowNode->GetClass()->ClassGeneratedBy)
+	{
+		bBlueprintCompilationPending = true;
+	}
+}
+
+void UFlowGraphNode::OnBlueprintCompiled()
+{
+	if (bBlueprintCompilationPending)
+	{
+		OnExternalChange();
+	}
+
+	bBlueprintCompilationPending = false;
 }
 
 void UFlowGraphNode::OnExternalChange()
