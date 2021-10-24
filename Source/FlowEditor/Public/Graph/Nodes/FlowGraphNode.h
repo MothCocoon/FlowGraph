@@ -57,6 +57,7 @@ private:
 	UPROPERTY(Instanced)
 	UFlowNode* FlowNode;
 
+	bool bBlueprintCompilationPending;
 	bool bNeedsFullReconstruction;
 	static bool bFlowAssetsLoaded;
 
@@ -84,6 +85,10 @@ public:
 
 private:
 	void SubscribeToExternalChanges();
+
+	void OnBlueprintPreCompile(UBlueprint* Blueprint);
+	void OnBlueprintCompiled();
+
 	void OnExternalChange();
 
 //////////////////////////////////////////////////////////////////////////
