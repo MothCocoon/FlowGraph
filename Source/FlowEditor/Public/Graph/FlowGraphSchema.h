@@ -15,6 +15,8 @@ private:
 	static TMap<FName, FAssetData> BlueprintFlowNodes;
 	static TMap<UClass*, UClass*> AssignedGraphNodeClasses;
 
+	static bool bBlueprintCompilationPending;
+
 public:
 	static void SubscribeToAssetChanges();
 	static void GetPaletteActions(FGraphActionMenuBuilder& ActionMenuBuilder, const FString& CategoryName);
@@ -40,6 +42,10 @@ private:
 	static void GetCommentAction(FGraphActionMenuBuilder& ActionMenuBuilder, const UEdGraph* CurrentGraph = nullptr);
 
 	static bool IsFlowNodePlaceable(const UClass* Class);
+
+	static void OnBlueprintPreCompile(UBlueprint* Blueprint);
+	static void OnBlueprintCompiled();
+
 	static void GatherFlowNodes();
 	static void OnHotReload(bool bWasTriggeredAutomatically);
 
