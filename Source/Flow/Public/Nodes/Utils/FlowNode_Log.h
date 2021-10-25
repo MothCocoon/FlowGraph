@@ -3,21 +3,16 @@
 #include "Nodes/FlowNode.h"
 #include "FlowNode_Log.generated.h"
 
+// Variant of ELogVerbosity
 UENUM(BlueprintType)
 enum class EFlowLogVerbosity : uint8
 {
-	Log,
-	Warning,
-	Error,
-	Verbose,
-	VeryVerbose,
-
-	/**
-	 * Here be dragons
-	 * This is the fatal log which means it will literally completely crash your editor/game.
-	 * You've been warned. Use with caution.
-	 */
-	Fatal		UMETA(DisplaName = "Fatal (USE WITH CAUTION)")
+	Error		UMETA(ToolTip = "Prints a message to console (and log file)"),
+	Warning		UMETA(ToolTip = "Prints a message to console (and log file)"),
+	Display		UMETA(ToolTip = "Prints a message to console (and log file)"),
+	Log			UMETA(ToolTip = "Prints a message to a log file (does not print to console)"),
+	Verbose		UMETA(ToolTip = "Prints a verbose message to a log file (if Verbose logging is enabled for the given category, usually used for detailed logging)"),
+	VeryVerbose	UMETA(ToolTip = "Prints a verbose message to a log file (if VeryVerbose logging is enabled, usually used for detailed logging that would otherwise spam output)"),
 };
 
 /**
