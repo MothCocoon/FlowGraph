@@ -3,6 +3,23 @@
 #include "Nodes/FlowNode.h"
 #include "FlowNode_Log.generated.h"
 
+UENUM(BlueprintType)
+enum class EFlowLogVerbosity : uint8
+{
+	Log,
+	Warning,
+	Error,
+	Verbose,
+	VeryVerbose,
+
+	/**
+	 * Here be dragons
+	 * This is the fatal log which means it will literally completely crash your editor/game.
+	 * You've been warned. Use with caution.
+	 */
+	Fatal		UMETA(DisplaName = "Fatal (USE WITH CAUTION)")
+};
+
 /**
  * Adds message to log
  * Optionally shows message on screen
@@ -15,6 +32,9 @@ class FLOW_API UFlowNode_Log : public UFlowNode
 private:
 	UPROPERTY(EditAnywhere, Category = "Flow")
 	FString Message;
+
+	UPROPERTY(EditAnywhere, Category = "Flow")
+	EFlowLogVerbosity Verbosity;
 
 	UPROPERTY(EditAnywhere, Category = "Flow")
 	bool bPrintToScreen;
