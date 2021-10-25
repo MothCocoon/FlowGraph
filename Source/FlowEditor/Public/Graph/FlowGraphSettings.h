@@ -25,6 +25,9 @@ class UFlowGraphSettings final : public UDeveloperSettings
 	FVector2D ConnectionSpacing;
 
 	UPROPERTY(config, EditAnywhere, Category = "Flow Graph")
+	bool bShowAssetPathInNode;
+
+	UPROPERTY(config, EditAnywhere, Category = "Flow Graph")
 	bool bShowGraphPreview;
 
 	UPROPERTY(config, EditAnywhere, Category = "Flow Graph", meta = (EditCondition = "bShowGraphPreview"))
