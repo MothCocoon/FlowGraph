@@ -69,17 +69,7 @@ public:
 	virtual FText GetNodeToolTip() const;
 	
 	// This method allows to have different for every node instance, i.e. Red if node represents enemy, Green if node represents a friend
-	virtual bool GetNodeTitleColor(FLinearColor& OutColor) const
-	{
-		const FColor* Color = UFlowSettings::Get()->NodeColors.Find(GetClass());
-
-		if (!Color)
-			return false;
-
-		OutColor = *Color;
-
-		return true;
-	}
+	virtual bool GetDynamicTitleColor(FLinearColor& OutColor) const { return false; }
 
 	EFlowNodeStyle GetNodeStyle() const { return NodeStyle; }
 
