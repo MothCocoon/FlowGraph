@@ -563,18 +563,16 @@ FText UFlowGraphNode::GetNodeTitle(ENodeTitleType::Type TitleType) const
 	{
 		if (UFlowGraphSettings::Get()->bShowAssetPathInNode)
 		{
-			FString FullName;
-			FlowNode->GetClass()->GetPathName(nullptr, FullName);
-		
 			FString CleanAssetName;
 			if (FlowNode->GetClass()->ClassGeneratedBy)
 			{
-				const int32 SubStringIdx = FullName.Find(".", ESearchCase::IgnoreCase, ESearchDir::FromEnd);
-				CleanAssetName = FullName.Left(SubStringIdx);
+				FlowNode->GetClass()->GetPathName(nullptr, CleanAssetName);
+				const int32 SubStringIdx = CleanAssetName.Find(".", ESearchCase::IgnoreCase, ESearchDir::FromEnd);
+				CleanAssetName.LeftInline(SubStringIdx);
 			}
 			else
 			{
-				CleanAssetName = "C++ - " + FlowNode->GetClass()->GetName();
+				CleanAssetName = FlowNode->GetClass()->GetName();
 			}
 
 			FFormatNamedArguments Args;
