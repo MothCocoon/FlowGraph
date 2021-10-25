@@ -577,7 +577,7 @@ FText UFlowGraphNode::GetNodeTitle(ENodeTitleType::Type TitleType) const
 			{
 				CleanAssetName = FlowNode->GetClass()->GetPathName();
 				const int32 SubStringIdx = CleanAssetName.Find(".", ESearchCase::IgnoreCase, ESearchDir::FromEnd);
-				CleanAssetName.LeftInline(SubStringIdx);
+				CleanAssetName = CleanAssetName.Left(SubStringIdx);
 			}
 			else
 			{
