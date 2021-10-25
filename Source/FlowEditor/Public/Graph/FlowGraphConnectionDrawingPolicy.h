@@ -57,5 +57,6 @@ public:
 private:
 
 	void Internal_DrawCircuitSpline(const int32& LayerId, const FVector2D& Start, const FVector2D& End, const FConnectionParams& Params) const;
-	FVector2D Internal_GetControlPoint(const FVector2D& Source, const FVector2D& Target) const;
+	void Internal_DrawCircuitConnection(const int32& LayerId, const FVector2D& Start, const FVector2D& StartDirection, const FVector2D& End, const FVector2D& EndDirection, const FConnectionParams& Params) const;
+	static FVector2D Internal_GetControlPoint(const FVector2D& Source, const FVector2D& Target);
 };

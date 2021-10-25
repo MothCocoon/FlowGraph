@@ -184,13 +184,59 @@ void FFlowGraphConnectionDrawingPolicy::Internal_DrawCircuitSpline(const int32& 
 	const FVector2D StartDirection = (Params.StartDirection == EGPD_Output) ? FVector2D(1.0f, 0.0f) : FVector2D(-1.0f, 0.0f);
 	const FVector2D EndDirection = (Params.EndDirection == EGPD_Input) ? FVector2D(1.0f, 0.0f) : FVector2D(-1.0f, 0.0f);
 
-	FSlateDrawElement::MakeDrawSpaceSpline(DrawElementsList, LayerId, Start, StartDirection, StartingPoint, EndDirection, Params.WireThickness, ESlateDrawEffect::None, Params.WireColor);
-	FSlateDrawElement::MakeDrawSpaceSpline(DrawElementsList, LayerId, StartingPoint, StartDirection, ControlPoint, EndDirection, Params.WireThickness, ESlateDrawEffect::None, Params.WireColor);
-	FSlateDrawElement::MakeDrawSpaceSpline(DrawElementsList, LayerId, ControlPoint, StartDirection, EndPoint, EndDirection, Params.WireThickness, ESlateDrawEffect::None, Params.WireColor);
-	FSlateDrawElement::MakeDrawSpaceSpline(DrawElementsList, LayerId, EndPoint, StartDirection, End, EndDirection, Params.WireThickness, ESlateDrawEffect::None, Params.WireColor);
+	Internal_DrawCircuitConnection(LayerId, Start, StartDirection, StartingPoint, EndDirection, Params);
+	Internal_DrawCircuitConnection(LayerId, StartingPoint, StartDirection, ControlPoint, EndDirection, Params);
+	Internal_DrawCircuitConnection(LayerId, ControlPoint, StartDirection, EndPoint, EndDirection, Params);
+	Internal_DrawCircuitConnection(LayerId, EndPoint, StartDirection, End, EndDirection, Params);
 }
 
-FVector2D FFlowGraphConnectionDrawingPolicy::Internal_GetControlPoint(const FVector2D& Source, const FVector2D& Target) const
+void FFlowGraphConnectionDrawingPolicy::Internal_DrawCircuitConnection(const int32& LayerId,
+	const FVector2D& Start, const FVector2D& StartDirection, const FVector2D& End, const FVector2D& EndDirection,
+	const FConnectionParams& Params) const
+{
+	FSlateDrawElement::MakeDrawSpaceSpline(DrawElementsList, LayerId, Start, StartDirection, End, EndDirection,
+		Params.WireThickness, ESlateDrawEffect::None, Params.WireColor);
+	
+	if (Params.bDrawBubbles)
+	{
+		// This table maps distance along curve to alpha
+		FInterpCurve<float> SplineReparamTable;
+		const float SplineLength = MakeSplineReparamTable(Start, StartDirection, End, EndDirection, SplineReparamTable);
+
+		// Draw bubbles on the spline
+		if (Params.bDrawBubbles)
+		{
+			const float BubbleSpacing = 64.f * ZoomFactor;
+			const float BubbleSpeed = 192.f * ZoomFactor;
+			const FVector2D BubbleSize = BubbleImage->ImageSize * ZoomFactor * 0.2f * Params.WireThickness;
+
+			const float Time = (FPlatformTime::Seconds() - GStartTime);
+			const float BubbleOffset = FMath::Fmod(Time * BubbleSpeed, BubbleSpacing);
+			const int32 NumBubbles = FMath::CeilToInt(SplineLength/BubbleSpacing);
+			for (int32 i = 0; i < NumBubbles; ++i)
+			{
+				const float Distance = (static_cast<float>(i) * BubbleSpacing) + BubbleOffset;
+				if (Distance < SplineLength)
+				{
+					const float Alpha = SplineReparamTable.Eval(Distance, 0.f);
+					FVector2D BubblePos = FMath::CubicInterp(Start, StartDirection, End, EndDirection, Alpha);
+					BubblePos -= (BubbleSize * 0.5f);
+
+					FSlateDrawElement::MakeBox(
+						DrawElementsList,
+						LayerId,
+						FPaintGeometry( BubblePos, BubbleSize, ZoomFactor  ),
+						BubbleImage,
+						ESlateDrawEffect::None,
+						Params.WireColor
+					);
+				}
+			}
+		}
+	}
+}
+
+FVector2D FFlowGraphConnectionDrawingPolicy::Internal_GetControlPoint(const FVector2D& Source, const FVector2D& Target)
 {
 	const FVector2D Delta = Target - Source;
 	const float Tangent = FMath::Tan(UFlowGraphSettings::Get()->ConnectionAngle * (PI / 180.f));
