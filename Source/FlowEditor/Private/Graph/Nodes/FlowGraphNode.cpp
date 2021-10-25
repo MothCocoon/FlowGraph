@@ -594,12 +594,17 @@ FLinearColor UFlowGraphNode::GetNodeTitleColor() const
 	if (FlowNode)
 	{
 		FLinearColor DynamicColor;
-		if (FlowNode->GetNodeTitleColor(DynamicColor))
+		if (FlowNode->GetDynamicTitleColor(DynamicColor))
 		{
 			return DynamicColor;
 		}
 
-		if (const FLinearColor* StyleColor = UFlowGraphSettings::Get()->NodeTitleColors.Find(FlowNode->GetNodeStyle()))
+		UFlowGraphSettings* GraphSettings = UFlowGraphSettings::Get();
+		if (const FLinearColor* NodeSpecificColor = GraphSettings->NodeSpecificColors.Find(FlowNode->GetClass()))
+		{
+			return *NodeSpecificColor;
+		}
+		if (const FLinearColor* StyleColor = GraphSettings->NodeTitleColors.Find(FlowNode->GetNodeStyle()))
 		{
 			return *StyleColor;
 		}
