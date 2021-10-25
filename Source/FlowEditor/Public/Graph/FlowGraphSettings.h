@@ -67,6 +67,9 @@ class UFlowGraphSettings final : public UDeveloperSettings
 	UPROPERTY(EditAnywhere, config, Category = "Nodes")
 	TMap<EFlowNodeStyle, FLinearColor> NodeTitleColors;
 
+	UPROPERTY(Config, EditAnywhere, Category = "Nodes")
+	TMap<TSubclassOf<UFlowNode>, FLinearColor> NodeSpecificColors;
+
 	UPROPERTY(EditAnywhere, config, Category = "Nodes")
 	FLinearColor ExecPinColorModifier;
 
