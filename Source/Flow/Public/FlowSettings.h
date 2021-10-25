@@ -24,4 +24,8 @@ class UFlowSettings final : public UDeveloperSettings
 	// How many nodes of given class should be preloaded with the Flow Asset instance?
 	UPROPERTY(Config, EditAnywhere, Category = "Preload")
 	TMap<TSubclassOf<UFlowNode>, int32> DefaultPreloadDepth;
+	
+	// Add custom color to a Node.
+	UPROPERTY(Config, EditAnywhere, Category = "Design", meta=(DisplayName="Color per Node"))
+	TMap<TSubclassOf<UFlowNode>, FColor> NodeColors;
 };
