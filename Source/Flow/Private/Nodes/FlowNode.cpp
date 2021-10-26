@@ -445,7 +445,7 @@ UFlowNode* UFlowNode::GetInspectedInstance() const
 {
 	if (const UFlowAsset* FlowInstance = GetFlowAsset()->GetInspectedInstance())
 	{
-		return FlowInstance->GetNodeInstance(GetGuid());
+		return FlowInstance->GetNode(GetGuid());
 	}
 
 	return nullptr;

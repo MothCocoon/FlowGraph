@@ -117,9 +117,9 @@ UFlowNode* UFlowGraphNode::GetFlowNode() const
 {
 	if (FlowNode)
 	{
-		if (UFlowAsset* InspectedInstance = FlowNode->GetFlowAsset()->GetInspectedInstance())
+		if (const UFlowAsset* InspectedInstance = FlowNode->GetFlowAsset()->GetInspectedInstance())
 		{
-			return InspectedInstance->GetNodeInstance(FlowNode->GetGuid());
+			return InspectedInstance->GetNode(FlowNode->GetGuid());
 		}
 
 		return FlowNode;
@@ -144,7 +144,7 @@ void UFlowGraphNode::PostLoad()
 	{
 		TArray<FAssetData> FlowAssets;
 
-		FAssetRegistryModule& AssetRegistryModule = FModuleManager::LoadModuleChecked<FAssetRegistryModule>(AssetRegistryConstants::ModuleName);
+		const FAssetRegistryModule& AssetRegistryModule = FModuleManager::LoadModuleChecked<FAssetRegistryModule>(AssetRegistryConstants::ModuleName);
 		AssetRegistryModule.Get().GetAssetsByClass(UFlowAsset::StaticClass()->GetFName(), FlowAssets, true);
 
 		for (FAssetData const& Asset : FlowAssets)
@@ -394,7 +394,7 @@ void UFlowGraphNode::RewireOldPinsToNewPins(TArray<UEdGraphPin*>& InOldPins)
 	// NOTE: we iterate backwards through the list because ReconstructSinglePin()
 	//       destroys pins as we go along (clearing out parent pointers, etc.); 
 	//       we need the parent pin chain intact for DoPinsMatchForReconstruction();              
-	//       we want to destroy old pins from the split children (leafs) up, so 
+	//       we want to destroy old pins from the split children (leaves) up, so 
 	//       we do this since split child pins are ordered later in the list 
 	//       (after their parents) 
 	for (int32 OldPinIndex = InOldPins.Num() - 1; OldPinIndex >= 0; --OldPinIndex)
@@ -644,7 +644,7 @@ EFlowNodeState UFlowGraphNode::GetActivationState() const
 {
 	if (FlowNode)
 	{
-		if (UFlowNode* NodeInstance = FlowNode->GetInspectedInstance())
+		if (const UFlowNode* NodeInstance = FlowNode->GetInspectedInstance())
 		{
 			return NodeInstance->GetActivationState();
 		}
@@ -657,7 +657,7 @@ FString UFlowGraphNode::GetStatusString() const
 {
 	if (FlowNode)
 	{
-		if (UFlowNode* NodeInstance = FlowNode->GetInspectedInstance())
+		if (const UFlowNode* NodeInstance = FlowNode->GetInspectedInstance())
 		{
 			return NodeInstance->GetStatusString();
 		}
@@ -670,7 +670,7 @@ bool UFlowGraphNode::IsContentPreloaded() const
 {
 	if (FlowNode)
 	{
-		if (UFlowNode* NodeInstance = FlowNode->GetInspectedInstance())
+		if (const UFlowNode* NodeInstance = FlowNode->GetInspectedInstance())
 		{
 			return NodeInstance->bPreloaded;
 		}
@@ -885,7 +885,7 @@ void UFlowGraphNode::GetPinHoverText(const UEdGraphPin& Pin, FString& HoverTextO
 	// add information on pin activations
 	if (GEditor->PlayWorld)
 	{
-		if (UFlowNode* InspectedNodeInstance = GetInspectedNodeInstance())
+		if (const UFlowNode* InspectedNodeInstance = GetInspectedNodeInstance())
 		{
 			if (!HoverTextOut.IsEmpty())
 			{
