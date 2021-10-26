@@ -146,12 +146,7 @@ void UFlowAsset::HarvestNodeConnections()
 
 UFlowNode* UFlowAsset::GetNode(const FGuid& Guid) const
 {
-	if (UFlowNode* Node = Nodes.FindRef(Guid))
-	{
-		return Node;
-	}
-
-	return nullptr;
+	return Nodes.FindRef(Guid);
 }
 
 void UFlowAsset::AddInstance(UFlowAsset* Instance)
@@ -416,11 +411,6 @@ UFlowNode_SubGraph* UFlowAsset::GetNodeOwningThisAssetInstance() const
 UFlowAsset* UFlowAsset::GetMasterInstance() const
 {
 	return NodeOwningThisAssetInstance.IsValid() ? NodeOwningThisAssetInstance.Get()->GetFlowAsset() : nullptr;
-}
-
-UFlowNode* UFlowAsset::GetNodeInstance(const FGuid Guid) const
-{
-	return Nodes.FindRef(Guid);
 }
 
 FFlowAssetSaveData UFlowAsset::SaveInstance(TArray<FFlowAssetSaveData>& SavedFlowInstances)
