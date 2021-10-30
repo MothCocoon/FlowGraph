@@ -1,5 +1,3 @@
-﻿// Created by Satheesh (ryanjon2040)
-
 #pragma once
 
 #include "Nodes/FlowNode.h"
