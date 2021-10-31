@@ -235,7 +235,7 @@ void UFlowComponent::BulkNotifyGraph(const FGameplayTagContainer NotifyTags, con
 		{
 			// save recently notify, this allow for the retroactive check in nodes
 			// if retroactive check wouldn't be performed, this is only used by the network replication
-			RecentlySentNotifyTags = NotifyTags;
+			RecentlySentNotifyTags = ValidatedTags;
 
 			OnRep_SentNotifyTags();
 		}
@@ -265,14 +265,14 @@ void UFlowComponent::NotifyFromGraph(const FGameplayTagContainer& NotifyTags, co
 
 		if (ValidatedTags.Num() > 0)
 		{
-			for (const FGameplayTag& NotifyTag : NotifyTags)
+			for (const FGameplayTag& ValidatedTag : ValidatedTags)
 			{
-				ReceiveNotify.Broadcast(nullptr, NotifyTag);
+				ReceiveNotify.Broadcast(nullptr, ValidatedTag);
 			}
 
 			if (IsNetMode(NM_DedicatedServer) || IsNetMode(NM_ListenServer))
 			{
-				NotifyTagsFromGraph = NotifyTags;
+				NotifyTagsFromGraph = ValidatedTags;
 			}
 		}
 	}
