@@ -13,28 +13,7 @@ UCLASS(Config = Editor, defaultconfig, meta = (DisplayName = "Flow Graph"))
 class UFlowGraphSettings final : public UDeveloperSettings
 {
 	GENERATED_UCLASS_BODY()
-	static UFlowGraphSettings* Get() { return CastChecked<UFlowGraphSettings>(UFlowGraphSettings::StaticClass()->GetDefaultObject()); }
-
-	UPROPERTY(config, EditAnywhere, Category = "Flow Graph")
-	EFlowConnectionDrawType ConnectionDrawType;
-
-	UPROPERTY(config, EditAnywhere, Category = "Flow Graph", meta = (EditCondition = "ConnectionDrawType == EFlowConnectionDrawType::Circuit"))
-	float ConnectionAngle;
-
-	UPROPERTY(config, EditAnywhere, Category = "Flow Graph", meta = (EditCondition = "ConnectionDrawType == EFlowConnectionDrawType::Circuit"))
-	FVector2D ConnectionSpacing;
-
-	UPROPERTY(config, EditAnywhere, Category = "Flow Graph")
-	bool bShowAssetPathInNode;
-
-	UPROPERTY(config, EditAnywhere, Category = "Flow Graph")
-	bool bShowGraphPreview;
-
-	UPROPERTY(config, EditAnywhere, Category = "Flow Graph", meta = (EditCondition = "bShowGraphPreview"))
-	bool bShowGraphPathInPreview;
-	
-	UPROPERTY(config, EditAnywhere, Category = "Flow Graph", meta = (EditCondition = "bShowGraphPreview"))
-	FVector2D GraphPreviewSize;
+	static UFlowGraphSettings* Get() { return StaticClass()->GetDefaultObject<UFlowGraphSettings>(); }
 
 	/** Show Flow Asset in Flow category of "Create Asset" menu?
 	* Requires restart after making a change. */
@@ -81,6 +60,15 @@ class UFlowGraphSettings final : public UDeveloperSettings
 
 	UPROPERTY(EditAnywhere, config, Category = "NodePopups")
 	FLinearColor NodePreloadedBackground;
+
+	UPROPERTY(config, EditAnywhere, Category = "Wires")
+	EFlowConnectionDrawType ConnectionDrawType;
+
+	UPROPERTY(config, EditAnywhere, Category = "Wires", meta = (EditCondition = "ConnectionDrawType == EFlowConnectionDrawType::Circuit"))
+	float CircuitConnectionAngle;
+
+	UPROPERTY(config, EditAnywhere, Category = "Wires", meta = (EditCondition = "ConnectionDrawType == EFlowConnectionDrawType::Circuit"))
+	FVector2D CircuitConnectionSpacing;
 	
 	UPROPERTY(EditAnywhere, config, Category = "Wires")
 	FLinearColor InactiveWireColor;
@@ -103,12 +91,6 @@ class UFlowGraphSettings final : public UDeveloperSettings
 
 	UPROPERTY(EditAnywhere, config, Category = "Wires", meta = (ClampMin = 0.0f))
 	float RecordedWireThickness;
-
-	UPROPERTY(EditAnywhere, config, Category = "Wires")
-	bool bHighlightInputWiresOfSelectedNodes;
-
-	UPROPERTY(EditAnywhere, config, Category = "Wires")
-	bool bHighlightOutputWiresOfSelectedNodes;
 
 	UPROPERTY(EditAnywhere, config, Category = "Wires")
 	FLinearColor SelectedWireColor;

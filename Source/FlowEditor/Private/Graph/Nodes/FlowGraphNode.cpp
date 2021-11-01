@@ -3,6 +3,7 @@
 #include "Asset/FlowDebugger.h"
 #include "FlowEditorCommands.h"
 #include "Graph/FlowGraph.h"
+#include "Graph/FlowGraphEditorSettings.h"
 #include "Graph/FlowGraphSchema.h"
 #include "Graph/FlowGraphSettings.h"
 #include "Graph/Widgets/SFlowGraphNode.h"
@@ -561,7 +562,7 @@ FText UFlowGraphNode::GetNodeTitle(ENodeTitleType::Type TitleType) const
 {
 	if (FlowNode)
 	{
-		if (UFlowGraphSettings::Get()->bShowAssetPathInNode)
+		if (UFlowGraphEditorSettings::Get()->bShowNodeClass)
 		{
 			FString CleanAssetName;
 			if (FlowNode->GetClass()->ClassGeneratedBy)
