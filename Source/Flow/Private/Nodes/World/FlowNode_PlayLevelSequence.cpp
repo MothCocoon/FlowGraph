@@ -114,7 +114,7 @@ void UFlowNode_PlayLevelSequence::CreatePlayer()
 	if (LoadedSequence)
 	{
 		ALevelSequenceActor* SequenceActor;
-		SequencePlayer = UFlowLevelSequencePlayer::CreateFlowLevelSequencePlayer(this, LoadedSequence, PlaybackSettings, SequenceActor);
+		SequencePlayer = UFlowLevelSequencePlayer::CreateFlowLevelSequencePlayer(this, LoadedSequence, PlaybackSettings, CameraSettings, SequenceActor);
 		SequencePlayer->SetFlowEventReceiver(this);
 
 		const FFrameRate FrameRate = LoadedSequence->GetMovieScene()->GetTickResolution();

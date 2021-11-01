@@ -4,8 +4,13 @@ public class Flow : ModuleRules
 {
 	public Flow(ReadOnlyTargetRules Target) : base(Target)
 	{
-        PCHUsage = PCHUsageMode.UseExplicitOrSharedPCHs;
+		PCHUsage = PCHUsageMode.UseExplicitOrSharedPCHs;
 
+		PublicDependencyModuleNames.AddRange(new[] 
+		{
+			"LevelSequence"
+		});
+		
 		PrivateDependencyModuleNames.AddRange(new[] 
 		{
             "Core",
@@ -13,7 +18,6 @@ public class Flow : ModuleRules
             "DeveloperSettings",
 			"Engine",
             "GameplayTags",
-            "LevelSequence",
 			"MovieScene",
 			"MovieSceneTracks",
             "Slate",
