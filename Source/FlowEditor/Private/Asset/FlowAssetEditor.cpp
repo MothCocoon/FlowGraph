@@ -414,11 +414,11 @@ void FFlowAssetEditor::BindGraphCommands()
 
 	// Generic Node commands
 	ToolkitCommands->MapAction(GenericCommands.Undo,
-		FExecuteAction::CreateStatic(this, &FFlowAssetEditor::UndoGraphAction),
+		FExecuteAction::CreateStatic(&FFlowAssetEditor::UndoGraphAction),
 		FCanExecuteAction::CreateStatic(&FFlowAssetEditor::CanEdit));
 
 	ToolkitCommands->MapAction(GenericCommands.Redo,
-		FExecuteAction::CreateStatic(this, &FFlowAssetEditor::RedoGraphAction),
+		FExecuteAction::CreateStatic(&FFlowAssetEditor::RedoGraphAction),
 		FCanExecuteAction::CreateStatic(&FFlowAssetEditor::CanEdit));
 
 	ToolkitCommands->MapAction(GenericCommands.SelectAll,
