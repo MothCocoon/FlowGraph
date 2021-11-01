@@ -1,7 +1,9 @@
 #include "Graph/Widgets/SFlowGraphNode.h"
 #include "FlowEditorStyle.h"
+#include "Graph/FlowGraphEditorSettings.h"
 #include "Graph/FlowGraphSettings.h"
 
+#include "FlowAsset.h"
 #include "Nodes/FlowNode.h"
 
 #include "EdGraph/EdGraphPin.h"
@@ -14,19 +16,15 @@
 #include "SCommentBubble.h"
 #include "SGraphNode.h"
 #include "SGraphPin.h"
+#include "SlateOptMacros.h"
 #include "SLevelOfDetailBranchNode.h"
 #include "SNodePanel.h"
-#include "SlateOptMacros.h"
 #include "Styling/SlateColor.h"
 #include "TutorialMetaData.h"
-#include "FlowAsset.h"
-#include "SGraphPreviewer.h"
-#include "Nodes/Route/FlowNode_SubGraph.h"
 #include "Widgets/Images/SImage.h"
 #include "Widgets/Layout/SBorder.h"
 #include "Widgets/SBoxPanel.h"
 #include "Widgets/SOverlay.h"
-#include "Widgets/SToolTip.h"
 
 #define LOCTEXT_NAMESPACE "SFlowGraphNode"
 
@@ -256,7 +254,7 @@ void SFlowGraphNode::UpdateGraphNode()
 
 	this->ContentScale.Bind(this, &SGraphNode::GetContentScale);
 
-	TSharedPtr<SVerticalBox> InnerVerticalBox = SNew(SVerticalBox)
+	const TSharedPtr<SVerticalBox> InnerVerticalBox = SNew(SVerticalBox)
 		+ SVerticalBox::Slot()
 			.AutoHeight()
 			.HAlign(HAlign_Fill)
@@ -383,7 +381,7 @@ const FSlateBrush* SFlowGraphNode::GetNodeBodyBrush() const
 
 void SFlowGraphNode::CreateStandardPinWidget(UEdGraphPin* Pin)
 {
-	TSharedPtr<SGraphPin> NewPin = SNew(SFlowGraphPinExec, Pin);
+	const TSharedPtr<SGraphPin> NewPin = SNew(SFlowGraphPinExec, Pin);
 
 	if (!UFlowGraphSettings::Get()->bShowDefaultPinNames && FlowGraphNode->GetFlowNode())
 	{
@@ -468,46 +466,6 @@ FReply SFlowGraphNode::OnAddPin()
 
 TSharedPtr<SToolTip> SFlowGraphNode::GetComplexTooltip()
 {
-	if (UFlowGraphSettings::Get()->bShowGraphPreview)
-	{
-		if (UFlowNode_SubGraph* MySubGraphNode = Cast<UFlowNode_SubGraph>(FlowGraphNode->GetFlowNode()))
-		{
-			const UFlowAsset* AssetToEdit = Cast<UFlowAsset>(MySubGraphNode->GetAssetToEdit());
-			if (AssetToEdit && AssetToEdit->GetGraph())
-			{
-				TSharedPtr<SWidget> TitleBarWidget = SNullWidget::NullWidget;
-				if (UFlowGraphSettings::Get()->bShowGraphPathInPreview)
-				{
-					const FString AssetName = FString::Printf(TEXT(".%s"), *AssetToEdit->GetName());
-					const FString AssetPath = AssetToEdit->GetPathName().Replace(*AssetName, TEXT(""));
-					TitleBarWidget = SNew(SBox)
-					.Padding(10.f)
-					[
-						SNew(STextBlock)
-						.Text(FText::FromString(AssetPath))
-					];
-				}
-				
-				return SNew(SToolTip)
-				[
-					SNew(SBox)
-					.WidthOverride(UFlowGraphSettings::Get()->GraphPreviewSize.X)
-					.HeightOverride(UFlowGraphSettings::Get()->GraphPreviewSize.Y)
-					[
-						SNew(SOverlay)
-						+SOverlay::Slot()
-						[
-							SNew(SGraphPreviewer, AssetToEdit->GetGraph())
-							.CornerOverlayText(LOCTEXT("FlowNodePreviewGraphOverlayText", "FLOW PREVIEW"))
-							.ShowGraphStateOverlay(false)
-							.TitleBar(TitleBarWidget)
-						]
-					]
-				];
-			}
-		}
-	}
-
 	return IDocumentation::Get()->CreateToolTip(TAttribute<FText>(this, &SGraphNode::GetNodeTooltip), nullptr, GraphNode->GetDocumentationLink(), GraphNode->GetDocumentationExcerptName());
 }
 
