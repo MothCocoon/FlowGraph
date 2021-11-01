@@ -19,10 +19,7 @@ struct FSlateBrush;
 struct FPropertyChangedEvent;
 struct Rect;
 
-class FFlowAssetEditor : public FAssetEditorToolkit,
-						public FEditorUndoClient,
-						public FGCObject,
-						public FNotifyHook
+class FFlowAssetEditor : public FAssetEditorToolkit, public FEditorUndoClient, public FGCObject, public FNotifyHook
 {
 	/** The FlowAsset asset being inspected */
 	UFlowAsset* FlowAsset;
@@ -47,7 +44,7 @@ private:
 
 public:
 	FFlowAssetEditor();
-	virtual ~FFlowAssetEditor();
+	virtual ~FFlowAssetEditor() override;
 
 	UFlowAsset* GetFlowAsset() const { return FlowAsset; };
 
@@ -98,20 +95,19 @@ protected:
 	virtual void GoToMasterInstance();
 	virtual bool CanGoToMasterInstance();
 
-private:
-	void CreateWidgets();
-	TSharedRef<SGraphEditor> CreateGraphWidget();
+	virtual void CreateWidgets();
 
-protected:
-	FGraphAppearanceInfo GetGraphAppearanceInfo() const;
+	virtual TSharedRef<SGraphEditor> CreateGraphWidget();
+	virtual FGraphAppearanceInfo GetGraphAppearanceInfo() const;
 	virtual FText GetCornerText() const;
 
-private:
-	void BindGraphCommands();
-	void UndoGraphAction();
-	void RedoGraphAction();
+	virtual void BindGraphCommands();
 
-	FReply OnSpawnGraphNodeByShortcut(FInputChord InChord, const FVector2D& InPosition, UEdGraph* InGraph);
+private:	
+	static void UndoGraphAction();
+	static void RedoGraphAction();
+
+	static FReply OnSpawnGraphNodeByShortcut(FInputChord InChord, const FVector2D& InPosition, UEdGraph* InGraph);
 
 public:
 	/** Gets the UI selection state of this editor */
@@ -133,42 +129,43 @@ public:
 	int32 GetNumberOfSelectedNodes() const;
 	bool GetBoundsForSelectedNodes(class FSlateRect& Rect, float Padding) const;
 
-private:
-	void OnSelectedNodesChanged(const TSet<UObject*>& Nodes);
+protected:
+	virtual void OnSelectedNodesChanged(const TSet<UObject*>& Nodes);
 
 public:
-	void SelectSingleNode(UEdGraphNode* Node) const;
+	virtual void SelectSingleNode(UEdGraphNode* Node) const;
 
-private:
-	void SelectAllNodes() const;
-	bool CanSelectAllNodes() const;
+protected:
+	virtual void SelectAllNodes() const;
+	virtual bool CanSelectAllNodes() const;
 
-	void DeleteSelectedNodes();
-	void DeleteSelectedDuplicatableNodes();
-	bool CanDeleteNodes() const;
+	virtual void DeleteSelectedNodes();
+	virtual void DeleteSelectedDuplicatableNodes();
+	virtual bool CanDeleteNodes() const;
 
-	void CopySelectedNodes() const;
-	bool CanCopyNodes() const;
+	virtual void CopySelectedNodes() const;
+	virtual bool CanCopyNodes() const;
 
-	void CutSelectedNodes();
-	bool CanCutNodes() const;
+	virtual void CutSelectedNodes();
+	virtual bool CanCutNodes() const;
 
-	void PasteNodes();
+	virtual void PasteNodes();
 
 public:
-	void PasteNodesHere(const FVector2D& Location);
-	bool CanPasteNodes() const;
+	virtual void PasteNodesHere(const FVector2D& Location);
+	virtual bool CanPasteNodes() const;
+
+protected:
+	virtual void DuplicateNodes();
+	virtual bool CanDuplicateNodes() const;
+
+	virtual void OnNodeDoubleClicked(class UEdGraphNode* Node) const;
+	virtual void OnNodeTitleCommitted(const FText& NewText, ETextCommit::Type CommitInfo, UEdGraphNode* NodeBeingChanged);
+
+	virtual void RefreshContextPins() const;
+	virtual bool CanRefreshContextPins() const;
 
 private:
-	void DuplicateNodes();
-	bool CanDuplicateNodes() const;
-
-	void OnNodeDoubleClicked(class UEdGraphNode* Node) const;
-	void OnNodeTitleCommitted(const FText& NewText, ETextCommit::Type CommitInfo, UEdGraphNode* NodeBeingChanged);
-
-	void RefreshContextPins() const;
-	bool CanRefreshContextPins() const;
-
 	void AddInput() const;
 	bool CanAddInput() const;
 
