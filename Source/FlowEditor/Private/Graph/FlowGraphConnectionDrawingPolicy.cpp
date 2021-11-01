@@ -2,6 +2,7 @@
 
 #include "Asset/FlowAssetEditor.h"
 #include "Graph/FlowGraph.h"
+#include "Graph/FlowGraphEditorSettings.h"
 #include "Graph/FlowGraphSchema.h"
 #include "Graph/FlowGraphSettings.h"
 #include "Graph/FlowGraphUtils.h"
@@ -23,8 +24,6 @@ FConnectionDrawingPolicy* FFlowGraphConnectionDrawingPolicyFactory::CreateConnec
 
 /////////////////////////////////////////////////////
 // FFlowGraphConnectionDrawingPolicy
-
-class UGraphEditorSettings;
 
 FFlowGraphConnectionDrawingPolicy::FFlowGraphConnectionDrawingPolicy(int32 InBackLayerID, int32 InFrontLayerID, float ZoomFactor, const FSlateRect& InClippingRect, FSlateWindowElementList& InDrawElements, UEdGraph* InGraphObj)
 	: FConnectionDrawingPolicy(InBackLayerID, InFrontLayerID, ZoomFactor, InClippingRect, InDrawElements)
@@ -77,7 +76,7 @@ void FFlowGraphConnectionDrawingPolicy::BuildPaths()
 		}
 	}
 
-	if (GraphObj && (UFlowGraphSettings::Get()->bHighlightInputWiresOfSelectedNodes || UFlowGraphSettings::Get()->bHighlightOutputWiresOfSelectedNodes))
+	if (GraphObj && (UFlowGraphEditorSettings::Get()->bHighlightInputWiresOfSelectedNodes || UFlowGraphEditorSettings::Get()->bHighlightOutputWiresOfSelectedNodes))
 	{
 		const TSharedPtr<FFlowAssetEditor> FlowAssetEditor = FFlowGraphUtils::GetFlowAssetEditor(GraphObj);
 		if (FlowAssetEditor.IsValid())
@@ -86,8 +85,8 @@ void FFlowGraphConnectionDrawingPolicy::BuildPaths()
 			{
 				for (UEdGraphPin* Pin : SelectedNode->Pins)
 				{
-					if ((Pin->Direction == EGPD_Input && UFlowGraphSettings::Get()->bHighlightInputWiresOfSelectedNodes)
-						|| (Pin->Direction == EGPD_Output && UFlowGraphSettings::Get()->bHighlightOutputWiresOfSelectedNodes))
+					if ((Pin->Direction == EGPD_Input && UFlowGraphEditorSettings::Get()->bHighlightInputWiresOfSelectedNodes)
+						|| (Pin->Direction == EGPD_Output && UFlowGraphEditorSettings::Get()->bHighlightOutputWiresOfSelectedNodes))
 					{
 						for (UEdGraphPin* LinkedPin : Pin->LinkedTo)
 						{
@@ -100,24 +99,18 @@ void FFlowGraphConnectionDrawingPolicy::BuildPaths()
 	}
 }
 
-void FFlowGraphConnectionDrawingPolicy::DrawConnection(int32 LayerId, const FVector2D& Start, const FVector2D& End,
-	const FConnectionParams& Params)
+void FFlowGraphConnectionDrawingPolicy::DrawConnection(int32 LayerId, const FVector2D& Start, const FVector2D& End, const FConnectionParams& Params)
 {
-	if (UFlowGraphSettings::Get()->ConnectionDrawType == EFlowConnectionDrawType::Default)
+	switch (UFlowGraphSettings::Get()->ConnectionDrawType)
 	{
-		FConnectionDrawingPolicy::DrawConnection(LayerId, Start, End, Params);
-		return;
+		case EFlowConnectionDrawType::Default:
+			FConnectionDrawingPolicy::DrawConnection(LayerId, Start, End, Params);
+			break;
+		case EFlowConnectionDrawType::Circuit:
+			DrawCircuitSpline(LayerId, Start, End, Params);
+			break;
+		default: ;
 	}
-	
-	Internal_DrawCircuitSpline(LayerId, Start, End, Params);
-}
-
-void FFlowGraphConnectionDrawingPolicy::Draw(TMap<TSharedRef<SWidget>, FArrangedWidget>& InPinGeometries, FArrangedChildren& ArrangedNodes)
-{
-	BuildPaths();
-
-	// Draw everything
-	FConnectionDrawingPolicy::Draw(InPinGeometries, ArrangedNodes);
 }
 
 // Give specific editor modes a chance to highlight this connection or darken non-interesting connections
@@ -175,28 +168,32 @@ void FFlowGraphConnectionDrawingPolicy::DetermineWiringStyle(UEdGraphPin* Output
 	}
 }
 
-void FFlowGraphConnectionDrawingPolicy::Internal_DrawCircuitSpline(const int32& LayerId, const FVector2D& Start, const FVector2D& End, const FConnectionParams& Params) const
+void FFlowGraphConnectionDrawingPolicy::Draw(TMap<TSharedRef<SWidget>, FArrangedWidget>& InPinGeometries, FArrangedChildren& ArrangedNodes)
 {
-	const FVector2D StartingPoint =  FVector2D(Start.X + UFlowGraphSettings::Get()->ConnectionSpacing.X, Start.Y);
-	const FVector2D EndPoint = FVector2D(End.X - UFlowGraphSettings::Get()->ConnectionSpacing.Y, End.Y);
-	const FVector2D ControlPoint = Internal_GetControlPoint(StartingPoint, EndPoint);
-	
+	BuildPaths();
+
+	FConnectionDrawingPolicy::Draw(InPinGeometries, ArrangedNodes);
+}
+
+void FFlowGraphConnectionDrawingPolicy::DrawCircuitSpline(const int32& LayerId, const FVector2D& Start, const FVector2D& End, const FConnectionParams& Params) const
+{
+	const FVector2D StartingPoint = FVector2D(Start.X + UFlowGraphSettings::Get()->CircuitConnectionSpacing.X, Start.Y);
+	const FVector2D EndPoint = FVector2D(End.X - UFlowGraphSettings::Get()->CircuitConnectionSpacing.Y, End.Y);
+	const FVector2D ControlPoint = GetControlPoint(StartingPoint, EndPoint);
+
 	const FVector2D StartDirection = (Params.StartDirection == EGPD_Output) ? FVector2D(1.0f, 0.0f) : FVector2D(-1.0f, 0.0f);
 	const FVector2D EndDirection = (Params.EndDirection == EGPD_Input) ? FVector2D(1.0f, 0.0f) : FVector2D(-1.0f, 0.0f);
 
-	Internal_DrawCircuitConnection(LayerId, Start, StartDirection, StartingPoint, EndDirection, Params);
-	Internal_DrawCircuitConnection(LayerId, StartingPoint, StartDirection, ControlPoint, EndDirection, Params);
-	Internal_DrawCircuitConnection(LayerId, ControlPoint, StartDirection, EndPoint, EndDirection, Params);
-	Internal_DrawCircuitConnection(LayerId, EndPoint, StartDirection, End, EndDirection, Params);
+	DrawCircuitConnection(LayerId, Start, StartDirection, StartingPoint, EndDirection, Params);
+	DrawCircuitConnection(LayerId, StartingPoint, StartDirection, ControlPoint, EndDirection, Params);
+	DrawCircuitConnection(LayerId, ControlPoint, StartDirection, EndPoint, EndDirection, Params);
+	DrawCircuitConnection(LayerId, EndPoint, StartDirection, End, EndDirection, Params);
 }
 
-void FFlowGraphConnectionDrawingPolicy::Internal_DrawCircuitConnection(const int32& LayerId,
-	const FVector2D& Start, const FVector2D& StartDirection, const FVector2D& End, const FVector2D& EndDirection,
-	const FConnectionParams& Params) const
+void FFlowGraphConnectionDrawingPolicy::DrawCircuitConnection(const int32& LayerId, const FVector2D& Start, const FVector2D& StartDirection, const FVector2D& End, const FVector2D& EndDirection, const FConnectionParams& Params) const
 {
-	FSlateDrawElement::MakeDrawSpaceSpline(DrawElementsList, LayerId, Start, StartDirection, End, EndDirection,
-		Params.WireThickness, ESlateDrawEffect::None, Params.WireColor);
-	
+	FSlateDrawElement::MakeDrawSpaceSpline(DrawElementsList, LayerId, Start, StartDirection, End, EndDirection, Params.WireThickness, ESlateDrawEffect::None, Params.WireColor);
+
 	if (Params.bDrawBubbles)
 	{
 		// This table maps distance along curve to alpha
@@ -212,7 +209,7 @@ void FFlowGraphConnectionDrawingPolicy::Internal_DrawCircuitConnection(const int
 
 			const float Time = (FPlatformTime::Seconds() - GStartTime);
 			const float BubbleOffset = FMath::Fmod(Time * BubbleSpeed, BubbleSpacing);
-			const int32 NumBubbles = FMath::CeilToInt(SplineLength/BubbleSpacing);
+			const int32 NumBubbles = FMath::CeilToInt(SplineLength / BubbleSpacing);
 			for (int32 i = 0; i < NumBubbles; ++i)
 			{
 				const float Distance = (static_cast<float>(i) * BubbleSpacing) + BubbleOffset;
@@ -222,36 +219,29 @@ void FFlowGraphConnectionDrawingPolicy::Internal_DrawCircuitConnection(const int
 					FVector2D BubblePos = FMath::CubicInterp(Start, StartDirection, End, EndDirection, Alpha);
 					BubblePos -= (BubbleSize * 0.5f);
 
-					FSlateDrawElement::MakeBox(
-						DrawElementsList,
-						LayerId,
-						FPaintGeometry( BubblePos, BubbleSize, ZoomFactor  ),
-						BubbleImage,
-						ESlateDrawEffect::None,
-						Params.WireColor
-					);
+					FSlateDrawElement::MakeBox(DrawElementsList, LayerId, FPaintGeometry(BubblePos, BubbleSize, ZoomFactor), BubbleImage, ESlateDrawEffect::None, Params.WireColor);
 				}
 			}
 		}
 	}
 }
 
-FVector2D FFlowGraphConnectionDrawingPolicy::Internal_GetControlPoint(const FVector2D& Source, const FVector2D& Target)
+FVector2D FFlowGraphConnectionDrawingPolicy::GetControlPoint(const FVector2D& Source, const FVector2D& Target)
 {
 	const FVector2D Delta = Target - Source;
-	const float Tangent = FMath::Tan(UFlowGraphSettings::Get()->ConnectionAngle * (PI / 180.f));
+	const float Tangent = FMath::Tan(UFlowGraphSettings::Get()->CircuitConnectionAngle * (PI / 180.f));
 
-	const float DX = FMath::Abs(Delta.X);
-	const float DY = FMath::Abs(Delta.Y);
+	const float DeltaX = FMath::Abs(Delta.X);
+	const float DeltaY = FMath::Abs(Delta.Y);
 
-	const float SlopeWidth = DY / Tangent;
-	if (DX > SlopeWidth)
+	const float SlopeWidth = DeltaY / Tangent;
+	if (DeltaX > SlopeWidth)
 	{
 		return Delta.X > 0.f ? FVector2D(Target.X - SlopeWidth, Source.Y) : FVector2D(Source.X - SlopeWidth, Target.Y);
 	}
 
-	const float SlopeHeight = DX * Tangent;
-	if (DY > SlopeHeight)
+	const float SlopeHeight = DeltaX * Tangent;
+	if (DeltaY > SlopeHeight)
 	{
 		if (Delta.Y > 0.f)
 		{
