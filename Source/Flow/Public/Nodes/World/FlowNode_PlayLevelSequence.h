@@ -1,13 +1,12 @@
 #pragma once
 
 #include "EngineDefines.h"
-#include "LevelSequencePlayer.h"
 #include "MovieSceneSequencePlayer.h"
-
 #include "Nodes/FlowNode.h"
 #include "FlowNode_PlayLevelSequence.generated.h"
 
 class UFlowLevelSequencePlayer;
+class ULevelSequence;
 
 DECLARE_MULTICAST_DELEGATE(FFlowNodeLevelSequenceEvent);
 
@@ -32,10 +31,7 @@ class FLOW_API UFlowNode_PlayLevelSequence : public UFlowNode
 
 	UPROPERTY(EditAnywhere, Category = "Sequence")
 	FMovieSceneSequencePlaybackSettings PlaybackSettings;
-	
-	UPROPERTY(EditAnywhere, Category = "Sequence")
-	FLevelSequenceCameraSettings CameraSettings;
-	
+
 protected:
 	UPROPERTY()
 	ULevelSequence* LoadedSequence;

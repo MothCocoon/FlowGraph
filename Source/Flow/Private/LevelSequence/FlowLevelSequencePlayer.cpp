@@ -8,9 +8,9 @@ UFlowLevelSequencePlayer::UFlowLevelSequencePlayer(const FObjectInitializer& Obj
 {
 }
 
-UFlowLevelSequencePlayer* UFlowLevelSequencePlayer::CreateFlowLevelSequencePlayer(UObject* WorldContextObject, ULevelSequence* LevelSequence, FMovieSceneSequencePlaybackSettings Settings, FLevelSequenceCameraSettings CameraSettings, ALevelSequenceActor*& OutActor)
+UFlowLevelSequencePlayer* UFlowLevelSequencePlayer::CreateFlowLevelSequencePlayer(UObject* WorldContextObject, ULevelSequence* InLevelSequence, FMovieSceneSequencePlaybackSettings Settings, ALevelSequenceActor*& OutActor)
 {
-	if (LevelSequence == nullptr)
+	if (InLevelSequence == nullptr)
 	{
 		return nullptr;
 	}
@@ -32,8 +32,7 @@ UFlowLevelSequencePlayer* UFlowLevelSequencePlayer::CreateFlowLevelSequencePlaye
 	ALevelSequenceActor* Actor = World->SpawnActor<AFlowLevelSequenceActor>(SpawnParams);
 
 	Actor->PlaybackSettings = Settings;
-	Actor->LevelSequence = LevelSequence;
-	Actor->CameraSettings = CameraSettings;
+	Actor->LevelSequence = InLevelSequence;
 
 	Actor->InitializePlayer();
 	OutActor = Actor;
