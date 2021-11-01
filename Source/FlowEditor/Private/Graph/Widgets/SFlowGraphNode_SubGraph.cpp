@@ -24,7 +24,7 @@ TSharedPtr<SToolTip> SFlowGraphNode_SubGraph::GetComplexTooltip()
 				{
 					FString CleanAssetName = AssetToEdit->GetPathName(nullptr);
 					const int32 SubStringIdx = CleanAssetName.Find(".", ESearchCase::IgnoreCase, ESearchDir::FromEnd);
-					CleanAssetName.LeftInline(SubStringIdx);
+					CleanAssetName = CleanAssetName.Left(SubStringIdx);
 					
 					TitleBarWidget = SNew(SBox)
 					.Padding(10.f)
