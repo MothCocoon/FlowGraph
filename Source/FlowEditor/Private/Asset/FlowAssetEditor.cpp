@@ -368,7 +368,7 @@ TSharedRef<SGraphEditor> FFlowAssetEditor::CreateGraphWidget()
 	InEvents.OnSelectionChanged = SGraphEditor::FOnSelectionChanged::CreateSP(this, &FFlowAssetEditor::OnSelectedNodesChanged);
 	InEvents.OnNodeDoubleClicked = FSingleNodeEvent::CreateSP(this, &FFlowAssetEditor::OnNodeDoubleClicked);
 	InEvents.OnTextCommitted = FOnNodeTextCommitted::CreateSP(this, &FFlowAssetEditor::OnNodeTitleCommitted);
-	InEvents.OnSpawnNodeByShortcut = SGraphEditor::FOnSpawnNodeByShortcut::CreateSP(this, &FFlowAssetEditor::OnSpawnGraphNodeByShortcut, static_cast<UEdGraph*>(FlowAsset->GetGraph()));
+	InEvents.OnSpawnNodeByShortcut = SGraphEditor::FOnSpawnNodeByShortcut::CreateStatic(&FFlowAssetEditor::OnSpawnGraphNodeByShortcut, static_cast<UEdGraph*>(FlowAsset->GetGraph()));
 
 	return SNew(SGraphEditor)
 		.AdditionalCommands(ToolkitCommands)
@@ -414,11 +414,11 @@ void FFlowAssetEditor::BindGraphCommands()
 
 	// Generic Node commands
 	ToolkitCommands->MapAction(GenericCommands.Undo,
-		FExecuteAction::CreateSP(this, &FFlowAssetEditor::UndoGraphAction),
+		FExecuteAction::CreateStatic(this, &FFlowAssetEditor::UndoGraphAction),
 		FCanExecuteAction::CreateStatic(&FFlowAssetEditor::CanEdit));
 
 	ToolkitCommands->MapAction(GenericCommands.Redo,
-		FExecuteAction::CreateSP(this, &FFlowAssetEditor::RedoGraphAction),
+		FExecuteAction::CreateStatic(this, &FFlowAssetEditor::RedoGraphAction),
 		FCanExecuteAction::CreateStatic(&FFlowAssetEditor::CanEdit));
 
 	ToolkitCommands->MapAction(GenericCommands.SelectAll,
