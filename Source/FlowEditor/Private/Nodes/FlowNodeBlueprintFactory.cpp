@@ -265,6 +265,7 @@ UObject* UFlowNodeBlueprintFactory::FactoryCreateNew(UClass* Class, UObject* InP
 		{
 			int32 NodePositionY = 0;
 			FKismetEditorUtilities::AddDefaultEventNode(NewBP, NewBP->UbergraphPages[0], FName(TEXT("K2_ExecuteInput")), UFlowNode::StaticClass(), NodePositionY);
+			FKismetEditorUtilities::AddDefaultEventNode(NewBP, NewBP->UbergraphPages[0], FName(TEXT("K2_Tick")), UFlowNode::StaticClass(), NodePositionY);
 			FKismetEditorUtilities::AddDefaultEventNode(NewBP, NewBP->UbergraphPages[0], FName(TEXT("K2_Cleanup")), UFlowNode::StaticClass(), NodePositionY);
 		}
 	}

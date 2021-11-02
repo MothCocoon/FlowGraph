@@ -101,6 +101,16 @@ public:
 	static FFlowPin DefaultOutputPin;
 
 protected:
+	// Automatically start tick when this node is active (i.e: When input is triggered). Otherwise tick can be manually started using Set Tick function
+	UPROPERTY(EditDefaultsOnly)
+	uint8 bStartWithTickEnabled : 1;
+
+	// Delegate for callbacks to Tick
+	FTickerDelegate TickDelegate;
+	
+	// Handle to various registered delegates
+	FDelegateHandle TickDelegateHandle;
+	
 	// Class-specific and user-added inputs
 	UPROPERTY(EditDefaultsOnly, Category = "FlowNode")
 	TArray<FFlowPin> InputPins;
@@ -225,6 +235,24 @@ protected:
 
 	// Trigger execution of input pin
 	void TriggerInput(const FName& PinName);
+
+private:
+
+	/** Native tick. Not meant to be accessed. @See Tick */
+	bool NativeFlowTick(float DeltaSeconds);
+
+protected:
+
+	virtual void Tick(const float& DeltaSeconds) { K2_Tick(DeltaSeconds); }
+
+	UFUNCTION(BlueprintCallable, Category = "FlowNode")
+	void SetTickEnabled(const bool bEnable);
+
+	UFUNCTION(BlueprintPure, Category = "FlowNode")
+	bool IsTickEnabled() const;
+
+	UFUNCTION(BlueprintImplementableEvent, Category = "FlowNode", meta = (DisplayName = "Tick"))	
+	void K2_Tick(const float& DeltaSeconds);
 
 	// Method reacting on triggering Input pin
 	virtual void ExecuteInput(const FName& PinName);

@@ -34,6 +34,7 @@ UFlowNode::UFlowNode(const FObjectInitializer& ObjectInitializer)
 	NodeStyle = EFlowNodeStyle::Default;
 #endif
 
+	bStartWithTickEnabled = false;
 	InputPins = {DefaultInputPin};
 	OutputPins = {DefaultOutputPin};
 }
@@ -334,7 +335,41 @@ void UFlowNode::TriggerInput(const FName& PinName)
 		return;
 	}
 
+	if (bStartWithTickEnabled)
+	{
+		SetTickEnabled(true);
+	}
+	
 	ExecuteInput(PinName);
+}
+
+bool UFlowNode::NativeFlowTick(float DeltaSeconds)
+{
+	Tick(DeltaSeconds);
+	return true;
+}
+
+void UFlowNode::SetTickEnabled(const bool bEnable)
+{
+	if (bEnable)
+	{
+		if (!TickDelegateHandle.IsValid())
+		{
+			TickDelegate = FTickerDelegate::CreateUObject(this, &UFlowNode::NativeFlowTick);
+			TickDelegateHandle = FTicker::GetCoreTicker().AddTicker(TickDelegate);
+		}
+	}
+	else if (TickDelegateHandle.IsValid())
+	{
+		FTicker::GetCoreTicker().RemoveTicker(TickDelegateHandle);
+		TickDelegate.Unbind();
+		TickDelegateHandle.Reset();
+	}
+}
+
+bool UFlowNode::IsTickEnabled() const
+{
+	return TickDelegateHandle.IsValid();
 }
 
 void UFlowNode::ExecuteInput(const FName& PinName)
@@ -418,6 +453,7 @@ void UFlowNode::Deactivate()
 		ActivationState = EFlowNodeState::Completed;
 	}
 
+	SetTickEnabled(false);
 	Cleanup();
 }
 
