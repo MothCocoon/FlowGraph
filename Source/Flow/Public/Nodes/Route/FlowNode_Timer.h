@@ -8,7 +8,7 @@
  * Triggers outputs after time elapsed
  */
 UCLASS(NotBlueprintable, meta = (DisplayName = "Timer"))
-class FLOW_API UFlowNode_Timer final : public UFlowNode
+class FLOW_API UFlowNode_Timer : public UFlowNode
 {
 	GENERATED_UCLASS_BODY()
 
