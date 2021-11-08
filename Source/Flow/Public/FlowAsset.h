@@ -107,10 +107,10 @@ public:
 
 	void RegisterNode(const FGuid& NewGuid, UFlowNode* NewNode);
 	void UnregisterNode(const FGuid& NodeGuid);
-#endif
-
+	
 	// Processes all nodes and creates map of all pin connections
-	void HarvestNodeConnections();
+    void HarvestNodeConnections();
+#endif
 
 	UFlowNode* GetNode(const FGuid& Guid) const;
 	TMap<FGuid, UFlowNode*> GetNodes() const { return Nodes; }

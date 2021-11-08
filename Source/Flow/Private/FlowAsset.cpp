@@ -99,7 +99,6 @@ void UFlowAsset::UnregisterNode(const FGuid& NodeGuid)
 	HarvestNodeConnections();
 	MarkPackageDirty();
 }
-#endif
 
 void UFlowAsset::HarvestNodeConnections()
 {
@@ -132,17 +131,13 @@ void UFlowAsset::HarvestNodeConnections()
 			}
 		}
 
-#if WITH_EDITOR
 		Node->SetFlags(RF_Transactional);
 		Node->Modify();
-#endif
 		Node->SetConnections(Connections);
-
-#if WITH_EDITOR
 		Node->PostEditChange();
-#endif
 	}
 }
+#endif
 
 UFlowNode* UFlowAsset::GetNode(const FGuid& Guid) const
 {
