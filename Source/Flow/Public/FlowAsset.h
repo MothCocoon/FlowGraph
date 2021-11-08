@@ -109,7 +109,7 @@ public:
 	void UnregisterNode(const FGuid& NodeGuid);
 	
 	// Processes all nodes and creates map of all pin connections
-    void HarvestNodeConnections();
+    	void HarvestNodeConnections();
 #endif
 
 	UFlowNode* GetNode(const FGuid& Guid) const;
