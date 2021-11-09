@@ -7,6 +7,7 @@
 #include "Nodes/FlowNode.h"
 
 #include "EditorStyleSet.h"
+#include "FlowAsset.h"
 #include "Fonts/SlateFontInfo.h"
 #include "Styling/CoreStyle.h"
 #include "Styling/SlateBrush.h"
@@ -180,8 +181,16 @@ TSharedRef<SWidget> SFlowPalette::OnCreateWidgetForAction(FCreateWidgetForAction
 
 void SFlowPalette::CollectAllActions(FGraphActionListBuilderBase& OutAllActions)
 {
+	UClass* AssetClass = UFlowAsset::StaticClass();
+	
+	const TSharedPtr<FFlowAssetEditor> FlowAssetEditor = FlowAssetEditorPtr.Pin();
+	if (FlowAssetEditor && FlowAssetEditor->GetFlowAsset())
+	{
+		AssetClass = FlowAssetEditor->GetFlowAsset()->GetClass();
+	}
+	
 	FGraphActionMenuBuilder ActionMenuBuilder;
-	UFlowGraphSchema::GetPaletteActions(ActionMenuBuilder, GetFilterCategoryName());
+	UFlowGraphSchema::GetPaletteActions(ActionMenuBuilder, AssetClass, GetFilterCategoryName());
 	OutAllActions.Append(ActionMenuBuilder);
 }
 
@@ -204,7 +213,7 @@ void SFlowPalette::OnActionSelected(const TArray<TSharedPtr<FEdGraphSchemaAction
 {
 	if (InSelectionType == ESelectInfo::OnMouseClick || InSelectionType == ESelectInfo::OnKeyPress || InSelectionType == ESelectInfo::OnNavigation || InActions.Num() == 0)
 	{
-		TSharedPtr<FFlowAssetEditor> FlowAssetEditor = FlowAssetEditorPtr.Pin();
+		const TSharedPtr<FFlowAssetEditor> FlowAssetEditor = FlowAssetEditorPtr.Pin();
 		if (FlowAssetEditor)
 		{
 			FlowAssetEditor->SetUISelectionState(FFlowAssetEditor::PaletteTab);

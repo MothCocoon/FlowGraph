@@ -16,6 +16,7 @@ UFlowAsset::UFlowAsset(const FObjectInitializer& ObjectInitializer)
 #if WITH_EDITOR
 	, FlowGraph(nullptr)
 #endif
+	, AllowedNodeClasses({UFlowNode::StaticClass()})
 	, TemplateAsset(nullptr)
 	, StartNode(nullptr)
 	, FinishPolicy(EFlowFinishPolicy::Keep)
