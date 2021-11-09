@@ -376,10 +376,17 @@ void UFlowAsset::FinishNode(UFlowNode* Node)
 	{
 		ActiveNodes.Remove(Node);
 
-		// if graph reached Finish and this asset instance was created by SubGraph node
-		if (Node->GetClass()->IsChildOf(UFlowNode_Finish::StaticClass()) && NodeOwningThisAssetInstance.IsValid())
+		if (Node->GetClass()->IsChildOf(UFlowNode_Finish::StaticClass()))
 		{
-			NodeOwningThisAssetInstance.Get()->TriggerFirstOutput(true);
+			// if graph reached Finish and this asset instance was created by SubGraph node
+			if (NodeOwningThisAssetInstance.IsValid())
+			{
+				NodeOwningThisAssetInstance.Get()->TriggerFirstOutput(true);
+			}
+			else
+			{
+				FinishFlow(EFlowFinishPolicy::Keep);
+			}
 		}
 	}
 }
