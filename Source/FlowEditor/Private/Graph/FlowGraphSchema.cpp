@@ -50,15 +50,21 @@ void UFlowGraphSchema::SubscribeToAssetChanges()
 	}
 }
 
-void UFlowGraphSchema::GetPaletteActions(FGraphActionMenuBuilder& ActionMenuBuilder, const FString& CategoryName)
+void UFlowGraphSchema::GetPaletteActions(FGraphActionMenuBuilder& ActionMenuBuilder, UClass* AssetClass, const FString& CategoryName)
 {
-	GetFlowNodeActions(ActionMenuBuilder, CategoryName);
+	GetFlowNodeActions(ActionMenuBuilder, AssetClass, CategoryName);
 	GetCommentAction(ActionMenuBuilder);
 }
 
 void UFlowGraphSchema::GetGraphContextActions(FGraphContextMenuBuilder& ContextMenuBuilder) const
 {
-	GetFlowNodeActions(ContextMenuBuilder, FString());
+	UClass* AssetClass = UFlowAsset::StaticClass();
+	if (const UFlowAsset* FlowAsset = ContextMenuBuilder.CurrentGraph->GetTypedOuter<UFlowAsset>())
+	{
+		AssetClass = FlowAsset->GetClass();
+	}
+
+	GetFlowNodeActions(ContextMenuBuilder, AssetClass, FString());
 	GetCommentAction(ContextMenuBuilder, ContextMenuBuilder.CurrentGraph);
 
 	if (!ContextMenuBuilder.FromPin && FFlowGraphUtils::GetFlowAssetEditor(ContextMenuBuilder.CurrentGraph)->CanPasteNodes())
@@ -223,27 +229,43 @@ UClass* UFlowGraphSchema::GetAssignedGraphNodeClass(const UClass* FlowNodeClass)
 	return UFlowGraphNode::StaticClass();
 }
 
-void UFlowGraphSchema::GetFlowNodeActions(FGraphActionMenuBuilder& ActionMenuBuilder, const FString& CategoryName)
+void UFlowGraphSchema::GetFlowNodeActions(FGraphActionMenuBuilder& ActionMenuBuilder, UClass* AssetClass, const FString& CategoryName)
 {
 	if (NativeFlowNodes.Num() == 0)
 	{
 		GatherFlowNodes();
 	}
 
+	// get actual asset type, as it might limit which nodes are placeable 
+	const UFlowAsset* AssetClassDefaults = AssetClass->GetDefaultObject<UFlowAsset>();
+
 	TArray<UFlowNode*> FlowNodes;
 	FlowNodes.Reserve(NativeFlowNodes.Num() + BlueprintFlowNodes.Num());
 
 	for (const UClass* FlowNodeClass : NativeFlowNodes)
 	{
-		FlowNodes.Emplace(FlowNodeClass->GetDefaultObject<UFlowNode>());
+		for (const UClass* AllowedClass : AssetClassDefaults->AllowedNodeClasses)
+		{
+			if (FlowNodeClass->IsChildOf(AllowedClass))
+			{
+				FlowNodes.Emplace(FlowNodeClass->GetDefaultObject<UFlowNode>());
+			}
+		}
 	}
 	for (const TPair<FName, FAssetData>& AssetData : BlueprintFlowNodes)
 	{
 		if (const UBlueprint* Blueprint = GetPlaceableNodeBlueprint(AssetData.Value))
 		{
-			FlowNodes.Emplace(Blueprint->GeneratedClass->GetDefaultObject<UFlowNode>());
+			for (const UClass* AllowedClass : AssetClassDefaults->AllowedNodeClasses)
+			{
+				if (Blueprint->GeneratedClass->IsChildOf(AllowedClass))
+				{
+					FlowNodes.Emplace(Blueprint->GeneratedClass->GetDefaultObject<UFlowNode>());
+				}
+			}
 		}
 	}
+	FlowNodes.Shrink();
 
 	for (const UFlowNode* FlowNode : FlowNodes)
 	{

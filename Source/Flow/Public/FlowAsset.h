@@ -45,6 +45,7 @@ class FLOW_API UFlowAsset : public UObject
 	friend class UFlowSubsystem;
 
 	friend class FFlowAssetDetails;
+	friend class UFlowGraphSchema;
 
 //////////////////////////////////////////////////////////////////////////
 // Graph
@@ -80,6 +81,9 @@ public:
 
 //////////////////////////////////////////////////////////////////////////
 // Nodes
+
+protected:
+	TArray<TSubclassOf<UFlowNode>> AllowedNodeClasses;	
 
 private:
 	UPROPERTY()
