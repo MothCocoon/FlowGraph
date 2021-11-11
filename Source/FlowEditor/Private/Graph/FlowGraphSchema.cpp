@@ -10,6 +10,7 @@
 #include "FlowAsset.h"
 #include "Nodes/FlowNode.h"
 #include "Nodes/Route/FlowNode_Start.h"
+#include "Nodes/Route/FlowNode_Reroute.h"
 
 #include "AssetRegistryModule.h"
 #include "Developer/ToolMenus/Public/ToolMenus.h"
@@ -177,6 +178,21 @@ int32 UFlowGraphSchema::GetNodeSelectionCount(const UEdGraph* Graph) const
 TSharedPtr<FEdGraphSchemaAction> UFlowGraphSchema::GetCreateCommentAction() const
 {
 	return TSharedPtr<FEdGraphSchemaAction>(static_cast<FEdGraphSchemaAction*>(new FFlowGraphSchemaAction_NewComment));
+}
+
+void UFlowGraphSchema::OnPinConnectionDoubleCicked(UEdGraphPin* PinA, UEdGraphPin* PinB, const FVector2D& GraphPosition) const
+{
+	const FScopedTransaction Transaction(LOCTEXT("CreateFlowRerouteNodeOnWire", "Create Flow Reroute Node"));
+
+	const FVector2D NodeSpacerSize(42.0f, 24.0f);
+	const FVector2D KnotTopLeft = GraphPosition - (NodeSpacerSize * 0.5f);
+	
+	UEdGraph* ParentGraph = PinA->GetOwningNode()->GetGraph();
+	UFlowGraphNode* NewReroute = FFlowGraphSchemaAction_NewNode::CreateNode(ParentGraph, nullptr, UFlowNode_Reroute::StaticClass(), KnotTopLeft, false);
+	
+	PinA->BreakLinkTo(PinB);
+	PinA->MakeLinkTo((PinA->Direction == EGPD_Output) ? NewReroute->InputPins[0] : NewReroute->OutputPins[0]);
+	PinB->MakeLinkTo((PinB->Direction == EGPD_Output) ? NewReroute->InputPins[0] : NewReroute->OutputPins[0]);
 }
 
 TArray<TSharedPtr<FString>> UFlowGraphSchema::GetFlowNodeCategories()
