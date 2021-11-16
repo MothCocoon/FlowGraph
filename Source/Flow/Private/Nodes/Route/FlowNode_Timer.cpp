@@ -17,11 +17,13 @@ UFlowNode_Timer::UFlowNode_Timer(const FObjectInitializer& ObjectInitializer)
 #endif
 
 	InputPins.Add(FFlowPin(TEXT("Skip")));
+	InputPins.Add(FFlowPin(TEXT("Stop")));
 
 	OutputPins.Empty();
 	OutputPins.Add(FFlowPin(TEXT("Completed")));
 	OutputPins.Add(FFlowPin(TEXT("Step")));
 	OutputPins.Add(FFlowPin(TEXT("Skipped")));
+	OutputPins.Add(FFlowPin(TEXT("Stopped")));
 }
 
 void UFlowNode_Timer::ExecuteInput(const FName& PinName)
@@ -59,6 +61,10 @@ void UFlowNode_Timer::ExecuteInput(const FName& PinName)
 	else if (PinName == TEXT("Skip"))
 	{
 		TriggerOutput(TEXT("Skipped"), true);
+	}
+	else if (PinName == TEXT("Stop"))
+	{
+		TriggerOutput(TEXT("Stopped"), true);
 	}
 }
 
