@@ -105,6 +105,7 @@ void UFlowAsset::UnregisterNode(const FGuid& NodeGuid)
 void UFlowAsset::HarvestNodeConnections()
 {
 	TMap<FName, FConnectedPin> Connections;
+	bool bModified = false;
 
 	// last moment to remove invalid nodes
 	for (auto NodeIt = Nodes.CreateIterator(); NodeIt; ++NodeIt)
@@ -113,6 +114,7 @@ void UFlowAsset::HarvestNodeConnections()
 		if (Pair.Value == nullptr)
 		{
 			NodeIt.RemoveCurrent();
+			bModified = true;
 		}
 	}
 
@@ -120,6 +122,7 @@ void UFlowAsset::HarvestNodeConnections()
 	{
 		UFlowNode* Node = Pair.Value;
 		Connections.Empty();
+		TMap<FName, FConnectedPin> CurrentConnections = Node->Connections;
 
 		for (const UEdGraphPin* ThisPin : Node->GetGraphNode()->Pins)
 		{
@@ -129,19 +132,39 @@ void UFlowAsset::HarvestNodeConnections()
 				{
 					const UEdGraphNode* LinkedNode = LinkedPin->GetOwningNode();
 					Connections.Add(ThisPin->PinName, FConnectedPin(LinkedNode->NodeGuid, LinkedPin->PinName));
+
+					// check if connection already exists
+					bool bFoundConnection = false;
+					for (TPair<FName, FConnectedPin>& KeyVal : CurrentConnections)
+					{
+						if (KeyVal.Value.NodeGuid == LinkedNode->NodeGuid && KeyVal.Value.PinName == LinkedPin->PinName)
+						{
+							bFoundConnection = true;
+							break;
+						}
+					}
+
+					// if not - we will have to override connections and modify the asset
+					if (!bFoundConnection)
+					{
+						bModified = true;
+					}
 				}
 			}
 		}
 
+		if (bModified)
+		{
 #if WITH_EDITOR
-		Node->SetFlags(RF_Transactional);
-		Node->Modify();
+			Node->SetFlags(RF_Transactional);
+			Node->Modify();
 #endif
-		Node->SetConnections(Connections);
+			Node->SetConnections(Connections);
 
 #if WITH_EDITOR
-		Node->PostEditChange();
-#endif
+			Node->PostEditChange();
+#endif			
+		}
 	}
 }
 
