@@ -758,7 +758,7 @@ void UFlowGraphNode::RemoveOrphanedPin(UEdGraphPin* Pin)
 
 	PinBreakpoints.Remove(Pin);
 
-	Pin->MarkPendingKill();
+	Pin->MarkAsGarbage();
 	Pins.Remove(Pin);
 
 	ReconstructNode();
@@ -833,7 +833,7 @@ void UFlowGraphNode::RemoveInstancePin(UEdGraphPin* Pin)
 			InputPins.Remove(Pin);
 			FlowNode->RemoveUserInput();
 
-			Pin->MarkPendingKill();
+			Pin->MarkAsGarbage();
 			Pins.Remove(Pin);
 		}
 	}
@@ -844,7 +844,7 @@ void UFlowGraphNode::RemoveInstancePin(UEdGraphPin* Pin)
 			OutputPins.Remove(Pin);
 			FlowNode->RemoveUserOutput();
 
-			Pin->MarkPendingKill();
+			Pin->MarkAsGarbage();
 			Pins.Remove(Pin);
 		}
 	}
