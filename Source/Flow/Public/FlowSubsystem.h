@@ -63,7 +63,9 @@ public:
 
 	UFlowAsset* CreateRootFlow(UObject* Owner, UFlowAsset* FlowAsset, const bool bAllowMultipleInstances = true);
 
-	// Finish the root Flow, typically when closing world that created this flow
+	// Finish Policy value is read by Flow Node
+	// Nodes have opportunity to terminate themselves differently if Flow Graph has been aborted
+	// Example: Spawn node might despawn all actors if Flow Graph is aborted, not completed
 	UFUNCTION(BlueprintCallable, Category = "FlowSubsystem")
 	void FinishRootFlow(UObject* Owner, const EFlowFinishPolicy FinishPolicy);
 
