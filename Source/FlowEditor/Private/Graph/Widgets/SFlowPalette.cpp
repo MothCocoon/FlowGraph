@@ -4,10 +4,10 @@
 #include "Graph/FlowGraphSchema.h"
 #include "Graph/FlowGraphSchema_Actions.h"
 
+#include "FlowAsset.h"
 #include "Nodes/FlowNode.h"
 
 #include "EditorStyleSet.h"
-#include "FlowAsset.h"
 #include "Fonts/SlateFontInfo.h"
 #include "Styling/CoreStyle.h"
 #include "Styling/SlateBrush.h"
