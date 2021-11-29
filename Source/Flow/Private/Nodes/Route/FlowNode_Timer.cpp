@@ -118,7 +118,7 @@ void UFlowNode_Timer::OnLoad_Implementation()
 {
 	if (RemainingStepTime > 0.0f)
 	{
-		GetWorld()->GetTimerManager().SetTimer(StepTimerHandle, this, &UFlowNode_Timer::OnStep, RemainingStepTime, true);
+		GetWorld()->GetTimerManager().SetTimer(StepTimerHandle, this, &UFlowNode_Timer::OnStep, StepTime, true, RemainingStepTime);
 	}
 
 	GetWorld()->GetTimerManager().SetTimer(CompletionTimerHandle, this, &UFlowNode_Timer::OnCompletion, RemainingCompletionTime, false);
