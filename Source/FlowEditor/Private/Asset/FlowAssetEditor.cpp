@@ -633,6 +633,7 @@ void FFlowAssetEditor::OnSelectedNodesChanged(const TSet<UObject*>& Nodes)
 
 void FFlowAssetEditor::SelectSingleNode(UEdGraphNode* Node) const
 {
+	FocusedGraphEditor->ClearSelectionSet();
 	FocusedGraphEditor->SetNodeSelection(Node, true);
 }
 
