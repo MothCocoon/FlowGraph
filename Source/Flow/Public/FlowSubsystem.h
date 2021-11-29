@@ -61,10 +61,8 @@ public:
 	UFUNCTION(BlueprintCallable, Category = "FlowSubsystem")
 	void StartRootFlow(UObject* Owner, UFlowAsset* FlowAsset, const bool bAllowMultipleInstances = true);
 
-protected:
 	UFlowAsset* CreateRootFlow(UObject* Owner, UFlowAsset* FlowAsset, const bool bAllowMultipleInstances = true);
 
-public:
 	// Finish the root Flow, typically when closing world that created this flow
 	UFUNCTION(BlueprintCallable, Category = "FlowSubsystem")
 	void FinishRootFlow(UObject* Owner, const EFlowFinishPolicy FinishPolicy);
