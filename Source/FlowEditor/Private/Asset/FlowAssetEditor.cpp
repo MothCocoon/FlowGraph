@@ -639,6 +639,7 @@ void FFlowAssetEditor::DeleteSelectedNodes()
 {
 	const FScopedTransaction Transaction(LOCTEXT("DeleteSelectedNode", "Delete Selected Node"));
 	FocusedGraphEditor->GetCurrentGraph()->Modify();
+	FlowAsset->Modify();
 
 	const FGraphPanelSelectionSet SelectedNodes = FocusedGraphEditor->GetSelectedNodes();
 	SetUISelectionState(NAME_None);
