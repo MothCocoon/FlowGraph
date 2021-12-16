@@ -104,7 +104,7 @@ void UFlowAsset::UnregisterNode(const FGuid& NodeGuid)
 void UFlowAsset::HarvestNodeConnections()
 {
 	TMap<FName, FConnectedPin> Connections;
-	bool bModified = false;
+	bool bGraphDirty = false;
 
 	// last moment to remove invalid nodes
 	for (auto NodeIt = Nodes.CreateIterator(); NodeIt; ++NodeIt)
@@ -113,15 +113,14 @@ void UFlowAsset::HarvestNodeConnections()
 		if (Pair.Value == nullptr)
 		{
 			NodeIt.RemoveCurrent();
-			bModified = true;
+			bGraphDirty = true;
 		}
 	}
 
 	for (const TPair<FGuid, UFlowNode*>& Pair : Nodes)
 	{
 		UFlowNode* Node = Pair.Value;
-		Connections.Empty();
-		TMap<FName, FConnectedPin> CurrentConnections = Node->Connections;
+		TMap<FName, FConnectedPin> FoundConnections;
 
 		for (const UEdGraphPin* ThisPin : Node->GetGraphNode()->Pins)
 		{
@@ -130,34 +129,46 @@ void UFlowAsset::HarvestNodeConnections()
 				if (const UEdGraphPin* LinkedPin = ThisPin->LinkedTo[0])
 				{
 					const UEdGraphNode* LinkedNode = LinkedPin->GetOwningNode();
-					Connections.Add(ThisPin->PinName, FConnectedPin(LinkedNode->NodeGuid, LinkedPin->PinName));
-
-					// check if connection already exists
-					bool bFoundConnection = false;
-					for (TPair<FName, FConnectedPin>& KeyVal : CurrentConnections)
-					{
-						if (KeyVal.Value.NodeGuid == LinkedNode->NodeGuid && KeyVal.Value.PinName == LinkedPin->PinName)
-						{
-							bFoundConnection = true;
-							break;
-						}
-					}
-
-					// if not - we will have to override connections and modify the asset
-					if (!bFoundConnection)
-					{
-						bModified = true;
-					}
+					FoundConnections.Add(ThisPin->PinName, FConnectedPin(LinkedNode->NodeGuid, LinkedPin->PinName));
 				}
 			}
 		}
 
-		if (bModified)
+		// This check exists to ensure that we don't mark graph dirty, if none of connections changed
+		// Optimization: we need check it only until the first node would be marked dirty, as this already marks Flow Asset package dirty
+		if (bGraphDirty == false)
+		{
+			if (FoundConnections.Num() != Node->Connections.Num())
+			{
+				bGraphDirty = true;
+			}
+			else
+			{
+				for (const TPair<FName, FConnectedPin>& FoundConnection : FoundConnections)
+				{
+					if (const FConnectedPin* OldConnection = Node->Connections.Find(FoundConnection.Key))
+					{
+						if (FoundConnection.Value != *OldConnection)
+						{
+							bGraphDirty = true;
+							break;
+						}
+					}
+					else
+					{
+						bGraphDirty = true;
+						break;
+					}
+				}
+			}
+		}
+		
+		if (bGraphDirty)
 		{
 			Node->SetFlags(RF_Transactional);
 			Node->Modify();
 			
-			Node->SetConnections(Connections);
+			Node->SetConnections(FoundConnections);
 			Node->PostEditChange();
 		}
 	}
