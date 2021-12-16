@@ -136,7 +136,15 @@ void UFlowNode_PlayLevelSequence::ExecuteInput(const FName& PinName)
 			TriggerOutput(TEXT("PreStart"));
 
 			SequencePlayer->OnFinished.AddDynamic(this, &UFlowNode_PlayLevelSequence::OnPlaybackFinished);
-			SequencePlayer->Play();
+			
+			if(bPlayReverse)
+			{
+				SequencePlayer->PlayReverse();
+			}
+			else
+			{
+				SequencePlayer->Play();
+			}
 
 			TriggerOutput(TEXT("Started"));
 		}
