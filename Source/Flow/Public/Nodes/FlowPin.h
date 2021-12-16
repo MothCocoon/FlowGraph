@@ -96,6 +96,11 @@ struct FLOW_API FFlowPin
 	{
 		return PinName != Other;
 	}
+
+	friend uint32 GetTypeHash(const FFlowPin& FlowPin)
+	{
+		return GetTypeHash(FlowPin.PinName);
+	}
 };
 
 // Processing Flow Nodes creates map of connected pins
@@ -120,6 +125,21 @@ struct FLOW_API FConnectedPin
         : NodeGuid(InNodeId)
         , PinName(InPinName)
 	{
+	}
+
+	FORCEINLINE bool operator==(const FConnectedPin& Other) const
+	{
+		return NodeGuid == Other.NodeGuid && PinName == Other.PinName;
+	}
+
+	FORCEINLINE bool operator!=(const FConnectedPin& Other) const
+	{
+		return NodeGuid != Other.NodeGuid || PinName != Other.PinName;
+	}
+
+	friend uint32 GetTypeHash(const FConnectedPin& ConnectedPin)
+	{
+		return GetTypeHash(ConnectedPin.NodeGuid) + GetTypeHash(ConnectedPin.PinName);
 	}
 };
 
