@@ -158,7 +158,7 @@ private:
 	TMap<FName, FConnectedPin> Connections;
 
 public:
-	void SetConnections(TMap<FName, FConnectedPin>& InConnections) { Connections = InConnections; }
+	void SetConnections(const TMap<FName, FConnectedPin>& InConnections) { Connections = InConnections; }
 	FConnectedPin GetConnection(const FName OutputName) const { return Connections.FindRef(OutputName); }
 	TSet<UFlowNode*> GetConnectedNodes() const;
 
