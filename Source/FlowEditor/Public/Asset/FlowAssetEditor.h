@@ -49,6 +49,10 @@ public:
 
 	// FGCObject
 	virtual void AddReferencedObjects(FReferenceCollector& Collector) override;
+	virtual FString GetReferencerName() const override
+	{
+		return TEXT("FFlowAssetEditor");
+	}
 	// --
 
 	// FEditorUndoClient
