@@ -23,7 +23,8 @@ void SLevelEditorFlow::OnMapOpened(const FString& Filename, bool bAsTemplate)
 
 void SLevelEditorFlow::CreateFlowWidget()
 {
-	if (UFlowComponent* FlowComponent = FindFlowComponent(); FlowComponent && FlowComponent->RootFlow)
+	UFlowComponent* FlowComponent = FindFlowComponent();
+	if (FlowComponent && FlowComponent->RootFlow)
 	{
 		FlowPath = FName(*FlowComponent->RootFlow->GetPathName());
 	}
