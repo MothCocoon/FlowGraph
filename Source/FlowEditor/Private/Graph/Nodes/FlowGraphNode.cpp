@@ -11,7 +11,6 @@
 #include "FlowAsset.h"
 #include "Nodes/FlowNode.h"
 
-#include "AssetRegistryModule.h"
 #include "EdGraph/EdGraphSchema.h"
 #include "EdGraphSchema_K2.h"
 #include "Editor.h"
@@ -19,7 +18,6 @@
 #include "Framework/Commands/GenericCommands.h"
 #include "GraphEditorActions.h"
 #include "Kismet2/KismetEditorUtilities.h"
-#include "Modules/ModuleManager.h"
 #include "ScopedTransaction.h"
 #include "SourceCodeNavigation.h"
 #include "Textures/SlateIcon.h"
@@ -93,8 +91,6 @@ void FFlowBreakpoint::ToggleBreakpoint()
 	}
 }
 
-bool UFlowGraphNode::bFlowAssetsLoaded = false;
-
 //////////////////////////////////////////////////////////////////////////
 // Flow Graph Node
 
@@ -135,24 +131,6 @@ void UFlowGraphNode::PostLoad()
 	{
 		FlowNode->FixNode(this); // fix already created nodes
 		SubscribeToExternalChanges();
-	}
-
-	// todo: verify if we still need this workaround
-	// without this reconstructing UFlowNode_SubGraph pins wouldn't work well
-	if (bFlowAssetsLoaded == false)
-	{
-		TArray<FAssetData> FlowAssets;
-
-		const FAssetRegistryModule& AssetRegistryModule = FModuleManager::LoadModuleChecked<FAssetRegistryModule>(AssetRegistryConstants::ModuleName);
-		AssetRegistryModule.Get().GetAssetsByClass(UFlowAsset::StaticClass()->GetFName(), FlowAssets, true);
-
-		for (FAssetData const& Asset : FlowAssets)
-		{
-			const FString AssetPath = Asset.ObjectPath.ToString();
-			StaticLoadObject(Asset.GetClass(), nullptr, *AssetPath);
-		}
-
-		bFlowAssetsLoaded = true;
 	}
 
 	ReconstructNode();
