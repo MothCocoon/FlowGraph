@@ -55,11 +55,16 @@ void UFlowAsset::PostDuplicate(bool bDuplicateForPIE)
 
 EDataValidationResult UFlowAsset::IsDataValid(TArray<FText>& ValidationErrors)
 {
-	for (const TPair<FGuid, UFlowNode*>& NodePair : Nodes)
+	for (const TPair<FGuid, UFlowNode*>& Node : Nodes)
 	{
-		const EDataValidationResult Result = NodePair.Value->IsDataValid(ValidationErrors);
-		if (Result == EDataValidationResult::Invalid)
+		if (Node.Value == nullptr || Node.Value->IsDataValid(ValidationErrors) == EDataValidationResult::Invalid)
 		{
+			// refresh data if Node is missing, i.e. its class has been deleted
+			if (Node.Value == nullptr)
+			{
+				HarvestNodeConnections();	
+			}
+			
 			return EDataValidationResult::Invalid;
 		}
 	}
