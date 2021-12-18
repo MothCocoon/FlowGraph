@@ -3,6 +3,8 @@
 #include "FlowComponent.h"
 #include "FlowWorldSettings.h"
 
+#include "Graph/FlowGraphSettings.h"
+
 #include "Editor.h"
 #include "Framework/MultiBox/MultiBoxDefs.h"
 #include "PropertyCustomizationHelpers.h"
@@ -24,8 +26,7 @@ void SLevelEditorFlow::OnMapOpened(const FString& Filename, bool bAsTemplate)
 
 void SLevelEditorFlow::CreateFlowWidget()
 {
-	UFlowComponent* FlowComponent = FindFlowComponent();
-	if (FlowComponent && FlowComponent->RootFlow)
+	if (UFlowComponent* FlowComponent = FindFlowComponent(); FlowComponent && FlowComponent->RootFlow)
 	{
 		FlowPath = FName(*FlowComponent->RootFlow->GetPathName());
 	}
@@ -76,8 +77,7 @@ void SLevelEditorFlow::OnFlowChanged(const FAssetData& NewAsset)
 {
 	FlowPath = NewAsset.ObjectPath;
 
-	UFlowComponent* FlowComponent = FindFlowComponent();
-	if (FlowComponent)
+	if (UFlowComponent* FlowComponent = FindFlowComponent())
 	{
 		if (UObject* NewObject = NewAsset.GetAsset())
 		{
@@ -100,12 +100,11 @@ FString SLevelEditorFlow::GetFlowPath() const
 
 UFlowComponent* SLevelEditorFlow::FindFlowComponent() const
 {
-	if (UWorld* World = GEditor->GetEditorWorldContext().World())
+	if (const UWorld* World = GEditor->GetEditorWorldContext().World())
 	{
 		if (const AWorldSettings* WorldSettings = World->GetWorldSettings())
 		{
-			UActorComponent* FoundComponent = WorldSettings->GetComponentByClass(UFlowComponent::StaticClass());
-			if (FoundComponent)
+			if (UActorComponent* FoundComponent = WorldSettings->GetComponentByClass(UFlowComponent::StaticClass()))
 			{
 				return Cast<UFlowComponent>(FoundComponent);
 			}
