@@ -9,7 +9,6 @@
 #include "Framework/MultiBox/MultiBoxDefs.h"
 #include "PropertyCustomizationHelpers.h"
 #include "SLevelOfDetailBranchNode.h"
-#include "Graph/FlowGraphSettings.h"
 
 #define LOCTEXT_NAMESPACE "SLevelEditorFlow"
 
@@ -26,7 +25,8 @@ void SLevelEditorFlow::OnMapOpened(const FString& Filename, bool bAsTemplate)
 
 void SLevelEditorFlow::CreateFlowWidget()
 {
-	if (UFlowComponent* FlowComponent = FindFlowComponent(); FlowComponent && FlowComponent->RootFlow)
+	UFlowComponent* FlowComponent = FindFlowComponent();
+	if (FlowComponent && FlowComponent->RootFlow)
 	{
 		FlowPath = FName(*FlowComponent->RootFlow->GetPathName());
 	}
