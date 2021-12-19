@@ -596,6 +596,11 @@ void UFlowNode::LoadInstance(const FFlowNodeSaveData& NodeRecord)
 	FFlowArchive Ar(MemoryReader);
 	Serialize(Ar);
 
+	if (UFlowAsset* FlowAsset = GetFlowAsset())
+	{
+		FlowAsset->OnActivationStateLoaded(this);
+	}
+
 	OnLoad();
 }
 

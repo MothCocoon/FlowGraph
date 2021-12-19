@@ -256,6 +256,9 @@ public:
 	UFUNCTION(BlueprintCallable, Category = "Flow")
 	void LoadInstance(const FFlowAssetSaveData& AssetRecord);
 
+private:
+	void OnActivationStateLoaded(UFlowNode* Node);
+
 protected:
 	UFUNCTION(BlueprintNativeEvent, Category = "SaveGame")
 	void OnSave();
