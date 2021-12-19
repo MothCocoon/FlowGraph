@@ -62,9 +62,9 @@ EDataValidationResult UFlowAsset::IsDataValid(TArray<FText>& ValidationErrors)
 			// refresh data if Node is missing, i.e. its class has been deleted
 			if (Node.Value == nullptr)
 			{
-				HarvestNodeConnections();	
+				HarvestNodeConnections();
 			}
-			
+
 			return EDataValidationResult::Invalid;
 		}
 	}
@@ -167,12 +167,12 @@ void UFlowAsset::HarvestNodeConnections()
 				}
 			}
 		}
-		
+
 		if (bGraphDirty)
 		{
 			Node->SetFlags(RF_Transactional);
 			Node->Modify();
-			
+
 			Node->SetConnections(FoundConnections);
 			Node->PostEditChange();
 		}
@@ -505,6 +505,19 @@ void UFlowAsset::LoadInstance(const FFlowAssetSaveData& AssetRecord)
 	}
 
 	OnLoad();
+}
+
+void UFlowAsset::OnActivationStateLoaded(UFlowNode* Node)
+{
+	if (Node->ActivationState != EFlowNodeState::NeverActivated)
+	{
+		RecordedNodes.Emplace(Node);
+	}
+
+	if (Node->ActivationState == EFlowNodeState::Active)
+	{
+		ActiveNodes.Emplace(Node);
+	}
 }
 
 void UFlowAsset::OnSave_Implementation()
