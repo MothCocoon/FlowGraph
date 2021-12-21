@@ -55,24 +55,32 @@ void UFlowNode_ComponentObserver::OnLoad_Implementation()
 
 void UFlowNode_ComponentObserver::StartObserving()
 {
-	for (const TWeakObjectPtr<UFlowComponent>& FoundComponent : GetFlowSubsystem()->GetComponents<UFlowComponent>(IdentityTags, EGameplayContainerMatchType::Any))
+	if (UFlowSubsystem* FlowSubsystem = GetFlowSubsystem())
 	{
-		ObserveActor(FoundComponent->GetOwner(), FoundComponent);
-	}
+		for (const TWeakObjectPtr<UFlowComponent>& FoundComponent : FlowSubsystem->GetComponents<UFlowComponent>(IdentityTags, EGameplayContainerMatchType::Any))
+		{
+			ObserveActor(FoundComponent->GetOwner(), FoundComponent);
+		}
 
-	GetFlowSubsystem()->OnComponentRegistered.AddDynamic(this, &UFlowNode_ComponentObserver::OnComponentRegistered);
-	GetFlowSubsystem()->OnComponentTagAdded.AddDynamic(this, &UFlowNode_ComponentObserver::OnComponentTagAdded);
-	GetFlowSubsystem()->OnComponentTagRemoved.AddDynamic(this, &UFlowNode_ComponentObserver::OnComponentTagRemoved);
-	GetFlowSubsystem()->OnComponentUnregistered.AddDynamic(this, &UFlowNode_ComponentObserver::OnComponentUnregistered);
+		// clear old bindings before binding again, which might happen while loading a SaveGame
+		StopObserving();
+
+		FlowSubsystem->OnComponentRegistered.AddDynamic(this, &UFlowNode_ComponentObserver::OnComponentRegistered);
+		FlowSubsystem->OnComponentTagAdded.AddDynamic(this, &UFlowNode_ComponentObserver::OnComponentTagAdded);
+		FlowSubsystem->OnComponentTagRemoved.AddDynamic(this, &UFlowNode_ComponentObserver::OnComponentTagRemoved);
+		FlowSubsystem->OnComponentUnregistered.AddDynamic(this, &UFlowNode_ComponentObserver::OnComponentUnregistered);
+	}
 }
 
 void UFlowNode_ComponentObserver::StopObserving()
 {
-	GetFlowSubsystem()->OnComponentRegistered.RemoveAll(this);
-	GetFlowSubsystem()->OnComponentUnregistered.RemoveAll(this);
-
-	GetFlowSubsystem()->OnComponentTagAdded.RemoveAll(this);
-	GetFlowSubsystem()->OnComponentTagRemoved.RemoveAll(this);
+	if (UFlowSubsystem* FlowSubsystem = GetFlowSubsystem())
+	{
+		FlowSubsystem->OnComponentRegistered.RemoveAll(this);
+		FlowSubsystem->OnComponentUnregistered.RemoveAll(this);
+		FlowSubsystem->OnComponentTagAdded.RemoveAll(this);
+		FlowSubsystem->OnComponentTagRemoved.RemoveAll(this);
+	}
 }
 
 void UFlowNode_ComponentObserver::OnComponentRegistered(UFlowComponent* Component)
