@@ -115,7 +115,10 @@ void UFlowNode_PlayLevelSequence::CreatePlayer()
 	{
 		ALevelSequenceActor* SequenceActor;
 		SequencePlayer = UFlowLevelSequencePlayer::CreateFlowLevelSequencePlayer(this, LoadedSequence, PlaybackSettings, CameraSettings, SequenceActor);
-		SequencePlayer->SetFlowEventReceiver(this);
+		if (SequencePlayer)
+		{
+			SequencePlayer->SetFlowEventReceiver(this);
+		}
 
 		const FFrameRate FrameRate = LoadedSequence->GetMovieScene()->GetTickResolution();
 		const FFrameNumber PlaybackStartFrame = LoadedSequence->GetMovieScene()->GetPlaybackRange().GetLowerBoundValue();
@@ -133,12 +136,15 @@ void UFlowNode_PlayLevelSequence::ExecuteInput(const FName& PinName)
 		{
 			CreatePlayer();
 
-			TriggerOutput(TEXT("PreStart"));
+			if (SequencePlayer)
+			{
+				TriggerOutput(TEXT("PreStart"));
 
-			SequencePlayer->OnFinished.AddDynamic(this, &UFlowNode_PlayLevelSequence::OnPlaybackFinished);
-			SequencePlayer->Play();
+				SequencePlayer->OnFinished.AddDynamic(this, &UFlowNode_PlayLevelSequence::OnPlaybackFinished);
+				SequencePlayer->Play();
 
-			TriggerOutput(TEXT("Started"));
+				TriggerOutput(TEXT("Started"));
+			}
 		}
 
 		TriggerFirstOutput(false);
@@ -166,11 +172,15 @@ void UFlowNode_PlayLevelSequence::OnLoad_Implementation()
 		if (GetFlowSubsystem()->GetWorld() && LoadedSequence)
 		{
 			CreatePlayer();
-			SequencePlayer->OnFinished.AddDynamic(this, &UFlowNode_PlayLevelSequence::OnPlaybackFinished);
 
-			SequencePlayer->SetPlayRate(TimeDilation);
-			SequencePlayer->SetPlaybackPosition(FMovieSceneSequencePlaybackParams(ElapsedTime, EUpdatePositionMethod::Jump));
-			SequencePlayer->Play();
+			if (SequencePlayer)
+			{
+				SequencePlayer->OnFinished.AddDynamic(this, &UFlowNode_PlayLevelSequence::OnPlaybackFinished);
+
+				SequencePlayer->SetPlayRate(TimeDilation);
+				SequencePlayer->SetPlaybackPosition(FMovieSceneSequencePlaybackParams(ElapsedTime, EUpdatePositionMethod::Jump));
+				SequencePlayer->Play();
+			}
 		}
 	}
 }
