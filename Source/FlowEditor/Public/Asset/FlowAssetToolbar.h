@@ -16,16 +16,25 @@ public:
 	SLATE_BEGIN_ARGS(SFlowAssetInstanceList) {}
 	SLATE_END_ARGS()
 
+	virtual ~SFlowAssetInstanceList() override;
+	
 	void Construct(const FArguments& InArgs, TWeakPtr<FFlowAssetEditor> InFlowAssetEditor);
 
+	void SetSelectedInstanceName(FName NewInstanceName);
+	
 private:
 	TSharedRef<SWidget> OnGenerateWidget(TSharedPtr<FName> Item) const;
+	void OnComboBoxOpening();
 	void OnSelectionChanged(TSharedPtr<FName> SelectedItem, ESelectInfo::Type SelectionType);
 	FText GetSelectedInstanceName() const;
 
+	void RefreshInstanceNames();
+	void ResetSelectedInstance(const bool bSimulateInEditor);
+	
 	TWeakPtr<FFlowAssetEditor> FlowAssetEditor;
 	TSharedPtr<SComboBox<TSharedPtr<FName>>> Dropdown;
 
+	TArray<TSharedPtr<FName>> NamePtrCache;
 	TArray<TSharedPtr<FName>> InstanceNames;
 	TSharedPtr<FName> SelectedInstance;
 

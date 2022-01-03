@@ -26,7 +26,11 @@ class FLOW_API UFlowSubsystem : public UGameInstanceSubsystem
 {
 	GENERATED_BODY()
 
+public:
+
 	UFlowSubsystem();
+
+private:	
 
 	friend class UFlowAsset;
 	friend class UFlowComponent;
@@ -90,10 +94,21 @@ public:
     TMap<UFlowNode_SubGraph*, UFlowAsset*> GetInstancedSubFlows() const { return InstancedSubFlows; }
 	
 	virtual UWorld* GetWorld() const override;
-	
+
+//////////////////////////////////////////////////////////////////////////
+// Tick
+protected:
+
+	virtual void ExecuteRootInstancesTick(float DeltaTime);
+
+#if WITH_EDITOR	
+	virtual void RefreshInspectedInstances();
+#endif
+
 //////////////////////////////////////////////////////////////////////////
 // SaveGame
 
+public:
 	UPROPERTY(BlueprintAssignable, Category = "FlowSubsystem")
 	FSimpleFlowEvent OnSaveGame;
 

@@ -101,6 +101,8 @@ protected:
 
 	virtual void BindGraphCommands();
 
+	virtual void PostRegenerateMenusAndToolbars() override;
+
 private:
 	static void UndoGraphAction();
 	static void RedoGraphAction();
@@ -113,11 +115,13 @@ public:
 	void SetUISelectionState(const FName SelectionOwner);
 
 	virtual void ClearSelectionStateFor(const FName SelectionOwner);
-
+	
 private:
 	void OnCreateComment() const;
 	void OnStraightenConnections() const;
 
+	void OnInspectedInstanceChanged();
+	
 public:
 	static bool CanEdit();
 	static bool IsPIE();
@@ -148,6 +152,9 @@ protected:
 	virtual bool CanCutNodes() const;
 
 	virtual void PasteNodes();
+
+	virtual void RefreshAllNodes() const;
+	virtual void RefreshAllDirtyNodes() const;
 
 public:
 	virtual void PasteNodesHere(const FVector2D& Location);

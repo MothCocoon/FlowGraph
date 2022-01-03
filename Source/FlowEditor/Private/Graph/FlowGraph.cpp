@@ -28,10 +28,14 @@ UEdGraph* UFlowGraph::CreateGraph(UFlowAsset* InFlowAsset)
 	UFlowGraph* NewGraph = CastChecked<UFlowGraph>(FBlueprintEditorUtils::CreateNewGraph(InFlowAsset, NAME_None, StaticClass(), UFlowGraphSchema::StaticClass()));
 	NewGraph->bAllowDeletion = false;
 
-	InFlowAsset->FlowGraph = NewGraph;
-	NewGraph->GetSchema()->CreateDefaultNodesForGraph(*NewGraph);
+	return OnCreateGraph(InFlowAsset, NewGraph);
+}
 
-	return NewGraph;
+UEdGraph* UFlowGraph::OnCreateGraph(UFlowAsset* InFlowAsset, UFlowGraph* InFlowGraph)
+{
+	InFlowAsset->FlowGraph = InFlowGraph;
+	InFlowGraph->GetSchema()->CreateDefaultNodesForGraph(*InFlowGraph);
+	return InFlowGraph;
 }
 
 void UFlowGraph::NotifyGraphChanged()

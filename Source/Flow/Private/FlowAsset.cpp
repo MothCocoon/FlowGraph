@@ -3,6 +3,7 @@
 #include "FlowSubsystem.h"
 
 #include "Nodes/FlowNode.h"
+#include "Nodes/FlowPrivateNode.h"
 #include "Nodes/Route/FlowNode_CustomInput.h"
 #include "Nodes/Route/FlowNode_Start.h"
 #include "Nodes/Route/FlowNode_Finish.h"
@@ -223,12 +224,41 @@ void UFlowAsset::ClearInstances()
 	ActiveInstances.Empty();
 }
 
+void UFlowAsset::ExecuteTick(float DeltaTime)
+{
 #if WITH_EDITOR
+	// 非模板实例才需要更新
+	if (TemplateAsset != nullptr && TemplateAsset != this)
+#endif
+	{
+		OnTick(DeltaTime);
+		return;
+	}
+#if WITH_EDITOR
+	// 如果TicK的是模板 那就Tick生成的实例
+	TArray<UFlowAsset*> Instances(ActiveInstances);
+	for (int i = 0; i < Instances.Num(); ++ i)
+	{
+		Instances[i]->OnTick(DeltaTime);
+	}
+#endif
+}
+
+#if WITH_EDITOR
+
 void UFlowAsset::GetInstanceDisplayNames(TArray<TSharedPtr<FName>>& OutDisplayNames) const
 {
 	for (const UFlowAsset* Instance : ActiveInstances)
 	{
 		OutDisplayNames.Emplace(MakeShareable(new FName(Instance->GetDisplayName())));
+	}
+}
+
+void UFlowAsset::GetInstanceDisplayNames(TArray<FName>& OutDisplayNames) const
+{
+	for (const UFlowAsset* Instance : ActiveInstances)
+	{
+		OutDisplayNames.Emplace(Instance->GetDisplayName());
 	}
 }
 
@@ -253,7 +283,7 @@ void UFlowAsset::SetInspectedInstance(const FName& NewInspectedInstanceName)
 		}
 	}
 
-	BroadcastRegenerateToolbars();
+	BroadcastUpdateInspectedInstance();
 }
 #endif
 
@@ -326,10 +356,10 @@ void UFlowAsset::PreStartFlow()
 	{
 		TemplateAsset->SetInspectedInstance(GetDisplayName());
 	}
-	else
-	{
-		TemplateAsset->BroadcastRegenerateToolbars();
-	}
+	// else
+	// {
+	// 	TemplateAsset->BroadcastRegenerateToolbars();
+	// }
 #endif
 }
 

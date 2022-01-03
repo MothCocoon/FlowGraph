@@ -32,6 +32,8 @@ UFlowNode::UFlowNode(const FObjectInitializer& ObjectInitializer)
 #if WITH_EDITOR
 	Category = TEXT("Uncategorized");
 	NodeStyle = EFlowNodeStyle::Default;
+
+	bUpdateDebugInfoFlag = false;
 #endif
 
 	InputPins = {DefaultInputPin};
@@ -138,7 +140,7 @@ FString UFlowNode::GetNodeDescription() const
 
 UFlowAsset* UFlowNode::GetFlowAsset() const
 {
-	return GetOuter() ? Cast<UFlowAsset>(GetOuter()) : nullptr;
+	return Cast<UFlowAsset>(GetOuter());
 }
 
 void UFlowNode::AddInputPins(TArray<FName> PinNames)
@@ -263,6 +265,26 @@ void UFlowNode::RecursiveFindNodesByClass(UFlowNode* Node, const TSubclassOf<UFl
 			RecursiveFindNodesByClass(ConnectedNode, Class, Depth, OutNodes);
 		}
 	}
+}
+#if WITH_EDITOR
+EFlowNodeDebugInfoLevel UFlowNode::GetDebugInfo(FString& Message) const
+{
+	Message = DebugMessage;
+	return DebugInfoLevel;
+}
+#endif
+
+void UFlowNode::MarkUpdateDebugInfo(EFlowNodeDebugInfoLevel Level, const FString& Message)
+{
+#if WITH_EDITOR
+	if (Level == DebugInfoLevel && Message == DebugMessage)
+	{
+		return;
+	}
+	bUpdateDebugInfoFlag = true;
+	DebugMessage = Message;
+	DebugInfoLevel = Level;
+#endif
 }
 
 UFlowSubsystem* UFlowNode::GetFlowSubsystem() const

@@ -12,8 +12,7 @@
 #include "Misc/FileHelper.h"
 #include "Misc/Paths.h"
 
-UFlowSubsystem::UFlowSubsystem()
-	: UGameInstanceSubsystem()
+UFlowSubsystem::UFlowSubsystem() : UGameInstanceSubsystem()
 {
 }
 
@@ -189,6 +188,30 @@ UWorld* UFlowSubsystem::GetWorld() const
 {
 	return GetGameInstance()->GetWorld();
 }
+
+void UFlowSubsystem::ExecuteRootInstancesTick(float DeltaTime)
+{
+	TArray<UFlowAsset*> ActiveInstances;
+	RootInstances.GenerateValueArray(ActiveInstances);
+
+	for (UFlowAsset* Instance : ActiveInstances)
+	{
+		Instance->ExecuteTick(DeltaTime);
+	}
+}
+
+#if WITH_EDITOR	
+void UFlowSubsystem::RefreshInspectedInstances()
+{
+	for (const auto Template : InstancedTemplates)
+	{
+		if (Template->GetInspectedInstance() != nullptr)
+		{
+			Template->BroadcastRefreshAllDirtyNodes();
+		}
+	}
+}
+#endif
 
 void UFlowSubsystem::OnGameSaved(UFlowSaveGame* SaveGame)
 {

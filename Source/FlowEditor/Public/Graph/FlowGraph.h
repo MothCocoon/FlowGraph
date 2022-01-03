@@ -18,8 +18,10 @@ UCLASS()
 class FLOWEDITOR_API UFlowGraph : public UEdGraph
 {
 	GENERATED_UCLASS_BODY()
-
+	
 	static UEdGraph* CreateGraph(UFlowAsset* InFlowAsset);
+
+	static UEdGraph* OnCreateGraph(UFlowAsset* InFlowAsset, UFlowGraph* InFlowGraph);
 
 	// UEdGraph
 	virtual void NotifyGraphChanged() override;

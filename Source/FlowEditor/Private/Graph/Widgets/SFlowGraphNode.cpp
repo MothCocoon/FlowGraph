@@ -21,6 +21,7 @@
 #include "SNodePanel.h"
 #include "Styling/SlateColor.h"
 #include "TutorialMetaData.h"
+#include "Logging/TokenizedMessage.h"
 #include "Widgets/Images/SImage.h"
 #include "Widgets/Layout/SBorder.h"
 #include "Widgets/SBoxPanel.h"
@@ -349,6 +350,43 @@ void SFlowGraphNode::UpdateGraphNode()
 	CreateOutputSideAddButton(RightNodeBox);
 	CreateBelowPinControls(InnerVerticalBox);
 	CreateAdvancedViewArrow(InnerVerticalBox);
+}
+
+void SFlowGraphNode::UpdateErrorInfo()
+{
+	//Check for node errors/warnings
+	if (UFlowNode* Node = FlowGraphNode->GetFlowNode())
+	{
+		const EFlowNodeDebugInfoLevel State = Node->GetDebugInfo(ErrorMsg);
+		switch (State)
+		{
+		case EFlowNodeDebugInfoLevel::None:
+			ErrorColor = FLinearColor(0,0,0);
+			break;
+		case EFlowNodeDebugInfoLevel::Error:
+			ErrorColor = FEditorStyle::GetColor("ErrorReporting.BackgroundColor");
+			break;
+		case EFlowNodeDebugInfoLevel::Warning:
+			ErrorColor = FEditorStyle::GetColor("ErrorReporting.WarningBackgroundColor");
+			break;
+		case EFlowNodeDebugInfoLevel::Info:
+			ErrorColor = FEditorStyle::GetColor("InfoReporting.BackgroundColor");
+			break;
+		default:
+			ErrorColor = FLinearColor(0,0,0);
+			break;
+		}
+	}
+	else if (!GraphNode->NodeUpgradeMessage.IsEmpty())
+	{
+		ErrorMsg = FString(TEXT("UPGRADE NOTE"));
+		ErrorColor = FEditorStyle::GetColor("InfoReporting.BackgroundColor");
+	}
+	else 
+	{
+		ErrorColor = FLinearColor(0,0,0);
+		ErrorMsg.Empty();
+	}
 }
 
 TSharedRef<SWidget> SFlowGraphNode::CreateNodeContentArea()

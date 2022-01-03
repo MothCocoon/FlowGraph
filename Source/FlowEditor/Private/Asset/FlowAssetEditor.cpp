@@ -45,6 +45,13 @@ FFlowAssetEditor::FFlowAssetEditor()
 
 FFlowAssetEditor::~FFlowAssetEditor()
 {
+	if (FlowAsset != nullptr)
+	{
+		FlowAsset->OnUpdateInspectedInstance().RemoveAll(this);
+		FlowAsset->OnRegenerateToolbars().RemoveAll(this);
+		FlowAsset->OnRefreshAllDirtyNodes().RemoveAll(this);
+	}
+
 	GEditor->UnregisterForUndo(this);
 }
 
@@ -225,7 +232,10 @@ void FFlowAssetEditor::InitFlowAssetEditor(const EToolkitMode::Type Mode, const 
 	InitAssetEditor(Mode, InitToolkitHost, TEXT("FlowEditorApp"), StandaloneDefaultLayout, bCreateDefaultStandaloneMenu, bCreateDefaultToolbar, ObjectToEdit, false);
 
 	RegenerateMenusAndToolbars();
+	
+	FlowAsset->OnUpdateInspectedInstance().AddSP(this, &FFlowAssetEditor::OnInspectedInstanceChanged);
 	FlowAsset->OnRegenerateToolbars().AddSP(this, &FFlowAssetEditor::RegenerateMenusAndToolbars);
+	FlowAsset->OnRefreshAllDirtyNodes().AddSP(this, &FFlowAssetEditor::RefreshAllDirtyNodes);
 }
 
 void FFlowAssetEditor::CreateToolbar()
@@ -495,6 +505,11 @@ void FFlowAssetEditor::BindGraphCommands()
         FCanExecuteAction::CreateSP(this, &FFlowAssetEditor::CanJumpToNodeDefinition));
 }
 
+void FFlowAssetEditor::PostRegenerateMenusAndToolbars()
+{
+	RefreshAllNodes();
+}
+
 void FFlowAssetEditor::UndoGraphAction()
 {
 	GEditor->UndoTransaction();
@@ -556,6 +571,22 @@ void FFlowAssetEditor::OnCreateComment() const
 void FFlowAssetEditor::OnStraightenConnections() const
 {
 	FocusedGraphEditor->OnStraightenConnections();
+}
+
+void FFlowAssetEditor::OnInspectedInstanceChanged()
+{
+	if (GetFlowAsset() == nullptr || GetFlowAsset()->GetInspectedInstance() == nullptr)
+	{
+		RegenerateMenusAndToolbars();
+		return;
+	}
+	
+	if (AssetToolbar.IsValid() && AssetToolbar->GetAssetInstanceList().IsValid())
+	{
+		AssetToolbar->GetAssetInstanceList()->SetSelectedInstanceName(GetFlowAsset()->GetInspectedInstance()->GetFName());
+	}
+
+	RefreshAllNodes();
 }
 
 bool FFlowAssetEditor::CanEdit()
@@ -795,6 +826,49 @@ bool FFlowAssetEditor::CanCopyNodes() const
 void FFlowAssetEditor::PasteNodes()
 {
 	PasteNodesHere(FocusedGraphEditor->GetPasteLocation());
+}
+
+void FFlowAssetEditor::RefreshAllNodes() const
+{
+	if (GetFlowAsset() == nullptr)
+	{
+		return;
+	}
+
+	for (UEdGraphNode* Node : FocusedGraphEditor->GetCurrentGraph()->Nodes)
+	{
+		if (const UFlowGraphNode* FlowGraphNode = Cast<UFlowGraphNode>(Node))
+		{
+			if (UFlowNode* FlowNode = FlowGraphNode->GetFlowNode())
+			{
+				FlowNode->CleanUpdateDebugInfoFlag();
+				FocusedGraphEditor->RefreshNode(*Node);
+			}
+		}
+	}
+}
+
+void FFlowAssetEditor::RefreshAllDirtyNodes() const
+{
+	if (GetFlowAsset() == nullptr)
+	{
+		return;
+	}
+
+	for (UEdGraphNode* Node : FocusedGraphEditor->GetCurrentGraph()->Nodes)
+	{
+		if (const UFlowGraphNode* FlowGraphNode = Cast<UFlowGraphNode>(Node))
+		{
+			if (UFlowNode* FlowNode = FlowGraphNode->GetFlowNode())
+			{
+				if (FlowNode->RequiresUpdateDebugInfo())
+				{
+					FlowNode->CleanUpdateDebugInfoFlag();
+					FocusedGraphEditor->RefreshNode(*Node);
+				}
+			}
+		}
+	}
 }
 
 void FFlowAssetEditor::PasteNodesHere(const FVector2D& Location)

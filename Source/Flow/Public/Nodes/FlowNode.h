@@ -5,8 +5,8 @@
 #include "Engine/StreamableManager.h"
 #include "GameplayTagContainer.h"
 #include "VisualLogger/VisualLoggerDebugSnapshotInterface.h"
-
 #include "FlowTypes.h"
+#include "Logging/TokenizedMessage.h"
 #include "Nodes/FlowPin.h"
 #include "FlowNode.generated.h"
 
@@ -175,6 +175,31 @@ protected:
 	static FString MissingClass;
 	static FString NoActorsFound;
 
+// Graph Node Debug Info	
+#if WITH_EDITOR
+	
+public:
+	/** 是否请求更新DebugInfo */
+	FORCEINLINE bool RequiresUpdateDebugInfo() const { return bUpdateDebugInfoFlag; }
+
+	/** 清除更新DebugInfo的标记 */
+	FORCEINLINE void CleanUpdateDebugInfoFlag() { bUpdateDebugInfoFlag = false; }
+	
+	EFlowNodeDebugInfoLevel GetDebugInfo(FString& Message) const;
+	
+private:
+	uint8 bUpdateDebugInfoFlag:1;
+	
+	FString DebugMessage;
+	EFlowNodeDebugInfoLevel DebugInfoLevel = EFlowNodeDebugInfoLevel::None;
+	
+#endif
+
+protected:
+
+	// 标记更新Debug信息
+	void MarkUpdateDebugInfo(EFlowNodeDebugInfoLevel Level, const FString& Message);
+	
 //////////////////////////////////////////////////////////////////////////
 // Executing node instance
 
@@ -347,6 +372,7 @@ protected:
 	void OnLoad();
 
 private:
+	
 	UPROPERTY()
 	TArray<FName> InputNames_DEPRECATED;
 

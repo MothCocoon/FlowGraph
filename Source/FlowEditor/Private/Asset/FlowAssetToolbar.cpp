@@ -21,6 +21,12 @@
 
 FText SFlowAssetInstanceList::NoInstanceSelectedText = LOCTEXT("NoInstanceSelected", "No instance selected");
 
+SFlowAssetInstanceList::~SFlowAssetInstanceList()
+{
+	FEditorDelegates::PreBeginPIE.RemoveAll(this);
+	FEditorDelegates::EndPIE.RemoveAll(this);
+}
+
 void SFlowAssetInstanceList::Construct(const FArguments& InArgs, TWeakPtr<FFlowAssetEditor> InFlowAssetEditor)
 {
 	FlowAssetEditor = InFlowAssetEditor;
@@ -51,6 +57,7 @@ void SFlowAssetInstanceList::Construct(const FArguments& InArgs, TWeakPtr<FFlowA
 	// create dropdown
 	SAssignNew(Dropdown, SComboBox<TSharedPtr<FName>>)
 		.OptionsSource(&InstanceNames)
+		.OnComboBoxOpening(this, &SFlowAssetInstanceList::OnComboBoxOpening)
 		.OnGenerateWidget(this, &SFlowAssetInstanceList::OnGenerateWidget)
 		.OnSelectionChanged(this, &SFlowAssetInstanceList::OnSelectionChanged)
 		.Visibility_Static(&FFlowAssetEditor::GetDebuggerVisibility)
@@ -63,11 +70,49 @@ void SFlowAssetInstanceList::Construct(const FArguments& InArgs, TWeakPtr<FFlowA
 	[
 		Dropdown.ToSharedRef()
 	];
+
+	FEditorDelegates::PreBeginPIE.AddRaw(this, &SFlowAssetInstanceList::ResetSelectedInstance);
+	FEditorDelegates::EndPIE.AddRaw(this, &SFlowAssetInstanceList::ResetSelectedInstance);
+}
+
+void SFlowAssetInstanceList::SetSelectedInstanceName(FName NewInstanceName)
+{
+	if (!Dropdown.IsValid())
+	{
+		return;
+	}
+	
+	if (SelectedInstance->Compare(NewInstanceName) == 0)
+	{
+		return;
+	}
+
+	RefreshInstanceNames();
+	
+	for (const TSharedPtr<FName> InstanceName : InstanceNames)
+	{
+		if (InstanceName->Compare(NewInstanceName) == 0)
+		{
+			Dropdown->SetSelectedItem(InstanceName);
+		}
+	}
 }
 
 TSharedRef<SWidget> SFlowAssetInstanceList::OnGenerateWidget(const TSharedPtr<FName> Item) const
 {
 	return SNew(STextBlock).Text(FText::FromName(*Item.Get()));
+}
+
+void SFlowAssetInstanceList::OnComboBoxOpening()
+{
+	RefreshInstanceNames();
+	
+	const int SelectedIndex = InstanceNames.IndexOfByKey(SelectedInstance);
+	if (SelectedIndex == INDEX_NONE)
+	{
+		SelectedInstance = InstanceNames[0];
+		Dropdown->SetSelectedItem(SelectedInstance);
+	}
 }
 
 void SFlowAssetInstanceList::OnSelectionChanged(const TSharedPtr<FName> SelectedItem, const ESelectInfo::Type SelectionType)
@@ -84,6 +129,47 @@ void SFlowAssetInstanceList::OnSelectionChanged(const TSharedPtr<FName> Selected
 FText SFlowAssetInstanceList::GetSelectedInstanceName() const
 {
 	return SelectedInstance.IsValid() ? FText::FromName(*SelectedInstance) : NoInstanceSelectedText;
+}
+
+void SFlowAssetInstanceList::RefreshInstanceNames()
+{
+	TArray<FName> Names = {*NoInstanceSelectedText.ToString()};
+	FlowAssetEditor.Pin()->GetFlowAsset()->GetInstanceDisplayNames(Names);
+
+	if (Names.Num() < InstanceNames.Num())
+	{
+		while (Names.Num() < InstanceNames.Num())
+		{
+			NamePtrCache.Emplace(InstanceNames.Pop());
+		}
+	}
+	else if (Names.Num() > InstanceNames.Num())
+	{
+		while (Names.Num() > InstanceNames.Num())
+		{
+			if (NamePtrCache.Num() > 0)
+			{
+				InstanceNames.Emplace(NamePtrCache.Pop());
+			}
+			else
+			{
+				InstanceNames.Emplace(MakeShareable(new FName));
+			}
+		}
+	}
+
+	for (int i = 0; i < Names.Num(); ++ i)
+	{
+		*InstanceNames[i] = Names[i];
+	}
+
+	Dropdown->RefreshOptions();
+}
+
+void SFlowAssetInstanceList::ResetSelectedInstance(const bool bSimulateInEditor)
+{
+	SelectedInstance = InstanceNames[0];
+	Dropdown->SetSelectedItem(SelectedInstance);
 }
 
 //////////////////////////////////////////////////////////////////////////

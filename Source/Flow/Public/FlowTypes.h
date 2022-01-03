@@ -27,6 +27,16 @@ enum class EFlowNodeState : uint8
 	Aborted
 };
 
+/** Flow节点Debug信息等级 */
+UENUM(BlueprintType)
+enum EFlowNodeDebugInfoLevel
+{
+	None,
+	Info,
+	Warning,
+	Error,
+};
+
 // Finish Policy value is read by Flow Node
 // Nodes have opportunity to terminate themselves differently if Flow Graph has been aborted
 // Example: Spawn node might despawn all actors if Flow Graph is aborted, not completed

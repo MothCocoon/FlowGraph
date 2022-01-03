@@ -9,6 +9,7 @@
 
 #include "FlowAsset.h"
 #include "Nodes/FlowNode.h"
+#include "Nodes/FlowPrivateNode.h"
 #include "Nodes/Route/FlowNode_Start.h"
 #include "Nodes/Route/FlowNode_Reroute.h"
 
@@ -260,6 +261,15 @@ void UFlowGraphSchema::GetFlowNodeActions(FGraphActionMenuBuilder& ActionMenuBui
 
 	for (const UClass* FlowNodeClass : NativeFlowNodes)
 	{
+		if (AssetClassDefaults->RefusedNodeClasses.Num() > 0 &&
+			AssetClassDefaults->RefusedNodeClasses.FindByPredicate([&FlowNodeClass](const TSubclassOf<UFlowNode> &RefusedClass)
+			{
+				return FlowNodeClass->IsChildOf(RefusedClass);
+			}) != nullptr)
+		{
+			continue;
+		}
+		
 		for (const UClass* AllowedClass : AssetClassDefaults->AllowedNodeClasses)
 		{
 			if (FlowNodeClass->IsChildOf(AllowedClass))
@@ -268,13 +278,24 @@ void UFlowGraphSchema::GetFlowNodeActions(FGraphActionMenuBuilder& ActionMenuBui
 			}
 		}
 	}
+	
 	for (const TPair<FName, FAssetData>& AssetData : BlueprintFlowNodes)
 	{
 		if (const UBlueprint* Blueprint = GetPlaceableNodeBlueprint(AssetData.Value))
 		{
+			const UClass* FlowNodeClass = Blueprint->GeneratedClass;
+			if (AssetClassDefaults->RefusedNodeClasses.Num() > 0 &&
+			AssetClassDefaults->RefusedNodeClasses.FindByPredicate([&FlowNodeClass](const TSubclassOf<UFlowNode> &RefusedClass)
+			{
+				return FlowNodeClass->IsChildOf(RefusedClass);
+			}) != nullptr)
+			{
+				continue;
+			}
+			
 			for (const UClass* AllowedClass : AssetClassDefaults->AllowedNodeClasses)
 			{
-				if (Blueprint->GeneratedClass->IsChildOf(AllowedClass))
+				if (FlowNodeClass->IsChildOf(AllowedClass))
 				{
 					FlowNodes.Emplace(Blueprint->GeneratedClass->GetDefaultObject<UFlowNode>());
 				}
@@ -282,6 +303,18 @@ void UFlowGraphSchema::GetFlowNodeActions(FGraphActionMenuBuilder& ActionMenuBui
 		}
 	}
 	FlowNodes.Shrink();
+
+	for (int i = FlowNodes.Num() - 1; i >= 0; -- i)
+	{
+		const UFlowNode* FlowNode = FlowNodes[i];
+		if (FlowNode->GetClass()->ImplementsInterface(UFlowPrivateNode::StaticClass()))
+		{
+			if (!Cast<IFlowPrivateNode>(FlowNode)->IsAllowedFlowAssetClass(AssetClass))
+			{
+				FlowNodes.RemoveAtSwap(i);
+			}
+		}
+	}
 
 	for (const UFlowNode* FlowNode : FlowNodes)
 	{

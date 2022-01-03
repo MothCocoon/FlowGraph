@@ -34,7 +34,7 @@ DECLARE_DELEGATE(FFlowAssetEvent);
 /**
  * Single asset containing flow nodes.
  */
-UCLASS(BlueprintType, hideCategories = Object)
+UCLASS(Abstract, BlueprintType, NotBlueprintable, hideCategories = Object)
 class FLOW_API UFlowAsset : public UObject
 {
 	GENERATED_UCLASS_BODY()
@@ -83,8 +83,11 @@ public:
 // Nodes
 
 protected:
-	TArray<TSubclassOf<UFlowNode>> AllowedNodeClasses;	
-
+#if WITH_EDITOR
+	TArray<TSubclassOf<UFlowNode>> AllowedNodeClasses;
+	TArray<TSubclassOf<UFlowNode>> RefusedNodeClasses;
+#endif
+	
 private:
 	UPROPERTY()
 	TMap<FGuid, UFlowNode*> Nodes;
@@ -134,6 +137,10 @@ private:
 	TWeakObjectPtr<UFlowAsset> InspectedInstance;
 #endif
 
+protected:
+
+	virtual void OnTick(float DeltaTime) {}
+	
 public:
 	void AddInstance(UFlowAsset* Instance);
 	int32 RemoveInstance(UFlowAsset* Instance);
@@ -141,18 +148,31 @@ public:
 	void ClearInstances();
 	int32 GetInstancesNum() const { return ActiveInstances.Num(); }
 
+	void ExecuteTick(float DeltaTime);
+	
 #if WITH_EDITOR
 	void GetInstanceDisplayNames(TArray<TSharedPtr<FName>>& OutDisplayNames) const;
-
+	void GetInstanceDisplayNames(TArray<FName>& OutDisplayNames) const;
+	
 	void SetInspectedInstance(const FName& NewInspectedInstanceName);
 	UFlowAsset* GetInspectedInstance() const { return InspectedInstance.IsValid() ? InspectedInstance.Get() : nullptr; }
 
+	DECLARE_EVENT(UFlowAsset, FUpdateInspectedInstanceEvent);
+	FUpdateInspectedInstanceEvent& OnUpdateInspectedInstance() { return UpdateInspectedInstanceEvent; }
+	FUpdateInspectedInstanceEvent UpdateInspectedInstanceEvent;
+	
 	DECLARE_EVENT(UFlowAsset, FRegenerateToolbarsEvent);
 	FRegenerateToolbarsEvent& OnRegenerateToolbars() { return RegenerateToolbarsEvent; }
 	FRegenerateToolbarsEvent RegenerateToolbarsEvent;
 
+	DECLARE_EVENT(UFlowAsset, FRefreshAllDirtyNodesEvent);
+	FRefreshAllDirtyNodesEvent& OnRefreshAllDirtyNodes() { return RefreshAllDirtyNodesEvent; }
+	FRefreshAllDirtyNodesEvent RefreshAllDirtyNodesEvent;
+	
 private:
+	void BroadcastUpdateInspectedInstance() const { UpdateInspectedInstanceEvent.Broadcast(); }
 	void BroadcastRegenerateToolbars() const { RegenerateToolbarsEvent.Broadcast(); }
+	void BroadcastRefreshAllDirtyNodes() const { RefreshAllDirtyNodesEvent.Broadcast(); }
 #endif
 
 //////////////////////////////////////////////////////////////////////////
