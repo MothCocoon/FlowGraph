@@ -32,7 +32,7 @@
 #include "ToolMenus.h"
 #include "Widgets/Docking/SDockTab.h"
 
-#define LOCTEXT_NAMESPACE "FlowEditor"
+#define LOCTEXT_NAMESPACE "FlowAssetEditor"
 
 const FName FFlowAssetEditor::DetailsTab(TEXT("Details"));
 const FName FFlowAssetEditor::GraphTab(TEXT("Graph"));

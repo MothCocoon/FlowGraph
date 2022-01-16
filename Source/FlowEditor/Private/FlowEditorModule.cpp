@@ -29,7 +29,7 @@
 #include "LevelEditor.h"
 #include "Modules/ModuleManager.h"
 
-#define LOCTEXT_NAMESPACE "FlowEditor"
+#define LOCTEXT_NAMESPACE "FlowEditorModule"
 
 EAssetTypeCategories::Type FFlowEditorModule::FlowAssetCategory = static_cast<EAssetTypeCategories::Type>(0);
 
@@ -105,7 +105,7 @@ void FFlowEditorModule::ShutdownModule()
 void FFlowEditorModule::RegisterAssets()
 {
 	IAssetTools& AssetTools = FModuleManager::LoadModuleChecked<FAssetToolsModule>("AssetTools").Get();
-	FlowAssetCategory = AssetTools.RegisterAdvancedAssetCategory(FName(TEXT("Flow")), LOCTEXT("FlowAssetCategory", "Flow"));
+	FlowAssetCategory = AssetTools.RegisterAdvancedAssetCategory(FName(TEXT("Flow")), UFlowGraphSettings::Get()->FlowAssetCategoryName);
 
 	const TSharedRef<IAssetTypeActions> FlowAssetActions = MakeShareable(new FAssetTypeActions_FlowAsset());
 	RegisteredAssetActions.Add(FlowAssetActions);
