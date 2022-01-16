@@ -2,11 +2,14 @@
 
 #include "FlowAsset.h"
 
+#define LOCTEXT_NAMESPACE "FlowGraphSettings"
+
 UFlowGraphSettings::UFlowGraphSettings(const FObjectInitializer& ObjectInitializer)
 	: Super(ObjectInitializer)
 	, bExposeFlowAssetCreation(true)
 	, bExposeFlowNodeCreation(true)
 	, bShowAssetToolbarAboveLevelEditor(true)
+	, FlowAssetCategoryName(LOCTEXT("FlowAssetCategory", "Flow"))
 	, WorldAssetClass(UFlowAsset::StaticClass())
 	, bShowDefaultPinNames(false)
 	, ExecPinColorModifier(0.75f, 0.75f, 0.75f, 1.0f)
@@ -33,3 +36,5 @@ UFlowGraphSettings::UFlowGraphSettings(const FObjectInitializer& ObjectInitializ
 	NodeTitleColors.Emplace(EFlowNodeStyle::Logic, FLinearColor(1.0f, 1.0f, 1.0f, 1.0f));
 	NodeTitleColors.Emplace(EFlowNodeStyle::SubGraph, FLinearColor(1.0f, 0.128f, 0.0f, 1.0f));
 }
+
+#undef LOCTEXT_NAMESPACE

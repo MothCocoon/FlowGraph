@@ -30,6 +30,9 @@ class UFlowGraphSettings final : public UDeveloperSettings
 	UPROPERTY(EditAnywhere, config, Category = "Default UI")
 	bool bShowAssetToolbarAboveLevelEditor;
 
+	UPROPERTY(EditAnywhere, config, Category = "Default UI")
+	FText FlowAssetCategoryName;
+
 	/** Flow Asset class allowed to be assigned via Level Editor toolbar*/
 	UPROPERTY(EditAnywhere, config, Category = "Default UI", meta = (EditCondition = "bShowAssetToolbarAboveLevelEditor"))
 	TSubclassOf<class UFlowAsset> WorldAssetClass;
