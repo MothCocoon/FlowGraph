@@ -1,6 +1,6 @@
 {
 	"FileVersion" : 3,
-	"Version" : 1.0,
+	"Version" : 1.2,
 	"FriendlyName" : "Flow",
 	"Description" : "Design-agnostic node editor for scripting game’s flow.",
 	"Category" : "Gameplay",
