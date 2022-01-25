@@ -27,7 +27,6 @@ class FFlowGraphConnectionDrawingPolicy : public FConnectionDrawingPolicy
 {
 	float RecentWireDuration;
 
-	FLinearColor InactiveColor;
 	FLinearColor RecentColor;
 	FLinearColor RecordedColor;
 	FLinearColor SelectedColor;

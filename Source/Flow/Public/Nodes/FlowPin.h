@@ -103,6 +103,59 @@ struct FLOW_API FFlowPin
 	}
 };
 
+USTRUCT()
+struct FLOW_API FFlowInputOutputPin
+{
+	GENERATED_USTRUCT_BODY()
+
+	FProperty* InputProperty;
+	FProperty* OutputProperty;
+
+	UPROPERTY()
+	FName InputPinName;
+
+	UPROPERTY()
+	FName OutputPinName;
+
+	UPROPERTY()
+	FGuid InputNodeGuid;
+
+	UPROPERTY()
+	FGuid OutputNodeGuid;
+
+	UPROPERTY()
+	FString PinTooltip;
+
+	FORCEINLINE bool IsValid() const
+	{
+		return !OutputPinName.IsNone() && !InputPinName.IsNone() && InputNodeGuid.IsValid() && OutputNodeGuid.IsValid();
+	}
+
+	FFlowInputOutputPin()
+	{
+		InputPinName = OutputPinName = NAME_None;
+		InputNodeGuid = OutputNodeGuid = FGuid();
+		InputProperty = OutputProperty = nullptr;
+	}
+
+	FFlowInputOutputPin(const FName& InPinName, const FName& OutPinName, const FGuid& InNodeGuid, const FGuid& OutNodeGuid)
+	{
+		InputPinName = InPinName;
+		OutputPinName = OutPinName;
+		InputNodeGuid = InNodeGuid;
+		OutputNodeGuid = OutNodeGuid;
+		InputProperty = OutputProperty = nullptr;
+	}
+
+	FFlowInputOutputPin(FProperty* NewInputProperty, FProperty* NewOutputProperty)
+	{
+		InputPinName = OutputPinName = NAME_None;
+		InputNodeGuid = OutputNodeGuid = FGuid();
+		InputProperty = NewInputProperty;
+		OutputProperty = NewOutputProperty;
+	}
+};
+
 // Processing Flow Nodes creates map of connected pins
 USTRUCT()
 struct FLOW_API FConnectedPin
@@ -115,6 +168,9 @@ struct FLOW_API FConnectedPin
 	UPROPERTY()
 	FName PinName;
 
+	UPROPERTY()
+	FFlowInputOutputPin PinProperty;
+
 	FConnectedPin()
         : NodeGuid(FGuid())
         , PinName(NAME_None)
@@ -124,6 +180,13 @@ struct FLOW_API FConnectedPin
 	FConnectedPin(const FGuid InNodeId, const FName& InPinName)
         : NodeGuid(InNodeId)
         , PinName(InPinName)
+	{
+	}
+
+	FConnectedPin(const FGuid InNodeId, const FName& InPinName, const FFlowInputOutputPin& InputOutputPin)
+		: NodeGuid(InNodeId)
+		, PinName(InPinName)
+		, PinProperty(InputOutputPin)
 	{
 	}
 

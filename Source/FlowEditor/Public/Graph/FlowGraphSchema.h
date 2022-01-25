@@ -1,12 +1,12 @@
 #pragma once
 
-#include "EdGraph/EdGraphSchema.h"
+#include "EdGraphSchema_K2.h"
 #include "FlowGraphSchema.generated.h"
 
 DECLARE_MULTICAST_DELEGATE(FFlowGraphSchemaRefresh);
 
 UCLASS()
-class FLOWEDITOR_API UFlowGraphSchema : public UEdGraphSchema
+class FLOWEDITOR_API UFlowGraphSchema : public UEdGraphSchema_K2
 {
 	GENERATED_UCLASS_BODY()
 
@@ -27,9 +27,9 @@ public:
 	virtual const FPinConnectionResponse CanCreateConnection(const UEdGraphPin* A, const UEdGraphPin* B) const override;
 	virtual bool TryCreateConnection(UEdGraphPin* A, UEdGraphPin* B) const override;
 	virtual bool ShouldHidePinDefaultValue(UEdGraphPin* Pin) const override;
-	virtual FLinearColor GetPinTypeColor(const FEdGraphPinType& PinType) const override;
 	virtual void BreakNodeLinks(UEdGraphNode& TargetNode) const override;
 	virtual void BreakPinLinks(UEdGraphPin& TargetPin, bool bSendsNodeNotification) const override;
+	virtual void BreakSinglePinLink(UEdGraphPin* SourcePin, UEdGraphPin* TargetPin) const override;
 	virtual int32 GetNodeSelectionCount(const UEdGraph* Graph) const override;
 	virtual TSharedPtr<FEdGraphSchemaAction> GetCreateCommentAction() const override;
 	virtual void OnPinConnectionDoubleCicked(UEdGraphPin* PinA, UEdGraphPin* PinB, const FVector2D& GraphPosition) const override;

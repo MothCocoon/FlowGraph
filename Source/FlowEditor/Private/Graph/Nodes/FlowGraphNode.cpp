@@ -24,6 +24,7 @@
 #include "Textures/SlateIcon.h"
 #include "ToolMenuSection.h"
 #include "UnrealEd.h"
+#include "FlowHelpers.h"
 
 #define LOCTEXT_NAMESPACE "FlowGraphNode"
 
@@ -356,6 +357,16 @@ void UFlowGraphNode::AllocateDefaultPins()
 		for (const FFlowPin& OutputPin : FlowNode->OutputPins)
 		{
 			CreateOutputPin(OutputPin);
+		}
+
+		for (const auto& It : FlowNode->GetInputProperties())
+		{
+			CreateInputPropertyPin(It.Value);
+		}
+
+		for (const auto& It : FlowNode->GetOutputProperties())
+		{
+			CreateOutputPropertyPin(It.Value);
 		}
 	}
 }
@@ -727,6 +738,131 @@ void UFlowGraphNode::CreateOutputPin(const FFlowPin& FlowPin, const int32 Index 
 	NewPin->PinToolTip = FlowPin.PinToolTip;
 
 	OutputPins.Emplace(NewPin);
+}
+
+static const FName GetPinNameFromProperty(const FProperty* Property)
+{
+	if (FLOW_PROPERTY_IS(Property, Object))
+	{
+		return UEdGraphSchema_K2::PC_Object;
+	}
+
+	if (FLOW_PROPERTY_IS(Property, Float))
+	{
+		return UEdGraphSchema_K2::PC_Float;
+	}
+
+	if (FLOW_PROPERTY_IS(Property, Bool))
+	{
+		return UEdGraphSchema_K2::PC_Boolean;
+	}
+
+	if (FLOW_PROPERTY_IS(Property, Byte))
+	{
+		return UEdGraphSchema_K2::PC_Byte;
+	}
+
+	if (FLOW_PROPERTY_IS(Property, Int))
+	{
+		return UEdGraphSchema_K2::PC_Int;
+	}
+
+	if (FLOW_PROPERTY_IS(Property, Int64))
+	{
+		return UEdGraphSchema_K2::PC_Int64;
+	}
+
+	if (FLOW_PROPERTY_IS(Property, Struct))
+	{
+		return UEdGraphSchema_K2::PC_Struct;
+	}
+
+	if (FLOW_PROPERTY_IS(Property, Str))
+	{
+		return UEdGraphSchema_K2::PC_String;
+	}
+
+	if (FLOW_PROPERTY_IS(Property, Text))
+	{
+		return UEdGraphSchema_K2::PC_Text;
+	}
+
+	if (FLOW_PROPERTY_IS(Property, Name))
+	{
+		return UEdGraphSchema_K2::PC_Name;
+	}
+
+	return NAME_None;
+}
+
+void UFlowGraphNode::CreateInputPropertyPin(const FFlowInputOutputPin& FlowPropertyPin, const int32 Index)
+{
+	if (ensure(FlowPropertyPin.InputProperty))
+	{
+		const FName PinName = GetPinNameFromProperty(FlowPropertyPin.InputProperty);
+		if (FlowPropertyPin.InputPinName.IsNone() || PinName.IsNone())
+		{
+			return;
+		}
+
+		FCreatePinParams CreatePinParams;
+		CreatePinParams.Index = Index;
+		UEdGraphPin* NewPin = CreatePin(EGPD_Input, PinName, nullptr, FlowPropertyPin.InputPinName, CreatePinParams);
+		check(NewPin);
+		NewPin->PinToolTip = FlowPropertyPin.PinTooltip;
+		SetPinSubCategoryObject(FlowPropertyPin.InputProperty, NewPin);
+	}
+}
+
+void UFlowGraphNode::CreateOutputPropertyPin(const FFlowInputOutputPin& FlowPropertyPin, const int32 Index)
+{
+	if (ensure(FlowPropertyPin.OutputProperty))
+	{
+		const FName PinName = GetPinNameFromProperty(FlowPropertyPin.OutputProperty);
+		if (FlowPropertyPin.OutputPinName.IsNone() || PinName.IsNone())
+		{
+			return;
+		}
+
+		FCreatePinParams CreatePinParams;
+		CreatePinParams.Index = Index;
+		UEdGraphPin* NewPin = CreatePin(EGPD_Output, PinName, nullptr, FlowPropertyPin.OutputPinName, CreatePinParams);
+		check(NewPin);
+		NewPin->PinToolTip = FlowPropertyPin.PinTooltip;
+		SetPinSubCategoryObject(FlowPropertyPin.OutputProperty, NewPin);
+	}
+}
+
+void UFlowGraphNode::SetPinSubCategoryObject(const FProperty* Property, UEdGraphPin* NewPin)
+{
+	if (const FStructProperty* StructProperty = CastField<FStructProperty>(Property))
+	{
+		UScriptStruct* GameplayTagContainerStruct = TBaseStructure<FGameplayTagContainer>::Get();
+		UScriptStruct* GameplayTagStruct = TBaseStructure<FGameplayTag>::Get();
+		UScriptStruct* VectorStruct = TBaseStructure<FVector>::Get();
+		UScriptStruct* RotatorStruct = TBaseStructure<FRotator>::Get();
+		UScriptStruct* TransformStruct = TBaseStructure<FTransform>::Get();
+		if (StructProperty->Struct == GameplayTagContainerStruct)
+		{
+			NewPin->PinType.PinSubCategoryObject = GameplayTagContainerStruct;
+		}
+		else if (StructProperty->Struct == GameplayTagStruct)
+		{
+			NewPin->PinType.PinSubCategoryObject = GameplayTagStruct;
+		}
+		else if (StructProperty->Struct == VectorStruct)
+		{
+			NewPin->PinType.PinSubCategoryObject = VectorStruct;
+		}
+		else if (StructProperty->Struct == RotatorStruct)
+		{
+			NewPin->PinType.PinSubCategoryObject = RotatorStruct;
+		}
+		else if (StructProperty->Struct == TransformStruct)
+		{
+			NewPin->PinType.PinSubCategoryObject = TransformStruct;
+		}
+	}
 }
 
 void UFlowGraphNode::RemoveOrphanedPin(UEdGraphPin* Pin)

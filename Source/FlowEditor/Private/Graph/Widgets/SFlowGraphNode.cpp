@@ -381,7 +381,16 @@ const FSlateBrush* SFlowGraphNode::GetNodeBodyBrush() const
 
 void SFlowGraphNode::CreateStandardPinWidget(UEdGraphPin* Pin)
 {
-	const TSharedPtr<SGraphPin> NewPin = SNew(SFlowGraphPinExec, Pin);
+	TSharedPtr<SGraphPin> NewPin;
+	if (Pin->PinType.PinCategory == UEdGraphSchema_K2::PC_Exec)
+	{
+		NewPin = SNew(SFlowGraphPinExec, Pin);
+	}
+	else
+	{
+		NewPin = SNew(SGraphPin, Pin);
+	}
+
 
 	if (!UFlowGraphSettings::Get()->bShowDefaultPinNames && FlowGraphNode->GetFlowNode())
 	{

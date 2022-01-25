@@ -224,7 +224,7 @@ protected:
 	void K2_FlushContent();
 
 	// Trigger execution of input pin
-	void TriggerInput(const FName& PinName);
+	void TriggerInput(const FConnectedPin& ConnectedPin);
 
 	// Method reacting on triggering Input pin
 	virtual void ExecuteInput(const FName& PinName);
@@ -313,6 +313,11 @@ protected:
 
 		return Cast<T>(AssetPtr.Get());
 	}
+
+	const TMultiMap<TWeakObjectPtr<UObject>, FFlowInputOutputPin> GetInputProperties() const;
+	const TMultiMap<TWeakObjectPtr<UObject>, FFlowInputOutputPin> GetOutputProperties() const;
+	FProperty* FindInputPropertyByPinName(const FName& InPinName) const;
+	FProperty* FindOutputPropertyByPinName(const FName& InPinName) const;
 
 public:
 	UFUNCTION(BlueprintPure, Category = "FlowNode")

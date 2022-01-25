@@ -32,7 +32,6 @@ FFlowGraphConnectionDrawingPolicy::FFlowGraphConnectionDrawingPolicy(int32 InBac
 	// Cache off the editor options
 	RecentWireDuration = UFlowGraphSettings::Get()->RecentWireDuration;
 
-	InactiveColor = UFlowGraphSettings::Get()->InactiveWireColor;
 	RecentColor = UFlowGraphSettings::Get()->RecentWireColor;
 	RecordedColor = UFlowGraphSettings::Get()->RecordedWireColor;
 	SelectedColor = UFlowGraphSettings::Get()->SelectedWireColor;
@@ -162,7 +161,7 @@ void FFlowGraphConnectionDrawingPolicy::DetermineWiringStyle(UEdGraphPin* Output
 			}
 
 			// It's not followed, fade it and keep it thin
-			Params.WireColor = InactiveColor;
+			Params.WireColor = Schema->GetPinTypeColor(OutputPin->PinType);
 			Params.WireThickness = InactiveWireThickness;
 		}
 	}
