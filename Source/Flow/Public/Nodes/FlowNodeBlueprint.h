@@ -9,7 +9,7 @@
  */
 
 UCLASS(BlueprintType)
-class FLOW_API UFlowNodeBlueprint final : public UBlueprint
+class FLOW_API UFlowNodeBlueprint : public UBlueprint
 {
 	GENERATED_UCLASS_BODY()
 
