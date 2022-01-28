@@ -253,7 +253,7 @@ void UFlowAsset::SetInspectedInstance(const FName& NewInspectedInstanceName)
 		}
 	}
 
-	BroadcastRegenerateToolbars();
+	BroadcastDebuggerRefresh();
 }
 #endif
 
@@ -324,11 +324,13 @@ void UFlowAsset::PreStartFlow()
 #if WITH_EDITOR
 	if (TemplateAsset->ActiveInstances.Num() == 1)
 	{
+		// this instance is the only active one, set it directly as Inspected Instance
 		TemplateAsset->SetInspectedInstance(GetDisplayName());
 	}
 	else
 	{
-		TemplateAsset->BroadcastRegenerateToolbars();
+		// request to refresh list to show newly created instance
+		TemplateAsset->BroadcastDebuggerRefresh();
 	}
 #endif
 }

@@ -147,12 +147,12 @@ public:
 	void SetInspectedInstance(const FName& NewInspectedInstanceName);
 	UFlowAsset* GetInspectedInstance() const { return InspectedInstance.IsValid() ? InspectedInstance.Get() : nullptr; }
 
-	DECLARE_EVENT(UFlowAsset, FRegenerateToolbarsEvent);
-	FRegenerateToolbarsEvent& OnRegenerateToolbars() { return RegenerateToolbarsEvent; }
-	FRegenerateToolbarsEvent RegenerateToolbarsEvent;
+	DECLARE_EVENT(UFlowAsset, FRefreshDebuggerEvent);
+	FRefreshDebuggerEvent& OnDebuggerRefresh() { return RefreshDebuggerEvent; }
+	FRefreshDebuggerEvent RefreshDebuggerEvent;
 
 private:
-	void BroadcastRegenerateToolbars() const { RegenerateToolbarsEvent.Broadcast(); }
+	void BroadcastDebuggerRefresh() const { RefreshDebuggerEvent.Broadcast(); }
 #endif
 
 //////////////////////////////////////////////////////////////////////////
