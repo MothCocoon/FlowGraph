@@ -44,6 +44,9 @@ protected:
 	UPROPERTY(EditDefaultsOnly, Category = "FlowNode")
 	EFlowNodeStyle NodeStyle;
 
+	uint8 bCanDelete : 1;
+	uint8 bCanDuplicate : 1;
+
 public:
 	FFlowNodeEvent OnReconstructionRequested;
 #endif
