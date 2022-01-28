@@ -21,31 +21,13 @@
 
 FText SFlowAssetInstanceList::NoInstanceSelectedText = LOCTEXT("NoInstanceSelected", "No instance selected");
 
-void SFlowAssetInstanceList::Construct(const FArguments& InArgs, TWeakPtr<FFlowAssetEditor> InFlowAssetEditor)
+void SFlowAssetInstanceList::Construct(const FArguments& InArgs, const TWeakObjectPtr<UFlowAsset> InTemplateAsset)
 {
-	FlowAssetEditor = InFlowAssetEditor;
-
-	// collect instance names of this Flow Asset
-	InstanceNames = {MakeShareable(new FName(*NoInstanceSelectedText.ToString()))};
-	FlowAssetEditor.Pin()->GetFlowAsset()->GetInstanceDisplayNames(InstanceNames);
-
-	// select instance
-	if (const UFlowAsset* InspectedInstance = FlowAssetEditor.Pin()->GetFlowAsset()->GetInspectedInstance())
+	TemplateAsset = InTemplateAsset;
+	if (TemplateAsset.IsValid())
 	{
-		const FName& InspectedInstanceName = InspectedInstance->GetDisplayName();
-		for (const TSharedPtr<FName>& Instance : InstanceNames)
-		{
-			if (*Instance == InspectedInstanceName)
-			{
-				SelectedInstance = Instance;
-				break;
-			}
-		}
-	}
-	else
-	{
-		// default object is always available
-		SelectedInstance = InstanceNames[0];
+		TemplateAsset->OnDebuggerRefresh().AddSP(this, &SFlowAssetInstanceList::RefreshInstances);
+		RefreshInstances();
 	}
 
 	// create dropdown
@@ -65,6 +47,40 @@ void SFlowAssetInstanceList::Construct(const FArguments& InArgs, TWeakPtr<FFlowA
 	];
 }
 
+SFlowAssetInstanceList::~SFlowAssetInstanceList()
+{
+	if (TemplateAsset.IsValid())
+	{
+		TemplateAsset->OnDebuggerRefresh().RemoveAll(this);
+	}
+}
+
+void SFlowAssetInstanceList::RefreshInstances()
+{
+	// collect instance names of this Flow Asset
+	InstanceNames = {MakeShareable(new FName(*NoInstanceSelectedText.ToString()))};
+	TemplateAsset->GetInstanceDisplayNames(InstanceNames);
+
+	// select instance
+	if (const UFlowAsset* InspectedInstance = TemplateAsset->GetInspectedInstance())
+	{
+		const FName& InspectedInstanceName = InspectedInstance->GetDisplayName();
+		for (const TSharedPtr<FName>& Instance : InstanceNames)
+		{
+			if (*Instance == InspectedInstanceName)
+			{
+				SelectedInstance = Instance;
+				break;
+			}
+		}
+	}
+	else
+	{
+		// default object is always available
+		SelectedInstance = InstanceNames[0];
+	}
+}
+
 TSharedRef<SWidget> SFlowAssetInstanceList::OnGenerateWidget(const TSharedPtr<FName> Item) const
 {
 	return SNew(STextBlock).Text(FText::FromName(*Item.Get()));
@@ -72,12 +88,15 @@ TSharedRef<SWidget> SFlowAssetInstanceList::OnGenerateWidget(const TSharedPtr<FN
 
 void SFlowAssetInstanceList::OnSelectionChanged(const TSharedPtr<FName> SelectedItem, const ESelectInfo::Type SelectionType)
 {
-	SelectedInstance = SelectedItem;
-
-	if (FlowAssetEditor.IsValid() && FlowAssetEditor.Pin()->GetFlowAsset())
+	if (SelectionType != ESelectInfo::Direct)
 	{
-		const FName NewSelectedInstanceName = (SelectedInstance.IsValid() && *SelectedInstance != *InstanceNames[0]) ? *SelectedInstance : NAME_None;
-		FlowAssetEditor.Pin()->GetFlowAsset()->SetInspectedInstance(NewSelectedInstanceName);
+		SelectedInstance = SelectedItem;
+
+		if (TemplateAsset.IsValid())
+		{
+			const FName NewSelectedInstanceName = (SelectedInstance.IsValid() && *SelectedInstance != *InstanceNames[0]) ? *SelectedInstance : NAME_None;
+			TemplateAsset->SetInspectedInstance(NewSelectedInstanceName);
+		}
 	}
 }
 
@@ -89,9 +108,9 @@ FText SFlowAssetInstanceList::GetSelectedInstanceName() const
 //////////////////////////////////////////////////////////////////////////
 // Flow Asset Breadcrumb
 
-void SFlowAssetBreadcrumb::Construct(const FArguments& InArgs, TWeakPtr<FFlowAssetEditor> InFlowAssetEditor)
+void SFlowAssetBreadcrumb::Construct(const FArguments& InArgs, const TWeakObjectPtr<UFlowAsset> InTemplateAsset)
 {
-	FlowAssetEditor = InFlowAssetEditor;
+	TemplateAsset = InTemplateAsset;
 
 	// create breadcrumb
 	SAssignNew(BreadcrumbTrail, SBreadcrumbTrail<FFlowBreadcrumb>)
@@ -117,7 +136,7 @@ void SFlowAssetBreadcrumb::Construct(const FArguments& InArgs, TWeakPtr<FFlowAss
 
 	// fill breadcrumb
 	BreadcrumbTrail->ClearCrumbs();
-	if (UFlowAsset* InspectedInstance = FlowAssetEditor.Pin()->GetFlowAsset()->GetInspectedInstance())
+	if (UFlowAsset* InspectedInstance = TemplateAsset->GetInspectedInstance())
 	{
 		TArray<UFlowAsset*> InstancesFromRoot = {InspectedInstance};
 
@@ -138,9 +157,9 @@ void SFlowAssetBreadcrumb::Construct(const FArguments& InArgs, TWeakPtr<FFlowAss
 
 void SFlowAssetBreadcrumb::OnCrumbClicked(const FFlowBreadcrumb& Item) const
 {
-	ensure(FlowAssetEditor.Pin()->GetFlowAsset()->GetInspectedInstance());
+	ensure(TemplateAsset->GetInspectedInstance());
 
-	if (Item.InstanceName != FlowAssetEditor.Pin()->GetFlowAsset()->GetInspectedInstance()->GetDisplayName())
+	if (Item.InstanceName != TemplateAsset->GetInspectedInstance()->GetDisplayName())
 	{
 		GEditor->GetEditorSubsystem<UAssetEditorSubsystem>()->OpenEditorForAsset(Item.AssetPathName);
 	}
@@ -175,13 +194,15 @@ void FFlowAssetToolbar::BuildDebuggerToolbar(UToolMenu* ToolbarMenu)
 	Section.InsertPosition = FToolMenuInsert("Asset", EToolMenuInsertType::After);
 	
 	FPlayWorldCommands::BuildToolbar(Section);
+
+	TWeakObjectPtr<UFlowAsset> TemplateAsset = FlowAssetEditor.Pin()->GetFlowAsset();
 	
-	AssetInstanceList = SNew(SFlowAssetInstanceList, FlowAssetEditor);
+	AssetInstanceList = SNew(SFlowAssetInstanceList, TemplateAsset);
 	Section.AddEntry(FToolMenuEntry::InitWidget("AssetInstances", AssetInstanceList.ToSharedRef(), FText(), true));
 
 	Section.AddEntry(FToolMenuEntry::InitToolBarButton(FFlowToolbarCommands::Get().GoToMasterInstance));
 
-	Breadcrumb = SNew(SFlowAssetBreadcrumb, FlowAssetEditor);
+	Breadcrumb = SNew(SFlowAssetBreadcrumb, TemplateAsset);
 	Section.AddEntry(FToolMenuEntry::InitWidget("AssetBreadcrumb", Breadcrumb.ToSharedRef(), FText(), true));
 }
 

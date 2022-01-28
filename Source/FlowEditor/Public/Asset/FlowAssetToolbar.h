@@ -16,14 +16,17 @@ public:
 	SLATE_BEGIN_ARGS(SFlowAssetInstanceList) {}
 	SLATE_END_ARGS()
 
-	void Construct(const FArguments& InArgs, TWeakPtr<FFlowAssetEditor> InFlowAssetEditor);
+	void Construct(const FArguments& InArgs, const TWeakObjectPtr<UFlowAsset> InTemplateAsset);
+	virtual ~SFlowAssetInstanceList() override;
 
 private:
+	void RefreshInstances();
+	
 	TSharedRef<SWidget> OnGenerateWidget(TSharedPtr<FName> Item) const;
 	void OnSelectionChanged(TSharedPtr<FName> SelectedItem, ESelectInfo::Type SelectionType);
 	FText GetSelectedInstanceName() const;
 
-	TWeakPtr<FFlowAssetEditor> FlowAssetEditor;
+	TWeakObjectPtr<UFlowAsset> TemplateAsset;
 	TSharedPtr<SComboBox<TSharedPtr<FName>>> Dropdown;
 
 	TArray<TSharedPtr<FName>> InstanceNames;
@@ -57,16 +60,16 @@ struct FFlowBreadcrumb
 class SFlowAssetBreadcrumb final : public SCompoundWidget
 {
 public:
-	SLATE_BEGIN_ARGS(SFlowAssetInstanceList)	{}
+	SLATE_BEGIN_ARGS(SFlowAssetInstanceList) {}
 	SLATE_END_ARGS()
 
-	void Construct(const FArguments& InArgs, TWeakPtr<FFlowAssetEditor> InFlowAssetEditor);
+	void Construct(const FArguments& InArgs, const TWeakObjectPtr<UFlowAsset> InTemplateAsset);
 
 private:
 	void OnCrumbClicked(const FFlowBreadcrumb& Item) const;
 	FText GetBreadcrumbText(const TWeakObjectPtr<UFlowAsset> FlowInstance) const;
 
-	TWeakPtr<FFlowAssetEditor> FlowAssetEditor;
+	TWeakObjectPtr<UFlowAsset> TemplateAsset;
 	TSharedPtr<SBreadcrumbTrail<FFlowBreadcrumb>> BreadcrumbTrail;
 };
 
