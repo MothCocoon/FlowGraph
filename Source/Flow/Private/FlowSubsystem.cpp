@@ -19,13 +19,21 @@ UFlowSubsystem::UFlowSubsystem()
 
 bool UFlowSubsystem::ShouldCreateSubsystem(UObject* Outer) const
 {
+	// Only create an instance if there is no override implementation defined elsewhere
+	TArray<UClass*> ChildClasses;
+	GetDerivedClasses(GetClass(), ChildClasses, false);
+	if (ChildClasses.Num() > 0)
+	{
+		return false;
+	}
+	
 	// in this case, we simply create subsystem for every instance of the game
 	if (UFlowSettings::Get()->bCreateFlowSubsystemOnClients)
 	{
 		return true;
 	}
 
-	return Outer->GetWorld()->GetNetMode() < NM_Client && Outer->GetWorld()->IsServer();
+	return Outer->GetWorld()->GetNetMode() < NM_Client;
 }
 
 void UFlowSubsystem::Initialize(FSubsystemCollectionBase& Collection)
