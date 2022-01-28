@@ -531,6 +531,16 @@ void UFlowGraphNode::GetNodeContextMenuActions(class UToolMenu* Menu, class UGra
 	}
 }
 
+bool UFlowGraphNode::CanUserDeleteNode() const
+{
+	return FlowNode ? FlowNode->bCanDelete : Super::CanUserDeleteNode();
+}
+
+bool UFlowGraphNode::CanDuplicateNode() const
+{
+	return FlowNode ? FlowNode->bCanDuplicate : Super::CanDuplicateNode();
+}
+
 TSharedPtr<SGraphNode> UFlowGraphNode::CreateVisualWidget()
 {
 	return SNew(SFlowGraphNode, this);

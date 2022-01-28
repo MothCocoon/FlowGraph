@@ -10,7 +10,5 @@ class FLOWEDITOR_API UFlowGraphNode_Start : public UFlowGraphNode
 
 	// UEdGraphNode
 	virtual TSharedPtr<SGraphNode> CreateVisualWidget() override;
-	virtual bool CanUserDeleteNode() const override { return false; }
-	virtual bool CanDuplicateNode() const override { return false; }
 	// --
 };
