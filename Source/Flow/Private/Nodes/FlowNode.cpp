@@ -31,6 +31,7 @@ UFlowNode::UFlowNode(const FObjectInitializer& ObjectInitializer)
 #if WITH_EDITOR
 	Category = TEXT("Uncategorized");
 	NodeStyle = EFlowNodeStyle::Default;
+	bCanDelete = bCanDuplicate = true;
 #endif
 
 	InputPins = {DefaultInputPin};
