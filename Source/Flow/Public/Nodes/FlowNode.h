@@ -316,6 +316,8 @@ protected:
 
 	const TMultiMap<TWeakObjectPtr<UObject>, FFlowInputOutputPin> GetInputProperties() const;
 	const TMultiMap<TWeakObjectPtr<UObject>, FFlowInputOutputPin> GetOutputProperties() const;
+
+public:
 	FProperty* FindInputPropertyByPinName(const FName& InPinName) const;
 	FProperty* FindOutputPropertyByPinName(const FName& InPinName) const;
 
