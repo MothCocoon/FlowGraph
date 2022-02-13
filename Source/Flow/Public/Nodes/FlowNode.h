@@ -28,6 +28,7 @@ class FLOW_API UFlowNode : public UObject, public IVisualLoggerDebugSnapshotInte
 	friend class SFlowGraphNode;
 	friend class UFlowAsset;
 	friend class UFlowGraphNode;
+	friend class UFlowGraphSchema;
 
 //////////////////////////////////////////////////////////////////////////
 // Node
@@ -46,6 +47,13 @@ protected:
 
 	uint8 bCanDelete : 1;
 	uint8 bCanDuplicate : 1;
+
+	UPROPERTY(EditDefaultsOnly, Category = "FlowNode")
+	bool bNodeDeprecated;
+	
+	// If this node is deprecated, it might be replaced by another node
+	UPROPERTY(EditDefaultsOnly, Category = "FlowNode")
+	TSubclassOf<UFlowNode> ReplacedBy;
 
 public:
 	FFlowNodeEvent OnReconstructionRequested;

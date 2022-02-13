@@ -24,6 +24,9 @@ UFlowNode::UFlowNode(const FObjectInitializer& ObjectInitializer)
 	: Super(ObjectInitializer)
 #if WITH_EDITOR
 	, GraphNode(nullptr)
+	, bCanDelete(true)
+	, bCanDuplicate(true)
+	, bNodeDeprecated(false)
 #endif
 	, bPreloaded(false)
 	, ActivationState(EFlowNodeState::NeverActivated)
@@ -31,7 +34,6 @@ UFlowNode::UFlowNode(const FObjectInitializer& ObjectInitializer)
 #if WITH_EDITOR
 	Category = TEXT("Uncategorized");
 	NodeStyle = EFlowNodeStyle::Default;
-	bCanDelete = bCanDuplicate = true;
 #endif
 
 	InputPins = {DefaultInputPin};
