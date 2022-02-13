@@ -308,7 +308,17 @@ void UFlowGraphSchema::GetCommentAction(FGraphActionMenuBuilder& ActionMenuBuild
 
 bool UFlowGraphSchema::IsFlowNodePlaceable(const UClass* Class)
 {
-	return !Class->HasAnyClassFlags(CLASS_Abstract) && !Class->HasAnyClassFlags(CLASS_NotPlaceable) && !Class->HasAnyClassFlags(CLASS_Deprecated);
+	if (Class->HasAnyClassFlags(CLASS_Abstract) || Class->HasAnyClassFlags(CLASS_NotPlaceable) || Class->HasAnyClassFlags(CLASS_Deprecated))
+	{
+		return false;
+	}
+
+	if (const UFlowNode* DefaultObject = Class->GetDefaultObject<UFlowNode>())
+	{
+		return !DefaultObject->bNodeDeprecated;
+	}
+
+	return true; 
 }
 
 void UFlowGraphSchema::OnBlueprintPreCompile(UBlueprint* Blueprint)
