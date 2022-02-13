@@ -35,6 +35,7 @@ protected:
 
 	// SGraphNode
 	virtual void UpdateGraphNode() override;
+	virtual void UpdateErrorInfo() override;
 	virtual TSharedRef<SWidget> CreateNodeContentArea() override;
 	virtual const FSlateBrush* GetNodeBodyBrush() const override;
 

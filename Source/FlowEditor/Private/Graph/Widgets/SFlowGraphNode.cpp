@@ -351,6 +351,21 @@ void SFlowGraphNode::UpdateGraphNode()
 	CreateAdvancedViewArrow(InnerVerticalBox);
 }
 
+void SFlowGraphNode::UpdateErrorInfo()
+{
+	if (const UFlowNode* FlowNode = FlowGraphNode->GetFlowNode())
+	{
+		if (FlowNode->GetClass()->HasAnyClassFlags(CLASS_Deprecated) || FlowNode->bNodeDeprecated)
+		{
+			ErrorMsg = FlowNode->ReplacedBy ? FString::Printf(TEXT(" REPLACED BY: %s "), *FlowNode->ReplacedBy->GetName()) : FString(TEXT(" DEPRECATED! "));
+			ErrorColor = FEditorStyle::GetColor("ErrorReporting.WarningBackgroundColor");
+			return;
+		}
+	}
+
+	SGraphNode::UpdateErrorInfo();
+}
+
 TSharedRef<SWidget> SFlowGraphNode::CreateNodeContentArea()
 {
 	return SNew(SBorder)
