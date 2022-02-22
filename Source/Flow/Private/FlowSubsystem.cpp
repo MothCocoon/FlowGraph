@@ -101,14 +101,14 @@ void UFlowSubsystem::FinishRootFlow(UObject* Owner, const EFlowFinishPolicy Fini
 	}
 }
 
-UFlowAsset* UFlowSubsystem::CreateSubFlow(UFlowNode_SubGraph* SubGraphNode, const FString NewInstanceName, const bool bPreloading /* = false */)
+UFlowAsset* UFlowSubsystem::CreateSubFlow(UFlowNode_SubGraph* SubGraphNode, const FString SavedInstanceName, const bool bPreloading /* = false */)
 {
 	UFlowAsset* NewInstance = nullptr;
 
 	if (!InstancedSubFlows.Contains(SubGraphNode))
 	{
 		const TWeakObjectPtr<UObject> Owner = SubGraphNode->GetFlowAsset() ? SubGraphNode->GetFlowAsset()->GetOwner() : nullptr;
-		NewInstance = CreateFlowInstance(Owner, SubGraphNode->Asset, NewInstanceName);
+		NewInstance = CreateFlowInstance(Owner, SubGraphNode->Asset, SavedInstanceName);
 		InstancedSubFlows.Add(SubGraphNode, NewInstance);
 
 		if (bPreloading)
@@ -124,8 +124,12 @@ UFlowAsset* UFlowSubsystem::CreateSubFlow(UFlowNode_SubGraph* SubGraphNode, cons
 		
 		AssetInstance->NodeOwningThisAssetInstance = SubGraphNode;
 		SubGraphNode->GetFlowAsset()->ActiveSubGraphs.Add(SubGraphNode, AssetInstance);
-		
-		AssetInstance->StartFlow();
+
+		// don't activate Start Node if we're loading Sub Graph from SaveGame
+		if (SavedInstanceName.IsEmpty())
+		{
+			AssetInstance->StartFlow();
+		}
 	}
 
 	return NewInstance;
@@ -221,7 +225,7 @@ void UFlowSubsystem::OnGameSaved(UFlowSaveGame* SaveGame)
 	TArray<TWeakObjectPtr<UFlowComponent>> ComponentsArray;
 	FlowComponentRegistry.GenerateValueArray(ComponentsArray);
 	const TSet<TWeakObjectPtr<UFlowComponent>> FlowComponents = TSet<TWeakObjectPtr<UFlowComponent>>(ComponentsArray);
-	for (TWeakObjectPtr<UFlowComponent> FlowComponent : FlowComponents)
+	for (const TWeakObjectPtr<UFlowComponent> FlowComponent : FlowComponents)
 	{
 		SaveGame->FlowComponents.Emplace(FlowComponent->SaveInstance());
 	}
