@@ -1,7 +1,7 @@
 ## Concept
-Flow plug-in for Unreal Engine provides a graph editor tailored for scripting flow of events in virtual worlds. It's based on a decade of experience with designing and implementing narrative in video games. All we need here is simplicity.
+Flow plug-in for Unreal Engine is a design-agnostic event node editor. It provides a graph editor tailored for scripting flow of events in virtual worlds. It's based on a decade of experience with designing and implementing narrative in video games. All we need here is simplicity.
 
-It's a design-agnostic event node editor.
+The aim of publishing it as open-source project is to let people tell great stories and construct immersive worlds easier. That allows us to enrich video game storytelling so we can inspire people and make our world a better place.
 
 ![Flow101](https://user-images.githubusercontent.com/5065057/103543817-6d924080-4e9f-11eb-87d9-15ab092c3875.png)
 
