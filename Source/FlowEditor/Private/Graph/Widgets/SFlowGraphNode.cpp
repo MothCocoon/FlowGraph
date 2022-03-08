@@ -429,7 +429,7 @@ void SFlowGraphNode::CreateInputSideAddButton(TSharedPtr<SVerticalBox> OutputBox
 	{
 		const TSharedRef<SWidget> AddPinButton = AddPinButtonContent(
 			LOCTEXT("FlowNodeAddPinButton", "Add pin"),
-			LOCTEXT("FlowNodeAddPinButton_Tooltip", "Adds an input pin")
+			LOCTEXT("FlowNodeAddPinButton_InputTooltip", "Adds an input pin")
 		);
 
 		FMargin AddPinPadding = Settings->GetInputPinPadding();
@@ -451,7 +451,7 @@ void SFlowGraphNode::CreateOutputSideAddButton(TSharedPtr<SVerticalBox> OutputBo
 	{
 		const TSharedRef<SWidget> AddPinButton = AddPinButtonContent(
 			LOCTEXT("FlowNodeAddPinButton", "Add pin"),
-			LOCTEXT("FlowNodeAddPinButton_Tooltip", "Adds an output pin")
+			LOCTEXT("FlowNodeAddPinButton_OutputTooltip", "Adds an output pin")
 		);
 
 		FMargin AddPinPadding = Settings->GetOutputPinPadding();
