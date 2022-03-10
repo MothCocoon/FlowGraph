@@ -205,6 +205,10 @@ UWorld* UFlowSubsystem::GetWorld() const
 
 void UFlowSubsystem::OnGameSaved(UFlowSaveGame* SaveGame)
 {
+	// clear data, in case we received here reused SaveGame object
+	SaveGame->FlowComponents.Empty();
+	SaveGame->FlowInstances.Empty();
+	
 	// save graphs with nodes
 	for (const TPair<TWeakObjectPtr<UObject>, UFlowAsset*>& Pair : RootInstances)
 	{
