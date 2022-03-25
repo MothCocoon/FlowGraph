@@ -461,7 +461,7 @@ UFlowAsset* UFlowAsset::GetMasterInstance() const
 FFlowAssetSaveData UFlowAsset::SaveInstance(TArray<FFlowAssetSaveData>& SavedFlowInstances)
 {
 	FFlowAssetSaveData AssetRecord;
-	AssetRecord.WorldName = IsBoundToWorld() ? GetWorld()->GetName() : FString();
+	AssetRecord.WorldName = IsBoundToWorld() ? GetFlowSubsystem()->GetWorld()->GetName() : FString();
 	AssetRecord.InstanceName = GetName();
 
 	// opportunity to collect data before serializing asset
