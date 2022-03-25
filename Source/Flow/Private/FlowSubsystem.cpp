@@ -276,7 +276,8 @@ void UFlowSubsystem::LoadRootFlow(UObject* Owner, UFlowAsset* FlowAsset, const F
 
 	for (const FFlowAssetSaveData& AssetRecord : LoadedSaveGame->FlowInstances)
 	{
-		if ((FlowAsset->IsBoundToWorld() == false || AssetRecord.WorldName == GetWorld()->GetName()) && AssetRecord.InstanceName == SavedAssetInstanceName)
+		if (AssetRecord.InstanceName == SavedAssetInstanceName
+			&& (FlowAsset->IsBoundToWorld() == false || AssetRecord.WorldName == GetWorld()->GetName()))
 		{
 			UFlowAsset* LoadedInstance = CreateRootFlow(Owner, FlowAsset, false);
 			if (LoadedInstance)
@@ -294,10 +295,17 @@ void UFlowSubsystem::LoadSubFlow(UFlowNode_SubGraph* SubGraphNode, const FString
 	{
 		return;
 	}
-	
+
+	if (SubGraphNode->Asset.IsPending())
+	{
+		const FSoftObjectPath& AssetRef = SubGraphNode->Asset.ToSoftObjectPath();
+		Streamable.LoadSynchronous(AssetRef, false);
+	}
+
 	for (const FFlowAssetSaveData& AssetRecord : LoadedSaveGame->FlowInstances)
 	{
-		if ((SubGraphNode->Asset->IsBoundToWorld() == false || AssetRecord.WorldName == GetWorld()->GetName()) && AssetRecord.InstanceName == SavedAssetInstanceName)
+		if (AssetRecord.InstanceName == SavedAssetInstanceName
+			&& ((SubGraphNode->Asset && SubGraphNode->Asset->IsBoundToWorld() == false) || AssetRecord.WorldName == GetWorld()->GetName()))
 		{
 			UFlowAsset* LoadedInstance = CreateSubFlow(SubGraphNode, SavedAssetInstanceName);
 			if (LoadedInstance)
