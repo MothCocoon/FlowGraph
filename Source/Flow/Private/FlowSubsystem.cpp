@@ -205,11 +205,31 @@ UWorld* UFlowSubsystem::GetWorld() const
 
 void UFlowSubsystem::OnGameSaved(UFlowSaveGame* SaveGame)
 {
-	// clear data, in case we received here reused SaveGame object
-	SaveGame->FlowComponents.Empty();
-	SaveGame->FlowInstances.Empty();
+	// clear existing data, in case we received reused SaveGame instance
+	// we only remove data for the current world + global Flow Graph instances (i.e. not bound to any world if created by UGameInstanceSubsystem)
+	// we keep data bound to other worlds
+	if (GetWorld())
+	{
+		const FString& WorldName = GetWorld()->GetName();
+
+		for (int32 i = SaveGame->FlowInstances.Num() - 1; i >= 0; i--)
+		{
+			if (SaveGame->FlowInstances[i].WorldName.IsEmpty() || SaveGame->FlowInstances[i].WorldName == WorldName)
+			{
+				SaveGame->FlowInstances.RemoveAt(i);
+			}
+		}
+
+		for (int32 i = SaveGame->FlowComponents.Num() - 1; i >= 0; i--)
+		{
+			if (SaveGame->FlowComponents[i].WorldName.IsEmpty() || SaveGame->FlowComponents[i].WorldName == WorldName)
+			{
+				SaveGame->FlowComponents.RemoveAt(i);
+			}
+		}
+	}
 	
-	// save graphs with nodes
+	// save Flow Graphs
 	for (const TPair<TWeakObjectPtr<UObject>, UFlowAsset*>& Pair : RootInstances)
 	{
 		if (Pair.Key.IsValid() && Pair.Value)
@@ -225,13 +245,20 @@ void UFlowSubsystem::OnGameSaved(UFlowSaveGame* SaveGame)
 		}
 	}
 
-	// save components
-	TArray<TWeakObjectPtr<UFlowComponent>> ComponentsArray;
-	FlowComponentRegistry.GenerateValueArray(ComponentsArray);
-	const TSet<TWeakObjectPtr<UFlowComponent>> FlowComponents = TSet<TWeakObjectPtr<UFlowComponent>>(ComponentsArray);
-	for (const TWeakObjectPtr<UFlowComponent> FlowComponent : FlowComponents)
+	// save Flow Components
 	{
-		SaveGame->FlowComponents.Emplace(FlowComponent->SaveInstance());
+		// retrieve all registered components
+		TArray<TWeakObjectPtr<UFlowComponent>> ComponentsArray;
+		FlowComponentRegistry.GenerateValueArray(ComponentsArray);
+
+		// ensure uniqueness of entries
+		const TSet<TWeakObjectPtr<UFlowComponent>> RegisteredComponents = TSet<TWeakObjectPtr<UFlowComponent>>(ComponentsArray);
+
+		// write archives to SaveGame
+		for (const TWeakObjectPtr<UFlowComponent> RegisteredComponent : RegisteredComponents)
+		{
+			SaveGame->FlowComponents.Emplace(RegisteredComponent->SaveInstance());
+		}
 	}
 }
 
@@ -242,14 +269,14 @@ void UFlowSubsystem::OnGameLoaded(UFlowSaveGame* SaveGame)
 
 void UFlowSubsystem::LoadRootFlow(UObject* Owner, UFlowAsset* FlowAsset, const FString& SavedAssetInstanceName)
 {
-	if (SavedAssetInstanceName.IsEmpty())
+	if (FlowAsset == nullptr || SavedAssetInstanceName.IsEmpty())
 	{
 		return;
 	}
 
 	for (const FFlowAssetSaveData& AssetRecord : LoadedSaveGame->FlowInstances)
 	{
-		if (AssetRecord.InstanceName == SavedAssetInstanceName)
+		if ((FlowAsset->IsBoundToWorld() == false || AssetRecord.WorldName == GetWorld()->GetName()) && AssetRecord.InstanceName == SavedAssetInstanceName)
 		{
 			UFlowAsset* LoadedInstance = CreateRootFlow(Owner, FlowAsset, false);
 			if (LoadedInstance)
@@ -263,9 +290,14 @@ void UFlowSubsystem::LoadRootFlow(UObject* Owner, UFlowAsset* FlowAsset, const F
 
 void UFlowSubsystem::LoadSubFlow(UFlowNode_SubGraph* SubGraphNode, const FString& SavedAssetInstanceName)
 {
+	if (SubGraphNode->Asset.IsNull())
+	{
+		return;
+	}
+	
 	for (const FFlowAssetSaveData& AssetRecord : LoadedSaveGame->FlowInstances)
 	{
-		if (AssetRecord.InstanceName == SavedAssetInstanceName)
+		if ((SubGraphNode->Asset->IsBoundToWorld() == false || AssetRecord.WorldName == GetWorld()->GetName()) && AssetRecord.InstanceName == SavedAssetInstanceName)
 		{
 			UFlowAsset* LoadedInstance = CreateSubFlow(SubGraphNode, SavedAssetInstanceName);
 			if (LoadedInstance)

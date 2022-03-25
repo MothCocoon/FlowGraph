@@ -250,10 +250,10 @@ public:
 //////////////////////////////////////////////////////////////////////////
 // SaveGame
 	
-	UFUNCTION(BlueprintCallable, Category = "Flow")
+	UFUNCTION(BlueprintCallable, Category = "SaveGame")
 	FFlowAssetSaveData SaveInstance(TArray<FFlowAssetSaveData>& SavedFlowInstances);
 
-	UFUNCTION(BlueprintCallable, Category = "Flow")
+	UFUNCTION(BlueprintCallable, Category = "SaveGame")
 	void LoadInstance(const FFlowAssetSaveData& AssetRecord);
 
 private:
@@ -265,4 +265,8 @@ protected:
 	
 	UFUNCTION(BlueprintNativeEvent, Category = "SaveGame")
 	void OnLoad();
+
+public:	
+	UFUNCTION(BlueprintNativeEvent, Category = "SaveGame")
+	bool IsBoundToWorld();
 };
