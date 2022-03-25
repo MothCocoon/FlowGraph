@@ -8,6 +8,7 @@
 #include "Nodes/Route/FlowNode_Finish.h"
 #include "Nodes/Route/FlowNode_SubGraph.h"
 
+#include "Engine/World.h"
 #include "Serialization/MemoryReader.h"
 #include "Serialization/MemoryWriter.h"
 
