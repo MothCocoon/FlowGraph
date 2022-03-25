@@ -461,13 +461,13 @@ UFlowAsset* UFlowAsset::GetMasterInstance() const
 FFlowAssetSaveData UFlowAsset::SaveInstance(TArray<FFlowAssetSaveData>& SavedFlowInstances)
 {
 	FFlowAssetSaveData AssetRecord;
-
-	//FSoftObjectPtr<UFlowAsset> FlowAsset;
-	//FArchiveUObject::SerializeSoftObjectPtr(AssetRecord.AssetClass, FlowAsset);
+	AssetRecord.WorldName = IsBoundToWorld() ? GetWorld()->GetName() : FString();
 	AssetRecord.InstanceName = GetName();
 
+	// opportunity to collect data before serializing asset
 	OnSave();
 
+	// iterate SubGraphs
 	for (const TPair<FGuid, UFlowNode*>& Node : Nodes)
 	{
 		if (Node.Value && Node.Value->ActivationState == EFlowNodeState::Active)
@@ -489,11 +489,14 @@ FFlowAssetSaveData UFlowAsset::SaveInstance(TArray<FFlowAssetSaveData>& SavedFlo
 		}
 	}
 
+	// serialize asset
 	FMemoryWriter MemoryWriter(AssetRecord.AssetData, true);
 	FFlowArchive Ar(MemoryWriter);
 	Serialize(Ar);
 
+	// write archive to SaveGame
 	SavedFlowInstances.Emplace(AssetRecord);
+
 	return AssetRecord;
 }
 
@@ -535,4 +538,9 @@ void UFlowAsset::OnSave_Implementation()
 
 void UFlowAsset::OnLoad_Implementation()
 {
+}
+
+bool UFlowAsset::IsBoundToWorld_Implementation()
+{
+	return true;
 }
