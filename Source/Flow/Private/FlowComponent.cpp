@@ -376,8 +376,10 @@ FFlowComponentSaveData UFlowComponent::SaveInstance()
 	ComponentRecord.WorldName = GetWorld()->GetName();
 	ComponentRecord.ActorInstanceName = GetOwner()->GetName();
 
+	// opportunity to collect data before serializing component
 	OnSave();
 
+	// serialize component
 	FMemoryWriter MemoryWriter(ComponentRecord.ComponentData, true);
 	FFlowArchive Ar(MemoryWriter);
 	Serialize(Ar);
