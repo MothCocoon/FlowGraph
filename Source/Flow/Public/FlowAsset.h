@@ -84,6 +84,7 @@ public:
 
 protected:
 	TArray<TSubclassOf<UFlowNode>> AllowedNodeClasses;	
+	TArray<TSubclassOf<UFlowNode>> DeniedNodeClasses;	
 
 private:
 	UPROPERTY()
