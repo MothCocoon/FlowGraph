@@ -240,6 +240,28 @@ TSet<UFlowNode*> UFlowNode::GetConnectedNodes() const
 	return Result;
 }
 
+bool UFlowNode::IsInputConnected(const FName& PinName) const
+{
+	if (GetFlowAsset())
+	{
+		for (const TPair<FGuid, UFlowNode*>& Pair : GetFlowAsset()->Nodes)
+		{
+			if (Pair.Value)
+			{
+				for (const TPair<FName, FConnectedPin>& Connection : Pair.Value->Connections)
+				{
+					if (Connection.Value.NodeGuid == NodeGuid && Connection.Value.PinName == PinName)
+					{
+						return true;
+					}
+				}
+			}
+		}
+	}
+
+	return false;
+}
+
 bool UFlowNode::IsOutputConnected(const FName& PinName) const
 {
 	return OutputPins.Contains(PinName) && Connections.Contains(PinName);
