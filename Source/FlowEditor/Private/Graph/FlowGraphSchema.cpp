@@ -186,10 +186,10 @@ void UFlowGraphSchema::OnPinConnectionDoubleCicked(UEdGraphPin* PinA, UEdGraphPi
 
 	const FVector2D NodeSpacerSize(42.0f, 24.0f);
 	const FVector2D KnotTopLeft = GraphPosition - (NodeSpacerSize * 0.5f);
-	
+
 	UEdGraph* ParentGraph = PinA->GetOwningNode()->GetGraph();
 	UFlowGraphNode* NewReroute = FFlowGraphSchemaAction_NewNode::CreateNode(ParentGraph, nullptr, UFlowNode_Reroute::StaticClass(), KnotTopLeft, false);
-	
+
 	PinA->BreakLinkTo(PinB);
 	PinA->MakeLinkTo((PinA->Direction == EGPD_Output) ? NewReroute->InputPins[0] : NewReroute->OutputPins[0]);
 	PinB->MakeLinkTo((PinB->Direction == EGPD_Output) ? NewReroute->InputPins[0] : NewReroute->OutputPins[0]);
@@ -245,6 +245,19 @@ UClass* UFlowGraphSchema::GetAssignedGraphNodeClass(const UClass* FlowNodeClass)
 	return UFlowGraphNode::StaticClass();
 }
 
+bool UFlowGraphSchema::IsClassContained(const TArray<TSubclassOf<UFlowNode>> Classes, const UClass* Class)
+{
+	for (const UClass* CurrentClass : Classes)
+	{
+		if (Class->IsChildOf(CurrentClass))
+		{
+			return true;
+		}
+	}
+
+	return false;
+}
+
 void UFlowGraphSchema::GetFlowNodeActions(FGraphActionMenuBuilder& ActionMenuBuilder, UClass* AssetClass, const FString& CategoryName)
 {
 	if (NativeFlowNodes.Num() == 0)
@@ -260,12 +273,14 @@ void UFlowGraphSchema::GetFlowNodeActions(FGraphActionMenuBuilder& ActionMenuBui
 
 	for (const UClass* FlowNodeClass : NativeFlowNodes)
 	{
-		for (const UClass* AllowedClass : AssetClassDefaults->AllowedNodeClasses)
+		if (IsClassContained(AssetClassDefaults->DeniedNodeClasses, FlowNodeClass))
 		{
-			if (FlowNodeClass->IsChildOf(AllowedClass))
-			{
-				FlowNodes.Emplace(FlowNodeClass->GetDefaultObject<UFlowNode>());
-			}
+			continue;
+		}
+
+		if (IsClassContained(AssetClassDefaults->AllowedNodeClasses, FlowNodeClass))
+		{
+			FlowNodes.Emplace(FlowNodeClass->GetDefaultObject<UFlowNode>());
 		}
 	}
 	for (const TPair<FName, FAssetData>& AssetData : BlueprintFlowNodes)
@@ -318,7 +333,7 @@ bool UFlowGraphSchema::IsFlowNodePlaceable(const UClass* Class)
 		return !DefaultObject->bNodeDeprecated;
 	}
 
-	return true; 
+	return true;
 }
 
 void UFlowGraphSchema::OnBlueprintPreCompile(UBlueprint* Blueprint)
