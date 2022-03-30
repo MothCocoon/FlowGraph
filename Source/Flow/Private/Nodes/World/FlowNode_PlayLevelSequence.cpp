@@ -1,5 +1,6 @@
 #include "Nodes/World/FlowNode_PlayLevelSequence.h"
 
+#include "FlowAsset.h"
 #include "FlowModule.h"
 #include "FlowSubsystem.h"
 #include "LevelSequence/FlowLevelSequencePlayer.h"
@@ -34,6 +35,10 @@ UFlowNode_PlayLevelSequence::UFlowNode_PlayLevelSequence(const FObjectInitialize
 	OutputPins.Add(FFlowPin(TEXT("Started")));
 	OutputPins.Add(FFlowPin(TEXT("Completed")));
 	OutputPins.Add(FFlowPin(TEXT("Stopped")));
+
+	// Initialize the original time dilation.
+	OriginalTimeDilation = PlaybackSettings.PlayRate;
+
 }
 
 #if WITH_EDITOR
@@ -114,6 +119,24 @@ void UFlowNode_PlayLevelSequence::CreatePlayer()
 	if (LoadedSequence)
 	{
 		ALevelSequenceActor* SequenceActor;
+
+		// This block is for setting the custom time dilation from the parent actor.
+		if(GetFlowAsset())
+		{
+			if(GetFlowAsset()->GetOwner())
+			{
+				const UFlowComponent* OwnerComp = Cast<UFlowComponent>(GetFlowAsset()->GetOwner());
+				if(OwnerComp)
+				{
+					if(IsValid(OwnerComp->GetOwner()))
+					{
+						PlaybackSettings.PlayRate = OriginalTimeDilation * OwnerComp->GetOwner()->CustomTimeDilation;
+					}
+				}
+			}
+		}
+		// End of custom time dilation block.
+
 		SequencePlayer = UFlowLevelSequencePlayer::CreateFlowLevelSequencePlayer(this, LoadedSequence, PlaybackSettings, CameraSettings, SequenceActor);
 		if (SequencePlayer)
 		{
@@ -177,7 +200,8 @@ void UFlowNode_PlayLevelSequence::OnLoad_Implementation()
 			{
 				SequencePlayer->OnFinished.AddDynamic(this, &UFlowNode_PlayLevelSequence::OnPlaybackFinished);
 
-				SequencePlayer->SetPlayRate(TimeDilation);
+				// Added the multiplier if you set the playrate in playback settings.
+				SequencePlayer->SetPlayRate(TimeDilation * OriginalTimeDilation);
 				SequencePlayer->SetPlaybackPosition(FMovieSceneSequencePlaybackParams(ElapsedTime, EUpdatePositionMethod::Jump));
 				SequencePlayer->Play();
 			}
@@ -195,7 +219,8 @@ void UFlowNode_PlayLevelSequence::OnTimeDilationUpdate(const float NewTimeDilati
 	if (SequencePlayer)
 	{
 		TimeDilation = NewTimeDilation;
-		SequencePlayer->SetPlayRate(NewTimeDilation);
+		// Added the multiplier if you set the playrate in playback settings.
+		SequencePlayer->SetPlayRate(NewTimeDilation * OriginalTimeDilation);
 	}
 }
 
