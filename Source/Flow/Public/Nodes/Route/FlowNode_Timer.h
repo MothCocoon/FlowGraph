@@ -35,7 +35,9 @@ private:
 
 protected:
 	virtual void ExecuteInput(const FName& PinName) override;
-
+	virtual void SetTimer();
+	virtual void Restart();
+	
 private:
 	UFUNCTION()
 	void OnStep();
