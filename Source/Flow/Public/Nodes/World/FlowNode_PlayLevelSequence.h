@@ -43,6 +43,9 @@ protected:
 	UPROPERTY()
 	UFlowLevelSequencePlayer* SequencePlayer;
 
+	UPROPERTY()
+	float OriginalTimeDilation; // It is for the default play rate getting from the playback settings.
+
 	UPROPERTY(SaveGame)
 	float StartTime;
 
