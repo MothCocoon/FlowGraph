@@ -16,8 +16,10 @@ FFlowNodeLevelSequenceEvent UFlowNode_PlayLevelSequence::OnPlaybackCompleted;
 
 UFlowNode_PlayLevelSequence::UFlowNode_PlayLevelSequence(const FObjectInitializer& ObjectInitializer)
 	: Super(ObjectInitializer)
+	, bApplyOwnerTimeDilation(true)
 	, LoadedSequence(nullptr)
 	, SequencePlayer(nullptr)
+	, CachedPlayRate(0)
 	, StartTime(0.0f)
 	, ElapsedTime(0.0f)
 	, TimeDilation(1.0f)
@@ -35,10 +37,6 @@ UFlowNode_PlayLevelSequence::UFlowNode_PlayLevelSequence(const FObjectInitialize
 	OutputPins.Add(FFlowPin(TEXT("Started")));
 	OutputPins.Add(FFlowPin(TEXT("Completed")));
 	OutputPins.Add(FFlowPin(TEXT("Stopped")));
-
-	// Initialize the original time dilation.
-	OriginalTimeDilation = PlaybackSettings.PlayRate;
-
 }
 
 #if WITH_EDITOR
@@ -113,6 +111,14 @@ void UFlowNode_PlayLevelSequence::FlushContent()
 	}
 }
 
+void UFlowNode_PlayLevelSequence::InitializeInstance()
+{
+	Super::InitializeInstance();
+
+	// Cache Play Rate set by user
+	CachedPlayRate = PlaybackSettings.PlayRate;
+}
+
 void UFlowNode_PlayLevelSequence::CreatePlayer()
 {
 	LoadedSequence = LoadAsset<ULevelSequence>(Sequence);
@@ -120,22 +126,27 @@ void UFlowNode_PlayLevelSequence::CreatePlayer()
 	{
 		ALevelSequenceActor* SequenceActor;
 
-		// This block is for setting the custom time dilation from the parent actor.
-		if(GetFlowAsset())
+		// Apply AActor::CustomTimeDilation from owner of the Root Flow
+		if (GetFlowAsset())
 		{
-			if(GetFlowAsset()->GetOwner())
+			if (UObject* RootFlowOwner = GetFlowAsset()->GetOwner())
 			{
-				const UFlowComponent* OwnerComp = Cast<UFlowComponent>(GetFlowAsset()->GetOwner());
-				if(OwnerComp)
+				AActor* OwningActor = Cast<AActor>(RootFlowOwner); // in case Root Flow was created directly from some actor
+
+				if (OwningActor == nullptr)
 				{
-					if(IsValid(OwnerComp->GetOwner()))
+					if (const USceneComponent* OwningComponent = Cast<USceneComponent>(RootFlowOwner))
 					{
-						PlaybackSettings.PlayRate = OriginalTimeDilation * OwnerComp->GetOwner()->CustomTimeDilation;
+						OwningActor = OwningComponent->GetOwner();
 					}
+				}
+
+				if (IsValid(OwningActor))
+				{
+					PlaybackSettings.PlayRate = CachedPlayRate * OwningActor->CustomTimeDilation;
 				}
 			}
 		}
-		// End of custom time dilation block.
 
 		SequencePlayer = UFlowLevelSequencePlayer::CreateFlowLevelSequencePlayer(this, LoadedSequence, PlaybackSettings, CameraSettings, SequenceActor);
 		if (SequencePlayer)
@@ -200,8 +211,9 @@ void UFlowNode_PlayLevelSequence::OnLoad_Implementation()
 			{
 				SequencePlayer->OnFinished.AddDynamic(this, &UFlowNode_PlayLevelSequence::OnPlaybackFinished);
 
-				// Added the multiplier if you set the playrate in playback settings.
-				SequencePlayer->SetPlayRate(TimeDilation * OriginalTimeDilation);
+				// Take into account Play Rate set in the Playback Settings
+				SequencePlayer->SetPlayRate(TimeDilation * CachedPlayRate);
+
 				SequencePlayer->SetPlaybackPosition(FMovieSceneSequencePlaybackParams(ElapsedTime, EUpdatePositionMethod::Jump));
 				SequencePlayer->Play();
 			}
@@ -219,8 +231,9 @@ void UFlowNode_PlayLevelSequence::OnTimeDilationUpdate(const float NewTimeDilati
 	if (SequencePlayer)
 	{
 		TimeDilation = NewTimeDilation;
-		// Added the multiplier if you set the playrate in playback settings.
-		SequencePlayer->SetPlayRate(NewTimeDilation * OriginalTimeDilation);
+
+		// Take into account Play Rate set in the Playback Settings
+		SequencePlayer->SetPlayRate(NewTimeDilation * CachedPlayRate);
 	}
 }
 
