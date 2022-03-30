@@ -209,7 +209,6 @@ void UFlowNode_PlayLevelSequence::OnLoad_Implementation()
 
 			if (SequencePlayer)
 			{
-
 				SequencePlayer->OnFinished.AddDynamic(this, &UFlowNode_PlayLevelSequence::OnPlaybackFinished);
 
 				// Take into account Play Rate set in the Playback Settings
