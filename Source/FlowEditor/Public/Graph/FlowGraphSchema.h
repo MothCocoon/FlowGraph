@@ -39,7 +39,6 @@ public:
 	static UClass* GetAssignedGraphNodeClass(const UClass* FlowNodeClass);
 
 private:
-
 	static bool IsClassContained(const TArray<TSubclassOf<class UFlowNode>> Classes, const UClass* Class);
 	static void GetFlowNodeActions(FGraphActionMenuBuilder& ActionMenuBuilder, UClass* AssetClass, const FString& CategoryName);
 	static void GetCommentAction(FGraphActionMenuBuilder& ActionMenuBuilder, const UEdGraph* CurrentGraph = nullptr);
