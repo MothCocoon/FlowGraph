@@ -174,6 +174,9 @@ public:
 	TSet<UFlowNode*> GetConnectedNodes() const;
 
 	UFUNCTION(BlueprintPure, Category= "FlowNode")
+	bool IsInputConnected(const FName& PinName) const;
+
+	UFUNCTION(BlueprintPure, Category= "FlowNode")
 	bool IsOutputConnected(const FName& PinName) const;
 
 	static void RecursiveFindNodesByClass(UFlowNode* Node, const TSubclassOf<UFlowNode> Class, uint8 Depth, TArray<UFlowNode*>& OutNodes);
