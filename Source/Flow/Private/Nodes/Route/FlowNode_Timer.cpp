@@ -29,7 +29,7 @@ void UFlowNode_Timer::ExecuteInput(const FName& PinName)
 {
 	if (CompletionTime == 0.0f)
 	{
-		LogError("Invalid Timer settings");
+		LogError(TEXT("Invalid Timer settings"));
 		TriggerOutput(TEXT("Completed"), true);
 		return;
 	}
@@ -38,7 +38,7 @@ void UFlowNode_Timer::ExecuteInput(const FName& PinName)
 	{
 		if (CompletionTimerHandle.IsValid() || StepTimerHandle.IsValid())
 		{
-			LogError("Timer already active");
+			LogError(TEXT("Timer already active"));
 			return;
 		}
 
@@ -63,21 +63,22 @@ void UFlowNode_Timer::SetTimer()
 			GetWorld()->GetTimerManager().SetTimer(StepTimerHandle, this, &UFlowNode_Timer::OnStep, StepTime, true);
 		}
 
-		GetWorld()->GetTimerManager().SetTimer(CompletionTimerHandle, this, &UFlowNode_Timer::OnCompletion,
-		                                       CompletionTime, false);
+		GetWorld()->GetTimerManager().SetTimer(CompletionTimerHandle, this, &UFlowNode_Timer::OnCompletion, CompletionTime, false);
 	}
 	else
 	{
-		LogError("No valid world");
+		LogError(TEXT("No valid world"));
 		TriggerOutput(TEXT("Completed"), true);
 	}
 }
 
 void UFlowNode_Timer::Restart()
 {
-	SumOfSteps = 0.0f;
+	Cleanup();
+
 	RemainingStepTime = 0.0f;
 	RemainingCompletionTime = 0.0f;
+
 	SetTimer();
 }
 
