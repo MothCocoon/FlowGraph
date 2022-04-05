@@ -135,7 +135,6 @@ TSharedRef<SDockTab> FFlowAssetEditor::SpawnTab_Details(const FSpawnTabArgs& Arg
 	check(Args.GetTabId() == DetailsTab);
 
 	return SNew(SDockTab)
-		.Icon(FEditorStyle::GetBrush("LevelEditor.Tabs.Details"))
 		.Label(LOCTEXT("FlowDetailsTitle", "Details"))
 		[
 			DetailsView.ToSharedRef()
@@ -162,11 +161,10 @@ TSharedRef<SDockTab> FFlowAssetEditor::SpawnTab_Palette(const FSpawnTabArgs& Arg
 	check(Args.GetTabId() == PaletteTab);
 
 	return SNew(SDockTab)
-		.Icon(FEditorStyle::GetBrush("Kismet.Tabs.Palette"))
 		.Label(LOCTEXT("FlowPaletteTitle", "Palette"))
-	[
-		Palette.ToSharedRef()
-	];
+		[
+			Palette.ToSharedRef()
+		];
 }
 
 void FFlowAssetEditor::InitFlowAssetEditor(const EToolkitMode::Type Mode, const TSharedPtr<class IToolkitHost>& InitToolkitHost, UObject* ObjectToEdit)
@@ -186,38 +184,28 @@ void FFlowAssetEditor::InitFlowAssetEditor(const EToolkitMode::Type Mode, const 
 	BindGraphCommands();
 	CreateWidgets();
 
-	const TSharedRef<FTabManager::FLayout> StandaloneDefaultLayout = FTabManager::NewLayout("FlowAssetEditor_Layout_v2")
+	const TSharedRef<FTabManager::FLayout> StandaloneDefaultLayout = FTabManager::NewLayout("FlowAssetEditor_Layout_v3")
 		->AddArea
 		(
-			FTabManager::NewPrimaryArea()->SetOrientation(Orient_Vertical)
+			FTabManager::NewPrimaryArea()->SetOrientation(Orient_Horizontal)
 				->Split
-					(
-						FTabManager::NewStack()
-						->SetSizeCoefficient(0.1f)
-						->AddTab(GetToolbarTabId(), ETabState::OpenedTab)->SetHideTabWell(true)
-					)
+				(
+					FTabManager::NewStack()
+					->SetSizeCoefficient(0.225f)
+					->AddTab(DetailsTab, ETabState::OpenedTab)
+				)
 				->Split
-					(
-						FTabManager::NewSplitter()->SetOrientation(Orient_Horizontal)->SetSizeCoefficient(0.9f)
-							->Split
-							(
-								FTabManager::NewStack()
-								->SetSizeCoefficient(0.225f)
-								->AddTab(DetailsTab, ETabState::OpenedTab)
-							)
-							->Split
-							(
-								FTabManager::NewStack()
-								->SetSizeCoefficient(0.65f)
-								->AddTab(GraphTab, ETabState::OpenedTab)->SetHideTabWell(true)
-							)
-							->Split
-							(
-								FTabManager::NewStack()
-								->SetSizeCoefficient(0.125f)
-								->AddTab(PaletteTab, ETabState::OpenedTab)
-							)
-					)
+				(
+					FTabManager::NewStack()
+					->SetSizeCoefficient(0.65f)
+					->AddTab(GraphTab, ETabState::OpenedTab)->SetHideTabWell(true)
+				)
+				->Split
+				(
+					FTabManager::NewStack()
+					->SetSizeCoefficient(0.125f)
+					->AddTab(PaletteTab, ETabState::OpenedTab)
+				)
 		);
 
 	constexpr bool bCreateDefaultStandaloneMenu = true;

@@ -22,6 +22,7 @@ public class FlowEditor : ModuleRules
             "CoreUObject",
             "DetailCustomizations",
             "DeveloperSettings",
+            "EditorFramework",
             "EditorStyle",
             "Engine",
             "GraphEditor",

@@ -32,7 +32,7 @@ UFlowLevelSequencePlayer* UFlowLevelSequencePlayer::CreateFlowLevelSequencePlaye
 	ALevelSequenceActor* Actor = World->SpawnActor<AFlowLevelSequenceActor>(SpawnParams);
 
 	Actor->PlaybackSettings = Settings;
-	Actor->LevelSequence = LevelSequence;
+	Actor->LevelSequenceAsset = LevelSequence;
 	Actor->CameraSettings = CameraSettings;
 
 	Actor->InitializePlayer();
