@@ -4,6 +4,7 @@
 #include "Asset/AssetTypeActions_FlowAsset.h"
 #include "Asset/FlowAssetDetails.h"
 #include "Asset/FlowAssetEditor.h"
+#include "Asset/FlowAssetIndexer.h"
 #include "Graph/FlowGraphConnectionDrawingPolicy.h"
 #include "Graph/FlowGraphSettings.h"
 #include "LevelEditor/SLevelEditorFlow.h"
@@ -23,11 +24,14 @@
 
 #include "AssetToolsModule.h"
 #include "EdGraphUtilities.h"
+#include "IAssetSearchModule.h"
 #include "Framework/MultiBox/MultiBoxBuilder.h"
 #include "ISequencerChannelInterface.h"
 #include "ISequencerModule.h"
 #include "LevelEditor.h"
 #include "Modules/ModuleManager.h"
+
+static FName AssetSearchModuleName = TEXT("AssetSearch");
 
 #define LOCTEXT_NAMESPACE "FlowEditorModule"
 
@@ -69,6 +73,13 @@ void FFlowEditorModule::StartupModule()
 
 	FPropertyEditorModule& PropertyModule = FModuleManager::GetModuleChecked<FPropertyEditorModule>("PropertyEditor");
 	PropertyModule.NotifyCustomizationModuleChanged();
+
+	// register asset indexers
+	if (FModuleManager::Get().IsModuleLoaded(AssetSearchModuleName))
+	{
+		RegisterAssetIndexers();
+	}
+	ModulesChangedHandle = FModuleManager::Get().OnModulesChanged().AddRaw(this, &FFlowEditorModule::ModulesChangesCallback);
 }
 
 void FFlowEditorModule::ShutdownModule()
@@ -100,6 +111,8 @@ void FFlowEditorModule::ShutdownModule()
 			}
 		}
 	}
+	
+	FModuleManager::Get().OnModulesChanged().Remove(ModulesChangedHandle);
 }
 
 void FFlowEditorModule::RegisterAssets()
@@ -147,6 +160,23 @@ void FFlowEditorModule::RegisterCustomClassLayout(const TSubclassOf<UObject> Cla
 		FPropertyEditorModule& PropertyModule = FModuleManager::GetModuleChecked<FPropertyEditorModule>("PropertyEditor");
 		PropertyModule.RegisterCustomClassLayout(Class->GetFName(), DetailLayout);
 	}
+}
+
+void FFlowEditorModule::ModulesChangesCallback(FName ModuleName, EModuleChangeReason ReasonForChange)
+{
+	if (ReasonForChange == EModuleChangeReason::ModuleLoaded && ModuleName == AssetSearchModuleName)
+	{
+		RegisterAssetIndexers();
+	}
+}
+
+void FFlowEditorModule::RegisterAssetIndexers() const
+{
+	/**
+	 * Documentation: https://github.com/MothCocoon/FlowGraph/wiki/Asset-Search
+	 * Uncomment line below, if you made these changes to the engine: https://github.com/EpicGames/UnrealEngine/pull/9070
+	 */
+	//IAssetSearchModule::Get().RegisterAssetIndexer(UFlowAsset::StaticClass(), MakeUnique<FFlowAssetIndexer>());
 }
 
 void FFlowEditorModule::CreateFlowToolbar(FToolBarBuilder& ToolbarBuilder) const
