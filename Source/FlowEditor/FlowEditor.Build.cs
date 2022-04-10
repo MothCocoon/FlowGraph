@@ -27,6 +27,8 @@ public class FlowEditor : ModuleRules
             "Engine",
             "GraphEditor",
             "InputCore",
+            "Json",
+            "JsonUtilities",
             "KismetWidgets",
             "LevelEditor",
             "MovieScene",
