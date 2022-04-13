@@ -33,6 +33,9 @@ class FLOW_API UFlowNode_PlayLevelSequence : public UFlowNode
 	UPROPERTY(EditAnywhere, Category = "Sequence")
 	FMovieSceneSequencePlaybackSettings PlaybackSettings;
 
+	UPROPERTY(EditAnywhere, Category = "Sequence")
+	bool bPlayReverse;
+	
 	// if True, Play Rate will by multiplied by Custom Time Dilation
 	// set in the actor that owns Root Flow
 	UPROPERTY(EditAnywhere, Category = "Sequence")
