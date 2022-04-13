@@ -16,6 +16,7 @@ FFlowNodeLevelSequenceEvent UFlowNode_PlayLevelSequence::OnPlaybackCompleted;
 
 UFlowNode_PlayLevelSequence::UFlowNode_PlayLevelSequence(const FObjectInitializer& ObjectInitializer)
 	: Super(ObjectInitializer)
+	, bPlayReverse(false)
 	, bApplyOwnerTimeDilation(true)
 	, LoadedSequence(nullptr)
 	, SequencePlayer(nullptr)
@@ -131,8 +132,7 @@ void UFlowNode_PlayLevelSequence::CreatePlayer()
 		{
 			if (UObject* RootFlowOwner = GetFlowAsset()->GetOwner())
 			{
-				AActor* OwningActor = Cast<AActor>(RootFlowOwner); // in case Root Flow was created directly from some actor
-
+				const AActor* OwningActor = Cast<AActor>(RootFlowOwner); // in case Root Flow was created directly from some actor
 				if (OwningActor == nullptr)
 				{
 					if (const USceneComponent* OwningComponent = Cast<USceneComponent>(RootFlowOwner))
@@ -175,7 +175,15 @@ void UFlowNode_PlayLevelSequence::ExecuteInput(const FName& PinName)
 				TriggerOutput(TEXT("PreStart"));
 
 				SequencePlayer->OnFinished.AddDynamic(this, &UFlowNode_PlayLevelSequence::OnPlaybackFinished);
-				SequencePlayer->Play();
+
+				if (bPlayReverse)
+				{
+					SequencePlayer->PlayReverse();
+				}
+				else
+				{
+					SequencePlayer->Play();
+				}
 
 				TriggerOutput(TEXT("Started"));
 			}
@@ -211,11 +219,19 @@ void UFlowNode_PlayLevelSequence::OnLoad_Implementation()
 			{
 				SequencePlayer->OnFinished.AddDynamic(this, &UFlowNode_PlayLevelSequence::OnPlaybackFinished);
 
+				SequencePlayer->SetPlaybackPosition(FMovieSceneSequencePlaybackParams(ElapsedTime, EUpdatePositionMethod::Jump));
+				
 				// Take into account Play Rate set in the Playback Settings
 				SequencePlayer->SetPlayRate(TimeDilation * CachedPlayRate);
 
-				SequencePlayer->SetPlaybackPosition(FMovieSceneSequencePlaybackParams(ElapsedTime, EUpdatePositionMethod::Jump));
-				SequencePlayer->Play();
+				if (bPlayReverse)
+				{
+					SequencePlayer->PlayReverse();
+				}
+				else
+				{
+					SequencePlayer->Play();
+				}
 			}
 		}
 	}
