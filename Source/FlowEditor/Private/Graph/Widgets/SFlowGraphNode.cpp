@@ -190,46 +190,46 @@ void SFlowGraphNode::UpdateGraphNode()
 
 	const TSharedRef<SOverlay> DefaultTitleAreaWidget = SNew(SOverlay)
 		+ SOverlay::Slot()
+		.HAlign(HAlign_Fill)
+		.VAlign(VAlign_Center)
+		[
+			SNew(SHorizontalBox)
+			+ SHorizontalBox::Slot()
 			.HAlign(HAlign_Fill)
-			.VAlign(VAlign_Center)
 			[
-				SNew(SHorizontalBox)
-				+ SHorizontalBox::Slot()
-					.HAlign(HAlign_Fill)
-					[
-						SNew(SBorder)
-							.BorderImage(FFlowEditorStyle::GetBrush("Flow.Node.Title"))
-							// The extra margin on the right is for making the color spill stretch well past the node title
-							.Padding(FMargin(10, 5, 30, 3))
-							.BorderBackgroundColor(this, &SGraphNode::GetNodeTitleColor)
-							[
-								SNew(SHorizontalBox)
-								+ SHorizontalBox::Slot()
-									.VAlign(VAlign_Top)
-									.Padding(FMargin(0.f, 0.f, 4.f, 0.f))
-									.AutoWidth()
-									[
-										SNew(SImage)
-											.Image(IconBrush)
-											.ColorAndOpacity(this, &SGraphNode::GetNodeTitleIconColor)
-									]
-								+ SHorizontalBox::Slot()
-									[
-										SNew(SVerticalBox)
-										+ SVerticalBox::Slot()
-											.AutoHeight()
-											[
-												CreateTitleWidget(NodeTitle)
-											]
-										+ SVerticalBox::Slot()
-											.AutoHeight()
-											[
-												NodeTitle.ToSharedRef()
-											]
-									]
-							]
-					]
-			];
+				SNew(SBorder)
+				.BorderImage(FFlowEditorStyle::GetBrush("Flow.Node.Title"))
+				// The extra margin on the right is for making the color spill stretch well past the node title
+				.Padding(FMargin(10, 5, 30, 3))
+				.BorderBackgroundColor(this, &SGraphNode::GetNodeTitleColor)
+				[
+					SNew(SHorizontalBox)
+					+ SHorizontalBox::Slot()
+						.VAlign(VAlign_Top)
+						.Padding(FMargin(0.f, 0.f, 4.f, 0.f))
+						.AutoWidth()
+						[
+							SNew(SImage)
+							.Image(IconBrush)
+							.ColorAndOpacity(this, &SGraphNode::GetNodeTitleIconColor)
+						]
+					+ SHorizontalBox::Slot()
+						[
+							SNew(SVerticalBox)
+							+ SVerticalBox::Slot()
+								.AutoHeight()
+								[
+									CreateTitleWidget(NodeTitle)
+								]
+							+ SVerticalBox::Slot()
+								.AutoHeight()
+								[
+									NodeTitle.ToSharedRef()
+								]
+						]
+				]
+			]
+		];
 
 	SetDefaultTitleAreaWidget(DefaultTitleAreaWidget);
 
@@ -297,22 +297,22 @@ void SFlowGraphNode::UpdateGraphNode()
 		[
 			SAssignNew(MainVerticalBox, SVerticalBox)
 			+ SVerticalBox::Slot()
-				.AutoHeight()
-				[
-					SNew(SOverlay)
-						.AddMetaData<FGraphNodeMetaData>(TagMeta)
-						+ SOverlay::Slot()
-							.Padding(Settings->GetNonPinNodeBodyPadding())
-							[
-								SNew(SImage)
-									.Image(GetNodeBodyBrush())
-									.ColorAndOpacity(this, &SGraphNode::GetNodeBodyColor)
-							]
-						+ SOverlay::Slot()
-							[
-								InnerVerticalBox.ToSharedRef()
-							]
-				]
+			.AutoHeight()
+			[
+				SNew(SOverlay)
+					.AddMetaData<FGraphNodeMetaData>(TagMeta)
+					+ SOverlay::Slot()
+						.Padding(Settings->GetNonPinNodeBodyPadding())
+						[
+							SNew(SImage)
+							.Image(GetNodeBodyBrush())
+							.ColorAndOpacity(this, &SGraphNode::GetNodeBodyColor)
+						]
+					+ SOverlay::Slot()
+						[
+							InnerVerticalBox.ToSharedRef()
+						]
+			]
 		];
 
 	if (GraphNode && GraphNode->SupportsCommentBubble())
@@ -421,25 +421,35 @@ void SFlowGraphNode::CreateStandardPinWidget(UEdGraphPin* Pin)
 
 END_SLATE_FUNCTION_BUILD_OPTIMIZATION
 
+TSharedPtr<SToolTip> SFlowGraphNode::GetComplexTooltip()
+{
+	return IDocumentation::Get()->CreateToolTip(TAttribute<FText>(this, &SGraphNode::GetNodeTooltip), nullptr, GraphNode->GetDocumentationLink(), GraphNode->GetDocumentationExcerptName());
+}
+
 void SFlowGraphNode::CreateInputSideAddButton(TSharedPtr<SVerticalBox> OutputBox)
 {
 	if (FlowGraphNode->CanUserAddInput())
 	{
-		const TSharedRef<SWidget> AddPinButton = AddPinButtonContent(
-			LOCTEXT("FlowNodeAddPinButton", "Add pin"),
-			LOCTEXT("FlowNodeAddPinButton_InputTooltip", "Adds an input pin")
-		);
+		TSharedPtr<SWidget> AddPinWidget;
+		SAssignNew(AddPinWidget, SHorizontalBox)
+		+SHorizontalBox::Slot()
+		.AutoWidth()
+		. VAlign(VAlign_Center)
+		. Padding( 0,0,7,0 )
+		[
+			SNew(SImage)
+			.Image(FEditorStyle::GetBrush(TEXT("PropertyWindow.Button_AddToArray")))
+		]
+		+SHorizontalBox::Slot()
+		.AutoWidth()
+		.HAlign(HAlign_Left)
+		[
+			SNew(STextBlock)
+			.Text(LOCTEXT("FlowNodeAddPinButton", "Add pin"))
+			.ColorAndOpacity(FLinearColor::White)
+		];
 
-		FMargin AddPinPadding = Settings->GetInputPinPadding();
-		AddPinPadding.Top += 6.0f;
-
-		OutputBox->AddSlot()
-			.AutoHeight()
-			.VAlign(VAlign_Center)
-			.Padding(AddPinPadding)
-			[
-				AddPinButton
-			];
+		AddPinButton(OutputBox, AddPinWidget.ToSharedRef(), EGPD_Input);
 	}
 }
 
@@ -447,41 +457,83 @@ void SFlowGraphNode::CreateOutputSideAddButton(TSharedPtr<SVerticalBox> OutputBo
 {
 	if (FlowGraphNode->CanUserAddOutput())
 	{
-		const TSharedRef<SWidget> AddPinButton = AddPinButtonContent(
-			LOCTEXT("FlowNodeAddPinButton", "Add pin"),
-			LOCTEXT("FlowNodeAddPinButton_OutputTooltip", "Adds an output pin")
-		);
+		TSharedPtr<SWidget> AddPinWidget;
+		SAssignNew(AddPinWidget, SHorizontalBox)
+		+SHorizontalBox::Slot()
+		.AutoWidth()
+		.HAlign(HAlign_Left)
+		[
+			SNew(STextBlock)
+			.Text(LOCTEXT("FlowNodeAddPinButton", "Add pin"))
+			.ColorAndOpacity(FLinearColor::White)
+		]
+		+SHorizontalBox::Slot()
+		.AutoWidth()
+		.VAlign(VAlign_Center)
+		.Padding(7,0,0,0)
+		[
+			SNew(SImage)
+			.Image(FEditorStyle::GetBrush(TEXT("PropertyWindow.Button_AddToArray")))
+		];
 
-		FMargin AddPinPadding = Settings->GetOutputPinPadding();
-		AddPinPadding.Top += 6.0f;
-
-		OutputBox->AddSlot()
-			.AutoHeight()
-			.VAlign(VAlign_Center)
-			.Padding(AddPinPadding)
-			[
-				AddPinButton
-			];
-		}
+		AddPinButton(OutputBox, AddPinWidget.ToSharedRef(), EGPD_Output);
+	}
 }
 
-FReply SFlowGraphNode::OnAddPin()
+void SFlowGraphNode::AddPinButton(TSharedPtr<SVerticalBox> OutputBox, const TSharedRef<SWidget> ButtonContent, const EEdGraphPinDirection Direction, const FString DocumentationExcerpt, const TSharedPtr<SToolTip> CustomTooltip)
 {
-	if (FlowGraphNode->CanUserAddInput())
+	const FText PinTooltipText = (Direction == EEdGraphPinDirection::EGPD_Input) ? LOCTEXT("FlowNodeAddPinButton_InputTooltip", "Adds an input pin") : LOCTEXT("FlowNodeAddPinButton_OutputTooltip", "Adds an output pin");
+	TSharedPtr<SToolTip> Tooltip;
+
+	if (CustomTooltip.IsValid())
 	{
-		FlowGraphNode->AddUserInput();
+		Tooltip = CustomTooltip;
 	}
-	else if (FlowGraphNode->CanUserAddOutput())
+	else if (!DocumentationExcerpt.IsEmpty())
 	{
-		FlowGraphNode->AddUserOutput();
+		Tooltip = IDocumentation::Get()->CreateToolTip(PinTooltipText, nullptr, GraphNode->GetDocumentationLink(), DocumentationExcerpt);
+	}
+
+	const TSharedRef<SButton> AddPinButton = SNew(SButton)
+	.ContentPadding(0.0f)
+	.ButtonStyle(FEditorStyle::Get(), "NoBorder")
+	.OnClicked(this, &SFlowGraphNode::OnAddFlowPin, Direction)
+	.IsEnabled(this, &SFlowGraphNode::IsNodeEditable)
+	.ToolTipText(PinTooltipText)
+	.ToolTip(Tooltip)
+	.Visibility(this, &SFlowGraphNode::IsAddPinButtonVisible)
+	[
+		ButtonContent
+	];
+
+	AddPinButton->SetCursor(EMouseCursor::Hand);
+
+	FMargin AddPinPadding = (Direction == EEdGraphPinDirection::EGPD_Input) ? Settings->GetInputPinPadding() : Settings->GetOutputPinPadding();
+	AddPinPadding.Top += 6.0f;
+
+	OutputBox->AddSlot()
+		.AutoHeight()
+		.VAlign(VAlign_Center)
+		.Padding(AddPinPadding)
+		[
+			AddPinButton
+		];
+}
+
+FReply SFlowGraphNode::OnAddFlowPin(const EEdGraphPinDirection Direction)
+{
+	switch (Direction)
+	{
+		case EGPD_Input:
+			FlowGraphNode->AddUserInput();
+			break;
+		case EGPD_Output:
+			FlowGraphNode->AddUserOutput();
+			break;
+		default: ;
 	}
 
 	return FReply::Handled();
-}
-
-TSharedPtr<SToolTip> SFlowGraphNode::GetComplexTooltip()
-{
-	return IDocumentation::Get()->CreateToolTip(TAttribute<FText>(this, &SGraphNode::GetNodeTooltip), nullptr, GraphNode->GetDocumentationLink(), GraphNode->GetDocumentationExcerptName());
 }
 
 #undef LOCTEXT_NAMESPACE
