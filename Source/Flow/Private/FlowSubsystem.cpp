@@ -61,6 +61,8 @@ void UFlowSubsystem::AbortActiveFlows()
 
 	InstancedTemplates.Empty();
 	InstancedSubFlows.Empty();
+
+	RootInstances.Empty();
 }
 
 void UFlowSubsystem::StartRootFlow(UObject* Owner, UFlowAsset* FlowAsset, const bool bAllowMultipleInstances /* = true */)
