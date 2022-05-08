@@ -26,8 +26,10 @@ class FLOW_API UFlowSubsystem : public UGameInstanceSubsystem
 {
 	GENERATED_BODY()
 
+public:	
 	UFlowSubsystem();
 
+private:	
 	friend class UFlowAsset;
 	friend class UFlowComponent;
 	friend class UFlowNode_SubGraph;
@@ -46,6 +48,7 @@ class FLOW_API UFlowSubsystem : public UGameInstanceSubsystem
 
 	FStreamableManager Streamable;
 
+protected:
 	UPROPERTY()
 	UFlowSaveGame* LoadedSaveGame;
 
