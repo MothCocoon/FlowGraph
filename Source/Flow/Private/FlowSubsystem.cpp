@@ -153,10 +153,9 @@ UFlowAsset* UFlowSubsystem::CreateFlowInstance(const TWeakObjectPtr<UObject> Own
 {
 	check(!FlowAsset.IsNull());
 
-	if (FlowAsset.IsPending())
+	if (FlowAsset.IsPending() || !FlowAsset.IsValid())
 	{
-		const FSoftObjectPath& AssetRef = FlowAsset.ToSoftObjectPath();
-		FlowAsset = Cast<UFlowAsset>(Streamable.LoadSynchronous(AssetRef, false));
+		FlowAsset = Cast<UFlowAsset>(Streamable.LoadSynchronous(FlowAsset.ToSoftObjectPath(), false));
 	}
 
 	InstancedTemplates.Add(FlowAsset.Get());
