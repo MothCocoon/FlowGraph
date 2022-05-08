@@ -40,12 +40,17 @@ protected:
 	virtual const FSlateBrush* GetNodeBodyBrush() const override;
 
 	virtual void CreateStandardPinWidget(UEdGraphPin* Pin) override;
+	virtual TSharedPtr<SToolTip> GetComplexTooltip() override;
+
 	virtual void CreateInputSideAddButton(TSharedPtr<SVerticalBox> OutputBox) override;
 	virtual void CreateOutputSideAddButton(TSharedPtr<SVerticalBox> OutputBox) override;
-	virtual FReply OnAddPin() override;
-
-	virtual TSharedPtr<SToolTip> GetComplexTooltip() override;
 	// --
+	
+	// Variant of SGraphNode::AddPinButtonContent
+	virtual void AddPinButton(TSharedPtr<SVerticalBox> OutputBox, TSharedRef<SWidget> ButtonContent, const EEdGraphPinDirection Direction, FString DocumentationExcerpt = FString(), TSharedPtr<SToolTip> CustomTooltip = nullptr);
+
+	// Variant of SGraphNode::OnAddPin
+	virtual FReply OnAddFlowPin(const EEdGraphPinDirection Direction);
 
 protected:
 	UFlowGraphNode* FlowGraphNode = nullptr;
