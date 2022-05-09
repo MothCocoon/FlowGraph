@@ -92,6 +92,12 @@ public:
 	UPROPERTY(BlueprintAssignable, Category = "Flow")
 	FFlowComponentTagsReplicated OnIdentityTagsRemoved;
 
+public:
+	void VerifyIdentityTags() const;
+		
+	UFUNCTION(BlueprintCallable, Category = "Flow")
+	void LogError(FString Message, const EFlowOnScreenMessageType OnScreenMessageType = EFlowOnScreenMessageType::Permanent) const;
+
 //////////////////////////////////////////////////////////////////////////
 // Component sending Notify Tags to Flow Graph, or any other listener
 
