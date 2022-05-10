@@ -43,6 +43,9 @@ class FLOW_API UFlowNode_PlayLevelSequence : public UFlowNode
 	
 	UPROPERTY(EditAnywhere, Category = "Sequence")
 	FLevelSequenceCameraSettings CameraSettings;
+
+	UPROPERTY(EditAnywhere, Category = "Sequence")
+	bool bUseGraphOwnerAsOriginalPointActor;
 	
 protected:
 	UPROPERTY()
@@ -50,6 +53,9 @@ protected:
 
 	UPROPERTY()
 	UFlowLevelSequencePlayer* SequencePlayer;
+
+	UPROPERTY()
+	AActor* GraphOwner;
 
 	// Play Rate set by the user in PlaybackSettings
 	float CachedPlayRate;
