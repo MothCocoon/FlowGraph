@@ -1,3 +1,5 @@
+// Copyright https://github.com/MothCocoon/FlowGraph/graphs/contributors
+
 #include "LevelSequence/FlowLevelSequencePlayer.h"
 #include "LevelSequence/FlowLevelSequenceActor.h"
 #include "Nodes/FlowNode.h"

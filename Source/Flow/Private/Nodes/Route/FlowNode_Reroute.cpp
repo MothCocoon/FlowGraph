@@ -1,3 +1,5 @@
+// Copyright https://github.com/MothCocoon/FlowGraph/graphs/contributors
+
 #include "Nodes/Route/FlowNode_Reroute.h"
 
 UFlowNode_Reroute::UFlowNode_Reroute(const FObjectInitializer& ObjectInitializer)

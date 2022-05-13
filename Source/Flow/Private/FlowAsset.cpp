@@ -1,3 +1,5 @@
+// Copyright https://github.com/MothCocoon/FlowGraph/graphs/contributors
+
 #include "FlowAsset.h"
 #include "FlowSettings.h"
 #include "FlowSubsystem.h"

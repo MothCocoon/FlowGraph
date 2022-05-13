@@ -1,3 +1,5 @@
+// Copyright https://github.com/MothCocoon/FlowGraph/graphs/contributors
+
 #include "Nodes/FlowPin.h"
 
 #if !UE_BUILD_SHIPPING

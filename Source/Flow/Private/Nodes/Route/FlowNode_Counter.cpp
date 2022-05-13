@@ -1,3 +1,5 @@
+// Copyright https://github.com/MothCocoon/FlowGraph/graphs/contributors
+
 #include "Nodes/Route/FlowNode_Counter.h"
 
 UFlowNode_Counter::UFlowNode_Counter(const FObjectInitializer& ObjectInitializer)
