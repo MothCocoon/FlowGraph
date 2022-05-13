@@ -1,3 +1,5 @@
+// Copyright https://github.com/MothCocoon/FlowGraph/graphs/contributors
+
 #include "Nodes/World/FlowNode_OnNotifyFromActor.h"
 #include "FlowComponent.h"
 
