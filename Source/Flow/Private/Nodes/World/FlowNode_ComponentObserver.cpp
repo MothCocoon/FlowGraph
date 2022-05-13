@@ -1,3 +1,5 @@
+// Copyright https://github.com/MothCocoon/FlowGraph/graphs/contributors
+
 #include "Nodes/World/FlowNode_ComponentObserver.h"
 #include "FlowSubsystem.h"
 

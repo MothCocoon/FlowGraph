@@ -1,4 +1,6 @@
-﻿#pragma once
+﻿// Copyright https://github.com/MothCocoon/FlowGraph/graphs/contributors
+
+#pragma once
 
 #include "Nodes/FlowNode.h"
 #include "FlowNode_Checkpoint.generated.h"

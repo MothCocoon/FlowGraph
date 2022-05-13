@@ -1,3 +1,5 @@
+// Copyright https://github.com/MothCocoon/FlowGraph/graphs/contributors
+
 #include "Nodes/World/FlowNode_OnActorUnregistered.h"
 
 UFlowNode_OnActorUnregistered::UFlowNode_OnActorUnregistered(const FObjectInitializer& ObjectInitializer)
