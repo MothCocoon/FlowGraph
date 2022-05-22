@@ -7,6 +7,7 @@
 #include "FlowSettings.h"
 #include "FlowSubsystem.h"
 
+#include "Engine/Engine.h"
 #include "Engine/GameInstance.h"
 #include "Engine/ViewportStatsSubsystem.h"
 #include "Engine/World.h"
