@@ -20,13 +20,14 @@ UFlowNode_PlayLevelSequence::UFlowNode_PlayLevelSequence(const FObjectInitialize
 	: Super(ObjectInitializer)
 	, bPlayReverse(false)
 	, bApplyOwnerTimeDilation(true)
+	, bUseGraphOwnerAsOriginalPointActor(false)
 	, LoadedSequence(nullptr)
 	, SequencePlayer(nullptr)
 	, CachedPlayRate(0)
 	, StartTime(0.0f)
 	, ElapsedTime(0.0f)
 	, TimeDilation(1.0f)
-	, bUseGraphOwnerAsOriginalPointActor(false)
+	, GraphOwner(nullptr)
 {
 #if WITH_EDITOR
 	Category = TEXT("World");
@@ -151,15 +152,15 @@ void UFlowNode_PlayLevelSequence::CreatePlayer()
 			}
 		}
 
-		if(bUseGraphOwnerAsOriginalPointActor)
+		if (bUseGraphOwnerAsOriginalPointActor)
 		{
-			SequencePlayer = UFlowLevelSequencePlayer::CreateFlowLevelSequencePlayer(this, LoadedSequence, PlaybackSettings, CameraSettings, OwningActor, SequenceActor);
+			SequencePlayer = UFlowLevelSequencePlayer::CreateFlowLevelSequencePlayer(this, LoadedSequence, PlaybackSettings, CameraSettings, GraphOwner, SequenceActor);
 		}
 		else
 		{
 			SequencePlayer = UFlowLevelSequencePlayer::CreateFlowLevelSequencePlayer(this, LoadedSequence, PlaybackSettings, CameraSettings, nullptr, SequenceActor);
 		}
-		
+
 		if (SequencePlayer)
 		{
 			SequencePlayer->SetFlowEventReceiver(this);
@@ -231,7 +232,7 @@ void UFlowNode_PlayLevelSequence::OnLoad_Implementation()
 				SequencePlayer->OnFinished.AddDynamic(this, &UFlowNode_PlayLevelSequence::OnPlaybackFinished);
 
 				SequencePlayer->SetPlaybackPosition(FMovieSceneSequencePlaybackParams(ElapsedTime, EUpdatePositionMethod::Jump));
-				
+
 				// Take into account Play Rate set in the Playback Settings
 				SequencePlayer->SetPlayRate(TimeDilation * CachedPlayRate);
 
