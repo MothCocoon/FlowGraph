@@ -77,6 +77,7 @@ void UFlowGraphSchema::CreateDefaultNodesForGraph(UEdGraph& Graph) const
 {
 	// Start node
 	UFlowGraphNode* NewGraphNode = FFlowGraphSchemaAction_NewNode::CreateNode(&Graph, nullptr, UFlowNode_Start::StaticClass(), FVector2D::ZeroVector);
+	NewGraphNode->MakeAutomaticallyPlacedGhostNode();
 	SetNodeMetaData(NewGraphNode, FNodeMetadata::DefaultGraphNode);
 
 	CastChecked<UFlowGraph>(&Graph)->GetFlowAsset()->HarvestNodeConnections();
