@@ -20,6 +20,7 @@ UFlowAsset::UFlowAsset(const FObjectInitializer& ObjectInitializer)
 	, FlowGraph(nullptr)
 #endif
 	, AllowedNodeClasses({UFlowNode::StaticClass()})
+	, bStartNodePlacedAsGhostNode(false)
 	, TemplateAsset(nullptr)
 	, StartNode(nullptr)
 	, FinishPolicy(EFlowFinishPolicy::Keep)

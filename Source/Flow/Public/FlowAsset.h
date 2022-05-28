@@ -86,7 +86,9 @@ public:
 
 protected:
 	TArray<TSubclassOf<UFlowNode>> AllowedNodeClasses;	
-	TArray<TSubclassOf<UFlowNode>> DeniedNodeClasses;	
+	TArray<TSubclassOf<UFlowNode>> DeniedNodeClasses;
+
+	bool bStartNodePlacedAsGhostNode;
 
 private:
 	UPROPERTY()
