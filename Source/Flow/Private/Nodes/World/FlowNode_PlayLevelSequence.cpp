@@ -19,15 +19,14 @@ FFlowNodeLevelSequenceEvent UFlowNode_PlayLevelSequence::OnPlaybackCompleted;
 UFlowNode_PlayLevelSequence::UFlowNode_PlayLevelSequence(const FObjectInitializer& ObjectInitializer)
 	: Super(ObjectInitializer)
 	, bPlayReverse(false)
+	, bUseGraphOwnerAsTransformOrigin(false)
 	, bApplyOwnerTimeDilation(true)
-	, bUseGraphOwnerAsOriginalPointActor(false)
 	, LoadedSequence(nullptr)
 	, SequencePlayer(nullptr)
 	, CachedPlayRate(0)
 	, StartTime(0.0f)
 	, ElapsedTime(0.0f)
 	, TimeDilation(1.0f)
-	, GraphOwner(nullptr)
 {
 #if WITH_EDITOR
 	Category = TEXT("World");
@@ -131,35 +130,33 @@ void UFlowNode_PlayLevelSequence::CreatePlayer()
 	{
 		ALevelSequenceActor* SequenceActor;
 
-		// Apply AActor::CustomTimeDilation from owner of the Root Flow
+		AActor* OwningActor = nullptr;
 		if (GetFlowAsset())
 		{
 			if (UObject* RootFlowOwner = GetFlowAsset()->GetOwner())
 			{
-				const AActor* OwningActor = Cast<AActor>(RootFlowOwner); // in case Root Flow was created directly from some actor
+				OwningActor = Cast<AActor>(RootFlowOwner); // in case Root Flow was created directly from some actor
 				if (OwningActor == nullptr)
 				{
-					if (const USceneComponent* OwningComponent = Cast<USceneComponent>(RootFlowOwner))
+					if (const UActorComponent* OwningComponent = Cast<UActorComponent>(RootFlowOwner))
 					{
 						OwningActor = OwningComponent->GetOwner();
 					}
 				}
-
-				if (IsValid(OwningActor))
-				{
-					PlaybackSettings.PlayRate = CachedPlayRate * OwningActor->CustomTimeDilation;
-				}
 			}
 		}
 
-		if (bUseGraphOwnerAsOriginalPointActor)
+		// Apply AActor::CustomTimeDilation from owner of the Root Flow
+		if (IsValid(OwningActor))
 		{
-			SequencePlayer = UFlowLevelSequencePlayer::CreateFlowLevelSequencePlayer(this, LoadedSequence, PlaybackSettings, CameraSettings, GraphOwner, SequenceActor);
+			PlaybackSettings.PlayRate = CachedPlayRate * OwningActor->CustomTimeDilation;
 		}
-		else
-		{
-			SequencePlayer = UFlowLevelSequencePlayer::CreateFlowLevelSequencePlayer(this, LoadedSequence, PlaybackSettings, CameraSettings, nullptr, SequenceActor);
-		}
+
+		// Apply Transform Origin
+		AActor* TransformOriginActor = bUseGraphOwnerAsTransformOrigin ? OwningActor : nullptr;
+
+		// Finally create the player
+		SequencePlayer = UFlowLevelSequencePlayer::CreateFlowLevelSequencePlayer(this, LoadedSequence, PlaybackSettings, CameraSettings, TransformOriginActor, SequenceActor);
 
 		if (SequencePlayer)
 		{
