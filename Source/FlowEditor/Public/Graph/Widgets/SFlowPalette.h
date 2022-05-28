@@ -28,7 +28,7 @@ public:
 	SLATE_END_ARGS()
 
 	void Construct(const FArguments& InArgs, TWeakPtr<FFlowAssetEditor> InFlowAssetEditor);
-	virtual ~SFlowPalette();
+	virtual ~SFlowPalette() override;
 
 protected:
 	void Refresh();
@@ -42,7 +42,7 @@ protected:
 	FString GetFilterCategoryName() const;
 	void CategorySelectionChanged(TSharedPtr<FString> NewSelection, ESelectInfo::Type SelectInfo);
 
-	void OnActionSelected(const TArray<TSharedPtr<FEdGraphSchemaAction>>& InActions, ESelectInfo::Type InSelectionType);
+	void OnActionSelected(const TArray<TSharedPtr<FEdGraphSchemaAction>>& InActions, ESelectInfo::Type InSelectionType) const;
 
 public:
 	void ClearGraphActionMenuSelection() const;
