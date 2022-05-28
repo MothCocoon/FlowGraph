@@ -56,9 +56,6 @@ protected:
 	UPROPERTY()
 	UFlowLevelSequencePlayer* SequencePlayer;
 
-	UPROPERTY()
-	AActor* GraphOwner;
-
 	// Play Rate set by the user in PlaybackSettings
 	float CachedPlayRate;
 
@@ -70,6 +67,9 @@ protected:
 
 	UPROPERTY(SaveGame)
 	float TimeDilation;
+
+	UPROPERTY()
+	AActor* GraphOwner;
 
 public:
 #if WITH_EDITOR
