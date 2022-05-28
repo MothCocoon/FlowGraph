@@ -2,6 +2,7 @@
 
 #include "LevelSequence/FlowLevelSequencePlayer.h"
 #include "LevelSequence/FlowLevelSequenceActor.h"
+#include "DefaultLevelSequenceInstanceData.h"
 #include "Nodes/FlowNode.h"
 
 UFlowLevelSequencePlayer::UFlowLevelSequencePlayer(const FObjectInitializer& ObjectInitializer)
@@ -10,7 +11,7 @@ UFlowLevelSequencePlayer::UFlowLevelSequencePlayer(const FObjectInitializer& Obj
 {
 }
 
-UFlowLevelSequencePlayer* UFlowLevelSequencePlayer::CreateFlowLevelSequencePlayer(UObject* WorldContextObject, ULevelSequence* LevelSequence, FMovieSceneSequencePlaybackSettings Settings, FLevelSequenceCameraSettings CameraSettings, ALevelSequenceActor*& OutActor)
+UFlowLevelSequencePlayer* UFlowLevelSequencePlayer::CreateFlowLevelSequencePlayer(UObject* WorldContextObject, ULevelSequence* LevelSequence, FMovieSceneSequencePlaybackSettings Settings, FLevelSequenceCameraSettings CameraSettings, AActor* OriginalPointActor, ALevelSequenceActor*& OutActor)
 {
 	if (LevelSequence == nullptr)
 	{
@@ -38,9 +39,18 @@ UFlowLevelSequencePlayer* UFlowLevelSequencePlayer::CreateFlowLevelSequencePlaye
 	Actor->CameraSettings = CameraSettings;
 
 	Actor->InitializePlayer();
+	Actor->bOverrideInstanceData = true;
 	OutActor = Actor;
 
-    const FTransform DefaultTransform;
+	UDefaultLevelSequenceInstanceData* LevelSequenceData = static_cast<UDefaultLevelSequenceInstanceData*>(Actor->DefaultInstanceData);
+	if (IsValid(LevelSequenceData) && IsValid(OriginalPointActor))
+	{
+		LevelSequenceData->TransformOrigin = OriginalPointActor->GetTransform();
+	}
+
+    // It seems doesn't really matter where the level sequence actor is.
+	const FTransform DefaultTransform = FTransform(OriginalPointActor->GetActorRotation(),
+			OriginalPointActor->GetActorLocation(), FVector::OneVector);
 	Actor->FinishSpawning(DefaultTransform);
 
 	return Cast<UFlowLevelSequencePlayer>(Actor->SequencePlayer);
