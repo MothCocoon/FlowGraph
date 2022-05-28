@@ -36,7 +36,7 @@ UFlowGraphSchema::UFlowGraphSchema(const FObjectInitializer& ObjectInitializer)
 
 void UFlowGraphSchema::SubscribeToAssetChanges()
 {
-	FAssetRegistryModule& AssetRegistry = FModuleManager::LoadModuleChecked<FAssetRegistryModule>(AssetRegistryConstants::ModuleName);
+	const FAssetRegistryModule& AssetRegistry = FModuleManager::LoadModuleChecked<FAssetRegistryModule>(AssetRegistryConstants::ModuleName);
 	AssetRegistry.Get().OnFilesLoaded().AddStatic(&UFlowGraphSchema::GatherFlowNodes);
 	AssetRegistry.Get().OnAssetAdded().AddStatic(&UFlowGraphSchema::OnAssetAdded);
 	AssetRegistry.Get().OnAssetRemoved().AddStatic(&UFlowGraphSchema::OnAssetRemoved);
@@ -51,21 +51,15 @@ void UFlowGraphSchema::SubscribeToAssetChanges()
 	}
 }
 
-void UFlowGraphSchema::GetPaletteActions(FGraphActionMenuBuilder& ActionMenuBuilder, UClass* AssetClass, const FString& CategoryName)
+void UFlowGraphSchema::GetPaletteActions(FGraphActionMenuBuilder& ActionMenuBuilder, const UClass* AssetClass, const FString& CategoryName)
 {
-	GetFlowNodeActions(ActionMenuBuilder, AssetClass, CategoryName);
+	GetFlowNodeActions(ActionMenuBuilder, AssetClass->GetDefaultObject<UFlowAsset>(), CategoryName);
 	GetCommentAction(ActionMenuBuilder);
 }
 
 void UFlowGraphSchema::GetGraphContextActions(FGraphContextMenuBuilder& ContextMenuBuilder) const
 {
-	UClass* AssetClass = UFlowAsset::StaticClass();
-	if (const UFlowAsset* FlowAsset = ContextMenuBuilder.CurrentGraph->GetTypedOuter<UFlowAsset>())
-	{
-		AssetClass = FlowAsset->GetClass();
-	}
-
-	GetFlowNodeActions(ContextMenuBuilder, AssetClass, FString());
+	GetFlowNodeActions(ContextMenuBuilder, GetAssetClassDefaults(ContextMenuBuilder.CurrentGraph), FString());
 	GetCommentAction(ContextMenuBuilder, ContextMenuBuilder.CurrentGraph);
 
 	if (!ContextMenuBuilder.FromPin && FFlowGraphUtils::GetFlowAssetEditor(ContextMenuBuilder.CurrentGraph)->CanPasteNodes())
@@ -79,8 +73,13 @@ void UFlowGraphSchema::CreateDefaultNodesForGraph(UEdGraph& Graph) const
 {
 	// Start node
 	UFlowGraphNode* NewGraphNode = FFlowGraphSchemaAction_NewNode::CreateNode(&Graph, nullptr, UFlowNode_Start::StaticClass(), FVector2D::ZeroVector);
-	NewGraphNode->MakeAutomaticallyPlacedGhostNode();
 	SetNodeMetaData(NewGraphNode, FNodeMetadata::DefaultGraphNode);
+
+	const UFlowAsset* AssetClassDefaults = GetAssetClassDefaults(&Graph);
+	if (AssetClassDefaults && AssetClassDefaults->bStartNodePlacedAsGhostNode)
+	{
+		NewGraphNode->MakeAutomaticallyPlacedGhostNode();
+	}
 
 	CastChecked<UFlowGraph>(&Graph)->GetFlowAsset()->HarvestNodeConnections();
 }
@@ -259,21 +258,19 @@ bool UFlowGraphSchema::IsClassContained(const TArray<TSubclassOf<UFlowNode>> Cla
 	return false;
 }
 
-void UFlowGraphSchema::GetFlowNodeActions(FGraphActionMenuBuilder& ActionMenuBuilder, UClass* AssetClass, const FString& CategoryName)
+void UFlowGraphSchema::GetFlowNodeActions(FGraphActionMenuBuilder& ActionMenuBuilder, const UFlowAsset* AssetClassDefaults, const FString& CategoryName)
 {
 	if (NativeFlowNodes.Num() == 0)
 	{
 		GatherFlowNodes();
 	}
 
-	// get actual asset type, as it might limit which nodes are placeable 
-	const UFlowAsset* AssetClassDefaults = AssetClass->GetDefaultObject<UFlowAsset>();
-
 	TArray<UFlowNode*> FlowNodes;
 	FlowNodes.Reserve(NativeFlowNodes.Num() + BlueprintFlowNodes.Num());
 
 	for (const UClass* FlowNodeClass : NativeFlowNodes)
 	{
+		// Flow Asset type might limit which nodes are placeable 
 		if (IsClassContained(AssetClassDefaults->DeniedNodeClasses, FlowNodeClass))
 		{
 			continue;
@@ -442,7 +439,7 @@ void UFlowGraphSchema::AddAsset(const FAssetData& AssetData, const bool bBatch)
 		{
 			UObject* Outer = nullptr;
 			ResolveName(Outer, NativeParentClassPath, false, false);
-			UClass* NativeParentClass = FindObject<UClass>(ANY_PACKAGE, *NativeParentClassPath);
+			const UClass* NativeParentClass = FindObject<UClass>(ANY_PACKAGE, *NativeParentClassPath);
 
 			// accept only Flow Node blueprints
 			if (NativeParentClass && NativeParentClass->IsChildOf(UFlowNode::StaticClass()))
@@ -478,6 +475,21 @@ UBlueprint* UFlowGraphSchema::GetPlaceableNodeBlueprint(const FAssetData& AssetD
 	}
 
 	return nullptr;
+}
+
+const UFlowAsset* UFlowGraphSchema::GetAssetClassDefaults(const UEdGraph* Graph)
+{
+	const UClass* AssetClass = UFlowAsset::StaticClass();
+
+	if (Graph)
+	{
+		if (const UFlowAsset* FlowAsset = Graph->GetTypedOuter<UFlowAsset>())
+		{
+			AssetClass = FlowAsset->GetClass();
+		}
+	}
+
+	return AssetClass->GetDefaultObject<UFlowAsset>();
 }
 
 #undef LOCTEXT_NAMESPACE
