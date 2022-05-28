@@ -903,6 +903,10 @@ void FFlowAssetEditor::OnNodeDoubleClicked(class UEdGraphNode* Node) const
 				}
 			}
 		}
+		else if (UObject* BlueprintAsset = FlowNode->GetClass()->ClassGeneratedBy)
+		{
+			GEditor->GetEditorSubsystem<UAssetEditorSubsystem>()->OpenEditorForAsset(BlueprintAsset);
+		}
 	}
 }
 
