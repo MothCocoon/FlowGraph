@@ -26,6 +26,7 @@ UFlowNode_PlayLevelSequence::UFlowNode_PlayLevelSequence(const FObjectInitialize
 	, StartTime(0.0f)
 	, ElapsedTime(0.0f)
 	, TimeDilation(1.0f)
+	, bUseGraphOwnerAsOriginalPointActor(false)
 {
 #if WITH_EDITOR
 	Category = TEXT("World");
@@ -150,7 +151,15 @@ void UFlowNode_PlayLevelSequence::CreatePlayer()
 			}
 		}
 
-		SequencePlayer = UFlowLevelSequencePlayer::CreateFlowLevelSequencePlayer(this, LoadedSequence, PlaybackSettings, CameraSettings, SequenceActor);
+		if(bUseGraphOwnerAsOriginalPointActor)
+		{
+			SequencePlayer = UFlowLevelSequencePlayer::CreateFlowLevelSequencePlayer(this, LoadedSequence, PlaybackSettings, CameraSettings, OwningActor, SequenceActor);
+		}
+		else
+		{
+			SequencePlayer = UFlowLevelSequencePlayer::CreateFlowLevelSequencePlayer(this, LoadedSequence, PlaybackSettings, CameraSettings, nullptr, SequenceActor);
+		}
+		
 		if (SequencePlayer)
 		{
 			SequencePlayer->SetFlowEventReceiver(this);
