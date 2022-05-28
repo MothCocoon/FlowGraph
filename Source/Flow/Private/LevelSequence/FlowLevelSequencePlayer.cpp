@@ -12,7 +12,7 @@ UFlowLevelSequencePlayer::UFlowLevelSequencePlayer(const FObjectInitializer& Obj
 {
 }
 
-UFlowLevelSequencePlayer* UFlowLevelSequencePlayer::CreateFlowLevelSequencePlayer(UObject* WorldContextObject, const ULevelSequence* LevelSequence, FMovieSceneSequencePlaybackSettings Settings, FLevelSequenceCameraSettings CameraSettings, AActor* TransformOriginActor, ALevelSequenceActor*& OutActor)
+UFlowLevelSequencePlayer* UFlowLevelSequencePlayer::CreateFlowLevelSequencePlayer(UObject* WorldContextObject, ULevelSequence* LevelSequence, FMovieSceneSequencePlaybackSettings Settings, FLevelSequenceCameraSettings CameraSettings, AActor* TransformOriginActor, ALevelSequenceActor*& OutActor)
 {
 	if (LevelSequence == nullptr)
 	{
