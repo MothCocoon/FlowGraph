@@ -4,6 +4,7 @@
 
 UFlowGraphEditorSettings::UFlowGraphEditorSettings(const FObjectInitializer& ObjectInitializer)
 	: Super(ObjectInitializer)
+	, NodeDoubleClickTarget(EFlowNodeDoubleClickTarget::PrimaryAsset)
 	, bShowNodeClass(false)
 	, bShowSubGraphPreview(true)
 	, bShowSubGraphPath(true)
