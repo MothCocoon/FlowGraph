@@ -473,6 +473,14 @@ void FFlowAssetEditor::BindGraphCommands()
 		FIsActionButtonVisible::CreateSP(this, &FFlowAssetEditor::CanTogglePinBreakpoint)
 	);
 
+	// Execution Override commands
+	ToolkitCommands->MapAction(FlowGraphCommands.ForcePinActivation,
+		FExecuteAction::CreateSP(this, &FFlowAssetEditor::OnForcePinActivation),
+		FCanExecuteAction::CreateStatic(&FFlowAssetEditor::IsPIE),
+		FIsActionChecked(),
+		FIsActionButtonVisible::CreateStatic(&FFlowAssetEditor::IsPIE)
+	);
+
 	// Jump commands
 	ToolkitCommands->MapAction(FlowGraphCommands.FocusViewport,
 		FExecuteAction::CreateSP(this, &FFlowAssetEditor::FocusViewport),
@@ -1226,6 +1234,17 @@ bool FFlowAssetEditor::CanToggleBreakpoint() const
 bool FFlowAssetEditor::CanTogglePinBreakpoint() const
 {
 	return FocusedGraphEditor->GetGraphPinForMenu() != nullptr;
+}
+
+void FFlowAssetEditor::OnForcePinActivation() const
+{
+	if (UEdGraphPin* Pin = FocusedGraphEditor->GetGraphPinForMenu())
+	{
+		if (UFlowGraphNode* GraphNode = Cast<UFlowGraphNode>(Pin->GetOwningNode()))
+		{
+			GraphNode->ForcePinActivation(Pin);
+		}
+	}
 }
 
 void FFlowAssetEditor::FocusViewport() const

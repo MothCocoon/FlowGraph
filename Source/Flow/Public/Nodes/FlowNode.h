@@ -240,7 +240,7 @@ protected:
 	void K2_FlushContent();
 
 	// Trigger execution of input pin
-	void TriggerInput(const FName& PinName);
+	void TriggerInput(const FName& PinName, const bool bForcedActivation = false);
 
 	// Method reacting on triggering Input pin
 	virtual void ExecuteInput(const FName& PinName);
@@ -254,8 +254,8 @@ protected:
 	void TriggerFirstOutput(const bool bFinish);
 
 	// Trigger Output Pin
-	UFUNCTION(BlueprintCallable, Category = "FlowNode")
-	void TriggerOutput(const FName& PinName, const bool bFinish = false);
+	UFUNCTION(BlueprintCallable, Category = "FlowNode", meta = (HidePin = "bForcedActivation"))
+	void TriggerOutput(const FName& PinName, const bool bFinish = false, const bool bForcedActivation = false);
 
 	void TriggerOutput(const FString& PinName, const bool bFinish = false);
 	void TriggerOutput(const FText& PinName, const bool bFinish = false);
