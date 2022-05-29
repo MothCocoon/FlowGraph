@@ -39,6 +39,9 @@ public:
 	TSharedPtr<FUICommandInfo> DisablePinBreakpoint;
 	TSharedPtr<FUICommandInfo> TogglePinBreakpoint;
 
+	/** Execution Override */
+	TSharedPtr<FUICommandInfo> ForcePinActivation;
+
 	/** Jumps */
 	TSharedPtr<FUICommandInfo> FocusViewport;
 	TSharedPtr<FUICommandInfo> JumpToNodeDefinition;
