@@ -65,8 +65,8 @@ private:
 	static bool bFlowAssetsLoaded;
 
 public:
-	// actually, it would be intuitive to assign a custom Graph Node class in Flow Node class
-	// although we shouldn't assign class from editor module to runtime module class
+	// It would be intuitive to assign a custom Graph Node class in Flow Node class
+	// However, we shouldn't assign class from editor module to runtime module class
 	UPROPERTY()
 	TArray<TSubclassOf<UFlowNode>> AssignedNodeClasses;
 	
@@ -141,19 +141,19 @@ public:
 // Utils
 
 public:
-	// short summary of node's content
+	// Short summary of node's content
 	FString GetNodeDescription() const;
 
-	// get flow node for the inspected asset instance
+	// Get flow node for the inspected asset instance
 	UFlowNode* GetInspectedNodeInstance() const;
 
-	// used for highlighting active nodes of the inspected asset instance
+	// Used for highlighting active nodes of the inspected asset instance
 	EFlowNodeState GetActivationState() const;
 
-	// information displayed while node is active
+	// Information displayed while node is active
 	FString GetStatusString() const;
 
-	// check this to display information while node is preloaded
+	// Check this to display information while node is preloaded
 	bool IsContentPreloaded() const;
 
 	bool CanFocusViewport() const;
@@ -189,10 +189,10 @@ public:
 	void AddUserInput();
 	void AddUserOutput();
 
-	// add pin only on this instance of node, under default pins
+	// Add pin only on this instance of node, under default pins
 	void AddInstancePin(const EEdGraphPinDirection Direction, const FName& PinName);
 
-	// call node and graph updates manually, if using bBatchRemoval
+	// Call node and graph updates manually, if using bBatchRemoval
 	void RemoveInstancePin(UEdGraphPin* Pin);
 
 	// Create pins from the context asset, i.e. Sequencer events
@@ -215,4 +215,11 @@ private:
 	void OnResumePIE(const bool bIsSimulating);
 	void OnEndPIE(const bool bIsSimulating);
 	void ResetBreakpoints();
+
+//////////////////////////////////////////////////////////////////////////
+// Execution Override
+
+public:
+	// Pin activation forced by user during PIE
+	void ForcePinActivation(const FEdGraphPinReference PinReference) const;
 };

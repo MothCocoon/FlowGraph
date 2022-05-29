@@ -457,7 +457,7 @@ void UFlowGraphNode::GetNodeContextMenuActions(class UToolMenu* Menu, class UGra
 	if (Context->Pin)
 	{
 		{
-			FToolMenuSection& Section = Menu->AddSection("FlowGraphSchemaPinActions", LOCTEXT("PinActionsMenuHeader", "Pin Actions"));
+			FToolMenuSection& Section = Menu->AddSection("FlowGraphPinActions", LOCTEXT("PinActionsMenuHeader", "Pin Actions"));
 			if (Context->Pin->LinkedTo.Num() > 0)
 			{
 				Section.AddMenuEntry(GraphCommands.BreakPinLinks);
@@ -474,18 +474,23 @@ void UFlowGraphNode::GetNodeContextMenuActions(class UToolMenu* Menu, class UGra
 		}
 
 		{
-			FToolMenuSection& Section = Menu->AddSection("FlowGraphNodePinBreakpoints", LOCTEXT("PinBreakpointsMenuHeader", "Pin Breakpoints"));
+			FToolMenuSection& Section = Menu->AddSection("FlowGraphPinBreakpoints", LOCTEXT("PinBreakpointsMenuHeader", "Pin Breakpoints"));
 			Section.AddMenuEntry(FlowGraphCommands.AddPinBreakpoint);
 			Section.AddMenuEntry(FlowGraphCommands.RemovePinBreakpoint);
 			Section.AddMenuEntry(FlowGraphCommands.EnablePinBreakpoint);
 			Section.AddMenuEntry(FlowGraphCommands.DisablePinBreakpoint);
 			Section.AddMenuEntry(FlowGraphCommands.TogglePinBreakpoint);
 		}
+
+		{
+			FToolMenuSection& Section = Menu->AddSection("FlowGraphPinExecutionOverride", LOCTEXT("PinExecutionOverrideMenuHeader", "Execution Override"));
+			Section.AddMenuEntry(FlowGraphCommands.ForcePinActivation);
+		}
 	}
 	else if (Context->Node)
 	{
 		{
-			FToolMenuSection& Section = Menu->AddSection("FlowGraphSchemaNodeActions", LOCTEXT("NodeActionsMenuHeader", "Node Actions"));
+			FToolMenuSection& Section = Menu->AddSection("FlowGraphNodeActions", LOCTEXT("NodeActionsMenuHeader", "Node Actions"));
 			Section.AddMenuEntry(GenericCommands.Delete);
 			Section.AddMenuEntry(GenericCommands.Cut);
 			Section.AddMenuEntry(GenericCommands.Copy);
@@ -572,7 +577,7 @@ FText UFlowGraphNode::GetNodeTitle(ENodeTitleType::Type TitleType) const
 
 		return FlowNode->GetNodeTitle();
 	}
-	
+
 	return Super::GetNodeTitle(TitleType);
 }
 
@@ -880,7 +885,7 @@ void UFlowGraphNode::GetPinHoverText(const UEdGraphPin& Pin, FString& HoverTextO
 			{
 				HoverTextOut.Append(LINE_TERMINATOR).Append(LINE_TERMINATOR);
 			}
-			
+
 			const TArray<FPinRecord>& PinRecords = InspectedNodeInstance->GetPinRecords(Pin.PinName, Pin.Direction);
 			if (PinRecords.Num() == 0)
 			{
@@ -893,6 +898,11 @@ void UFlowGraphNode::GetPinHoverText(const UEdGraphPin& Pin, FString& HoverTextO
 				{
 					HoverTextOut.Append(LINE_TERMINATOR);
 					HoverTextOut.Appendf(TEXT("%d) %s"), i + 1, *PinRecords[i].HumanReadableTime);
+
+					if (PinRecords[i].bForcedActivation)
+					{
+						HoverTextOut.Append(FPinRecord::ForcedActivation);
+					}
 				}
 			}
 		}
@@ -958,6 +968,29 @@ void UFlowGraphNode::ResetBreakpoints()
 	for (TPair<FEdGraphPinReference, FFlowBreakpoint>& PinBreakpoint : PinBreakpoints)
 	{
 		PinBreakpoint.Value.bBreakpointHit = false;
+	}
+}
+
+void UFlowGraphNode::ForcePinActivation(const FEdGraphPinReference PinReference) const
+{
+	UFlowNode* InspectedNodeInstance = GetInspectedNodeInstance();
+	if (InspectedNodeInstance == nullptr)
+	{
+		return;
+	}
+
+	if (const UEdGraphPin* FoundPin = PinReference.Get())
+	{
+		switch (FoundPin->Direction)
+		{
+			case EGPD_Input:
+				InspectedNodeInstance->TriggerInput(FoundPin->PinName, true);
+				break;
+			case EGPD_Output:
+				InspectedNodeInstance->TriggerOutput(FoundPin->PinName, false, true);
+				break;
+			default: ;
+		}
 	}
 }
 
