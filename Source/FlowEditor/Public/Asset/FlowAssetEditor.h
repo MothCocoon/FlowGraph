@@ -205,6 +205,8 @@ private:
 	bool CanToggleBreakpoint() const;
 	bool CanTogglePinBreakpoint() const;
 
+	void OnForcePinActivation() const;
+	
 	void FocusViewport() const;
 	bool CanFocusViewport() const;
 

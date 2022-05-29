@@ -151,12 +151,14 @@ struct FLOW_API FPinRecord
 {	
 	double Time;
 	FString HumanReadableTime;
+	bool bForcedActivation;
 
 	static FString NoActivations;
 	static FString PinActivations;
+	static FString ForcedActivation;
 
 	FPinRecord();
-	FPinRecord(const double InTime);
+	FPinRecord(const double InTime, const bool bInForcedActivation);
 
 	private:
 	FORCEINLINE static FString DoubleDigit(const int32 Number);
