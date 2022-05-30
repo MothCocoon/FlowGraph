@@ -1,3 +1,5 @@
+// Copyright https://github.com/MothCocoon/FlowGraph/graphs/contributors
+
 #include "Graph/Nodes/FlowGraphNode_Reroute.h"
 #include "SGraphNodeKnot.h"
 
