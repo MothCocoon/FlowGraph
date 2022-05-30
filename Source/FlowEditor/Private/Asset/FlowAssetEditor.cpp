@@ -1,3 +1,5 @@
+// Copyright https://github.com/MothCocoon/FlowGraph/graphs/contributors
+
 #include "Asset/FlowAssetEditor.h"
 
 #include "Asset/FlowAssetToolbar.h"
