@@ -1,3 +1,5 @@
+// Copyright https://github.com/MothCocoon/FlowGraph/graphs/contributors
+
 #include "Graph/Nodes/FlowGraphNode_ExecutionSequence.h"
 #include "Nodes/Route/FlowNode_ExecutionMultiGate.h"
 #include "Nodes/Route/FlowNode_ExecutionSequence.h"
