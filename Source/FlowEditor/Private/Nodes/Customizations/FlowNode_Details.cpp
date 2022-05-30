@@ -1,3 +1,5 @@
+// Copyright https://github.com/MothCocoon/FlowGraph/graphs/contributors
+
 #include "FlowNode_Details.h"
 #include "PropertyEditing.h"
 

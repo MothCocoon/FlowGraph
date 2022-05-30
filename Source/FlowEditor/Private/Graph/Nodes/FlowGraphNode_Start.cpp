@@ -1,3 +1,5 @@
+// Copyright https://github.com/MothCocoon/FlowGraph/graphs/contributors
+
 #include "Graph/Nodes/FlowGraphNode_Start.h"
 #include "Graph/Widgets/SFlowGraphNode_Start.h"
 

@@ -1,3 +1,5 @@
+// Copyright https://github.com/MothCocoon/FlowGraph/graphs/contributors
+
 #include "LevelEditor/SLevelEditorFlow.h"
 #include "FlowAsset.h"
 #include "FlowComponent.h"
