@@ -26,4 +26,7 @@ class UFlowSettings final : public UDeveloperSettings
 	// How many nodes of given class should be preloaded with the Flow Asset instance?
 	UPROPERTY(Config, EditAnywhere, Category = "Preload")
 	TMap<TSubclassOf<UFlowNode>, int32> DefaultPreloadDepth;
+	
+	UPROPERTY(Config, EditAnywhere, Category = "SaveSystem")
+	bool bWarnAboutMissingIdentityTags;
 };
