@@ -213,9 +213,11 @@ void UFlowComponent::OnRep_RemovedIdentityTags()
 
 void UFlowComponent::VerifyIdentityTags() const
 {
-	if (IdentityTags.IsEmpty())
+	if (IdentityTags.IsEmpty() && UFlowSettings::Get()->bWarnAboutMissingIdentityTags)
 	{
-		LogError(TEXT("Missing Identity Tags on the Flow Component creating Flow Asset instance! This gonna break loading SaveGame for this component!"));
+		FString Message = TEXT("Missing Identity Tags on the Flow Component creating Flow Asset instance! This gonna break loading SaveGame for this component!");
+		Message.Append(LINE_TERMINATOR).Append(TEXT("If you're not using SaveSystem, you can silence this warning by unchecking bWarnAboutMissingIdentityTags flag in Flow Settings."));
+		LogError(Message);
 	}
 }
 
