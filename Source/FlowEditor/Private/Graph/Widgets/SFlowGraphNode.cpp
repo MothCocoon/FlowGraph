@@ -475,7 +475,7 @@ void SFlowGraphNode::CreateOutputSideAddButton(TSharedPtr<SVerticalBox> OutputBo
 		.Padding(7,0,0,0)
 		[
 			SNew(SImage)
-			.Image(FEditorStyle::GetBrush(TEXT("PropertyWindow.Button_AddToArray")))
+			.Image(FEditorStyle::GetBrush(TEXT("Icons.PlusCircle")))
 		];
 
 		AddPinButton(OutputBox, AddPinWidget.ToSharedRef(), EGPD_Output);
