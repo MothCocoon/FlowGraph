@@ -1,10 +1,15 @@
+// Copyright https://github.com/MothCocoon/FlowGraph/graphs/contributors
+
 #include "FlowComponent.h"
 
 #include "FlowAsset.h"
+#include "FlowModule.h"
 #include "FlowSettings.h"
 #include "FlowSubsystem.h"
 
+#include "Engine/Engine.h"
 #include "Engine/GameInstance.h"
+#include "Engine/ViewportStatsSubsystem.h"
 #include "Engine/World.h"
 #include "Net/UnrealNetwork.h"
 #include "Serialization/MemoryReader.h"
@@ -206,6 +211,43 @@ void UFlowComponent::OnRep_RemovedIdentityTags()
 	}
 }
 
+void UFlowComponent::VerifyIdentityTags() const
+{
+	if (IdentityTags.IsEmpty() && UFlowSettings::Get()->bWarnAboutMissingIdentityTags)
+	{
+		FString Message = TEXT("Missing Identity Tags on the Flow Component creating Flow Asset instance! This gonna break loading SaveGame for this component!");
+		Message.Append(LINE_TERMINATOR).Append(TEXT("If you're not using SaveSystem, you can silence this warning by unchecking bWarnAboutMissingIdentityTags flag in Flow Settings."));
+		LogError(Message);
+	}
+}
+
+void UFlowComponent::LogError(FString Message, const EFlowOnScreenMessageType OnScreenMessageType) const
+{
+	Message += TEXT(" --- Flow Component in actor ") + GetOwner()->GetName();
+
+	if (OnScreenMessageType == EFlowOnScreenMessageType::Permanent)
+	{
+		if (GetWorld())
+		{
+			if (UViewportStatsSubsystem* StatsSubsystem = GetWorld()->GetSubsystem<UViewportStatsSubsystem>())
+			{
+				StatsSubsystem->AddDisplayDelegate([this, Message](FText& OutText, FLinearColor& OutColor)
+				{
+					OutText = FText::FromString(Message);
+					OutColor = FLinearColor::Red;
+					return IsValid(this);
+				});
+			}
+		}
+	}
+	else
+	{
+		GEngine->AddOnScreenDebugMessage(-1, 2.0f, FColor::Red, Message);
+	}
+
+	UE_LOG(LogFlow, Error, TEXT("%s"), *Message);
+}
+
 void UFlowComponent::NotifyGraph(const FGameplayTag NotifyTag, const EFlowNetMode NetMode /* = EFlowNetMode::Authority*/)
 {
 	if (IsFlowNetMode(NetMode) && NotifyTag.IsValid() && HasBegunPlay())
@@ -326,6 +368,8 @@ void UFlowComponent::StartRootFlow()
 	{
 		if (UFlowSubsystem* FlowSubsystem = GetFlowSubsystem())
 		{
+			VerifyIdentityTags();
+
 			FlowSubsystem->StartRootFlow(this, RootFlow, bAllowMultipleInstances);
 		}
 	}
@@ -365,6 +409,8 @@ void UFlowComponent::LoadRootFlow()
 {
 	if (RootFlow && !SavedAssetInstanceName.IsEmpty() && GetFlowSubsystem())
 	{
+		VerifyIdentityTags();
+
 		GetFlowSubsystem()->LoadRootFlow(this, RootFlow, SavedAssetInstanceName);
 		SavedAssetInstanceName = FString();
 	}
@@ -376,8 +422,10 @@ FFlowComponentSaveData UFlowComponent::SaveInstance()
 	ComponentRecord.WorldName = GetWorld()->GetName();
 	ComponentRecord.ActorInstanceName = GetOwner()->GetName();
 
+	// opportunity to collect data before serializing component
 	OnSave();
 
+	// serialize component
 	FMemoryWriter MemoryWriter(ComponentRecord.ComponentData, true);
 	FFlowArchive Ar(MemoryWriter);
 	Serialize(Ar);

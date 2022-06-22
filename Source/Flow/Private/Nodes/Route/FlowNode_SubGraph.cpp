@@ -1,3 +1,5 @@
+// Copyright https://github.com/MothCocoon/FlowGraph/graphs/contributors
+
 #include "Nodes/Route/FlowNode_SubGraph.h"
 
 #include "FlowAsset.h"
@@ -8,6 +10,7 @@ FFlowPin UFlowNode_SubGraph::FinishPin(TEXT("Finish"));
 
 UFlowNode_SubGraph::UFlowNode_SubGraph(const FObjectInitializer& ObjectInitializer)
 	: Super(ObjectInitializer)
+	, bCanInstanceIdenticalAsset(false)
 {
 #if WITH_EDITOR
 	Category = TEXT("Route");
@@ -18,9 +21,14 @@ UFlowNode_SubGraph::UFlowNode_SubGraph(const FObjectInitializer& ObjectInitializ
 	OutputPins = {FinishPin};
 }
 
+bool UFlowNode_SubGraph::CanBeAssetInstanced() const
+{
+	return !Asset.IsNull() && (bCanInstanceIdenticalAsset || Asset->GetPathName() != GetFlowAsset()->GetTemplateAsset()->GetPathName());
+}
+
 void UFlowNode_SubGraph::PreloadContent()
 {
-	if (!Asset.IsNull() && GetFlowSubsystem())
+	if (CanBeAssetInstanced() && GetFlowSubsystem())
 	{
 		GetFlowSubsystem()->CreateSubFlow(this, FString(), true);
 	}
@@ -28,7 +36,7 @@ void UFlowNode_SubGraph::PreloadContent()
 
 void UFlowNode_SubGraph::FlushContent()
 {
-	if (!Asset.IsNull() && GetFlowSubsystem())
+	if (CanBeAssetInstanced() && GetFlowSubsystem())
 	{
 		GetFlowSubsystem()->RemoveSubFlow(this, EFlowFinishPolicy::Abort);
 	}
@@ -36,30 +44,37 @@ void UFlowNode_SubGraph::FlushContent()
 
 void UFlowNode_SubGraph::ExecuteInput(const FName& PinName)
 {
-	if (Asset.IsNull())
+	if (CanBeAssetInstanced() == false)
 	{
-		LogError(TEXT("Missing Flow Asset"));
-		Finish();
-	}
-	else
-	{
-		if (PinName == TEXT("Start"))
+		if (Asset.IsNull())
 		{
-			if (GetFlowSubsystem())
-			{
-				GetFlowSubsystem()->CreateSubFlow(this);
-			}
+			LogError(TEXT("Missing Flow Asset"));
 		}
 		else
 		{
-			GetFlowAsset()->TriggerCustomEvent(this, PinName);
+			LogError(FString::Printf(TEXT("Asset %s cannot be instance, probably is the same as the asset owning this SubGraph node."), *Asset->GetPathName()));
 		}
+		
+		Finish();
+		return;
+	}
+	
+	if (PinName == TEXT("Start"))
+	{
+		if (GetFlowSubsystem())
+		{
+			GetFlowSubsystem()->CreateSubFlow(this);
+		}
+	}
+	else
+	{
+		GetFlowAsset()->TriggerCustomEvent(this, PinName);
 	}
 }
 
 void UFlowNode_SubGraph::Cleanup()
 {
-	if (!Asset.IsNull() && GetFlowSubsystem())
+	if (CanBeAssetInstanced() && GetFlowSubsystem())
 	{
 		GetFlowSubsystem()->RemoveSubFlow(this, EFlowFinishPolicy::Keep);
 	}

@@ -1,9 +1,12 @@
+// Copyright https://github.com/MothCocoon/FlowGraph/graphs/contributors
+
 #include "Asset/FlowAssetEditor.h"
 
 #include "Asset/FlowAssetToolbar.h"
 #include "Asset/FlowDebugger.h"
 #include "FlowEditorCommands.h"
 #include "Graph/FlowGraph.h"
+#include "Graph/FlowGraphEditorSettings.h"
 #include "Graph/FlowGraphSchema.h"
 #include "Graph/FlowGraphSchema_Actions.h"
 #include "Graph/Nodes/FlowGraphNode.h"
@@ -472,6 +475,14 @@ void FFlowAssetEditor::BindGraphCommands()
 		FIsActionButtonVisible::CreateSP(this, &FFlowAssetEditor::CanTogglePinBreakpoint)
 	);
 
+	// Execution Override commands
+	ToolkitCommands->MapAction(FlowGraphCommands.ForcePinActivation,
+		FExecuteAction::CreateSP(this, &FFlowAssetEditor::OnForcePinActivation),
+		FCanExecuteAction::CreateStatic(&FFlowAssetEditor::IsPIE),
+		FIsActionChecked(),
+		FIsActionButtonVisible::CreateStatic(&FFlowAssetEditor::IsPIE)
+	);
+
 	// Jump commands
 	ToolkitCommands->MapAction(FlowGraphCommands.FocusViewport,
 		FExecuteAction::CreateSP(this, &FFlowAssetEditor::FocusViewport),
@@ -768,7 +779,7 @@ bool FFlowAssetEditor::CanCopyNodes() const
 		const FGraphPanelSelectionSet SelectedNodes = FocusedGraphEditor->GetSelectedNodes();
 		for (FGraphPanelSelectionSet::TConstIterator SelectedIt(SelectedNodes); SelectedIt; ++SelectedIt)
 		{
-			UEdGraphNode* Node = Cast<UEdGraphNode>(*SelectedIt);
+			const UEdGraphNode* Node = Cast<UEdGraphNode>(*SelectedIt);
 			if (Node && Node->CanDuplicateNode())
 			{
 				return true;
@@ -882,23 +893,30 @@ void FFlowAssetEditor::OnNodeDoubleClicked(class UEdGraphNode* Node) const
 
 	if (FlowNode)
 	{
-		const FString AssetPath = FlowNode->GetAssetPath();
-		if (!AssetPath.IsEmpty())
+		if (UFlowGraphEditorSettings::Get()->NodeDoubleClickTarget == EFlowNodeDoubleClickTarget::NodeDefinition)
 		{
-			GEditor->GetEditorSubsystem<UAssetEditorSubsystem>()->OpenEditorForAsset(AssetPath);
+			Node->JumpToDefinition();
 		}
-		else if (UObject* AssetToEdit = FlowNode->GetAssetToEdit())
+		else
 		{
-			GEditor->GetEditorSubsystem<UAssetEditorSubsystem>()->OpenEditorForAsset(AssetToEdit);
-			
-			if (IsPIE())
+			const FString AssetPath = FlowNode->GetAssetPath();
+			if (!AssetPath.IsEmpty())
 			{
-				if (UFlowNode_SubGraph* SubGraphNode = Cast<UFlowNode_SubGraph>(FlowNode))
+				GEditor->GetEditorSubsystem<UAssetEditorSubsystem>()->OpenEditorForAsset(AssetPath);
+			}
+			else if (UObject* AssetToEdit = FlowNode->GetAssetToEdit())
+			{
+				GEditor->GetEditorSubsystem<UAssetEditorSubsystem>()->OpenEditorForAsset(AssetToEdit);
+				
+				if (IsPIE())
 				{
-					const TWeakObjectPtr<UFlowAsset> SubFlowInstance = SubGraphNode->GetFlowAsset()->GetFlowInstance(SubGraphNode);
-					if (SubFlowInstance.IsValid())
+					if (UFlowNode_SubGraph* SubGraphNode = Cast<UFlowNode_SubGraph>(FlowNode))
 					{
-						SubGraphNode->GetFlowAsset()->GetTemplateAsset()->SetInspectedInstance(SubFlowInstance->GetDisplayName());
+						const TWeakObjectPtr<UFlowAsset> SubFlowInstance = SubGraphNode->GetFlowAsset()->GetFlowInstance(SubGraphNode);
+						if (SubFlowInstance.IsValid())
+						{
+							SubGraphNode->GetFlowAsset()->GetTemplateAsset()->SetInspectedInstance(SubFlowInstance->GetDisplayName());
+						}
 					}
 				}
 			}
@@ -1218,6 +1236,17 @@ bool FFlowAssetEditor::CanToggleBreakpoint() const
 bool FFlowAssetEditor::CanTogglePinBreakpoint() const
 {
 	return FocusedGraphEditor->GetGraphPinForMenu() != nullptr;
+}
+
+void FFlowAssetEditor::OnForcePinActivation() const
+{
+	if (UEdGraphPin* Pin = FocusedGraphEditor->GetGraphPinForMenu())
+	{
+		if (UFlowGraphNode* GraphNode = Cast<UFlowGraphNode>(Pin->GetOwningNode()))
+		{
+			GraphNode->ForcePinActivation(Pin);
+		}
+	}
 }
 
 void FFlowAssetEditor::FocusViewport() const

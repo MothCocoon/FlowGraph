@@ -1,3 +1,5 @@
+// Copyright https://github.com/MothCocoon/FlowGraph/graphs/contributors
+
 #pragma once
 
 #include "AssetTypeCategories.h"
@@ -35,8 +37,12 @@ private:
 
 public:
 	FDelegateHandle FlowTrackCreateEditorHandle;
+	FDelegateHandle ModulesChangedHandle;
 
 private:
+	void ModulesChangesCallback(FName ModuleName, EModuleChangeReason ReasonForChange);
+	void RegisterAssetIndexers() const;
+
 	void CreateFlowToolbar(FToolBarBuilder& ToolbarBuilder) const;
 
 public:

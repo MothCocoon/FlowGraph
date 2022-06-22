@@ -1,3 +1,5 @@
+// Copyright https://github.com/MothCocoon/FlowGraph/graphs/contributors
+
 #pragma once
 
 #include "Nodes/FlowNode.h"
@@ -21,10 +23,19 @@ private:
 	UPROPERTY(EditAnywhere, Category = "Graph")
 	TSoftObjectPtr<UFlowAsset> Asset;
 
+	/*
+	 * Allow to create instance of the same Flow Asset as the asset containing this node
+	 * Enabling it may cause an infinite loop, if graph would keep creating copies of itself
+	 */
+	UPROPERTY(EditAnywhere, Category = "Graph")
+	bool bCanInstanceIdenticalAsset;
+	
 	UPROPERTY(SaveGame)
 	FString SavedAssetInstanceName;
 
 protected:
+	virtual bool CanBeAssetInstanced() const;
+	
 	virtual void PreloadContent() override;
 	virtual void FlushContent() override;
 

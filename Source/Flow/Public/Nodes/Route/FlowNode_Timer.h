@@ -1,3 +1,5 @@
+// Copyright https://github.com/MothCocoon/FlowGraph/graphs/contributors
+
 #pragma once
 
 #include "Engine/EngineTypes.h"
@@ -36,6 +38,9 @@ private:
 protected:
 	virtual void ExecuteInput(const FName& PinName) override;
 
+	virtual void SetTimer();
+	virtual void Restart();
+	
 private:
 	UFUNCTION()
 	void OnStep();

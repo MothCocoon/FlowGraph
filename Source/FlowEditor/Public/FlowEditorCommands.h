@@ -1,3 +1,5 @@
+// Copyright https://github.com/MothCocoon/FlowGraph/graphs/contributors
+
 #pragma once
 
 #include "EdGraph/EdGraphSchema.h"
@@ -36,6 +38,9 @@ public:
 	TSharedPtr<FUICommandInfo> EnablePinBreakpoint;
 	TSharedPtr<FUICommandInfo> DisablePinBreakpoint;
 	TSharedPtr<FUICommandInfo> TogglePinBreakpoint;
+
+	/** Execution Override */
+	TSharedPtr<FUICommandInfo> ForcePinActivation;
 
 	/** Jumps */
 	TSharedPtr<FUICommandInfo> FocusViewport;

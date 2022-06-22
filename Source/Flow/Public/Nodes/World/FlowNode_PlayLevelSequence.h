@@ -1,3 +1,5 @@
+// Copyright https://github.com/MothCocoon/FlowGraph/graphs/contributors
+
 #pragma once
 
 #include "EngineDefines.h"
@@ -32,9 +34,23 @@ class FLOW_API UFlowNode_PlayLevelSequence : public UFlowNode
 
 	UPROPERTY(EditAnywhere, Category = "Sequence")
 	FMovieSceneSequencePlaybackSettings PlaybackSettings;
-	
+
+	UPROPERTY(EditAnywhere, Category = "Sequence")
+	bool bPlayReverse;
+
 	UPROPERTY(EditAnywhere, Category = "Sequence")
 	FLevelSequenceCameraSettings CameraSettings;
+	
+	// Level Sequence playback can be moved to any place in the world by applying Transform Origin
+	// Enabling this option will use actor that created Root Flow instance, i.e. World Settings or Player Controller
+	// https://docs.unrealengine.com/5.0/en-US/creating-level-sequences-with-dynamic-transforms-in-unreal-engine/
+	UPROPERTY(EditAnywhere, Category = "Sequence")
+	bool bUseGraphOwnerAsTransformOrigin;
+	
+	// if True, Play Rate will by multiplied by Custom Time Dilation
+	// Enabling this option will use Custom Time Dilation from actor that created Root Flow instance, i.e. World Settings or Player Controller
+	UPROPERTY(EditAnywhere, Category = "Sequence")
+	bool bApplyOwnerTimeDilation;
 	
 protected:
 	UPROPERTY()
@@ -42,6 +58,9 @@ protected:
 
 	UPROPERTY()
 	UFlowLevelSequencePlayer* SequencePlayer;
+
+	// Play Rate set by the user in PlaybackSettings
+	float CachedPlayRate;
 
 	UPROPERTY(SaveGame)
 	float StartTime;
@@ -63,6 +82,7 @@ public:
 	virtual void PreloadContent() override;
 	virtual void FlushContent() override;
 
+	virtual void InitializeInstance() override;
 	void CreatePlayer();
 
 protected:

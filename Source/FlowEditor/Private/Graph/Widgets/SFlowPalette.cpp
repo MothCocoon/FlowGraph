@@ -1,3 +1,5 @@
+// Copyright https://github.com/MothCocoon/FlowGraph/graphs/contributors
+
 #include "Graph/Widgets/SFlowPalette.h"
 #include "Asset/FlowAssetEditor.h"
 #include "FlowEditorCommands.h"
@@ -48,7 +50,7 @@ void SFlowPaletteItem::Construct(const FArguments& InArgs, FCreateWidgetForActio
 	const FSlateBrush* IconBrush = FEditorStyle::GetBrush(TEXT("NoBrush"));
 	const FSlateColor IconColor = FSlateColor::UseForeground();
 	const FText IconToolTip = GraphAction->GetTooltipDescription();
-	const bool bIsReadOnly = false;
+	constexpr bool bIsReadOnly = false;
 
 	const TSharedRef<SWidget> IconWidget = CreateIconWidget(IconToolTip, IconBrush, IconColor);
 	const TSharedRef<SWidget> NameSlotWidget = CreateTextSlotWidget(InCreateData, bIsReadOnly);
@@ -181,7 +183,7 @@ TSharedRef<SWidget> SFlowPalette::OnCreateWidgetForAction(FCreateWidgetForAction
 
 void SFlowPalette::CollectAllActions(FGraphActionListBuilderBase& OutAllActions)
 {
-	UClass* AssetClass = UFlowAsset::StaticClass();
+	const UClass* AssetClass = UFlowAsset::StaticClass();
 	
 	const TSharedPtr<FFlowAssetEditor> FlowAssetEditor = FlowAssetEditorPtr.Pin();
 	if (FlowAssetEditor && FlowAssetEditor->GetFlowAsset())
@@ -209,7 +211,7 @@ void SFlowPalette::CategorySelectionChanged(TSharedPtr<FString> NewSelection, ES
 	RefreshActionsList(true);
 }
 
-void SFlowPalette::OnActionSelected(const TArray<TSharedPtr<FEdGraphSchemaAction>>& InActions, ESelectInfo::Type InSelectionType)
+void SFlowPalette::OnActionSelected(const TArray<TSharedPtr<FEdGraphSchemaAction>>& InActions, ESelectInfo::Type InSelectionType) const
 {
 	if (InSelectionType == ESelectInfo::OnMouseClick || InSelectionType == ESelectInfo::OnKeyPress || InSelectionType == ESelectInfo::OnNavigation || InActions.Num() == 0)
 	{

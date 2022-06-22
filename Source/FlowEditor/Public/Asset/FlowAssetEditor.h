@@ -1,3 +1,5 @@
+// Copyright https://github.com/MothCocoon/FlowGraph/graphs/contributors
+
 #pragma once
 
 #include "EditorUndoClient.h"
@@ -203,6 +205,8 @@ private:
 	bool CanToggleBreakpoint() const;
 	bool CanTogglePinBreakpoint() const;
 
+	void OnForcePinActivation() const;
+	
 	void FocusViewport() const;
 	bool CanFocusViewport() const;
 

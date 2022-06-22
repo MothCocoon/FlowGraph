@@ -1,3 +1,5 @@
+// Copyright https://github.com/MothCocoon/FlowGraph/graphs/contributors
+
 #include "Nodes/Route/FlowNode_Timer.h"
 
 #include "Engine/World.h"
@@ -5,11 +7,11 @@
 
 UFlowNode_Timer::UFlowNode_Timer(const FObjectInitializer& ObjectInitializer)
 	: Super(ObjectInitializer)
-	, CompletionTime(1.0f)
-	, StepTime(0.0f)
-	, SumOfSteps(0.0f)
-	, RemainingCompletionTime(0.0f)
-	, RemainingStepTime(0.0f)
+	  , CompletionTime(1.0f)
+	  , StepTime(0.0f)
+	  , SumOfSteps(0.0f)
+	  , RemainingCompletionTime(0.0f)
+	  , RemainingStepTime(0.0f)
 {
 #if WITH_EDITOR
 	Category = TEXT("Route");
@@ -17,6 +19,7 @@ UFlowNode_Timer::UFlowNode_Timer(const FObjectInitializer& ObjectInitializer)
 #endif
 
 	InputPins.Add(FFlowPin(TEXT("Skip")));
+	InputPins.Add(FFlowPin(TEXT("Restart")));
 
 	OutputPins.Empty();
 	OutputPins.Add(FFlowPin(TEXT("Completed")));
@@ -28,7 +31,7 @@ void UFlowNode_Timer::ExecuteInput(const FName& PinName)
 {
 	if (CompletionTime == 0.0f)
 	{
-		LogError("Invalid Timer settings");
+		LogError(TEXT("Invalid Timer settings"));
 		TriggerOutput(TEXT("Completed"), true);
 		return;
 	}
@@ -37,29 +40,48 @@ void UFlowNode_Timer::ExecuteInput(const FName& PinName)
 	{
 		if (CompletionTimerHandle.IsValid() || StepTimerHandle.IsValid())
 		{
-			LogError("Timer already active");
+			LogError(TEXT("Timer already active"));
 			return;
 		}
 
-		if (GetWorld())
-		{
-			if (StepTime > 0.0f)
-			{
-				GetWorld()->GetTimerManager().SetTimer(StepTimerHandle, this, &UFlowNode_Timer::OnStep, StepTime, true);
-			}
-
-			GetWorld()->GetTimerManager().SetTimer(CompletionTimerHandle, this, &UFlowNode_Timer::OnCompletion, CompletionTime, false);
-		}
-		else
-		{
-			LogError("No valid world");
-			TriggerOutput(TEXT("Completed"), true);
-		}
+		SetTimer();
 	}
 	else if (PinName == TEXT("Skip"))
 	{
 		TriggerOutput(TEXT("Skipped"), true);
 	}
+	else if (PinName == TEXT("Restart"))
+	{
+		Restart();
+	}
+}
+
+void UFlowNode_Timer::SetTimer()
+{
+	if (GetWorld())
+	{
+		if (StepTime > 0.0f)
+		{
+			GetWorld()->GetTimerManager().SetTimer(StepTimerHandle, this, &UFlowNode_Timer::OnStep, StepTime, true);
+		}
+
+		GetWorld()->GetTimerManager().SetTimer(CompletionTimerHandle, this, &UFlowNode_Timer::OnCompletion, CompletionTime, false);
+	}
+	else
+	{
+		LogError(TEXT("No valid world"));
+		TriggerOutput(TEXT("Completed"), true);
+	}
+}
+
+void UFlowNode_Timer::Restart()
+{
+	Cleanup();
+
+	RemainingStepTime = 0.0f;
+	RemainingCompletionTime = 0.0f;
+
+	SetTimer();
 }
 
 void UFlowNode_Timer::OnStep()
@@ -118,10 +140,12 @@ void UFlowNode_Timer::OnLoad_Implementation()
 {
 	if (RemainingStepTime > 0.0f)
 	{
-		GetWorld()->GetTimerManager().SetTimer(StepTimerHandle, this, &UFlowNode_Timer::OnStep, StepTime, true, RemainingStepTime);
+		GetWorld()->GetTimerManager().SetTimer(StepTimerHandle, this, &UFlowNode_Timer::OnStep, StepTime, true,
+		                                       RemainingStepTime);
 	}
 
-	GetWorld()->GetTimerManager().SetTimer(CompletionTimerHandle, this, &UFlowNode_Timer::OnCompletion, RemainingCompletionTime, false);
+	GetWorld()->GetTimerManager().SetTimer(CompletionTimerHandle, this, &UFlowNode_Timer::OnCompletion,
+	                                       RemainingCompletionTime, false);
 
 	RemainingStepTime = 0.0f;
 	RemainingCompletionTime = 0.0f;
@@ -134,7 +158,8 @@ FString UFlowNode_Timer::GetNodeDescription() const
 	{
 		if (StepTime > 0.0f)
 		{
-			return FString::SanitizeFloat(CompletionTime, 2).Append(TEXT(", step by ")).Append(FString::SanitizeFloat(StepTime, 2));
+			return FString::SanitizeFloat(CompletionTime, 2).Append(TEXT(", step by ")).Append(
+				FString::SanitizeFloat(StepTime, 2));
 		}
 
 		return FString::SanitizeFloat(CompletionTime, 2);
@@ -152,7 +177,8 @@ FString UFlowNode_Timer::GetStatusString() const
 
 	if (CompletionTimerHandle.IsValid() && GetWorld())
 	{
-		return TEXT("Progress: ") + GetProgressAsString(GetWorld()->GetTimerManager().GetTimerElapsed(CompletionTimerHandle));
+		return TEXT("Progress: ") + GetProgressAsString(
+			GetWorld()->GetTimerManager().GetTimerElapsed(CompletionTimerHandle));
 	}
 
 	return FString();

@@ -1,3 +1,5 @@
+// Copyright https://github.com/MothCocoon/FlowGraph/graphs/contributors
+
 #pragma once
 
 #include "CoreMinimal.h"
@@ -27,6 +29,9 @@ USTRUCT(BlueprintType)
 struct FLOW_API FFlowAssetSaveData
 {
 	GENERATED_USTRUCT_BODY()
+
+	UPROPERTY(SaveGame, VisibleAnywhere, Category = "Flow")
+	FString WorldName;
 
 	UPROPERTY(SaveGame, VisibleAnywhere, Category = "Flow")
 	FString InstanceName;

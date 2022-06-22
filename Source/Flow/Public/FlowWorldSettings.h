@@ -1,3 +1,5 @@
+// Copyright https://github.com/MothCocoon/FlowGraph/graphs/contributors
+
 #pragma once
 
 #include "GameFramework/WorldSettings.h"
@@ -24,6 +26,8 @@ public:
 	virtual void PostInitializeComponents() override;
 
 private:
+	bool IsValidInstance() const;
+	
 	UPROPERTY()
 	class UFlowAsset* FlowAsset_DEPRECATED;
 };

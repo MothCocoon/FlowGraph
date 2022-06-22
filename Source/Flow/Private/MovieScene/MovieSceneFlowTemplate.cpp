@@ -1,3 +1,5 @@
+// Copyright https://github.com/MothCocoon/FlowGraph/graphs/contributors
+
 #include "MovieScene/MovieSceneFlowTemplate.h"
 #include "MovieScene/MovieSceneFlowTrack.h"
 #include "Nodes/World/FlowNode_PlayLevelSequence.h"

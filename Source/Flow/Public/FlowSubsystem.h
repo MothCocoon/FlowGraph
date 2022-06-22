@@ -1,3 +1,5 @@
+// Copyright https://github.com/MothCocoon/FlowGraph/graphs/contributors
+
 #pragma once
 
 #include "Engine/StreamableManager.h"
@@ -26,8 +28,10 @@ class FLOW_API UFlowSubsystem : public UGameInstanceSubsystem
 {
 	GENERATED_BODY()
 
+public:	
 	UFlowSubsystem();
 
+private:	
 	friend class UFlowAsset;
 	friend class UFlowComponent;
 	friend class UFlowNode_SubGraph;
@@ -46,6 +50,7 @@ class FLOW_API UFlowSubsystem : public UGameInstanceSubsystem
 
 	FStreamableManager Streamable;
 
+protected:
 	UPROPERTY()
 	UFlowSaveGame* LoadedSaveGame;
 
@@ -59,17 +64,17 @@ public:
 
 	// Start the root Flow, graph that will eventually instantiate next Flow Graphs through the SubGraph node
 	UFUNCTION(BlueprintCallable, Category = "FlowSubsystem")
-	void StartRootFlow(UObject* Owner, UFlowAsset* FlowAsset, const bool bAllowMultipleInstances = true);
+	virtual void StartRootFlow(UObject* Owner, UFlowAsset* FlowAsset, const bool bAllowMultipleInstances = true);
 
-	UFlowAsset* CreateRootFlow(UObject* Owner, UFlowAsset* FlowAsset, const bool bAllowMultipleInstances = true);
+	virtual UFlowAsset* CreateRootFlow(UObject* Owner, UFlowAsset* FlowAsset, const bool bAllowMultipleInstances = true);
 
 	// Finish Policy value is read by Flow Node
 	// Nodes have opportunity to terminate themselves differently if Flow Graph has been aborted
 	// Example: Spawn node might despawn all actors if Flow Graph is aborted, not completed
 	UFUNCTION(BlueprintCallable, Category = "FlowSubsystem")
-	void FinishRootFlow(UObject* Owner, const EFlowFinishPolicy FinishPolicy);
+	virtual void FinishRootFlow(UObject* Owner, const EFlowFinishPolicy FinishPolicy);
 
-private:
+protected:
 	UFlowAsset* CreateSubFlow(UFlowNode_SubGraph* SubGraphNode, const FString SavedInstanceName = FString(), const bool bPreloading = false);
 	void RemoveSubFlow(UFlowNode_SubGraph* SubGraphNode, const EFlowFinishPolicy FinishPolicy);
 

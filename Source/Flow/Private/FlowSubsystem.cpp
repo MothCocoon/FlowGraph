@@ -1,3 +1,5 @@
+// Copyright https://github.com/MothCocoon/FlowGraph/graphs/contributors
+
 #include "FlowSubsystem.h"
 
 #include "FlowAsset.h"
@@ -61,6 +63,8 @@ void UFlowSubsystem::AbortActiveFlows()
 
 	InstancedTemplates.Empty();
 	InstancedSubFlows.Empty();
+
+	RootInstances.Empty();
 }
 
 void UFlowSubsystem::StartRootFlow(UObject* Owner, UFlowAsset* FlowAsset, const bool bAllowMultipleInstances /* = true */)
@@ -153,10 +157,9 @@ UFlowAsset* UFlowSubsystem::CreateFlowInstance(const TWeakObjectPtr<UObject> Own
 {
 	check(!FlowAsset.IsNull());
 
-	if (FlowAsset.IsPending())
+	if (FlowAsset.IsPending() || !FlowAsset.IsValid())
 	{
-		const FSoftObjectPath& AssetRef = FlowAsset.ToSoftObjectPath();
-		FlowAsset = Cast<UFlowAsset>(Streamable.LoadSynchronous(AssetRef, false));
+		FlowAsset = Cast<UFlowAsset>(Streamable.LoadSynchronous(FlowAsset.ToSoftObjectPath(), false));
 	}
 
 	InstancedTemplates.Add(FlowAsset.Get());
@@ -205,11 +208,31 @@ UWorld* UFlowSubsystem::GetWorld() const
 
 void UFlowSubsystem::OnGameSaved(UFlowSaveGame* SaveGame)
 {
-	// clear data, in case we received here reused SaveGame object
-	SaveGame->FlowComponents.Empty();
-	SaveGame->FlowInstances.Empty();
+	// clear existing data, in case we received reused SaveGame instance
+	// we only remove data for the current world + global Flow Graph instances (i.e. not bound to any world if created by UGameInstanceSubsystem)
+	// we keep data bound to other worlds
+	if (GetWorld())
+	{
+		const FString& WorldName = GetWorld()->GetName();
+
+		for (int32 i = SaveGame->FlowInstances.Num() - 1; i >= 0; i--)
+		{
+			if (SaveGame->FlowInstances[i].WorldName.IsEmpty() || SaveGame->FlowInstances[i].WorldName == WorldName)
+			{
+				SaveGame->FlowInstances.RemoveAt(i);
+			}
+		}
+
+		for (int32 i = SaveGame->FlowComponents.Num() - 1; i >= 0; i--)
+		{
+			if (SaveGame->FlowComponents[i].WorldName.IsEmpty() || SaveGame->FlowComponents[i].WorldName == WorldName)
+			{
+				SaveGame->FlowComponents.RemoveAt(i);
+			}
+		}
+	}
 	
-	// save graphs with nodes
+	// save Flow Graphs
 	for (const TPair<TWeakObjectPtr<UObject>, UFlowAsset*>& Pair : RootInstances)
 	{
 		if (Pair.Key.IsValid() && Pair.Value)
@@ -225,13 +248,20 @@ void UFlowSubsystem::OnGameSaved(UFlowSaveGame* SaveGame)
 		}
 	}
 
-	// save components
-	TArray<TWeakObjectPtr<UFlowComponent>> ComponentsArray;
-	FlowComponentRegistry.GenerateValueArray(ComponentsArray);
-	const TSet<TWeakObjectPtr<UFlowComponent>> FlowComponents = TSet<TWeakObjectPtr<UFlowComponent>>(ComponentsArray);
-	for (const TWeakObjectPtr<UFlowComponent> FlowComponent : FlowComponents)
+	// save Flow Components
 	{
-		SaveGame->FlowComponents.Emplace(FlowComponent->SaveInstance());
+		// retrieve all registered components
+		TArray<TWeakObjectPtr<UFlowComponent>> ComponentsArray;
+		FlowComponentRegistry.GenerateValueArray(ComponentsArray);
+
+		// ensure uniqueness of entries
+		const TSet<TWeakObjectPtr<UFlowComponent>> RegisteredComponents = TSet<TWeakObjectPtr<UFlowComponent>>(ComponentsArray);
+
+		// write archives to SaveGame
+		for (const TWeakObjectPtr<UFlowComponent> RegisteredComponent : RegisteredComponents)
+		{
+			SaveGame->FlowComponents.Emplace(RegisteredComponent->SaveInstance());
+		}
 	}
 }
 
@@ -242,14 +272,15 @@ void UFlowSubsystem::OnGameLoaded(UFlowSaveGame* SaveGame)
 
 void UFlowSubsystem::LoadRootFlow(UObject* Owner, UFlowAsset* FlowAsset, const FString& SavedAssetInstanceName)
 {
-	if (SavedAssetInstanceName.IsEmpty())
+	if (FlowAsset == nullptr || SavedAssetInstanceName.IsEmpty())
 	{
 		return;
 	}
 
 	for (const FFlowAssetSaveData& AssetRecord : LoadedSaveGame->FlowInstances)
 	{
-		if (AssetRecord.InstanceName == SavedAssetInstanceName)
+		if (AssetRecord.InstanceName == SavedAssetInstanceName
+			&& (FlowAsset->IsBoundToWorld() == false || AssetRecord.WorldName == GetWorld()->GetName()))
 		{
 			UFlowAsset* LoadedInstance = CreateRootFlow(Owner, FlowAsset, false);
 			if (LoadedInstance)
@@ -263,9 +294,21 @@ void UFlowSubsystem::LoadRootFlow(UObject* Owner, UFlowAsset* FlowAsset, const F
 
 void UFlowSubsystem::LoadSubFlow(UFlowNode_SubGraph* SubGraphNode, const FString& SavedAssetInstanceName)
 {
+	if (SubGraphNode->Asset.IsNull())
+	{
+		return;
+	}
+
+	if (SubGraphNode->Asset.IsPending())
+	{
+		const FSoftObjectPath& AssetRef = SubGraphNode->Asset.ToSoftObjectPath();
+		Streamable.LoadSynchronous(AssetRef, false);
+	}
+
 	for (const FFlowAssetSaveData& AssetRecord : LoadedSaveGame->FlowInstances)
 	{
-		if (AssetRecord.InstanceName == SavedAssetInstanceName)
+		if (AssetRecord.InstanceName == SavedAssetInstanceName
+			&& ((SubGraphNode->Asset && SubGraphNode->Asset->IsBoundToWorld() == false) || AssetRecord.WorldName == GetWorld()->GetName()))
 		{
 			UFlowAsset* LoadedInstance = CreateSubFlow(SubGraphNode, SavedAssetInstanceName);
 			if (LoadedInstance)

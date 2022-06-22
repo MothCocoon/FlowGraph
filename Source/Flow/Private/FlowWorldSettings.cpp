@@ -1,5 +1,8 @@
+// Copyright https://github.com/MothCocoon/FlowGraph/graphs/contributors
+
 #include "FlowWorldSettings.h"
 #include "FlowComponent.h"
+#include "FlowSubsystem.h"
 
 AFlowWorldSettings::AFlowWorldSettings(const FObjectInitializer& ObjectInitializer)
 	: Super(ObjectInitializer)
@@ -25,13 +28,23 @@ void AFlowWorldSettings::PostInitializeComponents()
 {
 	Super::PostInitializeComponents();
 
+	if (!IsValidInstance())
+	{
+		GetFlowComponent()->bAutoStartRootFlow = false;
+	}
+}
+
+bool AFlowWorldSettings::IsValidInstance() const
+{
 	if (const UWorld* World = GetWorld())
 	{
-		// prevent starting Flow from the obsolete AWorldSettings actor that still exists in the world
-		// i.e. instance of class that is parent to the class set in Project Settings
-		if (World->GetWorldSettings() != this)
+		// workaround to prevent starting Flow from stray AWorldSettings actor that still exists in the world
+		// cause of this issue fixed in UE 5.0: https://github.com/EpicGames/UnrealEngine/commit/001f50b8b55507940f9c2cb1349592c692aae2c1?diff=unified
+		if (World->GetWorldSettings() == this)
 		{
-			GetFlowComponent()->bAutoStartRootFlow = false;
+			return true;
 		}
 	}
+
+	return false;
 }

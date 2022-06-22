@@ -1,3 +1,5 @@
+// Copyright https://github.com/MothCocoon/FlowGraph/graphs/contributors
+
 #include "Nodes/Route/FlowNode_Finish.h"
 
 UFlowNode_Finish::UFlowNode_Finish(const FObjectInitializer& ObjectInitializer)

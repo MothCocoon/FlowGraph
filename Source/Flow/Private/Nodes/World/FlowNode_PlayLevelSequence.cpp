@@ -1,5 +1,8 @@
+// Copyright https://github.com/MothCocoon/FlowGraph/graphs/contributors
+
 #include "Nodes/World/FlowNode_PlayLevelSequence.h"
 
+#include "FlowAsset.h"
 #include "FlowModule.h"
 #include "FlowSubsystem.h"
 #include "LevelSequence/FlowLevelSequencePlayer.h"
@@ -15,8 +18,12 @@ FFlowNodeLevelSequenceEvent UFlowNode_PlayLevelSequence::OnPlaybackCompleted;
 
 UFlowNode_PlayLevelSequence::UFlowNode_PlayLevelSequence(const FObjectInitializer& ObjectInitializer)
 	: Super(ObjectInitializer)
+	, bPlayReverse(false)
+	, bUseGraphOwnerAsTransformOrigin(false)
+	, bApplyOwnerTimeDilation(true)
 	, LoadedSequence(nullptr)
 	, SequencePlayer(nullptr)
+	, CachedPlayRate(0)
 	, StartTime(0.0f)
 	, ElapsedTime(0.0f)
 	, TimeDilation(1.0f)
@@ -108,13 +115,49 @@ void UFlowNode_PlayLevelSequence::FlushContent()
 	}
 }
 
+void UFlowNode_PlayLevelSequence::InitializeInstance()
+{
+	Super::InitializeInstance();
+
+	// Cache Play Rate set by user
+	CachedPlayRate = PlaybackSettings.PlayRate;
+}
+
 void UFlowNode_PlayLevelSequence::CreatePlayer()
 {
 	LoadedSequence = LoadAsset<ULevelSequence>(Sequence);
 	if (LoadedSequence)
 	{
 		ALevelSequenceActor* SequenceActor;
-		SequencePlayer = UFlowLevelSequencePlayer::CreateFlowLevelSequencePlayer(this, LoadedSequence, PlaybackSettings, CameraSettings, SequenceActor);
+
+		AActor* OwningActor = nullptr;
+		if (GetFlowAsset())
+		{
+			if (UObject* RootFlowOwner = GetFlowAsset()->GetOwner())
+			{
+				OwningActor = Cast<AActor>(RootFlowOwner); // in case Root Flow was created directly from some actor
+				if (OwningActor == nullptr)
+				{
+					if (const UActorComponent* OwningComponent = Cast<UActorComponent>(RootFlowOwner))
+					{
+						OwningActor = OwningComponent->GetOwner();
+					}
+				}
+			}
+		}
+
+		// Apply AActor::CustomTimeDilation from owner of the Root Flow
+		if (IsValid(OwningActor))
+		{
+			PlaybackSettings.PlayRate = CachedPlayRate * OwningActor->CustomTimeDilation;
+		}
+
+		// Apply Transform Origin
+		AActor* TransformOriginActor = bUseGraphOwnerAsTransformOrigin ? OwningActor : nullptr;
+
+		// Finally create the player
+		SequencePlayer = UFlowLevelSequencePlayer::CreateFlowLevelSequencePlayer(this, LoadedSequence, PlaybackSettings, CameraSettings, TransformOriginActor, SequenceActor);
+
 		if (SequencePlayer)
 		{
 			SequencePlayer->SetFlowEventReceiver(this);
@@ -141,7 +184,15 @@ void UFlowNode_PlayLevelSequence::ExecuteInput(const FName& PinName)
 				TriggerOutput(TEXT("PreStart"));
 
 				SequencePlayer->OnFinished.AddDynamic(this, &UFlowNode_PlayLevelSequence::OnPlaybackFinished);
-				SequencePlayer->Play();
+
+				if (bPlayReverse)
+				{
+					SequencePlayer->PlayReverse();
+				}
+				else
+				{
+					SequencePlayer->Play();
+				}
 
 				TriggerOutput(TEXT("Started"));
 			}
@@ -177,9 +228,19 @@ void UFlowNode_PlayLevelSequence::OnLoad_Implementation()
 			{
 				SequencePlayer->OnFinished.AddDynamic(this, &UFlowNode_PlayLevelSequence::OnPlaybackFinished);
 
-				SequencePlayer->SetPlayRate(TimeDilation);
 				SequencePlayer->SetPlaybackPosition(FMovieSceneSequencePlaybackParams(ElapsedTime, EUpdatePositionMethod::Jump));
-				SequencePlayer->Play();
+
+				// Take into account Play Rate set in the Playback Settings
+				SequencePlayer->SetPlayRate(TimeDilation * CachedPlayRate);
+
+				if (bPlayReverse)
+				{
+					SequencePlayer->PlayReverse();
+				}
+				else
+				{
+					SequencePlayer->Play();
+				}
 			}
 		}
 	}
@@ -195,7 +256,9 @@ void UFlowNode_PlayLevelSequence::OnTimeDilationUpdate(const float NewTimeDilati
 	if (SequencePlayer)
 	{
 		TimeDilation = NewTimeDilation;
-		SequencePlayer->SetPlayRate(NewTimeDilation);
+
+		// Take into account Play Rate set in the Playback Settings
+		SequencePlayer->SetPlayRate(NewTimeDilation * CachedPlayRate);
 	}
 }
 

@@ -1,3 +1,5 @@
+// Copyright https://github.com/MothCocoon/FlowGraph/graphs/contributors
+
 #include "Nodes/FlowNode.h"
 
 #include "FlowAsset.h"
@@ -240,6 +242,28 @@ TSet<UFlowNode*> UFlowNode::GetConnectedNodes() const
 	return Result;
 }
 
+bool UFlowNode::IsInputConnected(const FName& PinName) const
+{
+	if (GetFlowAsset())
+	{
+		for (const TPair<FGuid, UFlowNode*>& Pair : GetFlowAsset()->Nodes)
+		{
+			if (Pair.Value)
+			{
+				for (const TPair<FName, FConnectedPin>& Connection : Pair.Value->Connections)
+				{
+					if (Connection.Value.NodeGuid == NodeGuid && Connection.Value.PinName == PinName)
+					{
+						return true;
+					}
+				}
+			}
+		}
+	}
+
+	return false;
+}
+
 bool UFlowNode::IsOutputConnected(const FName& PinName) const
 {
 	return OutputPins.Contains(PinName) && Connections.Contains(PinName);
@@ -310,7 +334,7 @@ void UFlowNode::FlushContent()
 	K2_FlushContent();
 }
 
-void UFlowNode::TriggerInput(const FName& PinName)
+void UFlowNode::TriggerInput(const FName& PinName, const bool bForcedActivation /*= false*/)
 {
 	if (InputPins.Contains(PinName))
 	{
@@ -319,7 +343,7 @@ void UFlowNode::TriggerInput(const FName& PinName)
 #if !UE_BUILD_SHIPPING
 		// record for debugging
 		TArray<FPinRecord>& Records = InputRecords.FindOrAdd(PinName);
-		Records.Add(FPinRecord(FApp::GetCurrentTime()));
+		Records.Add(FPinRecord(FApp::GetCurrentTime(), bForcedActivation));
 #endif // UE_BUILD_SHIPPING
 
 #if WITH_EDITOR
@@ -353,7 +377,7 @@ void UFlowNode::TriggerFirstOutput(const bool bFinish)
 	}
 }
 
-void UFlowNode::TriggerOutput(const FName& PinName, const bool bFinish /*= false*/)
+void UFlowNode::TriggerOutput(const FName& PinName, const bool bFinish /*= false*/, const bool bForcedActivation /*= false*/)
 {
 	// clean up node, if needed
 	if (bFinish)
@@ -366,7 +390,7 @@ void UFlowNode::TriggerOutput(const FName& PinName, const bool bFinish /*= false
 	{
 		// record for debugging, even if nothing is connected to this pin
 		TArray<FPinRecord>& Records = OutputRecords.FindOrAdd(PinName);
-		Records.Add(FPinRecord(FApp::GetCurrentTime()));
+		Records.Add(FPinRecord(FApp::GetCurrentTime(), bForcedActivation));
 
 #if WITH_EDITOR
 		if (GetWorld()->WorldType == EWorldType::PIE && UFlowAsset::GetFlowGraphInterface().IsValid())
@@ -558,7 +582,7 @@ FString UFlowNode::GetProgressAsString(float Value)
 void UFlowNode::LogError(FString Message, const EFlowOnScreenMessageType OnScreenMessageType) const
 {
 	const FString TemplatePath = GetFlowAsset()->TemplateAsset->GetPathName();
-	Message += TEXT(" in node ") + GetName() + TEXT(", asset ") + FPaths::GetPath(TemplatePath) + TEXT("/") + FPaths::GetBaseFilename(TemplatePath);
+	Message += TEXT(" --- node ") + GetName() + TEXT(", asset ") + FPaths::GetPath(TemplatePath) / FPaths::GetBaseFilename(TemplatePath);
 
 	if (OnScreenMessageType == EFlowOnScreenMessageType::Permanent)
 	{

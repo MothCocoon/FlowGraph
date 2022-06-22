@@ -1,7 +1,11 @@
+// Copyright https://github.com/MothCocoon/FlowGraph/graphs/contributors
+
 #pragma once
 
 #include "EdGraph/EdGraphSchema.h"
 #include "FlowGraphSchema.generated.h"
+
+class UFlowAsset;
 
 DECLARE_MULTICAST_DELEGATE(FFlowGraphSchemaRefresh);
 
@@ -19,7 +23,7 @@ private:
 
 public:
 	static void SubscribeToAssetChanges();
-	static void GetPaletteActions(FGraphActionMenuBuilder& ActionMenuBuilder, UClass* AssetClass, const FString& CategoryName);
+	static void GetPaletteActions(FGraphActionMenuBuilder& ActionMenuBuilder, const UClass* AssetClass, const FString& CategoryName);
 
 	// EdGraphSchema
 	virtual void GetGraphContextActions(FGraphContextMenuBuilder& ContextMenuBuilder) const override;
@@ -39,7 +43,8 @@ public:
 	static UClass* GetAssignedGraphNodeClass(const UClass* FlowNodeClass);
 
 private:
-	static void GetFlowNodeActions(FGraphActionMenuBuilder& ActionMenuBuilder, UClass* AssetClass, const FString& CategoryName);
+	static bool IsClassContained(const TArray<TSubclassOf<class UFlowNode>> Classes, const UClass* Class);
+	static void GetFlowNodeActions(FGraphActionMenuBuilder& ActionMenuBuilder, const UFlowAsset* AssetClassDefaults, const FString& CategoryName);
 	static void GetCommentAction(FGraphActionMenuBuilder& ActionMenuBuilder, const UEdGraph* CurrentGraph = nullptr);
 
 	static bool IsFlowNodePlaceable(const UClass* Class);
@@ -57,4 +62,6 @@ private:
 public:
 	static FFlowGraphSchemaRefresh OnNodeListChanged;
 	static UBlueprint* GetPlaceableNodeBlueprint(const FAssetData& AssetData);
+
+	static const UFlowAsset* GetAssetClassDefaults(const UEdGraph* Graph);
 };

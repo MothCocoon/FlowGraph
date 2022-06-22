@@ -1,11 +1,10 @@
 {
 	"FileVersion" : 3,
-	"Version" : 1.2,
+	"Version" : 1.3,
 	"FriendlyName" : "Flow",
 	"Description" : "Design-agnostic node editor for scripting game’s flow.",
 	"Category" : "Gameplay",
-	"CreatedBy" : "Krzysztof Justyński",
-	"CreatedByURL" : "https://twitter.com/MothDoctor",
+	"CreatedByURL" : "https://github.com/MothCocoon/FlowGraph/graphs/contributors",
 	"DocsURL" : "https://github.com/MothCocoon/FlowGraph/wiki",
 	"MarketplaceURL" : "",
 	"SupportURL": "https://discord.gg/zMtMQ2vUUa",
@@ -25,6 +24,12 @@
 			"Name" : "FlowEditor",
 			"Type" : "Editor",
 			"LoadingPhase" : "Default"
+		}
+	],
+	"Plugins": [
+		{
+			"Name": "AssetSearch",
+			"Enabled": true
 		}
 	]
 }
