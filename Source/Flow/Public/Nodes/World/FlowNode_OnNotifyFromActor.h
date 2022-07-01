@@ -14,12 +14,12 @@ class FLOW_API UFlowNode_OnNotifyFromActor : public UFlowNode_ComponentObserver
 	GENERATED_UCLASS_BODY()
 
 protected:
-	UPROPERTY(EditAnywhere, Category = "ObservedComponent")
+	UPROPERTY(EditAnywhere, Category = "Notify")
 	FGameplayTagContainer NotifyTags;
 
 	// If true, node will check given Notify Tag is present in the Recently Sent Notify Tags
 	// This might be helpful in multiplayer, if client-side Flow Node started work after server sent the notify
-	UPROPERTY(EditAnywhere, Category = "ObservedComponent")
+	UPROPERTY(EditAnywhere, Category = "Notify")
 	bool bRetroactive;
 
 	virtual void PostLoad() override;
