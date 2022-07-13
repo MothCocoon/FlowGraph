@@ -57,6 +57,13 @@ void UFlowGraphSchema::GetPaletteActions(FGraphActionMenuBuilder& ActionMenuBuil
 	GetCommentAction(ActionMenuBuilder);
 }
 
+void UFlowGraphSchema::GetContextMenuActions(UToolMenu* Menu, UGraphNodeContextMenuContext* Context) const
+{
+	// DO NOT CALL Super:: since UEdGraphSchema_K2 calls FindBlueprintForNodeChecked which will crash. Instead directly call from UEdGraphSchema.
+	// Same as Super::Super::GetContextMenuActions(TargetNode);
+	UEdGraphSchema::GetContextMenuActions(Menu, Context);
+}
+
 void UFlowGraphSchema::GetGraphContextActions(FGraphContextMenuBuilder& ContextMenuBuilder) const
 {
 	GetFlowNodeActions(ContextMenuBuilder, GetAssetClassDefaults(ContextMenuBuilder.CurrentGraph), FString());
