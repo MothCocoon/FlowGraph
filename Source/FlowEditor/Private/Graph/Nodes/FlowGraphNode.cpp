@@ -101,9 +101,9 @@ void FFlowBreakpoint::ToggleBreakpoint()
 
 UFlowGraphNode::UFlowGraphNode(const FObjectInitializer& ObjectInitializer)
 	: Super(ObjectInitializer)
-	, FlowNode(nullptr)
-	, bBlueprintCompilationPending(false)
-	, bNeedsFullReconstruction(false)
+	  , FlowNode(nullptr)
+	  , bBlueprintCompilationPending(false)
+	  , bNeedsFullReconstruction(false)
 {
 	OrphanedPinSaveMode = ESaveOrphanPinMode::SaveAll;
 }
@@ -1122,7 +1122,7 @@ void UFlowGraphNode::ForcePinActivation(const FEdGraphPinReference PinReference)
 		switch (FoundPin->Direction)
 		{
 			case EGPD_Input:
-				InspectedNodeInstance->TriggerInput(FoundPin->PinName, true);
+				InspectedNodeInstance->TriggerInput(FConnectedPin(FoundPin->PinId, FoundPin->PinName), true);
 				break;
 			case EGPD_Output:
 				InspectedNodeInstance->TriggerOutput(FoundPin->PinName, false, true);
