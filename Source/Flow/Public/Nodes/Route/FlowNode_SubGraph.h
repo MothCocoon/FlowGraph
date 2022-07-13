@@ -57,6 +57,8 @@ public:
 
 	virtual TArray<FName> GetContextInputs() override;
 	virtual TArray<FName> GetContextOutputs() override;
+	
+	virtual UClass* GetVariableHolder() const override;
 
 	// UObject
 	virtual void PostLoad() override;

@@ -633,7 +633,7 @@ AActor* UFlowNode::GetActorToFocus()
 const TMultiMap<TWeakObjectPtr<UObject>, FFlowInputOutputPin> UFlowNode::GetInputProperties() const
 {
 	TMultiMap<TWeakObjectPtr<UObject>, FFlowInputOutputPin> Properties;
-	for (TFieldIterator<FProperty> PropertyIterator(GetClass()); PropertyIterator; ++PropertyIterator)
+	for (TFieldIterator<FProperty> PropertyIterator(GetVariableHolder()); PropertyIterator; ++PropertyIterator)
 	{
 		FProperty* Property = *PropertyIterator;
 		if (FlowHelpers::IsPropertyExposedAsInput(Property))
@@ -738,6 +738,11 @@ FProperty* UFlowNode::FindOutputPropertyByPinName(const FName& InPinName) const
 	}
 
 	return nullptr;
+}
+
+UClass* UFlowNode::GetVariableHolder() const
+{
+	return GetClass();
 }
 
 FString UFlowNode::GetIdentityTagDescription(const FGameplayTag& Tag)

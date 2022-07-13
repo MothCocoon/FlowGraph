@@ -1,6 +1,7 @@
 // Copyright https://github.com/MothCocoon/FlowGraph/graphs/contributors
 
 #include "Nodes/Route/FlowNode_SubGraph.h"
+#include "CoreUObject.h"
 
 #include "FlowAsset.h"
 #include "FlowSubsystem.h"
@@ -10,7 +11,7 @@ FFlowPin UFlowNode_SubGraph::FinishPin(TEXT("Finish"));
 
 UFlowNode_SubGraph::UFlowNode_SubGraph(const FObjectInitializer& ObjectInitializer)
 	: Super(ObjectInitializer)
-	, bCanInstanceIdenticalAsset(false)
+	  , bCanInstanceIdenticalAsset(false)
 {
 #if WITH_EDITOR
 	Category = TEXT("Route");
@@ -54,11 +55,11 @@ void UFlowNode_SubGraph::ExecuteInput(const FName& PinName)
 		{
 			LogError(FString::Printf(TEXT("Asset %s cannot be instance, probably is the same as the asset owning this SubGraph node."), *Asset->GetPathName()));
 		}
-		
+
 		Finish();
 		return;
 	}
-	
+
 	if (PinName == TEXT("Start"))
 	{
 		if (GetFlowSubsystem())
@@ -141,6 +142,22 @@ TArray<FName> UFlowNode_SubGraph::GetContextOutputs()
 	}
 
 	return EventNames;
+}
+
+UClass* UFlowNode_SubGraph::GetVariableHolder() const
+{
+	if (Asset.IsNull())
+	{
+		return Super::GetVariableHolder();
+	}
+
+	const UFlowAsset* FlowAsset = Asset.LoadSynchronous();
+	if (!IsValid(FlowAsset))
+	{
+		return Super::GetVariableHolder();
+	}
+
+	return FlowAsset->GetClass();
 }
 
 void UFlowNode_SubGraph::PostLoad()

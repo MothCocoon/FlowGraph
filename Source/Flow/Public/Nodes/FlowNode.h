@@ -330,10 +330,12 @@ protected:
 		return Cast<T>(AssetPtr.Get());
 	}
 
-	const TMultiMap<TWeakObjectPtr<UObject>, FFlowInputOutputPin> GetInputProperties() const;
-	const TMultiMap<TWeakObjectPtr<UObject>, FFlowInputOutputPin> GetOutputProperties() const;
-	FProperty* FindInputPropertyByPinName(const FName& InPinName) const;
-	FProperty* FindOutputPropertyByPinName(const FName& InPinName) const;
+	virtual const TMultiMap<TWeakObjectPtr<UObject>, FFlowInputOutputPin> GetInputProperties() const;
+	virtual const TMultiMap<TWeakObjectPtr<UObject>, FFlowInputOutputPin> GetOutputProperties() const;
+	virtual FProperty* FindInputPropertyByPinName(const FName& InPinName) const;
+	virtual FProperty* FindOutputPropertyByPinName(const FName& InPinName) const;
+
+	virtual UClass* GetVariableHolder() const;
 
 public:
 	UFUNCTION(BlueprintPure, Category = "FlowNode")
