@@ -44,7 +44,8 @@ public class FlowEditor : ModuleRules
             "Slate",
             "SlateCore",
             "ToolMenus",
-            "UnrealEd"
+            "UnrealEd",
+            "GameplayTags"
         });
     }
 }

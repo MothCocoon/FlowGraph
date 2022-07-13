@@ -176,6 +176,14 @@ public:
 	void CreateInputPin(const FFlowPin& FlowPin, const int32 Index = INDEX_NONE);
 	void CreateOutputPin(const FFlowPin& FlowPin, const int32 Index = INDEX_NONE);
 
+private:
+
+	void CreateInputPropertyPin(const FFlowInputOutputPin& FlowPropertyPin, const int32 Index = INDEX_NONE);
+	void CreateOutputPropertyPin(const FFlowInputOutputPin& FlowPropertyPin, const int32 Index = INDEX_NONE);
+	void SetPinSubCategoryObject(const FProperty* Property, UEdGraphPin* NewPin);
+
+public:
+
 	void RemoveOrphanedPin(UEdGraphPin* Pin);
 
 	bool SupportsContextPins() const;

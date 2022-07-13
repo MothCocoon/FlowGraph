@@ -21,7 +21,6 @@ UFlowGraphSettings::UFlowGraphSettings(const FObjectInitializer& ObjectInitializ
 	, ConnectionDrawType(EFlowConnectionDrawType::Default)
 	, CircuitConnectionAngle(45.f)
 	, CircuitConnectionSpacing(FVector2D(30.f))
-	, InactiveWireColor(FLinearColor(0.364f, 0.364f, 0.364f, 1.0f))
 	, InactiveWireThickness(1.5f)
 	, RecentWireDuration(3.0f)
 	, RecentWireColor(FLinearColor(1.0f, 0.05f, 0.0f, 1.0f))
