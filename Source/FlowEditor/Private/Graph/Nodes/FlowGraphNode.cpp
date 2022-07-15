@@ -26,7 +26,7 @@
 #include "Textures/SlateIcon.h"
 #include "ToolMenuSection.h"
 #include "UnrealEd.h"
-#include "FlowHelpers.h"
+#include "FlowPropertyHelpers.h"
 
 #define LOCTEXT_NAMESPACE "FlowGraphNode"
 

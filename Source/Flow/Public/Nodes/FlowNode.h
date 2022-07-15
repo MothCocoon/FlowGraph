@@ -332,12 +332,13 @@ protected:
 
 	virtual const TMultiMap<TWeakObjectPtr<UObject>, FFlowInputOutputPin> GetInputProperties() const;
 	virtual const TMultiMap<TWeakObjectPtr<UObject>, FFlowInputOutputPin> GetOutputProperties() const;
+
+	virtual UClass* GetVariableHolder() const;
+	
+public:
 	virtual FProperty* FindInputPropertyByPinName(const FName& InPinName) const;
 	virtual FProperty* FindOutputPropertyByPinName(const FName& InPinName) const;
 
-	virtual UClass* GetVariableHolder() const;
-
-public:
 	UFUNCTION(BlueprintPure, Category = "FlowNode")
 	static FString GetIdentityTagDescription(const FGameplayTag& Tag);
 
