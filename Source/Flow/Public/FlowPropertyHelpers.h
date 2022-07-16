@@ -11,7 +11,7 @@ namespace FlowPropertyHelpers
 {
 	/**
 	* public
-	* static FlowHelpers::IsPropertySupported
+	* static FlowPropertyHelpers::IsPropertySupported
 	* Checks if the given property is supported as input/output.
 	* @param Property [const FProperty*] Property to check.
 	**/
@@ -31,7 +31,7 @@ namespace FlowPropertyHelpers
 
 	/**
 	* public
-	* static FlowHelpers::IsPropertyExposedAsInput
+	* static FlowPropertyHelpers::IsPropertyExposedAsInput
 	* Checks if the given property is exposed as input.
 	* @param Property [const FProperty*] Property to check.
 	**/
@@ -47,7 +47,7 @@ namespace FlowPropertyHelpers
 
 	/**
 	* public
-	* static FlowHelpers::IsPropertyExposedAsOutput
+	* static FlowPropertyHelpers::IsPropertyExposedAsOutput
 	* Checks if the given property is exposed as output.
 	* @param Property [const FProperty*] Property to check.
 	**/
@@ -61,15 +61,16 @@ namespace FlowPropertyHelpers
 		return false;
 	}
 
-	static FORCEINLINE_DEBUGGABLE bool SetPropertyValue(UFlowNode* TargetNode, const FConnectedPin& ConnectedPin, const FProperty* Property)
+	static FORCEINLINE_DEBUGGABLE bool SetPropertyValue(UFlowNode* TargetNode, const FFlowInputOutputPin& ConnectedPin, const FProperty* Property)
 	{
-		if (Property->GetFName().IsEqual(ConnectedPin.PinProperty.InputProperty->GetFName()))
+		if (Property->GetFName().IsEqual(ConnectedPin.InputProperty->GetFName()))
 		{
-			const UFlowNode* InputNode = Cast<UFlowNode>(TargetNode->GetFlowAsset()->GetNodes().FindRef(ConnectedPin.PinProperty.OutputNodeGuid));
+			const UFlowNode* InputNode = Cast<UFlowNode>(TargetNode->GetFlowAsset()->GetNodes().FindRef(ConnectedPin.OutputNodeGuid));
 			const UFlowNode* ConnectedParentNode = TargetNode->GetFlowAsset()->GetNode(InputNode->GetGuid());
-			const FProperty* OutputProperty = ConnectedParentNode->FindOutputPropertyByPinName(ConnectedPin.PinProperty.OutputPinName);
+			const FProperty* OutputProperty = ConnectedParentNode->FindOutputPropertyByPinName(ConnectedPin.OutputPinName);
+			UObject* VariableHolder = TargetNode->GetVariableHolder();
 
-#define SET_PROPERTY_VALUE(Type)	return PropertyPathHelpers::SetPropertyValue(TargetNode, ConnectedPin.PinProperty.InputProperty->GetNameCPP(), *OutputProperty->ContainerPtrToValuePtr<Type>(ConnectedParentNode));
+#define SET_PROPERTY_VALUE(Type)	return PropertyPathHelpers::SetPropertyValue(VariableHolder, ConnectedPin.InputProperty->GetNameCPP(), *OutputProperty->ContainerPtrToValuePtr<Type>(ConnectedParentNode));
 			if (FLOW_PROPERTY_IS(Property, Struct))
 			{
 				const FStructProperty* StructProperty = CastField<FStructProperty>(Property);

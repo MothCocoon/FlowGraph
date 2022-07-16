@@ -337,6 +337,21 @@ void UFlowNode::FlushContent()
 	K2_FlushContent();
 }
 
+void UFlowNode::SetProperties(TArray<FFlowInputOutputPin> Pins)
+{
+	for (FFlowInputOutputPin PropertyPin : Pins)
+	{
+		for (TFieldIterator<FProperty> PropertyIterator(GetClass()); PropertyIterator; ++PropertyIterator)
+		{
+			if (FlowPropertyHelpers::SetPropertyValue(this, PropertyPin, *PropertyIterator))
+			{
+				UE_LOG(LogFlow, Log, TEXT("Set Property %s"), *PropertyPin.InputPinName.ToString())
+				break;
+			}
+		}
+	}
+}
+
 void UFlowNode::TriggerInput(const FConnectedPin& ConnectedPin, const bool bForcedActivation /*= false*/)
 {
 	if (InputPins.Contains(ConnectedPin.PinName))
@@ -362,17 +377,6 @@ void UFlowNode::TriggerInput(const FConnectedPin& ConnectedPin, const bool bForc
 		LogError(FString::Printf(TEXT("Input Pin name %s invalid"), *ConnectedPin.PinName.ToString()));
 #endif // UE_BUILD_SHIPPING
 		return;
-	}
-
-	if (ConnectedPin.PinProperty.IsValid())
-	{
-		for (TFieldIterator<FProperty> PropertyIterator(GetClass()); PropertyIterator; ++PropertyIterator)
-		{
-			if (FlowPropertyHelpers::SetPropertyValue(this, ConnectedPin, *PropertyIterator))
-			{
-				break;
-			}
-		}
 	}
 
 	ExecuteInput(ConnectedPin.PinName);
@@ -418,28 +422,32 @@ void UFlowNode::TriggerOutput(const FName& PinName, const bool bFinish /*= false
 		LogError(FString::Printf(TEXT("Output Pin name %s invalid"), *PinName.ToString()));
 	}
 #endif // UE_BUILD_SHIPPING
-
+	
 	// call the next node
 	if (OutputPins.Contains(PinName) && Connections.Contains(PinName))
 	{
 		const TMultiMap<TWeakObjectPtr<UObject>, FFlowInputOutputPin>& Outputs = GetOutputProperties();
-		FFlowInputOutputPin PinProperty;
+		TArray<FFlowInputOutputPin> PropertyPins;
 		for (const auto& It : Outputs)
 		{
 			FConnectedPin FlowOutputPin = GetConnection(It.Value.OutputProperty->GetFName());
-			PinProperty = FlowOutputPin.PinProperty;
-			if (FlowOutputPin.PinProperty.IsValid())
+			FFlowInputOutputPin PinProperty = FlowOutputPin.PinProperty;
+			if (PinProperty.IsValid())
 			{
 				const UFlowNode* LinkedNode = GetFlowAsset()->Nodes.FindRef(FlowOutputPin.PinProperty.InputNodeGuid);
 				const UFlowNode* OutputNode = GetFlowAsset()->Nodes.FindRef(FlowOutputPin.PinProperty.OutputNodeGuid);
 				PinProperty.InputProperty = LinkedNode->FindInputPropertyByPinName(FlowOutputPin.PinProperty.InputPinName);
 				PinProperty.OutputProperty = OutputNode->FindInputPropertyByPinName(FlowOutputPin.PinProperty.OutputPinName);
-				break;
+				PropertyPins.Add(PinProperty);
 			}
 		}
 
 		FConnectedPin FlowPin = GetConnection(PinName);
-		FlowPin.PinProperty = PinProperty;
+		if(PropertyPins.Num())
+		{
+			GetFlowAsset()->UpdateProperties(FlowPin.NodeGuid, PropertyPins);
+		}
+
 		GetFlowAsset()->TriggerInput(FlowPin);
 	}
 }
@@ -554,10 +562,11 @@ AActor* UFlowNode::GetActorToFocus()
 }
 #endif
 
-const TMultiMap<TWeakObjectPtr<UObject>, FFlowInputOutputPin> UFlowNode::GetInputProperties() const
+const TMultiMap<TWeakObjectPtr<UObject>, FFlowInputOutputPin> UFlowNode::GetInputProperties()
 {
 	TMultiMap<TWeakObjectPtr<UObject>, FFlowInputOutputPin> Properties;
-	for (TFieldIterator<FProperty> PropertyIterator(GetVariableHolder()); PropertyIterator; ++PropertyIterator)
+	UObject* VariableHolder = GetVariableHolder();
+	for (TFieldIterator<FProperty> PropertyIterator(VariableHolder->GetClass()); PropertyIterator; ++PropertyIterator)
 	{
 		FProperty* Property = *PropertyIterator;
 		if (FlowPropertyHelpers::IsPropertyExposedAsInput(Property))
@@ -568,7 +577,7 @@ const TMultiMap<TWeakObjectPtr<UObject>, FFlowInputOutputPin> UFlowNode::GetInpu
 				FFlowInputOutputPin PropertyToAdd = FFlowInputOutputPin(Property, nullptr);
 				PropertyToAdd.InputPinName = Property->GetFName();
 				PropertyToAdd.PinTooltip = Property->GetToolTipText(true).ToString();
-				Properties.Add(const_cast<UFlowNode*>(this), PropertyToAdd);
+				Properties.Add(VariableHolder, PropertyToAdd);
 			}
 			else
 			{
@@ -586,7 +595,7 @@ const TMultiMap<TWeakObjectPtr<UObject>, FFlowInputOutputPin> UFlowNode::GetInpu
 					FFlowInputOutputPin PropertyToAdd = FFlowInputOutputPin(Property, nullptr);
 					PropertyToAdd.InputPinName = Property->GetFName();
 					PropertyToAdd.PinTooltip = Property->GetToolTipText(true).ToString();
-					Properties.Add(const_cast<UFlowNode*>(this), PropertyToAdd);
+					Properties.Add(VariableHolder, PropertyToAdd);
 				}
 			}
 		}
@@ -595,10 +604,11 @@ const TMultiMap<TWeakObjectPtr<UObject>, FFlowInputOutputPin> UFlowNode::GetInpu
 	return Properties;
 }
 
-const TMultiMap<TWeakObjectPtr<UObject>, FFlowInputOutputPin> UFlowNode::GetOutputProperties() const
+const TMultiMap<TWeakObjectPtr<UObject>, FFlowInputOutputPin> UFlowNode::GetOutputProperties()
 {
 	TMultiMap<TWeakObjectPtr<UObject>, FFlowInputOutputPin> Properties;
-	for (TFieldIterator<FProperty> PropertyIterator(GetClass()); PropertyIterator; ++PropertyIterator)
+	UObject* VariableHolder = GetVariableHolder();
+	for (TFieldIterator<FProperty> PropertyIterator(VariableHolder->GetClass()); PropertyIterator; ++PropertyIterator)
 	{
 		FProperty* Property = *PropertyIterator;
 		if (FlowPropertyHelpers::IsPropertyExposedAsOutput(Property))
@@ -609,7 +619,7 @@ const TMultiMap<TWeakObjectPtr<UObject>, FFlowInputOutputPin> UFlowNode::GetOutp
 				FFlowInputOutputPin PropertyToAdd = FFlowInputOutputPin(nullptr, Property);
 				PropertyToAdd.OutputPinName = Property->GetFName();
 				PropertyToAdd.PinTooltip = Property->GetToolTipText(true).ToString();
-				Properties.Add(const_cast<UFlowNode*>(this), PropertyToAdd);
+				Properties.Add(VariableHolder, PropertyToAdd);
 			}
 			else
 			{
@@ -627,7 +637,7 @@ const TMultiMap<TWeakObjectPtr<UObject>, FFlowInputOutputPin> UFlowNode::GetOutp
 					FFlowInputOutputPin PropertyToAdd = FFlowInputOutputPin(nullptr, Property);
 					PropertyToAdd.OutputPinName = Property->GetFName();
 					PropertyToAdd.PinTooltip = Property->GetToolTipText(true).ToString();
-					Properties.Add(const_cast<UFlowNode*>(this), PropertyToAdd);
+					Properties.Add(VariableHolder, PropertyToAdd);
 				}
 			}
 		}
@@ -664,9 +674,9 @@ FProperty* UFlowNode::FindOutputPropertyByPinName(const FName& InPinName) const
 	return nullptr;
 }
 
-UClass* UFlowNode::GetVariableHolder() const
+UObject* UFlowNode::GetVariableHolder()
 {
-	return GetClass();
+	return this;
 }
 
 FString UFlowNode::GetIdentityTagDescription(const FGameplayTag& Tag)

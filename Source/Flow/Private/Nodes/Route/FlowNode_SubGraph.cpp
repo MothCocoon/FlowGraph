@@ -144,20 +144,20 @@ TArray<FName> UFlowNode_SubGraph::GetContextOutputs()
 	return EventNames;
 }
 
-UClass* UFlowNode_SubGraph::GetVariableHolder() const
+UObject* UFlowNode_SubGraph::GetVariableHolder()
 {
 	if (Asset.IsNull())
 	{
 		return Super::GetVariableHolder();
 	}
 
-	const UFlowAsset* FlowAsset = Asset.LoadSynchronous();
+	UFlowAsset* FlowAsset = Asset.LoadSynchronous();
 	if (!IsValid(FlowAsset))
 	{
 		return Super::GetVariableHolder();
 	}
 
-	return FlowAsset->GetClass();
+	return FlowAsset;
 }
 
 void UFlowNode_SubGraph::PostLoad()

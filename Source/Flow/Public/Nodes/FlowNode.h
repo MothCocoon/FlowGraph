@@ -239,6 +239,8 @@ protected:
 	UFUNCTION(BlueprintImplementableEvent, Category = "FlowNode", meta = (DisplayName = "FlushContent"))
 	void K2_FlushContent();
 
+	void SetProperties(TArray<FFlowInputOutputPin> Pins);
+
 	// Trigger execution of input pin
 	void TriggerInput(const FConnectedPin& ConnectedPin, const bool bForcedActivation = false);
 
@@ -330,12 +332,12 @@ protected:
 		return Cast<T>(AssetPtr.Get());
 	}
 
-	virtual const TMultiMap<TWeakObjectPtr<UObject>, FFlowInputOutputPin> GetInputProperties() const;
-	virtual const TMultiMap<TWeakObjectPtr<UObject>, FFlowInputOutputPin> GetOutputProperties() const;
+	virtual const TMultiMap<TWeakObjectPtr<UObject>, FFlowInputOutputPin> GetInputProperties();
+	virtual const TMultiMap<TWeakObjectPtr<UObject>, FFlowInputOutputPin> GetOutputProperties();
 
-	virtual UClass* GetVariableHolder() const;
-	
 public:
+	virtual UObject* GetVariableHolder();
+	
 	virtual FProperty* FindInputPropertyByPinName(const FName& InPinName) const;
 	virtual FProperty* FindOutputPropertyByPinName(const FName& InPinName) const;
 

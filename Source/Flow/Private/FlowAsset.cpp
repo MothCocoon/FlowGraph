@@ -403,6 +403,14 @@ void UFlowAsset::TriggerCustomOutput(const FName& EventName) const
 	NodeOwningThisAssetInstance->TriggerOutput(EventName);
 }
 
+void UFlowAsset::UpdateProperties(const FGuid& NodeGuid, const TArray<FFlowInputOutputPin> Pins) const
+{
+	if (UFlowNode* Node = Nodes.FindRef(NodeGuid))
+	{
+		Node->SetProperties(Pins);
+	}
+}
+
 void UFlowAsset::TriggerInput(const FConnectedPin& InConnectedPin)
 {
 	if (UFlowNode* Node = Nodes.FindRef(InConnectedPin.NodeGuid))
