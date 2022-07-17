@@ -6,6 +6,7 @@
 
 #include "Nodes/FlowGraphNode.h"
 #include "Nodes/FlowNode.h"
+#include "UObject/WeakFieldPtr.h"
 #include "FlowGraphSchema_Actions.generated.h"
 
 /** Action to add a node to the graph */
@@ -27,19 +28,19 @@ struct FLOWEDITOR_API FFlowGraphSchemaAction_NewNode : public FEdGraphSchemaActi
 
 	FFlowGraphSchemaAction_NewNode()
 		: FEdGraphSchemaAction()
-		, NodeClass(nullptr)
+		  , NodeClass(nullptr)
 	{
 	}
 
 	FFlowGraphSchemaAction_NewNode(UClass* Node)
 		: FEdGraphSchemaAction()
-		, NodeClass(Node)
+		  , NodeClass(Node)
 	{
 	}
 
 	FFlowGraphSchemaAction_NewNode(const UFlowNode* Node)
 		: FEdGraphSchemaAction(FText::FromString(Node->GetNodeCategory()), Node->GetNodeTitle(), Node->GetNodeToolTip(), 0)
-		, NodeClass(Node->GetClass())
+		  , NodeClass(Node->GetClass())
 	{
 	}
 
@@ -99,4 +100,39 @@ struct FLOWEDITOR_API FFlowGraphSchemaAction_NewComment : public FEdGraphSchemaA
 	// FEdGraphSchemaAction
 	virtual UEdGraphNode* PerformAction(class UEdGraph* ParentGraph, UEdGraphPin* FromPin, const FVector2D Location, bool bSelectNewNode = true) override;
 	// --
+};
+
+/** Action to create new property node */
+USTRUCT()
+struct FLOWEDITOR_API FFlowGraphSchemaAction_NewPropertyNode : public FEdGraphSchemaAction
+{
+	GENERATED_USTRUCT_BODY()
+
+	TWeakFieldPtr<FProperty> Property;
+
+	static FName StaticGetTypeId()
+	{
+		static FName Type("FFlowGraphSchemaAction_NewPropertyNode");
+		return Type;
+	}
+
+	virtual FName GetTypeId() const override { return StaticGetTypeId(); }
+
+	FFlowGraphSchemaAction_NewPropertyNode()
+		: FEdGraphSchemaAction(),
+		  Property(nullptr)
+	{
+	}
+
+	FFlowGraphSchemaAction_NewPropertyNode(FProperty* InProperty, FText InNodeCategory, const FString InMenuDesc, FText InToolTip)
+		: FEdGraphSchemaAction(MoveTemp(InNodeCategory), FText::FromString(InMenuDesc), MoveTemp(InToolTip), 0),
+		  Property(InProperty)
+	{
+	}
+
+	// FEdGraphSchemaAction
+	virtual UEdGraphNode* PerformAction(UEdGraph* ParentGraph, UEdGraphPin* FromPin, const FVector2D Location, bool bSelectNewNode = true) override;
+	// --
+
+	static UFlowGraphNode* CreateNode(UEdGraph* ParentGraph, UEdGraphPin* FromPin, FProperty* Property, const FVector2D Location, const bool bSelectNewNode = true);
 };

@@ -15,10 +15,11 @@
 #include "Nodes/Route/FlowNode_Reroute.h"
 
 #include "AssetRegistryModule.h"
+#include "FlowPropertyHelpers.h"
 #include "Developer/ToolMenus/Public/ToolMenus.h"
 #include "EdGraph/EdGraph.h"
 #include "ScopedTransaction.h"
-#include "UObject/UObjectIterator.h"
+#include "Nodes/Utils/FlowNode_PropertyGetter.h"
 
 #define LOCTEXT_NAMESPACE "FlowGraphSchema"
 
@@ -68,6 +69,8 @@ void UFlowGraphSchema::GetGraphContextActions(FGraphContextMenuBuilder& ContextM
 {
 	GetFlowNodeActions(ContextMenuBuilder, GetAssetClassDefaults(ContextMenuBuilder.CurrentGraph), FString());
 	GetCommentAction(ContextMenuBuilder, ContextMenuBuilder.CurrentGraph);
+
+	GetPropertyActions(ContextMenuBuilder);
 
 	if (!ContextMenuBuilder.FromPin && FFlowGraphUtils::GetFlowAssetEditor(ContextMenuBuilder.CurrentGraph)->CanPasteNodes())
 	{
@@ -145,7 +148,7 @@ static FText GetPinIncompatibilityReason(const UEdGraphPin* PinA, const UEdGraph
 			}
 		}
 	}
-	else if ((OutputType.PinCategory == UEdGraphSchema_K2::PC_Object))//|| (OutputType.PinCategory == UEdGraphSchema_K2::PC_Interface))
+	else if ((OutputType.PinCategory == UEdGraphSchema_K2::PC_Object)) //|| (OutputType.PinCategory == UEdGraphSchema_K2::PC_Interface))
 	{
 		if (InputType.PinCategory == UEdGraphSchema_K2::PC_Class)
 		{
@@ -425,6 +428,26 @@ void UFlowGraphSchema::GetCommentAction(FGraphActionMenuBuilder& ActionMenuBuild
 
 		const TSharedPtr<FFlowGraphSchemaAction_NewComment> NewAction(new FFlowGraphSchemaAction_NewComment(FText::GetEmpty(), MenuDescription, ToolTip, 0));
 		ActionMenuBuilder.AddAction(NewAction);
+	}
+}
+
+void UFlowGraphSchema::GetPropertyActions(FGraphContextMenuBuilder& ActionMenuBuilder)
+{
+	if (!ActionMenuBuilder.FromPin)
+	{
+		const TSharedPtr<FFlowAssetEditor> FlowAssetEditor = FFlowGraphUtils::GetFlowAssetEditor(ActionMenuBuilder.CurrentGraph);
+
+		UFlowAsset* FlowAsset = FlowAssetEditor->GetFlowAsset();
+
+		TMultiMap<TWeakObjectPtr<UObject>, FProperty*> Properties = FlowPropertyHelpers::GatherProperties(FlowAsset, FlowPropertyHelpers::IsPropertyExposedAsOutput);
+
+		for (const TTuple<TWeakObjectPtr<UObject>, FProperty*> Tuple : Properties)
+		{
+			const FText ToolTip = LOCTEXT("CreatePropertyToolTip", "Creates a property.");
+
+			const TSharedPtr<FFlowGraphSchemaAction_NewPropertyNode> NewAction(new FFlowGraphSchemaAction_NewPropertyNode(Tuple.Value, LOCTEXT("CreatePropertyCategory", "Variables"), Tuple.Value->GetAuthoredName(), ToolTip));
+			ActionMenuBuilder.AddAction(NewAction);
+		}
 	}
 }
 

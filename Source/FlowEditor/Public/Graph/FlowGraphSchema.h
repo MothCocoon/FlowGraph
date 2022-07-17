@@ -47,6 +47,7 @@ private:
 	static bool IsClassContained(const TArray<TSubclassOf<class UFlowNode>> Classes, const UClass* Class);
 	static void GetFlowNodeActions(FGraphActionMenuBuilder& ActionMenuBuilder, const UFlowAsset* AssetClassDefaults, const FString& CategoryName);
 	static void GetCommentAction(FGraphActionMenuBuilder& ActionMenuBuilder, const UEdGraph* CurrentGraph = nullptr);
+	static void GetPropertyActions(FGraphContextMenuBuilder& ActionMenuBuilder);
 
 	static bool IsFlowNodePlaceable(const UClass* Class);
 

@@ -229,7 +229,6 @@ private:
 	void TriggerCustomEvent(UFlowNode_SubGraph* Node, const FName& EventName);
 	void TriggerCustomOutput(const FName& EventName) const;
 
-	void UpdateProperties(const FGuid& NodeGuid, const TArray<FFlowInputOutputPin> Pins) const;
 	void TriggerInput(const FConnectedPin& InConnectedPin);
 
 	void FinishNode(UFlowNode* Node);

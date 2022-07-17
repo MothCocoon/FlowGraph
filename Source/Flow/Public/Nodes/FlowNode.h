@@ -166,13 +166,18 @@ protected:
 // Connections to other nodes
 
 private:
-	// Map outputs to the connected node and input pin
+	// Map outputs to the connected node and input pin in outgoing direction
 	UPROPERTY()
-	TMap<FName, FConnectedPin> Connections;
+	TMap<FName, FConnectedPin> OutgoingConnections;
+	// Map outputs to the connected node and input pin in ingoing direction
+	UPROPERTY()
+	TMap<FName, FConnectedPin> IngoingConnections;
 
 public:
-	void SetConnections(const TMap<FName, FConnectedPin>& InConnections) { Connections = InConnections; }
-	FConnectedPin GetConnection(const FName OutputName) const { return Connections.FindRef(OutputName); }
+	void SetOutgoingConnections(const TMap<FName, FConnectedPin>& InConnections) { OutgoingConnections = InConnections; }
+	FConnectedPin GetOutgoingConnection(const FName OutputName) const { return OutgoingConnections.FindRef(OutputName); }
+	void SetIngoingConnections(const TMap<FName, FConnectedPin>& InConnections) { IngoingConnections = InConnections; }
+	FConnectedPin GetIngoingConnection(const FName OutputName) const { return IngoingConnections.FindRef(OutputName); }
 	TSet<UFlowNode*> GetConnectedNodes() const;
 
 	UFUNCTION(BlueprintPure, Category= "FlowNode")
@@ -338,8 +343,8 @@ protected:
 public:
 	virtual UObject* GetVariableHolder();
 	
-	virtual FProperty* FindInputPropertyByPinName(const FName& InPinName) const;
-	virtual FProperty* FindOutputPropertyByPinName(const FName& InPinName) const;
+	virtual FProperty* FindInputPropertyByPinName(const FName& InPinName);
+	virtual FProperty* FindOutputPropertyByPinName(const FName& InPinName);
 
 	UFUNCTION(BlueprintPure, Category = "FlowNode")
 	static FString GetIdentityTagDescription(const FGameplayTag& Tag);

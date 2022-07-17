@@ -17,13 +17,13 @@
 UFlowAsset::UFlowAsset(const FObjectInitializer& ObjectInitializer)
 	: Super(ObjectInitializer)
 #if WITH_EDITOR
-	, FlowGraph(nullptr)
+	  , FlowGraph(nullptr)
 #endif
-	, AllowedNodeClasses({UFlowNode::StaticClass()})
-	, bStartNodePlacedAsGhostNode(false)
-	, TemplateAsset(nullptr)
-	, StartNode(nullptr)
-	, FinishPolicy(EFlowFinishPolicy::Keep)
+	  , AllowedNodeClasses({UFlowNode::StaticClass()})
+	  , bStartNodePlacedAsGhostNode(false)
+	  , TemplateAsset(nullptr)
+	  , StartNode(nullptr)
+	  , FinishPolicy(EFlowFinishPolicy::Keep)
 {
 }
 
@@ -129,7 +129,8 @@ void UFlowAsset::HarvestNodeConnections()
 	for (const TPair<FGuid, UFlowNode*>& Pair : Nodes)
 	{
 		UFlowNode* Node = Pair.Value;
-		TMap<FName, FConnectedPin> FoundConnections;
+		TMap<FName, FConnectedPin> OutgoingConnections;
+		TMap<FName, FConnectedPin> IngoingConnections;
 
 		for (const UEdGraphPin* ThisPin : Node->GetGraphNode()->Pins)
 		{
@@ -144,7 +145,20 @@ void UFlowAsset::HarvestNodeConnections()
 						PinProperty = FFlowInputOutputPin(LinkedPin->PinName, ThisPin->PinName, LinkedNode->NodeGuid, Node->NodeGuid);
 					}
 
-					FoundConnections.Add(ThisPin->PinName, FConnectedPin(LinkedNode->NodeGuid, LinkedPin->PinName, PinProperty));
+					OutgoingConnections.Add(ThisPin->PinName, FConnectedPin(LinkedNode->NodeGuid, LinkedPin->PinName, PinProperty));
+				}
+			}
+
+			if (ThisPin->Direction == EGPD_Input && ThisPin->LinkedTo.Num() > 0)
+			{
+				if (const UEdGraphPin* LinkedPin = ThisPin->LinkedTo[0])
+				{
+					const UEdGraphNode* LinkedNode = LinkedPin->GetOwningNode();
+					if (ThisPin->PinType.PinCategory != UEdGraphSchema_K2::PC_Exec)
+					{
+						FFlowInputOutputPin PinProperty = FFlowInputOutputPin(ThisPin->PinName, LinkedPin->PinName, Node->NodeGuid, LinkedNode->NodeGuid);
+						IngoingConnections.Add(ThisPin->PinName, FConnectedPin(Node->NodeGuid, ThisPin->PinName, PinProperty));
+					}
 				}
 			}
 		}
@@ -153,15 +167,42 @@ void UFlowAsset::HarvestNodeConnections()
 		// Optimization: we need check it only until the first node would be marked dirty, as this already marks Flow Asset package dirty
 		if (bGraphDirty == false)
 		{
-			if (FoundConnections.Num() != Node->Connections.Num())
+			if (OutgoingConnections.Num() != Node->OutgoingConnections.Num())
 			{
 				bGraphDirty = true;
 			}
 			else
 			{
-				for (const TPair<FName, FConnectedPin>& FoundConnection : FoundConnections)
+				for (const TPair<FName, FConnectedPin>& FoundConnection : OutgoingConnections)
 				{
-					if (const FConnectedPin* OldConnection = Node->Connections.Find(FoundConnection.Key))
+					if (const FConnectedPin* OldConnection = Node->OutgoingConnections.Find(FoundConnection.Key))
+					{
+						if (FoundConnection.Value != *OldConnection)
+						{
+							bGraphDirty = true;
+							break;
+						}
+					}
+					else
+					{
+						bGraphDirty = true;
+						break;
+					}
+				}
+			}
+		}
+
+		if(bGraphDirty == false)
+		{
+			if (IngoingConnections.Num() != Node->IngoingConnections.Num())
+			{
+				bGraphDirty = true;
+			}
+			else
+			{
+				for (const TPair<FName, FConnectedPin>& FoundConnection : IngoingConnections)
+				{
+					if (const FConnectedPin* OldConnection = Node->IngoingConnections.Find(FoundConnection.Key))
 					{
 						if (FoundConnection.Value != *OldConnection)
 						{
@@ -183,7 +224,8 @@ void UFlowAsset::HarvestNodeConnections()
 			Node->SetFlags(RF_Transactional);
 			Node->Modify();
 
-			Node->SetConnections(FoundConnections);
+			Node->SetOutgoingConnections(OutgoingConnections);
+			Node->SetIngoingConnections(IngoingConnections);
 			Node->PostEditChange();
 		}
 	}
@@ -401,14 +443,6 @@ void UFlowAsset::TriggerCustomEvent(UFlowNode_SubGraph* Node, const FName& Event
 void UFlowAsset::TriggerCustomOutput(const FName& EventName) const
 {
 	NodeOwningThisAssetInstance->TriggerOutput(EventName);
-}
-
-void UFlowAsset::UpdateProperties(const FGuid& NodeGuid, const TArray<FFlowInputOutputPin> Pins) const
-{
-	if (UFlowNode* Node = Nodes.FindRef(NodeGuid))
-	{
-		Node->SetProperties(Pins);
-	}
 }
 
 void UFlowAsset::TriggerInput(const FConnectedPin& InConnectedPin)

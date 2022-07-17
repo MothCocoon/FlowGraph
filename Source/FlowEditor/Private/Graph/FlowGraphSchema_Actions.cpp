@@ -17,6 +17,8 @@
 #include "Editor.h"
 #include "Layout/SlateRect.h"
 #include "ScopedTransaction.h"
+#include "Graph/Nodes/FlowGraphNode_PropertyGetter.h"
+#include "Nodes/Utils/FlowNode_PropertyGetter.h"
 
 #define LOCTEXT_NAMESPACE "FlowGraphSchema_Actions"
 
@@ -118,6 +120,71 @@ UEdGraphNode* FFlowGraphSchemaAction_NewComment::PerformAction(class UEdGraph* P
 	}
 
 	return FEdGraphSchemaAction_NewNode::SpawnNodeFromTemplate<UEdGraphNode_Comment>(ParentGraph, CommentTemplate, SpawnLocation);
+}
+
+/////////////////////////////////////////////////////
+// Property Node
+
+UEdGraphNode* FFlowGraphSchemaAction_NewPropertyNode::PerformAction(UEdGraph* ParentGraph, UEdGraphPin* FromPin, const FVector2D Location, bool bSelectNewNode)
+{
+	// prevent adding new nodes while playing
+	if (GEditor->PlayWorld != nullptr)
+	{
+		return nullptr;
+	}
+
+	if (Property.IsValid())
+	{
+		return CreateNode(ParentGraph, FromPin, Property.Get(), Location, bSelectNewNode);
+	}
+
+	return nullptr;
+}
+
+UFlowGraphNode* FFlowGraphSchemaAction_NewPropertyNode::CreateNode(UEdGraph* ParentGraph, UEdGraphPin* FromPin, FProperty* Property, const FVector2D Location, const bool bSelectNewNode)
+{
+	check(Property);
+
+	const FScopedTransaction Transaction(LOCTEXT("AddNode", "Add Node"));
+
+	ParentGraph->Modify();
+	if (FromPin)
+	{
+		FromPin->Modify();
+	}
+
+	UFlowAsset* FlowAsset = CastChecked<UFlowGraph>(ParentGraph)->GetFlowAsset();
+	FlowAsset->Modify();
+
+	UFlowGraphNode_PropertyGetter* NewGraphNode = NewObject<UFlowGraphNode_PropertyGetter>(ParentGraph, UFlowGraphNode_PropertyGetter::StaticClass(), NAME_None, RF_Transactional);
+
+	NewGraphNode->CreateNewGuid();
+
+	NewGraphNode->NodePosX = Location.X;
+	NewGraphNode->NodePosY = Location.Y;
+	ParentGraph->AddNode(NewGraphNode, false, bSelectNewNode);
+
+	UFlowNode_PropertyGetter* NewNode = Cast<UFlowNode_PropertyGetter>(FlowAsset->CreateNode(UFlowNode_PropertyGetter::StaticClass(), NewGraphNode));
+	NewNode->SetProperty(Property);
+	NewGraphNode->SetFlowNode(NewNode);
+
+	NewGraphNode->PostPlacedNewNode();
+	NewGraphNode->AllocateDefaultPins();
+
+	NewGraphNode->AutowireNewNode(FromPin);
+	
+	ParentGraph->NotifyGraphChanged();
+
+	const TSharedPtr<FFlowAssetEditor> FlowEditor = FFlowGraphUtils::GetFlowAssetEditor(ParentGraph);
+	if (FlowEditor.IsValid())
+	{
+		FlowEditor->SelectSingleNode(NewGraphNode);
+	}
+
+	FlowAsset->PostEditChange();
+	FlowAsset->MarkPackageDirty();
+
+	return NewGraphNode;
 }
 
 #undef LOCTEXT_NAMESPACE

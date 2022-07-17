@@ -29,13 +29,13 @@ FString UFlowNode::NoActorsFound = TEXT("No actors found");
 UFlowNode::UFlowNode(const FObjectInitializer& ObjectInitializer)
 	: Super(ObjectInitializer)
 #if WITH_EDITOR
-	, GraphNode(nullptr)
-	, bCanDelete(true)
-	, bCanDuplicate(true)
-	, bNodeDeprecated(false)
+	  , GraphNode(nullptr)
+	  , bCanDelete(true)
+	  , bCanDuplicate(true)
+	  , bNodeDeprecated(false)
 #endif
-	, bPreloaded(false)
-	, ActivationState(EFlowNodeState::NeverActivated)
+	  , bPreloaded(false)
+	  , ActivationState(EFlowNodeState::NeverActivated)
 {
 #if WITH_EDITOR
 	Category = TEXT("Uncategorized");
@@ -238,7 +238,7 @@ void UFlowNode::RemoveUserOutput()
 TSet<UFlowNode*> UFlowNode::GetConnectedNodes() const
 {
 	TSet<UFlowNode*> Result;
-	for (const TPair<FName, FConnectedPin>& Connection : Connections)
+	for (const TPair<FName, FConnectedPin>& Connection : OutgoingConnections)
 	{
 		Result.Emplace(GetFlowAsset()->GetNode(Connection.Value.NodeGuid));
 	}
@@ -253,7 +253,7 @@ bool UFlowNode::IsInputConnected(const FName& PinName) const
 		{
 			if (Pair.Value)
 			{
-				for (const TPair<FName, FConnectedPin>& Connection : Pair.Value->Connections)
+				for (const TPair<FName, FConnectedPin>& Connection : Pair.Value->OutgoingConnections)
 				{
 					if (Connection.Value.NodeGuid == NodeGuid && Connection.Value.PinName == PinName)
 					{
@@ -269,7 +269,7 @@ bool UFlowNode::IsInputConnected(const FName& PinName) const
 
 bool UFlowNode::IsOutputConnected(const FName& PinName) const
 {
-	return OutputPins.Contains(PinName) && Connections.Contains(PinName);
+	return OutputPins.Contains(PinName) && OutgoingConnections.Contains(PinName);
 }
 
 void UFlowNode::RecursiveFindNodesByClass(UFlowNode* Node, const TSubclassOf<UFlowNode> Class, uint8 Depth, TArray<UFlowNode*>& OutNodes)
@@ -339,13 +339,14 @@ void UFlowNode::FlushContent()
 
 void UFlowNode::SetProperties(TArray<FFlowInputOutputPin> Pins)
 {
+	const UClass* Class = GetVariableHolder()->GetClass();
+
 	for (FFlowInputOutputPin PropertyPin : Pins)
 	{
-		for (TFieldIterator<FProperty> PropertyIterator(GetClass()); PropertyIterator; ++PropertyIterator)
+		for (TFieldIterator<FProperty> PropertyIterator(Class); PropertyIterator; ++PropertyIterator)
 		{
 			if (FlowPropertyHelpers::SetPropertyValue(this, PropertyPin, *PropertyIterator))
 			{
-				UE_LOG(LogFlow, Log, TEXT("Set Property %s"), *PropertyPin.InputPinName.ToString())
 				break;
 			}
 		}
@@ -377,6 +378,27 @@ void UFlowNode::TriggerInput(const FConnectedPin& ConnectedPin, const bool bForc
 		LogError(FString::Printf(TEXT("Input Pin name %s invalid"), *ConnectedPin.PinName.ToString()));
 #endif // UE_BUILD_SHIPPING
 		return;
+	}
+
+	const TMultiMap<TWeakObjectPtr<UObject>, FFlowInputOutputPin>& Outputs = GetInputProperties();
+	TArray<FFlowInputOutputPin> PropertyPins;
+	for (const auto& It : Outputs)
+	{
+		FConnectedPin FlowOutputPin = GetIngoingConnection(It.Value.InputProperty->GetFName());
+		FFlowInputOutputPin PinProperty = FlowOutputPin.PinProperty;
+		if (PinProperty.IsValid())
+		{
+			UFlowNode* LinkedNode = GetFlowAsset()->Nodes.FindRef(FlowOutputPin.PinProperty.InputNodeGuid);
+			UFlowNode* OutputNode = GetFlowAsset()->Nodes.FindRef(FlowOutputPin.PinProperty.OutputNodeGuid);
+			PinProperty.InputProperty = LinkedNode->FindInputPropertyByPinName(FlowOutputPin.PinProperty.InputPinName);
+			PinProperty.OutputProperty = OutputNode->FindInputPropertyByPinName(FlowOutputPin.PinProperty.OutputPinName);
+			PropertyPins.Add(PinProperty);
+		}
+	}
+
+	if (PropertyPins.Num())
+	{
+		SetProperties(PropertyPins);
 	}
 
 	ExecuteInput(ConnectedPin.PinName);
@@ -422,30 +444,30 @@ void UFlowNode::TriggerOutput(const FName& PinName, const bool bFinish /*= false
 		LogError(FString::Printf(TEXT("Output Pin name %s invalid"), *PinName.ToString()));
 	}
 #endif // UE_BUILD_SHIPPING
-	
+
 	// call the next node
-	if (OutputPins.Contains(PinName) && Connections.Contains(PinName))
+	if (OutputPins.Contains(PinName) && OutgoingConnections.Contains(PinName))
 	{
+		FConnectedPin FlowPin = GetOutgoingConnection(PinName);
+
 		const TMultiMap<TWeakObjectPtr<UObject>, FFlowInputOutputPin>& Outputs = GetOutputProperties();
 		TArray<FFlowInputOutputPin> PropertyPins;
 		for (const auto& It : Outputs)
 		{
-			FConnectedPin FlowOutputPin = GetConnection(It.Value.OutputProperty->GetFName());
+			FConnectedPin FlowOutputPin = GetOutgoingConnection(It.Value.OutputProperty->GetFName());
 			FFlowInputOutputPin PinProperty = FlowOutputPin.PinProperty;
 			if (PinProperty.IsValid())
 			{
-				const UFlowNode* LinkedNode = GetFlowAsset()->Nodes.FindRef(FlowOutputPin.PinProperty.InputNodeGuid);
-				const UFlowNode* OutputNode = GetFlowAsset()->Nodes.FindRef(FlowOutputPin.PinProperty.OutputNodeGuid);
+				UFlowNode* LinkedNode = GetFlowAsset()->Nodes.FindRef(FlowOutputPin.PinProperty.InputNodeGuid);
+				UFlowNode* OutputNode = GetFlowAsset()->Nodes.FindRef(FlowOutputPin.PinProperty.OutputNodeGuid);
 				PinProperty.InputProperty = LinkedNode->FindInputPropertyByPinName(FlowOutputPin.PinProperty.InputPinName);
 				PinProperty.OutputProperty = OutputNode->FindInputPropertyByPinName(FlowOutputPin.PinProperty.OutputPinName);
 				PropertyPins.Add(PinProperty);
 			}
 		}
-
-		FConnectedPin FlowPin = GetConnection(PinName);
-		if(PropertyPins.Num())
+		if (PropertyPins.Num())
 		{
-			GetFlowAsset()->UpdateProperties(FlowPin.NodeGuid, PropertyPins);
+			//SetProperties(PropertyPins);
 		}
 
 		GetFlowAsset()->TriggerInput(FlowPin);
@@ -532,12 +554,12 @@ TArray<FPinRecord> UFlowNode::GetPinRecords(const FName& PinName, const EEdGraph
 {
 	switch (PinDirection)
 	{
-		case EGPD_Input:
-			return InputRecords.FindRef(PinName);
-		case EGPD_Output:
-			return OutputRecords.FindRef(PinName);
-		default:
-			return TArray<FPinRecord>();
+	case EGPD_Input:
+		return InputRecords.FindRef(PinName);
+	case EGPD_Output:
+		return OutputRecords.FindRef(PinName);
+	default:
+		return TArray<FPinRecord>();
 	}
 }
 
@@ -646,9 +668,9 @@ const TMultiMap<TWeakObjectPtr<UObject>, FFlowInputOutputPin> UFlowNode::GetOutp
 	return Properties;
 }
 
-FProperty* UFlowNode::FindInputPropertyByPinName(const FName& InPinName) const
+FProperty* UFlowNode::FindInputPropertyByPinName(const FName& InPinName)
 {
-	for (TFieldIterator<FProperty> PropIt(GetClass()); PropIt; ++PropIt)
+	for (TFieldIterator<FProperty> PropIt(GetVariableHolder()->GetClass()); PropIt; ++PropIt)
 	{
 		FProperty* Property = *PropIt;
 		if (FlowPropertyHelpers::IsPropertyExposedAsInput(Property) && Property->GetFName().IsEqual(InPinName))
@@ -660,9 +682,9 @@ FProperty* UFlowNode::FindInputPropertyByPinName(const FName& InPinName) const
 	return nullptr;
 }
 
-FProperty* UFlowNode::FindOutputPropertyByPinName(const FName& InPinName) const
+FProperty* UFlowNode::FindOutputPropertyByPinName(const FName& InPinName)
 {
-	for (TFieldIterator<FProperty> PropIt(GetClass()); PropIt; ++PropIt)
+	for (TFieldIterator<FProperty> PropIt(GetVariableHolder()->GetClass()); PropIt; ++PropIt)
 	{
 		FProperty* Property = *PropIt;
 		if (FlowPropertyHelpers::IsPropertyExposedAsOutput(Property) && Property->GetFName().IsEqual(InPinName))
