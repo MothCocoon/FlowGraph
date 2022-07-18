@@ -12,11 +12,11 @@ class UFlowNode;
  *
  */
 UCLASS(Config = Game, defaultconfig, meta = (DisplayName = "Flow"))
-class UFlowSettings final : public UDeveloperSettings
+class FLOW_API UFlowSettings final : public UDeveloperSettings
 {
 	GENERATED_UCLASS_BODY()
 
-	static UFlowSettings* Get() { return CastChecked<UFlowSettings>(UFlowSettings::StaticClass()->GetDefaultObject()); }
+	static UFlowSettings* Get() { return CastChecked<UFlowSettings>(StaticClass()->GetDefaultObject()); }
 
 	// Set if to False, if you don't want to create client-side Flow Graphs
 	// And you don't access to the Flow Component registry on clients
@@ -29,4 +29,17 @@ class UFlowSettings final : public UDeveloperSettings
 	
 	UPROPERTY(Config, EditAnywhere, Category = "SaveSystem")
 	bool bWarnAboutMissingIdentityTags;
+
+	/**
+	 * If set, Only Properties with the corresponding Meta-Tag set will treated as inputs or outputs.
+	 * Only works for c++
+	 */
+	UPROPERTY(Config, EditAnywhere, Category="Properties")
+	bool bUseCustomMetaTagsForInputOutputs = false;
+	
+	UPROPERTY(Config, EditAnywhere, Category="Properties", meta=(DisplayName="Input Meta Tag", EditCondition="bUseCustomMetaTagsForInputOutputs"))
+	FName PropertyInputMetaTag = FName("FlowInput");
+
+	UPROPERTY(Config, EditAnywhere, Category="Properties", meta=(DisplayName="Output Meta Tag", EditCondition="bUseCustomMetaTagsForInputOutputs"))
+	FName PropertyOutputMetaTag = FName("FlowOutput");
 };

@@ -4,7 +4,7 @@
 #include "Nodes/FlowNode.h"
 #include "Nodes/FlowPin.h"
 #include "FlowAsset.h"
-#include "FlowModule.h"
+#include "FlowSettings.h"
 
 #define FLOW_PROPERTY_IS(PropertyRef, Type)							PropertyRef->IsA(F##Type##Property::StaticClass())
 
@@ -54,6 +54,11 @@ namespace FlowPropertyHelpers
 	{
 		if (Property && IsPropertySupported(Property))
 		{
+			if (UFlowSettings::Get()->bUseCustomMetaTagsForInputOutputs)
+			{
+				return Property->HasMetaData(UFlowSettings::Get()->PropertyInputMetaTag);
+			}
+
 			return !Property->HasAnyPropertyFlags(CPF_DisableEditOnInstance | CPF_BlueprintReadOnly) && Property->HasAllPropertyFlags(CPF_ExposeOnSpawn);
 		}
 
@@ -70,13 +75,18 @@ namespace FlowPropertyHelpers
 	{
 		if (Property && IsPropertySupported(Property))
 		{
+			if (UFlowSettings::Get()->bUseCustomMetaTagsForInputOutputs)
+			{
+				return Property->HasMetaData(UFlowSettings::Get()->PropertyOutputMetaTag);
+			}
+
 			return !Property->HasAnyPropertyFlags(CPF_DisableEditOnInstance) && Property->HasAnyPropertyFlags(CPF_BlueprintReadOnly | CPF_BlueprintVisible);
 		}
 
 		return false;
 	}
 
-	static bool SetPropertyValue(UFlowNode* TargetNode, const FFlowInputOutputPin& ConnectedPin, FProperty* Property)
+	static FORCEINLINE_DEBUGGABLE bool SetPropertyValue(UFlowNode* TargetNode, const FFlowInputOutputPin& ConnectedPin, FProperty* Property)
 	{
 		if (Property->GetFName().IsEqual(ConnectedPin.InputProperty->GetFName()))
 		{
@@ -148,9 +158,6 @@ namespace FlowPropertyHelpers
 			}
 			else if (FLOW_PROPERTY_IS(Property, Text))
 			{
-				FText InputValue = CastField<FTextProperty>(Property)->GetPropertyValue(Property->ContainerPtrToValuePtr<void>(InputVariableHolder));
-				FText OutputValue = CastField<FTextProperty>(OutputProperty)->GetPropertyValue(OutputProperty->ContainerPtrToValuePtr<void>(OutputVariableHolder));
-				UE_LOG(LogTemp, Warning, TEXT("Output %s -> Input %s"), *OutputValue.ToString(), *InputValue.ToString())
 				SET_PROPERTY_VALUE(FText);
 			}
 			else if (FLOW_PROPERTY_IS(Property, Name))
