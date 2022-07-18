@@ -19,6 +19,8 @@
 #include "Developer/ToolMenus/Public/ToolMenus.h"
 #include "EdGraph/EdGraph.h"
 #include "ScopedTransaction.h"
+#include "Graph/Nodes/FlowGraphNode_PropertyGetter.h"
+#include "Graph/Nodes/FlowGraphNode_PropertySetter.h"
 #include "Nodes/Utils/FlowNode_PropertyGetter.h"
 
 #define LOCTEXT_NAMESPACE "FlowGraphSchema"
@@ -445,8 +447,22 @@ void UFlowGraphSchema::GetPropertyActions(FGraphContextMenuBuilder& ActionMenuBu
 		{
 			const FText ToolTip = LOCTEXT("CreatePropertyToolTip", "Creates a property.");
 
-			const TSharedPtr<FFlowGraphSchemaAction_NewPropertyNode> NewAction(new FFlowGraphSchemaAction_NewPropertyNode(Tuple.Value, LOCTEXT("CreatePropertyCategory", "Variables"), Tuple.Value->GetAuthoredName(), ToolTip));
-			ActionMenuBuilder.AddAction(NewAction);
+			FFormatOrderedArguments CategoryArguments;
+			CategoryArguments.Add(FFormatArgumentValue(FText::FromString(Tuple.Value->GetAuthoredName())));
+			const FText Category = FText::Format(LOCTEXT("CreatePropertyCategory", "Variables|{0}"), CategoryArguments);
+
+			FFormatOrderedArguments GetterNameArguments;
+			GetterNameArguments.Add(FFormatArgumentValue(FText::FromString(Tuple.Value->GetAuthoredName())));
+			const FText GetterName = FText::Format(LOCTEXT("CreatePropertyGetterName", "Get {0}"), GetterNameArguments);
+
+			FFormatOrderedArguments SetterNameArguments;
+			SetterNameArguments.Add(FFormatArgumentValue(FText::FromString(Tuple.Value->GetAuthoredName())));
+			const FText SetterName = FText::Format(LOCTEXT("CreatePropertySetterName", "Set {0}"), SetterNameArguments);
+
+			const TSharedPtr<FFlowGraphSchemaAction_NewPropertyNode> GetterAction(new FFlowGraphSchemaAction_NewPropertyNode(Tuple.Value, UFlowGraphNode_PropertyGetter::StaticClass(), Category, GetterName, ToolTip));
+			const TSharedPtr<FFlowGraphSchemaAction_NewPropertyNode> SetterAction(new FFlowGraphSchemaAction_NewPropertyNode(Tuple.Value, UFlowGraphNode_PropertySetter::StaticClass(), Category, SetterName, ToolTip));
+			ActionMenuBuilder.AddAction(GetterAction);
+			ActionMenuBuilder.AddAction(SetterAction);
 		}
 	}
 }

@@ -17,7 +17,9 @@
 #include "Editor.h"
 #include "Layout/SlateRect.h"
 #include "ScopedTransaction.h"
+#include "Graph/Nodes/FlowGraphNode_Property.h"
 #include "Graph/Nodes/FlowGraphNode_PropertyGetter.h"
+#include "Nodes/Utils/FlowNode_Property.h"
 #include "Nodes/Utils/FlowNode_PropertyGetter.h"
 
 #define LOCTEXT_NAMESPACE "FlowGraphSchema_Actions"
@@ -135,13 +137,13 @@ UEdGraphNode* FFlowGraphSchemaAction_NewPropertyNode::PerformAction(UEdGraph* Pa
 
 	if (Property.IsValid())
 	{
-		return CreateNode(ParentGraph, FromPin, Property.Get(), Location, bSelectNewNode);
+		return CreateNode(ParentGraph, FromPin, Class, Property.Get(), Location, bSelectNewNode);
 	}
 
 	return nullptr;
 }
 
-UFlowGraphNode* FFlowGraphSchemaAction_NewPropertyNode::CreateNode(UEdGraph* ParentGraph, UEdGraphPin* FromPin, FProperty* Property, const FVector2D Location, const bool bSelectNewNode)
+UFlowGraphNode* FFlowGraphSchemaAction_NewPropertyNode::CreateNode(UEdGraph* ParentGraph, UEdGraphPin* FromPin, TSubclassOf<UFlowGraphNode_Property> Class, FProperty* Property, const FVector2D Location, const bool bSelectNewNode)
 {
 	check(Property);
 
@@ -156,7 +158,7 @@ UFlowGraphNode* FFlowGraphSchemaAction_NewPropertyNode::CreateNode(UEdGraph* Par
 	UFlowAsset* FlowAsset = CastChecked<UFlowGraph>(ParentGraph)->GetFlowAsset();
 	FlowAsset->Modify();
 
-	UFlowGraphNode_PropertyGetter* NewGraphNode = NewObject<UFlowGraphNode_PropertyGetter>(ParentGraph, UFlowGraphNode_PropertyGetter::StaticClass(), NAME_None, RF_Transactional);
+	UFlowGraphNode_Property* NewGraphNode = NewObject<UFlowGraphNode_Property>(ParentGraph, Class, NAME_None, RF_Transactional);
 
 	NewGraphNode->CreateNewGuid();
 
@@ -164,7 +166,7 @@ UFlowGraphNode* FFlowGraphSchemaAction_NewPropertyNode::CreateNode(UEdGraph* Par
 	NewGraphNode->NodePosY = Location.Y;
 	ParentGraph->AddNode(NewGraphNode, false, bSelectNewNode);
 
-	UFlowNode_PropertyGetter* NewNode = Cast<UFlowNode_PropertyGetter>(FlowAsset->CreateNode(UFlowNode_PropertyGetter::StaticClass(), NewGraphNode));
+	UFlowNode_Property* NewNode = Cast<UFlowNode_Property>(FlowAsset->CreateNode(NewGraphNode->AssignedNodeClasses[0], NewGraphNode));
 	NewNode->SetProperty(Property);
 	NewGraphNode->SetFlowNode(NewNode);
 

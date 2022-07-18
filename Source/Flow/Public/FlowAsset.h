@@ -37,12 +37,13 @@ DECLARE_DELEGATE(FFlowAssetEvent);
 /**
  * Single asset containing flow nodes.
  */
-UCLASS(BlueprintType, hideCategories = Object)
+UCLASS(BlueprintType)
 class FLOW_API UFlowAsset : public UObject
 {
 	GENERATED_UCLASS_BODY()
 
 	friend class UFlowNode;
+	friend class UFlowNode_PropertySetter;
 	friend class UFlowNode_CustomOutput;
 	friend class UFlowNode_SubGraph;
 	friend class UFlowSubsystem;

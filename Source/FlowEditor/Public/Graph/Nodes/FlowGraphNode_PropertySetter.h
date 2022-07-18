@@ -3,10 +3,10 @@
 #pragma once
 
 #include "FlowGraphNode_Property.h"
-#include "FlowGraphNode_PropertyGetter.generated.h"
+#include "FlowGraphNode_PropertySetter.generated.h"
 
 UCLASS()
-class FLOWEDITOR_API UFlowGraphNode_PropertyGetter : public UFlowGraphNode_Property
+class FLOWEDITOR_API UFlowGraphNode_PropertySetter : public UFlowGraphNode_Property
 {
 	GENERATED_UCLASS_BODY()
 

@@ -5,6 +5,7 @@
 #include "EdGraph/EdGraphSchema.h"
 
 #include "Nodes/FlowGraphNode.h"
+#include "Nodes/FlowGraphNode_Property.h"
 #include "Nodes/FlowNode.h"
 #include "UObject/WeakFieldPtr.h"
 #include "FlowGraphSchema_Actions.generated.h"
@@ -110,6 +111,9 @@ struct FLOWEDITOR_API FFlowGraphSchemaAction_NewPropertyNode : public FEdGraphSc
 
 	TWeakFieldPtr<FProperty> Property;
 
+	UPROPERTY()
+	TSubclassOf<UFlowGraphNode_Property> Class;
+
 	static FName StaticGetTypeId()
 	{
 		static FName Type("FFlowGraphSchemaAction_NewPropertyNode");
@@ -120,13 +124,15 @@ struct FLOWEDITOR_API FFlowGraphSchemaAction_NewPropertyNode : public FEdGraphSc
 
 	FFlowGraphSchemaAction_NewPropertyNode()
 		: FEdGraphSchemaAction(),
-		  Property(nullptr)
+		  Property(nullptr),
+		  Class(UFlowGraphNode_Property::StaticClass())
 	{
 	}
 
-	FFlowGraphSchemaAction_NewPropertyNode(FProperty* InProperty, FText InNodeCategory, const FString InMenuDesc, FText InToolTip)
-		: FEdGraphSchemaAction(MoveTemp(InNodeCategory), FText::FromString(InMenuDesc), MoveTemp(InToolTip), 0),
-		  Property(InProperty)
+	FFlowGraphSchemaAction_NewPropertyNode(FProperty* InProperty, const TSubclassOf<UFlowGraphNode_Property> NodeClass, FText InNodeCategory, FText InMenuDesc, FText InToolTip)
+		: FEdGraphSchemaAction(MoveTemp(InNodeCategory), MoveTemp(InMenuDesc), MoveTemp(InToolTip), 0),
+		  Property(InProperty),
+		  Class(NodeClass)
 	{
 	}
 
@@ -134,5 +140,5 @@ struct FLOWEDITOR_API FFlowGraphSchemaAction_NewPropertyNode : public FEdGraphSc
 	virtual UEdGraphNode* PerformAction(UEdGraph* ParentGraph, UEdGraphPin* FromPin, const FVector2D Location, bool bSelectNewNode = true) override;
 	// --
 
-	static UFlowGraphNode* CreateNode(UEdGraph* ParentGraph, UEdGraphPin* FromPin, FProperty* Property, const FVector2D Location, const bool bSelectNewNode = true);
+	static UFlowGraphNode* CreateNode(UEdGraph* ParentGraph, UEdGraphPin* FromPin, TSubclassOf<UFlowGraphNode_Property> Class, FProperty* Property, const FVector2D Location, const bool bSelectNewNode = true);
 };
