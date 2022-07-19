@@ -441,29 +441,34 @@ void UFlowGraphSchema::GetPropertyActions(FGraphContextMenuBuilder& ActionMenuBu
 
 		UFlowAsset* FlowAsset = FlowAssetEditor->GetFlowAsset();
 
-		TMultiMap<TWeakObjectPtr<UObject>, FProperty*> Properties = FlowPropertyHelpers::GatherProperties(FlowAsset, FlowPropertyHelpers::IsPropertyExposedAsOutput);
+		GetPropertyActions(ActionMenuBuilder, FlowAsset, FlowPropertyHelpers::IsPropertyExposedAsOutput,
+		                   UFlowGraphNode_PropertyGetter::StaticClass(),LOCTEXT("CreatePropertyGetterName", "Get {0}"),
+		                   LOCTEXT("CreatePropertyToolTip", "Creates a Node to get {0} directly from this asset"));
 
-		for (const TTuple<TWeakObjectPtr<UObject>, FProperty*> Tuple : Properties)
-		{
-			const FText ToolTip = LOCTEXT("CreatePropertyToolTip", "Creates a property.");
+		GetPropertyActions(ActionMenuBuilder, FlowAsset, FlowPropertyHelpers::IsPropertyExposedAsInput,
+		                   UFlowGraphNode_PropertySetter::StaticClass(),LOCTEXT("CreatePropertySetterName", "Set {0}"),
+		                   LOCTEXT("CreatePropertyToolTip", "Creates a Node to set {0} directly to this asset"));
+	}
+}
 
-			FFormatOrderedArguments CategoryArguments;
-			CategoryArguments.Add(FFormatArgumentValue(FText::FromString(Tuple.Value->GetAuthoredName())));
-			const FText Category = FText::Format(LOCTEXT("CreatePropertyCategory", "Variables|{0}"), CategoryArguments);
+void UFlowGraphSchema::GetPropertyActions(FGraphContextMenuBuilder& ActionMenuBuilder, UFlowAsset* FlowAsset, bool (& Predicate)(const FProperty*), UClass* Class, FTextFormat PropertyNameFormat, FTextFormat TooltipFormat)
+{
+	TMultiMap<TWeakObjectPtr<UObject>, FProperty*> InputProperties = FlowPropertyHelpers::GatherProperties(FlowAsset, Predicate);
 
-			FFormatOrderedArguments GetterNameArguments;
-			GetterNameArguments.Add(FFormatArgumentValue(FText::FromString(Tuple.Value->GetAuthoredName())));
-			const FText GetterName = FText::Format(LOCTEXT("CreatePropertyGetterName", "Get {0}"), GetterNameArguments);
+	for (const TTuple<TWeakObjectPtr<UObject>, FProperty*> Tuple : InputProperties)
+	{
+		const bool bIsBool = CastField<FBoolProperty>(Tuple.Value) != nullptr;
+		FString DisplayString = FName::NameToDisplayString(Tuple.Value->GetAuthoredName(), bIsBool);
 
-			FFormatOrderedArguments SetterNameArguments;
-			SetterNameArguments.Add(FFormatArgumentValue(FText::FromString(Tuple.Value->GetAuthoredName())));
-			const FText SetterName = FText::Format(LOCTEXT("CreatePropertySetterName", "Set {0}"), SetterNameArguments);
+		FFormatOrderedArguments Arguments;
+		Arguments.Add(FFormatArgumentValue(FText::FromString(DisplayString)));
 
-			const TSharedPtr<FFlowGraphSchemaAction_NewPropertyNode> GetterAction(new FFlowGraphSchemaAction_NewPropertyNode(Tuple.Value, UFlowGraphNode_PropertyGetter::StaticClass(), Category, GetterName, ToolTip));
-			const TSharedPtr<FFlowGraphSchemaAction_NewPropertyNode> SetterAction(new FFlowGraphSchemaAction_NewPropertyNode(Tuple.Value, UFlowGraphNode_PropertySetter::StaticClass(), Category, SetterName, ToolTip));
-			ActionMenuBuilder.AddAction(GetterAction);
-			ActionMenuBuilder.AddAction(SetterAction);
-		}
+		const FText Category = FText::Format(LOCTEXT("CreatePropertyCategory", "Variables|{0}"), Arguments);
+		const FText Name = FText::Format(PropertyNameFormat, Arguments);
+		const FText ToolTip = FText::Format(TooltipFormat, Arguments);
+
+		const TSharedPtr<FFlowGraphSchemaAction_NewPropertyNode> Action(new FFlowGraphSchemaAction_NewPropertyNode(Tuple.Value, Class, Category, Name, ToolTip));
+		ActionMenuBuilder.AddAction(Action);
 	}
 }
 

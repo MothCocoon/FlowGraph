@@ -13,7 +13,6 @@ UCLASS()
 class FLOWEDITOR_API UFlowGraphSchema : public UEdGraphSchema_K2
 {
 	GENERATED_UCLASS_BODY()
-
 private:
 	static TArray<UClass*> NativeFlowNodes;
 	static TMap<FName, FAssetData> BlueprintFlowNodes;
@@ -48,6 +47,7 @@ private:
 	static void GetFlowNodeActions(FGraphActionMenuBuilder& ActionMenuBuilder, const UFlowAsset* AssetClassDefaults, const FString& CategoryName);
 	static void GetCommentAction(FGraphActionMenuBuilder& ActionMenuBuilder, const UEdGraph* CurrentGraph = nullptr);
 	static void GetPropertyActions(FGraphContextMenuBuilder& ActionMenuBuilder);
+	static void GetPropertyActions(FGraphContextMenuBuilder& ActionMenuBuilder, UFlowAsset* FlowAsset, bool (&Predicate)(const FProperty*), UClass* Class, FTextFormat PropertyNameFormat, FTextFormat TooltipFormat);
 
 	static bool IsFlowNodePlaceable(const UClass* Class);
 
