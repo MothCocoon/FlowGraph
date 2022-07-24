@@ -183,7 +183,7 @@ private:
 
 	// Optional entry points to the graph, similar to blueprint Custom Events
 	UPROPERTY()
-	TMap<FName, UFlowNode_CustomInput*> CustomInputNodes;
+	TSet<UFlowNode_CustomInput*> CustomInputNodes;
 
 	UPROPERTY()
 	TSet<UFlowNode*> PreloadedNodes;
