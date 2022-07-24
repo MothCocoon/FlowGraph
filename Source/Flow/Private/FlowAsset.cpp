@@ -279,10 +279,9 @@ void UFlowAsset::InitializeInstance(const TWeakObjectPtr<UObject> InOwner, UFlow
 
 		if (UFlowNode_CustomInput* CustomInput = Cast<UFlowNode_CustomInput>(NewNodeInstance))
 		{
-			const FName& EventName = CustomInput->EventName;
-			if (!EventName.IsNone() && !CustomInputNodes.Contains(CustomInput->EventName))
+			if (!CustomInput->EventName.IsNone())
 			{
-				CustomInputNodes.Emplace(CustomInput->EventName, CustomInput);
+				CustomInputNodes.Emplace(CustomInput);
 			}
 		}
 
@@ -293,9 +292,9 @@ void UFlowAsset::InitializeInstance(const TWeakObjectPtr<UObject> InOwner, UFlow
 void UFlowAsset::PreloadNodes()
 {
 	TArray<UFlowNode*> GraphEntryNodes = {StartNode};
-	for (const TPair<FName, UFlowNode_CustomInput*>& CustomEvent : CustomInputNodes)
+	for (UFlowNode_CustomInput* CustomInput : CustomInputNodes)
 	{
-		GraphEntryNodes.Emplace(CustomEvent.Value);
+		GraphEntryNodes.Emplace(CustomInput);
 	}
 
 	// NOTE: this is just the example algorithm of gathering nodes for pre-load
@@ -384,10 +383,13 @@ void UFlowAsset::TriggerCustomEvent(UFlowNode_SubGraph* Node, const FName& Event
 	const TWeakObjectPtr<UFlowAsset> FlowInstance = ActiveSubGraphs.FindRef(Node);
 	if (FlowInstance.IsValid())
 	{
-		if (UFlowNode_CustomInput* CustomEvent = FlowInstance->CustomInputNodes.FindRef(EventName))
+		for (UFlowNode_CustomInput* CustomInput : FlowInstance->CustomInputNodes)
 		{
-			RecordedNodes.Add(CustomEvent);
-			CustomEvent->TriggerFirstOutput(true);
+			if (CustomInput->EventName == EventName)
+			{
+				RecordedNodes.Add(CustomInput);
+				CustomInput->TriggerFirstOutput(true);
+			}
 		}
 	}
 }
