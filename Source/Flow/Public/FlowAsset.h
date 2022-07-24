@@ -225,7 +225,7 @@ public:
 	TWeakObjectPtr<UFlowAsset> GetFlowInstance(UFlowNode_SubGraph* SubGraphNode) const;
 
 private:
-	void TriggerCustomEvent(UFlowNode_SubGraph* Node, const FName& EventName);
+	void TriggerCustomEvent(UFlowNode_SubGraph* Node, const FName& EventName) const;
 	void TriggerCustomOutput(const FName& EventName) const;
 
 	void TriggerInput(const FGuid& NodeGuid, const FName& PinName);
