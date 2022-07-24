@@ -378,7 +378,7 @@ TWeakObjectPtr<UFlowAsset> UFlowAsset::GetFlowInstance(UFlowNode_SubGraph* SubGr
 	return ActiveSubGraphs.FindRef(SubGraphNode);
 }
 
-void UFlowAsset::TriggerCustomEvent(UFlowNode_SubGraph* Node, const FName& EventName)
+void UFlowAsset::TriggerCustomEvent(UFlowNode_SubGraph* Node, const FName& EventName) const
 {
 	const TWeakObjectPtr<UFlowAsset> FlowInstance = ActiveSubGraphs.FindRef(Node);
 	if (FlowInstance.IsValid())
@@ -387,7 +387,7 @@ void UFlowAsset::TriggerCustomEvent(UFlowNode_SubGraph* Node, const FName& Event
 		{
 			if (CustomInput->EventName == EventName)
 			{
-				RecordedNodes.Add(CustomInput);
+				FlowInstance->RecordedNodes.Add(CustomInput);
 				CustomInput->TriggerFirstOutput(true);
 			}
 		}
