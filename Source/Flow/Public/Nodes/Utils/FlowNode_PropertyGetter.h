@@ -15,5 +15,5 @@ class FLOW_API UFlowNode_PropertyGetter final : public UFlowNode_Property
 	GENERATED_UCLASS_BODY()
 
 protected:
-	virtual const TMultiMap<TWeakObjectPtr<UObject>, FFlowInputOutputPin> GetOutputProperties() override;
+	virtual const TArray<FFlowPropertyPin> GetOutputProperties() override;
 };

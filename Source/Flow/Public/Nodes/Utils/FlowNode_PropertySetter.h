@@ -16,5 +16,5 @@ class FLOW_API UFlowNode_PropertySetter : public UFlowNode_Property
 
 	virtual void ExecuteInput(const FName& PinName) override;
 
-	virtual const TMultiMap<TWeakObjectPtr<UObject>, FFlowInputOutputPin> GetInputProperties() override;
+	virtual const TArray<FFlowPropertyPin> GetInputProperties() override;
 };

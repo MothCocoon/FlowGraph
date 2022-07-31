@@ -17,10 +17,11 @@ class FLOW_API UFlowNode_Property : public UFlowNode
 
 protected:
 	virtual UObject* GetVariableHolder() override;
+	virtual uint8* GetVariableContainer() override;
 	virtual void PostLoad() override;
 
-	virtual const TMultiMap<TWeakObjectPtr<UObject>, FFlowInputOutputPin> GetOutputProperties() override;
-	virtual const TMultiMap<TWeakObjectPtr<UObject>, FFlowInputOutputPin> GetInputProperties() override;
+	virtual const TArray<FFlowPropertyPin> GetOutputProperties() override;
+	virtual const TArray<FFlowPropertyPin> GetInputProperties() override;
 
 	UPROPERTY(SaveGame)
 	FName PropertyName;

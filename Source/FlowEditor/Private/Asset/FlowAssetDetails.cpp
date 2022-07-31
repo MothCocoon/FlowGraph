@@ -14,7 +14,7 @@
 void FFlowAssetDetails::CustomizeDetails(IDetailLayoutBuilder& DetailLayout)
 {
 	IDetailCategoryBuilder& FlowAssetCategory = DetailLayout.EditCategory("FlowAsset", LOCTEXT("FlowAssetCategory", "Flow Asset"));
-	
+
 	const TSharedPtr<IPropertyHandle> InputsPropertyHandle = DetailLayout.GetProperty(GET_MEMBER_NAME_CHECKED(UFlowAsset, CustomInputs));
 	if (InputsPropertyHandle.IsValid() && InputsPropertyHandle->AsArray().IsValid())
 	{
@@ -41,13 +41,13 @@ void FFlowAssetDetails::GenerateCustomPinArray(TSharedRef<IPropertyHandle> Prope
 	PropertyRow.ShouldAutoExpand(true);
 
 	PropertyRow.CustomWidget(false)
-		.ValueContent()
-		[
-			SNew(SEditableTextBox)
+	           .ValueContent()
+	[
+		SNew(SEditableTextBox)
 				.Text(this, &FFlowAssetDetails::GetCustomPinText, PropertyHandle)
 				.OnTextCommitted_Static(&FFlowAssetDetails::OnCustomPinTextCommitted, PropertyHandle)
 				.OnVerifyTextChanged_Static(&FFlowAssetDetails::VerifyNewCustomPinText)
-		];
+	];
 }
 
 FText FFlowAssetDetails::GetCustomPinText(TSharedRef<IPropertyHandle> PropertyHandle) const

@@ -363,12 +363,12 @@ void UFlowGraphNode::AllocateDefaultPins()
 
 		for (const auto& It : FlowNode->GetInputProperties())
 		{
-			CreateInputPropertyPin(It.Value);
+			CreatePropertyPin(It, EGPD_Input);
 		}
 
 		for (const auto& It : FlowNode->GetOutputProperties())
 		{
-			CreateOutputPropertyPin(It.Value);
+			CreatePropertyPin(It, EGPD_Output);
 		}
 	}
 }
@@ -812,74 +812,19 @@ static const FName GetPinNameFromProperty(const FProperty* Property)
 	return NAME_None;
 }
 
-void UFlowGraphNode::CreateInputPropertyPin(const FFlowInputOutputPin& FlowPropertyPin, const int32 Index)
+void UFlowGraphNode::CreatePropertyPin(const FFlowPropertyPin& FlowPropertyPin, const EEdGraphPinDirection Dir)
 {
-	if (ensure(FlowPropertyPin.InputProperty))
+	if (FlowPropertyPin.Category.IsNone() || FlowPropertyPin.Name.IsNone())
 	{
-		const FName PinName = GetPinNameFromProperty(FlowPropertyPin.InputProperty);
-		if (FlowPropertyPin.InputPinName.IsNone() || PinName.IsNone())
-		{
-			return;
-		}
-
-		FCreatePinParams CreatePinParams;
-		CreatePinParams.Index = Index;
-		UEdGraphPin* NewPin = CreatePin(EGPD_Input, PinName, nullptr, FlowPropertyPin.InputPinName, CreatePinParams);
-		check(NewPin);
-		NewPin->PinToolTip = FlowPropertyPin.PinTooltip;
-		SetPinSubCategoryObject(FlowPropertyPin.InputProperty, NewPin);
+		return;
 	}
-}
 
-void UFlowGraphNode::CreateOutputPropertyPin(const FFlowInputOutputPin& FlowPropertyPin, const int32 Index)
-{
-	if (ensure(FlowPropertyPin.OutputProperty))
-	{
-		const FName PinName = GetPinNameFromProperty(FlowPropertyPin.OutputProperty);
-		if (FlowPropertyPin.OutputPinName.IsNone() || PinName.IsNone())
-		{
-			return;
-		}
-
-		FCreatePinParams CreatePinParams;
-		CreatePinParams.Index = Index;
-		UEdGraphPin* NewPin = CreatePin(EGPD_Output, PinName, nullptr, FlowPropertyPin.OutputPinName, CreatePinParams);
-		check(NewPin);
-		NewPin->PinToolTip = FlowPropertyPin.PinTooltip;
-		SetPinSubCategoryObject(FlowPropertyPin.OutputProperty, NewPin);
-	}
-}
-
-void UFlowGraphNode::SetPinSubCategoryObject(const FProperty* Property, UEdGraphPin* NewPin)
-{
-	if (const FStructProperty* StructProperty = CastField<FStructProperty>(Property))
-	{
-		UScriptStruct* GameplayTagContainerStruct = TBaseStructure<FGameplayTagContainer>::Get();
-		UScriptStruct* GameplayTagStruct = TBaseStructure<FGameplayTag>::Get();
-		UScriptStruct* VectorStruct = TBaseStructure<FVector>::Get();
-		UScriptStruct* RotatorStruct = TBaseStructure<FRotator>::Get();
-		UScriptStruct* TransformStruct = TBaseStructure<FTransform>::Get();
-		if (StructProperty->Struct == GameplayTagContainerStruct)
-		{
-			NewPin->PinType.PinSubCategoryObject = GameplayTagContainerStruct;
-		}
-		else if (StructProperty->Struct == GameplayTagStruct)
-		{
-			NewPin->PinType.PinSubCategoryObject = GameplayTagStruct;
-		}
-		else if (StructProperty->Struct == VectorStruct)
-		{
-			NewPin->PinType.PinSubCategoryObject = VectorStruct;
-		}
-		else if (StructProperty->Struct == RotatorStruct)
-		{
-			NewPin->PinType.PinSubCategoryObject = RotatorStruct;
-		}
-		else if (StructProperty->Struct == TransformStruct)
-		{
-			NewPin->PinType.PinSubCategoryObject = TransformStruct;
-		}
-	}
+	FCreatePinParams CreatePinParams;
+	CreatePinParams.Index = INDEX_NONE;
+	UEdGraphPin* NewPin = CreatePin(Dir, FlowPropertyPin.Category, FlowPropertyPin.SubCategory, FlowPropertyPin.SubCategoryObject, FlowPropertyPin.Name, CreatePinParams);
+	check(NewPin);
+	NewPin->PinToolTip = FlowPropertyPin.Tooltip;
+	NewPin->PinType.bIsWeakPointer = FlowPropertyPin.bIsWeakPointer;
 }
 
 void UFlowGraphNode::RemoveOrphanedPin(UEdGraphPin* Pin)
@@ -1121,13 +1066,13 @@ void UFlowGraphNode::ForcePinActivation(const FEdGraphPinReference PinReference)
 	{
 		switch (FoundPin->Direction)
 		{
-			case EGPD_Input:
-				InspectedNodeInstance->TriggerInput(FConnectedPin(FoundPin->PinId, FoundPin->PinName), true);
-				break;
-			case EGPD_Output:
-				InspectedNodeInstance->TriggerOutput(FoundPin->PinName, false, true);
-				break;
-			default: ;
+		case EGPD_Input:
+			InspectedNodeInstance->TriggerInput(FConnectedPin(FoundPin->PinId, FoundPin->PinName), true);
+			break;
+		case EGPD_Output:
+			InspectedNodeInstance->TriggerOutput(FoundPin->PinName, false, true);
+			break;
+		default: ;
 		}
 	}
 }

@@ -10,7 +10,8 @@ public class FlowEditor : ModuleRules
 
         PublicDependencyModuleNames.AddRange(new[]
         {
-            "Flow"
+            "Flow",
+            "StructUtils"
         });
 
         PrivateDependencyModuleNames.AddRange(new[]

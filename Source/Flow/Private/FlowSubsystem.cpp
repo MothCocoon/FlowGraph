@@ -5,6 +5,7 @@
 #include "FlowAsset.h"
 #include "FlowComponent.h"
 #include "FlowModule.h"
+#include "FlowPropertyHelpers.h"
 #include "FlowSave.h"
 #include "FlowSettings.h"
 #include "Nodes/Route/FlowNode_SubGraph.h"
@@ -29,7 +30,7 @@ bool UFlowSubsystem::ShouldCreateSubsystem(UObject* Outer) const
 	{
 		return false;
 	}
-	
+
 	// in this case, we simply create subsystem for every instance of the game
 	if (UFlowSettings::Get()->bCreateFlowSubsystemOnClients)
 	{
@@ -107,12 +108,34 @@ void UFlowSubsystem::FinishRootFlow(UObject* Owner, const EFlowFinishPolicy Fini
 
 UFlowAsset* UFlowSubsystem::CreateSubFlow(UFlowNode_SubGraph* SubGraphNode, const FString SavedInstanceName, const bool bPreloading /* = false */)
 {
+	return CreateSubFlow(SubGraphNode, {}, SavedInstanceName, bPreloading);
+}
+
+UFlowAsset* UFlowSubsystem::CreateSubFlow(UFlowNode_SubGraph* SubGraphNode, TMap<FProperty*, FString> PropertiesToSet, const FString SavedInstanceName, const bool bPreloading /* = false */)
+{
 	UFlowAsset* NewInstance = nullptr;
 
 	if (!InstancedSubFlows.Contains(SubGraphNode))
 	{
 		const TWeakObjectPtr<UObject> Owner = SubGraphNode->GetFlowAsset() ? SubGraphNode->GetFlowAsset()->GetOwner() : nullptr;
 		NewInstance = CreateFlowInstance(Owner, SubGraphNode->Asset, SavedInstanceName);
+		UScriptStruct* ScriptStruct = const_cast<UScriptStruct*>(NewInstance->Properties.GetScriptStruct());
+
+		for (TTuple<FProperty*, FString> PropertyPin : PropertiesToSet)
+		{
+			uint8* MutableMemory = PropertyPin.Key->ContainerPtrToValuePtr<uint8>(NewInstance->Properties.GetMutableMemory());
+			PropertyPin.Key->ImportText(*PropertyPin.Value, MutableMemory, PPF_None, ScriptStruct);
+		}
+
+		for (TTuple<FProperty*, FString> PropertyPin : PropertiesToSet)
+		{
+			const uint8* MutableMemory = PropertyPin.Key->ContainerPtrToValuePtr<uint8>(NewInstance->Properties.GetMemory());
+			FString Value;
+			PropertyPin.Key->ExportText_Direct(Value, MutableMemory, MutableMemory, ScriptStruct, PPF_None);
+
+			UE_LOG(LogTemp, Warning, TEXT("Imported value: %s"), *Value)
+		}
+
 		InstancedSubFlows.Add(SubGraphNode, NewInstance);
 
 		if (bPreloading)
@@ -125,7 +148,7 @@ UFlowAsset* UFlowSubsystem::CreateSubFlow(UFlowNode_SubGraph* SubGraphNode, cons
 	{
 		// get instanced asset from map - in case it was already instanced by calling CreateSubFlow() with bPreloading == true
 		UFlowAsset* AssetInstance = InstancedSubFlows[SubGraphNode];
-		
+
 		AssetInstance->NodeOwningThisAssetInstance = SubGraphNode;
 		SubGraphNode->GetFlowAsset()->ActiveSubGraphs.Add(SubGraphNode, AssetInstance);
 
@@ -231,7 +254,7 @@ void UFlowSubsystem::OnGameSaved(UFlowSaveGame* SaveGame)
 			}
 		}
 	}
-	
+
 	// save Flow Graphs
 	for (const TPair<TWeakObjectPtr<UObject>, UFlowAsset*>& Pair : RootInstances)
 	{

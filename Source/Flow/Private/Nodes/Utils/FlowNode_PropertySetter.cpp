@@ -14,19 +14,15 @@ void UFlowNode_PropertySetter::ExecuteInput(const FName& PinName)
 	TriggerFirstOutput(true);
 }
 
-const TMultiMap<TWeakObjectPtr<UObject>, FFlowInputOutputPin> UFlowNode_PropertySetter::GetInputProperties()
+const TArray<FFlowPropertyPin> UFlowNode_PropertySetter::GetInputProperties()
 {
 	LoadProperty();
 
-	TMultiMap<TWeakObjectPtr<UObject>, FFlowInputOutputPin> Properties;
+	TArray<FFlowPropertyPin> Properties;
 	if (!Property)
 	{
 		return Properties;
 	}
 
-	FFlowInputOutputPin PropertyToAdd = FFlowInputOutputPin(Property, nullptr);
-	PropertyToAdd.InputPinName = Property->GetFName();
-	PropertyToAdd.PinTooltip = Property->GetToolTipText(true).ToString();
-	Properties.Add(GetVariableHolder(), PropertyToAdd);
-	return Properties;
+	return ConvertProperties({{"",Property }});
 }

@@ -26,14 +26,13 @@ UCLASS(Abstract, Blueprintable, HideCategories = Object)
 class FLOW_API UFlowNode : public UObject, public IVisualLoggerDebugSnapshotInterface
 {
 	GENERATED_UCLASS_BODY()
-
 	friend class SFlowGraphNode;
 	friend class UFlowAsset;
 	friend class UFlowGraphNode;
 	friend class UFlowGraphSchema;
 
-//////////////////////////////////////////////////////////////////////////
-// Node
+	//////////////////////////////////////////////////////////////////////////
+	// Node
 
 private:
 	UPROPERTY()
@@ -52,7 +51,7 @@ protected:
 
 	UPROPERTY(EditDefaultsOnly, Category = "FlowNode")
 	bool bNodeDeprecated;
-	
+
 	// If this node is deprecated, it might be replaced by another node
 	UPROPERTY(EditDefaultsOnly, Category = "FlowNode")
 	TSubclassOf<UFlowNode> ReplacedBy;
@@ -80,7 +79,7 @@ public:
 	virtual FString GetNodeCategory() const;
 	virtual FText GetNodeTitle() const;
 	virtual FText GetNodeToolTip() const;
-	
+
 	// This method allows to have different for every node instance, i.e. Red if node represents enemy, Green if node represents a friend
 	virtual bool GetDynamicTitleColor(FLinearColor& OutColor) const { return false; }
 
@@ -106,8 +105,8 @@ public:
 	UFUNCTION(BlueprintPure, Category = "FlowNode")
 	UFlowAsset* GetFlowAsset() const;
 
-//////////////////////////////////////////////////////////////////////////
-// All created pins (default, class-specific and added by user)
+	//////////////////////////////////////////////////////////////////////////
+	// All created pins (default, class-specific and added by user)
 
 public:
 	static FFlowPin DefaultInputPin;
@@ -162,8 +161,8 @@ protected:
 	UFUNCTION(BlueprintImplementableEvent, Category = "FlowNode", meta = (DisplayName = "CanUserAddOutput"))
 	bool K2_CanUserAddOutput() const;
 
-//////////////////////////////////////////////////////////////////////////
-// Connections to other nodes
+	//////////////////////////////////////////////////////////////////////////
+	// Connections to other nodes
 
 private:
 	// Map outputs to the connected node and input pin in outgoing direction
@@ -188,16 +187,16 @@ public:
 
 	static void RecursiveFindNodesByClass(UFlowNode* Node, const TSubclassOf<UFlowNode> Class, uint8 Depth, TArray<UFlowNode*>& OutNodes);
 
-//////////////////////////////////////////////////////////////////////////
-// Debugger
+	//////////////////////////////////////////////////////////////////////////
+	// Debugger
 protected:
 	static FString MissingIdentityTag;
 	static FString MissingNotifyTag;
 	static FString MissingClass;
 	static FString NoActorsFound;
 
-//////////////////////////////////////////////////////////////////////////
-// Executing node instance
+	//////////////////////////////////////////////////////////////////////////
+	// Executing node instance
 
 public:
 	bool bPreloaded;
@@ -207,7 +206,7 @@ protected:
 
 	UPROPERTY(SaveGame)
 	EFlowNodeState ActivationState;
-	
+
 #if !UE_BUILD_SHIPPING
 private:
 	TMap<FName, TArray<FPinRecord>> InputRecords;
@@ -244,7 +243,7 @@ protected:
 	UFUNCTION(BlueprintImplementableEvent, Category = "FlowNode", meta = (DisplayName = "FlushContent"))
 	void K2_FlushContent();
 
-	void SetProperties(TArray<FFlowInputOutputPin> Pins);
+	virtual void SetProperties(TArray<FFlowInputOutputPin> Pins);
 
 	// Trigger execution of input pin
 	void TriggerInput(const FConnectedPin& ConnectedPin, const bool bForcedActivation = false);
@@ -337,12 +336,17 @@ protected:
 		return Cast<T>(AssetPtr.Get());
 	}
 
-	virtual const TMultiMap<TWeakObjectPtr<UObject>, FFlowInputOutputPin> GetInputProperties();
-	virtual const TMultiMap<TWeakObjectPtr<UObject>, FFlowInputOutputPin> GetOutputProperties();
+	virtual const TArray<FFlowPropertyPin> GetInputProperties();
+	virtual const TArray<FFlowPropertyPin> GetOutputProperties();
+	
+	static TArray<FFlowPropertyPin> ConvertProperties(TMultiMap<FString, FProperty*> Tuples);
 
 public:
+	/* Returns the Object which contains the property to retrieve the properties */
 	virtual UObject* GetVariableHolder();
-	
+	/* Returns the container of the properties. This can be the object itself or the memory of a struct */
+	virtual uint8* GetVariableContainer();
+
 	virtual FProperty* FindInputPropertyByPinName(const FName& InPinName);
 	virtual FProperty* FindOutputPropertyByPinName(const FName& InPinName);
 
@@ -373,7 +377,7 @@ public:
 protected:
 	UFUNCTION(BlueprintNativeEvent, Category = "FlowNode")
 	void OnSave();
-	
+
 	UFUNCTION(BlueprintNativeEvent, Category = "FlowNode")
 	void OnLoad();
 

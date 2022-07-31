@@ -453,9 +453,9 @@ void UFlowGraphSchema::GetPropertyActions(FGraphContextMenuBuilder& ActionMenuBu
 
 void UFlowGraphSchema::GetPropertyActions(FGraphContextMenuBuilder& ActionMenuBuilder, UFlowAsset* FlowAsset, bool (& Predicate)(const FProperty*), UClass* Class, FTextFormat PropertyNameFormat, FTextFormat TooltipFormat)
 {
-	TMultiMap<TWeakObjectPtr<UObject>, FProperty*> InputProperties = FlowPropertyHelpers::GatherProperties(FlowAsset, Predicate);
+	TMultiMap<FString, FProperty*> InputProperties = FlowPropertyHelpers::GatherProperties(const_cast<UScriptStruct*>(FlowAsset->Properties.GetScriptStruct()), Predicate);
 
-	for (const TTuple<TWeakObjectPtr<UObject>, FProperty*> Tuple : InputProperties)
+	for (const TTuple<FString, FProperty*> Tuple : InputProperties)
 	{
 		const bool bIsBool = CastField<FBoolProperty>(Tuple.Value) != nullptr;
 		FString DisplayString = FName::NameToDisplayString(Tuple.Value->GetAuthoredName(), bIsBool);

@@ -5,6 +5,8 @@
 #include "CoreMinimal.h"
 #include "FlowSave.h"
 #include "FlowTypes.h"
+#include "InstancedStruct.h"
+#include "Engine/UserDefinedStruct.h"
 #include "Nodes/FlowPin.h"
 #include "FlowAsset.generated.h"
 
@@ -24,11 +26,21 @@ class UFlowAsset;
 class FLOW_API IFlowGraphInterface
 {
 public:
-	IFlowGraphInterface() {}
-	virtual ~IFlowGraphInterface() {}
+	IFlowGraphInterface()
+	{
+	}
 
-	virtual void OnInputTriggered(UEdGraphNode* GraphNode, const int32 Index) const {}
-	virtual void OnOutputTriggered(UEdGraphNode* GraphNode, const int32 Index) const {}
+	virtual ~IFlowGraphInterface()
+	{
+	}
+
+	virtual void OnInputTriggered(UEdGraphNode* GraphNode, const int32 Index) const
+	{
+	}
+
+	virtual void OnOutputTriggered(UEdGraphNode* GraphNode, const int32 Index) const
+	{
+	}
 };
 
 DECLARE_DELEGATE(FFlowAssetEvent);
@@ -41,9 +53,8 @@ UCLASS(BlueprintType)
 class FLOW_API UFlowAsset : public UObject
 {
 	GENERATED_UCLASS_BODY()
-
 	friend class UFlowNode;
-	friend class UFlowNode_PropertySetter;
+	friend class UFlowNode_Property;
 	friend class UFlowNode_CustomOutput;
 	friend class UFlowNode_SubGraph;
 	friend class UFlowSubsystem;
@@ -51,8 +62,8 @@ class FLOW_API UFlowAsset : public UObject
 	friend class FFlowAssetDetails;
 	friend class UFlowGraphSchema;
 
-//////////////////////////////////////////////////////////////////////////
-// Graph
+	//////////////////////////////////////////////////////////////////////////
+	// Graph
 
 #if WITH_EDITOR
 	friend class UFlowGraph;
@@ -83,14 +94,17 @@ public:
 #endif
 	// -- 
 
-//////////////////////////////////////////////////////////////////////////
-// Nodes
+	//////////////////////////////////////////////////////////////////////////
+	// Nodes
 
 protected:
-	TArray<TSubclassOf<UFlowNode>> AllowedNodeClasses;	
+	TArray<TSubclassOf<UFlowNode>> AllowedNodeClasses;
 	TArray<TSubclassOf<UFlowNode>> DeniedNodeClasses;
 
 	bool bStartNodePlacedAsGhostNode;
+
+	UPROPERTY(EditAnywhere, SaveGame, meta=(ShowInnerProperties))
+	FInstancedStruct Properties;
 
 private:
 	UPROPERTY()
@@ -129,8 +143,8 @@ public:
 	TArray<FName> GetCustomInputs() const { return CustomInputs; }
 	TArray<FName> GetCustomOutputs() const { return CustomOutputs; }
 
-//////////////////////////////////////////////////////////////////////////
-// Instances of the template asset
+	//////////////////////////////////////////////////////////////////////////
+	// Instances of the template asset
 
 private:
 	// Original object holds references to instances
@@ -155,6 +169,7 @@ public:
 	UFlowAsset* GetInspectedInstance() const { return InspectedInstance.IsValid() ? InspectedInstance.Get() : nullptr; }
 
 	DECLARE_EVENT(UFlowAsset, FRefreshDebuggerEvent);
+
 	FRefreshDebuggerEvent& OnDebuggerRefresh() { return RefreshDebuggerEvent; }
 	FRefreshDebuggerEvent RefreshDebuggerEvent;
 
@@ -162,8 +177,8 @@ private:
 	void BroadcastDebuggerRefresh() const { RefreshDebuggerEvent.Broadcast(); }
 #endif
 
-//////////////////////////////////////////////////////////////////////////
-// Executing asset instance
+	//////////////////////////////////////////////////////////////////////////
+	// Executing asset instance
 
 private:
 	UPROPERTY()
@@ -204,7 +219,7 @@ public:
 	void InitializeInstance(const TWeakObjectPtr<UObject> InOwner, UFlowAsset* InTemplateAsset);
 
 	UFlowAsset* GetTemplateAsset() const { return TemplateAsset; }
-	
+
 	// Object that spawned Root Flow instance, i.e. World Settings or Player Controller
 	// This pointer is passed to child instances: Flow Asset instances created by the SubGraph nodes
 	UFUNCTION(BlueprintPure, Category = "Flow")
@@ -220,7 +235,7 @@ public:
 
 	virtual void PreStartFlow();
 	virtual void StartFlow();
-	
+
 	virtual void FinishFlow(const EFlowFinishPolicy InFinishPolicy);
 
 	// Get Flow Asset instance created by the given SubGraph node
@@ -254,9 +269,9 @@ public:
 	UFUNCTION(BlueprintPure, Category = "Flow")
 	TArray<UFlowNode*> GetRecordedNodes() const { return RecordedNodes; }
 
-//////////////////////////////////////////////////////////////////////////
-// SaveGame
-	
+	//////////////////////////////////////////////////////////////////////////
+	// SaveGame
+
 	UFUNCTION(BlueprintCallable, Category = "SaveGame")
 	FFlowAssetSaveData SaveInstance(TArray<FFlowAssetSaveData>& SavedFlowInstances);
 
@@ -269,11 +284,11 @@ private:
 protected:
 	UFUNCTION(BlueprintNativeEvent, Category = "SaveGame")
 	void OnSave();
-	
+
 	UFUNCTION(BlueprintNativeEvent, Category = "SaveGame")
 	void OnLoad();
 
-public:	
+public:
 	UFUNCTION(BlueprintNativeEvent, Category = "SaveGame")
 	bool IsBoundToWorld();
 };

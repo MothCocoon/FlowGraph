@@ -27,6 +27,32 @@ bool UFlowNode_SubGraph::CanBeAssetInstanced() const
 	return !Asset.IsNull() && (bCanInstanceIdenticalAsset || Asset->GetPathName() != GetFlowAsset()->GetTemplateAsset()->GetPathName());
 }
 
+void UFlowNode_SubGraph::SetProperties(TArray<FFlowInputOutputPin> Pins)
+{
+	PropertiesToSet.Empty();
+
+	for (FFlowInputOutputPin Pin : Pins)
+	{
+		UFlowNode* ConnectedParentNode = GetFlowAsset()->GetNode(Pin.OutputNodeGuid);
+		const FProperty* OutputProperty = ConnectedParentNode->FindOutputPropertyByPinName(Pin.OutputPinName);
+		uint8* OutputVariableHolder = ConnectedParentNode->GetVariableContainer();
+		const void* OutputValuePtr = OutputProperty->ContainerPtrToValuePtr<const void>(OutputVariableHolder);
+		FString Value;
+		OutputProperty->ExportText_Direct(Value, OutputValuePtr, OutputValuePtr, ConnectedParentNode->GetVariableHolder(), PPF_None);
+		PropertiesToSet.Add(Pin.InputProperty, Value);
+	}
+}
+
+const TArray<FFlowPropertyPin> UFlowNode_SubGraph::GetInputProperties()
+{
+	return InputPropertyPins;
+}
+
+const TArray<FFlowPropertyPin> UFlowNode_SubGraph::GetOutputProperties()
+{
+	return OutputPropertyPins;
+}
+
 void UFlowNode_SubGraph::PreloadContent()
 {
 	if (CanBeAssetInstanced() && GetFlowSubsystem())
@@ -64,7 +90,7 @@ void UFlowNode_SubGraph::ExecuteInput(const FName& PinName)
 	{
 		if (GetFlowSubsystem())
 		{
-			GetFlowSubsystem()->CreateSubFlow(this);
+			GetFlowSubsystem()->CreateSubFlow(this, PropertiesToSet);
 		}
 	}
 	else
@@ -151,13 +177,14 @@ UObject* UFlowNode_SubGraph::GetVariableHolder()
 		return Super::GetVariableHolder();
 	}
 
-	UFlowAsset* FlowAsset = Asset.LoadSynchronous();
-	if (!IsValid(FlowAsset))
+	const UFlowAsset* FlowAsset = Asset.LoadSynchronous();
+
+	if (!FlowAsset)
 	{
-		return Super::GetVariableHolder();
+		return nullptr;
 	}
 
-	return FlowAsset;
+	return const_cast<UScriptStruct*>(FlowAsset->Properties.GetScriptStruct());
 }
 
 void UFlowNode_SubGraph::PostLoad()
@@ -186,6 +213,7 @@ void UFlowNode_SubGraph::PostEditChangeProperty(FPropertyChangedEvent& PropertyC
 
 	if (PropertyChangedEvent.Property && PropertyChangedEvent.GetPropertyName() == GET_MEMBER_NAME_CHECKED(UFlowNode_SubGraph, Asset))
 	{
+		GatherProperties();
 		OnReconstructionRequested.ExecuteIfBound();
 		SubscribeToAssetChanges();
 	}
@@ -200,9 +228,16 @@ void UFlowNode_SubGraph::SubscribeToAssetChanges()
 		{
 			if (SelfWeakPtr.IsValid())
 			{
+				SelfWeakPtr->GatherProperties();
 				SelfWeakPtr->OnReconstructionRequested.ExecuteIfBound();
 			}
 		});
 	}
+}
+
+void UFlowNode_SubGraph::GatherProperties()
+{
+	InputPropertyPins = Super::GetInputProperties();
+	OutputPropertyPins = Super::GetOutputProperties();
 }
 #endif

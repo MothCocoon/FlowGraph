@@ -22,6 +22,11 @@ private:
 	UPROPERTY(EditAnywhere, Category = "Graph")
 	TSoftObjectPtr<UFlowAsset> Asset;
 
+	TMap<FProperty*, FString> PropertiesToSet;
+	UPROPERTY()
+	TArray<FFlowPropertyPin> InputPropertyPins;
+	UPROPERTY()
+	TArray<FFlowPropertyPin> OutputPropertyPins;
 	/*
 	 * Allow to create instance of the same Flow Asset as the asset containing this node
 	 * Enabling it may cause an infinite loop, if graph would keep creating copies of itself
@@ -35,6 +40,10 @@ private:
 protected:
 	virtual bool CanBeAssetInstanced() const;
 
+	virtual void SetProperties(TArray<FFlowInputOutputPin> Pins) override;
+	virtual const TArray<FFlowPropertyPin> GetInputProperties() override;
+	virtual const TArray<FFlowPropertyPin> GetOutputProperties() override;
+
 	virtual void PreloadContent() override;
 	virtual void FlushContent() override;
 
@@ -43,6 +52,8 @@ protected:
 
 public:
 	virtual void ForceFinishNode() override;
+
+	virtual UObject* GetVariableHolder() override;
 
 protected:
 	virtual void OnLoad_Implementation() override;
@@ -57,8 +68,6 @@ public:
 	virtual TArray<FName> GetContextInputs() override;
 	virtual TArray<FName> GetContextOutputs() override;
 
-	virtual UObject* GetVariableHolder() override;
-
 	// UObject
 	virtual void PostLoad() override;
 	virtual void PreEditChange(FProperty* PropertyAboutToChange) override;
@@ -67,5 +76,6 @@ public:
 
 private:
 	void SubscribeToAssetChanges();
+	void GatherProperties();
 #endif
 };

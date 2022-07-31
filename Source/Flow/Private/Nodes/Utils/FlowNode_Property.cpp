@@ -21,7 +21,12 @@ void UFlowNode_Property::SetProperty(FProperty* InProperty)
 
 UObject* UFlowNode_Property::GetVariableHolder()
 {
-	return GetFlowAsset();
+	return const_cast<UScriptStruct*>(GetFlowAsset()->Properties.GetScriptStruct());
+}
+
+uint8* UFlowNode_Property::GetVariableContainer()
+{
+	return GetFlowAsset()->Properties.GetMutableMemory();
 }
 
 void UFlowNode_Property::PostLoad()
@@ -30,12 +35,12 @@ void UFlowNode_Property::PostLoad()
 	LoadProperty();
 }
 
-const TMultiMap<TWeakObjectPtr<UObject>, FFlowInputOutputPin> UFlowNode_Property::GetOutputProperties()
+const TArray<FFlowPropertyPin> UFlowNode_Property::GetOutputProperties()
 {
 	return {};
 }
 
-const TMultiMap<TWeakObjectPtr<UObject>, FFlowInputOutputPin> UFlowNode_Property::GetInputProperties()
+const TArray<FFlowPropertyPin> UFlowNode_Property::GetInputProperties()
 {
 	return {};
 }
@@ -44,6 +49,9 @@ void UFlowNode_Property::LoadProperty()
 {
 	if (!Property)
 	{
-		Property = GetFlowAsset()->GetClass()->FindPropertyByName(PropertyName);
+		if (const UScriptStruct* ScriptStruct = GetFlowAsset()->Properties.GetScriptStruct())
+		{
+			Property = ScriptStruct->FindPropertyByName(PropertyName);
+		}
 	}
 }

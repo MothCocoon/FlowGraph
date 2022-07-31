@@ -339,13 +339,13 @@ void UFlowNode::FlushContent()
 
 void UFlowNode::SetProperties(TArray<FFlowInputOutputPin> Pins)
 {
-	const UClass* Class = GetVariableHolder()->GetClass();
+	TArray<FFlowPropertyPin> InputProperties = GetInputProperties();
 
-	for (FFlowInputOutputPin PropertyPin : Pins)
+	for (FFlowInputOutputPin ConnectedPin : Pins)
 	{
-		for (TFieldIterator<FProperty> PropertyIterator(Class); PropertyIterator; ++PropertyIterator)
+		for (const FFlowPropertyPin PropertyPin : InputProperties)
 		{
-			if (FlowPropertyHelpers::SetPropertyValue(this, PropertyPin, *PropertyIterator))
+			if (FlowPropertyHelpers::SetPropertyValue(this, ConnectedPin, PropertyPin.Name))
 			{
 				break;
 			}
@@ -380,11 +380,11 @@ void UFlowNode::TriggerInput(const FConnectedPin& ConnectedPin, const bool bForc
 		return;
 	}
 
-	const TMultiMap<TWeakObjectPtr<UObject>, FFlowInputOutputPin>& Outputs = GetInputProperties();
+	const TArray<FFlowPropertyPin> Outputs = GetInputProperties();
 	TArray<FFlowInputOutputPin> PropertyPins;
-	for (const auto& It : Outputs)
+	for (const FFlowPropertyPin It : Outputs)
 	{
-		FConnectedPin FlowOutputPin = GetIngoingConnection(It.Value.InputProperty->GetFName());
+		FConnectedPin FlowOutputPin = GetIngoingConnection(It.Name);
 		FFlowInputOutputPin PinProperty = FlowOutputPin.PinProperty;
 		if (PinProperty.IsValid())
 		{
@@ -448,27 +448,7 @@ void UFlowNode::TriggerOutput(const FName& PinName, const bool bFinish /*= false
 	// call the next node
 	if (OutputPins.Contains(PinName) && OutgoingConnections.Contains(PinName))
 	{
-		FConnectedPin FlowPin = GetOutgoingConnection(PinName);
-
-		const TMultiMap<TWeakObjectPtr<UObject>, FFlowInputOutputPin>& Outputs = GetOutputProperties();
-		TArray<FFlowInputOutputPin> PropertyPins;
-		for (const auto& It : Outputs)
-		{
-			FConnectedPin FlowOutputPin = GetOutgoingConnection(It.Value.OutputProperty->GetFName());
-			FFlowInputOutputPin PinProperty = FlowOutputPin.PinProperty;
-			if (PinProperty.IsValid())
-			{
-				UFlowNode* LinkedNode = GetFlowAsset()->Nodes.FindRef(FlowOutputPin.PinProperty.InputNodeGuid);
-				UFlowNode* OutputNode = GetFlowAsset()->Nodes.FindRef(FlowOutputPin.PinProperty.OutputNodeGuid);
-				PinProperty.InputProperty = LinkedNode->FindInputPropertyByPinName(FlowOutputPin.PinProperty.InputPinName);
-				PinProperty.OutputProperty = OutputNode->FindInputPropertyByPinName(FlowOutputPin.PinProperty.OutputPinName);
-				PropertyPins.Add(PinProperty);
-			}
-		}
-		if (PropertyPins.Num())
-		{
-			//SetProperties(PropertyPins);
-		}
+		const FConnectedPin FlowPin = GetOutgoingConnection(PinName);
 
 		GetFlowAsset()->TriggerInput(FlowPin);
 	}
@@ -584,98 +564,47 @@ AActor* UFlowNode::GetActorToFocus()
 }
 #endif
 
-const TMultiMap<TWeakObjectPtr<UObject>, FFlowInputOutputPin> UFlowNode::GetInputProperties()
+const TArray<FFlowPropertyPin> UFlowNode::GetInputProperties()
 {
-	TMultiMap<TWeakObjectPtr<UObject>, FFlowInputOutputPin> Properties;
+	TArray<FFlowPropertyPin> Properties;
 	UObject* VariableHolder = GetVariableHolder();
-	for (TFieldIterator<FProperty> PropertyIterator(VariableHolder->GetClass()); PropertyIterator; ++PropertyIterator)
-	{
-		FProperty* Property = *PropertyIterator;
-		if (FlowPropertyHelpers::IsPropertyExposedAsInput(Property))
-		{
-			FStructProperty* StructProperty = CastField<FStructProperty>(Property);
-			if (!StructProperty)
-			{
-				FFlowInputOutputPin PropertyToAdd = FFlowInputOutputPin(Property, nullptr);
-				PropertyToAdd.InputPinName = Property->GetFName();
-				PropertyToAdd.PinTooltip = Property->GetToolTipText(true).ToString();
-				Properties.Add(VariableHolder, PropertyToAdd);
-			}
-			else
-			{
-				UScriptStruct* GameplayTagContainerStruct = TBaseStructure<FGameplayTagContainer>::Get();
-				UScriptStruct* GameplayTagStruct = TBaseStructure<FGameplayTag>::Get();
-				UScriptStruct* VectorStruct = TBaseStructure<FVector>::Get();
-				UScriptStruct* RotatorStruct = TBaseStructure<FRotator>::Get();
-				UScriptStruct* TransformStruct = TBaseStructure<FTransform>::Get();
-				if (StructProperty->Struct == GameplayTagContainerStruct
-					|| StructProperty->Struct == GameplayTagStruct
-					|| StructProperty->Struct == VectorStruct
-					|| StructProperty->Struct == RotatorStruct
-					|| StructProperty->Struct == TransformStruct)
-				{
-					FFlowInputOutputPin PropertyToAdd = FFlowInputOutputPin(Property, nullptr);
-					PropertyToAdd.InputPinName = Property->GetFName();
-					PropertyToAdd.PinTooltip = Property->GetToolTipText(true).ToString();
-					Properties.Add(VariableHolder, PropertyToAdd);
-				}
-			}
-		}
-	}
-
-	return Properties;
+	const TMultiMap<FString, FProperty*> Tuples = FlowPropertyHelpers::GatherProperties(VariableHolder, FlowPropertyHelpers::IsPropertyExposedAsInput);
+	return ConvertProperties(Tuples);
 }
 
-const TMultiMap<TWeakObjectPtr<UObject>, FFlowInputOutputPin> UFlowNode::GetOutputProperties()
+const TArray<FFlowPropertyPin> UFlowNode::GetOutputProperties()
 {
-	TMultiMap<TWeakObjectPtr<UObject>, FFlowInputOutputPin> Properties;
+	TArray<FFlowPropertyPin> Properties;
 	UObject* VariableHolder = GetVariableHolder();
-	for (TFieldIterator<FProperty> PropertyIterator(VariableHolder->GetClass()); PropertyIterator; ++PropertyIterator)
-	{
-		FProperty* Property = *PropertyIterator;
-		if (FlowPropertyHelpers::IsPropertyExposedAsOutput(Property))
-		{
-			FStructProperty* StructProperty = CastField<FStructProperty>(Property);
-			if (!StructProperty)
-			{
-				FFlowInputOutputPin PropertyToAdd = FFlowInputOutputPin(nullptr, Property);
-				PropertyToAdd.OutputPinName = Property->GetFName();
-				PropertyToAdd.PinTooltip = Property->GetToolTipText(true).ToString();
-				Properties.Add(VariableHolder, PropertyToAdd);
-			}
-			else
-			{
-				UScriptStruct* GameplayTagContainerStruct = TBaseStructure<FGameplayTagContainer>::Get();
-				UScriptStruct* GameplayTagStruct = TBaseStructure<FGameplayTag>::Get();
-				UScriptStruct* VectorStruct = TBaseStructure<FVector>::Get();
-				UScriptStruct* RotatorStruct = TBaseStructure<FRotator>::Get();
-				UScriptStruct* TransformStruct = TBaseStructure<FTransform>::Get();
-				if (StructProperty->Struct == GameplayTagContainerStruct
-					|| StructProperty->Struct == GameplayTagStruct
-					|| StructProperty->Struct == VectorStruct
-					|| StructProperty->Struct == RotatorStruct
-					|| StructProperty->Struct == TransformStruct)
-				{
-					FFlowInputOutputPin PropertyToAdd = FFlowInputOutputPin(nullptr, Property);
-					PropertyToAdd.OutputPinName = Property->GetFName();
-					PropertyToAdd.PinTooltip = Property->GetToolTipText(true).ToString();
-					Properties.Add(VariableHolder, PropertyToAdd);
-				}
-			}
-		}
-	}
+	const TMultiMap<FString, FProperty*> Tuples = FlowPropertyHelpers::GatherProperties(VariableHolder, FlowPropertyHelpers::IsPropertyExposedAsOutput);
+	return ConvertProperties(Tuples);
+}
 
+TArray<FFlowPropertyPin> UFlowNode::ConvertProperties(TMultiMap<FString, FProperty*> Tuples)
+{
+	TArray<FFlowPropertyPin> Properties;
+	for (const TTuple<FString, FProperty*> Tuple : Tuples)
+	{
+		FFlowPropertyPin PropertyToAdd;
+		PropertyToAdd.Name = Tuple.Value->GetFName();
+		PropertyToAdd.Tooltip = Tuple.Value->GetToolTipText(true).ToString();
+
+		UEdGraphSchema_K2::GetPropertyCategoryInfo(Tuple.Value, PropertyToAdd.Category, PropertyToAdd.SubCategory, PropertyToAdd.SubCategoryObject, PropertyToAdd.bIsWeakPointer);
+		Properties.Add(PropertyToAdd);
+	}
 	return Properties;
 }
 
 FProperty* UFlowNode::FindInputPropertyByPinName(const FName& InPinName)
 {
-	for (TFieldIterator<FProperty> PropIt(GetVariableHolder()->GetClass()); PropIt; ++PropIt)
+	UObject* VariableHolder = GetVariableHolder();
+	TMultiMap<FString, FProperty*> Properties = FlowPropertyHelpers::GatherProperties(VariableHolder, FlowPropertyHelpers::IsPropertyExposedAsInput);
+
+	for (const TTuple<FString, FProperty*> Tuple : Properties)
 	{
-		FProperty* Property = *PropIt;
-		if (FlowPropertyHelpers::IsPropertyExposedAsInput(Property) && Property->GetFName().IsEqual(InPinName))
+		if (Tuple.Value->GetFName().IsEqual(InPinName))
 		{
-			return Property;
+			return Tuple.Value;
 		}
 	}
 
@@ -684,12 +613,14 @@ FProperty* UFlowNode::FindInputPropertyByPinName(const FName& InPinName)
 
 FProperty* UFlowNode::FindOutputPropertyByPinName(const FName& InPinName)
 {
-	for (TFieldIterator<FProperty> PropIt(GetVariableHolder()->GetClass()); PropIt; ++PropIt)
+	UObject* VariableHolder = GetVariableHolder();
+	TMultiMap<FString, FProperty*> Properties = FlowPropertyHelpers::GatherProperties(VariableHolder, FlowPropertyHelpers::IsPropertyExposedAsOutput);
+
+	for (const TTuple<FString, FProperty*> Tuple : Properties)
 	{
-		FProperty* Property = *PropIt;
-		if (FlowPropertyHelpers::IsPropertyExposedAsOutput(Property) && Property->GetFName().IsEqual(InPinName))
+		if (Tuple.Value->GetFName().IsEqual(InPinName))
 		{
-			return Property;
+			return Tuple.Value;
 		}
 	}
 
@@ -699,6 +630,11 @@ FProperty* UFlowNode::FindOutputPropertyByPinName(const FName& InPinName)
 UObject* UFlowNode::GetVariableHolder()
 {
 	return this;
+}
+
+uint8* UFlowNode::GetVariableContainer()
+{
+	return (uint8*)GetVariableHolder();
 }
 
 FString UFlowNode::GetIdentityTagDescription(const FGameplayTag& Tag)

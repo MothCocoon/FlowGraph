@@ -10,6 +10,7 @@
 #include "FlowComponent.h"
 #include "FlowSubsystem.generated.h"
 
+struct FFlowInputOutputPin;
 class UFlowAsset;
 class UFlowNode_SubGraph;
 
@@ -76,6 +77,7 @@ public:
 
 protected:
 	UFlowAsset* CreateSubFlow(UFlowNode_SubGraph* SubGraphNode, const FString SavedInstanceName = FString(), const bool bPreloading = false);
+	UFlowAsset* CreateSubFlow(UFlowNode_SubGraph* SubGraphNode, TMap<FProperty*, FString> PropertiesToSet, const FString SavedInstanceName = FString(), const bool bPreloading = false);
 	void RemoveSubFlow(UFlowNode_SubGraph* SubGraphNode, const EFlowFinishPolicy FinishPolicy);
 
 	UFlowAsset* CreateFlowInstance(const TWeakObjectPtr<UObject> Owner, TSoftObjectPtr<UFlowAsset> FlowAsset, FString NewInstanceName = FString());
