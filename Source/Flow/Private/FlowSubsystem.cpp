@@ -119,21 +119,28 @@ UFlowAsset* UFlowSubsystem::CreateSubFlow(UFlowNode_SubGraph* SubGraphNode, TMap
 	{
 		const TWeakObjectPtr<UObject> Owner = SubGraphNode->GetFlowAsset() ? SubGraphNode->GetFlowAsset()->GetOwner() : nullptr;
 		NewInstance = CreateFlowInstance(Owner, SubGraphNode->Asset, SavedInstanceName);
+
+		if (NewInstance->Properties.GetScriptStruct() && SubGraphNode->Properties.GetScriptStruct())
+		{
+			const FString FlowPropertiesClassName = NewInstance->Properties.GetScriptStruct()->GetName();
+			const FString NodePropertiesClassName = SubGraphNode->Properties.GetScriptStruct()->GetName();
+			if (FlowPropertiesClassName.Equals(NodePropertiesClassName))
+			{
+				NewInstance->Properties = SubGraphNode->Properties;
+			}
+			else
+			{
+				UE_LOG(LogFlow, Warning, TEXT("While creating SubFlow %s from %s, the properties could not be passed, because they are not the same struct base. Node: %s, FlowAsset: %s"),
+					*NewInstance->GetName(), *SubGraphNode->GetFlowAsset()->GetName(), *NodePropertiesClassName, *FlowPropertiesClassName)
+			}
+		}
+
 		UScriptStruct* ScriptStruct = const_cast<UScriptStruct*>(NewInstance->Properties.GetScriptStruct());
 
 		for (TTuple<FProperty*, FString> PropertyPin : PropertiesToSet)
 		{
 			uint8* MutableMemory = PropertyPin.Key->ContainerPtrToValuePtr<uint8>(NewInstance->Properties.GetMutableMemory());
 			PropertyPin.Key->ImportText(*PropertyPin.Value, MutableMemory, PPF_None, ScriptStruct);
-		}
-
-		for (TTuple<FProperty*, FString> PropertyPin : PropertiesToSet)
-		{
-			const uint8* MutableMemory = PropertyPin.Key->ContainerPtrToValuePtr<uint8>(NewInstance->Properties.GetMemory());
-			FString Value;
-			PropertyPin.Key->ExportText_Direct(Value, MutableMemory, MutableMemory, ScriptStruct, PPF_None);
-
-			UE_LOG(LogTemp, Warning, TEXT("Imported value: %s"), *Value)
 		}
 
 		InstancedSubFlows.Add(SubGraphNode, NewInstance);

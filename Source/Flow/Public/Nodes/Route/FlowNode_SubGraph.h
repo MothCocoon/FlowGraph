@@ -2,6 +2,7 @@
 
 #pragma once
 
+#include "InstancedStruct.h"
 #include "Nodes/FlowNode.h"
 #include "FlowNode_SubGraph.generated.h"
 
@@ -21,6 +22,9 @@ class FLOW_API UFlowNode_SubGraph : public UFlowNode
 private:
 	UPROPERTY(EditAnywhere, Category = "Graph")
 	TSoftObjectPtr<UFlowAsset> Asset;
+
+	UPROPERTY(EditAnywhere, SaveGame, meta=(ShowInnerProperties))
+	FInstancedStruct Properties;
 
 	TMap<FProperty*, FString> PropertiesToSet;
 	UPROPERTY()
