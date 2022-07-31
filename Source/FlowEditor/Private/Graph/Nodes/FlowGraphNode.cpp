@@ -27,6 +27,7 @@
 #include "ToolMenuSection.h"
 #include "UnrealEd.h"
 #include "FlowPropertyHelpers.h"
+#include "Nodes/Route/FlowNode_SubGraph.h"
 
 #define LOCTEXT_NAMESPACE "FlowGraphNode"
 
@@ -516,6 +517,11 @@ void UFlowGraphNode::GetNodeContextMenuActions(class UToolMenu* Menu, class UGra
 				Section.AddMenuEntry(FlowGraphCommands.RefreshContextPins);
 			}
 
+			if (SavesPropertyPins())
+			{
+				Section.AddMenuEntry(FlowGraphCommands.RefreshPropertyPins);
+			}
+
 			if (CanUserAddInput())
 			{
 				Section.AddMenuEntry(FlowGraphCommands.AddInput);
@@ -757,61 +763,6 @@ void UFlowGraphNode::CreateOutputPin(const FFlowPin& FlowPin, const int32 Index 
 	OutputPins.Emplace(NewPin);
 }
 
-static const FName GetPinNameFromProperty(const FProperty* Property)
-{
-	if (FLOW_PROPERTY_IS(Property, Object))
-	{
-		return UEdGraphSchema_K2::PC_Object;
-	}
-
-	if (FLOW_PROPERTY_IS(Property, Float))
-	{
-		return UEdGraphSchema_K2::PC_Float;
-	}
-
-	if (FLOW_PROPERTY_IS(Property, Bool))
-	{
-		return UEdGraphSchema_K2::PC_Boolean;
-	}
-
-	if (FLOW_PROPERTY_IS(Property, Byte))
-	{
-		return UEdGraphSchema_K2::PC_Byte;
-	}
-
-	if (FLOW_PROPERTY_IS(Property, Int))
-	{
-		return UEdGraphSchema_K2::PC_Int;
-	}
-
-	if (FLOW_PROPERTY_IS(Property, Int64))
-	{
-		return UEdGraphSchema_K2::PC_Int64;
-	}
-
-	if (FLOW_PROPERTY_IS(Property, Struct))
-	{
-		return UEdGraphSchema_K2::PC_Struct;
-	}
-
-	if (FLOW_PROPERTY_IS(Property, Str))
-	{
-		return UEdGraphSchema_K2::PC_String;
-	}
-
-	if (FLOW_PROPERTY_IS(Property, Text))
-	{
-		return UEdGraphSchema_K2::PC_Text;
-	}
-
-	if (FLOW_PROPERTY_IS(Property, Name))
-	{
-		return UEdGraphSchema_K2::PC_Name;
-	}
-
-	return NAME_None;
-}
-
 void UFlowGraphNode::CreatePropertyPin(const FFlowPropertyPin& FlowPropertyPin, const EEdGraphPinDirection Dir)
 {
 	if (FlowPropertyPin.Category.IsNone() || FlowPropertyPin.Name.IsNone())
@@ -844,6 +795,11 @@ void UFlowGraphNode::RemoveOrphanedPin(UEdGraphPin* Pin)
 bool UFlowGraphNode::SupportsContextPins() const
 {
 	return FlowNode && FlowNode->SupportsContextPins();
+}
+
+bool UFlowGraphNode::SavesPropertyPins() const
+{
+	return FlowNode && FlowNode->SavesPropertyPins();
 }
 
 bool UFlowGraphNode::CanUserAddInput() const
@@ -945,6 +901,23 @@ void UFlowGraphNode::RefreshContextPins(const bool bReconstructNode)
 		// recreate outputs
 		FlowNode->OutputPins = NodeDefaults->OutputPins;
 		FlowNode->AddOutputPins(FlowNode->GetContextOutputs());
+
+		if (bReconstructNode)
+		{
+			ReconstructNode();
+			GetGraph()->NotifyGraphChanged();
+		}
+	}
+}
+
+void UFlowGraphNode::RefreshPropertyPins(const bool bReconstructNode)
+{
+	if (SavesPropertyPins())
+	{
+		const FScopedTransaction Transaction(LOCTEXT("RefreshPropertyPins", "Refresh Property Pins"));
+		Modify();
+
+		FlowNode->GatherProperties();
 
 		if (bReconstructNode)
 		{

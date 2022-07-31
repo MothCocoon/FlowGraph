@@ -185,6 +185,7 @@ public:
 	void RemoveOrphanedPin(UEdGraphPin* Pin);
 
 	bool SupportsContextPins() const;
+	bool SavesPropertyPins() const;
 
 	bool CanUserAddInput() const;
 	bool CanUserAddOutput() const;
@@ -203,6 +204,9 @@ public:
 
 	// Create pins from the context asset, i.e. Sequencer events
 	void RefreshContextPins(const bool bReconstructNode);
+
+	// Create property pins from the context asset, i.e. subgraph properties
+	void RefreshPropertyPins(const bool bReconstructNode);
 
 	// UEdGraphNode
 	virtual void GetPinHoverText(const UEdGraphPin& Pin, FString& HoverTextOut) const override;

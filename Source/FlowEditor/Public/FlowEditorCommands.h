@@ -26,6 +26,7 @@ public:
 
 	/** Context Pins */
 	TSharedPtr<FUICommandInfo> RefreshContextPins;
+	TSharedPtr<FUICommandInfo> RefreshPropertyPins;
 
 	/** Pins */
 	TSharedPtr<FUICommandInfo> AddInput;

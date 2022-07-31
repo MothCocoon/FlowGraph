@@ -390,6 +390,10 @@ void FFlowAssetEditor::BindGraphCommands()
 	ToolkitCommands->MapAction(FlowGraphCommands.RefreshContextPins,
 		FExecuteAction::CreateSP(this, &FFlowAssetEditor::RefreshContextPins),
 		FCanExecuteAction::CreateSP(this, &FFlowAssetEditor::CanRefreshContextPins));
+	
+	ToolkitCommands->MapAction(FlowGraphCommands.RefreshPropertyPins,
+		FExecuteAction::CreateSP(this, &FFlowAssetEditor::RefreshPropertyPins),
+		FCanExecuteAction::CreateSP(this, &FFlowAssetEditor::CanRefreshPropertyPins));
 
 	ToolkitCommands->MapAction(FlowGraphCommands.AddInput,
 		FExecuteAction::CreateSP(this, &FFlowAssetEditor::AddInput),
@@ -949,6 +953,27 @@ bool FFlowAssetEditor::CanRefreshContextPins() const
 		for (const UFlowGraphNode* SelectedNode : GetSelectedFlowNodes())
 		{
 			return SelectedNode->SupportsContextPins();
+		}
+	}
+
+	return false;
+}
+
+void FFlowAssetEditor::RefreshPropertyPins() const
+{
+	for (UFlowGraphNode* SelectedNode : GetSelectedFlowNodes())
+	{
+		SelectedNode->RefreshPropertyPins(true);
+	}
+}
+
+bool FFlowAssetEditor::CanRefreshPropertyPins() const
+{
+	if (CanEdit() && GetSelectedFlowNodes().Num() == 1)
+	{
+		for (const UFlowGraphNode* SelectedNode : GetSelectedFlowNodes())
+		{
+			return SelectedNode->SavesPropertyPins();
 		}
 	}
 

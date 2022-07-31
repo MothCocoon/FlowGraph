@@ -164,6 +164,9 @@ protected:
 
 	virtual void RefreshContextPins() const;
 	virtual bool CanRefreshContextPins() const;
+	
+	virtual void RefreshPropertyPins() const;
+	virtual bool CanRefreshPropertyPins() const;
 
 private:
 	void AddInput() const;

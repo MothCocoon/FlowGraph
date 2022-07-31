@@ -68,6 +68,7 @@ public:
 	virtual UObject* GetAssetToEdit() override;
 
 	virtual bool SupportsContextPins() const override { return true; }
+	virtual bool SavesPropertyPins() const override { return true; }
 
 	virtual TArray<FName> GetContextInputs() override;
 	virtual TArray<FName> GetContextOutputs() override;
@@ -78,8 +79,10 @@ public:
 	virtual void PostEditChangeProperty(FPropertyChangedEvent& PropertyChangedEvent) override;
 	// --
 
+protected:
+	virtual void GatherProperties() override;
+
 private:
 	void SubscribeToAssetChanges();
-	void GatherProperties();
 #endif
 };

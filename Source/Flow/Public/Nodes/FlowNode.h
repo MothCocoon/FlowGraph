@@ -140,6 +140,7 @@ protected:
 public:
 #if WITH_EDITOR
 	virtual bool SupportsContextPins() const { return false; }
+	virtual bool SavesPropertyPins() const { return false; }
 
 	// Be careful, enabling it might cause loading gigabytes of data as nodes would load all related data (i.e. Level Sequences)
 	virtual bool CanRefreshContextPinsOnLoad() const { return false; }
@@ -147,6 +148,13 @@ public:
 	virtual TArray<FName> GetContextInputs() { return TArray<FName>(); }
 	virtual TArray<FName> GetContextOutputs() { return TArray<FName>(); }
 
+protected:
+	// Reload the properties and save them to the instance. Implementation should be handled by every derived class
+	virtual void GatherProperties()
+	{
+	}
+
+public:
 	virtual bool CanUserAddInput() const;
 	virtual bool CanUserAddOutput() const;
 
@@ -338,7 +346,7 @@ protected:
 
 	virtual const TArray<FFlowPropertyPin> GetInputProperties();
 	virtual const TArray<FFlowPropertyPin> GetOutputProperties();
-	
+
 	static TArray<FFlowPropertyPin> ConvertProperties(TMultiMap<FString, FProperty*> Tuples);
 
 public:
