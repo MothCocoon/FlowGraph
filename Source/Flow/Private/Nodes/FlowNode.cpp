@@ -391,7 +391,7 @@ void UFlowNode::TriggerInput(const FConnectedPin& ConnectedPin, const bool bForc
 			UFlowNode* LinkedNode = GetFlowAsset()->Nodes.FindRef(FlowOutputPin.PinProperty.InputNodeGuid);
 			UFlowNode* OutputNode = GetFlowAsset()->Nodes.FindRef(FlowOutputPin.PinProperty.OutputNodeGuid);
 			PinProperty.InputProperty = LinkedNode->FindInputPropertyByPinName(FlowOutputPin.PinProperty.InputPinName);
-			PinProperty.OutputProperty = OutputNode->FindInputPropertyByPinName(FlowOutputPin.PinProperty.OutputPinName);
+			PinProperty.OutputProperty = OutputNode->FindOutputPropertyByPinName(FlowOutputPin.PinProperty.OutputPinName);
 			PropertyPins.Add(PinProperty);
 		}
 	}
