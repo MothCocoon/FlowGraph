@@ -321,7 +321,7 @@ void UFlowGraphSchema::GetCommentAction(FGraphActionMenuBuilder& ActionMenuBuild
 
 bool UFlowGraphSchema::IsFlowNodePlaceable(const UClass* Class)
 {
-	if (Class->HasAnyClassFlags(CLASS_Abstract) || Class->HasAnyClassFlags(CLASS_NotPlaceable) || Class->HasAnyClassFlags(CLASS_Deprecated))
+	if (Class->HasAnyClassFlags(CLASS_Abstract | CLASS_NotPlaceable | CLASS_Deprecated))
 	{
 		return false;
 	}
