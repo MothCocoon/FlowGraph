@@ -35,7 +35,7 @@ protected:
 	int32 SuccessLimit;
 
 	// This node will become Completed, if Success Limit > 0 and Success Count reaches this limit
-	UPROPERTY(VisibleAnywhere, Category = "Lifetime")
+	UPROPERTY(VisibleAnywhere, Category = "Lifetime", SaveGame)
 	int32 SuccessCount;
 
 	TMap<TWeakObjectPtr<AActor>, TWeakObjectPtr<UFlowComponent>> RegisteredActors;
