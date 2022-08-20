@@ -76,7 +76,7 @@ void FFlowTrackEditor::BuildAddTrackMenu(FMenuBuilder& MenuBuilder)
 			LOCTEXT("AddTooltip", "Adds a new flow track that can trigger events in the Flow graph."),
 			FNewMenuDelegate::CreateRaw(this, &FFlowTrackEditor::AddFlowSubMenu),
 			false,
-			FSlateIcon(FEditorStyle::GetStyleSetName(), "Sequencer.Tracks.Event")
+			FSlateIcon(FAppStyle::GetAppStyleSetName(), "Sequencer.Tracks.Event")
 		);
 	}
 }
@@ -144,7 +144,7 @@ bool FFlowTrackEditor::SupportsSequence(UMovieSceneSequence* InSequence) const
 
 const FSlateBrush* FFlowTrackEditor::GetIconBrush() const
 {
-	return FEditorStyle::GetBrush("Sequencer.Tracks.Event");
+	return FAppStyle::GetBrush("Sequencer.Tracks.Event");
 }
 
 void FFlowTrackEditor::HandleAddFlowTrackMenuEntryExecute(UClass* SectionType)

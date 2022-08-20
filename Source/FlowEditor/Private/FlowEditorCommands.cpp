@@ -25,7 +25,7 @@ void FFlowToolbarCommands::RegisterCommands()
 }
 
 FFlowGraphCommands::FFlowGraphCommands()
-	: TCommands<FFlowGraphCommands>("FlowGraph", LOCTEXT("FlowGraph", "Flow Graph"), NAME_None, FEditorStyle::GetStyleSetName())
+	: TCommands<FFlowGraphCommands>("FlowGraph", LOCTEXT("FlowGraph", "Flow Graph"), NAME_None, FAppStyle::GetAppStyleSetName())
 {
 }
 
@@ -50,7 +50,7 @@ void FFlowGraphCommands::RegisterCommands()
 }
 
 FFlowSpawnNodeCommands::FFlowSpawnNodeCommands()
-	: TCommands<FFlowSpawnNodeCommands>(TEXT("FFlowSpawnNodeCommands"), LOCTEXT("FlowGraph_SpawnNodes", "Flow Graph - Spawn Nodes"), NAME_None, FEditorStyle::GetStyleSetName())
+	: TCommands<FFlowSpawnNodeCommands>(TEXT("FFlowSpawnNodeCommands"), LOCTEXT("FlowGraph_SpawnNodes", "Flow Graph - Spawn Nodes"), NAME_None, FAppStyle::GetAppStyleSetName())
 {
 }
 
@@ -116,7 +116,7 @@ void FFlowSpawnNodeCommands::RegisterCommands()
 		const FText CommandLabelText = FText::FromString(NodeClass->GetName());
 		const FText Description = FText::Format(LOCTEXT("NodeSpawnDescription", "Hold down the bound keys and left click in the graph panel to spawn a {0} node."), CommandLabelText);
 
-		FUICommandInfo::MakeCommandInfo(this->AsShared(), CommandInfo, FName(*NodeSpawns[x]), CommandLabelText, Description, FSlateIcon(FEditorStyle::GetStyleSetName(), *FString::Printf(TEXT("%s.%s"), *this->GetContextName().ToString(), *NodeSpawns[x])), EUserInterfaceActionType::Button, Chord);
+		FUICommandInfo::MakeCommandInfo(this->AsShared(), CommandInfo, FName(*NodeSpawns[x]), CommandLabelText, Description, FSlateIcon(FAppStyle::GetAppStyleSetName(), *FString::Printf(TEXT("%s.%s"), *this->GetContextName().ToString(), *NodeSpawns[x])), EUserInterfaceActionType::Button, Chord);
 
 		NodeCommands.Add(NodeClass, CommandInfo);
 	}
