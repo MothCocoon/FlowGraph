@@ -49,6 +49,9 @@ class FLOW_API UFlowAsset : public UObject
 	friend class FFlowAssetDetails;
 	friend class UFlowGraphSchema;
 
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Flow Asset")
+	FGuid AssetGuid;
+	
 //////////////////////////////////////////////////////////////////////////
 // Graph
 
@@ -98,14 +101,14 @@ private:
 	 * Custom Inputs define custom entry points in graph, it's similar to blueprint Custom Events
 	 * Sub Graph node using this Flow Asset will generate context Input Pin for every valid Event name on this list
 	 */
-	UPROPERTY(EditAnywhere, Category = "Flow")
+	UPROPERTY(EditAnywhere, Category = "Sub Graph")
 	TArray<FName> CustomInputs;
 
 	/**
 	 * Custom Outputs define custom graph outputs, this allow to send signals to the parent graph while executing this graph
 	 * Sub Graph node using this Flow Asset will generate context Output Pin for every valid Event name on this list
 	 */
-	UPROPERTY(EditAnywhere, Category = "Flow")
+	UPROPERTY(EditAnywhere, Category = "Sub Graph")
 	TArray<FName> CustomOutputs;
 
 public:
