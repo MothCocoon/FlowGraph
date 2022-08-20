@@ -507,6 +507,11 @@ FString UFlowNode::GetStatusString() const
 	return K2_GetStatusString();
 }
 
+bool UFlowNode::GetStatusBackgroundColor(FLinearColor& OutColor) const
+{
+	return K2_GetStatusBackgroundColor(OutColor);
+}
+
 FString UFlowNode::GetAssetPath()
 {
 	return K2_GetAssetPath();

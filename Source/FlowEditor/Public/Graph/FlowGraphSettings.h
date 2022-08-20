@@ -15,6 +15,7 @@ UCLASS(Config = Editor, defaultconfig, meta = (DisplayName = "Flow Graph"))
 class UFlowGraphSettings final : public UDeveloperSettings
 {
 	GENERATED_UCLASS_BODY()
+
 	static UFlowGraphSettings* Get() { return StaticClass()->GetDefaultObject<UFlowGraphSettings>(); }
 
 	/** Show Flow Asset in Flow category of "Create Asset" menu?
