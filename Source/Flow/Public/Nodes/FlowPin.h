@@ -9,8 +9,13 @@ struct FLOW_API FFlowPin
 {
 	GENERATED_BODY()
 
+	// A logical name, used during execution of pin
 	UPROPERTY(EditDefaultsOnly, Category = "FlowPin")
 	FName PinName;
+
+	// An optional Display Name, you can use it override PinName without need to update graph connections
+	UPROPERTY(EditDefaultsOnly, Category = "FlowPin")
+	FText PinFriendlyName;
 
 	UPROPERTY(EditDefaultsOnly, Category = "FlowPin")
 	FString PinToolTip;
@@ -31,7 +36,7 @@ struct FLOW_API FFlowPin
 	}
 
 	FFlowPin(const FText& InPinName)
-        : PinName(*InPinName.ToString())
+		: PinName(*InPinName.ToString())
 	{
 	}
 
@@ -50,30 +55,25 @@ struct FLOW_API FFlowPin
 	{
 	}
 
-	FFlowPin(const FName& InPinName, const FString& InPinTooltip)
+	FFlowPin(const FStringView InPinName, const FText& InPinFriendlyName)
+		: PinName(InPinName)
+		, PinFriendlyName(InPinFriendlyName)
+	{
+	}
+
+	FFlowPin(const FStringView InPinName, const FString& InPinTooltip)
 		: PinName(InPinName)
 		, PinToolTip(InPinTooltip)
 	{
 	}
 
-	FFlowPin(const FString& InPinName, const FString& InPinTooltip)
-		: PinName(*InPinName)
+	FFlowPin(const FStringView InPinName, const FText& InPinFriendlyName, const FString& InPinTooltip)
+		: PinName(InPinName)
+		, PinFriendlyName(InPinFriendlyName)
 		, PinToolTip(InPinTooltip)
 	{
 	}
 
-	FFlowPin(const FText& InPinName, const FString& InPinTooltip)
-        : PinName(*InPinName.ToString())
-        , PinToolTip(InPinTooltip)
-	{
-	}
-
-	FFlowPin(const TCHAR* InPinName, const FString& InPinTooltip)
-		: PinName(FName(InPinName))
-		, PinToolTip(InPinTooltip)
-	{
-	}
-	
 	FORCEINLINE bool IsValid() const
 	{
 		return !PinName.IsNone();
@@ -111,21 +111,21 @@ struct FLOW_API FConnectedPin
 {
 	GENERATED_USTRUCT_BODY()
 
-    UPROPERTY()
+	UPROPERTY()
 	FGuid NodeGuid;
 
 	UPROPERTY()
 	FName PinName;
 
 	FConnectedPin()
-        : NodeGuid(FGuid())
-        , PinName(NAME_None)
+		: NodeGuid(FGuid())
+		, PinName(NAME_None)
 	{
 	}
 
 	FConnectedPin(const FGuid InNodeId, const FName& InPinName)
-        : NodeGuid(InNodeId)
-        , PinName(InPinName)
+		: NodeGuid(InNodeId)
+		, PinName(InPinName)
 	{
 	}
 
@@ -148,7 +148,7 @@ struct FLOW_API FConnectedPin
 // Every time pin is activated, we record it and display this data while user hovers mouse over pin
 #if !UE_BUILD_SHIPPING
 struct FLOW_API FPinRecord
-{	
+{
 	double Time;
 	FString HumanReadableTime;
 	bool bForcedActivation;
@@ -160,7 +160,7 @@ struct FLOW_API FPinRecord
 	FPinRecord();
 	FPinRecord(const double InTime, const bool bInForcedActivation);
 
-	private:
+private:
 	FORCEINLINE static FString DoubleDigit(const int32 Number);
 };
 #endif
