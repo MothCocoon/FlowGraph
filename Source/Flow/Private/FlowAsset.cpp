@@ -25,6 +25,10 @@ UFlowAsset::UFlowAsset(const FObjectInitializer& ObjectInitializer)
 	, StartNode(nullptr)
 	, FinishPolicy(EFlowFinishPolicy::Keep)
 {
+	if (!AssetGuid.IsValid())
+	{
+		AssetGuid = FGuid::NewGuid();
+	}
 }
 
 #if WITH_EDITOR
@@ -53,6 +57,7 @@ void UFlowAsset::PostDuplicate(bool bDuplicateForPIE)
 
 	if (!bDuplicateForPIE)
 	{
+		AssetGuid = FGuid::NewGuid();
 		Nodes.Empty();
 	}
 }

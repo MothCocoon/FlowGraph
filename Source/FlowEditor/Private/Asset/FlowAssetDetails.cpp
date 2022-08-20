@@ -11,26 +11,22 @@
 
 #define LOCTEXT_NAMESPACE "FlowAssetDetails"
 
-void FFlowAssetDetails::CustomizeDetails(IDetailLayoutBuilder& DetailLayout)
+void FFlowAssetDetails::CustomizeDetails(IDetailLayoutBuilder& DetailBuilder)
 {
-	IDetailCategoryBuilder& FlowAssetCategory = DetailLayout.EditCategory("FlowAsset", LOCTEXT("FlowAssetCategory", "Flow Asset"));
-	
-	const TSharedPtr<IPropertyHandle> InputsPropertyHandle = DetailLayout.GetProperty(GET_MEMBER_NAME_CHECKED(UFlowAsset, CustomInputs));
-	if (InputsPropertyHandle.IsValid() && InputsPropertyHandle->AsArray().IsValid())
+	IDetailCategoryBuilder& FlowAssetCategory = DetailBuilder.EditCategory("SubGraph", LOCTEXT("SubGraphCategory", "Sub Graph"));
+
+	TArray<TSharedPtr<IPropertyHandle>> ArrayPropertyHandles;
+	ArrayPropertyHandles.Add(DetailBuilder.GetProperty(GET_MEMBER_NAME_CHECKED(UFlowAsset, CustomInputs)));
+	ArrayPropertyHandles.Add(DetailBuilder.GetProperty(GET_MEMBER_NAME_CHECKED(UFlowAsset, CustomOutputs)));
+	for (const TSharedPtr<IPropertyHandle>& PropertyHandle : ArrayPropertyHandles)
 	{
-		const TSharedRef<FDetailArrayBuilder> InputsArrayBuilder = MakeShareable(new FDetailArrayBuilder(InputsPropertyHandle.ToSharedRef()));
-		InputsArrayBuilder->OnGenerateArrayElementWidget(FOnGenerateArrayElementWidget::CreateSP(this, &FFlowAssetDetails::GenerateCustomPinArray));
+		if (PropertyHandle.IsValid() && PropertyHandle->AsArray().IsValid())
+		{
+			const TSharedRef<FDetailArrayBuilder> ArrayBuilder = MakeShareable(new FDetailArrayBuilder(PropertyHandle.ToSharedRef()));
+			ArrayBuilder->OnGenerateArrayElementWidget(FOnGenerateArrayElementWidget::CreateSP(this, &FFlowAssetDetails::GenerateCustomPinArray));
 
-		FlowAssetCategory.AddCustomBuilder(InputsArrayBuilder);
-	}
-
-	const TSharedPtr<IPropertyHandle> OutputsPropertyHandle = DetailLayout.GetProperty(GET_MEMBER_NAME_CHECKED(UFlowAsset, CustomOutputs));
-	if (OutputsPropertyHandle.IsValid() && OutputsPropertyHandle->AsArray().IsValid())
-	{
-		const TSharedRef<FDetailArrayBuilder> OutputsArrayBuilder = MakeShareable(new FDetailArrayBuilder(OutputsPropertyHandle.ToSharedRef()));
-		OutputsArrayBuilder->OnGenerateArrayElementWidget(FOnGenerateArrayElementWidget::CreateSP(this, &FFlowAssetDetails::GenerateCustomPinArray));
-
-		FlowAssetCategory.AddCustomBuilder(OutputsArrayBuilder);
+			FlowAssetCategory.AddCustomBuilder(ArrayBuilder);
+		}
 	}
 }
 

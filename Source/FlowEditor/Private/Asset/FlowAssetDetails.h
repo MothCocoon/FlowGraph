@@ -19,7 +19,7 @@ public:
 	}
 
 	// IDetailCustomization
-	virtual void CustomizeDetails(IDetailLayoutBuilder& DetailLayout) override;
+	virtual void CustomizeDetails(IDetailLayoutBuilder& DetailBuilder) override;
 	// --
 
 private:
