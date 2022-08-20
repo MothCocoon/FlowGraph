@@ -662,6 +662,23 @@ FString UFlowGraphNode::GetStatusString() const
 	return FString();
 }
 
+FLinearColor UFlowGraphNode::GetStatusBackgroundColor() const
+{
+	if (FlowNode)
+	{
+		if (const UFlowNode* NodeInstance = FlowNode->GetInspectedInstance())
+		{
+			FLinearColor ObtainedColor;
+			if (NodeInstance->GetStatusBackgroundColor(ObtainedColor))
+			{
+				return ObtainedColor;
+			}
+		}
+	}
+
+	return UFlowGraphSettings::Get()->NodeStatusBackground;
+}
+
 bool UFlowGraphNode::IsContentPreloaded() const
 {
 	if (FlowNode)

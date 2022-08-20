@@ -296,6 +296,7 @@ public:
 
 	// Information displayed while node is working - displayed over node as NodeInfoPopup
 	virtual FString GetStatusString() const;
+	bool GetStatusBackgroundColor(FLinearColor& OutColor) const;
 
 	virtual FString GetAssetPath();
 	virtual UObject* GetAssetToEdit();
@@ -306,6 +307,9 @@ protected:
 	// Information displayed while node is working - displayed over node as NodeInfoPopup
 	UFUNCTION(BlueprintImplementableEvent, Category = "FlowNode", meta = (DisplayName = "GetStatusString"))
 	FString K2_GetStatusString() const;
+
+	UFUNCTION(BlueprintImplementableEvent, Category = "FlowNode", meta = (DisplayName = "GetStatusBackgroundColor"))
+	bool K2_GetStatusBackgroundColor(FLinearColor& OutColor) const;
 
 	UFUNCTION(BlueprintImplementableEvent, Category = "FlowNode", meta = (DisplayName = "GetAssetPath"))
 	FString K2_GetAssetPath();
