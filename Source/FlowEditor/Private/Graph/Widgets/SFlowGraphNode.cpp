@@ -64,7 +64,7 @@ void SFlowGraphNode::GetNodeInfoPopups(FNodeInfoContext* Context, TArray<FGraphI
 		const FString Status = FlowGraphNode->GetStatusString();
 		if (!Status.IsEmpty())
 		{
-			const FGraphInformationPopupInfo DescriptionPopup = FGraphInformationPopupInfo(nullptr, UFlowGraphSettings::Get()->NodeStatusBackground, Status);
+			const FGraphInformationPopupInfo DescriptionPopup = FGraphInformationPopupInfo(nullptr, FlowGraphNode->GetStatusBackgroundColor(), Status);
 			Popups.Add(DescriptionPopup);
 		}
 		else if (FlowGraphNode->IsContentPreloaded())
