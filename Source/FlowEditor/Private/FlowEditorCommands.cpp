@@ -68,7 +68,7 @@ void FFlowSpawnNodeCommands::RegisterCommands()
 		FString ClassName;
 		if (FParse::Value(*NodeSpawns[x], TEXT("Class="), ClassName))
 		{
-			UClass* FoundClass = FindObject<UClass>(ANY_PACKAGE, *ClassName, true);
+			UClass* FoundClass = FindObject<UClass>(nullptr, *ClassName, true);
 			if (FoundClass && FoundClass->IsChildOf(UFlowNode::StaticClass()))
 			{
 				NodeClass = FoundClass;

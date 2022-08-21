@@ -138,7 +138,7 @@ bool FFlowTrackEditor::SupportsType(TSubclassOf<UMovieSceneTrack> Type) const
 
 bool FFlowTrackEditor::SupportsSequence(UMovieSceneSequence* InSequence) const
 {
-	static UClass* LevelSequenceClass = FindObject<UClass>(ANY_PACKAGE, TEXT("LevelSequence"), true);
+	static UClass* LevelSequenceClass = FindObject<UClass>(nullptr, TEXT("LevelSequence"), true);
 	return InSequence && LevelSequenceClass && InSequence->GetClass()->IsChildOf(LevelSequenceClass);
 }
 
