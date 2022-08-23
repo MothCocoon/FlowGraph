@@ -195,10 +195,13 @@ public:
 
 	// This will destroy instantiated Flow Asset - created from asset assigned on this component.
 	UFUNCTION(BlueprintCallable, Category = "RootFlow")
-	void FinishRootFlow(const EFlowFinishPolicy FinishPolicy);
+	void FinishRootFlow(UFlowAsset* TemplateAsset, const EFlowFinishPolicy FinishPolicy);
 
-	UFUNCTION(BlueprintPure, Category = "RootFlow")
-	UFlowAsset* GetRootFlowInstance();
+	UFUNCTION(BlueprintPure, Category = "FlowSubsystem")
+	TSet<UFlowAsset*> GetRootInstances(const UObject* Owner) const;
+
+	UFUNCTION(BlueprintPure, Category = "RootFlow", meta = (DeprecatedFunction, DeprecationMessage="Use GetRootInstances() instead."))
+	UFlowAsset* GetRootFlowInstance() const;
 
 //////////////////////////////////////////////////////////////////////////
 // SaveGame
