@@ -72,7 +72,7 @@ void UFlowComponent::EndPlay(const EEndPlayReason::Type EndPlayReason)
 {
 	if (UFlowSubsystem* FlowSubsystem = GetFlowSubsystem())
 	{
-		FlowSubsystem->FinishRootFlow(this, EFlowFinishPolicy::Keep);
+		FlowSubsystem->FinishAllRootFlows(this, EFlowFinishPolicy::Keep);
 		FlowSubsystem->UnregisterComponent(this);
 	}
 
@@ -375,19 +375,33 @@ void UFlowComponent::StartRootFlow()
 	}
 }
 
-void UFlowComponent::FinishRootFlow(const EFlowFinishPolicy FinishPolicy)
+void UFlowComponent::FinishRootFlow(UFlowAsset* TemplateAsset, const EFlowFinishPolicy FinishPolicy)
 {
 	if (UFlowSubsystem* FlowSubsystem = GetFlowSubsystem())
 	{
-		FlowSubsystem->FinishRootFlow(this, FinishPolicy);
+		FlowSubsystem->FinishRootFlow(this, TemplateAsset, FinishPolicy);
 	}
 }
 
-UFlowAsset* UFlowComponent::GetRootFlowInstance()
+TSet<UFlowAsset*> UFlowComponent::GetRootInstances(const UObject* Owner) const
 {
 	if (const UFlowSubsystem* FlowSubsystem = GetFlowSubsystem())
 	{
-		return FlowSubsystem->GetRootFlow(this);
+		return FlowSubsystem->GetRootInstancesByOwner(this);
+	}
+
+	return TSet<UFlowAsset*>();
+}
+
+UFlowAsset* UFlowComponent::GetRootFlowInstance() const
+{
+	if (const UFlowSubsystem* FlowSubsystem = GetFlowSubsystem())
+	{
+		const TSet<UFlowAsset*> Result = FlowSubsystem->GetRootInstancesByOwner(this);
+		if (Result.Num() > 0)
+		{
+			return Result.Array()[0];
+		}
 	}
 
 	return nullptr;

@@ -42,7 +42,7 @@ private:
 
 	/* Assets instanced by object from another system, i.e. World Settings or Player Controller */
 	UPROPERTY()
-	TMap<TWeakObjectPtr<UObject>, UFlowAsset*> RootInstances;
+	TMap<UFlowAsset*, TWeakObjectPtr<UObject>> RootInstances;
 
 	/* Assets instanced by Sub Graph nodes */
 	UPROPERTY()
@@ -63,7 +63,7 @@ public:
 	virtual void AbortActiveFlows();
 
 	/* Start the root Flow, graph that will eventually instantiate next Flow Graphs through the SubGraph node */
-	UFUNCTION(BlueprintCallable, Category = "FlowSubsystem")
+	UFUNCTION(BlueprintCallable, Category = "FlowSubsystem", meta = (DefaultToSelf = "Owner"))
 	virtual void StartRootFlow(UObject* Owner, UFlowAsset* FlowAsset, const bool bAllowMultipleInstances = true);
 
 	virtual UFlowAsset* CreateRootFlow(UObject* Owner, UFlowAsset* FlowAsset, const bool bAllowMultipleInstances = true);
@@ -71,8 +71,14 @@ public:
 	/* Finish Policy value is read by Flow Node
 	 * Nodes have opportunity to terminate themselves differently if Flow Graph has been aborted
 	 * Example: Spawn node might despawn all actors if Flow Graph is aborted, not completed */
-	UFUNCTION(BlueprintCallable, Category = "FlowSubsystem")
-	virtual void FinishRootFlow(UObject* Owner, const EFlowFinishPolicy FinishPolicy);
+	UFUNCTION(BlueprintCallable, Category = "FlowSubsystem", meta = (DefaultToSelf = "Owner"))
+	virtual void FinishRootFlow(UObject* Owner, UFlowAsset* TemplateAsset, const EFlowFinishPolicy FinishPolicy);
+
+	/* Finish Policy value is read by Flow Node
+	 * Nodes have opportunity to terminate themselves differently if Flow Graph has been aborted
+	 * Example: Spawn node might despawn all actors if Flow Graph is aborted, not completed */
+	UFUNCTION(BlueprintCallable, Category = "FlowSubsystem", meta = (DefaultToSelf = "Owner"))
+	virtual void FinishAllRootFlows(UObject* Owner, const EFlowFinishPolicy FinishPolicy);
 
 protected:
 	UFlowAsset* CreateSubFlow(UFlowNode_SubGraph* SubGraphNode, const FString SavedInstanceName = FString(), const bool bPreloading = false);
@@ -82,13 +88,16 @@ protected:
 	void RemoveInstancedTemplate(UFlowAsset* Template);
 
 public:
-	/* Returns asset instanced by object from another system like World Settings */
-	UFUNCTION(BlueprintPure, Category = "FlowSubsystem")
-	UFlowAsset* GetRootFlow(UObject* Owner) const { return RootInstances.FindRef(Owner); }
-
-	/* Returns assets instanced by object from another system like World Settings */
+	/* Returns all assets instanced by object from another system like World Settings */
 	UFUNCTION(BlueprintPure, Category = "FlowSubsystem")
 	TMap<UObject*, UFlowAsset*> GetRootInstances() const;
+	
+	/* Returns asset instanced by specific object */
+	UFUNCTION(BlueprintPure, Category = "FlowSubsystem")
+	TSet<UFlowAsset*> GetRootInstancesByOwner(const UObject* Owner) const;
+
+	UFUNCTION(BlueprintPure, Category = "FlowSubsystem", meta = (DeprecatedFunction, DeprecationMessage="Use GetRootInstancesByOwner() instead."))
+	UFlowAsset* GetRootFlow(const UObject* Owner) const;
 
 	/* Returns assets instanced by Sub Graph nodes */
 	UFUNCTION(BlueprintPure, Category = "FlowSubsystem")
