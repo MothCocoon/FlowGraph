@@ -296,7 +296,7 @@ public:
 
 	// Information displayed while node is working - displayed over node as NodeInfoPopup
 	virtual FString GetStatusString() const;
-	bool GetStatusBackgroundColor(FLinearColor& OutColor) const;
+	virtual bool GetStatusBackgroundColor(FLinearColor& OutColor) const;
 
 	virtual FString GetAssetPath();
 	virtual UObject* GetAssetToEdit();
