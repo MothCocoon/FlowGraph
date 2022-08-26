@@ -1254,7 +1254,7 @@ void FFlowAssetEditor::OnForcePinActivation() const
 {
 	if (UEdGraphPin* Pin = FocusedGraphEditor->GetGraphPinForMenu())
 	{
-		if (UFlowGraphNode* GraphNode = Cast<UFlowGraphNode>(Pin->GetOwningNode()))
+		if (const UFlowGraphNode* GraphNode = Cast<UFlowGraphNode>(Pin->GetOwningNode()))
 		{
 			GraphNode->ForcePinActivation(Pin);
 		}
