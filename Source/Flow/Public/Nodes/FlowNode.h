@@ -202,6 +202,9 @@ protected:
 
 	UPROPERTY(SaveGame)
 	EFlowNodeState ActivationState;
+
+public:	
+	EFlowNodeState GetActivationState() const { return ActivationState; }
 	
 #if !UE_BUILD_SHIPPING
 private:
@@ -289,7 +292,6 @@ private:
 #if WITH_EDITOR
 public:
 	UFlowNode* GetInspectedInstance() const;
-	EFlowNodeState GetActivationState() const { return ActivationState; }
 
 	TMap<uint8, FPinRecord> GetWireRecords() const;
 	TArray<FPinRecord> GetPinRecords(const FName& PinName, const EEdGraphPinDirection PinDirection) const;
