@@ -22,7 +22,6 @@ public:
 private:
 	TArray<TSharedRef<IAssetTypeActions>> RegisteredAssetActions;
 	TSet<FName> CustomClassLayouts;
-	TSharedPtr<FGraphPanelPinConnectionFactory> FlowGraphConnectionFactory;
 
 public:
 	virtual void StartupModule() override;
