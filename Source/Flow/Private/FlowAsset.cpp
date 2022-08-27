@@ -17,6 +17,7 @@
 UFlowAsset::UFlowAsset(const FObjectInitializer& ObjectInitializer)
 	: Super(ObjectInitializer)
 #if WITH_EDITOR
+	, bWorldBound(true)
 	, FlowGraph(nullptr)
 #endif
 	, AllowedNodeClasses({UFlowNode::StaticClass()})
@@ -553,5 +554,5 @@ void UFlowAsset::OnLoad_Implementation()
 
 bool UFlowAsset::IsBoundToWorld_Implementation()
 {
-	return true;
+	return bWorldBound;
 }
