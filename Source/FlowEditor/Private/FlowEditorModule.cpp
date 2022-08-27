@@ -17,6 +17,8 @@
 #include "Nodes/Customizations/FlowNode_CustomInputDetails.h"
 #include "Nodes/Customizations/FlowNode_CustomOutputDetails.h"
 #include "Nodes/Customizations/FlowNode_PlayLevelSequenceDetails.h"
+#include "Pins/SFlowInputPinHandle.h"
+#include "Pins/SFlowOutputPinHandle.h"
 
 #include "FlowAsset.h"
 #include "Nodes/Route/FlowNode_CustomInput.h"
@@ -47,6 +49,8 @@ void FFlowEditorModule::StartupModule()
 
 	// register visual utilities
 	FEdGraphUtilities::RegisterVisualPinConnectionFactory(MakeShareable(new FFlowGraphConnectionDrawingPolicyFactory));
+	FEdGraphUtilities::RegisterVisualPinFactory(MakeShareable(new FFlowInputPinHandleFactory()));
+	FEdGraphUtilities::RegisterVisualPinFactory(MakeShareable(new FFlowOutputPinHandleFactory()));
 
 	// add Flow Toolbar
 	if (UFlowGraphSettings::Get()->bShowAssetToolbarAboveLevelEditor)
@@ -89,12 +93,6 @@ void FFlowEditorModule::ShutdownModule()
 	FFlowEditorStyle::Shutdown();
 
 	UnregisterAssets();
-
-	// unregister visual utilities
-	if (FlowGraphConnectionFactory.IsValid())
-	{
-		FEdGraphUtilities::UnregisterVisualPinConnectionFactory(FlowGraphConnectionFactory);
-	}
 
 	// unregister track editors
 	ISequencerModule& SequencerModule = FModuleManager::Get().LoadModuleChecked<ISequencerModule>("Sequencer");

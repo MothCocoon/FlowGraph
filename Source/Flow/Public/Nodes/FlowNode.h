@@ -31,6 +31,8 @@ class FLOW_API UFlowNode : public UObject, public IVisualLoggerDebugSnapshotInte
 	friend class UFlowAsset;
 	friend class UFlowGraphNode;
 	friend class UFlowGraphSchema;
+	friend class SFlowInputPinHandle;
+	friend class SFlowOutputPinHandle;
 
 //////////////////////////////////////////////////////////////////////////
 // Node
@@ -256,13 +258,15 @@ protected:
 	UFUNCTION(BlueprintCallable, Category = "FlowNode")
 	void TriggerFirstOutput(const bool bFinish);
 
-	// Trigger Output Pin
 	UFUNCTION(BlueprintCallable, Category = "FlowNode", meta = (HidePin = "bForcedActivation"))
 	void TriggerOutput(const FName& PinName, const bool bFinish = false, const bool bForcedActivation = false);
 
 	void TriggerOutput(const FString& PinName, const bool bFinish = false);
 	void TriggerOutput(const FText& PinName, const bool bFinish = false);
 	void TriggerOutput(const TCHAR* PinName, const bool bFinish = false);
+
+	UFUNCTION(BlueprintCallable, Category = "FlowNode", meta = (HidePin = "bForcedActivation"))
+	void TriggerOutputPin(const FFlowOutputPinHandle Pin, const bool bFinish = false, const bool bForcedActivation = false);
 
 	// Finish execution of node, it will call Cleanup
 	UFUNCTION(BlueprintCallable, Category = "FlowNode")
