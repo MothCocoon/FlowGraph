@@ -105,6 +105,41 @@ struct FLOW_API FFlowPin
 	}
 };
 
+USTRUCT()
+struct FLOW_API FFlowPinHandle
+{
+	GENERATED_BODY()
+
+	// Update SFlowPinHandleBase code if this property name would be ever changed
+	UPROPERTY()
+	FName PinName;
+
+	FFlowPinHandle()
+		: PinName(NAME_None)
+	{
+	}
+};
+
+USTRUCT(BlueprintType)
+struct FLOW_API FFlowInputPinHandle : public FFlowPinHandle
+{
+	GENERATED_BODY()
+
+	FFlowInputPinHandle()
+	{
+	}
+};
+
+USTRUCT(BlueprintType)
+struct FLOW_API FFlowOutputPinHandle : public FFlowPinHandle
+{
+	GENERATED_BODY()
+
+	FFlowOutputPinHandle()
+	{
+	}
+};
+
 // Processing Flow Nodes creates map of connected pins
 USTRUCT()
 struct FLOW_API FConnectedPin
