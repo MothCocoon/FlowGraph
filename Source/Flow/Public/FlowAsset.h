@@ -51,6 +51,11 @@ class FLOW_API UFlowAsset : public UObject
 
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Flow Asset")
 	FGuid AssetGuid;
+
+	// Set it to False, if this asset is instantiated as Root Flow for owner that doesn't live in the world
+	// This allow to SaveGame support works properly, if owner of Root Flow would be Game Instance or its subsystem
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Flow Asset")
+	bool bWorldBound;
 	
 //////////////////////////////////////////////////////////////////////////
 // Graph
