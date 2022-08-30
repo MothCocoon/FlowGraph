@@ -22,7 +22,7 @@ private:
 
 public:
     // variant of ULevelSequencePlayer::CreateLevelSequencePlayer
-	static UFlowLevelSequencePlayer* CreateFlowLevelSequencePlayer(UObject* WorldContextObject, ULevelSequence* LevelSequence, FMovieSceneSequencePlaybackSettings Settings, FLevelSequenceCameraSettings CameraSettings, AActor* TransformOriginActor, ALevelSequenceActor*& OutActor);
+	static UFlowLevelSequencePlayer* CreateFlowLevelSequencePlayer(UObject* WorldContextObject, ULevelSequence* LevelSequence, FMovieSceneSequencePlaybackSettings Settings, FLevelSequenceCameraSettings CameraSettings, AActor* TransformOriginActor, bool bReplicates, ALevelSequenceActor*& OutActor);
 
 	void SetFlowEventReceiver(UFlowNode* FlowNode) { FlowEventReceiver = FlowNode; }
 

@@ -19,6 +19,7 @@ FFlowNodeLevelSequenceEvent UFlowNode_PlayLevelSequence::OnPlaybackCompleted;
 UFlowNode_PlayLevelSequence::UFlowNode_PlayLevelSequence(const FObjectInitializer& ObjectInitializer)
 	: Super(ObjectInitializer)
 	, bPlayReverse(false)
+	, bReplicates(false)
 	, bUseGraphOwnerAsTransformOrigin(false)
 	, bApplyOwnerTimeDilation(true)
 	, LoadedSequence(nullptr)
@@ -156,7 +157,7 @@ void UFlowNode_PlayLevelSequence::CreatePlayer()
 		AActor* TransformOriginActor = bUseGraphOwnerAsTransformOrigin ? OwningActor : nullptr;
 
 		// Finally create the player
-		SequencePlayer = UFlowLevelSequencePlayer::CreateFlowLevelSequencePlayer(this, LoadedSequence, PlaybackSettings, CameraSettings, TransformOriginActor, SequenceActor);
+		SequencePlayer = UFlowLevelSequencePlayer::CreateFlowLevelSequencePlayer(this, LoadedSequence, PlaybackSettings, CameraSettings, TransformOriginActor, bReplicates, SequenceActor);
 
 		if (SequencePlayer)
 		{
