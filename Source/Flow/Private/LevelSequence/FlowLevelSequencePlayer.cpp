@@ -12,7 +12,7 @@ UFlowLevelSequencePlayer::UFlowLevelSequencePlayer(const FObjectInitializer& Obj
 {
 }
 
-UFlowLevelSequencePlayer* UFlowLevelSequencePlayer::CreateFlowLevelSequencePlayer(UObject* WorldContextObject, const ULevelSequence* LevelSequence, FMovieSceneSequencePlaybackSettings Settings, FLevelSequenceCameraSettings CameraSettings, AActor* TransformOriginActor, ALevelSequenceActor*& OutActor)
+UFlowLevelSequencePlayer* UFlowLevelSequencePlayer::CreateFlowLevelSequencePlayer(UObject* WorldContextObject, ULevelSequence* LevelSequence, FMovieSceneSequencePlaybackSettings Settings, FLevelSequenceCameraSettings CameraSettings, AActor* TransformOriginActor, bool bReplicates, ALevelSequenceActor*& OutActor)
 {
 	if (LevelSequence == nullptr)
 	{
@@ -33,13 +33,22 @@ UFlowLevelSequencePlayer* UFlowLevelSequencePlayer::CreateFlowLevelSequencePlaye
 	// Defer construction for autoplay so that BeginPlay() is called
 	SpawnParams.bDeferConstruction = true;
 
-	ALevelSequenceActor* Actor = World->SpawnActor<AFlowLevelSequenceActor>(SpawnParams);
+	AFlowLevelSequenceActor* Actor = World->SpawnActor<AFlowLevelSequenceActor>(SpawnParams);
 
 	Actor->PlaybackSettings = Settings;
-	Actor->LevelSequence = LevelSequence;
 	Actor->CameraSettings = CameraSettings;
-
-	Actor->InitializePlayer();
+	if (bReplicates)
+	{
+		Actor->SetReplicatedLevelSequenceAsset(LevelSequence);
+		Actor->SetReplicatePlayback(true);
+		Actor->bAlwaysRelevant = true;
+		Actor->RPC_InitializePlayer();
+	}
+	else
+	{
+		Actor->LevelSequence = LevelSequence;
+		Actor->InitializePlayer();
+	}
 	OutActor = Actor;
 
 	{
