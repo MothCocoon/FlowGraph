@@ -39,6 +39,9 @@ class FLOW_API UFlowNode_PlayLevelSequence : public UFlowNode
 	bool bPlayReverse;
 
 	UPROPERTY(EditAnywhere, Category = "Sequence")
+	bool bReplicates;
+
+	UPROPERTY(EditAnywhere, Category = "Sequence")
 	FLevelSequenceCameraSettings CameraSettings;
 	
 	// Level Sequence playback can be moved to any place in the world by applying Transform Origin
