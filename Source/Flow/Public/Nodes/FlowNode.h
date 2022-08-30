@@ -7,7 +7,6 @@
 #include "Engine/StreamableManager.h"
 #include "GameplayTagContainer.h"
 #include "VisualLogger/VisualLoggerDebugSnapshotInterface.h"
-#include "Templates/SubclassOf.h"
 
 #include "FlowTypes.h"
 #include "Nodes/FlowPin.h"

@@ -45,7 +45,7 @@ public:
 		[
 			SNew(SBorder)
 				.Visibility(EVisibility::Visible)
-				.BorderImage(FAppStyle::GetBrush("Menu.Background"))
+				.BorderImage(FEditorStyle::GetBrush("Menu.Background"))
 				[
 					SNew(SBox)
 						.Visibility(EVisibility::Visible)
@@ -56,7 +56,7 @@ public:
 								.FillHeight(1)
 								[
 									SNew(SBorder)
-										.BorderImage(FAppStyle::GetBrush("ToolPanel.GroupBorder"))
+										.BorderImage(FEditorStyle::GetBrush("ToolPanel.GroupBorder"))
 										.Content()
 										[
 											SAssignNew(ParentClassContainer, SVerticalBox)
@@ -69,14 +69,14 @@ public:
 								.Padding(8)
 								[
 									SNew(SUniformGridPanel)
-										.SlotPadding(FAppStyle::GetMargin("StandardDialog.SlotPadding"))
-										.MinDesiredSlotWidth(FAppStyle::GetFloat("StandardDialog.MinDesiredSlotWidth"))
-										.MinDesiredSlotHeight(FAppStyle::GetFloat("StandardDialog.MinDesiredSlotHeight"))
+										.SlotPadding(FEditorStyle::GetMargin("StandardDialog.SlotPadding"))
+										.MinDesiredSlotWidth(FEditorStyle::GetFloat("StandardDialog.MinDesiredSlotWidth"))
+										.MinDesiredSlotHeight(FEditorStyle::GetFloat("StandardDialog.MinDesiredSlotHeight"))
 										+ SUniformGridPanel::Slot(0, 0)
 											[
 												SNew(SButton)
 													.HAlign(HAlign_Center)
-													.ContentPadding(FAppStyle::GetMargin("StandardDialog.ContentPadding"))
+													.ContentPadding(FEditorStyle::GetMargin("StandardDialog.ContentPadding"))
 													.OnClicked(this, &SFlowNodeBlueprintCreateDialog::OkClicked)
 													.Text(LOCTEXT("CreateFlowNodeBlueprintOk", "OK"))
 											]
@@ -84,7 +84,7 @@ public:
 											[
 												SNew(SButton)
 													.HAlign(HAlign_Center)
-													.ContentPadding(FAppStyle::GetMargin("StandardDialog.ContentPadding"))
+													.ContentPadding(FEditorStyle::GetMargin("StandardDialog.ContentPadding"))
 													.OnClicked(this, &SFlowNodeBlueprintCreateDialog::CancelClicked)
 													.Text(LOCTEXT("CreateFlowNodeBlueprintCancel", "Cancel"))
 											]

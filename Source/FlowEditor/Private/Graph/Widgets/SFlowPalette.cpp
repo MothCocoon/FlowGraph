@@ -47,7 +47,7 @@ void SFlowPaletteItem::Construct(const FArguments& InArgs, FCreateWidgetForActio
 	}
 
 	// Find icons
-	const FSlateBrush* IconBrush = FAppStyle::GetBrush(TEXT("NoBrush"));
+	const FSlateBrush* IconBrush = FEditorStyle::GetBrush(TEXT("NoBrush"));
 	const FSlateColor IconColor = FSlateColor::UseForeground();
 	const FText IconToolTip = GraphAction->GetTooltipDescription();
 	constexpr bool bIsReadOnly = false;
@@ -110,7 +110,7 @@ void SFlowPalette::Construct(const FArguments& InArgs, TWeakPtr<FFlowAssetEditor
 	[
 		SNew(SBorder)
 			.Padding(2.0f)
-			.BorderImage(FAppStyle::GetBrush("ToolPanel.GroupBorder"))
+			.BorderImage(FEditorStyle::GetBrush("ToolPanel.GroupBorder"))
 			[
 				SNew(SVerticalBox)
 				+ SVerticalBox::Slot() // Filter UI

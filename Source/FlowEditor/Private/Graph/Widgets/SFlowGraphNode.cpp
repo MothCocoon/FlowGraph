@@ -24,11 +24,9 @@
 #include "Styling/SlateColor.h"
 #include "TutorialMetaData.h"
 #include "Widgets/Images/SImage.h"
-#include "Widgets/Input/SButton.h"
 #include "Widgets/Layout/SBorder.h"
 #include "Widgets/SBoxPanel.h"
 #include "Widgets/SOverlay.h"
-#include "Widgets/SToolTip.h"
 
 #define LOCTEXT_NAMESPACE "SFlowGraphNode"
 
@@ -362,7 +360,7 @@ void SFlowGraphNode::UpdateErrorInfo()
 		if (FlowNode->GetClass()->HasAnyClassFlags(CLASS_Deprecated) || FlowNode->bNodeDeprecated)
 		{
 			ErrorMsg = FlowNode->ReplacedBy ? FString::Printf(TEXT(" REPLACED BY: %s "), *FlowNode->ReplacedBy->GetName()) : FString(TEXT(" DEPRECATED! "));
-			ErrorColor = FAppStyle::GetColor("ErrorReporting.WarningBackgroundColor");
+			ErrorColor = FEditorStyle::GetColor("ErrorReporting.WarningBackgroundColor");
 			return;
 		}
 	}
@@ -373,7 +371,7 @@ void SFlowGraphNode::UpdateErrorInfo()
 TSharedRef<SWidget> SFlowGraphNode::CreateNodeContentArea()
 {
 	return SNew(SBorder)
-		.BorderImage(FAppStyle::GetBrush("NoBorder"))
+		.BorderImage(FEditorStyle::GetBrush("NoBorder"))
 		.HAlign(HAlign_Fill)
 		.VAlign(VAlign_Fill)
 		[
@@ -442,7 +440,7 @@ void SFlowGraphNode::CreateInputSideAddButton(TSharedPtr<SVerticalBox> OutputBox
 		. Padding( 0,0,7,0 )
 		[
 			SNew(SImage)
-			.Image(FAppStyle::GetBrush(TEXT("Icons.PlusCircle")))
+			.Image(FEditorStyle::GetBrush(TEXT("Icons.PlusCircle")))
 		]
 		+SHorizontalBox::Slot()
 		.AutoWidth()
@@ -477,7 +475,7 @@ void SFlowGraphNode::CreateOutputSideAddButton(TSharedPtr<SVerticalBox> OutputBo
 		.Padding(7,0,0,0)
 		[
 			SNew(SImage)
-			.Image(FAppStyle::GetBrush(TEXT("Icons.PlusCircle")))
+			.Image(FEditorStyle::GetBrush(TEXT("Icons.PlusCircle")))
 		];
 
 		AddPinButton(OutputBox, AddPinWidget.ToSharedRef(), EGPD_Output);
@@ -500,7 +498,7 @@ void SFlowGraphNode::AddPinButton(TSharedPtr<SVerticalBox> OutputBox, const TSha
 
 	const TSharedRef<SButton> AddPinButton = SNew(SButton)
 	.ContentPadding(0.0f)
-	.ButtonStyle(FAppStyle::Get(), "NoBorder")
+	.ButtonStyle(FEditorStyle::Get(), "NoBorder")
 	.OnClicked(this, &SFlowGraphNode::OnAddFlowPin, Direction)
 	.IsEnabled(this, &SFlowGraphNode::IsNodeEditable)
 	.ToolTipText(PinTooltipText)

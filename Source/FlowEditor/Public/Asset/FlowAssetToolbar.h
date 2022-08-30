@@ -8,7 +8,6 @@
 #include "FlowAsset.h"
 
 class FFlowAssetEditor;
-class UToolMenu;
 
 //////////////////////////////////////////////////////////////////////////
 // Flow Asset Instance List

@@ -8,7 +8,6 @@
 
 #include "IDocumentation.h"
 #include "SGraphPreviewer.h"
-#include "Widgets/Layout/SBox.h"
 #include "Widgets/SToolTip.h"
 
 #define LOCTEXT_NAMESPACE "SFlowGraphNode_SubGraph"

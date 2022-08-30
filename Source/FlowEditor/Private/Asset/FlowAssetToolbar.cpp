@@ -118,10 +118,10 @@ void SFlowAssetBreadcrumb::Construct(const FArguments& InArgs, const TWeakObject
 	SAssignNew(BreadcrumbTrail, SBreadcrumbTrail<FFlowBreadcrumb>)
 		.OnCrumbClicked(this, &SFlowAssetBreadcrumb::OnCrumbClicked)
 		.Visibility_Static(&FFlowAssetEditor::GetDebuggerVisibility)
-		.ButtonStyle(FAppStyle::Get(), "FlatButton")
-		.DelimiterImage(FAppStyle::GetBrush("Sequencer.BreadcrumbIcon"))
+		.ButtonStyle(FEditorStyle::Get(), "FlatButton")
+		.DelimiterImage(FEditorStyle::GetBrush("Sequencer.BreadcrumbIcon"))
 		.PersistentBreadcrumbs(true)
-		.TextStyle(FAppStyle::Get(), "Sequencer.BreadcrumbText");
+		.TextStyle(FEditorStyle::Get(), "Sequencer.BreadcrumbText");
 
 	ChildSlot
 	[
