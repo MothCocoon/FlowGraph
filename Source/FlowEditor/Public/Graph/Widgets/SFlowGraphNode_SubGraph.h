@@ -4,7 +4,7 @@
 
 #include "Graph/Widgets/SFlowGraphNode.h"
 
-class SFlowGraphNode_SubGraph : public SFlowGraphNode
+class FLOWEDITOR_API SFlowGraphNode_SubGraph : public SFlowGraphNode
 {
 protected:
 	// SGraphNode

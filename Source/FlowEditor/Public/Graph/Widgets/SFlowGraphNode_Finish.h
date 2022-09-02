@@ -4,6 +4,6 @@
 
 #include "Graph/Widgets/SFlowGraphNode.h"
 
-class SFlowGraphNode_Finish : public SFlowGraphNode
+class FLOWEDITOR_API SFlowGraphNode_Finish : public SFlowGraphNode
 {
 };
