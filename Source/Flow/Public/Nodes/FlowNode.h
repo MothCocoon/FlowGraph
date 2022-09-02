@@ -2,7 +2,6 @@
 
 #pragma once
 
-#include "CoreMinimal.h"
 #include "EdGraph/EdGraphNode.h"
 #include "Engine/StreamableManager.h"
 #include "GameplayTagContainer.h"

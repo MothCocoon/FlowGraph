@@ -2,7 +2,6 @@
 
 #pragma once
 
-#include "CoreMinimal.h"
 #include "GameFramework/SaveGame.h"
 #include "Serialization/BufferArchive.h"
 #include "Serialization/ObjectAndNameAsStringProxyArchive.h"
