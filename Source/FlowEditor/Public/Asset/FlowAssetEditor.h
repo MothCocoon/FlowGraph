@@ -23,6 +23,7 @@ struct Rect;
 
 class FFlowAssetEditor : public FAssetEditorToolkit, public FEditorUndoClient, public FGCObject, public FNotifyHook
 {
+protected:
 	/** The FlowAsset asset being inspected */
 	UFlowAsset* FlowAsset;
 
