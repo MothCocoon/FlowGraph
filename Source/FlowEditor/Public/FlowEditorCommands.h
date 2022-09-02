@@ -7,7 +7,7 @@
 #include "Framework/Commands/UICommandInfo.h"
 #include "Templates/SharedPointer.h"
 
-class FFlowToolbarCommands final : public TCommands<FFlowToolbarCommands>
+class FLOWEDITOR_API FFlowToolbarCommands final : public TCommands<FFlowToolbarCommands>
 {
 public:
 	FFlowToolbarCommands();

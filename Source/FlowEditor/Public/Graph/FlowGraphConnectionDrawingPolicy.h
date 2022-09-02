@@ -14,7 +14,7 @@ enum class EFlowConnectionDrawType : uint8
 
 struct FFlowGraphConnectionDrawingPolicyFactory : public FGraphPanelPinConnectionFactory
 {
-	virtual ~FFlowGraphConnectionDrawingPolicyFactory()
+	virtual ~FFlowGraphConnectionDrawingPolicyFactory() override
 	{
 	}
 
@@ -25,7 +25,7 @@ class FSlateWindowElementList;
 class UEdGraph;
 
 // This class draws the connections between nodes
-class FFlowGraphConnectionDrawingPolicy : public FConnectionDrawingPolicy
+class FLOWEDITOR_API FFlowGraphConnectionDrawingPolicy : public FConnectionDrawingPolicy
 {
 	float RecentWireDuration;
 

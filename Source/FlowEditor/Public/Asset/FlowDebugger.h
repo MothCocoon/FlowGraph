@@ -8,7 +8,7 @@
 ** Minimalistic form of breakpoint debugger
 ** See BehaviorTreeDebugger for a more complex example
  */
-class FFlowDebugger
+class FLOWEDITOR_API FFlowDebugger
 {
 public:
 	FFlowDebugger();

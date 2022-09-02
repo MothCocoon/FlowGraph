@@ -15,7 +15,7 @@ class UEdGraphSchema;
 class UFlowNode;
 
 USTRUCT()
-struct FFlowBreakpoint
+struct FLOWEDITOR_API FFlowBreakpoint
 {
 	GENERATED_USTRUCT_BODY()
 

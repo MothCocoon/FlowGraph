@@ -10,7 +10,7 @@
 class FLOWEDITOR_API FFlowGraphInterface final : public IFlowGraphInterface
 {
 public:
-	virtual ~FFlowGraphInterface() {}
+	virtual ~FFlowGraphInterface() override {}
 
 	virtual void OnInputTriggered(UEdGraphNode* GraphNode, const int32 Index) const override;
 	virtual void OnOutputTriggered(UEdGraphNode* GraphNode, const int32 Index) const override;

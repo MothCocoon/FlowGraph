@@ -7,7 +7,7 @@
 class FFlowAssetEditor;
 
 /** Widget displaying a single item  */
-class SFlowPaletteItem : public SGraphPaletteItem
+class FLOWEDITOR_API SFlowPaletteItem : public SGraphPaletteItem
 {
 public:
 	SLATE_BEGIN_ARGS(SFlowPaletteItem) {}
@@ -21,7 +21,7 @@ private:
 };
 
 /** Flow Palette  */
-class SFlowPalette : public SGraphPalette
+class FLOWEDITOR_API SFlowPalette : public SGraphPalette
 {
 public:
 	SLATE_BEGIN_ARGS(SFlowPalette) {}

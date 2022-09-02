@@ -8,7 +8,7 @@
 
 struct FAssetData;
 
-class SLevelEditorFlow : public SCompoundWidget
+class FLOWEDITOR_API SLevelEditorFlow : public SCompoundWidget
 {
 public:
 	SLATE_BEGIN_ARGS(SLevelEditorFlow) {}
