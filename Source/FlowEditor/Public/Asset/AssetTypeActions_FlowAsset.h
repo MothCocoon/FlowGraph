@@ -5,7 +5,7 @@
 #include "AssetTypeActions_Base.h"
 #include "Toolkits/IToolkitHost.h"
 
-class FAssetTypeActions_FlowAsset : public FAssetTypeActions_Base
+class FLOWEDITOR_API FAssetTypeActions_FlowAsset : public FAssetTypeActions_Base
 {
 public:
 	virtual FText GetName() const override;
