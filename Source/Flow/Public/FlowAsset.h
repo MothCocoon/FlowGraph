@@ -2,7 +2,6 @@
 
 #pragma once
 
-#include "CoreMinimal.h"
 #include "FlowSave.h"
 #include "FlowTypes.h"
 #include "FlowAsset.generated.h"
