@@ -7,7 +7,7 @@
 
 #include "Graph/Nodes/FlowGraphNode.h"
 
-class SFlowGraphPinExec final : public SGraphPinExec
+class FLOWEDITOR_API SFlowGraphPinExec : public SGraphPinExec
 {
 public:
 	SFlowGraphPinExec();
@@ -18,7 +18,7 @@ public:
 	void Construct(const FArguments& InArgs, UEdGraphPin* InPin);
 };
 
-class SFlowGraphNode : public SGraphNode
+class FLOWEDITOR_API SFlowGraphNode : public SGraphNode
 {
 public:
 	SLATE_BEGIN_ARGS(SFlowGraphNode) {}

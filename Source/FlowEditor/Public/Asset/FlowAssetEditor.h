@@ -21,7 +21,7 @@ struct FSlateBrush;
 struct FPropertyChangedEvent;
 struct Rect;
 
-class FFlowAssetEditor : public FAssetEditorToolkit, public FEditorUndoClient, public FGCObject, public FNotifyHook
+class FLOWEDITOR_API FFlowAssetEditor : public FAssetEditorToolkit, public FEditorUndoClient, public FGCObject, public FNotifyHook
 {
 protected:
 	/** The FlowAsset asset being inspected */
