@@ -207,7 +207,8 @@ private:
 	EFlowFinishPolicy FinishPolicy;
 
 public:
-	void InitializeInstance(const TWeakObjectPtr<UObject> InOwner, UFlowAsset* InTemplateAsset);
+	virtual void InitializeInstance(const TWeakObjectPtr<UObject> InOwner, UFlowAsset* InTemplateAsset);
+	virtual void DeinitializeInstance();
 
 	UFlowAsset* GetTemplateAsset() const { return TemplateAsset; }
 	
@@ -227,7 +228,7 @@ public:
 	virtual void PreStartFlow();
 	virtual void StartFlow();
 	
-	virtual void FinishFlow(const EFlowFinishPolicy InFinishPolicy);
+	virtual void FinishFlow(const EFlowFinishPolicy InFinishPolicy, const bool bRemoveInstance = true);
 
 	// Get Flow Asset instance created by the given SubGraph node
 	TWeakObjectPtr<UFlowAsset> GetFlowInstance(UFlowNode_SubGraph* SubGraphNode) const;

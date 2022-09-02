@@ -295,6 +295,18 @@ void UFlowAsset::InitializeInstance(const TWeakObjectPtr<UObject> InOwner, UFlow
 	}
 }
 
+void UFlowAsset::DeinitializeInstance()
+{
+	if (TemplateAsset)
+	{
+		const int32 ActiveInstancesLeft = TemplateAsset->RemoveInstance(this);
+		if (ActiveInstancesLeft == 0 && GetFlowSubsystem())
+		{
+			GetFlowSubsystem()->RemoveInstancedTemplate(TemplateAsset);
+		}
+	}
+}
+
 void UFlowAsset::PreloadNodes()
 {
 	TArray<UFlowNode*> GraphEntryNodes = {StartNode};
@@ -353,7 +365,7 @@ void UFlowAsset::StartFlow()
 	StartNode->TriggerFirstOutput(true);
 }
 
-void UFlowAsset::FinishFlow(const EFlowFinishPolicy InFinishPolicy)
+void UFlowAsset::FinishFlow(const EFlowFinishPolicy InFinishPolicy, const bool bRemoveInstance /*= true*/)
 {
 	FinishPolicy = InFinishPolicy;
 
@@ -371,11 +383,10 @@ void UFlowAsset::FinishFlow(const EFlowFinishPolicy InFinishPolicy)
 	}
 	PreloadedNodes.Empty();
 
-	// clear instance entries
-	const int32 ActiveInstancesLeft = TemplateAsset->RemoveInstance(this);
-	if (ActiveInstancesLeft == 0 && GetFlowSubsystem())
+	// provides option to finish game-specific logic prior to removing asset instance 
+	if (bRemoveInstance)
 	{
-		GetFlowSubsystem()->RemoveInstancedTemplate(TemplateAsset);
+		DeinitializeInstance();
 	}
 }
 
