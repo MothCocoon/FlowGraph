@@ -190,11 +190,6 @@ void UFlowAsset::HarvestNodeConnections()
 }
 #endif
 
-UFlowNode* UFlowAsset::GetNode(const FGuid& Guid) const
-{
-	return Nodes.FindRef(Guid);
-}
-
 void UFlowAsset::AddInstance(UFlowAsset* Instance)
 {
 	ActiveInstances.Add(Instance);
