@@ -128,8 +128,21 @@ public:
 	void HarvestNodeConnections();
 #endif
 
-	UFlowNode* GetNode(const FGuid& Guid) const;
 	TMap<FGuid, UFlowNode*> GetNodes() const { return Nodes; }
+    UFlowNode* GetNode(const FGuid& Guid) const { return Nodes.FindRef(Guid); }
+
+    template <class T>
+    T* GetNode(const FGuid& Guid) const
+    {
+        static_assert(TPointerIsConvertibleFromTo<T, const UFlowNode>::Value, "'T' template parameter to GetNode must be derived from UFlowNode");
+        
+        if (UFlowNode* Node = Nodes.FindRef(Guid))
+        {
+            return Cast<T>(Node);
+        }
+
+        return nullptr;
+    }
 
 	TArray<FName> GetCustomInputs() const { return CustomInputs; }
 	TArray<FName> GetCustomOutputs() const { return CustomOutputs; }
