@@ -48,6 +48,14 @@ void UFlowSubsystem::Deinitialize()
 	AbortActiveFlows();
 }
 
+void UFlowSubsystem::OnNodeInputTriggered(const UFlowNode* node, const bool bWasActive)
+{
+}
+
+void UFlowSubsystem::OnNodeOutputTriggered(const UFlowNode* node, const bool bFinish)
+{
+}
+
 void UFlowSubsystem::AbortActiveFlows()
 {
 	if (InstancedTemplates.Num() > 0)

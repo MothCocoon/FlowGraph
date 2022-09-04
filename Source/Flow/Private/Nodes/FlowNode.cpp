@@ -346,6 +346,8 @@ void UFlowNode::TriggerInput(const FName& PinName, const bool bForcedActivation 
 
 		ActivationState = EFlowNodeState::Active;
 
+		GetFlowSubsystem()->OnNodeInputTriggered(this, PreviousActivationState == EFlowNodeState::Active);
+
 #if !UE_BUILD_SHIPPING
 		// record for debugging
 		TArray<FPinRecord>& Records = InputRecords.FindOrAdd(PinName);
@@ -385,6 +387,8 @@ void UFlowNode::TriggerFirstOutput(const bool bFinish)
 
 void UFlowNode::TriggerOutput(const FName& PinName, const bool bFinish /*= false*/, const bool bForcedActivation /*= false*/)
 {
+	GetFlowSubsystem()->OnNodeOutputTriggered(this, bFinish);
+
 	// clean up node, if needed
 	if (bFinish)
 	{
