@@ -338,6 +338,12 @@ void UFlowNode::TriggerInput(const FName& PinName, const bool bForcedActivation 
 {
 	if (InputPins.Contains(PinName))
 	{
+		EFlowNodeState PreviousActivationState = ActivationState;
+		if (PreviousActivationState != EFlowNodeState::Active)
+		{
+			Activate();
+		}
+
 		ActivationState = EFlowNodeState::Active;
 
 #if !UE_BUILD_SHIPPING
@@ -456,6 +462,11 @@ void UFlowNode::Deactivate()
 void UFlowNode::Cleanup()
 {
 	K2_Cleanup();
+}
+
+void UFlowNode::Activate()
+{
+	K2_Activate();
 }
 
 void UFlowNode::ForceFinishNode()
