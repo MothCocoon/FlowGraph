@@ -16,6 +16,9 @@ class FLOW_API UFlowNode_CustomOutput final : public UFlowNode
 
 	UPROPERTY()
 	FName EventName;
+
+	UPROPERTY(EditAnywhere, Category = "Output")
+	bool bFinish;
 	
 protected:
 	virtual void ExecuteInput(const FName& PinName) override;
