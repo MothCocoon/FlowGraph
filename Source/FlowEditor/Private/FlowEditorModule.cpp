@@ -118,7 +118,29 @@ void FFlowEditorModule::ShutdownModule()
 void FFlowEditorModule::RegisterAssets()
 {
 	IAssetTools& AssetTools = FModuleManager::LoadModuleChecked<FAssetToolsModule>("AssetTools").Get();
-	FlowAssetCategory = AssetTools.RegisterAdvancedAssetCategory(FName(TEXT("Flow")), UFlowGraphSettings::Get()->FlowAssetCategoryName);
+
+	FText AssetCategoryText = UFlowGraphSettings::Get()->FlowAssetCategoryName;
+
+	// Find matching BuildIn category
+	if (!AssetCategoryText.IsEmpty())
+	{		
+		TArray<FAdvancedAssetCategory> AllCategories;
+		AssetTools.GetAllAdvancedAssetCategories(AllCategories);
+		for (const FAdvancedAssetCategory& ExistingCategory : AllCategories)
+		{
+			if (ExistingCategory.CategoryName.EqualTo(AssetCategoryText))
+			{
+				FlowAssetCategory = ExistingCategory.CategoryType;
+				break;
+			}
+		}
+	}
+
+	if (FlowAssetCategory == EAssetTypeCategories::None)
+	{
+		FlowAssetCategory = AssetTools.RegisterAdvancedAssetCategory(FName(TEXT("Flow")), AssetCategoryText);
+	}
+
 
 	const TSharedRef<IAssetTypeActions> FlowAssetActions = MakeShareable(new FAssetTypeActions_FlowAsset());
 	RegisteredAssetActions.Add(FlowAssetActions);
