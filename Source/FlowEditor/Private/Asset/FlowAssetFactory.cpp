@@ -3,22 +3,26 @@
 #include "Asset/FlowAssetFactory.h"
 #include "FlowAsset.h"
 #include "Graph/FlowGraph.h"
+#include "Graph/FlowGraphSettings.h"
 
-#include <ClassViewerModule.h>
-#include <ClassViewerFilter.h>
-#include <Kismet2/KismetEditorUtilities.h>
-#include <Kismet2/SClassPickerDialog.h>
+#include "ClassViewerFilter.h"
+#include "ClassViewerModule.h"
+#include "Kismet2/KismetEditorUtilities.h"
+#include "Kismet2/SClassPickerDialog.h"
 
+#define LOCTEXT_NAMESPACE "FlowAssetFactory"
 
 class FAssetClassParentFilter : public IClassViewerFilter
 {
 public:
 	FAssetClassParentFilter()
-		: DisallowedClassFlags(CLASS_None), bDisallowBlueprintBase(false)
-	{}
+		: DisallowedClassFlags(CLASS_None)
+		, bDisallowBlueprintBase(false)
+	{
+	}
 
 	/** All children of these classes will be included unless filtered out by another setting. */
-	TSet< const UClass* > AllowedChildrenOfClasses;
+	TSet<const UClass*> AllowedChildrenOfClasses;
 
 	/** Disallowed class flags. */
 	EClassFlags DisallowedClassFlags;
@@ -26,10 +30,9 @@ public:
 	/** Disallow blueprint base classes. */
 	bool bDisallowBlueprintBase;
 
-	virtual bool IsClassAllowed(const FClassViewerInitializationOptions& InInitOptions, const UClass* InClass, TSharedRef< FClassViewerFilterFuncs > InFilterFuncs) override
+	virtual bool IsClassAllowed(const FClassViewerInitializationOptions& InInitOptions, const UClass* InClass, TSharedRef<FClassViewerFilterFuncs> InFilterFuncs) override
 	{
-		bool bAllowed = !InClass->HasAnyClassFlags(DisallowedClassFlags)
-			&& InFilterFuncs->IfInChildOfClassesSet(AllowedChildrenOfClasses, InClass) != EFilterReturn::Failed;
+		const bool bAllowed = !InClass->HasAnyClassFlags(DisallowedClassFlags) && InFilterFuncs->IfInChildOfClassesSet(AllowedChildrenOfClasses, InClass) != EFilterReturn::Failed;
 
 		if (bAllowed && bDisallowBlueprintBase)
 		{
@@ -42,15 +45,14 @@ public:
 		return bAllowed;
 	}
 
-	virtual bool IsUnloadedClassAllowed(const FClassViewerInitializationOptions& InInitOptions, const TSharedRef< const IUnloadedBlueprintData > InUnloadedClassData, TSharedRef< FClassViewerFilterFuncs > InFilterFuncs) override
+	virtual bool IsUnloadedClassAllowed(const FClassViewerInitializationOptions& InInitOptions, const TSharedRef<const IUnloadedBlueprintData> InUnloadedClassData, TSharedRef<FClassViewerFilterFuncs> InFilterFuncs) override
 	{
 		if (bDisallowBlueprintBase)
 		{
 			return false;
 		}
 
-		return !InUnloadedClassData->HasAnyClassFlags(DisallowedClassFlags)
-			&& InFilterFuncs->IfInChildOfClassesSet(AllowedChildrenOfClasses, InUnloadedClassData) != EFilterReturn::Failed;
+		return !InUnloadedClassData->HasAnyClassFlags(DisallowedClassFlags) && InFilterFuncs->IfInChildOfClassesSet(AllowedChildrenOfClasses, InUnloadedClassData) != EFilterReturn::Failed;
 	}
 };
 
@@ -67,27 +69,26 @@ UFlowAssetFactory::UFlowAssetFactory(const FObjectInitializer& ObjectInitializer
 bool UFlowAssetFactory::ConfigureProperties()
 {
 	AssetClass = UFlowGraphSettings::Get()->DefaultFlowAssetClass;;
-
 	if (AssetClass != nullptr)
-	{		
+	{
 		// Class was selected in settings
 		return true;
 	}
 
-	// Load the classviewer module to display a class picker
-	FClassViewerModule& ClassViewerModule = FModuleManager::LoadModuleChecked<FClassViewerModule>("ClassViewer");
+	// Load the Class Viewer module to display a class picker
+	FModuleManager::LoadModuleChecked<FClassViewerModule>("ClassViewer");
 
 	// Fill in options
 	FClassViewerInitializationOptions Options;
 	Options.Mode = EClassViewerMode::ClassPicker;
 
-	TSharedPtr<FAssetClassParentFilter> Filter = MakeShareable(new FAssetClassParentFilter);
+	const TSharedPtr<FAssetClassParentFilter> Filter = MakeShareable(new FAssetClassParentFilter);
 	Options.ClassFilter = Filter;
 
 	Filter->DisallowedClassFlags = CLASS_Abstract | CLASS_Deprecated | CLASS_NewerVersionExists | CLASS_HideDropDown;
 	Filter->AllowedChildrenOfClasses.Add(UFlowAsset::StaticClass());
 
-	const FText TitleText = NSLOCTEXT("FlowAssetFactory", "CreateFlowAssetOptions", "Pick Flow Asset Class");
+	const FText TitleText = LOCTEXT("CreateFlowAssetOptions", "Pick Flow Asset Class");
 	UClass* ChosenClass = nullptr;
 	const bool bPressedOk = SClassPickerDialog::PickClass(TitleText, Options, ChosenClass, UFlowAsset::StaticClass());
 
@@ -115,3 +116,5 @@ UObject* UFlowAssetFactory::FactoryCreateNew(UClass* Class, UObject* InParent, F
 	UFlowGraph::CreateGraph(NewFlow);
 	return NewFlow;
 }
+
+#undef LOCTEXT_NAMESPACE
