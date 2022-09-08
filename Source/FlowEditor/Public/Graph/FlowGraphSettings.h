@@ -20,20 +20,20 @@ class UFlowGraphSettings final : public UDeveloperSettings
 
 	/** Show Flow Asset in Flow category of "Create Asset" menu?
 	* Requires restart after making a change. */
-	UPROPERTY(EditAnywhere, config, Category = "Default UI")
+	UPROPERTY(EditAnywhere, config, Category = "Default UI", meta = (ConfigRestartRequired = true))
 	bool bExposeFlowAssetCreation;
 
 	/** Show Flow Node blueprint in Flow category of "Create Asset" menu?
 	* Requires restart after making a change. */
-	UPROPERTY(EditAnywhere, config, Category = "Default UI")
+	UPROPERTY(EditAnywhere, config, Category = "Default UI", meta = (ConfigRestartRequired = true))
 	bool bExposeFlowNodeCreation;
 	
 	/** Show Flow Asset toolbar?
 	* Requires restart after making a change. */
-	UPROPERTY(EditAnywhere, config, Category = "Default UI")
+	UPROPERTY(EditAnywhere, config, Category = "Default UI", meta = (ConfigRestartRequired = true))
 	bool bShowAssetToolbarAboveLevelEditor;
 
-	UPROPERTY(EditAnywhere, config, Category = "Default UI")
+	UPROPERTY(EditAnywhere, config, Category = "Default UI", meta = (ConfigRestartRequired = true))
 	FText FlowAssetCategoryName;
 
 	/** Flow Asset class allowed to be assigned via Level Editor toolbar*/
