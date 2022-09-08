@@ -111,7 +111,7 @@ void FFlowEditorModule::ShutdownModule()
 			}
 		}
 	}
-	
+
 	FModuleManager::Get().OnModulesChanged().Remove(ModulesChangedHandle);
 }
 
@@ -119,28 +119,30 @@ void FFlowEditorModule::RegisterAssets()
 {
 	IAssetTools& AssetTools = FModuleManager::LoadModuleChecked<FAssetToolsModule>("AssetTools").Get();
 
-	FText AssetCategoryText = UFlowGraphSettings::Get()->FlowAssetCategoryName;
+	// try to merge asset category with a built-in one
+	{
+		FText AssetCategoryText = UFlowGraphSettings::Get()->FlowAssetCategoryName;
 
-	// Find matching BuildIn category
-	if (!AssetCategoryText.IsEmpty())
-	{		
-		TArray<FAdvancedAssetCategory> AllCategories;
-		AssetTools.GetAllAdvancedAssetCategories(AllCategories);
-		for (const FAdvancedAssetCategory& ExistingCategory : AllCategories)
+		// Find matching built-in category
+		if (!AssetCategoryText.IsEmpty())
 		{
-			if (ExistingCategory.CategoryName.EqualTo(AssetCategoryText))
+			TArray<FAdvancedAssetCategory> AllCategories;
+			AssetTools.GetAllAdvancedAssetCategories(AllCategories);
+			for (const FAdvancedAssetCategory& ExistingCategory : AllCategories)
 			{
-				FlowAssetCategory = ExistingCategory.CategoryType;
-				break;
+				if (ExistingCategory.CategoryName.EqualTo(AssetCategoryText))
+				{
+					FlowAssetCategory = ExistingCategory.CategoryType;
+					break;
+				}
 			}
 		}
-	}
 
-	if (FlowAssetCategory == EAssetTypeCategories::None)
-	{
-		FlowAssetCategory = AssetTools.RegisterAdvancedAssetCategory(FName(TEXT("Flow")), AssetCategoryText);
+		if (FlowAssetCategory == EAssetTypeCategories::None)
+		{
+			FlowAssetCategory = AssetTools.RegisterAdvancedAssetCategory(FName(TEXT("Flow")), AssetCategoryText);
+		}
 	}
-
 
 	const TSharedRef<IAssetTypeActions> FlowAssetActions = MakeShareable(new FAssetTypeActions_FlowAsset());
 	RegisteredAssetActions.Add(FlowAssetActions);
