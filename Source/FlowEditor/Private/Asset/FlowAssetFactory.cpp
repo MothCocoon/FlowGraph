@@ -83,10 +83,10 @@ bool UFlowAssetFactory::ConfigureProperties()
 	Options.Mode = EClassViewerMode::ClassPicker;
 
 	const TSharedPtr<FAssetClassParentFilter> Filter = MakeShareable(new FAssetClassParentFilter);
-	Options.ClassFilter = Filter;
-
 	Filter->DisallowedClassFlags = CLASS_Abstract | CLASS_Deprecated | CLASS_NewerVersionExists | CLASS_HideDropDown;
 	Filter->AllowedChildrenOfClasses.Add(UFlowAsset::StaticClass());
+
+	Options.ClassFilters = {Filter.ToSharedRef()};
 
 	const FText TitleText = LOCTEXT("CreateFlowAssetOptions", "Pick Flow Asset Class");
 	UClass* ChosenClass = nullptr;
