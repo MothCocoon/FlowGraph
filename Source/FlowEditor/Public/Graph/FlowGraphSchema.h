@@ -5,6 +5,7 @@
 #include "EdGraph/EdGraphSchema.h"
 #include "FlowGraphSchema.generated.h"
 
+class UFlowNode;
 class UFlowAsset;
 
 DECLARE_MULTICAST_DELEGATE(FFlowGraphSchemaRefresh);
@@ -43,7 +44,7 @@ public:
 	static UClass* GetAssignedGraphNodeClass(const UClass* FlowNodeClass);
 
 private:
-	static bool IsClassContained(const TArray<TSubclassOf<class UFlowNode>> Classes, const UClass* Class);
+	static void ApplyNodeFilter(const UFlowAsset* AssetClassDefaults, const UClass* FlowNodeClass, TArray<UFlowNode*>& FilteredNodes);
 	static void GetFlowNodeActions(FGraphActionMenuBuilder& ActionMenuBuilder, const UFlowAsset* AssetClassDefaults, const FString& CategoryName);
 	static void GetCommentAction(FGraphActionMenuBuilder& ActionMenuBuilder, const UEdGraph* CurrentGraph = nullptr);
 
