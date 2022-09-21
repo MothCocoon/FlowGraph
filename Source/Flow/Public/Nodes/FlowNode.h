@@ -42,6 +42,9 @@ private:
 
 #if WITH_EDITORONLY_DATA
 protected:
+	TArray<TSubclassOf<UFlowAsset>> AllowedAssetClasses;
+	TArray<TSubclassOf<UFlowAsset>> DeniedAssetClasses;
+	
 	UPROPERTY()
 	FString Category;
 
