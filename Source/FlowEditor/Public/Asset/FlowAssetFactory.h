@@ -5,8 +5,8 @@
 #include "Factories/Factory.h"
 #include "FlowAssetFactory.generated.h"
 
-UCLASS(HideCategories = Object, MinimalAPI)
-class UFlowAssetFactory : public UFactory
+UCLASS(HideCategories = Object)
+class FLOWEDITOR_API UFlowAssetFactory : public UFactory
 {
 	GENERATED_UCLASS_BODY()
 
