@@ -45,6 +45,9 @@ class FLOWEDITOR_API FFlowGraphConnectionDrawingPolicy : public FConnectionDrawi
 	TMap<UEdGraphPin*, UEdGraphPin*> RecordedPaths;
 	TMap<UEdGraphPin*, UEdGraphPin*> SelectedPaths;
 
+	//Used to help reversing pins on nodes that go backwards
+	TMap<class UFlowGraphNode_Reroute*, bool> RerouteToReversedDirectionMap;
+
 public:
 	FFlowGraphConnectionDrawingPolicy(int32 InBackLayerID, int32 InFrontLayerID, float ZoomFactor, const FSlateRect& InClippingRect, FSlateWindowElementList& InDrawElements, UEdGraph* InGraphObj);
 
@@ -60,4 +63,8 @@ protected:
 	void DrawCircuitSpline(const int32& LayerId, const FVector2D& Start, const FVector2D& End, const FConnectionParams& Params) const;
 	void DrawCircuitConnection(const int32& LayerId, const FVector2D& Start, const FVector2D& StartDirection, const FVector2D& End, const FVector2D& EndDirection, const FConnectionParams& Params) const;
 	static FVector2D GetControlPoint(const FVector2D& Source, const FVector2D& Target);
+
+	bool ShouldChangeTangentForReroute(class UFlowGraphNode_Reroute* Reroute);
+	bool FindPinCenter(UEdGraphPin* Pin, FVector2D& OutCenter) const;
+	bool GetAverageConnectedPosition(class UFlowGraphNode_Reroute* Reroute, EEdGraphPinDirection Direction, FVector2D& OutPos) const;
 };
