@@ -350,14 +350,20 @@ void UFlowGraphNode::AllocateDefaultPins()
 
 	if (FlowNode)
 	{
-		for (const FFlowPin& InputPin : FlowNode->InputPins)
+		UFlowGraphSettings* GraphSettings = UFlowGraphSettings::Get();
+		const bool HideAdvancedPin = GraphSettings->NodeHideAdvancedPinThresholds.Contains(FlowNode->GetClass());
+		AdvancedPinDisplay = HideAdvancedPin ? ENodeAdvancedPins::Hidden : ENodeAdvancedPins::NoPins;
+
+		for (int32 PinIndex = 0; PinIndex < FlowNode->InputPins.Num(); PinIndex++)
 		{
-			CreateInputPin(InputPin);
+			const FFlowPin& InputPin = FlowNode->InputPins[PinIndex];
+			CreateInputPin(InputPin, PinIndex);
 		}
 
-		for (const FFlowPin& OutputPin : FlowNode->OutputPins)
+		for (int32 PinIndex = 0; PinIndex < FlowNode->OutputPins.Num(); PinIndex++)
 		{
-			CreateOutputPin(OutputPin);
+			const FFlowPin& OutputPin = FlowNode->OutputPins[PinIndex];
+			CreateOutputPin(OutputPin, PinIndex);
 		}
 	}
 }
@@ -752,6 +758,15 @@ void UFlowGraphNode::CreateInputPin(const FFlowPin& FlowPin, const int32 Index /
 	
 	NewPin->PinToolTip = FlowPin.PinToolTip;
 
+	UFlowGraphSettings* GraphSettings = UFlowGraphSettings::Get();
+	if (const int32* NodeHideAdvancedPinThreshold = GraphSettings->NodeHideAdvancedPinThresholds.Find(FlowNode->GetClass()))
+	{
+		if (Index >= *NodeHideAdvancedPinThreshold)
+		{
+			NewPin->bAdvancedView = true;
+		}
+	}
+
 	InputPins.Emplace(NewPin);
 }
 
@@ -773,6 +788,15 @@ void UFlowGraphNode::CreateOutputPin(const FFlowPin& FlowPin, const int32 Index 
 	}
 
 	NewPin->PinToolTip = FlowPin.PinToolTip;
+
+	UFlowGraphSettings* GraphSettings = UFlowGraphSettings::Get();
+	if (const int32* NodeHideAdvancedPinThreshold = GraphSettings->NodeHideAdvancedPinThresholds.Find(FlowNode->GetClass()))
+	{
+		if (Index >= *NodeHideAdvancedPinThreshold)
+		{
+			NewPin->bAdvancedView = true;
+		}
+	}
 
 	OutputPins.Emplace(NewPin);
 }
@@ -834,7 +858,7 @@ void UFlowGraphNode::AddInstancePin(const EEdGraphPinDirection Direction, const 
 	if (Direction == EGPD_Input)
 	{
 		FlowNode->InputPins.Emplace(PinName);
-		CreateInputPin(FlowNode->InputPins.Last());
+		CreateInputPin(FlowNode->InputPins.Last(), FlowNode->InputPins.Num());
 	}
 	else
 	{
@@ -895,12 +919,12 @@ void UFlowGraphNode::RefreshContextPins(const bool bReconstructNode)
 		// recreate outputs
 		FlowNode->OutputPins = NodeDefaults->OutputPins;
 		FlowNode->AddOutputPins(FlowNode->GetContextOutputs());
+	}
 
-		if (bReconstructNode)
-		{
-			ReconstructNode();
-			GetGraph()->NotifyGraphChanged();
-		}
+	if (bReconstructNode)
+	{
+		ReconstructNode();
+		GetGraph()->NotifyGraphChanged();
 	}
 }
 

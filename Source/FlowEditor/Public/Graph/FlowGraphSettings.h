@@ -59,6 +59,10 @@ class UFlowGraphSettings final : public UDeveloperSettings
 	UPROPERTY(Config, EditAnywhere, Category = "Nodes")
 	TMap<TSubclassOf<UFlowNode>, FLinearColor> NodeSpecificColors;
 
+	/** Hide unused pins whose index is greater than the given threshold */
+	UPROPERTY(Config, EditAnywhere, Category = "Nodes")
+	TMap<TSubclassOf<UFlowNode>, int32> NodeHideAdvancedPinThresholds;
+
 	UPROPERTY(EditAnywhere, config, Category = "Nodes")
 	FLinearColor ExecPinColorModifier;
 
