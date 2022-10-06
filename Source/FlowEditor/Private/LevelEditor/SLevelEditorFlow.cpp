@@ -25,13 +25,13 @@ void SLevelEditorFlow::OnMapOpened(const FString& Filename, bool bAsTemplate)
 
 void SLevelEditorFlow::CreateFlowWidget()
 {
-	if (UFlowComponent* FlowComponent = FindFlowComponent(); FlowComponent && FlowComponent->RootFlow)
+	if (const UFlowComponent* FlowComponent = FindFlowComponent(); FlowComponent && FlowComponent->RootFlow)
 	{
-		FlowPath = FName(*FlowComponent->RootFlow->GetPathName());
+		FlowAssetPath = FlowComponent->RootFlow->GetPathName();
 	}
 	else
 	{
-		FlowPath = FName();
+		FlowAssetPath = FString();
 	}
 
 	ChildSlot
@@ -44,14 +44,14 @@ void SLevelEditorFlow::CreateFlowWidget()
 					.AllowedClass(UFlowGraphSettings::Get()->WorldAssetClass)
 					.DisplayThumbnail(false)
 					.OnObjectChanged(this, &SLevelEditorFlow::OnFlowChanged)
-					.ObjectPath(this, &SLevelEditorFlow::GetFlowPath)
+					.ObjectPath(FlowAssetPath)
 			]
 	];
 }
 
 void SLevelEditorFlow::OnFlowChanged(const FAssetData& NewAsset)
 {
-	FlowPath = NewAsset.ObjectPath;
+	FlowAssetPath = NewAsset.GetSoftObjectPath().ToString();
 
 	if (UFlowComponent* FlowComponent = FindFlowComponent())
 	{
@@ -67,11 +67,6 @@ void SLevelEditorFlow::OnFlowChanged(const FAssetData& NewAsset)
 		const bool bSuccess = FlowComponent->MarkPackageDirty();
 		ensureMsgf(bSuccess, TEXT("World Settings couldn't be marked dirty while changing the assigned Flow Asset."));
 	}
-}
-
-FString SLevelEditorFlow::GetFlowPath() const
-{
-	return FlowPath.IsValid() ? FlowPath.ToString() : FString();
 }
 
 UFlowComponent* SLevelEditorFlow::FindFlowComponent() const

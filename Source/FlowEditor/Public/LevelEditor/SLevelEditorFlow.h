@@ -16,14 +16,12 @@ public:
 
 	void Construct(const FArguments& InArgs);
 
-private:
+protected:
 	void OnMapOpened(const FString& Filename, bool bAsTemplate);
 	void CreateFlowWidget();
 
 	void OnFlowChanged(const FAssetData& NewAsset);
-	FString GetFlowPath() const;
-
 	class UFlowComponent* FindFlowComponent() const;
 	
-	FName FlowPath;
+	FString FlowAssetPath;
 };

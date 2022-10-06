@@ -14,7 +14,7 @@
 #include "Nodes/Route/FlowNode_Start.h"
 #include "Nodes/Route/FlowNode_Reroute.h"
 
-#include "AssetRegistryModule.h"
+#include "AssetRegistry/AssetRegistryModule.h"
 #include "Developer/ToolMenus/Public/ToolMenus.h"
 #include "EdGraph/EdGraph.h"
 #include "ScopedTransaction.h"
