@@ -196,11 +196,7 @@ void FFlowEditorModule::ModulesChangesCallback(FName ModuleName, EModuleChangeRe
 
 void FFlowEditorModule::RegisterAssetIndexers() const
 {
-	/**
-	 * Documentation: https://github.com/MothCocoon/FlowGraph/wiki/Asset-Search
-	 * Uncomment line below, if you made these changes to the engine: https://github.com/EpicGames/UnrealEngine/pull/9070
-	 */
-	//IAssetSearchModule::Get().RegisterAssetIndexer(UFlowAsset::StaticClass(), MakeUnique<FFlowAssetIndexer>());
+	IAssetSearchModule::Get().RegisterAssetIndexer(UFlowAsset::StaticClass(), MakeUnique<FFlowAssetIndexer>());
 }
 
 void FFlowEditorModule::CreateFlowToolbar(FToolBarBuilder& ToolbarBuilder) const

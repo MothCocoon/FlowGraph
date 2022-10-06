@@ -16,7 +16,7 @@
 
 #define LOCTEXT_NAMESPACE "FFlowAssetIndexer"
 
-/*enum class EFlowAssetIndexerVersion
+enum class EFlowAssetIndexerVersion
 {
 	Empty,
 	Initial,
@@ -133,6 +133,6 @@ void FFlowAssetIndexer::IndexGraph(const UFlowAsset* InFlowAsset, FSearchSeriali
 			}
 		}
 	}
-}*/
+}
 
 #undef LOCTEXT_NAMESPACE
