@@ -436,8 +436,8 @@ void UFlowGraphSchema::GatherFlowNodes()
 	const FAssetRegistryModule& AssetRegistryModule = FModuleManager::LoadModuleChecked<FAssetRegistryModule>(AssetRegistryConstants::ModuleName);
 
 	FARFilter Filter;
-	Filter.ClassNames.Add(UBlueprint::StaticClass()->GetFName());
-	Filter.ClassNames.Add(UBlueprintGeneratedClass::StaticClass()->GetFName());
+	Filter.ClassPaths.Add(UBlueprint::StaticClass()->GetClassPathName());
+	Filter.ClassPaths.Add(UBlueprintGeneratedClass::StaticClass()->GetClassPathName());
 	Filter.bRecursiveClasses = true;
 
 	TArray<FAssetData> FoundAssets;
@@ -470,9 +470,9 @@ void UFlowGraphSchema::AddAsset(const FAssetData& AssetData, const bool bBatch)
 			return;
 		}
 
-		TArray<FName> AncestorClassNames;
-		AssetRegistryModule.Get().GetAncestorClassNames(AssetData.AssetClass, AncestorClassNames);
-		if (!AncestorClassNames.Contains(UBlueprintCore::StaticClass()->GetFName()))
+		TArray<FTopLevelAssetPath> AncestorClassNames;
+		AssetRegistryModule.Get().GetAncestorClassNames(AssetData.AssetClassPath, AncestorClassNames);
+		if (!AncestorClassNames.Contains(UBlueprintCore::StaticClass()->GetClassPathName()))
 		{
 			return;
 		}
@@ -483,7 +483,7 @@ void UFlowGraphSchema::AddAsset(const FAssetData& AssetData, const bool bBatch)
 		{
 			UObject* Outer = nullptr;
 			ResolveName(Outer, NativeParentClassPath, false, false);
-			const UClass* NativeParentClass = FindObject<UClass>(ANY_PACKAGE, *NativeParentClassPath);
+			const UClass* NativeParentClass = FindObject<UClass>(nullptr, *NativeParentClassPath);
 
 			// accept only Flow Node blueprints
 			if (NativeParentClass && NativeParentClass->IsChildOf(UFlowNode::StaticClass()))

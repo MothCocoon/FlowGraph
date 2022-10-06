@@ -4,6 +4,7 @@
 
 #include "FlowSave.h"
 #include "FlowTypes.h"
+#include "Templates/SubclassOf.h"
 #include "FlowAsset.generated.h"
 
 class UFlowNode;
