@@ -30,9 +30,6 @@ void FFlowEditorStyle::Initialize()
 	// engine assets
 	StyleSet->SetContentRoot(FPaths::EngineContentDir() / TEXT("Editor/Slate/"));
 
-	StyleSet->Set("FlowToolbar.RefreshAsset", new IMAGE_BRUSH("Automation/RefreshTests", Icon40));
-	StyleSet->Set("FlowToolbar.RefreshAsset.Small", new IMAGE_BRUSH("Automation/RefreshTests", Icon20));
-
 	StyleSet->Set("FlowToolbar.GoToMasterInstance", new IMAGE_BRUSH("Icons/icon_DebugStepOut_40x", Icon40));
 	StyleSet->Set("FlowToolbar.GoToMasterInstance.Small", new IMAGE_BRUSH("Icons/icon_DebugStepOut_40x", Icon20));
 
@@ -41,13 +38,15 @@ void FFlowEditorStyle::Initialize()
 	StyleSet->Set("FlowGraph.BreakpointHit", new IMAGE_BRUSH("Old/Kismet2/IP_Breakpoint", Icon40));
 	StyleSet->Set("FlowGraph.PinBreakpointHit", new IMAGE_BRUSH("Old/Kismet2/IP_Breakpoint", Icon30));
 
-	StyleSet->Set( "GraphEditor.Sequence_16x", new IMAGE_BRUSH("Icons/icon_Blueprint_Sequence_16x", Icon16));
+	StyleSet->Set("GraphEditor.Sequence_16x", new IMAGE_BRUSH("Icons/icon_Blueprint_Sequence_16x", Icon16));
 
 	// Flow assets
 	StyleSet->SetContentRoot(IPluginManager::Get().FindPlugin(TEXT("Flow"))->GetBaseDir() / TEXT("Resources"));
 
 	StyleSet->Set("ClassIcon.FlowAsset", new IMAGE_BRUSH(TEXT("Icons/FlowAsset_16x"), Icon16));
 	StyleSet->Set("ClassThumbnail.FlowAsset", new IMAGE_BRUSH(TEXT("Icons/FlowAsset_64x"), Icon64));
+
+	StyleSet->Set("FlowToolbar.RefreshAsset", new IMAGE_BRUSH("Icons/Refresh", Icon40));
 
 	StyleSet->Set("Flow.Node.Title", new BOX_BRUSH("Icons/FlowNode_Title", FMargin(8.0f/64.0f, 0, 0, 0)));
 	StyleSet->Set("Flow.Node.Body", new BOX_BRUSH("Icons/FlowNode_Body", FMargin(16.f/64.f)));
