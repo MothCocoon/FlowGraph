@@ -20,7 +20,9 @@ protected:
 	void OnMapOpened(const FString& Filename, bool bAsTemplate);
 	void CreateFlowWidget();
 
+	FString GetFlowAssetPath() const;
 	void OnFlowChanged(const FAssetData& NewAsset);
+	
 	class UFlowComponent* FindFlowComponent() const;
 	
 	FString FlowAssetPath;

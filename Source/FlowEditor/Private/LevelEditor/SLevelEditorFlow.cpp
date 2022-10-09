@@ -44,9 +44,14 @@ void SLevelEditorFlow::CreateFlowWidget()
 					.AllowedClass(UFlowGraphSettings::Get()->WorldAssetClass)
 					.DisplayThumbnail(false)
 					.OnObjectChanged(this, &SLevelEditorFlow::OnFlowChanged)
-					.ObjectPath(FlowAssetPath)
+					.ObjectPath(this, &SLevelEditorFlow::GetFlowAssetPath) // needs function to automatically refresh view upon data change
 			]
 	];
+}
+
+FString SLevelEditorFlow::GetFlowAssetPath() const
+{
+	return FlowAssetPath;
 }
 
 void SLevelEditorFlow::OnFlowChanged(const FAssetData& NewAsset)
