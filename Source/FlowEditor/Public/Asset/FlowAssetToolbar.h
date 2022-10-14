@@ -86,9 +86,11 @@ public:
 
 private:
 	void BuildAssetToolbar(UToolMenu* ToolbarMenu) const;
+	TSharedRef<SWidget> MakeDiffMenu() const;
+	
 	void BuildDebuggerToolbar(UToolMenu* ToolbarMenu);
 
-public:	
+public:
 	TSharedPtr<SFlowAssetInstanceList> GetAssetInstanceList() const { return AssetInstanceList; }
 
 private:

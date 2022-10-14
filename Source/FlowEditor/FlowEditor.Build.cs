@@ -32,6 +32,7 @@ public class FlowEditor : ModuleRules
             "InputCore",
             "Json",
             "JsonUtilities",
+            "Kismet",
             "KismetWidgets",
             "LevelEditor",
             "MovieScene",
@@ -43,6 +44,7 @@ public class FlowEditor : ModuleRules
             "Sequencer",
             "Slate",
             "SlateCore",
+            "SourceControl",
             "ToolMenus",
             "UnrealEd"
         });
