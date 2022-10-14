@@ -6,7 +6,6 @@
 #include "Asset/AssetTypeActions_FlowAsset.h"
 #include "Asset/FlowAssetDetails.h"
 #include "Asset/FlowAssetEditor.h"
-#include "Asset/FlowAssetIndexer.h"
 #include "Graph/FlowGraphConnectionDrawingPolicy.h"
 #include "Graph/FlowGraphSettings.h"
 #include "LevelEditor/SLevelEditorFlow.h"
@@ -19,6 +18,11 @@
 #include "Nodes/Customizations/FlowNode_PlayLevelSequenceDetails.h"
 #include "Pins/SFlowInputPinHandle.h"
 #include "Pins/SFlowOutputPinHandle.h"
+
+#include "FlowEditorDefines.h"
+#if ENABLE_FLOW_SEARCH
+#include "Asset/FlowAssetIndexer.h"
+#endif
 
 #include "FlowAsset.h"
 #include "Nodes/Route/FlowNode_CustomInput.h"
@@ -121,7 +125,7 @@ void FFlowEditorModule::RegisterAssets()
 
 	// try to merge asset category with a built-in one
 	{
-		FText AssetCategoryText = UFlowGraphSettings::Get()->FlowAssetCategoryName;
+		const FText AssetCategoryText = UFlowGraphSettings::Get()->FlowAssetCategoryName;
 
 		// Find matching built-in category
 		if (!AssetCategoryText.IsEmpty())
@@ -198,9 +202,11 @@ void FFlowEditorModule::RegisterAssetIndexers() const
 {
 	/**
 	 * Documentation: https://github.com/MothCocoon/FlowGraph/wiki/Asset-Search
-	 * Uncomment line below, if you made these changes to the engine: https://github.com/EpicGames/UnrealEngine/pull/9070
+	 * Set macro value to 1, if you made these changes to the engine: https://github.com/EpicGames/UnrealEngine/pull/9070
 	 */
-	//IAssetSearchModule::Get().RegisterAssetIndexer(UFlowAsset::StaticClass(), MakeUnique<FFlowAssetIndexer>());
+#if ENABLE_FLOW_SEARCH
+	IAssetSearchModule::Get().RegisterAssetIndexer(UFlowAsset::StaticClass(), MakeUnique<FFlowAssetIndexer>());
+#endif
 }
 
 void FFlowEditorModule::CreateFlowToolbar(FToolBarBuilder& ToolbarBuilder) const
