@@ -2,6 +2,12 @@
 
 #include "Asset/FlowAssetIndexer.h"
 
+/**
+ * Documentation: https://github.com/MothCocoon/FlowGraph/wiki/Asset-Search
+ * Set macro value to 1, if you made these changes to the engine: https://github.com/EpicGames/UnrealEngine/pull/9070
+ */
+#include "FlowEditorDefines.h"
+#if ENABLE_FLOW_SEARCH
 #include "FlowAsset.h"
 #include "Nodes/FlowNode.h"
 
@@ -16,7 +22,7 @@
 
 #define LOCTEXT_NAMESPACE "FFlowAssetIndexer"
 
-/*enum class EFlowAssetIndexerVersion
+enum class EFlowAssetIndexerVersion
 {
 	Empty,
 	Initial,
@@ -136,3 +142,4 @@ void FFlowAssetIndexer::IndexGraph(const UFlowAsset* InFlowAsset, FSearchSeriali
 }*/
 
 #undef LOCTEXT_NAMESPACE
+#endif
