@@ -3,7 +3,6 @@
 #pragma once
 
 #include "AssetTypeCategories.h"
-#include "Framework/MultiBox/MultiBoxBuilder.h"
 #include "IAssetTypeActions.h"
 #include "Modules/ModuleInterface.h"
 #include "PropertyEditorDelegates.h"
