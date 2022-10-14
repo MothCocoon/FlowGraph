@@ -1,6 +1,7 @@
 // Copyright https://github.com/MothCocoon/FlowGraph/graphs/contributors
 
 #include "Asset/AssetTypeActions_FlowAsset.h"
+#include "Asset/SFlowDiff.h"
 #include "FlowEditorModule.h"
 #include "Graph/FlowGraphSettings.h"
 
@@ -33,10 +34,31 @@ void FAssetTypeActions_FlowAsset::OpenAssetEditor(const TArray<UObject*>& InObje
 	{
 		if (UFlowAsset* FlowAsset = Cast<UFlowAsset>(*ObjIt))
 		{
-			FFlowEditorModule* FlowModule = &FModuleManager::LoadModuleChecked<FFlowEditorModule>("FlowEditor");
+			const FFlowEditorModule* FlowModule = &FModuleManager::LoadModuleChecked<FFlowEditorModule>("FlowEditor");
 			FlowModule->CreateFlowAssetEditor(Mode, EditWithinLevelEditor, FlowAsset);
 		}
 	}
 }
+
+/**
+ * Documentation: https://github.com/MothCocoon/FlowGraph/wiki/Visual-Diff
+ * Set macro value to 1, if you made these changes to the engine: https://github.com/EpicGames/UnrealEngine/pull/9659
+ */
+#if ENABLE_FLOW_DIFF
+void FAssetTypeActions_FlowAsset::PerformAssetDiff(UObject* OldAsset, UObject* NewAsset, const FRevisionInfo& OldRevision, const FRevisionInfo& NewRevision) const
+{
+	const UFlowAsset* OldFlow = CastChecked<UFlowAsset>(OldAsset);
+	const UFlowAsset* NewFlow = CastChecked<UFlowAsset>(NewAsset);
+
+	// sometimes we're comparing different revisions of one single asset (other 
+	// times we're comparing two completely separate assets altogether)
+	const bool bIsSingleAsset = (OldFlow->GetName() == NewFlow->GetName());
+
+	static const FText BasicWindowTitle = LOCTEXT("FlowAssetDiff", "FlowAsset Diff");
+	const FText WindowTitle = !bIsSingleAsset ? BasicWindowTitle : FText::Format(LOCTEXT("FlowAsset Diff", "{0} - FlowAsset Diff"), FText::FromString(NewFlow->GetName()));
+
+	SFlowDiff::CreateDiffWindow(WindowTitle, OldFlow, NewFlow, OldRevision, NewRevision);
+}
+#endif
 
 #undef LOCTEXT_NAMESPACE
