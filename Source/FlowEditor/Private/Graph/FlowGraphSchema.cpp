@@ -483,7 +483,7 @@ void UFlowGraphSchema::AddAsset(const FAssetData& AssetData, const bool bBatch)
 		{
 			UObject* Outer = nullptr;
 			ResolveName(Outer, NativeParentClassPath, false, false);
-			const UClass* NativeParentClass = FindObject<UClass>(nullptr, *NativeParentClassPath);
+			const UClass* NativeParentClass = FindObject<UClass>(Outer, *NativeParentClassPath);
 
 			// accept only Flow Node blueprints
 			if (NativeParentClass && NativeParentClass->IsChildOf(UFlowNode::StaticClass()))
