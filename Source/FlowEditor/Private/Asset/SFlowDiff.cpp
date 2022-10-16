@@ -208,7 +208,7 @@ void SFlowDiff::Construct(const FArguments& InArgs)
 	this->ChildSlot
 	[
 		SNew(SBorder)
-		.BorderImage(FAppStyle::GetBrush("Docking.Tab", ".ContentAreaBrush"))
+		.BorderImage(FEditorStyle::GetBrush("Docking.Tab", ".ContentAreaBrush"))
 		[
 			SNew(SOverlay)
 			+ SOverlay::Slot()
@@ -248,7 +248,7 @@ void SFlowDiff::Construct(const FArguments& InArgs)
 					.Value(.2f)
 					[
 						SNew(SBorder)
-						.BorderImage(FAppStyle::GetBrush("ToolPanel.GroupBorder"))
+						.BorderImage(FEditorStyle::GetBrush("ToolPanel.GroupBorder"))
 						[
 							DifferencesTreeView.ToSharedRef()
 						]
@@ -531,8 +531,8 @@ void FFlowDiffPanel::GeneratePanel(UEdGraph* Graph, TSharedPtr<TArray<FDiffSingl
 			.AdditionalCommands(GraphEditorCommands)
 			.GraphToEdit(Graph)
 			.GraphToDiff(nullptr)
-			.DiffResults(DiffResults)
-			.FocusedDiffResult(FocusedDiffResult)
+			//.DiffResults(DiffResults)
+			//.FocusedDiffResult(FocusedDiffResult)
 			.IsEditable(false)
 			.GraphEvents(InEvents);
 
