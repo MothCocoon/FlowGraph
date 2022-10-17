@@ -139,7 +139,7 @@ void FFlowAssetIndexer::IndexGraph(const UFlowAsset* InFlowAsset, FSearchSeriali
 			}
 		}
 	}
-}*/
+}
 
 #undef LOCTEXT_NAMESPACE
 #endif
