@@ -137,6 +137,9 @@ protected:
 	void SetNumberedInputPins(const uint8 FirstNumber = 0, const uint8 LastNumber = 1);
 	void SetNumberedOutputPins(const uint8 FirstNumber = 0, const uint8 LastNumber = 1);
 
+	uint8 CountNumberedInputs() const;
+	uint8 CountNumberedOutputs() const;
+	
 	TArray<FFlowPin> GetInputPins() const { return InputPins; }
 	TArray<FFlowPin> GetOutputPins() const { return OutputPins; }
 
@@ -159,8 +162,8 @@ public:
 	virtual bool CanUserAddInput() const;
 	virtual bool CanUserAddOutput() const;
 
-	void RemoveUserInput();
-	void RemoveUserOutput();
+	void RemoveUserInput(const FName& PinName);
+	void RemoveUserOutput(const FName& PinName);
 #endif
 
 protected:

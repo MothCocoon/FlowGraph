@@ -191,7 +191,7 @@ public:
 	void AddUserOutput();
 
 	// Add pin only on this instance of node, under default pins
-	void AddInstancePin(const EEdGraphPinDirection Direction, const FName& PinName);
+	void AddInstancePin(const EEdGraphPinDirection Direction, const uint8 NumberedPinsAmount);
 
 	// Call node and graph updates manually, if using bBatchRemoval
 	void RemoveInstancePin(UEdGraphPin* Pin);
