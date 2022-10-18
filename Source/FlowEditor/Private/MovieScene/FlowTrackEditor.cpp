@@ -8,13 +8,11 @@
 #include "MovieScene/MovieSceneFlowTriggerSection.h"
 
 #include "Framework/MultiBox/MultiBoxBuilder.h"
-#include "UObject/Package.h"
 #include "ISequencerSection.h"
-#include "DetailLayoutBuilder.h"
-#include "DetailCategoryBuilder.h"
+#include "LevelSequence.h"
+#include "MovieSceneSequenceEditor.h"
 #include "Sections/MovieSceneEventSection.h"
 #include "SequencerUtilities.h"
-#include "MovieSceneSequenceEditor.h"
 
 #define LOCTEXT_NAMESPACE "FFlowTrackEditor"
 
@@ -138,8 +136,7 @@ bool FFlowTrackEditor::SupportsType(TSubclassOf<UMovieSceneTrack> Type) const
 
 bool FFlowTrackEditor::SupportsSequence(UMovieSceneSequence* InSequence) const
 {
-	static UClass* LevelSequenceClass = FindObject<UClass>(ANY_PACKAGE, TEXT("LevelSequence"), true);
-	return InSequence && LevelSequenceClass && InSequence->GetClass()->IsChildOf(LevelSequenceClass);
+	return InSequence && InSequence->GetClass()->IsChildOf(ULevelSequence::StaticClass());
 }
 
 const FSlateBrush* FFlowTrackEditor::GetIconBrush() const
