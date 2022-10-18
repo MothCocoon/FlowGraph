@@ -808,38 +808,56 @@ bool UFlowGraphNode::CanUserAddOutput() const
 
 bool UFlowGraphNode::CanUserRemoveInput(const UEdGraphPin* Pin) const
 {
-	return FlowNode && FlowNode->InputPins.Num() > FlowNode->GetClass()->GetDefaultObject<UFlowNode>()->InputPins.Num();
+	return FlowNode && !FlowNode->GetClass()->GetDefaultObject<UFlowNode>()->InputPins.Contains(Pin->PinName);
 }
 
 bool UFlowGraphNode::CanUserRemoveOutput(const UEdGraphPin* Pin) const
 {
-	return FlowNode && FlowNode->OutputPins.Num() > FlowNode->GetClass()->GetDefaultObject<UFlowNode>()->OutputPins.Num();
+	return FlowNode && !FlowNode->GetClass()->GetDefaultObject<UFlowNode>()->OutputPins.Contains(Pin->PinName);
 }
 
 void UFlowGraphNode::AddUserInput()
 {
-	AddInstancePin(EGPD_Input, *FString::FromInt(InputPins.Num()));
+	AddInstancePin(EGPD_Input, FlowNode->CountNumberedInputs());
 }
 
 void UFlowGraphNode::AddUserOutput()
 {
-	AddInstancePin(EGPD_Output, *FString::FromInt(OutputPins.Num()));
+	AddInstancePin(EGPD_Output, FlowNode->CountNumberedOutputs());
 }
 
-void UFlowGraphNode::AddInstancePin(const EEdGraphPinDirection Direction, const FName& PinName)
+void UFlowGraphNode::AddInstancePin(const EEdGraphPinDirection Direction, const uint8 NumberedPinsAmount)
 {
 	const FScopedTransaction Transaction(LOCTEXT("AddInstancePin", "Add Instance Pin"));
 	Modify();
 
+	const FFlowPin PinName = FFlowPin(FString::FromInt(NumberedPinsAmount));
+	
 	if (Direction == EGPD_Input)
 	{
-		FlowNode->InputPins.Emplace(PinName);
-		CreateInputPin(FlowNode->InputPins.Last());
+		if (FlowNode->InputPins.IsValidIndex(NumberedPinsAmount))
+		{
+			FlowNode->InputPins.Insert(PinName, NumberedPinsAmount);
+		}
+		else
+		{
+			FlowNode->InputPins.Add(PinName);
+		}
+		
+		CreateInputPin(PinName, NumberedPinsAmount);
 	}
 	else
 	{
-		FlowNode->OutputPins.Emplace(PinName);
-		CreateOutputPin(FlowNode->OutputPins.Last());
+		if (FlowNode->OutputPins.IsValidIndex(NumberedPinsAmount))
+		{
+			FlowNode->OutputPins.Insert(PinName, NumberedPinsAmount);
+		}
+		else
+		{
+			FlowNode->InputPins.Add(PinName);
+		}
+		
+		CreateOutputPin(PinName, NumberedPinsAmount);
 	}
 
 	GetGraph()->NotifyGraphChanged();
@@ -857,7 +875,7 @@ void UFlowGraphNode::RemoveInstancePin(UEdGraphPin* Pin)
 		if (InputPins.Contains(Pin))
 		{
 			InputPins.Remove(Pin);
-			FlowNode->RemoveUserInput();
+			FlowNode->RemoveUserInput(Pin->PinName);
 
 			Pin->MarkAsGarbage();
 			Pins.Remove(Pin);
@@ -868,7 +886,7 @@ void UFlowGraphNode::RemoveInstancePin(UEdGraphPin* Pin)
 		if (OutputPins.Contains(Pin))
 		{
 			OutputPins.Remove(Pin);
-			FlowNode->RemoveUserOutput();
+			FlowNode->RemoveUserOutput(Pin->PinName);
 
 			Pin->MarkAsGarbage();
 			Pins.Remove(Pin);
