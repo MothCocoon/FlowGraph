@@ -284,6 +284,11 @@ protected:
 	UFUNCTION(BlueprintImplementableEvent, Category = "FlowNode", meta = (DisplayName = "Cleanup"))
 	void K2_Cleanup();
 
+	virtual void Activate();
+
+	UFUNCTION(BlueprintImplementableEvent, Category = "FlowNode", meta = (DisplayName = "Activate"))
+	void K2_Activate();
+
 public:
 	// Define what happens when node is terminated from the outside
 	virtual void ForceFinishNode();
