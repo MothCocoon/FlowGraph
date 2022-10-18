@@ -471,7 +471,7 @@ UFlowNode_SubGraph* UFlowAsset::GetNodeOwningThisAssetInstance() const
 	return NodeOwningThisAssetInstance.Get();
 }
 
-UFlowAsset* UFlowAsset::GetMasterInstance() const
+UFlowAsset* UFlowAsset::GetParentInstance() const
 {
 	return NodeOwningThisAssetInstance.IsValid() ? NodeOwningThisAssetInstance.Get()->GetFlowAsset() : nullptr;
 }

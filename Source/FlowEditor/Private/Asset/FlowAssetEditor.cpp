@@ -250,11 +250,11 @@ void FFlowAssetEditor::BindToolbarCommands()
 	ToolkitCommands->Append(FPlayWorldCommands::GlobalPlayWorldActions.ToSharedRef());
 
 	// Debugging
-	ToolkitCommands->MapAction(ToolbarCommands.GoToMasterInstance,
-		FExecuteAction::CreateSP(this, &FFlowAssetEditor::GoToMasterInstance),
-		FCanExecuteAction::CreateSP(this, &FFlowAssetEditor::CanGoToMasterInstance),
+	ToolkitCommands->MapAction(ToolbarCommands.GoToParentInstance,
+		FExecuteAction::CreateSP(this, &FFlowAssetEditor::GoToParentInstance),
+		FCanExecuteAction::CreateSP(this, &FFlowAssetEditor::CanGoToParentInstance),
 		FIsActionChecked(),
-		FIsActionButtonVisible::CreateStatic(&FFlowAssetEditor::IsPIE));
+		FIsActionButtonVisible::CreateSP(this, &FFlowAssetEditor::CanGoToParentInstance));
 }
 
 void FFlowAssetEditor::RefreshAsset()
@@ -268,15 +268,15 @@ void FFlowAssetEditor::RefreshAsset()
 	}
 }
 
-void FFlowAssetEditor::GoToMasterInstance()
+void FFlowAssetEditor::GoToParentInstance()
 {
-	const UFlowAsset* AssetThatInstancedThisAsset = FlowAsset->GetInspectedInstance()->GetMasterInstance();
+	const UFlowAsset* AssetThatInstancedThisAsset = FlowAsset->GetInspectedInstance()->GetParentInstance();
 
 	GEditor->GetEditorSubsystem<UAssetEditorSubsystem>()->OpenEditorForAsset(AssetThatInstancedThisAsset->GetTemplateAsset());
 	AssetThatInstancedThisAsset->GetTemplateAsset()->SetInspectedInstance(AssetThatInstancedThisAsset->GetDisplayName());
 }
 
-bool FFlowAssetEditor::CanGoToMasterInstance()
+bool FFlowAssetEditor::CanGoToParentInstance()
 {
 	return FlowAsset->GetInspectedInstance() && FlowAsset->GetInspectedInstance()->GetNodeOwningThisAssetInstance() != nullptr;
 }

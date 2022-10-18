@@ -93,8 +93,8 @@ protected:
 
 	virtual void BindToolbarCommands();
 	virtual void RefreshAsset();
-	virtual void GoToMasterInstance();
-	virtual bool CanGoToMasterInstance();
+	virtual void GoToParentInstance();
+	virtual bool CanGoToParentInstance();
 
 	virtual void CreateWidgets();
 
