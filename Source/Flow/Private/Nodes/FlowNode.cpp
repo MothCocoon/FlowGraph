@@ -334,19 +334,22 @@ void UFlowNode::FlushContent()
 	K2_FlushContent();
 }
 
+void UFlowNode::OnActivate()
+{
+	K2_OnActivate();
+}
+
 void UFlowNode::TriggerInput(const FName& PinName, const bool bForcedActivation /*= false*/)
 {
 	if (InputPins.Contains(PinName))
 	{
-		EFlowNodeState PreviousActivationState = ActivationState;
+		const EFlowNodeState PreviousActivationState = ActivationState;
 		if (PreviousActivationState != EFlowNodeState::Active)
 		{
-			Activate();
+			OnActivate();
 		}
 
 		ActivationState = EFlowNodeState::Active;
-
-		GetFlowSubsystem()->OnNodeInputTriggered(this, PreviousActivationState == EFlowNodeState::Active);
 
 #if !UE_BUILD_SHIPPING
 		// record for debugging
@@ -387,8 +390,6 @@ void UFlowNode::TriggerFirstOutput(const bool bFinish)
 
 void UFlowNode::TriggerOutput(const FName& PinName, const bool bFinish /*= false*/, const bool bForcedActivation /*= false*/)
 {
-	GetFlowSubsystem()->OnNodeOutputTriggered(this, bFinish);
-
 	// clean up node, if needed
 	if (bFinish)
 	{
@@ -466,11 +467,6 @@ void UFlowNode::Deactivate()
 void UFlowNode::Cleanup()
 {
 	K2_Cleanup();
-}
-
-void UFlowNode::Activate()
-{
-	K2_Activate();
 }
 
 void UFlowNode::ForceFinishNode()

@@ -247,6 +247,11 @@ protected:
 	UFUNCTION(BlueprintImplementableEvent, Category = "FlowNode", meta = (DisplayName = "FlushContent"))
 	void K2_FlushContent();
 
+	virtual void OnActivate();
+
+	UFUNCTION(BlueprintImplementableEvent, Category = "FlowNode", meta = (DisplayName = "On Activate"))
+	void K2_OnActivate();
+	
 	// Trigger execution of input pin
 	void TriggerInput(const FName& PinName, const bool bForcedActivation = false);
 
@@ -283,11 +288,6 @@ protected:
 	// Event called after node finished the work
 	UFUNCTION(BlueprintImplementableEvent, Category = "FlowNode", meta = (DisplayName = "Cleanup"))
 	void K2_Cleanup();
-
-	virtual void Activate();
-
-	UFUNCTION(BlueprintImplementableEvent, Category = "FlowNode", meta = (DisplayName = "Activate"))
-	void K2_Activate();
 
 public:
 	// Define what happens when node is terminated from the outside
