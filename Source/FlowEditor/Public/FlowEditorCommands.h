@@ -57,8 +57,8 @@ public:
 
 	virtual void RegisterCommands() override;
 
-	TSharedPtr<const FInputChord> GetChordByClass(UClass* NodeClass) const;
-	TSharedPtr<FEdGraphSchemaAction> GetActionByChord(FInputChord& InChord) const;
+	TSharedPtr<const FInputChord> GetChordByClass(const UClass* NodeClass) const;
+	TSharedPtr<FEdGraphSchemaAction> GetActionByChord(const FInputChord& InChord) const;
 
 private:
 	TSharedPtr<FEdGraphSchemaAction> GetActionByClass(UClass* NodeClass) const;

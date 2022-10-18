@@ -67,7 +67,7 @@ void FFlowSpawnNodeCommands::RegisterCommands()
 		FString ClassName;
 		if (FParse::Value(*NodeSpawns[x], TEXT("Class="), ClassName))
 		{
-			UClass* FoundClass = FindObject<UClass>(nullptr, *ClassName, true);
+		    UClass* FoundClass = FindFirstObject<UClass>(*ClassName, EFindFirstObjectOptions::ExactClass, ELogVerbosity::Warning, TEXT("looking for SpawnNodes"));
 			if (FoundClass && FoundClass->IsChildOf(UFlowNode::StaticClass()))
 			{
 				NodeClass = FoundClass;
@@ -121,7 +121,7 @@ void FFlowSpawnNodeCommands::RegisterCommands()
 	}
 }
 
-TSharedPtr<const FInputChord> FFlowSpawnNodeCommands::GetChordByClass(UClass* NodeClass) const
+TSharedPtr<const FInputChord> FFlowSpawnNodeCommands::GetChordByClass(const UClass* NodeClass) const
 {
 	if (NodeCommands.Contains(NodeClass) && NodeCommands[NodeClass]->GetFirstValidChord()->IsValidChord())
 	{
@@ -131,7 +131,7 @@ TSharedPtr<const FInputChord> FFlowSpawnNodeCommands::GetChordByClass(UClass* No
 	return nullptr;
 }
 
-TSharedPtr<FEdGraphSchemaAction> FFlowSpawnNodeCommands::GetActionByChord(FInputChord& InChord) const
+TSharedPtr<FEdGraphSchemaAction> FFlowSpawnNodeCommands::GetActionByChord(const FInputChord& InChord) const
 {
 	if (InChord.IsValidChord())
 	{
