@@ -182,6 +182,32 @@ void UFlowNode::SetNumberedOutputPins(const uint8 FirstNumber /*= 0*/, const uin
 	}
 }
 
+uint8 UFlowNode::CountNumberedInputs() const
+{
+	uint8 Result = 0;
+	for (const FFlowPin& Pin : InputPins)
+	{
+		if (Pin.PinName.ToString().IsNumeric())
+		{
+			Result++;
+		}
+	}
+	return Result;
+}
+
+uint8 UFlowNode::CountNumberedOutputs() const
+{
+	uint8 Result = 0;
+	for (const FFlowPin& Pin : OutputPins)
+	{
+		if (Pin.PinName.ToString().IsNumeric())
+		{
+			Result++;
+		}
+	}
+	return Result;
+}
+
 TArray<FName> UFlowNode::GetInputNames() const
 {
 	TArray<FName> Result;
@@ -219,16 +245,32 @@ bool UFlowNode::CanUserAddOutput() const
 	return K2_CanUserAddOutput();
 }
 
-void UFlowNode::RemoveUserInput()
+void UFlowNode::RemoveUserInput(const FName& PinName)
 {
 	Modify();
-	InputPins.RemoveAt(InputPins.Num() - 1);
+
+	for (int32 i = 0; i < InputPins.Num(); i++)
+	{
+		if (InputPins[i].PinName == PinName)
+		{
+			InputPins.RemoveAt(i);
+			break;
+		}
+	}
 }
 
-void UFlowNode::RemoveUserOutput()
+void UFlowNode::RemoveUserOutput(const FName& PinName)
 {
 	Modify();
-	OutputPins.RemoveAt(OutputPins.Num() - 1);
+
+	for (int32 i = 0; i < OutputPins.Num(); i++)
+	{
+		if (OutputPins[i].PinName == PinName)
+		{
+			OutputPins.RemoveAt(i);
+			break;
+		}
+	}
 }
 #endif
 
