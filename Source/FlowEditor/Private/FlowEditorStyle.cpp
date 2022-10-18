@@ -33,8 +33,8 @@ void FFlowEditorStyle::Initialize()
 	StyleSet->Set("FlowToolbar.RefreshAsset", new IMAGE_BRUSH("Automation/RefreshTests", Icon40));
 	StyleSet->Set("FlowToolbar.RefreshAsset.Small", new IMAGE_BRUSH("Automation/RefreshTests", Icon20));
 
-	StyleSet->Set("FlowToolbar.GoToMasterInstance", new IMAGE_BRUSH("Icons/icon_DebugStepOut_40x", Icon40));
-	StyleSet->Set("FlowToolbar.GoToMasterInstance.Small", new IMAGE_BRUSH("Icons/icon_DebugStepOut_40x", Icon20));
+	StyleSet->Set("FlowToolbar.GoToParentInstance", new IMAGE_BRUSH("Icons/icon_DebugStepOut_40x", Icon40));
+	StyleSet->Set("FlowToolbar.GoToParentInstance.Small", new IMAGE_BRUSH("Icons/icon_DebugStepOut_40x", Icon20));
 
 	StyleSet->Set("FlowGraph.BreakpointEnabled", new IMAGE_BRUSH("Old/Kismet2/Breakpoint_Valid", FVector2D(24.0f, 24.0f)));
 	StyleSet->Set("FlowGraph.BreakpointDisabled", new IMAGE_BRUSH("Old/Kismet2/Breakpoint_Disabled", FVector2D(24.0f, 24.0f)));
