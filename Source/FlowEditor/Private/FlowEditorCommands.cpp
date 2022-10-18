@@ -20,7 +20,7 @@ FFlowToolbarCommands::FFlowToolbarCommands()
 void FFlowToolbarCommands::RegisterCommands()
 {
 	UI_COMMAND(RefreshAsset, "Refresh Asset", "Refresh asset and all nodes", EUserInterfaceActionType::Button, FInputChord());
-	UI_COMMAND(GoToMasterInstance, "Go To Master", "Open editor for the Flow Asset that created this Flow instance", EUserInterfaceActionType::Button, FInputChord());
+	UI_COMMAND(GoToParentInstance, "Go To Parent", "Open editor for the Flow Asset that created this Flow instance", EUserInterfaceActionType::Button, FInputChord());
 }
 
 FFlowGraphCommands::FFlowGraphCommands()
