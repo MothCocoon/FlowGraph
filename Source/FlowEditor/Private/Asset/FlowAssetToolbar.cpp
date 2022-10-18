@@ -152,10 +152,10 @@ void SFlowAssetBreadcrumb::Construct(const FArguments& InArgs, const TWeakObject
 		TArray<UFlowAsset*> InstancesFromRoot = {InspectedInstance};
 
 		const UFlowAsset* CheckedInstance = InspectedInstance;
-		while (UFlowAsset* MasterInstance = CheckedInstance->GetMasterInstance())
+		while (UFlowAsset* ParentInstance = CheckedInstance->GetParentInstance())
 		{
-			InstancesFromRoot.Insert(MasterInstance, 0);
-			CheckedInstance = MasterInstance;
+			InstancesFromRoot.Insert(ParentInstance, 0);
+			CheckedInstance = ParentInstance;
 		}
 
 		for (UFlowAsset* Instance : InstancesFromRoot)
@@ -308,7 +308,7 @@ void FFlowAssetToolbar::BuildDebuggerToolbar(UToolMenu* ToolbarMenu)
 	AssetInstanceList = SNew(SFlowAssetInstanceList, TemplateAsset);
 	Section.AddEntry(FToolMenuEntry::InitWidget("AssetInstances", AssetInstanceList.ToSharedRef(), FText(), true));
 
-	Section.AddEntry(FToolMenuEntry::InitToolBarButton(FFlowToolbarCommands::Get().GoToMasterInstance));
+	Section.AddEntry(FToolMenuEntry::InitToolBarButton(FFlowToolbarCommands::Get().GoToParentInstance));
 
 	Breadcrumb = SNew(SFlowAssetBreadcrumb, TemplateAsset);
 	Section.AddEntry(FToolMenuEntry::InitWidget("AssetBreadcrumb", Breadcrumb.ToSharedRef(), FText(), true));

@@ -260,7 +260,7 @@ public:
 	FName GetDisplayName() const;
 
 	UFlowNode_SubGraph* GetNodeOwningThisAssetInstance() const;
-	UFlowAsset* GetMasterInstance() const;
+	UFlowAsset* GetParentInstance() const;
 
 	// Are there any active nodes?
 	UFUNCTION(BlueprintPure, Category = "Flow")
