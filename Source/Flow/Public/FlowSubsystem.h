@@ -12,7 +12,6 @@
 
 class UFlowAsset;
 class UFlowNode_SubGraph;
-class UFlowNode;
 
 DECLARE_DYNAMIC_MULTICAST_DELEGATE(FSimpleFlowEvent);
 DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FSimpleFlowComponentEvent, UFlowComponent*, Component);
@@ -60,9 +59,6 @@ public:
 
 	virtual void Initialize(FSubsystemCollectionBase& Collection) override;
 	virtual void Deinitialize() override;
-
-	virtual void OnNodeInputTriggered(const UFlowNode* node, const bool bWasActive);
-	virtual void OnNodeOutputTriggered(const UFlowNode* node, const bool bFinish);
 
 	virtual void AbortActiveFlows();
 
