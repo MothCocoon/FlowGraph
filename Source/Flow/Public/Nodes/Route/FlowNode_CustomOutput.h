@@ -16,10 +16,6 @@ class FLOW_API UFlowNode_CustomOutput final : public UFlowNode
 
 	UPROPERTY()
 	FName EventName;
-
-	// this allows to finish execution of this Flow Asset
-	UPROPERTY(EditAnywhere, Category = "Output")
-	bool bFinishGraph;
 	
 protected:
 	virtual void ExecuteInput(const FName& PinName) override;
