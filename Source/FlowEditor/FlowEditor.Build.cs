@@ -33,6 +33,7 @@ public class FlowEditor : ModuleRules
             "JsonUtilities",
             "KismetWidgets",
             "LevelEditor",
+            "LevelSequence",
             "MovieScene",
             "MovieSceneTracks",
             "MovieSceneTools",
