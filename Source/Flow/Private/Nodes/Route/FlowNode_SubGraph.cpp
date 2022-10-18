@@ -18,7 +18,7 @@ UFlowNode_SubGraph::UFlowNode_SubGraph(const FObjectInitializer& ObjectInitializ
 #endif
 
 	InputPins = {StartPin};
-	OutputPins = {FinishPin};
+	OutputPins = {};
 }
 
 bool UFlowNode_SubGraph::CanBeAssetInstanced() const

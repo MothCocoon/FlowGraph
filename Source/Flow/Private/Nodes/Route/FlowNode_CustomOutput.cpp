@@ -7,6 +7,7 @@
 
 UFlowNode_CustomOutput::UFlowNode_CustomOutput(const FObjectInitializer& ObjectInitializer)
 	: Super(ObjectInitializer)
+	, bFinishGraph(false)
 {
 #if WITH_EDITOR
 	Category = TEXT("Route");
@@ -20,13 +21,13 @@ void UFlowNode_CustomOutput::ExecuteInput(const FName& PinName)
 {
 	if (!EventName.IsNone() && GetFlowAsset()->GetCustomOutputs().Contains(EventName) && GetFlowAsset()->GetNodeOwningThisAssetInstance())
 	{
-		GetFlowAsset()->TriggerCustomOutput(EventName);
+		GetFlowAsset()->TriggerCustomOutput(EventName, bFinishGraph);
 	}
 }
 
 #if WITH_EDITOR
 FString UFlowNode_CustomOutput::GetNodeDescription() const
 {
-	return EventName.ToString();
+	return EventName.ToString() + LINE_TERMINATOR + (bFinishGraph ? TEXT("True") : TEXT("False"));
 }
 #endif

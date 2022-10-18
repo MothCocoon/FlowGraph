@@ -406,9 +406,9 @@ void UFlowAsset::TriggerCustomEvent(UFlowNode_SubGraph* Node, const FName& Event
 	}
 }
 
-void UFlowAsset::TriggerCustomOutput(const FName& EventName) const
+void UFlowAsset::TriggerCustomOutput(const FName& EventName, const bool bFinish) const
 {
-	NodeOwningThisAssetInstance->TriggerOutput(EventName);
+	NodeOwningThisAssetInstance->TriggerOutput(EventName, bFinish);
 }
 
 void UFlowAsset::TriggerInput(const FGuid& NodeGuid, const FName& PinName)

@@ -248,7 +248,7 @@ public:
 
 private:
 	void TriggerCustomEvent(UFlowNode_SubGraph* Node, const FName& EventName) const;
-	void TriggerCustomOutput(const FName& EventName) const;
+	void TriggerCustomOutput(const FName& EventName, const bool bFinish) const;
 
 	void TriggerInput(const FGuid& NodeGuid, const FName& PinName);
 
