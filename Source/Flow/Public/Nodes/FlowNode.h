@@ -97,7 +97,7 @@ public:
 
 protected:
 	// Short summary of node's content - displayed over node as NodeInfoPopup
-	UFUNCTION(BlueprintImplementableEvent, Category = "FlowNode", meta = (DisplayName = "GetNodeDescription"))
+	UFUNCTION(BlueprintImplementableEvent, Category = "FlowNode", meta = (DisplayName = "Get Node Description"))
 	FString K2_GetNodeDescription() const;
 
 	// Inherits Guid after graph node
@@ -164,10 +164,10 @@ public:
 #endif
 
 protected:
-	UFUNCTION(BlueprintImplementableEvent, Category = "FlowNode", meta = (DisplayName = "CanUserAddInput"))
+	UFUNCTION(BlueprintImplementableEvent, Category = "FlowNode", meta = (DisplayName = "Can User Add Input"))
 	bool K2_CanUserAddInput() const;
 
-	UFUNCTION(BlueprintImplementableEvent, Category = "FlowNode", meta = (DisplayName = "CanUserAddOutput"))
+	UFUNCTION(BlueprintImplementableEvent, Category = "FlowNode", meta = (DisplayName = "Can User Add Output"))
 	bool K2_CanUserAddOutput() const;
 
 //////////////////////////////////////////////////////////////////////////
@@ -233,7 +233,7 @@ protected:
 
 	// Event called just after creating the node instance, while initializing the Flow Asset instance
 	// This happens before executing graph, only called during gameplay
-	UFUNCTION(BlueprintImplementableEvent, Category = "FlowNode", meta = (DisplayName = "InitInstance"))
+	UFUNCTION(BlueprintImplementableEvent, Category = "FlowNode", meta = (DisplayName = "Init Instance"))
 	void K2_InitializeInstance();
 
 public:
@@ -244,10 +244,10 @@ protected:
 	virtual void PreloadContent();
 	virtual void FlushContent();
 
-	UFUNCTION(BlueprintImplementableEvent, Category = "FlowNode", meta = (DisplayName = "PreloadContent"))
+	UFUNCTION(BlueprintImplementableEvent, Category = "FlowNode", meta = (DisplayName = "Preload Content"))
 	void K2_PreloadContent();
 
-	UFUNCTION(BlueprintImplementableEvent, Category = "FlowNode", meta = (DisplayName = "FlushContent"))
+	UFUNCTION(BlueprintImplementableEvent, Category = "FlowNode", meta = (DisplayName = "Flush Content"))
 	void K2_FlushContent();
 
 	virtual void OnActivate();
@@ -262,7 +262,7 @@ protected:
 	virtual void ExecuteInput(const FName& PinName);
 
 	// Event reacting on triggering Input pin
-	UFUNCTION(BlueprintImplementableEvent, Category = "FlowNode", meta = (DisplayName = "ExecuteInput"))
+	UFUNCTION(BlueprintImplementableEvent, Category = "FlowNode", meta = (DisplayName = "Execute Input"))
 	void K2_ExecuteInput(const FName& PinName);
 
 	// Simply trigger the first Output Pin, convenient to use if node has only one output
@@ -298,7 +298,7 @@ public:
 
 protected:
 	// Define what happens when node is terminated from the outside
-	UFUNCTION(BlueprintImplementableEvent, Category = "FlowNode", meta = (DisplayName = "ForceFinishNode"))
+	UFUNCTION(BlueprintImplementableEvent, Category = "FlowNode", meta = (DisplayName = "Force Finish Node"))
 	void K2_ForceFinishNode();
 
 private:
@@ -322,19 +322,19 @@ public:
 
 protected:
 	// Information displayed while node is working - displayed over node as NodeInfoPopup
-	UFUNCTION(BlueprintImplementableEvent, Category = "FlowNode", meta = (DisplayName = "GetStatusString"))
+	UFUNCTION(BlueprintImplementableEvent, Category = "FlowNode", meta = (DisplayName = "Get Status String"))
 	FString K2_GetStatusString() const;
 
-	UFUNCTION(BlueprintImplementableEvent, Category = "FlowNode", meta = (DisplayName = "GetStatusBackgroundColor"))
+	UFUNCTION(BlueprintImplementableEvent, Category = "FlowNode", meta = (DisplayName = "Get Status Background Color"))
 	bool K2_GetStatusBackgroundColor(FLinearColor& OutColor) const;
 
-	UFUNCTION(BlueprintImplementableEvent, Category = "FlowNode", meta = (DisplayName = "GetAssetPath"))
+	UFUNCTION(BlueprintImplementableEvent, Category = "FlowNode", meta = (DisplayName = "Get Asset Path"))
 	FString K2_GetAssetPath();
 
-	UFUNCTION(BlueprintImplementableEvent, Category = "FlowNode", meta = (DisplayName = "GetAssetToEdit"))
+	UFUNCTION(BlueprintImplementableEvent, Category = "FlowNode", meta = (DisplayName = "Get Asset To Edit"))
 	UObject* K2_GetAssetToEdit();
 
-	UFUNCTION(BlueprintImplementableEvent, Category = "FlowNode", meta = (DisplayName = "GetActorToFocus"))
+	UFUNCTION(BlueprintImplementableEvent, Category = "FlowNode", meta = (DisplayName = "Get Actor To Focus"))
 	AActor* K2_GetActorToFocus();
 
 	template <typename T>
