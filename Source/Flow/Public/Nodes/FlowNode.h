@@ -111,6 +111,9 @@ public:
 	UFUNCTION(BlueprintPure, Category = "FlowNode")
 	UFlowAsset* GetFlowAsset() const;
 
+protected:
+	virtual bool CanFinishGraph() const { return false; }
+
 //////////////////////////////////////////////////////////////////////////
 // All created pins (default, class-specific and added by user)
 
