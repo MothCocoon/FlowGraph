@@ -22,7 +22,6 @@ void FFlowEditorStyle::Initialize()
 	StyleSet = MakeShareable(new FSlateStyleSet(TEXT("FlowEditorStyle")));
 
 	const FVector2D Icon16(16.0f, 16.0f);
-	const FVector2D Icon20(20.0f, 20.0f);
 	const FVector2D Icon30(30.0f, 30.0f);
 	const FVector2D Icon40(40.0f, 40.0f);
 	const FVector2D Icon64(64.0f, 64.0f);
@@ -31,7 +30,6 @@ void FFlowEditorStyle::Initialize()
 	StyleSet->SetContentRoot(FPaths::EngineContentDir() / TEXT("Editor/Slate/"));
 
 	StyleSet->Set("FlowToolbar.GoToParentInstance", new IMAGE_BRUSH("Icons/icon_DebugStepOut_40x", Icon40));
-	StyleSet->Set("FlowToolbar.GoToParentInstance.Small", new IMAGE_BRUSH("Icons/icon_DebugStepOut_40x", Icon20));
 
 	StyleSet->Set("FlowGraph.BreakpointEnabled", new IMAGE_BRUSH("Old/Kismet2/Breakpoint_Valid", FVector2D(24.0f, 24.0f)));
 	StyleSet->Set("FlowGraph.BreakpointDisabled", new IMAGE_BRUSH("Old/Kismet2/Breakpoint_Disabled", FVector2D(24.0f, 24.0f)));
