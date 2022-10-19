@@ -11,11 +11,11 @@
 
 #include "FlowAsset.h"
 #include "Nodes/FlowNode.h"
+#include "Nodes/FlowNodeBlueprint.h"
 #include "Nodes/Route/FlowNode_Start.h"
 #include "Nodes/Route/FlowNode_Reroute.h"
 
 #include "AssetRegistry/AssetRegistryModule.h"
-#include "Developer/ToolMenus/Public/ToolMenus.h"
 #include "EdGraph/EdGraph.h"
 #include "ScopedTransaction.h"
 
@@ -470,30 +470,13 @@ void UFlowGraphSchema::AddAsset(const FAssetData& AssetData, const bool bBatch)
 			return;
 		}
 
-		TArray<FTopLevelAssetPath> AncestorClassNames;
-		AssetRegistryModule.Get().GetAncestorClassNames(AssetData.AssetClassPath, AncestorClassNames);
-		if (!AncestorClassNames.Contains(UBlueprintCore::StaticClass()->GetClassPathName()))
+		if (AssetData.GetClass()->IsChildOf(UFlowNodeBlueprint::StaticClass()))
 		{
-			return;
-		}
+			BlueprintFlowNodes.Emplace(AssetData.PackageName, AssetData);
 
-		FString NativeParentClassPath;
-		AssetData.GetTagValue(FBlueprintTags::NativeParentClassPath, NativeParentClassPath);
-		if (!NativeParentClassPath.IsEmpty())
-		{
-			UObject* Outer = nullptr;
-			ResolveName(Outer, NativeParentClassPath, false, false);
-			const UClass* NativeParentClass = FindObject<UClass>(Outer, *NativeParentClassPath);
-
-			// accept only Flow Node blueprints
-			if (NativeParentClass && NativeParentClass->IsChildOf(UFlowNode::StaticClass()))
+			if (!bBatch)
 			{
-				BlueprintFlowNodes.Emplace(AssetData.PackageName, AssetData);
-
-				if (!bBatch)
-				{
-					OnNodeListChanged.Broadcast();
-				}
+				OnNodeListChanged.Broadcast();
 			}
 		}
 	}
