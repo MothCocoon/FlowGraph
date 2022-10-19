@@ -854,10 +854,10 @@ void UFlowGraphNode::AddInstancePin(const EEdGraphPinDirection Direction, const 
 		}
 		else
 		{
-			FlowNode->InputPins.Add(PinName);
+			FlowNode->OutputPins.Add(PinName);
 		}
 		
-		CreateOutputPin(PinName, NumberedPinsAmount);
+		CreateOutputPin(PinName, FlowNode->InputPins.Num() + NumberedPinsAmount);
 	}
 
 	GetGraph()->NotifyGraphChanged();
