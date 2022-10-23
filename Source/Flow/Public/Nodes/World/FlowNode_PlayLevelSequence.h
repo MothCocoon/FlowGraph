@@ -39,9 +39,6 @@ class FLOW_API UFlowNode_PlayLevelSequence : public UFlowNode
 	bool bPlayReverse;
 
 	UPROPERTY(EditAnywhere, Category = "Sequence")
-	bool bReplicates;
-
-	UPROPERTY(EditAnywhere, Category = "Sequence")
 	FLevelSequenceCameraSettings CameraSettings;
 	
 	// Level Sequence playback can be moved to any place in the world by applying Transform Origin
@@ -49,8 +46,16 @@ class FLOW_API UFlowNode_PlayLevelSequence : public UFlowNode
 	// https://docs.unrealengine.com/5.0/en-US/creating-level-sequences-with-dynamic-transforms-in-unreal-engine/
 	UPROPERTY(EditAnywhere, Category = "Sequence")
 	bool bUseGraphOwnerAsTransformOrigin;
-	
-	// if True, Play Rate will by multiplied by Custom Time Dilation
+
+	// If true, playback of this level sequence on the server will be synchronized across other clients
+	UPROPERTY(EditAnywhere, Category = "Sequence")
+	bool bReplicates;
+
+	// Always relevant for network (overrides bOnlyRelevantToOwner)
+	UPROPERTY(EditAnywhere, Category = "Sequence")
+	bool bAlwaysRelevant;
+
+	// If True, Play Rate will by multiplied by Custom Time Dilation
 	// Enabling this option will use Custom Time Dilation from actor that created Root Flow instance, i.e. World Settings or Player Controller
 	UPROPERTY(EditAnywhere, Category = "Sequence")
 	bool bApplyOwnerTimeDilation;
