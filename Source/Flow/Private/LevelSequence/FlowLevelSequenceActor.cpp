@@ -5,8 +5,8 @@
 #include "Net/UnrealNetwork.h"
 
 AFlowLevelSequenceActor::AFlowLevelSequenceActor(const FObjectInitializer& ObjectInitializer)
-	: Super(ObjectInitializer
-	  .SetDefaultSubobjectClass<UFlowLevelSequencePlayer>("AnimationPlayer"))
+	: Super(ObjectInitializer.SetDefaultSubobjectClass<UFlowLevelSequencePlayer>("AnimationPlayer"))
+	, ReplicatedLevelSequenceAsset(nullptr)
 {
 }
 
@@ -29,9 +29,7 @@ void AFlowLevelSequenceActor::SetReplicatedLevelSequenceAsset(ULevelSequence* As
 void AFlowLevelSequenceActor::OnRep_ReplicatedLevelSequenceAsset()
 {
 	LevelSequenceAsset = ReplicatedLevelSequenceAsset;
-}
+	ReplicatedLevelSequenceAsset = nullptr;
 
-void AFlowLevelSequenceActor::RPC_InitializePlayer_Implementation()
-{
 	InitializePlayer();
-};
+}
