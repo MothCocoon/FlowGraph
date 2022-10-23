@@ -14,5 +14,7 @@ void FFlowNode_PlayLevelSequenceDetails::CustomizeDetails(IDetailLayoutBuilder& 
 	SequenceCategory.AddProperty(GET_MEMBER_NAME_CHECKED(UFlowNode_PlayLevelSequence, bPlayReverse));
 	SequenceCategory.AddProperty(GET_MEMBER_NAME_CHECKED(UFlowNode_PlayLevelSequence, CameraSettings));
 	SequenceCategory.AddProperty(GET_MEMBER_NAME_CHECKED(UFlowNode_PlayLevelSequence, bUseGraphOwnerAsTransformOrigin));
+	SequenceCategory.AddProperty(GET_MEMBER_NAME_CHECKED(UFlowNode_PlayLevelSequence, bReplicates));
+	SequenceCategory.AddProperty(GET_MEMBER_NAME_CHECKED(UFlowNode_PlayLevelSequence, bAlwaysRelevant));
 	SequenceCategory.AddProperty(GET_MEMBER_NAME_CHECKED(UFlowNode_PlayLevelSequence, bApplyOwnerTimeDilation));
 }
