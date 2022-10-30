@@ -17,7 +17,7 @@ The aim of publishing it as open-source project is to let people tell great stor
 ## In-depth video presentation
 This 24-minute presentation breaks down the concept of the Flow Graph. It goes through everything written in this ReadMe but in greater detail.
 
-[![Introducing Flow Graph for Unreal Engine](https://img.youtube.com/vi/Rj76JP1f-I4/0.jpg)](https://www.youtube.com/watch?v=BAqhccgKx_k)
+[![Introducing Flow Graph for Unreal Engine](https://img.youtube.com/vi/BAqhccgKx_k/0.jpg)](https://www.youtube.com/watch?v=BAqhccgKx_k)
 
 ## Acknowledgements
 I got an opportunity to work on something like the Flow Graph at Reikon Games. They shared my enthusiasm for providing the plugin as open source and as such allowed me to publish this work and keep expanding it as a personal project. Kudos, guys!
