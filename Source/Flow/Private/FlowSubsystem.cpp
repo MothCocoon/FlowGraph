@@ -208,7 +208,7 @@ UFlowAsset* UFlowSubsystem::CreateFlowInstance(const TWeakObjectPtr<UObject> Own
 	// it won't be empty, if we're restoring Flow Asset instance from the SaveGame
 	if (NewInstanceName.IsEmpty())
 	{
-		NewInstanceName = FPaths::GetBaseFilename(FlowAsset.Get()->GetPathName()) + TEXT("_") + FString::FromInt(FlowAsset.Get()->GetInstancesNum());
+		NewInstanceName = MakeUniqueObjectName(this, UFlowAsset::StaticClass(), *FPaths::GetBaseFilename(FlowAsset.Get()->GetPathName())).ToString();
 	}
 
 	UFlowAsset* NewInstance = NewObject<UFlowAsset>(this, FlowAsset->GetClass(), *NewInstanceName, RF_Transient, FlowAsset.Get(), false, nullptr);
