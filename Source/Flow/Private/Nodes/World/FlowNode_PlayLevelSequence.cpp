@@ -221,7 +221,6 @@ void UFlowNode_PlayLevelSequence::OnLoad_Implementation()
 	if (ElapsedTime != 0.0f)
 	{
 		LoadedSequence = LoadAsset<ULevelSequence>(Sequence);
-
 		if (GetFlowSubsystem()->GetWorld() && LoadedSequence)
 		{
 			CreatePlayer();
