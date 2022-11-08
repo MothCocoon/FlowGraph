@@ -159,8 +159,7 @@ FString UFlowNode_Timer::GetNodeDescription() const
 	{
 		if (StepTime > 0.0f)
 		{
-			return FString::SanitizeFloat(CompletionTime, 2).Append(TEXT(", step by ")).Append(
-				FString::SanitizeFloat(StepTime, 2));
+			return FString::SanitizeFloat(CompletionTime, 2).Append(TEXT(", step by ")).Append(FString::SanitizeFloat(StepTime, 2));
 		}
 
 		return FString::SanitizeFloat(CompletionTime, 2);
