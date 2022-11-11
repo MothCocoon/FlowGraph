@@ -14,6 +14,7 @@ UFlowNode_CustomOutput::UFlowNode_CustomOutput(const FObjectInitializer& ObjectI
 #endif
 
 	OutputPins.Empty();
+	AllowedSignalModes = {EFlowSignalMode::Enabled, EFlowSignalMode::Disabled};
 }
 
 void UFlowNode_CustomOutput::ExecuteInput(const FName& PinName)
