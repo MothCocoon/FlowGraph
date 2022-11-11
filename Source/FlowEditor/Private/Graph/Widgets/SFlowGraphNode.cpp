@@ -375,7 +375,7 @@ void SFlowGraphNode::UpdateErrorInfo()
 TSharedRef<SWidget> SFlowGraphNode::CreateTitleWidget(TSharedPtr<SNodeTitle> NodeTitle)
 {
 	SAssignNew(InlineEditableText, SInlineEditableTextBlock)
-		.Style(FAppStyle::Get(), "Graph.Node.NodeTitleInlineEditableText")
+		.Style(FEditorStyle::Get(), "Graph.Node.NodeTitleInlineEditableText")
 		.Text(NodeTitle.Get(), &SNodeTitle::GetHeadTitle)
 		.OnVerifyTextChanged(this, &SFlowGraphNode::OnVerifyNameTextChanged)
 		.OnTextCommitted(this, &SFlowGraphNode::OnNameTextCommited)

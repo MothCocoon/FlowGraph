@@ -4,6 +4,8 @@
 
 #if !UE_BUILD_SHIPPING
 
+FName FFlowPin::AnyPinName = TEXT("AnyPinName");
+
 FString FPinRecord::NoActivations = TEXT("No activations");
 FString FPinRecord::PinActivations = TEXT("Pin activations");
 FString FPinRecord::ForcedActivation = TEXT(" (forced activation)");
