@@ -744,5 +744,6 @@ void UFlowNode::OnPassThrough_Implementation()
 		}
 	}
 
+	// deactivate node, so it doesn't get saved to a new SaveGame
 	Finish();
 }
