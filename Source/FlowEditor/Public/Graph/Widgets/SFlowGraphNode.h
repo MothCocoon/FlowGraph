@@ -38,8 +38,17 @@ protected:
 	// SGraphNode
 	virtual void UpdateGraphNode() override;
 	virtual void UpdateErrorInfo() override;
+
+	virtual TSharedRef<SWidget> CreateTitleWidget(TSharedPtr<SNodeTitle> NodeTitle) override;
 	virtual TSharedRef<SWidget> CreateNodeContentArea() override;
 	virtual const FSlateBrush* GetNodeBodyBrush() const override;
+
+	// purposely overriden non-virtual methods, avoiding engine modification
+	FSlateColor GetNodeTitleColor() const;
+	FSlateColor GetNodeBodyColor() const;
+	FSlateColor GetNodeTitleIconColor() const;
+	FLinearColor GetNodeTitleTextColor() const;
+	TSharedPtr<SWidget> GetEnabledStateWidget() const;
 
 	virtual void CreateStandardPinWidget(UEdGraphPin* Pin) override;
 	virtual TSharedPtr<SToolTip> GetComplexTooltip() override;

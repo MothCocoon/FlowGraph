@@ -8,6 +8,8 @@ UFlowNode_Reroute::UFlowNode_Reroute(const FObjectInitializer& ObjectInitializer
 #if WITH_EDITOR
 	Category = TEXT("Route");
 #endif
+
+	AllowedSignalModes = {EFlowSignalMode::Enabled, EFlowSignalMode::Disabled};
 }
 
 void UFlowNode_Reroute::ExecuteInput(const FName& PinName)
