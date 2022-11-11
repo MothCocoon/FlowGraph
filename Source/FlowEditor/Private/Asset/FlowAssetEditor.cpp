@@ -476,13 +476,34 @@ void FFlowAssetEditor::BindGraphCommands()
 	);
 
 	// Execution Override commands
+	ToolkitCommands->MapAction(FlowGraphCommands.EnableNode,
+		FExecuteAction::CreateSP(this, &FFlowAssetEditor::SetSignalMode, EFlowSignalMode::Enabled),
+		FCanExecuteAction::CreateSP(this, &FFlowAssetEditor::CanSetSignalMode, EFlowSignalMode::Enabled),
+		FIsActionChecked(),
+		FIsActionButtonVisible::CreateSP(this, &FFlowAssetEditor::CanSetSignalMode, EFlowSignalMode::Enabled)
+	);
+
+	ToolkitCommands->MapAction(FlowGraphCommands.DisableNode,
+	FExecuteAction::CreateSP(this, &FFlowAssetEditor::SetSignalMode, EFlowSignalMode::Disabled),
+	FCanExecuteAction::CreateSP(this, &FFlowAssetEditor::CanSetSignalMode, EFlowSignalMode::Disabled),
+	FIsActionChecked(),
+	FIsActionButtonVisible::CreateSP(this, &FFlowAssetEditor::CanSetSignalMode, EFlowSignalMode::Disabled)
+	);
+	
+	ToolkitCommands->MapAction(FlowGraphCommands.SetPassThrough,
+	FExecuteAction::CreateSP(this, &FFlowAssetEditor::SetSignalMode, EFlowSignalMode::PassThrough),
+	FCanExecuteAction::CreateSP(this, &FFlowAssetEditor::CanSetSignalMode, EFlowSignalMode::PassThrough),
+	FIsActionChecked(),
+	FIsActionButtonVisible::CreateSP(this, &FFlowAssetEditor::CanSetSignalMode, EFlowSignalMode::PassThrough)
+	);
+
 	ToolkitCommands->MapAction(FlowGraphCommands.ForcePinActivation,
 		FExecuteAction::CreateSP(this, &FFlowAssetEditor::OnForcePinActivation),
 		FCanExecuteAction::CreateStatic(&FFlowAssetEditor::IsPIE),
 		FIsActionChecked(),
 		FIsActionButtonVisible::CreateStatic(&FFlowAssetEditor::IsPIE)
 	);
-
+	
 	// Jump commands
 	ToolkitCommands->MapAction(FlowGraphCommands.FocusViewport,
 		FExecuteAction::CreateSP(this, &FFlowAssetEditor::FocusViewport),
@@ -1236,6 +1257,29 @@ bool FFlowAssetEditor::CanToggleBreakpoint() const
 bool FFlowAssetEditor::CanTogglePinBreakpoint() const
 {
 	return FocusedGraphEditor->GetGraphPinForMenu() != nullptr;
+}
+
+void FFlowAssetEditor::SetSignalMode(const EFlowSignalMode Mode) const
+{
+	for (UFlowGraphNode* SelectedNode : GetSelectedFlowNodes())
+	{
+		SelectedNode->SetSignalMode(Mode);
+	}
+}
+
+bool FFlowAssetEditor::CanSetSignalMode(const EFlowSignalMode Mode) const
+{
+	if (IsPIE())
+	{
+		return false;
+	}
+	
+	for (const UFlowGraphNode* SelectedNode : GetSelectedFlowNodes())
+	{
+		return SelectedNode->CanSetSignalMode(Mode);
+	}
+
+	return false;
 }
 
 void FFlowAssetEditor::OnForcePinActivation() const

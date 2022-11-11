@@ -9,6 +9,8 @@
 #include "Toolkits/IToolkitHost.h"
 #include "UObject/GCObject.h"
 
+#include "FlowTypes.h"
+
 class SFlowPalette;
 class UFlowAsset;
 class UFlowGraphNode;
@@ -205,6 +207,9 @@ private:
 
 	bool CanToggleBreakpoint() const;
 	bool CanTogglePinBreakpoint() const;
+
+	void SetSignalMode(const EFlowSignalMode Mode) const;
+	bool CanSetSignalMode(const EFlowSignalMode Mode) const;
 
 	void OnForcePinActivation() const;
 	

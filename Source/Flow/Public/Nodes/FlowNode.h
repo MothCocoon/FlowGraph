@@ -114,6 +114,15 @@ public:
 protected:
 	virtual bool CanFinishGraph() const { return false; }
 
+protected:
+	UPROPERTY(EditDefaultsOnly, Category = "FlowNode")
+	TArray<EFlowSignalMode> AllowedSignalModes;
+	
+	// If enabled, signal will pass through node without calling ExecuteInput()
+	// Designed to handle patching
+	UPROPERTY()
+	EFlowSignalMode SignalMode;
+	
 //////////////////////////////////////////////////////////////////////////
 // All created pins (default, class-specific and added by user)
 
@@ -259,7 +268,7 @@ protected:
 	void K2_OnActivate();
 	
 	// Trigger execution of input pin
-	void TriggerInput(const FName& PinName, const bool bForcedActivation = false);
+	void TriggerInput(const FName& PinName, const EFlowPinActivationType ActivationType = EFlowPinActivationType::Default);
 
 	// Method reacting on triggering Input pin
 	virtual void ExecuteInput(const FName& PinName);
@@ -273,14 +282,14 @@ protected:
 	void TriggerFirstOutput(const bool bFinish);
 
 	UFUNCTION(BlueprintCallable, Category = "FlowNode", meta = (HidePin = "bForcedActivation"))
-	void TriggerOutput(const FName& PinName, const bool bFinish = false, const bool bForcedActivation = false);
+	void TriggerOutput(const FName& PinName, const bool bFinish = false, const EFlowPinActivationType ActivationType = EFlowPinActivationType::Default);
 
 	void TriggerOutput(const FString& PinName, const bool bFinish = false);
 	void TriggerOutput(const FText& PinName, const bool bFinish = false);
 	void TriggerOutput(const TCHAR* PinName, const bool bFinish = false);
 
-	UFUNCTION(BlueprintCallable, Category = "FlowNode", meta = (HidePin = "bForcedActivation"))
-	void TriggerOutputPin(const FFlowOutputPinHandle Pin, const bool bFinish = false, const bool bForcedActivation = false);
+	UFUNCTION(BlueprintCallable, Category = "FlowNode", meta = (HidePin = "ActivationType"))
+	void TriggerOutputPin(const FFlowOutputPinHandle Pin, const bool bFinish = false, const EFlowPinActivationType ActivationType = EFlowPinActivationType::Default);
 
 	// Finish execution of node, it will call Cleanup
 	UFUNCTION(BlueprintCallable, Category = "FlowNode")
@@ -386,6 +395,9 @@ protected:
 	UFUNCTION(BlueprintNativeEvent, Category = "FlowNode")
 	void OnLoad();
 
+	UFUNCTION(BlueprintNativeEvent, Category = "FlowNode")
+	void OnPassThrough();
+	
 private:
 	UPROPERTY()
 	TArray<FName> InputNames_DEPRECATED;

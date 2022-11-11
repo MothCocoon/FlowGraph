@@ -127,31 +127,14 @@ void FFlowGraphConnectionDrawingPolicy::DetermineWiringStyle(UEdGraphPin* Output
 	check(GraphObj);
 	const UEdGraphSchema* Schema = GraphObj->GetSchema();
 
-	{
-		//If reroute node path goes backwards, we need to flip the direction to make it look nice
-		//(all of the logic for this is basically same as in FKismetConnectionDrawingPolicy)
-		UEdGraphNode* OutputNode = OutputPin->GetOwningNode();
-		UEdGraphNode* InputNode = (InputPin != nullptr) ? InputPin->GetOwningNode() : nullptr;
-		if (auto* OutputRerouteNode = Cast<UFlowGraphNode_Reroute>(OutputNode))
-		{
-			if (ShouldChangeTangentForReroute(OutputRerouteNode))
-			{
-				Params.StartDirection = EGPD_Input;
-			}
-		}
-
-		if (auto* InputRerouteNode = Cast<UFlowGraphNode_Reroute>(InputNode))
-		{
-			if (ShouldChangeTangentForReroute(InputRerouteNode))
-			{
-				Params.EndDirection = EGPD_Output;
-			}
-		}
-	}
-
 	if (OutputPin->bOrphanedPin || (InputPin && InputPin->bOrphanedPin))
 	{
 		Params.WireColor = FLinearColor::Red;
+	}
+	else if (Cast<UFlowGraphNode>(OutputPin->GetOwningNode())->GetSignalMode() == EFlowSignalMode::Disabled)
+	{
+		Params.WireColor *= 0.5f;
+		Params.WireThickness = 0.5f;
 	}
 	else
 	{
@@ -189,6 +172,28 @@ void FFlowGraphConnectionDrawingPolicy::DetermineWiringStyle(UEdGraphPin* Output
 			// It's not followed, fade it and keep it thin
 			Params.WireColor = InactiveColor;
 			Params.WireThickness = InactiveWireThickness;
+		}
+	}
+
+	// If reroute node path goes backwards, we need to flip the direction to make it look nice
+	// (all of the logic for this is basically same as in FKismetConnectionDrawingPolicy)
+	{
+		UEdGraphNode* OutputNode = OutputPin->GetOwningNode();
+		UEdGraphNode* InputNode = (InputPin != nullptr) ? InputPin->GetOwningNode() : nullptr;
+		if (auto* OutputRerouteNode = Cast<UFlowGraphNode_Reroute>(OutputNode))
+		{
+			if (ShouldChangeTangentForReroute(OutputRerouteNode))
+			{
+				Params.StartDirection = EGPD_Input;
+			}
+		}
+
+		if (auto* InputRerouteNode = Cast<UFlowGraphNode_Reroute>(InputNode))
+		{
+			if (ShouldChangeTangentForReroute(InputRerouteNode))
+			{
+				Params.EndDirection = EGPD_Output;
+			}
 		}
 	}
 }

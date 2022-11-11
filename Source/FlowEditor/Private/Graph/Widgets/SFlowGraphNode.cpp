@@ -29,6 +29,7 @@
 #include "Widgets/SBoxPanel.h"
 #include "Widgets/SOverlay.h"
 #include "Widgets/SToolTip.h"
+#include "Widgets/Text/SInlineEditableTextBlock.h"
 
 #define LOCTEXT_NAMESPACE "SFlowGraphNode"
 
@@ -46,7 +47,9 @@ void SFlowGraphPinExec::Construct(const FArguments& InArgs, UEdGraphPin* InPin)
 void SFlowGraphNode::Construct(const FArguments& InArgs, UFlowGraphNode* InNode)
 {
 	GraphNode = InNode;
+
 	FlowGraphNode = InNode;
+	FlowGraphNode->OnSignalModeChanged.BindRaw(this, &SFlowGraphNode::UpdateGraphNode);
 
 	SetCursor(EMouseCursor::CardinalCross);
 	UpdateGraphNode();
@@ -215,7 +218,7 @@ void SFlowGraphNode::UpdateGraphNode()
 						[
 							SNew(SImage)
 							.Image(IconBrush)
-							.ColorAndOpacity(this, &SGraphNode::GetNodeTitleIconColor)
+							.ColorAndOpacity(this, &SFlowGraphNode::GetNodeTitleIconColor)
 						]
 					+ SHorizontalBox::Slot()
 						[
@@ -310,7 +313,7 @@ void SFlowGraphNode::UpdateGraphNode()
 						[
 							SNew(SImage)
 							.Image(GetNodeBodyBrush())
-							.ColorAndOpacity(this, &SGraphNode::GetNodeBodyColor)
+							.ColorAndOpacity(this, &SFlowGraphNode::GetNodeBodyColor)
 						]
 					+ SOverlay::Slot()
 						[
@@ -370,6 +373,20 @@ void SFlowGraphNode::UpdateErrorInfo()
 	SGraphNode::UpdateErrorInfo();
 }
 
+TSharedRef<SWidget> SFlowGraphNode::CreateTitleWidget(TSharedPtr<SNodeTitle> NodeTitle)
+{
+	SAssignNew(InlineEditableText, SInlineEditableTextBlock)
+		.Style(FAppStyle::Get(), "Graph.Node.NodeTitleInlineEditableText")
+		.Text(NodeTitle.Get(), &SNodeTitle::GetHeadTitle)
+		.OnVerifyTextChanged(this, &SFlowGraphNode::OnVerifyNameTextChanged)
+		.OnTextCommitted(this, &SFlowGraphNode::OnNameTextCommited)
+		.IsReadOnly(this, &SFlowGraphNode::IsNameReadOnly)
+		.IsSelected(this, &SFlowGraphNode::IsSelectedExclusively);
+		InlineEditableText->SetColorAndOpacity(TAttribute<FLinearColor>::Create(TAttribute<FLinearColor>::FGetter::CreateSP(this, &SFlowGraphNode::GetNodeTitleTextColor)));
+
+	return InlineEditableText.ToSharedRef();
+}
+
 TSharedRef<SWidget> SFlowGraphNode::CreateNodeContentArea()
 {
 	return SNew(SBorder)
@@ -396,6 +413,80 @@ TSharedRef<SWidget> SFlowGraphNode::CreateNodeContentArea()
 const FSlateBrush* SFlowGraphNode::GetNodeBodyBrush() const
 {
 	return FFlowEditorStyle::GetBrush("Flow.Node.Body");
+}
+
+FSlateColor SFlowGraphNode::GetNodeTitleColor() const
+{
+	FLinearColor ReturnTitleColor = GraphNode->IsDeprecated() ? FLinearColor::Red : GetNodeObj()->GetNodeTitleColor();
+
+	if (FlowGraphNode->GetSignalMode() == EFlowSignalMode::Enabled)
+	{
+		ReturnTitleColor.A = FadeCurve.GetLerp();
+	}
+	else
+	{
+		ReturnTitleColor *= FLinearColor(0.5f, 0.5f, 0.5f, 0.4f);
+	}
+
+	return ReturnTitleColor;
+}
+
+FSlateColor SFlowGraphNode::GetNodeBodyColor() const
+{
+	FLinearColor ReturnBodyColor = GraphNode->GetNodeBodyTintColor();
+	if (FlowGraphNode->GetSignalMode() != EFlowSignalMode::Enabled)
+	{
+		ReturnBodyColor *= FLinearColor(1.0f, 1.0f, 1.0f, 0.5f); 
+	}
+	return ReturnBodyColor;
+}
+
+FSlateColor SFlowGraphNode::GetNodeTitleIconColor() const
+{
+	FLinearColor ReturnIconColor = IconColor;
+	if (FlowGraphNode->GetSignalMode() != EFlowSignalMode::Enabled)
+	{
+		ReturnIconColor *= FLinearColor(1.0f, 1.0f, 1.0f, 0.3f); 
+	}
+	return ReturnIconColor;
+}
+
+FLinearColor SFlowGraphNode::GetNodeTitleTextColor() const
+{
+	FLinearColor ReturnTextColor = FLinearColor::White;
+	if (FlowGraphNode->GetSignalMode() != EFlowSignalMode::Enabled)
+	{
+		ReturnTextColor *= FLinearColor(1.0f, 1.0f, 1.0f, 0.3f); 
+	}
+	return ReturnTextColor;
+}
+
+TSharedPtr<SWidget> SFlowGraphNode::GetEnabledStateWidget() const
+{
+	if (FlowGraphNode->GetSignalMode() != EFlowSignalMode::Enabled && !GraphNode->IsAutomaticallyPlacedGhostNode())
+	{
+		const bool bPassThrough = FlowGraphNode->GetSignalMode() == EFlowSignalMode::PassThrough;
+		const FText StatusMessage = bPassThrough ? LOCTEXT("PassThrough", "Pass Through") : LOCTEXT("DisabledNode", "Disabled");
+		const FText StatusMessageTooltip = bPassThrough ?
+			LOCTEXT("PassThroughTooltip", "This node won't execute internal logic, but it will trigger all connected outputs") :
+			LOCTEXT("DisabledNodeTooltip", "This node is disabled and will not be executed");
+
+		return SNew(SBorder)
+			.BorderImage(FAppStyle::GetBrush(bPassThrough ? "Graph.Node.DevelopmentBanner" : "Graph.Node.DisabledBanner"))
+			.HAlign(HAlign_Fill)
+			.VAlign(VAlign_Fill)
+			[
+				SNew(STextBlock)
+				.Text(StatusMessage)
+				.ToolTipText(StatusMessageTooltip)
+				.Justification(ETextJustify::Center)
+				.ColorAndOpacity(FLinearColor::White)
+				.ShadowOffset(FVector2D::UnitVector)
+				.Visibility(EVisibility::Visible)
+			];
+	}
+
+	return TSharedPtr<SWidget>();
 }
 
 void SFlowGraphNode::CreateStandardPinWidget(UEdGraphPin* Pin)

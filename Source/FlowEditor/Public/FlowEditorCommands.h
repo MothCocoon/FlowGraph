@@ -40,6 +40,9 @@ public:
 	TSharedPtr<FUICommandInfo> TogglePinBreakpoint;
 
 	/** Execution Override */
+	TSharedPtr<FUICommandInfo> EnableNode;
+	TSharedPtr<FUICommandInfo> DisableNode;
+	TSharedPtr<FUICommandInfo> SetPassThrough;
 	TSharedPtr<FUICommandInfo> ForcePinActivation;
 
 	/** Jumps */

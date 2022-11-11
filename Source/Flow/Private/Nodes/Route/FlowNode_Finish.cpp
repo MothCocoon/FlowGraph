@@ -11,6 +11,7 @@ UFlowNode_Finish::UFlowNode_Finish(const FObjectInitializer& ObjectInitializer)
 #endif
 
 	OutputPins = {};
+	AllowedSignalModes = {EFlowSignalMode::Enabled, EFlowSignalMode::Disabled};
 }
 
 void UFlowNode_Finish::ExecuteInput(const FName& PinName)
