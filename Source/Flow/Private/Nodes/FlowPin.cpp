@@ -7,17 +7,18 @@
 FString FPinRecord::NoActivations = TEXT("No activations");
 FString FPinRecord::PinActivations = TEXT("Pin activations");
 FString FPinRecord::ForcedActivation = TEXT(" (forced activation)");
+FString FPinRecord::PassThroughActivation = TEXT(" (pass-through activation)");
 
 FPinRecord::FPinRecord()
 	: Time(0.0f)
 	, HumanReadableTime(FString())
-	, bForcedActivation(false)
+	, ActivationType(EFlowPinActivationType::Default)
 {
 }
 
-FPinRecord::FPinRecord(const double InTime, const bool bInForcedActivation)
+FPinRecord::FPinRecord(const double InTime, const EFlowPinActivationType InActivationType)
 	: Time(InTime)
-	, bForcedActivation(bInForcedActivation)
+	, ActivationType(InActivationType)
 {
 	const FDateTime SystemTime(FDateTime::Now());
 	HumanReadableTime = DoubleDigit(SystemTime.GetHour()) + TEXT(".")

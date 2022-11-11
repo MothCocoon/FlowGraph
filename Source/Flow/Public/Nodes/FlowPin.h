@@ -20,6 +20,8 @@ struct FLOW_API FFlowPin
 	UPROPERTY(EditDefaultsOnly, Category = "FlowPin")
 	FString PinToolTip;
 
+	static inline FName AnyPinName = TEXT("AnyPinName");
+	
 	FFlowPin()
 		: PinName(NAME_None)
 	{
@@ -180,20 +182,29 @@ struct FLOW_API FConnectedPin
 	}
 };
 
+UENUM(BlueprintType)
+enum class EFlowPinActivationType : uint8
+{
+	Default,
+	Forced,
+	PassThrough
+};
+
 // Every time pin is activated, we record it and display this data while user hovers mouse over pin
 #if !UE_BUILD_SHIPPING
 struct FLOW_API FPinRecord
 {
 	double Time;
 	FString HumanReadableTime;
-	bool bForcedActivation;
+	EFlowPinActivationType ActivationType;
 
 	static FString NoActivations;
 	static FString PinActivations;
 	static FString ForcedActivation;
+	static FString PassThroughActivation;
 
 	FPinRecord();
-	FPinRecord(const double InTime, const bool bInForcedActivation);
+	FPinRecord(const double InTime, const EFlowPinActivationType InActivationType);
 
 private:
 	FORCEINLINE static FString DoubleDigit(const int32 Number);

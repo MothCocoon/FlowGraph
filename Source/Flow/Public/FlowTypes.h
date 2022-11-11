@@ -40,6 +40,14 @@ enum class EFlowFinishPolicy : uint8
 };
 
 UENUM(BlueprintType)
+enum class EFlowSignalMode : uint8
+{
+	Enabled		UMETA(ToolTip = "Node executes its logic."),
+	Disabled	UMETA(ToolTip = "No logic executed, any Input Pin activation is ignored"),
+	PassThrough UMETA(ToolTip = "No logic executed, but signal pass through from Input Pin to assigned Output Pin")
+};
+
+UENUM(BlueprintType)
 enum class EFlowNetMode : uint8
 {
 	Any					UMETA(ToolTip = "Any networking mode."),

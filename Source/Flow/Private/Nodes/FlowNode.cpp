@@ -31,6 +31,8 @@ UFlowNode::UFlowNode(const FObjectInitializer& ObjectInitializer)
 	, bCanDuplicate(true)
 	, bNodeDeprecated(false)
 #endif
+	, AllowedSignalModes({EFlowSignalMode::Enabled, EFlowSignalMode::Disabled, EFlowSignalMode::PassThrough})
+	, SignalMode(EFlowSignalMode::Enabled)
 	, bPreloaded(false)
 	, ActivationState(EFlowNodeState::NeverActivated)
 {
@@ -381,22 +383,30 @@ void UFlowNode::OnActivate()
 	K2_OnActivate();
 }
 
-void UFlowNode::TriggerInput(const FName& PinName, const bool bForcedActivation /*= false*/)
+void UFlowNode::TriggerInput(const FName& PinName, const EFlowPinActivationType ActivationType /*= Default*/)
 {
+	if (SignalMode == EFlowSignalMode::Disabled)
+	{
+		// entirely ignore any Input activation
+	}
+
 	if (InputPins.Contains(PinName))
 	{
-		const EFlowNodeState PreviousActivationState = ActivationState;
-		if (PreviousActivationState != EFlowNodeState::Active)
+		if (SignalMode == EFlowSignalMode::Enabled)
 		{
-			OnActivate();
-		}
+			const EFlowNodeState PreviousActivationState = ActivationState;
+			if (PreviousActivationState != EFlowNodeState::Active)
+			{
+				OnActivate();
+			}
 
-		ActivationState = EFlowNodeState::Active;
+			ActivationState = EFlowNodeState::Active;
+		}
 
 #if !UE_BUILD_SHIPPING
 		// record for debugging
 		TArray<FPinRecord>& Records = InputRecords.FindOrAdd(PinName);
-		Records.Add(FPinRecord(FApp::GetCurrentTime(), bForcedActivation));
+		Records.Add(FPinRecord(FApp::GetCurrentTime(), ActivationType));
 #endif // UE_BUILD_SHIPPING
 
 #if WITH_EDITOR
@@ -414,7 +424,14 @@ void UFlowNode::TriggerInput(const FName& PinName, const bool bForcedActivation 
 		return;
 	}
 
-	ExecuteInput(PinName);
+	if (SignalMode == EFlowSignalMode::Enabled)
+	{
+		ExecuteInput(PinName);
+	}
+	else if (SignalMode == EFlowSignalMode::PassThrough)
+	{
+		OnPassThrough();
+	}
 }
 
 void UFlowNode::ExecuteInput(const FName& PinName)
@@ -430,7 +447,7 @@ void UFlowNode::TriggerFirstOutput(const bool bFinish)
 	}
 }
 
-void UFlowNode::TriggerOutput(const FName& PinName, const bool bFinish /*= false*/, const bool bForcedActivation /*= false*/)
+void UFlowNode::TriggerOutput(const FName& PinName, const bool bFinish /*= false*/, const EFlowPinActivationType ActivationType /*= Default*/)
 {
 	// clean up node, if needed
 	if (bFinish)
@@ -443,7 +460,7 @@ void UFlowNode::TriggerOutput(const FName& PinName, const bool bFinish /*= false
 	{
 		// record for debugging, even if nothing is connected to this pin
 		TArray<FPinRecord>& Records = OutputRecords.FindOrAdd(PinName);
-		Records.Add(FPinRecord(FApp::GetCurrentTime(), bForcedActivation));
+		Records.Add(FPinRecord(FApp::GetCurrentTime(), ActivationType));
 
 #if WITH_EDITOR
 		if (GetWorld()->WorldType == EWorldType::PIE && UFlowAsset::GetFlowGraphInterface().IsValid())
@@ -466,9 +483,9 @@ void UFlowNode::TriggerOutput(const FName& PinName, const bool bFinish /*= false
 	}
 }
 
-void UFlowNode::TriggerOutputPin(const FFlowOutputPinHandle Pin, const bool bFinish, const bool bForcedActivation)
+void UFlowNode::TriggerOutputPin(const FFlowOutputPinHandle Pin, const bool bFinish, const EFlowPinActivationType ActivationType /*= Default*/)
 {
-	TriggerOutput(Pin.PinName, bFinish, bForcedActivation);
+	TriggerOutput(Pin.PinName, bFinish, ActivationType);
 }
 
 void UFlowNode::TriggerOutput(const FString& PinName, const bool bFinish)
@@ -691,7 +708,20 @@ void UFlowNode::LoadInstance(const FFlowNodeSaveData& NodeRecord)
 		FlowAsset->OnActivationStateLoaded(this);
 	}
 
-	OnLoad();
+	switch (SignalMode)
+	{
+		case EFlowSignalMode::Enabled:
+			OnLoad();
+			break;
+		case EFlowSignalMode::Disabled:
+			// designer doesn't want to execute this node's logic at all, so we kill it
+			Finish();
+			break;
+		case EFlowSignalMode::PassThrough:
+			OnPassThrough();
+			break;
+		default: ;
+	}
 }
 
 void UFlowNode::OnSave_Implementation()
@@ -700,4 +730,19 @@ void UFlowNode::OnSave_Implementation()
 
 void UFlowNode::OnLoad_Implementation()
 {
+}
+
+void UFlowNode::OnPassThrough_Implementation()
+{
+	// trigger all connected outputs
+	// pin connections aren't serialized to the SaveGame, so users can safely change connections post game release
+	for (const FFlowPin& OutputPin : OutputPins)
+	{
+		if (Connections.Contains(OutputPin.PinName))
+		{
+			TriggerOutput(OutputPin.PinName, false, EFlowPinActivationType::PassThrough);
+		}
+	}
+
+	Finish();
 }

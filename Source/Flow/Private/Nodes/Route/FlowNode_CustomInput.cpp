@@ -11,6 +11,7 @@ UFlowNode_CustomInput::UFlowNode_CustomInput(const FObjectInitializer& ObjectIni
 #endif
 
 	InputPins.Empty();
+	AllowedSignalModes = {EFlowSignalMode::Enabled, EFlowSignalMode::Disabled};
 }
 
 void UFlowNode_CustomInput::ExecuteInput(const FName& PinName)
