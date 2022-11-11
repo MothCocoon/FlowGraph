@@ -20,7 +20,7 @@ struct FLOW_API FFlowPin
 	UPROPERTY(EditDefaultsOnly, Category = "FlowPin")
 	FString PinToolTip;
 
-	static inline FName AnyPinName = TEXT("AnyPinName");
+	static FName AnyPinName;
 	
 	FFlowPin()
 		: PinName(NAME_None)
