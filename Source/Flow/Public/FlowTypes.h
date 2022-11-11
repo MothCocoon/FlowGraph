@@ -43,8 +43,8 @@ UENUM(BlueprintType)
 enum class EFlowSignalMode : uint8
 {
 	Enabled		UMETA(ToolTip = "Node executes its logic."),
-	Disabled	UMETA(ToolTip = "No logic executed, any Input Pin activation is ignored"),
-	PassThrough UMETA(ToolTip = "No logic executed, but signal pass through from Input Pin to assigned Output Pin")
+	Disabled	UMETA(ToolTip = "No logic executed, any Input Pin activation is ignored. Node instantly enters a deactivated state."),
+	PassThrough UMETA(ToolTip = "Internal node logic not executed. All connected outputs are triggered, node finishes its work.")
 };
 
 UENUM(BlueprintType)
