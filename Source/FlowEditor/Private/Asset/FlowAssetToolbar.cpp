@@ -5,7 +5,6 @@
 #include "Asset/FlowAssetEditor.h"
 #include "Asset/SAssetRevisionMenu.h"
 #include "FlowEditorCommands.h"
-#include "FlowEditorDefines.h"
 
 #include "FlowAsset.h"
 
@@ -198,11 +197,7 @@ void FFlowAssetToolbar::BuildAssetToolbar(UToolMenu* ToolbarMenu) const
 
 	Section.AddEntry(FToolMenuEntry::InitToolBarButton(FFlowToolbarCommands::Get().RefreshAsset));
 
-	/**
-	 * Documentation: https://github.com/MothCocoon/FlowGraph/wiki/Visual-Diff
-	 * Set macro value to 1, if you made these changes to the engine: https://github.com/EpicGames/UnrealEngine/pull/9659
-	 */
-#if ENABLE_FLOW_DIFF
+	// visual diff: menu to choose asset revision compared with the current one 
 	FToolMenuSection& DiffSection = ToolbarMenu->AddSection("SourceControl");
 	DiffSection.InsertPosition = FToolMenuInsert("Asset", EToolMenuInsertType::After);
 	DiffSection.AddDynamicEntry("SourceControlCommands", FNewToolMenuSectionDelegate::CreateLambda([this](FToolMenuSection& InSection)
@@ -219,7 +214,6 @@ void FFlowAssetToolbar::BuildAssetToolbar(UToolMenu* ToolbarMenu) const
 		DiffEntry.StyleNameOverride = "CalloutToolbar";
 		InSection.AddEntry(DiffEntry);
 	}));
-#endif
 }
 
 /** Delegate called to diff a specific revision with the current */

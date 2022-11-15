@@ -1,13 +1,6 @@
 // Copyright https://github.com/MothCocoon/FlowGraph/graphs/contributors
 
 #include "Asset/FlowDiffControl.h"
-
-/**
- * Documentation: https://github.com/MothCocoon/FlowGraph/wiki/Visual-Diff
- * Set macro value to 1, if you made these changes to the engine: https://github.com/EpicGames/UnrealEngine/pull/9659
- */
-
-#if ENABLE_FLOW_DIFF
 #include "Asset/SFlowDiff.h"
 
 #include "FlowAsset.h"
@@ -190,4 +183,3 @@ void FFlowGraphToDiff::OnGraphChanged(const FEdGraphEditAction& Action) const
 }
 
 #undef LOCTEXT_NAMESPACE
-#endif

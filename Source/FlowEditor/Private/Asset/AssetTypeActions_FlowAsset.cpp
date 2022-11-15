@@ -40,11 +40,6 @@ void FAssetTypeActions_FlowAsset::OpenAssetEditor(const TArray<UObject*>& InObje
 	}
 }
 
-/**
- * Documentation: https://github.com/MothCocoon/FlowGraph/wiki/Visual-Diff
- * Set macro value to 1, if you made these changes to the engine: https://github.com/EpicGames/UnrealEngine/pull/9659
- */
-#if ENABLE_FLOW_DIFF
 void FAssetTypeActions_FlowAsset::PerformAssetDiff(UObject* OldAsset, UObject* NewAsset, const FRevisionInfo& OldRevision, const FRevisionInfo& NewRevision) const
 {
 	const UFlowAsset* OldFlow = CastChecked<UFlowAsset>(OldAsset);
@@ -59,6 +54,5 @@ void FAssetTypeActions_FlowAsset::PerformAssetDiff(UObject* OldAsset, UObject* N
 
 	SFlowDiff::CreateDiffWindow(WindowTitle, OldFlow, NewFlow, OldRevision, NewRevision);
 }
-#endif
 
 #undef LOCTEXT_NAMESPACE
