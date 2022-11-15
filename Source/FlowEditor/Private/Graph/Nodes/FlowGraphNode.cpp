@@ -1085,7 +1085,7 @@ EFlowSignalMode UFlowGraphNode::GetSignalMode() const
 
 bool UFlowGraphNode::CanSetSignalMode(const EFlowSignalMode Mode) const
 {
-	return FlowNode ? (FlowNode->AllowedSignalModes.Contains(Mode)  && FlowNode->SignalMode != Mode) : false;
+	return FlowNode ? (FlowNode->AllowedSignalModes.Contains(Mode) && FlowNode->SignalMode != Mode) : false;
 }
 
 #undef LOCTEXT_NAMESPACE

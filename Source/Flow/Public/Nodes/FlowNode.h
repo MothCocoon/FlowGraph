@@ -74,7 +74,7 @@ public:
 	// --
 
 	// Opportunity to update node's data before UFlowGraphNode would call ReconstructNode()
-	virtual void FixNode(UEdGraphNode* NewGraph);
+	virtual void FixNode(UEdGraphNode* NewGraphNode);
 #endif
 
 	UEdGraphNode* GetGraphNode() const { return GraphNode; }

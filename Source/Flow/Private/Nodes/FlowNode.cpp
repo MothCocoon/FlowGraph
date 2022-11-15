@@ -65,12 +65,12 @@ void UFlowNode::PostLoad()
 	FixNode(nullptr);
 }
 
-void UFlowNode::FixNode(UEdGraphNode* NewGraph)
+void UFlowNode::FixNode(UEdGraphNode* NewGraphNode)
 {
 	// Fix any node pointers that may be out of date
-	if (NewGraph)
+	if (NewGraphNode)
 	{
-		GraphNode = NewGraph;
+		GraphNode = NewGraphNode;
 	}
 
 	// v1.1 upgraded pins to be defined as structs
