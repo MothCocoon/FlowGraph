@@ -33,7 +33,6 @@
 #include "ScopedTransaction.h"
 #include "SNodePanel.h"
 #include "ToolMenus.h"
-#include "Nodes/Route/FlowNode_Start.h"
 #include "Widgets/Docking/SDockTab.h"
 
 #define LOCTEXT_NAMESPACE "FlowAssetEditor"
@@ -260,99 +259,13 @@ void FFlowAssetEditor::BindToolbarCommands()
 
 void FFlowAssetEditor::RefreshAsset()
 {
-	UEdGraph* Graph = FlowAsset->GetGraph();
-	
-	TMap<FGuid, UFlowNode*> AssetNodes = FlowAsset->GetNodes();
-	
-	TArray<UFlowGraphNode*> GraphNodes;
-	Graph->GetNodesOfClass<UFlowGraphNode>(GraphNodes);
+	TArray<UFlowGraphNode*> FlowGraphNodes;
+	FlowAsset->GetGraph()->GetNodesOfClass<UFlowGraphNode>(FlowGraphNodes);
 
-	for (UFlowGraphNode* GraphNode : GraphNodes)
+	for (UFlowGraphNode* GraphNode : FlowGraphNodes)
 	{
-		UFlowNode* FlowNode = GraphNode->GetFlowNode();
-		if (FlowNode)
-		{
-			if (!FlowNode->GetGraphNode())
-			{
-				FlowNode->FixNode(GraphNode);
-				GraphNode->ReconstructNode();
-				UE_LOG(LogTemp, Display, TEXT("Node %s fix - Missing GraphNode %s"), *GetNameSafe(FlowNode), *GetNameSafe(GraphNode));
-			}
-		}
+		GraphNode->RefreshContextPins(true);
 	}
-
-	TArray<UEdGraphNode*> GraphNodesToRemove;
-	for (auto&& Node : AssetNodes)
-	{
-		if (IsValid(Node.Value))
-		{
-			UEdGraphNode* CurrentGraphNode = Node.Value->GetGraphNode();
-			
-			const UClass* CorrectClass = UFlowGraphSchema::GetAssignedGraphNodeClass(Node.Value->GetClass());
-			if ((!CurrentGraphNode || CurrentGraphNode->GetClass() != CorrectClass) &&
-				Node.Value->GetClass() != UFlowNode_Start::StaticClass())
-			{
-				UE_LOG(LogTemp, Display, TEXT("Fixing node %s ..."), *GetNameSafe(Node.Value));
-				// Create a new node with the correct graph type.
-				UFlowGraphNode* NewGraphNode = NewObject<UFlowGraphNode>(Graph, CorrectClass);
-
-				NewGraphNode->NodeGuid = Node.Value->GetGuid();
-				if (CurrentGraphNode)
-				{
-					NewGraphNode->NodePosX = CurrentGraphNode->NodePosX;
-					NewGraphNode->NodePosY = CurrentGraphNode->NodePosY;
-				}
-				else
-				{
-					NewGraphNode->NodePosX = 0;
-					NewGraphNode->NodePosY = 0;
-				}
-				
-				Graph->AddNode(NewGraphNode, false, false);
-				
-				NewGraphNode->SetFlowNode(Node.Value);
-				
-				Node.Value->FixNode(NewGraphNode);
-				
-				NewGraphNode->PostPlacedNewNode();
-				NewGraphNode->AllocateDefaultPins();
-
-				if (CurrentGraphNode)
-				{
-					// Move links from the old node to the new node.
-					for (UEdGraphPin* OldNodePin : CurrentGraphNode->Pins)
-					{
-						if (UEdGraphPin** NewNodePin = NewGraphNode->Pins.FindByPredicate(
-							[OldNodePin](const UEdGraphPin* GraphPin)
-							{
-								return GraphPin->PinName == OldNodePin->PinName;
-							}))
-						{
-							TArray<UEdGraphPin*> Connections = OldNodePin->LinkedTo;
-							OldNodePin->BreakAllPinLinks(true);
-							for (UEdGraphPin* const Connection : Connections)
-							{
-								(*(NewNodePin))->MakeLinkTo(Connection);
-							}
-						}
-					}
-
-					// Remove the old node.
-					GraphNodesToRemove.Add(CurrentGraphNode);
-				}
-				
-			}
-		}
-	}
-	
-	for (UEdGraphNode* RemovedGraphNode : GraphNodesToRemove)
-	{
-		UE_LOG(LogTemp, Display, TEXT("Deleting node %s"), *GetNameSafe(RemovedGraphNode));
-		const FGuid NodeGuid = RemovedGraphNode->NodeGuid;
-		FBlueprintEditorUtils::RemoveNode(nullptr, RemovedGraphNode, true);
-		// GetFlowAsset()->UnregisterNode(NodeGuid);
-	}
-	Graph->NotifyGraphChanged();
 }
 
 void FFlowAssetEditor::GoToParentInstance()
