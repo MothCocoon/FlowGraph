@@ -397,11 +397,4 @@ protected:
 
 	UFUNCTION(BlueprintNativeEvent, Category = "FlowNode")
 	void OnPassThrough();
-	
-private:
-	UPROPERTY()
-	TArray<FName> InputNames_DEPRECATED;
-
-	UPROPERTY()
-	TArray<FName> OutputNames_DEPRECATED;
 };
