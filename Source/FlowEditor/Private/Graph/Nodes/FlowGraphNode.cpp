@@ -1074,6 +1074,7 @@ void UFlowGraphNode::SetSignalMode(const EFlowSignalMode Mode)
 	if (FlowNode)
 	{
 		FlowNode->SignalMode = Mode;
+		SetEnabledState(Mode == EFlowSignalMode::Enabled ? ENodeEnabledState::Enabled : ENodeEnabledState::Disabled);
 		OnSignalModeChanged.ExecuteIfBound();
 	}
 }

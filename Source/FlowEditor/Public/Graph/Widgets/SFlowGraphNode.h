@@ -44,10 +44,6 @@ protected:
 	virtual const FSlateBrush* GetNodeBodyBrush() const override;
 
 	// purposely overriden non-virtual methods, avoiding engine modification
-	FSlateColor GetNodeTitleColor() const;
-	FSlateColor GetNodeBodyColor() const;
-	FSlateColor GetNodeTitleIconColor() const;
-	FLinearColor GetNodeTitleTextColor() const;
 	TSharedPtr<SWidget> GetEnabledStateWidget() const;
 
 	virtual void CreateStandardPinWidget(UEdGraphPin* Pin) override;

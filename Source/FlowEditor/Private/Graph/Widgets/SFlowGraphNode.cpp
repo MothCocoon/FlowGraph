@@ -415,52 +415,6 @@ const FSlateBrush* SFlowGraphNode::GetNodeBodyBrush() const
 	return FFlowEditorStyle::GetBrush("Flow.Node.Body");
 }
 
-FSlateColor SFlowGraphNode::GetNodeTitleColor() const
-{
-	FLinearColor ReturnTitleColor = GraphNode->IsDeprecated() ? FLinearColor::Red : GetNodeObj()->GetNodeTitleColor();
-
-	if (FlowGraphNode->GetSignalMode() == EFlowSignalMode::Enabled)
-	{
-		ReturnTitleColor.A = FadeCurve.GetLerp();
-	}
-	else
-	{
-		ReturnTitleColor *= FLinearColor(0.5f, 0.5f, 0.5f, 0.4f);
-	}
-
-	return ReturnTitleColor;
-}
-
-FSlateColor SFlowGraphNode::GetNodeBodyColor() const
-{
-	FLinearColor ReturnBodyColor = GraphNode->GetNodeBodyTintColor();
-	if (FlowGraphNode->GetSignalMode() != EFlowSignalMode::Enabled)
-	{
-		ReturnBodyColor *= FLinearColor(1.0f, 1.0f, 1.0f, 0.5f); 
-	}
-	return ReturnBodyColor;
-}
-
-FSlateColor SFlowGraphNode::GetNodeTitleIconColor() const
-{
-	FLinearColor ReturnIconColor = IconColor;
-	if (FlowGraphNode->GetSignalMode() != EFlowSignalMode::Enabled)
-	{
-		ReturnIconColor *= FLinearColor(1.0f, 1.0f, 1.0f, 0.3f); 
-	}
-	return ReturnIconColor;
-}
-
-FLinearColor SFlowGraphNode::GetNodeTitleTextColor() const
-{
-	FLinearColor ReturnTextColor = FLinearColor::White;
-	if (FlowGraphNode->GetSignalMode() != EFlowSignalMode::Enabled)
-	{
-		ReturnTextColor *= FLinearColor(1.0f, 1.0f, 1.0f, 0.3f); 
-	}
-	return ReturnTextColor;
-}
-
 TSharedPtr<SWidget> SFlowGraphNode::GetEnabledStateWidget() const
 {
 	if (FlowGraphNode->GetSignalMode() != EFlowSignalMode::Enabled && !GraphNode->IsAutomaticallyPlacedGhostNode())
