@@ -1277,6 +1277,8 @@ void FFlowAssetEditor::SetSignalMode(const EFlowSignalMode Mode) const
 	{
 		SelectedNode->SetSignalMode(Mode);
 	}
+
+	FlowAsset->Modify();
 }
 
 bool FFlowAssetEditor::CanSetSignalMode(const EFlowSignalMode Mode) const
