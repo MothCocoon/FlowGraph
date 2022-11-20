@@ -56,7 +56,7 @@ FString SLevelEditorFlow::GetFlowAssetPath() const
 
 void SLevelEditorFlow::OnFlowChanged(const FAssetData& NewAsset)
 {
-	FlowAssetPath = NewAsset.GetSoftObjectPath().ToString();
+	FlowAssetPath = NewAsset.GetObjectPathString();
 
 	if (UFlowComponent* FlowComponent = FindFlowComponent())
 	{
