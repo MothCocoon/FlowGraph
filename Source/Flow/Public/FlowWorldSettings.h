@@ -22,8 +22,12 @@ private:
 public:
 	UFlowComponent* GetFlowComponent() const { return FlowComponent; }
 
+	virtual void PostLoad() override;
 	virtual void PostInitializeComponents() override;
 
 private:
 	bool IsValidInstance() const;
+	
+	UPROPERTY()
+	class UFlowAsset* FlowAsset_DEPRECATED;
 };

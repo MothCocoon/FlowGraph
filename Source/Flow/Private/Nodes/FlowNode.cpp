@@ -72,6 +72,22 @@ void UFlowNode::FixNode(UEdGraphNode* NewGraphNode)
 	{
 		GraphNode = NewGraphNode;
 	}
+
+	// v1.1 upgraded pins to be defined as structs
+	if (InputNames_DEPRECATED.Num() > InputPins.Num())
+	{
+		for (int32 i = InputPins.Num(); i < InputNames_DEPRECATED.Num(); i++)
+		{
+			InputPins.Emplace(InputNames_DEPRECATED[i]);
+		}
+	}
+	if (OutputNames_DEPRECATED.Num() > OutputPins.Num())
+	{
+		for (int32 i = OutputPins.Num(); i < OutputNames_DEPRECATED.Num(); i++)
+		{
+			OutputPins.Emplace(OutputNames_DEPRECATED[i]);
+		}
+	}
 }
 
 void UFlowNode::SetGraphNode(UEdGraphNode* NewGraph)

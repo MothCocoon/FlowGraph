@@ -14,6 +14,16 @@ AFlowWorldSettings::AFlowWorldSettings(const FObjectInitializer& ObjectInitializ
 	FlowComponent->bAllowMultipleInstances = false;
 }
 
+void AFlowWorldSettings::PostLoad()
+{
+	Super::PostLoad();
+
+	if (FlowAsset_DEPRECATED)
+	{
+		FlowComponent->RootFlow = FlowAsset_DEPRECATED;
+	}
+}
+
 void AFlowWorldSettings::PostInitializeComponents()
 {
 	Super::PostInitializeComponents();
