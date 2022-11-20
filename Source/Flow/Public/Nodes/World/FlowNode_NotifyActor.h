@@ -25,10 +25,20 @@ protected:
 	UPROPERTY(EditAnywhere, Category = "Notify")
 	EFlowNetMode NetMode;
 
+	virtual void PostLoad() override;
+	
 	virtual void ExecuteInput(const FName& PinName) override;
 
 #if WITH_EDITOR
 public:
 	virtual FString GetNodeDescription() const override;
 #endif
+
+private:
+	UPROPERTY()
+	FGameplayTag IdentityTag_DEPRECATED;
+
+	UPROPERTY()
+	FGameplayTag NotifyTag_DEPRECATED;
+	
 };
