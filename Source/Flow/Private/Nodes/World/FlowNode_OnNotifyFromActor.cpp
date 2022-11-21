@@ -13,16 +13,6 @@ UFlowNode_OnNotifyFromActor::UFlowNode_OnNotifyFromActor(const FObjectInitialize
 #endif
 }
 
-void UFlowNode_OnNotifyFromActor::PostLoad()
-{
-	Super::PostLoad();
-
-	if (NotifyTag_DEPRECATED.IsValid())
-	{
-		NotifyTags = FGameplayTagContainer(NotifyTag_DEPRECATED);
-	}
-}
-
 void UFlowNode_OnNotifyFromActor::ExecuteInput(const FName& PinName)
 {
 	Super::ExecuteInput(PinName);

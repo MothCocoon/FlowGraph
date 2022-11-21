@@ -18,16 +18,6 @@ UFlowNode_ComponentObserver::UFlowNode_ComponentObserver(const FObjectInitialize
 	OutputPins = {FFlowPin(TEXT("Success")), FFlowPin(TEXT("Completed")), FFlowPin(TEXT("Stopped"))};
 }
 
-void UFlowNode_ComponentObserver::PostLoad()
-{
-	Super::PostLoad();
-
-	if (IdentityTag_DEPRECATED.IsValid())
-	{
-		IdentityTags = FGameplayTagContainer(IdentityTag_DEPRECATED);
-	}
-}
-
 void UFlowNode_ComponentObserver::ExecuteInput(const FName& PinName)
 {
 	if (IdentityTags.IsValid())
