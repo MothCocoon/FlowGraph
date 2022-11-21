@@ -22,8 +22,6 @@ protected:
 	UPROPERTY(EditAnywhere, Category = "Notify")
 	bool bRetroactive;
 
-	virtual void PostLoad() override;
-
 	virtual void ExecuteInput(const FName& PinName) override;
 
 	virtual void ObserveActor(TWeakObjectPtr<AActor> Actor, TWeakObjectPtr<UFlowComponent> Component) override;
@@ -35,8 +33,4 @@ protected:
 public:
 	virtual FString GetNodeDescription() const override;
 #endif
-
-private:
-	UPROPERTY()
-	FGameplayTag NotifyTag_DEPRECATED;
 };
