@@ -9,7 +9,6 @@
 #include "FlowAsset.h"
 #include "Nodes/FlowNode.h"
 
-#include "EditorStyleSet.h"
 #include "Fonts/SlateFontInfo.h"
 #include "Styling/CoreStyle.h"
 #include "Styling/SlateBrush.h"
