@@ -5,6 +5,7 @@
 #include "Asset/FlowAssetToolbar.h"
 #include "Asset/FlowDebugger.h"
 #include "FlowEditorCommands.h"
+#include "Graph/FlowGraph.h"
 #include "Graph/FlowGraphEditorSettings.h"
 #include "Graph/FlowGraphSchema.h"
 #include "Graph/FlowGraphSchema_Actions.h"
@@ -256,12 +257,9 @@ void FFlowAssetEditor::BindToolbarCommands()
 
 void FFlowAssetEditor::RefreshAsset()
 {
-	TArray<UFlowGraphNode*> FlowGraphNodes;
-	FlowAsset->GetGraph()->GetNodesOfClass<UFlowGraphNode>(FlowGraphNodes);
-
-	for (UFlowGraphNode* GraphNode : FlowGraphNodes)
+	if (UFlowGraph* FlowGraph = Cast<UFlowGraph>(FlowAsset->GetGraph()))
 	{
-		GraphNode->RefreshContextPins(true);
+		FlowGraph->RefreshGraph();
 	}
 }
 

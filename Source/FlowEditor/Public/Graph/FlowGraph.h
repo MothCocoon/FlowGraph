@@ -22,9 +22,9 @@ class FLOWEDITOR_API UFlowGraph : public UEdGraph
 	GENERATED_UCLASS_BODY()
 
 	static UEdGraph* CreateGraph(UFlowAsset* InFlowAsset);
+	void RefreshGraph();
 
 	// UEdGraph
-	virtual void PostLoad() override;
 	virtual void NotifyGraphChanged() override;
 	// --
 
