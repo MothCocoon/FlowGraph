@@ -21,6 +21,7 @@
 
 #define LOCTEXT_NAMESPACE "FlowGraphSchema"
 
+bool UFlowGraphSchema::bInitialGatherPerformed = false;
 TArray<UClass*> UFlowGraphSchema::NativeFlowNodes;
 TMap<FName, FAssetData> UFlowGraphSchema::BlueprintFlowNodes;
 TMap<UClass*, UClass*> UFlowGraphSchema::AssignedGraphNodeClasses;
@@ -196,7 +197,7 @@ void UFlowGraphSchema::OnPinConnectionDoubleCicked(UEdGraphPin* PinA, UEdGraphPi
 
 TArray<TSharedPtr<FString>> UFlowGraphSchema::GetFlowNodeCategories()
 {
-	if (NativeFlowNodes.Num() == 0)
+	if (!bInitialGatherPerformed)
 	{
 		GatherNodes();
 	}
@@ -314,7 +315,7 @@ void UFlowGraphSchema::ApplyNodeFilter(const UFlowAsset* AssetClassDefaults, con
 
 void UFlowGraphSchema::GetFlowNodeActions(FGraphActionMenuBuilder& ActionMenuBuilder, const UFlowAsset* AssetClassDefaults, const FString& CategoryName)
 {
-	if (NativeFlowNodes.Num() == 0)
+	if (!bInitialGatherPerformed)
 	{
 		GatherNodes();
 	}
@@ -442,17 +443,18 @@ void UFlowGraphSchema::GatherNodes()
 		return;
 	}
 
+	bInitialGatherPerformed = true;
+
 	GatherNativeNodes();
 
 	// retrieve all blueprint nodes
-	const FAssetRegistryModule& AssetRegistryModule = FModuleManager::LoadModuleChecked<FAssetRegistryModule>(AssetRegistryConstants::ModuleName);
-
 	FARFilter Filter;
 	Filter.ClassPaths.Add(UBlueprint::StaticClass()->GetClassPathName());
 	Filter.ClassPaths.Add(UBlueprintGeneratedClass::StaticClass()->GetClassPathName());
 	Filter.bRecursiveClasses = true;
 
 	TArray<FAssetData> FoundAssets;
+	const FAssetRegistryModule& AssetRegistryModule = FModuleManager::LoadModuleChecked<FAssetRegistryModule>(AssetRegistryConstants::ModuleName);
 	AssetRegistryModule.Get().GetAssets(Filter, FoundAssets);
 	for (const FAssetData& AssetData : FoundAssets)
 	{
