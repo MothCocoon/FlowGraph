@@ -449,8 +449,7 @@ void UFlowGraphSchema::GatherNodes()
 
 	// retrieve all blueprint nodes
 	FARFilter Filter;
-	Filter.ClassNames.Add(UBlueprint::StaticClass()->GetFName());
-	Filter.ClassNames.Add(UBlueprintGeneratedClass::StaticClass()->GetFName());
+	Filter.ClassNames.Add(UFlowNodeBlueprint::StaticClass()->GetFName());
 	Filter.bRecursiveClasses = true;
 
 	TArray<FAssetData> FoundAssets;
