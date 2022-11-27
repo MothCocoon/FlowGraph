@@ -76,7 +76,9 @@ UFlowGraphNode* FFlowGraphSchemaAction_NewNode::CreateNode(UEdGraph* ParentGraph
 	NewGraphNode->PostPlacedNewNode();
 	ParentGraph->NotifyGraphChanged();
 
-    // select in editor UI
+	FlowAsset->PostEditChange();
+	
+	// select in editor UI
 	if (bSelectNewNode)
 	{
 		const TSharedPtr<FFlowAssetEditor> FlowEditor = FFlowGraphUtils::GetFlowAssetEditor(ParentGraph);
@@ -85,8 +87,6 @@ UFlowGraphNode* FFlowGraphSchemaAction_NewNode::CreateNode(UEdGraph* ParentGraph
 			FlowEditor->SelectSingleNode(NewGraphNode);
 		}
 	}
-
-	FlowAsset->PostEditChange();
 
 	return NewGraphNode;
 }
@@ -103,7 +103,7 @@ UFlowGraphNode* FFlowGraphSchemaAction_NewNode::RecreateNode(UEdGraph* ParentGra
 	// create new Flow Graph node
 	const UClass* GraphNodeClass = UFlowGraphSchema::GetAssignedGraphNodeClass(FlowNode->GetClass());
 	UFlowGraphNode* NewGraphNode = NewObject<UFlowGraphNode>(ParentGraph, GraphNodeClass, NAME_None, RF_Transactional);
-	
+
 	// register to the graph
 	NewGraphNode->NodeGuid = FlowNode->GetGuid();
 	ParentGraph->AddNode(NewGraphNode, false, false);
@@ -116,26 +116,26 @@ UFlowGraphNode* FFlowGraphSchemaAction_NewNode::RecreateNode(UEdGraph* ParentGra
 	NewGraphNode->AllocateDefaultPins();
 	if (OldInstance)
 	{
-	    for (UEdGraphPin* OldPin : OldInstance->Pins)
-    	{
-    		if (OldPin->LinkedTo.Num() == 0)
-    		{
-    			continue;
-    		}
-    
-    		for (UEdGraphPin* NewPin : NewGraphNode->Pins)
-    		{
-    			if (NewPin->Direction == OldPin->Direction && NewPin->PinName == OldPin->PinName)
-    			{
-    				TArray<UEdGraphPin*> Connections = OldPin->LinkedTo;
-    				for (UEdGraphPin* ConnectedPin : Connections)
-    				{
-    					ConnectedPin->BreakLinkTo(OldPin);
-    					ConnectedPin->MakeLinkTo(NewPin);
-    				}
-    			}
-    		}
-    	}
+		for (UEdGraphPin* OldPin : OldInstance->Pins)
+		{
+			if (OldPin->LinkedTo.Num() == 0)
+			{
+				continue;
+			}
+
+			for (UEdGraphPin* NewPin : NewGraphNode->Pins)
+			{
+				if (NewPin->Direction == OldPin->Direction && NewPin->PinName == OldPin->PinName)
+				{
+					TArray<UEdGraphPin*> Connections = OldPin->LinkedTo;
+					for (UEdGraphPin* ConnectedPin : Connections)
+					{
+						ConnectedPin->BreakLinkTo(OldPin);
+						ConnectedPin->MakeLinkTo(NewPin);
+					}
+				}
+			}
+		}
 	}
 
 	// keep old position
@@ -147,8 +147,11 @@ UFlowGraphNode* FFlowGraphSchemaAction_NewNode::RecreateNode(UEdGraph* ParentGra
 	{
 		OldInstance->DestroyNode();
 	}
-	
+
+	// call notifies
 	NewGraphNode->PostPlacedNewNode();
+	ParentGraph->NotifyGraphChanged();
+
 	return NewGraphNode;
 }
 

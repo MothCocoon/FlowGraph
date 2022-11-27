@@ -39,34 +39,33 @@ UEdGraph* UFlowGraph::CreateGraph(UFlowAsset* InFlowAsset)
 	return NewGraph;
 }
 
-void UFlowGraph::PostLoad()
+void UFlowGraph::RefreshGraph()
 {
-	Super::PostLoad();
-
-	// gather AssignedGraphNodeClasses before we'd checking nodes below
-	const UFlowGraphSchema* FlowGraphSchema = CastChecked<UFlowGraphSchema>(GetSchema());
-	FlowGraphSchema->GatherNativeNodes();
-	
-	// Check if all Graph Nodes have expected, up-to-date type
-	bool bAnyUpdate = false;
-	for (const TPair<FGuid, UFlowNode*>& Node : GetFlowAsset()->GetNodes())
+	// don't run fixup in commandlets or PIE
+	if (!IsRunningCommandlet() && GEditor && !GEditor->PlayWorld)
 	{
-		if (UFlowNode* FlowNode = Node.Value)
+		// check if all Graph Nodes have expected, up-to-date type
+		CastChecked<UFlowGraphSchema>(GetSchema())->GatherNativeNodes();
+		for (const TPair<FGuid, UFlowNode*>& Node : GetFlowAsset()->GetNodes())
 		{
-			const UClass* ExpectGraphNodeClass = UFlowGraphSchema::GetAssignedGraphNodeClass(FlowNode->GetClass());
-			if (FlowNode->GetGraphNode() && FlowNode->GetGraphNode()->GetClass() != ExpectGraphNodeClass)
+			if (UFlowNode* FlowNode = Node.Value)
 			{
-				// Create a new Flow Graph Node of proper type
-				FFlowGraphSchemaAction_NewNode::RecreateNode(this, FlowNode->GetGraphNode(), FlowNode);
-				bAnyUpdate = true;
+				const UClass* ExpectGraphNodeClass = UFlowGraphSchema::GetAssignedGraphNodeClass(FlowNode->GetClass());
+				if (FlowNode->GetGraphNode() && FlowNode->GetGraphNode()->GetClass() != ExpectGraphNodeClass)
+				{
+					// Create a new Flow Graph Node of proper type
+					FFlowGraphSchemaAction_NewNode::RecreateNode(this, FlowNode->GetGraphNode(), FlowNode);
+				}
 			}
 		}
-	}
 
-	if (bAnyUpdate)
-	{
-		GetFlowAsset()->HarvestNodeConnections();
-		GetOutermost()->SetDirtyFlag(true); // force dirty while loading asset
+		// update context pins
+		TArray<UFlowGraphNode*> FlowGraphNodes;
+		GetNodesOfClass<UFlowGraphNode>(FlowGraphNodes);
+		for (UFlowGraphNode* GraphNode : FlowGraphNodes)
+		{
+			GraphNode->RefreshContextPins(true);
+		}
 	}
 }
 
