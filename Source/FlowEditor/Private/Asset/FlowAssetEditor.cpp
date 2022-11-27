@@ -5,7 +5,6 @@
 #include "Asset/FlowAssetToolbar.h"
 #include "Asset/FlowDebugger.h"
 #include "FlowEditorCommands.h"
-#include "Graph/FlowGraph.h"
 #include "Graph/FlowGraphEditorSettings.h"
 #include "Graph/FlowGraphSchema.h"
 #include "Graph/FlowGraphSchema_Actions.h"
@@ -19,13 +18,11 @@
 #include "EdGraphUtilities.h"
 #include "EdGraph/EdGraphNode.h"
 #include "Editor.h"
-#include "EditorStyleSet.h"
 #include "Framework/Commands/GenericCommands.h"
 #include "GraphEditor.h"
 #include "GraphEditorActions.h"
 #include "HAL/PlatformApplicationMisc.h"
 #include "IDetailsView.h"
-#include "Kismet2/BlueprintEditorUtils.h"
 #include "Kismet2/DebuggerCommands.h"
 #include "LevelEditor.h"
 #include "Modules/ModuleManager.h"
@@ -678,7 +675,6 @@ void FFlowAssetEditor::DeleteSelectedNodes()
 	for (FGraphPanelSelectionSet::TConstIterator NodeIt(SelectedNodes); NodeIt; ++NodeIt)
 	{
 		UEdGraphNode* Node = CastChecked<UEdGraphNode>(*NodeIt);
-
 		if (Node->CanUserDeleteNode())
 		{
 			if (const UFlowGraphNode* FlowGraphNode = Cast<UFlowGraphNode>(Node))
@@ -686,13 +682,17 @@ void FFlowAssetEditor::DeleteSelectedNodes()
 				if (FlowGraphNode->GetFlowNode())
 				{
 					const FGuid NodeGuid = FlowGraphNode->GetFlowNode()->GetGuid();
-					FBlueprintEditorUtils::RemoveNode(nullptr, Node, true);
+
+					FocusedGraphEditor->GetCurrentGraph()->GetSchema()->BreakNodeLinks(*Node);
+					Node->DestroyNode();
+
 					FlowAsset->UnregisterNode(NodeGuid);
 					continue;
 				}
 			}
 
-			FBlueprintEditorUtils::RemoveNode(nullptr, Node, true);
+			FocusedGraphEditor->GetCurrentGraph()->GetSchema()->BreakNodeLinks(*Node);
+			Node->DestroyNode();
 		}
 	}
 }
