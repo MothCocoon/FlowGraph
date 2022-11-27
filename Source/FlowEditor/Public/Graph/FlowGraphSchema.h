@@ -15,6 +15,8 @@ class FLOWEDITOR_API UFlowGraphSchema : public UEdGraphSchema
 {
 	GENERATED_UCLASS_BODY()
 
+	friend class UFlowGraph;
+	
 private:
 	static TArray<UClass*> NativeFlowNodes;
 	static TMap<FName, FAssetData> BlueprintFlowNodes;
@@ -52,9 +54,10 @@ private:
 
 	static void OnBlueprintPreCompile(UBlueprint* Blueprint);
 	static void OnBlueprintCompiled();
-
-	static void GatherFlowNodes();
 	static void OnHotReload(EReloadCompleteReason ReloadCompleteReason);
+
+	static void GatherNativeNodes();
+	static void GatherNodes();
 
 	static void OnAssetAdded(const FAssetData& AssetData);
 	static void AddAsset(const FAssetData& AssetData, const bool bBatch);

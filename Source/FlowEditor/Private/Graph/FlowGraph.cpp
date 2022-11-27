@@ -2,7 +2,10 @@
 
 #include "Graph/FlowGraph.h"
 #include "Graph/FlowGraphSchema.h"
+#include "Graph/FlowGraphSchema_Actions.h"
 #include "Graph/Nodes/FlowGraphNode.h"
+
+#include "Nodes/FlowNode.h"
 
 #include "Kismet2/BlueprintEditorUtils.h"
 
@@ -27,13 +30,44 @@ UFlowGraph::UFlowGraph(const FObjectInitializer& ObjectInitializer)
 
 UEdGraph* UFlowGraph::CreateGraph(UFlowAsset* InFlowAsset)
 {
-	UFlowGraph* NewGraph = CastChecked<UFlowGraph>(FBlueprintEditorUtils::CreateNewGraph(InFlowAsset, NAME_None, StaticClass(), UFlowGraphSchema::StaticClass()));
+	UEdGraph* NewGraph = CastChecked<UFlowGraph>(FBlueprintEditorUtils::CreateNewGraph(InFlowAsset, NAME_None, StaticClass(), UFlowGraphSchema::StaticClass()));
 	NewGraph->bAllowDeletion = false;
 
 	InFlowAsset->FlowGraph = NewGraph;
 	NewGraph->GetSchema()->CreateDefaultNodesForGraph(*NewGraph);
 
 	return NewGraph;
+}
+
+void UFlowGraph::PostLoad()
+{
+	Super::PostLoad();
+
+	// gather AssignedGraphNodeClasses before we'd checking nodes below
+	const UFlowGraphSchema* FlowGraphSchema = CastChecked<UFlowGraphSchema>(GetSchema());
+	FlowGraphSchema->GatherNativeNodes();
+	
+	// Check if all Graph Nodes have expected, up-to-date type
+	bool bAnyUpdate = false;
+	for (const TPair<FGuid, UFlowNode*>& Node : GetFlowAsset()->GetNodes())
+	{
+		if (UFlowNode* FlowNode = Node.Value)
+		{
+			const UClass* ExpectGraphNodeClass = UFlowGraphSchema::GetAssignedGraphNodeClass(FlowNode->GetClass());
+			if (FlowNode->GetGraphNode() && FlowNode->GetGraphNode()->GetClass() != ExpectGraphNodeClass)
+			{
+				// Create a new Flow Graph Node of proper type
+				FFlowGraphSchemaAction_NewNode::RecreateNode(this, FlowNode->GetGraphNode(), FlowNode);
+				bAnyUpdate = true;
+			}
+		}
+	}
+
+	if (bAnyUpdate)
+	{
+		GetFlowAsset()->HarvestNodeConnections();
+		GetOutermost()->SetDirtyFlag(true); // force dirty while loading asset
+	}
 }
 
 void UFlowGraph::NotifyGraphChanged()
@@ -46,5 +80,5 @@ void UFlowGraph::NotifyGraphChanged()
 
 UFlowAsset* UFlowGraph::GetFlowAsset() const
 {
-	return CastChecked<UFlowAsset>(GetOuter());
+	return GetTypedOuter<UFlowAsset>();
 }
