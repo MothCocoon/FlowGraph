@@ -18,6 +18,7 @@ class FLOWEDITOR_API UFlowGraphSchema : public UEdGraphSchema
 	friend class UFlowGraph;
 	
 private:
+	static bool bInitialGatherPerformed;
 	static TArray<UClass*> NativeFlowNodes;
 	static TMap<FName, FAssetData> BlueprintFlowNodes;
 	static TMap<UClass*, UClass*> AssignedGraphNodeClasses;
