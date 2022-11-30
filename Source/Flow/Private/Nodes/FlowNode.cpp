@@ -645,6 +645,7 @@ FString UFlowNode::GetProgressAsString(float Value)
 
 void UFlowNode::LogError(FString Message, const EFlowOnScreenMessageType OnScreenMessageType) const
 {
+#if !UE_BUILD_SHIPPING
 	const FString TemplatePath = GetFlowAsset()->TemplateAsset->GetPathName();
 	Message += TEXT(" --- node ") + GetName() + TEXT(", asset ") + FPaths::GetPath(TemplatePath) / FPaths::GetBaseFilename(TemplatePath);
 
@@ -669,6 +670,7 @@ void UFlowNode::LogError(FString Message, const EFlowOnScreenMessageType OnScree
 	}
 
 	UE_LOG(LogFlow, Error, TEXT("%s"), *Message);
+#endif	
 }
 
 void UFlowNode::SaveInstance(FFlowNodeSaveData& NodeRecord)
