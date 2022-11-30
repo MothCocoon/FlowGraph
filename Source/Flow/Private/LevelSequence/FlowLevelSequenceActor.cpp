@@ -17,6 +17,12 @@ void AFlowLevelSequenceActor::GetLifetimeReplicatedProps(TArray<FLifetimePropert
 	DOREPLIFETIME(AFlowLevelSequenceActor, ReplicatedLevelSequenceAsset);
 }
 
+void AFlowLevelSequenceActor::SetPlaybackSettings(FMovieSceneSequencePlaybackSettings NewPlaybackSettings)
+{
+	PlaybackSettings = NewPlaybackSettings;
+	SequencePlayer->SetPlaybackSettings(PlaybackSettings);
+}
+
 void AFlowLevelSequenceActor::SetReplicatedLevelSequenceAsset(ULevelSequence* Asset)
 {
 	if (HasAuthority())
