@@ -51,7 +51,7 @@ UFlowLevelSequencePlayer* UFlowLevelSequencePlayer::CreateFlowLevelSequencePlaye
 	// We use deferred spawn, so we can set all actor properties prior to its initialization.
 	// This also helpful in case of multiplayer, since all actor settings are replicated with the spawned actor. No need to call replication just after spawn.
 	AFlowLevelSequenceActor* Actor = World->SpawnActorDeferred<AFlowLevelSequenceActor>(AFlowLevelSequenceActor::StaticClass(), SpawnTransform, nullptr, nullptr, ESpawnActorCollisionHandlingMethod::AlwaysSpawn);
-	Actor->PlaybackSettings = Settings;
+	Actor->SetPlaybackSettings(Settings);
 	Actor->CameraSettings = CameraSettings;
 
 	// apply Transform Origin to spawned actor

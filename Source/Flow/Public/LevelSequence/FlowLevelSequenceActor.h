@@ -20,6 +20,7 @@ protected:
 	virtual void GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const override;
 
 public:
+	void SetPlaybackSettings(FMovieSceneSequencePlaybackSettings NewPlaybackSettings);
 	void SetReplicatedLevelSequenceAsset(ULevelSequence* Asset);
 
 protected:
