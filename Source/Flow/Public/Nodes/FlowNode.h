@@ -379,9 +379,12 @@ public:
 	UFUNCTION(BlueprintPure, Category = "FlowNode")
 	static FString GetProgressAsString(float Value);
 
-	UFUNCTION(BlueprintCallable, Category = "FlowNode")
+	UFUNCTION(BlueprintCallable, Category = "FlowNode", meta = (DevelopmentOnly))
 	void LogError(FString Message, const EFlowOnScreenMessageType OnScreenMessageType = EFlowOnScreenMessageType::Permanent) const;
 
+	UFUNCTION(BlueprintCallable, Category = "FlowNode", meta = (DevelopmentOnly))
+	void LogMessage(FString Message) const;
+	
 	UFUNCTION(BlueprintCallable, Category = "FlowNode")
 	void SaveInstance(FFlowNodeSaveData& NodeRecord);
 

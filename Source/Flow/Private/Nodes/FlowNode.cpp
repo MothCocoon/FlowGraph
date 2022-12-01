@@ -408,13 +408,19 @@ void UFlowNode::TriggerInput(const FName& PinName, const EFlowPinActivationType 
 		return;
 	}
 
-	if (SignalMode == EFlowSignalMode::Enabled)
+	switch (SignalMode)
 	{
-		ExecuteInput(PinName);
-	}
-	else if (SignalMode == EFlowSignalMode::PassThrough)
-	{
-		OnPassThrough();
+		case EFlowSignalMode::Enabled:
+			ExecuteInput(PinName);
+			break;
+		case EFlowSignalMode::Disabled:
+			LogMessage(FString::Printf(TEXT("Node disabled while triggering input %s"), *PinName.ToString()));
+			break;
+		case EFlowSignalMode::PassThrough:
+			LogMessage(FString::Printf(TEXT("Signal pass-through on triggering input %s"), *PinName.ToString()));
+			OnPassThrough();
+			break;
+		default: ;
 	}
 }
 
@@ -670,7 +676,17 @@ void UFlowNode::LogError(FString Message, const EFlowOnScreenMessageType OnScree
 	}
 
 	UE_LOG(LogFlow, Error, TEXT("%s"), *Message);
-#endif	
+#endif
+}
+
+void UFlowNode::LogMessage(FString Message) const
+{
+#if !UE_BUILD_SHIPPING
+	const FString TemplatePath = GetFlowAsset()->TemplateAsset->GetPathName();
+	Message += TEXT(" --- node ") + GetName() + TEXT(", asset ") + FPaths::GetPath(TemplatePath) / FPaths::GetBaseFilename(TemplatePath);
+
+	UE_LOG(LogFlow, Log, TEXT("%s"), *Message);
+#endif
 }
 
 void UFlowNode::SaveInstance(FFlowNodeSaveData& NodeRecord)
@@ -701,9 +717,11 @@ void UFlowNode::LoadInstance(const FFlowNodeSaveData& NodeRecord)
 			break;
 		case EFlowSignalMode::Disabled:
 			// designer doesn't want to execute this node's logic at all, so we kill it
+			LogMessage(TEXT("Signal disabled while loading Flow Node from SaveGame"));
 			Finish();
 			break;
 		case EFlowSignalMode::PassThrough:
+			LogMessage(TEXT("Signal pass-through on loading Flow Node from SaveGame"));
 			OnPassThrough();
 			break;
 		default: ;
