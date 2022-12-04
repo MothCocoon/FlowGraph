@@ -651,6 +651,16 @@ void FFlowAssetEditor::SelectSingleNode(UEdGraphNode* Node) const
 	FocusedGraphEditor->SetNodeSelection(Node, true);
 }
 
+#if ENABLE_JUMP_TO_INNER_OBJECT
+void FFlowAssetEditor::JumpToInnerObject(UObject* InnerObject)
+{
+	if (const UFlowNode* FlowNode = Cast<UFlowNode>(InnerObject))
+	{
+		FocusedGraphEditor->JumpToNode(FlowNode->GetGraphNode(), false);
+	}
+}
+#endif
+
 void FFlowAssetEditor::SelectAllNodes() const
 {
 	FocusedGraphEditor->SelectAllNodes();
