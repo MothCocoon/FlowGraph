@@ -9,6 +9,7 @@
 #include "Toolkits/IToolkitHost.h"
 #include "UObject/GCObject.h"
 
+#include "FlowEditorDefines.h"
 #include "FlowTypes.h"
 
 class SFlowPalette;
@@ -137,6 +138,12 @@ protected:
 
 public:
 	virtual void SelectSingleNode(UEdGraphNode* Node) const;
+
+#if ENABLE_JUMP_TO_INNER_OBJECT
+	// FAssetEditorToolkit
+	virtual void JumpToInnerObject(UObject* InnerObject) override;
+	// --
+#endif	
 
 protected:
 	virtual void SelectAllNodes() const;
