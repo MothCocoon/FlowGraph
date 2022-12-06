@@ -56,25 +56,20 @@ void UFlowNode_ComponentObserver::StartObserving()
 		// collect already registered components
 		for (const TWeakObjectPtr<UFlowComponent>& FoundComponent : FlowSubsystem->GetComponents<UFlowComponent>(IdentityTags, ContainerMatchType, bExactMatch))
 		{
-			if (GetActivationState() == EFlowNodeState::Active)
+			ObserveActor(FoundComponent->GetOwner(), FoundComponent);
+			
+			// node might finish work immediately as the effect of ObserveActor()
+			// we should terminate iteration in this case
+			if (GetActivationState() != EFlowNodeState::Active)
 			{
-				ObserveActor(FoundComponent->GetOwner(), FoundComponent);
-			}
-			else
-			{
-				// node might finish work as the effect of triggering event on the found actor
-				// we should terminate iteration in this case
 				return;
 			}
 		}
-
-		if (GetActivationState() == EFlowNodeState::Active)
-		{
-			FlowSubsystem->OnComponentRegistered.AddUniqueDynamic(this, &UFlowNode_ComponentObserver::OnComponentRegistered);
-			FlowSubsystem->OnComponentTagAdded.AddUniqueDynamic(this, &UFlowNode_ComponentObserver::OnComponentTagAdded);
-			FlowSubsystem->OnComponentTagRemoved.AddUniqueDynamic(this, &UFlowNode_ComponentObserver::OnComponentTagRemoved);
-			FlowSubsystem->OnComponentUnregistered.AddUniqueDynamic(this, &UFlowNode_ComponentObserver::OnComponentUnregistered);
-		}
+		
+		FlowSubsystem->OnComponentRegistered.AddUniqueDynamic(this, &UFlowNode_ComponentObserver::OnComponentRegistered);
+		FlowSubsystem->OnComponentTagAdded.AddUniqueDynamic(this, &UFlowNode_ComponentObserver::OnComponentTagAdded);
+		FlowSubsystem->OnComponentTagRemoved.AddUniqueDynamic(this, &UFlowNode_ComponentObserver::OnComponentTagRemoved);
+		FlowSubsystem->OnComponentUnregistered.AddUniqueDynamic(this, &UFlowNode_ComponentObserver::OnComponentUnregistered);
 	}
 }
 
