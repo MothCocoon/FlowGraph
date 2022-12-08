@@ -15,7 +15,7 @@ The aim of publishing it as open-source project is to let people tell great stor
 * It's easy to include plugin in your own project, follow this short [Getting Started](https://github.com/MothCocoon/FlowGraph/wiki/Getting-Started) guide.
 
 ## In-depth video presentation
-This 24-minute presentation breaks down the concept of the Flow Graph. It goes through everything written in this ReadMe but in greater detail.
+This 24-minute presentation breaks down the concept of the Flow Graph. Trust me, you want to understand concept properly before diving into implementation.
 
 [![Introducing Flow Graph for Unreal Engine](https://img.youtube.com/vi/BAqhccgKx_k/0.jpg)](https://www.youtube.com/watch?v=BAqhccgKx_k)
 
