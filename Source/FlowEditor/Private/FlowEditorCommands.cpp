@@ -1,13 +1,11 @@
 // Copyright https://github.com/MothCocoon/FlowGraph/graphs/contributors
 
 #include "FlowEditorCommands.h"
-
 #include "FlowEditorStyle.h"
 #include "Graph/FlowGraphSchema_Actions.h"
 
 #include "Nodes/FlowNode.h"
 
-#include "EditorStyleSet.h"
 #include "Misc/ConfigCacheIni.h"
 
 #define LOCTEXT_NAMESPACE "FlowGraphCommands"

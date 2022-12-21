@@ -8,7 +8,6 @@
 
 #include "FlowAsset.h"
 
-#include "EditorStyleSet.h"
 #include "Kismet2/DebuggerCommands.h"
 #include "Misc/Attribute.h"
 #include "Subsystems/AssetEditorSubsystem.h"
