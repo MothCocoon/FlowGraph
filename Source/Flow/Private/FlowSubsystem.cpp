@@ -325,6 +325,9 @@ void UFlowSubsystem::OnGameSaved(UFlowSaveGame* SaveGame)
 void UFlowSubsystem::OnGameLoaded(UFlowSaveGame* SaveGame)
 {
 	LoadedSaveGame = SaveGame;
+
+	// here's opportunity to apply loaded data to custom systems
+	// it's recommended to do this by overriding method in the subclass
 }
 
 void UFlowSubsystem::LoadRootFlow(UObject* Owner, UFlowAsset* FlowAsset, const FString& SavedAssetInstanceName)
