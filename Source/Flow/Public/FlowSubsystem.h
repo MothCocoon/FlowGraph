@@ -126,7 +126,7 @@ public:
 //////////////////////////////////////////////////////////////////////////
 // Component Registry
 
-private:
+protected:
 	/* All the Flow Components currently existing in the world */
 	TMultiMap<FGameplayTag, TWeakObjectPtr<UFlowComponent>> FlowComponentRegistry;
 
