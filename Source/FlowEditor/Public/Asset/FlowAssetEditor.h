@@ -36,12 +36,16 @@ protected:
 	TSharedPtr<SGraphEditor> FocusedGraphEditor;
 	TSharedPtr<class IDetailsView> DetailsView;
 	TSharedPtr<class SFlowPalette> Palette;
+#if ENABLE_SEARCH_IN_ASSET_EDITOR
+	TSharedPtr<class SSearchBrowser> SearchBrowser;
+#endif
 
 public:
 	/**	The tab ids for all the tabs used */
 	static const FName DetailsTab;
 	static const FName GraphTab;
 	static const FName PaletteTab;
+	static const FName SearchTab;
 
 private:
 	/** The current UI selection state of this editor */
@@ -84,8 +88,9 @@ public:
 
 private:
 	TSharedRef<SDockTab> SpawnTab_Details(const FSpawnTabArgs& Args) const;
-	TSharedRef<SDockTab> SpawnTab_GraphCanvas(const FSpawnTabArgs& Args) const;
+	TSharedRef<SDockTab> SpawnTab_Graph(const FSpawnTabArgs& Args) const;
 	TSharedRef<SDockTab> SpawnTab_Palette(const FSpawnTabArgs& Args) const;
+	TSharedRef<SDockTab> SpawnTab_Search(const FSpawnTabArgs& Args) const;
 
 public:
 	/** Edits the specified FlowAsset object */
@@ -96,6 +101,10 @@ protected:
 
 	virtual void BindToolbarCommands();
 	virtual void RefreshAsset();
+#if ENABLE_SEARCH_IN_ASSET_EDITOR
+	virtual void SearchInAsset();
+#endif	
+	
 	virtual void GoToParentInstance();
 	virtual bool CanGoToParentInstance();
 
@@ -143,7 +152,7 @@ public:
 	// FAssetEditorToolkit
 	virtual void JumpToInnerObject(UObject* InnerObject) override;
 	// --
-#endif	
+#endif
 
 protected:
 	virtual void SelectAllNodes() const;

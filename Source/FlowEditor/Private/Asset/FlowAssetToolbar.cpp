@@ -194,12 +194,14 @@ void FFlowAssetToolbar::BuildAssetToolbar(UToolMenu* ToolbarMenu) const
 	FToolMenuSection& Section = ToolbarMenu->AddSection("Editing");
 	Section.InsertPosition = FToolMenuInsert("Asset", EToolMenuInsertType::After);
 
+	// add buttons
 	Section.AddEntry(FToolMenuEntry::InitToolBarButton(FFlowToolbarCommands::Get().RefreshAsset));
+#if ENABLE_SEARCH_IN_ASSET_EDITOR
+	Section.AddEntry(FToolMenuEntry::InitToolBarButton(FFlowToolbarCommands::Get().SearchInAsset));
+#endif	
 
-	// visual diff: menu to choose asset revision compared with the current one 
-	FToolMenuSection& DiffSection = ToolbarMenu->AddSection("SourceControl");
-	DiffSection.InsertPosition = FToolMenuInsert("Asset", EToolMenuInsertType::After);
-	DiffSection.AddDynamicEntry("SourceControlCommands", FNewToolMenuSectionDelegate::CreateLambda([this](FToolMenuSection& InSection)
+	// Visual Diff: menu to choose asset revision compared with the current one 
+	Section.AddDynamicEntry("SourceControlCommands", FNewToolMenuSectionDelegate::CreateLambda([this](FToolMenuSection& InSection)
 	{
 		InSection.InsertPosition = FToolMenuInsert();
 		FToolMenuEntry DiffEntry = FToolMenuEntry::InitComboButton(

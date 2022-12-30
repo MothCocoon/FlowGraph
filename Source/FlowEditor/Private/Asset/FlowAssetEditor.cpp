@@ -30,6 +30,7 @@
 #include "PropertyEditorModule.h"
 #include "ScopedTransaction.h"
 #include "SNodePanel.h"
+#include "Source/Private/Widgets/SSearchBrowser.h"
 #include "ToolMenus.h"
 #include "Widgets/Docking/SDockTab.h"
 
@@ -38,6 +39,7 @@
 const FName FFlowAssetEditor::DetailsTab(TEXT("Details"));
 const FName FFlowAssetEditor::GraphTab(TEXT("Graph"));
 const FName FFlowAssetEditor::PaletteTab(TEXT("Palette"));
+const FName FFlowAssetEditor::SearchTab(TEXT("Search"));
 
 FFlowAssetEditor::FFlowAssetEditor()
 	: FlowAsset(nullptr)
@@ -106,29 +108,39 @@ void FFlowAssetEditor::RegisterTabSpawners(const TSharedRef<class FTabManager>& 
 
 	FAssetEditorToolkit::RegisterTabSpawners(InTabManager);
 
-	InTabManager->RegisterTabSpawner(GraphTab, FOnSpawnTab::CreateSP(this, &FFlowAssetEditor::SpawnTab_GraphCanvas))
-				.SetDisplayName(LOCTEXT("GraphTab", "Viewport"))
-				.SetGroup(WorkspaceMenuCategoryRef)
-				.SetIcon(FSlateIcon(FAppStyle::GetAppStyleSetName(), "GraphEditor.EventGraph_16x"));
-
 	InTabManager->RegisterTabSpawner(DetailsTab, FOnSpawnTab::CreateSP(this, &FFlowAssetEditor::SpawnTab_Details))
 				.SetDisplayName(LOCTEXT("DetailsTab", "Details"))
 				.SetGroup(WorkspaceMenuCategoryRef)
 				.SetIcon(FSlateIcon(FAppStyle::GetAppStyleSetName(), "LevelEditor.Tabs.Details"));
 
+	InTabManager->RegisterTabSpawner(GraphTab, FOnSpawnTab::CreateSP(this, &FFlowAssetEditor::SpawnTab_Graph))
+				.SetDisplayName(LOCTEXT("GraphTab", "Viewport"))
+				.SetGroup(WorkspaceMenuCategoryRef)
+				.SetIcon(FSlateIcon(FAppStyle::GetAppStyleSetName(), "GraphEditor.EventGraph_16x"));
+	
 	InTabManager->RegisterTabSpawner(PaletteTab, FOnSpawnTab::CreateSP(this, &FFlowAssetEditor::SpawnTab_Palette))
 				.SetDisplayName(LOCTEXT("PaletteTab", "Palette"))
 				.SetGroup(WorkspaceMenuCategoryRef)
 				.SetIcon(FSlateIcon(FAppStyle::GetAppStyleSetName(), "Kismet.Tabs.Palette"));
+
+#if ENABLE_SEARCH_IN_ASSET_EDITOR
+	InTabManager->RegisterTabSpawner(SearchTab, FOnSpawnTab::CreateSP(this, &FFlowAssetEditor::SpawnTab_Search))
+				.SetDisplayName(LOCTEXT("SearchTab", "Search"))
+				.SetGroup(WorkspaceMenuCategoryRef)
+				.SetIcon(FSlateIcon(FAppStyle::GetAppStyleSetName(), "Kismet.Tabs.FindResults"));
+#endif	
 }
 
 void FFlowAssetEditor::UnregisterTabSpawners(const TSharedRef<class FTabManager>& InTabManager)
 {
 	FAssetEditorToolkit::UnregisterTabSpawners(InTabManager);
 
-	InTabManager->UnregisterTabSpawner(GraphTab);
 	InTabManager->UnregisterTabSpawner(DetailsTab);
+	InTabManager->UnregisterTabSpawner(GraphTab);
 	InTabManager->UnregisterTabSpawner(PaletteTab);
+#if ENABLE_SEARCH_IN_ASSET_EDITOR
+	InTabManager->UnregisterTabSpawner(SearchTab);
+#endif	
 }
 
 TSharedRef<SDockTab> FFlowAssetEditor::SpawnTab_Details(const FSpawnTabArgs& Args) const
@@ -142,7 +154,24 @@ TSharedRef<SDockTab> FFlowAssetEditor::SpawnTab_Details(const FSpawnTabArgs& Arg
 		];
 }
 
-TSharedRef<SDockTab> FFlowAssetEditor::SpawnTab_GraphCanvas(const FSpawnTabArgs& Args) const
+#if ENABLE_SEARCH_IN_ASSET_EDITOR
+TSharedRef<SDockTab> FFlowAssetEditor::SpawnTab_Search(const FSpawnTabArgs& Args) const
+{
+	check(Args.GetTabId() == SearchTab);
+
+	return SNew(SDockTab)
+		.Label(LOCTEXT("FlowSearchTitle", "Search"))
+		[
+			SNew(SBox)
+			.AddMetaData<FTagMetaData>(FTagMetaData(TEXT("FlowSearch")))
+			[
+				SearchBrowser.ToSharedRef()
+			]
+		];
+}
+#endif
+
+TSharedRef<SDockTab> FFlowAssetEditor::SpawnTab_Graph(const FSpawnTabArgs& Args) const
 {
 	check(Args.GetTabId() == GraphTab);
 
@@ -185,7 +214,7 @@ void FFlowAssetEditor::InitFlowAssetEditor(const EToolkitMode::Type Mode, const 
 	BindGraphCommands();
 	CreateWidgets();
 
-	const TSharedRef<FTabManager::FLayout> StandaloneDefaultLayout = FTabManager::NewLayout("FlowAssetEditor_Layout_v3")
+	const TSharedRef<FTabManager::FLayout> StandaloneDefaultLayout = FTabManager::NewLayout("FlowAssetEditor_Layout_v4")
 		->AddArea
 		(
 			FTabManager::NewPrimaryArea()->SetOrientation(Orient_Horizontal)
@@ -197,9 +226,22 @@ void FFlowAssetEditor::InitFlowAssetEditor(const EToolkitMode::Type Mode, const 
 				)
 				->Split
 				(
-					FTabManager::NewStack()
+					FTabManager::NewSplitter()
 					->SetSizeCoefficient(0.65f)
-					->AddTab(GraphTab, ETabState::OpenedTab)->SetHideTabWell(true)
+					->SetOrientation(Orient_Vertical)
+					->Split
+					(
+						FTabManager::NewStack()
+						->SetSizeCoefficient(0.8f)
+						->SetHideTabWell(true)
+						->AddTab(GraphTab, ETabState::OpenedTab)
+					)
+					->Split
+					(
+						FTabManager::NewStack()
+						->SetSizeCoefficient(0.2f)
+						->AddTab(SearchTab, ETabState::ClosedTab)
+					)
 				)
 				->Split
 				(
@@ -244,6 +286,12 @@ void FFlowAssetEditor::BindToolbarCommands()
 		FExecuteAction::CreateSP(this, &FFlowAssetEditor::RefreshAsset),
 		FCanExecuteAction::CreateStatic(&FFlowAssetEditor::CanEdit));
 
+#if ENABLE_SEARCH_IN_ASSET_EDITOR
+	ToolkitCommands->MapAction(ToolbarCommands.SearchInAsset,
+		FExecuteAction::CreateSP(this, &FFlowAssetEditor::SearchInAsset),
+		FCanExecuteAction());
+#endif	
+
 	// Engine's Play commands
 	ToolkitCommands->Append(FPlayWorldCommands::GlobalPlayWorldActions.ToSharedRef());
 
@@ -262,6 +310,14 @@ void FFlowAssetEditor::RefreshAsset()
 		FlowGraph->RefreshGraph();
 	}
 }
+
+#if ENABLE_SEARCH_IN_ASSET_EDITOR
+void FFlowAssetEditor::SearchInAsset()
+{
+	TabManager->TryInvokeTab(SearchTab);
+	SearchBrowser->FocusForUse();
+}
+#endif
 
 void FFlowAssetEditor::GoToParentInstance()
 {
@@ -291,6 +347,9 @@ void FFlowAssetEditor::CreateWidgets()
 	DetailsView->SetIsPropertyEditingEnabledDelegate(FIsPropertyEditingEnabled::CreateStatic(&FFlowAssetEditor::CanEdit));
 	DetailsView->SetObject(FlowAsset);
 
+#if ENABLE_SEARCH_IN_ASSET_EDITOR
+	SearchBrowser = SNew(SSearchBrowser, GetFlowAsset());
+#endif	
 	Palette = SNew(SFlowPalette, SharedThis(this));
 }
 
