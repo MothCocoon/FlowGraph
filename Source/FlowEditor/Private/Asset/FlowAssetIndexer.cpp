@@ -9,7 +9,6 @@
 
 #include "EdGraph/EdGraphPin.h"
 #include "EdGraphNode_Comment.h"
-#include "Engine/SimpleConstructionScript.h"
 #include "Internationalization/Text.h"
 #include "SearchSerializer.h"
 #include "Utility/IndexerUtilities.h"
@@ -37,15 +36,6 @@ void FFlowAssetIndexer::IndexAsset(const UObject* InAssetObject, FSearchSerializ
 
 	{
 		Serializer.BeginIndexingObject(FlowAsset, TEXT("$self"));
-
-		// for (const FName& CustomInput : FlowAsset->GetCustomInputs())
-		// {
-		// 	Serializer.IndexProperty(CustomInput.ToString(), CustomInput);
-		// }
-		// for (const FName& CustomOutput : FlowAsset->GetCustomOutputs())
-		// {
-		// 	Serializer.IndexProperty(CustomOutput.ToString(), CustomOutput);
-		// }
 
 		FIndexerUtilities::IterateIndexableProperties(FlowAsset, [&Serializer](const FProperty* Property, const FString& Value)
 		{
