@@ -202,6 +202,7 @@ void FFlowAssetToolbar::BuildAssetToolbar(UToolMenu* ToolbarMenu) const
 	Section.AddEntry(FToolMenuEntry::InitToolBarButton(FFlowToolbarCommands::Get().SearchInAsset));
 #endif	
 
+#if ENABLE_FLOW_DIFF
 	// Visual Diff: menu to choose asset revision compared with the current one 
 	Section.AddDynamicEntry("SourceControlCommands", FNewToolMenuSectionDelegate::CreateLambda([this](FToolMenuSection& InSection)
 	{
