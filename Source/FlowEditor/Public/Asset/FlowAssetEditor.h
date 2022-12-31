@@ -59,10 +59,12 @@ public:
 
 	// FGCObject
 	virtual void AddReferencedObjects(FReferenceCollector& Collector) override;
+
 	virtual FString GetReferencerName() const override
 	{
 		return TEXT("FFlowAssetEditor");
 	}
+
 	// --
 
 	// FEditorUndoClient
@@ -90,7 +92,9 @@ private:
 	TSharedRef<SDockTab> SpawnTab_Details(const FSpawnTabArgs& Args) const;
 	TSharedRef<SDockTab> SpawnTab_Graph(const FSpawnTabArgs& Args) const;
 	TSharedRef<SDockTab> SpawnTab_Palette(const FSpawnTabArgs& Args) const;
+#if ENABLE_SEARCH_IN_ASSET_EDITOR
 	TSharedRef<SDockTab> SpawnTab_Search(const FSpawnTabArgs& Args) const;
+#endif
 
 public:
 	/** Edits the specified FlowAsset object */
@@ -103,8 +107,8 @@ protected:
 	virtual void RefreshAsset();
 #if ENABLE_SEARCH_IN_ASSET_EDITOR
 	virtual void SearchInAsset();
-#endif	
-	
+#endif
+
 	virtual void GoToParentInstance();
 	virtual bool CanGoToParentInstance();
 
@@ -228,7 +232,7 @@ private:
 	bool CanSetSignalMode(const EFlowSignalMode Mode) const;
 
 	void OnForcePinActivation() const;
-	
+
 	void FocusViewport() const;
 	bool CanFocusViewport() const;
 
