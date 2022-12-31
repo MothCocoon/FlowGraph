@@ -30,9 +30,12 @@
 #include "PropertyEditorModule.h"
 #include "ScopedTransaction.h"
 #include "SNodePanel.h"
-#include "Source/Private/Widgets/SSearchBrowser.h"
 #include "ToolMenus.h"
 #include "Widgets/Docking/SDockTab.h"
+
+#if ENABLE_SEARCH_IN_ASSET_EDITOR
+#include "Source/Private/Widgets/SSearchBrowser.h"
+#endif
 
 #define LOCTEXT_NAMESPACE "FlowAssetEditor"
 
