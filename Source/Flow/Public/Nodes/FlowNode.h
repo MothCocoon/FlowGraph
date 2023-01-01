@@ -126,7 +126,7 @@ protected:
 	UPROPERTY()
 	EFlowSignalMode SignalMode;
 
-#if !UE_BUILD_SHIPPING
+#if WITH_EDITOR
 	FFlowMessageLog Log;
 #endif	
 	
