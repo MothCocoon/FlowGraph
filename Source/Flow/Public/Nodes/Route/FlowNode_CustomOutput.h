@@ -22,5 +22,6 @@ protected:
 
 #if WITH_EDITOR
 	virtual FString GetNodeDescription() const override;
+	virtual EDataValidationResult ValidateNode() override;
 #endif
 };

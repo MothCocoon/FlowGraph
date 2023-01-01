@@ -120,6 +120,8 @@ public:
 
 #if WITH_EDITOR
 	virtual FString GetNodeDescription() const override;
+	virtual EDataValidationResult ValidateNode() override;
+	
 	virtual FString GetStatusString() const override;
 	virtual UObject* GetAssetToEdit() override;
 #endif

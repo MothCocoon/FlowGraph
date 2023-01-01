@@ -30,4 +30,15 @@ FString UFlowNode_CustomOutput::GetNodeDescription() const
 {
 	return EventName.ToString();
 }
+
+EDataValidationResult UFlowNode_CustomOutput::ValidateNode()
+{
+	if (EventName.IsNone())
+	{
+		Log.Error<UFlowNode>(TEXT("Event Name is empty!"), this);
+		return EDataValidationResult::Invalid;
+	}
+
+	return EDataValidationResult::Valid;
+}
 #endif
