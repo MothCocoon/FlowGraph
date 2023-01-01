@@ -3,6 +3,7 @@
 #pragma once
 
 #include "EdGraph/EdGraphNode.h"
+#include "EdGraph/EdGraphPin.h"
 #include "Logging/TokenizedMessage.h"
 #include "Misc/UObjectToken.h"
 
