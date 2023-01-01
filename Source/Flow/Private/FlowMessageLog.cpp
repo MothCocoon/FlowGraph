@@ -4,6 +4,8 @@
 #include "Nodes/FlowNode.h"
 #include "FlowAsset.h"
 
+#if WITH_EDITOR
+
 #define LOCTEXT_NAMESPACE "FlowMessageLog"
 
 const FName FFlowMessageLog::LogName(TEXT("FlowGraph"));
@@ -82,3 +84,4 @@ TSharedPtr<IMessageToken> FFlowGraphToken::Create(const UEdGraphPin* InPin, FTok
 }
 
 #undef LOCTEXT_NAMESPACE
+#endif // WITH_EDITOR

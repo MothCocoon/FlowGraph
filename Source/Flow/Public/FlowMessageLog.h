@@ -10,6 +10,8 @@
 class UFlowAsset;
 class UFlowNode;
 
+#if WITH_EDITOR
+
 /**
  * Message Log token that links to an element in Flow Graph
  */
@@ -93,3 +95,5 @@ protected:
 		Messages.Add(Message);
 	}
 };
+
+#endif // WITH_EDITOR
