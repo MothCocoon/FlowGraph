@@ -374,16 +374,16 @@ void SFlowGraphNode::UpdateErrorInfo()
 			{
 				case EMessageSeverity::Error:
 					ErrorMsg = FString(TEXT("ERROR!"));
-					ErrorColor = FAppStyle::GetColor("ErrorReporting.BackgroundColor");
+					ErrorColor = FEditorStyle::GetColor("ErrorReporting.BackgroundColor");
 					break;
 				case EMessageSeverity::PerformanceWarning:
 				case EMessageSeverity::Warning:
 					ErrorMsg = FString(TEXT("WARNING!"));
-					ErrorColor = FAppStyle::GetColor("ErrorReporting.WarningBackgroundColor");
+					ErrorColor = FEditorStyle::GetColor("ErrorReporting.WarningBackgroundColor");
 					break;
 				case EMessageSeverity::Info:
 					ErrorMsg = FString(TEXT("NOTE"));
-					ErrorColor = FAppStyle::GetColor("InfoReporting.BackgroundColor");
+					ErrorColor = FEditorStyle::GetColor("InfoReporting.BackgroundColor");
 					break;
 				default: ;
 			}
