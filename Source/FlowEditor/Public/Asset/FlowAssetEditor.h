@@ -33,7 +33,7 @@ protected:
 	TSharedPtr<class FFlowAssetToolbar> AssetToolbar;
 	TSharedPtr<class FFlowDebugger> FlowDebugger;
 
-	TSharedPtr<SGraphEditor> FocusedGraphEditor;
+	TSharedPtr<SGraphEditor> GraphEditor;
 	TSharedPtr<class IDetailsView> DetailsView;
 	TSharedPtr<class SFlowPalette> Palette;
 #if ENABLE_SEARCH_IN_ASSET_EDITOR
