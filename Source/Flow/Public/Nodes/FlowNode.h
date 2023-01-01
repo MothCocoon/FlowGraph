@@ -7,6 +7,7 @@
 #include "GameplayTagContainer.h"
 #include "VisualLogger/VisualLoggerDebugSnapshotInterface.h"
 
+#include "FlowMessageLog.h"
 #include "FlowTypes.h"
 #include "Nodes/FlowPin.h"
 #include "FlowNode.generated.h"
@@ -74,6 +75,8 @@ public:
 
 	// Opportunity to update node's data before UFlowGraphNode would call ReconstructNode()
 	virtual void FixNode(UEdGraphNode* NewGraphNode);
+
+	virtual EDataValidationResult ValidateNode() { return EDataValidationResult::NotValidated; }
 #endif
 
 	UEdGraphNode* GetGraphNode() const { return GraphNode; }
@@ -121,6 +124,10 @@ protected:
 	// Designed to handle patching
 	UPROPERTY()
 	EFlowSignalMode SignalMode;
+
+#if !UE_BUILD_SHIPPING
+	FFlowMessageLog Log;
+#endif	
 	
 //////////////////////////////////////////////////////////////////////////
 // All created pins (default, class-specific and added by user)
@@ -379,10 +386,10 @@ public:
 	static FString GetProgressAsString(float Value);
 
 	UFUNCTION(BlueprintCallable, Category = "FlowNode", meta = (DevelopmentOnly))
-	void LogError(FString Message, const EFlowOnScreenMessageType OnScreenMessageType = EFlowOnScreenMessageType::Permanent) const;
+	void LogError(FString Message, const EFlowOnScreenMessageType OnScreenMessageType = EFlowOnScreenMessageType::Permanent);
 
 	UFUNCTION(BlueprintCallable, Category = "FlowNode", meta = (DevelopmentOnly))
-	void LogMessage(FString Message) const;
+	void LogMessage(FString Message);
 	
 	UFUNCTION(BlueprintCallable, Category = "FlowNode")
 	void SaveInstance(FFlowNodeSaveData& NodeRecord);

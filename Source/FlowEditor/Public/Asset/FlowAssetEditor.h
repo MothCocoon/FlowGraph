@@ -40,10 +40,15 @@ protected:
 	TSharedPtr<class SSearchBrowser> SearchBrowser;
 #endif
 
+	/** Message log, with the log listing that it reflects */
+	TSharedPtr<class SWidget> MessageLog;
+	TSharedPtr<class IMessageLogListing> MessageLogListing;
+
 public:
 	/**	The tab ids for all the tabs used */
 	static const FName DetailsTab;
 	static const FName GraphTab;
+	static const FName MessagesTab;
 	static const FName PaletteTab;
 	static const FName SearchTab;
 
@@ -64,7 +69,6 @@ public:
 	{
 		return TEXT("FFlowAssetEditor");
 	}
-
 	// --
 
 	// FEditorUndoClient
@@ -91,6 +95,7 @@ public:
 private:
 	TSharedRef<SDockTab> SpawnTab_Details(const FSpawnTabArgs& Args) const;
 	TSharedRef<SDockTab> SpawnTab_Graph(const FSpawnTabArgs& Args) const;
+	TSharedRef<SDockTab> SpawnTab_MessageLog(const FSpawnTabArgs& Args) const;
 	TSharedRef<SDockTab> SpawnTab_Palette(const FSpawnTabArgs& Args) const;
 #if ENABLE_SEARCH_IN_ASSET_EDITOR
 	TSharedRef<SDockTab> SpawnTab_Search(const FSpawnTabArgs& Args) const;
@@ -159,6 +164,8 @@ public:
 #endif
 
 protected:
+	void OnLogTokenClicked(const TSharedRef<class IMessageToken>& Token) const;
+	
 	virtual void SelectAllNodes() const;
 	virtual bool CanSelectAllNodes() const;
 

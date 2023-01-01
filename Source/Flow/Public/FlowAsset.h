@@ -2,6 +2,7 @@
 
 #pragma once
 
+#include "FlowMessageLog.h"
 #include "FlowSave.h"
 #include "FlowTypes.h"
 #include "FlowAsset.generated.h"
@@ -24,6 +25,8 @@ class FLOW_API IFlowGraphInterface
 public:
 	IFlowGraphInterface() {}
 	virtual ~IFlowGraphInterface() {}
+
+	virtual void RefreshGraph(UFlowAsset* FlowAsset) {}
 
 	virtual void OnInputTriggered(UEdGraphNode* GraphNode, const int32 Index) const {}
 	virtual void OnOutputTriggered(UEdGraphNode* GraphNode, const int32 Index) const {}
@@ -66,8 +69,9 @@ class FLOW_API UFlowAsset : public UObject
 	static void AddReferencedObjects(UObject* InThis, FReferenceCollector& Collector);
 	virtual void PostEditChangeProperty(FPropertyChangedEvent& PropertyChangedEvent) override;
 	virtual void PostDuplicate(bool bDuplicateForPIE) override;
-	virtual EDataValidationResult IsDataValid(TArray<FText>& ValidationErrors) override;
 	// --
+
+	virtual EDataValidationResult ValidateAsset(FFlowMessageLog& MessageLog);
 #endif
 
 	// IFlowGraphInterface

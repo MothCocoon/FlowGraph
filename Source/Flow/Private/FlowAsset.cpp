@@ -1,6 +1,8 @@
 // Copyright https://github.com/MothCocoon/FlowGraph/graphs/contributors
 
 #include "FlowAsset.h"
+
+#include "FlowMessageLog.h"
 #include "FlowSettings.h"
 #include "FlowSubsystem.h"
 
@@ -62,23 +64,28 @@ void UFlowAsset::PostDuplicate(bool bDuplicateForPIE)
 	}
 }
 
-EDataValidationResult UFlowAsset::IsDataValid(TArray<FText>& ValidationErrors)
+EDataValidationResult UFlowAsset::ValidateAsset(FFlowMessageLog& MessageLog)
 {
+	// first attempt to refresh graph, fix common issues automatically
+	if (GetFlowGraphInterface().IsValid())
+	{
+		GetFlowGraphInterface()->RefreshGraph(this);
+	}
+
+	// validate nodes
 	for (const TPair<FGuid, UFlowNode*>& Node : Nodes)
 	{
-		if (Node.Value == nullptr || Node.Value->IsDataValid(ValidationErrors) == EDataValidationResult::Invalid)
+		if (Node.Value)
 		{
-			// refresh data if Node is missing, i.e. its class has been deleted
-			if (Node.Value == nullptr)
+			Node.Value->Log.Messages.Empty();
+			if (Node.Value->ValidateNode() == EDataValidationResult::Invalid)
 			{
-				HarvestNodeConnections();
+				MessageLog.Messages.Append(Node.Value->Log.Messages);
 			}
-
-			return EDataValidationResult::Invalid;
 		}
 	}
 
-	return EDataValidationResult::Valid;
+	return MessageLog.Messages.Num() > 0 ? EDataValidationResult::Invalid : EDataValidationResult::Valid;
 }
 
 TSharedPtr<IFlowGraphInterface> UFlowAsset::FlowGraphInterface = nullptr;

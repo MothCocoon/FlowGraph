@@ -3,6 +3,7 @@
 #include "Nodes/FlowNode.h"
 
 #include "FlowAsset.h"
+#include "FlowMessageLog.h"
 #include "FlowModule.h"
 #include "FlowSubsystem.h"
 #include "FlowTypes.h"
@@ -649,12 +650,13 @@ FString UFlowNode::GetProgressAsString(float Value)
 	return TempString;
 }
 
-void UFlowNode::LogError(FString Message, const EFlowOnScreenMessageType OnScreenMessageType) const
+void UFlowNode::LogError(FString Message, const EFlowOnScreenMessageType OnScreenMessageType)
 {
 #if !UE_BUILD_SHIPPING
 	const FString TemplatePath = GetFlowAsset()->TemplateAsset->GetPathName();
 	Message += TEXT(" --- node ") + GetName() + TEXT(", asset ") + FPaths::GetPath(TemplatePath) / FPaths::GetBaseFilename(TemplatePath);
 
+	// OnScreen Message
 	if (OnScreenMessageType == EFlowOnScreenMessageType::Permanent)
 	{
 		if (GetWorld())
@@ -675,16 +677,34 @@ void UFlowNode::LogError(FString Message, const EFlowOnScreenMessageType OnScree
 		GEngine->AddOnScreenDebugMessage(-1, 2.0f, FColor::Red, Message);
 	}
 
+	// Message Log - not yet functional
+	{
+		Log.Error(*Message, GetGraphNode());
+		
+		FMessageLog MessageLog("FlowGraph");
+		MessageLog.AddMessages(Log.Messages);
+	}
+
+	// Output Log
 	UE_LOG(LogFlow, Error, TEXT("%s"), *Message);
 #endif
 }
 
-void UFlowNode::LogMessage(FString Message) const
+void UFlowNode::LogMessage(FString Message)
 {
 #if !UE_BUILD_SHIPPING
 	const FString TemplatePath = GetFlowAsset()->TemplateAsset->GetPathName();
 	Message += TEXT(" --- node ") + GetName() + TEXT(", asset ") + FPaths::GetPath(TemplatePath) / FPaths::GetBaseFilename(TemplatePath);
 
+	// Message Log - not yet functional
+	{
+		Log.Note(*Message, GetGraphNode());
+		
+		FMessageLog MessageLog("FlowGraph");
+		MessageLog.AddMessages(Log.Messages);
+	}
+	
+	// Output Log
 	UE_LOG(LogFlow, Log, TEXT("%s"), *Message);
 #endif
 }

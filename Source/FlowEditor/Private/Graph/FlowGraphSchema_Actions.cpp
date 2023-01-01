@@ -62,7 +62,7 @@ UFlowGraphNode* FFlowGraphSchemaAction_NewNode::CreateNode(UEdGraph* ParentGraph
 
 	// link editor and runtime nodes together
 	UFlowNode* FlowNode = FlowAsset->CreateNode(NodeClass, NewGraphNode);
-	NewGraphNode->SetFlowNode(FlowNode);
+	NewGraphNode->SetNodeTemplate(FlowNode);
 
 	// create pins and connections
 	NewGraphNode->AllocateDefaultPins();
@@ -110,7 +110,7 @@ UFlowGraphNode* FFlowGraphSchemaAction_NewNode::RecreateNode(UEdGraph* ParentGra
 
 	// link editor and runtime nodes together
 	FlowNode->SetGraphNode(NewGraphNode);
-	NewGraphNode->SetFlowNode(FlowNode);
+	NewGraphNode->SetNodeTemplate(FlowNode);
 
 	// move links from the old node
 	NewGraphNode->AllocateDefaultPins();

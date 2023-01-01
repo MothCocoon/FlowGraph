@@ -36,6 +36,7 @@ public class FlowEditor : ModuleRules
             "KismetWidgets",
             "LevelEditor",
             "LevelSequence",
+            "MessageLog",
             "MovieScene",
             "MovieSceneTracks",
             "MovieSceneTools",

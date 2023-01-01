@@ -24,11 +24,15 @@ public class Flow : ModuleRules
 			"MovieSceneTracks",
             "Slate",
             "SlateCore"
-        });
+		});
 
         if (Target.Type == TargetType.Editor)
         {
-            PublicDependencyModuleNames.Add("UnrealEd");
+            PublicDependencyModuleNames.AddRange(new[] 
+            {
+	            "MessageLog",
+	            "UnrealEd"
+            });
         }
     }
 }

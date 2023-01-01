@@ -72,7 +72,9 @@ public:
 	UPROPERTY()
 	TArray<TSubclassOf<UFlowNode>> AssignedNodeClasses;
 	
-	void SetFlowNode(UFlowNode* InFlowNode);
+	void SetNodeTemplate(UFlowNode* InFlowNode);
+	const UFlowNode* GetNodeTemplate() const;
+
 	UFlowNode* GetFlowNode() const;
 
 	// UObject
@@ -95,6 +97,9 @@ private:
 	void OnBlueprintCompiled();
 
 	void OnExternalChange();
+
+public:
+	virtual void OnGraphRefresh();
 
 //////////////////////////////////////////////////////////////////////////
 // Graph node
