@@ -3,6 +3,7 @@
 #include "Nodes/Route/FlowNode_SubGraph.h"
 
 #include "FlowAsset.h"
+#include "FlowMessageLog.h"
 #include "FlowSubsystem.h"
 
 FFlowPin UFlowNode_SubGraph::StartPin(TEXT("Start"));
@@ -103,6 +104,17 @@ FString UFlowNode_SubGraph::GetNodeDescription() const
 UObject* UFlowNode_SubGraph::GetAssetToEdit()
 {
 	return Asset.IsNull() ? nullptr : LoadAsset<UObject>(Asset);
+}
+
+EDataValidationResult UFlowNode_SubGraph::ValidateNode()
+{
+	if (Asset.IsNull())
+	{
+		Log.Error<UFlowNode>(TEXT("Flow Asset not assigned or invalid!"), this);
+		return EDataValidationResult::Invalid;
+	}
+
+	return EDataValidationResult::Valid;
 }
 
 TArray<FName> UFlowNode_SubGraph::GetContextInputs()

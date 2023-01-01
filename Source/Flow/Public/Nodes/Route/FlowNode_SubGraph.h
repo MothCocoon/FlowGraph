@@ -52,7 +52,8 @@ public:
 #if WITH_EDITOR
 	virtual FString GetNodeDescription() const override;
 	virtual UObject* GetAssetToEdit() override;
-
+	virtual EDataValidationResult ValidateNode() override;
+	
 	virtual bool SupportsContextPins() const override { return true; }
 
 	virtual TArray<FName> GetContextInputs() override;
