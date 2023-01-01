@@ -2,10 +2,13 @@
 
 #include "Asset/FlowAssetEditor.h"
 
+#include "FlowEditorCommands.h"
+#include "FlowEditorModule.h"
+#include "FlowMessageLog.h"
+
 #include "Asset/FlowAssetToolbar.h"
 #include "Asset/FlowDebugger.h"
-#include "FlowEditorCommands.h"
-#include "Graph/FlowGraph.h"
+#include "Asset/FlowMessageLogListing.h"
 #include "Graph/FlowGraphEditorSettings.h"
 #include "Graph/FlowGraphSchema.h"
 #include "Graph/FlowGraphSchema_Actions.h"
@@ -24,8 +27,11 @@
 #include "GraphEditorActions.h"
 #include "HAL/PlatformApplicationMisc.h"
 #include "IDetailsView.h"
+#include "IMessageLogListing.h"
 #include "Kismet2/DebuggerCommands.h"
 #include "LevelEditor.h"
+#include "MessageLogModule.h"
+#include "Misc/UObjectToken.h"
 #include "Modules/ModuleManager.h"
 #include "PropertyEditorModule.h"
 #include "ScopedTransaction.h"
@@ -41,6 +47,7 @@
 
 const FName FFlowAssetEditor::DetailsTab(TEXT("Details"));
 const FName FFlowAssetEditor::GraphTab(TEXT("Graph"));
+const FName FFlowAssetEditor::MessagesTab(TEXT("Messages"));
 const FName FFlowAssetEditor::PaletteTab(TEXT("Palette"));
 const FName FFlowAssetEditor::SearchTab(TEXT("Search"));
 
@@ -120,6 +127,11 @@ void FFlowAssetEditor::RegisterTabSpawners(const TSharedRef<class FTabManager>& 
 				.SetDisplayName(LOCTEXT("GraphTab", "Viewport"))
 				.SetGroup(WorkspaceMenuCategoryRef)
 				.SetIcon(FSlateIcon(FAppStyle::GetAppStyleSetName(), "GraphEditor.EventGraph_16x"));
+
+	InTabManager->RegisterTabSpawner(MessagesTab, FOnSpawnTab::CreateSP(this, &FFlowAssetEditor::SpawnTab_MessageLog))
+				.SetDisplayName(LOCTEXT("MessagesTab", "Messages"))
+				.SetGroup(WorkspaceMenuCategoryRef)
+				.SetIcon(FSlateIcon(FAppStyle::GetAppStyleSetName(), "Kismet.Tabs.CompilerResults"));
 	
 	InTabManager->RegisterTabSpawner(PaletteTab, FOnSpawnTab::CreateSP(this, &FFlowAssetEditor::SpawnTab_Palette))
 				.SetDisplayName(LOCTEXT("PaletteTab", "Palette"))
@@ -140,6 +152,7 @@ void FFlowAssetEditor::UnregisterTabSpawners(const TSharedRef<class FTabManager>
 
 	InTabManager->UnregisterTabSpawner(DetailsTab);
 	InTabManager->UnregisterTabSpawner(GraphTab);
+	InTabManager->UnregisterTabSpawner(MessagesTab);
 	InTabManager->UnregisterTabSpawner(PaletteTab);
 #if ENABLE_SEARCH_IN_ASSET_EDITOR
 	InTabManager->UnregisterTabSpawner(SearchTab);
@@ -189,6 +202,17 @@ TSharedRef<SDockTab> FFlowAssetEditor::SpawnTab_Graph(const FSpawnTabArgs& Args)
 	return SpawnedTab;
 }
 
+TSharedRef<SDockTab> FFlowAssetEditor::SpawnTab_MessageLog(const FSpawnTabArgs& Args) const
+{
+	check(Args.GetTabId() == MessagesTab);
+
+	return SNew(SDockTab)
+		.Label(LOCTEXT("FlowMessagesTitle", "Messages"))
+		[
+			MessageLog.ToSharedRef()
+		];
+}
+
 TSharedRef<SDockTab> FFlowAssetEditor::SpawnTab_Palette(const FSpawnTabArgs& Args) const
 {
 	check(Args.GetTabId() == PaletteTab);
@@ -217,7 +241,7 @@ void FFlowAssetEditor::InitFlowAssetEditor(const EToolkitMode::Type Mode, const 
 	BindGraphCommands();
 	CreateWidgets();
 
-	const TSharedRef<FTabManager::FLayout> StandaloneDefaultLayout = FTabManager::NewLayout("FlowAssetEditor_Layout_v4")
+	const TSharedRef<FTabManager::FLayout> StandaloneDefaultLayout = FTabManager::NewLayout("FlowAssetEditor_Layout_v5")
 		->AddArea
 		(
 			FTabManager::NewPrimaryArea()->SetOrientation(Orient_Horizontal)
@@ -238,6 +262,12 @@ void FFlowAssetEditor::InitFlowAssetEditor(const EToolkitMode::Type Mode, const 
 						->SetSizeCoefficient(0.8f)
 						->SetHideTabWell(true)
 						->AddTab(GraphTab, ETabState::OpenedTab)
+					)
+					->Split
+					(
+						FTabManager::NewStack()
+						->SetSizeCoefficient(0.2f)
+						->AddTab(MessagesTab, ETabState::ClosedTab)
 					)
 					->Split
 					(
@@ -308,10 +338,18 @@ void FFlowAssetEditor::BindToolbarCommands()
 
 void FFlowAssetEditor::RefreshAsset()
 {
-	if (UFlowGraph* FlowGraph = Cast<UFlowGraph>(FlowAsset->GetGraph()))
+	// Refresh and validate asset, including graph
+	FFlowMessageLog LogResults;
+	FlowAsset->ValidateAsset(LogResults);
+
+	// push messages to its window
+	MessageLogListing->ClearMessages();
+	if (LogResults.Messages.Num() > 0)
 	{
-		FlowGraph->RefreshGraph();
+		TabManager->TryInvokeTab(MessagesTab);
+		MessageLogListing->AddMessages(LogResults.Messages);
 	}
+	MessageLogListing->OnDataChanged().Broadcast();
 }
 
 #if ENABLE_SEARCH_IN_ASSET_EDITOR
@@ -339,21 +377,32 @@ void FFlowAssetEditor::CreateWidgets()
 {
 	FocusedGraphEditor = CreateGraphWidget();
 
-	FDetailsViewArgs Args;
-	Args.bHideSelectionTip = true;
-	Args.bShowPropertyMatrixButton = false;
-	Args.DefaultsOnlyVisibility = EEditDefaultsOnlyNodeVisibility::Hide;
-	Args.NotifyHook = this;
+	{
+		FDetailsViewArgs Args;
+		Args.bHideSelectionTip = true;
+		Args.bShowPropertyMatrixButton = false;
+		Args.DefaultsOnlyVisibility = EEditDefaultsOnlyNodeVisibility::Hide;
+		Args.NotifyHook = this;
 
-	FPropertyEditorModule& PropertyModule = FModuleManager::LoadModuleChecked<FPropertyEditorModule>("PropertyEditor");
-	DetailsView = PropertyModule.CreateDetailView(Args);
-	DetailsView->SetIsPropertyEditingEnabledDelegate(FIsPropertyEditingEnabled::CreateStatic(&FFlowAssetEditor::CanEdit));
-	DetailsView->SetObject(FlowAsset);
+		FPropertyEditorModule& PropertyModule = FModuleManager::LoadModuleChecked<FPropertyEditorModule>("PropertyEditor");
+		DetailsView = PropertyModule.CreateDetailView(Args);
+		DetailsView->SetIsPropertyEditingEnabledDelegate(FIsPropertyEditingEnabled::CreateStatic(&FFlowAssetEditor::CanEdit));
+		DetailsView->SetObject(FlowAsset);
+	}
+
+	Palette = SNew(SFlowPalette, SharedThis(this));
 
 #if ENABLE_SEARCH_IN_ASSET_EDITOR
 	SearchBrowser = SNew(SSearchBrowser, GetFlowAsset());
 #endif	
-	Palette = SNew(SFlowPalette, SharedThis(this));
+
+	{
+		MessageLogListing = FFlowMessageLogListing::GetLogListing(FlowAsset);
+		MessageLogListing->OnMessageTokenClicked().AddSP(this, &FFlowAssetEditor::OnLogTokenClicked);
+		
+		FMessageLogModule& MessageLogModule = FModuleManager::LoadModuleChecked<FMessageLogModule>("MessageLog");
+		MessageLog = MessageLogModule.CreateLogListingWidget(MessageLogListing.ToSharedRef());
+	}
 }
 
 TSharedRef<SGraphEditor> FFlowAssetEditor::CreateGraphWidget()
@@ -718,10 +767,45 @@ void FFlowAssetEditor::JumpToInnerObject(UObject* InnerObject)
 {
 	if (const UFlowNode* FlowNode = Cast<UFlowNode>(InnerObject))
 	{
-		FocusedGraphEditor->JumpToNode(FlowNode->GetGraphNode(), false);
+		FocusedGraphEditor->JumpToNode(FlowNode->GetGraphNode(), true);
 	}
 }
 #endif
+
+void FFlowAssetEditor::OnLogTokenClicked(const TSharedRef<IMessageToken>& Token) const
+{
+	if (Token->GetType() == EMessageToken::Object)
+	{
+		const TSharedRef<FUObjectToken> ObjectToken = StaticCastSharedRef<FUObjectToken>(Token);
+		if (const UObject* Object = ObjectToken->GetObject().Get())
+		{
+			if (Object->IsAsset())
+			{
+				GEditor->GetEditorSubsystem<UAssetEditorSubsystem>()->OpenEditorForAsset(const_cast<UObject*>(Object));
+			}
+			else
+			{
+				UE_LOG(LogFlowEditor, Warning, TEXT("Unknown type of hyperlinked object (%s), cannot focus it"), *GetNameSafe(Object));
+			}
+		}
+	}
+	else if (Token->GetType() == EMessageToken::EdGraph && FocusedGraphEditor.IsValid())
+	{
+		const TSharedRef<FFlowGraphToken> EdGraphToken = StaticCastSharedRef<FFlowGraphToken>(Token);
+
+		if (const UEdGraphPin* GraphPin = EdGraphToken->GetPin())
+		{
+			if (!GraphPin->IsPendingKill())
+			{
+				FocusedGraphEditor->JumpToPin(GraphPin);
+			}
+		}
+		else if (const UEdGraphNode* GraphNode = EdGraphToken->GetGraphNode())
+		{
+			FocusedGraphEditor->JumpToNode(GraphNode, true);
+		}
+	}
+}
 
 void FFlowAssetEditor::SelectAllNodes() const
 {

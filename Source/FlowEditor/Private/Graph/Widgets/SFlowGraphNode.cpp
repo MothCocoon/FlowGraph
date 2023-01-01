@@ -2,10 +2,8 @@
 
 #include "Graph/Widgets/SFlowGraphNode.h"
 #include "FlowEditorStyle.h"
-#include "Graph/FlowGraphEditorSettings.h"
 #include "Graph/FlowGraphSettings.h"
 
-#include "FlowAsset.h"
 #include "Nodes/FlowNode.h"
 
 #include "EdGraph/EdGraphPin.h"
@@ -362,6 +360,38 @@ void SFlowGraphNode::UpdateErrorInfo()
 {
 	if (const UFlowNode* FlowNode = FlowGraphNode->GetFlowNode())
 	{
+		if (FlowNode->Log.Messages.Num() > 0)
+		{
+			EMessageSeverity::Type MaxSeverity = EMessageSeverity::Info;
+			for (const TSharedRef<FTokenizedMessage>& Message : FlowNode->Log.Messages)
+			{
+				if (Message->GetSeverity() < MaxSeverity)
+				{
+					MaxSeverity = Message->GetSeverity();
+				}
+			}
+
+			switch(MaxSeverity)
+			{
+				case EMessageSeverity::Error:
+					ErrorMsg = FString(TEXT("ERROR!"));
+					ErrorColor = FAppStyle::GetColor("ErrorReporting.BackgroundColor");
+					break;
+				case EMessageSeverity::PerformanceWarning:
+				case EMessageSeverity::Warning:
+					ErrorMsg = FString(TEXT("WARNING!"));
+					ErrorColor = FAppStyle::GetColor("ErrorReporting.WarningBackgroundColor");
+					break;
+				case EMessageSeverity::Info:
+					ErrorMsg = FString(TEXT("NOTE"));
+					ErrorColor = FAppStyle::GetColor("InfoReporting.BackgroundColor");
+					break;
+				default: ;
+			}
+
+			return;
+		}
+
 		if (FlowNode->GetClass()->HasAnyClassFlags(CLASS_Deprecated) || FlowNode->bNodeDeprecated)
 		{
 			ErrorMsg = FlowNode->ReplacedBy ? FString::Printf(TEXT(" REPLACED BY: %s "), *FlowNode->ReplacedBy->GetName()) : FString(TEXT(" DEPRECATED! "));

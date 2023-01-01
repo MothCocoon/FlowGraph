@@ -25,7 +25,6 @@
 #include "SourceCodeNavigation.h"
 #include "Textures/SlateIcon.h"
 #include "ToolMenuSection.h"
-#include "UnrealEd.h"
 
 #define LOCTEXT_NAMESPACE "FlowGraphNode"
 
@@ -107,9 +106,14 @@ UFlowGraphNode::UFlowGraphNode(const FObjectInitializer& ObjectInitializer)
 	OrphanedPinSaveMode = ESaveOrphanPinMode::SaveAll;
 }
 
-void UFlowGraphNode::SetFlowNode(UFlowNode* InFlowNode)
+void UFlowGraphNode::SetNodeTemplate(UFlowNode* InFlowNode)
 {
 	FlowNode = InFlowNode;
+}
+
+const UFlowNode* UFlowGraphNode::GetNodeTemplate() const
+{
+	return FlowNode;
 }
 
 UFlowNode* UFlowGraphNode::GetFlowNode() const
@@ -237,6 +241,11 @@ void UFlowGraphNode::OnExternalChange()
 
 	ReconstructNode();
 	GetGraph()->NotifyGraphChanged();
+}
+
+void UFlowGraphNode::OnGraphRefresh()
+{
+	RefreshContextPins(true);
 }
 
 bool UFlowGraphNode::CanCreateUnderSpecifiedSchema(const UEdGraphSchema* Schema) const
