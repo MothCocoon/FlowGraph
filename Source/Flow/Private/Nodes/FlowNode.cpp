@@ -677,6 +677,7 @@ void UFlowNode::LogError(FString Message, const EFlowOnScreenMessageType OnScree
 		GEngine->AddOnScreenDebugMessage(-1, 2.0f, FColor::Red, Message);
 	}
 
+#if WITH_EDITOR	
 	// Message Log - not yet functional
 	{
 		Log.Error(*Message, GetGraphNode());
@@ -684,6 +685,7 @@ void UFlowNode::LogError(FString Message, const EFlowOnScreenMessageType OnScree
 		FMessageLog MessageLog("FlowGraph");
 		MessageLog.AddMessages(Log.Messages);
 	}
+#endif
 
 	// Output Log
 	UE_LOG(LogFlow, Error, TEXT("%s"), *Message);
@@ -696,6 +698,7 @@ void UFlowNode::LogMessage(FString Message)
 	const FString TemplatePath = GetFlowAsset()->TemplateAsset->GetPathName();
 	Message += TEXT(" --- node ") + GetName() + TEXT(", asset ") + FPaths::GetPath(TemplatePath) / FPaths::GetBaseFilename(TemplatePath);
 
+#if WITH_EDITOR	
 	// Message Log - not yet functional
 	{
 		Log.Note(*Message, GetGraphNode());
@@ -703,7 +706,8 @@ void UFlowNode::LogMessage(FString Message)
 		FMessageLog MessageLog("FlowGraph");
 		MessageLog.AddMessages(Log.Messages);
 	}
-	
+#endif
+
 	// Output Log
 	UE_LOG(LogFlow, Log, TEXT("%s"), *Message);
 #endif
