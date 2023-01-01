@@ -33,4 +33,15 @@ FString UFlowNode_NotifyActor::GetNodeDescription() const
 {
 	return GetIdentityTagsDescription(IdentityTags) + LINE_TERMINATOR + GetNotifyTagsDescription(NotifyTags);
 }
+
+EDataValidationResult UFlowNode_NotifyActor::ValidateNode()
+{
+	if (IdentityTags.IsEmpty())
+	{
+		Log.Error<UFlowNode>(*UFlowNode::MissingIdentityTag, this);
+		return EDataValidationResult::Invalid;
+	}
+
+	return EDataValidationResult::Valid;
+}
 #endif

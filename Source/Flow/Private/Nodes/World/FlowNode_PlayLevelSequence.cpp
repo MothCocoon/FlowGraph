@@ -314,6 +314,17 @@ FString UFlowNode_PlayLevelSequence::GetNodeDescription() const
 	return Sequence.IsNull() ? TEXT("[No sequence]") : Sequence.GetAssetName();
 }
 
+EDataValidationResult UFlowNode_PlayLevelSequence::ValidateNode()
+{
+	if (Sequence.IsNull())
+	{
+		Log.Error<UFlowNode>(TEXT("Level Sequence asset not assigned or invalid!"), this);
+		return EDataValidationResult::Invalid;
+	}
+
+	return EDataValidationResult::Valid;
+}
+
 FString UFlowNode_PlayLevelSequence::GetStatusString() const
 {
 	return GetPlaybackProgress();

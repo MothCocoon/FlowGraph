@@ -151,6 +151,17 @@ FString UFlowNode_ComponentObserver::GetNodeDescription() const
 	return GetIdentityTagsDescription(IdentityTags);
 }
 
+EDataValidationResult UFlowNode_ComponentObserver::ValidateNode()
+{
+	if (IdentityTags.IsEmpty())
+	{
+		Log.Error<UFlowNode>(*UFlowNode::MissingIdentityTag, this);
+		return EDataValidationResult::Invalid;
+	}
+
+	return EDataValidationResult::Valid;
+}
+
 FString UFlowNode_ComponentObserver::GetStatusString() const
 {
 	if (ActivationState == EFlowNodeState::Active && RegisteredActors.Num() == 0)
