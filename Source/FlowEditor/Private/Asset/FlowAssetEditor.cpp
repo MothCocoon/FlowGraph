@@ -767,7 +767,7 @@ void FFlowAssetEditor::JumpToInnerObject(UObject* InnerObject)
 {
 	if (const UFlowNode* FlowNode = Cast<UFlowNode>(InnerObject))
 	{
-		FocusedGraphEditor->JumpToNode(FlowNode->GetGraphNode(), true);
+		GraphEditor->JumpToNode(FlowNode->GetGraphNode(), true);
 	}
 }
 #endif
