@@ -10,7 +10,8 @@ public class FlowEditor : ModuleRules
 
         PublicDependencyModuleNames.AddRange(new[]
         {
-            "Flow"
+            "Flow",
+            "MessageLog"
         });
 
         PrivateDependencyModuleNames.AddRange(new[]
@@ -36,7 +37,6 @@ public class FlowEditor : ModuleRules
             "KismetWidgets",
             "LevelEditor",
             "LevelSequence",
-            "MessageLog",
             "MovieScene",
             "MovieSceneTracks",
             "MovieSceneTools",
