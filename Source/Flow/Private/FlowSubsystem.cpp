@@ -11,7 +11,6 @@
 
 #include "Engine/GameInstance.h"
 #include "Engine/World.h"
-#include "Misc/FileHelper.h"
 #include "Misc/Paths.h"
 #include "UObject/UObjectHash.h"
 

@@ -8,7 +8,7 @@ UMovieSceneFlowTriggerSection::UMovieSceneFlowTriggerSection(const FObjectInitia
 	: Super(ObjInit)
 {
 	bSupportsInfiniteRange = true;
-	SetRange(TRange<FFrameNumber>::All());
+	UMovieSceneSection::SetRange(TRange<FFrameNumber>::All());
 
 #if WITH_EDITOR
 	ChannelProxy = MakeShared<FMovieSceneChannelProxy>(StringChannel, FMovieSceneChannelMetaData(), TMovieSceneExternalValue<FString>::Make());
