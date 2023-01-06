@@ -390,8 +390,17 @@ public:
 	void LogError(FString Message, const EFlowOnScreenMessageType OnScreenMessageType = EFlowOnScreenMessageType::Permanent);
 
 	UFUNCTION(BlueprintCallable, Category = "FlowNode", meta = (DevelopmentOnly))
-	void LogMessage(FString Message);
+	void LogWarning(FString Message);
 	
+	UFUNCTION(BlueprintCallable, Category = "FlowNode", meta = (DevelopmentOnly))
+	void LogNote(FString Message);
+
+#if !UE_BUILD_SHIPPING
+private:
+	void BuildMessage(FString& Message) const;
+#endif
+	
+public:	
 	UFUNCTION(BlueprintCallable, Category = "FlowNode")
 	void SaveInstance(FFlowNodeSaveData& NodeRecord);
 

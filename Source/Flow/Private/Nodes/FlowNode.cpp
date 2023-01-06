@@ -415,10 +415,10 @@ void UFlowNode::TriggerInput(const FName& PinName, const EFlowPinActivationType 
 			ExecuteInput(PinName);
 			break;
 		case EFlowSignalMode::Disabled:
-			LogMessage(FString::Printf(TEXT("Node disabled while triggering input %s"), *PinName.ToString()));
+			LogNote(FString::Printf(TEXT("Node disabled while triggering input %s"), *PinName.ToString()));
 			break;
 		case EFlowSignalMode::PassThrough:
-			LogMessage(FString::Printf(TEXT("Signal pass-through on triggering input %s"), *PinName.ToString()));
+			LogNote(FString::Printf(TEXT("Signal pass-through on triggering input %s"), *PinName.ToString()));
 			OnPassThrough();
 			break;
 		default: ;
@@ -653,8 +653,7 @@ FString UFlowNode::GetProgressAsString(float Value)
 void UFlowNode::LogError(FString Message, const EFlowOnScreenMessageType OnScreenMessageType)
 {
 #if !UE_BUILD_SHIPPING
-	const FString TemplatePath = GetFlowAsset()->TemplateAsset->GetPathName();
-	Message += TEXT(" --- node ") + GetName() + TEXT(", asset ") + FPaths::GetPath(TemplatePath) / FPaths::GetBaseFilename(TemplatePath);
+	BuildMessage(Message);
 
 	// OnScreen Message
 	if (OnScreenMessageType == EFlowOnScreenMessageType::Permanent)
@@ -692,11 +691,30 @@ void UFlowNode::LogError(FString Message, const EFlowOnScreenMessageType OnScree
 #endif
 }
 
-void UFlowNode::LogMessage(FString Message)
+void UFlowNode::LogWarning(FString Message)
 {
 #if !UE_BUILD_SHIPPING
-	const FString TemplatePath = GetFlowAsset()->TemplateAsset->GetPathName();
-	Message += TEXT(" --- node ") + GetName() + TEXT(", asset ") + FPaths::GetPath(TemplatePath) / FPaths::GetBaseFilename(TemplatePath);
+	BuildMessage(Message);
+
+#if WITH_EDITOR	
+	// Message Log - not yet functional
+	{
+		Log.Warning(*Message, GetGraphNode());
+		
+		FMessageLog MessageLog("FlowGraph");
+		MessageLog.AddMessages(Log.Messages);
+	}
+#endif
+
+	// Output Log
+	UE_LOG(LogFlow, Warning, TEXT("%s"), *Message);
+#endif
+}
+
+void UFlowNode::LogNote(FString Message)
+{
+#if !UE_BUILD_SHIPPING
+	BuildMessage(Message);
 
 #if WITH_EDITOR	
 	// Message Log - not yet functional
@@ -712,6 +730,14 @@ void UFlowNode::LogMessage(FString Message)
 	UE_LOG(LogFlow, Log, TEXT("%s"), *Message);
 #endif
 }
+
+#if !UE_BUILD_SHIPPING
+void UFlowNode::BuildMessage(FString& Message) const
+{
+	const FString TemplatePath = GetFlowAsset()->TemplateAsset->GetPathName();
+	Message.Append(TEXT(" --- node ")).Append(GetName()).Append(TEXT(", asset ")).Append(FPaths::GetPath(TemplatePath) / FPaths::GetBaseFilename(TemplatePath));
+}
+#endif
 
 void UFlowNode::SaveInstance(FFlowNodeSaveData& NodeRecord)
 {
@@ -741,11 +767,11 @@ void UFlowNode::LoadInstance(const FFlowNodeSaveData& NodeRecord)
 			break;
 		case EFlowSignalMode::Disabled:
 			// designer doesn't want to execute this node's logic at all, so we kill it
-			LogMessage(TEXT("Signal disabled while loading Flow Node from SaveGame"));
+			LogNote(TEXT("Signal disabled while loading Flow Node from SaveGame"));
 			Finish();
 			break;
 		case EFlowSignalMode::PassThrough:
-			LogMessage(TEXT("Signal pass-through on loading Flow Node from SaveGame"));
+			LogNote(TEXT("Signal pass-through on loading Flow Node from SaveGame"));
 			OnPassThrough();
 			break;
 		default: ;
