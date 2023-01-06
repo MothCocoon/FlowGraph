@@ -262,7 +262,7 @@ UObject* UFlowNodeBlueprintFactory::FactoryCreateNew(UClass* Class, UObject* InP
 
 	if (NewBP && NewBP->UbergraphPages.Num() > 0)
 	{
-		UBlueprintEditorSettings* Settings = GetMutableDefault<UBlueprintEditorSettings>();
+		const UBlueprintEditorSettings* Settings = GetMutableDefault<UBlueprintEditorSettings>();
 		if(Settings && Settings->bSpawnDefaultBlueprintNodes)
 		{
 			int32 NodePositionY = 0;

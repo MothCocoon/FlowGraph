@@ -4,7 +4,7 @@ using UnrealBuildTool;
 
 public class FlowEditor : ModuleRules
 {
-    public FlowEditor(ReadOnlyTargetRules Target) : base(Target)
+    public FlowEditor(ReadOnlyTargetRules target) : base(target)
     {
         PCHUsage = PCHUsageMode.UseExplicitOrSharedPCHs;
 

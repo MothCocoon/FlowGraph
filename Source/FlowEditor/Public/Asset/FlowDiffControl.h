@@ -9,7 +9,6 @@
 
 #include "FlowEditorDefines.h"
 #if ENABLE_FLOW_DIFF
-#include "DetailsDiff.h"
 #include "DiffResults.h"
 #include "IAssetTypeActions.h"
 #include "Kismet/Private/DiffControl.h"

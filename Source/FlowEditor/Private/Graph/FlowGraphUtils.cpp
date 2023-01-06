@@ -13,7 +13,7 @@ TSharedPtr<FFlowAssetEditor> FFlowGraphUtils::GetFlowAssetEditor(const UObject* 
 	check(ObjectToFocusOn);
 
 	TSharedPtr<FFlowAssetEditor> FlowAssetEditor;
-	if (UFlowAsset* FlowAsset = Cast<const UFlowGraph>(ObjectToFocusOn)->GetFlowAsset())
+	if (const UFlowAsset* FlowAsset = Cast<const UFlowGraph>(ObjectToFocusOn)->GetFlowAsset())
 	{
 		const TSharedPtr<IToolkit> FoundAssetEditor = FToolkitManager::Get().FindEditorForAsset(FlowAsset);
 		if (FoundAssetEditor.IsValid())
