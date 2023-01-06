@@ -1,13 +1,12 @@
 // Copyright https://github.com/MothCocoon/FlowGraph/graphs/contributors
 
-#include "FlowNode_CustomInputDetails.h"
+#include "DetailCustomizations/FlowNode_CustomInputDetails.h"
 #include "FlowAsset.h"
 #include "Nodes/Route/FlowNode_CustomInput.h"
 
 #include "DetailCategoryBuilder.h"
 #include "DetailWidgetRow.h"
 #include "PropertyEditing.h"
-#include "UnrealEd.h"
 #include "Widgets/Input/SComboBox.h"
 #include "Widgets/Text/STextBlock.h"
 
