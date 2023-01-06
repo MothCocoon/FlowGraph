@@ -4,35 +4,35 @@ using UnrealBuildTool;
 
 public class Flow : ModuleRules
 {
-	public Flow(ReadOnlyTargetRules Target) : base(Target)
+	public Flow(ReadOnlyTargetRules target) : base(target)
 	{
 		PCHUsage = PCHUsageMode.UseExplicitOrSharedPCHs;
 
-		PublicDependencyModuleNames.AddRange(new[] 
+		PublicDependencyModuleNames.AddRange(new[]
 		{
 			"LevelSequence"
 		});
-		
-		PrivateDependencyModuleNames.AddRange(new[] 
+
+		PrivateDependencyModuleNames.AddRange(new[]
 		{
-            "Core",
+			"Core",
 			"CoreUObject",
-            "DeveloperSettings",
+			"DeveloperSettings",
 			"Engine",
-            "GameplayTags",
+			"GameplayTags",
 			"MovieScene",
 			"MovieSceneTracks",
-            "Slate",
-            "SlateCore"
+			"Slate",
+			"SlateCore"
 		});
 
-        if (Target.Type == TargetType.Editor)
-        {
-            PublicDependencyModuleNames.AddRange(new[] 
-            {
-	            "MessageLog",
-	            "UnrealEd"
-            });
-        }
-    }
+		if (target.Type == TargetType.Editor)
+		{
+			PublicDependencyModuleNames.AddRange(new[]
+			{
+				"MessageLog",
+				"UnrealEd"
+			});
+		}
+	}
 }
