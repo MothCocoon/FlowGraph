@@ -7,7 +7,7 @@
 
 class FSequencerSectionPainter;
 
-class FFlowSectionBase : public FSequencerSection
+class FLOWEDITOR_API FFlowSectionBase : public FSequencerSection
 {
 public:
 	FFlowSectionBase(UMovieSceneSection& InSectionObject, TWeakPtr<ISequencer> InSequencer)
@@ -26,7 +26,7 @@ protected:
 /**
 * An implementation of flow sections.
 */
-class FFlowSection final : public FFlowSectionBase
+class FLOWEDITOR_API FFlowSection : public FFlowSectionBase
 {
 public:
 	FFlowSection(UMovieSceneSection& InSectionObject, TWeakPtr<ISequencer> InSequencer)
@@ -37,7 +37,7 @@ public:
 	virtual int32 OnPaintSection(FSequencerSectionPainter& Painter) const override;
 };
 
-class FFlowTriggerSection : public FFlowSectionBase
+class FLOWEDITOR_API FFlowTriggerSection : public FFlowSectionBase
 {
 public:
 	FFlowTriggerSection(UMovieSceneSection& InSectionObject, TWeakPtr<ISequencer> InSequencer)
@@ -48,7 +48,7 @@ public:
 	virtual int32 OnPaintSection(FSequencerSectionPainter& Painter) const override;
 };
 
-class FFlowRepeaterSection : public FFlowSectionBase
+class FLOWEDITOR_API FFlowRepeaterSection : public FFlowSectionBase
 {
 public:
 	FFlowRepeaterSection(UMovieSceneSection& InSectionObject, TWeakPtr<ISequencer> InSequencer)

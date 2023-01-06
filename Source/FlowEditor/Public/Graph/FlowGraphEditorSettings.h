@@ -16,7 +16,7 @@ enum class EFlowNodeDoubleClickTarget : uint8
  *
  */
 UCLASS(Config = EditorPerProjectUserSettings, meta = (DisplayName = "Flow Graph"))
-class UFlowGraphEditorSettings final : public UDeveloperSettings
+class FLOWEDITOR_API UFlowGraphEditorSettings : public UDeveloperSettings
 {
 	GENERATED_UCLASS_BODY()
 

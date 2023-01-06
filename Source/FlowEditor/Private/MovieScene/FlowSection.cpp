@@ -1,13 +1,12 @@
 // Copyright https://github.com/MothCocoon/FlowGraph/graphs/contributors
 
-#include "FlowSection.h"
+#include "MovieScene/FlowSection.h"
 #include "MovieScene/MovieSceneFlowRepeaterSection.h"
 #include "MovieScene/MovieSceneFlowTriggerSection.h"
 
 #include "CommonMovieSceneTools.h"
 #include "Fonts/FontMeasure.h"
 #include "Framework/Application/SlateApplication.h"
-#include "MovieSceneEventUtils.h"
 #include "MovieSceneTrack.h"
 #include "Rendering/DrawElements.h"
 #include "Sections/MovieSceneEventSection.h"
@@ -18,19 +17,19 @@
 
 bool FFlowSectionBase::IsSectionSelected() const
 {
-	TSharedPtr<ISequencer> SequencerPtr = Sequencer.Pin();
+	const TSharedPtr<ISequencer> SequencerPtr = Sequencer.Pin();
 
 	TArray<UMovieSceneTrack*> SelectedTracks;
 	SequencerPtr->GetSelectedTracks(SelectedTracks);
 
-	UMovieSceneSection* Section = WeakSection.Get();
+	const UMovieSceneSection* Section = WeakSection.Get();
 	UMovieSceneTrack* Track = Section ? CastChecked<UMovieSceneTrack>(Section->GetOuter()) : nullptr;
 	return Track && SelectedTracks.Contains(Track);
 }
 
 void FFlowSectionBase::PaintEventName(FSequencerSectionPainter& Painter, int32 LayerId, const FString& InEventString, float PixelPos, bool bIsEventValid) const
 {
-	static const float BoxOffsetPx = 10.f;
+	static constexpr float BoxOffsetPx = 10.f;
 	static const TCHAR* WarningString = TEXT("\xf071");
 
 	const FSlateFontInfo FontAwesomeFont = FAppStyle::Get().GetFontStyle("FontAwesome.10");
@@ -99,7 +98,7 @@ void FFlowSectionBase::PaintEventName(FSequencerSectionPainter& Painter, int32 L
 int32 FFlowSection::OnPaintSection(FSequencerSectionPainter& Painter) const
 {
 	const int32 LayerId = Painter.PaintSectionBackground();
-	UMovieSceneEventSection* EventSection = Cast<UMovieSceneEventSection>(WeakSection.Get());
+	const UMovieSceneEventSection* EventSection = Cast<UMovieSceneEventSection>(WeakSection.Get());
 	if (!EventSection || !IsSectionSelected())
 	{
 		return LayerId;
@@ -160,7 +159,7 @@ int32 FFlowRepeaterSection::OnPaintSection(FSequencerSectionPainter& Painter) co
 {
 	const int32 LayerId = Painter.PaintSectionBackground();
 
-	UMovieSceneFlowRepeaterSection* EventRepeaterSection = Cast<UMovieSceneFlowRepeaterSection>(WeakSection.Get());
+	const UMovieSceneFlowRepeaterSection* EventRepeaterSection = Cast<UMovieSceneFlowRepeaterSection>(WeakSection.Get());
 	if (!EventRepeaterSection)
 	{
 		return LayerId;

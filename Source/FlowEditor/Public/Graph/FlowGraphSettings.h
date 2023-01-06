@@ -12,7 +12,7 @@
  *
  */
 UCLASS(Config = Editor, defaultconfig, meta = (DisplayName = "Flow Graph"))
-class UFlowGraphSettings final : public UDeveloperSettings
+class FLOWEDITOR_API UFlowGraphSettings : public UDeveloperSettings
 {
 	GENERATED_UCLASS_BODY()
 
