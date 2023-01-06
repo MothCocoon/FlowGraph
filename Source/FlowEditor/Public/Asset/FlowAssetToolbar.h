@@ -70,7 +70,6 @@ public:
 
 private:
 	void OnCrumbClicked(const FFlowBreadcrumb& Item) const;
-	FText GetBreadcrumbText(const TWeakObjectPtr<UFlowAsset> FlowInstance) const;
 
 	TWeakObjectPtr<UFlowAsset> TemplateAsset;
 	TSharedPtr<SBreadcrumbTrail<FFlowBreadcrumb>> BreadcrumbTrail;

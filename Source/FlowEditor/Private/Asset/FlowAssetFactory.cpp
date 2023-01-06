@@ -30,7 +30,7 @@ public:
 	/** Disallow blueprint base classes. */
 	bool bDisallowBlueprintBase;
 
-	virtual bool IsClassAllowed(const FClassViewerInitializationOptions& InInitOptions, const UClass* InClass, TSharedRef<FClassViewerFilterFuncs> InFilterFuncs) override
+	virtual bool IsClassAllowed(const FClassViewerInitializationOptions& InInitOptions, const UClass* InClass, const TSharedRef<FClassViewerFilterFuncs> InFilterFuncs) override
 	{
 		const bool bAllowed = !InClass->HasAnyClassFlags(DisallowedClassFlags) && InFilterFuncs->IfInChildOfClassesSet(AllowedChildrenOfClasses, InClass) != EFilterReturn::Failed;
 
@@ -102,7 +102,7 @@ bool UFlowAssetFactory::ConfigureProperties()
 
 UObject* UFlowAssetFactory::FactoryCreateNew(UClass* Class, UObject* InParent, FName Name, EObjectFlags Flags, UObject* Context, FFeedbackContext* Warn)
 {
-	UFlowAsset* NewFlow = nullptr;
+	UFlowAsset* NewFlow;
 	if (AssetClass != nullptr)
 	{
 		NewFlow = NewObject<UFlowAsset>(InParent, AssetClass, Name, Flags | RF_Transactional, Context);

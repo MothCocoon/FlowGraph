@@ -2,7 +2,6 @@
 
 #pragma once
 
-#include "DetailsDiff.h"
 #include "DiffResults.h"
 #include "IAssetTypeActions.h"
 #include "Kismet/Private/DiffControl.h"

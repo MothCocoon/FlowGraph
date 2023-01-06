@@ -158,8 +158,12 @@ void SFlowAssetBreadcrumb::Construct(const FArguments& InArgs, const TWeakObject
 
 		for (UFlowAsset* Instance : InstancesFromRoot)
 		{
-			TAttribute<FText> CrumbNameAttribute = MakeAttributeSP(this, &SFlowAssetBreadcrumb::GetBreadcrumbText, Instance);
-			BreadcrumbTrail->PushCrumb(CrumbNameAttribute, FFlowBreadcrumb(Instance));
+			TAttribute<FText> CrumbText = MakeAttributeLambda([Instance]()
+			{
+				return Instance ? FText::FromName(Instance->GetDisplayName()) : FText();
+			});
+
+			BreadcrumbTrail->PushCrumb(CrumbText, FFlowBreadcrumb(Instance));
 		}
 	}
 }
@@ -172,11 +176,6 @@ void SFlowAssetBreadcrumb::OnCrumbClicked(const FFlowBreadcrumb& Item) const
 	{
 		GEditor->GetEditorSubsystem<UAssetEditorSubsystem>()->OpenEditorForAsset(Item.AssetPathName);
 	}
-}
-
-FText SFlowAssetBreadcrumb::GetBreadcrumbText(const TWeakObjectPtr<UFlowAsset> FlowInstance) const
-{
-	return FlowInstance.IsValid() ? FText::FromName(FlowInstance->GetDisplayName()) : FText();
 }
 
 //////////////////////////////////////////////////////////////////////////
