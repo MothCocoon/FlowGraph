@@ -39,7 +39,7 @@ public:
 	FDelegateHandle ModulesChangedHandle;
 
 private:
-	void ModulesChangesCallback(FName ModuleName, EModuleChangeReason ReasonForChange);
+	void ModulesChangesCallback(FName ModuleName, EModuleChangeReason ReasonForChange) const;
 	void RegisterAssetIndexers() const;
 
 	void CreateFlowToolbar(FToolBarBuilder& ToolbarBuilder) const;

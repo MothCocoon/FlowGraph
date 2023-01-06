@@ -4,18 +4,12 @@
 #include "FlowEditorStyle.h"
 
 #include "Asset/AssetTypeActions_FlowAsset.h"
-#include "Asset/FlowAssetDetails.h"
 #include "Asset/FlowAssetEditor.h"
 #include "Graph/FlowGraphConnectionDrawingPolicy.h"
 #include "Graph/FlowGraphSettings.h"
 #include "Utils/SLevelEditorFlow.h"
 #include "MovieScene/FlowTrackEditor.h"
 #include "Nodes/AssetTypeActions_FlowNodeBlueprint.h"
-#include "Nodes/Customizations/FlowNode_Details.h"
-#include "Nodes/Customizations/FlowNode_ComponentObserverDetails.h"
-#include "Nodes/Customizations/FlowNode_CustomInputDetails.h"
-#include "Nodes/Customizations/FlowNode_CustomOutputDetails.h"
-#include "Nodes/Customizations/FlowNode_PlayLevelSequenceDetails.h"
 #include "Pins/SFlowInputPinHandle.h"
 #include "Pins/SFlowOutputPinHandle.h"
 
@@ -23,6 +17,13 @@
 #if ENABLE_FLOW_SEARCH
 #include "Asset/FlowAssetIndexer.h"
 #endif
+
+#include "DetailCustomizations/FlowAssetDetails.h"
+#include "DetailCustomizations/FlowNode_Details.h"
+#include "DetailCustomizations/FlowNode_ComponentObserverDetails.h"
+#include "DetailCustomizations/FlowNode_CustomInputDetails.h"
+#include "DetailCustomizations/FlowNode_CustomOutputDetails.h"
+#include "DetailCustomizations/FlowNode_PlayLevelSequenceDetails.h"
 
 #include "FlowAsset.h"
 #include "Nodes/Route/FlowNode_CustomInput.h"
@@ -34,7 +35,7 @@
 #include "EdGraphUtilities.h"
 #include "IAssetSearchModule.h"
 #include "Framework/MultiBox/MultiBoxBuilder.h"
-#include "ISequencerChannelInterface.h"
+#include "ISequencerChannelInterface.h" // ignore Rider's false "unused include" warning
 #include "ISequencerModule.h"
 #include "LevelEditor.h"
 #include "Modules/ModuleManager.h"
@@ -190,7 +191,7 @@ void FFlowEditorModule::RegisterCustomClassLayout(const TSubclassOf<UObject> Cla
 	}
 }
 
-void FFlowEditorModule::ModulesChangesCallback(FName ModuleName, EModuleChangeReason ReasonForChange)
+void FFlowEditorModule::ModulesChangesCallback(const FName ModuleName, const EModuleChangeReason ReasonForChange) const
 {
 	if (ReasonForChange == EModuleChangeReason::ModuleLoaded && ModuleName == AssetSearchModuleName)
 	{
