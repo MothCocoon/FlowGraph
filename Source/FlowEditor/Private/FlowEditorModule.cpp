@@ -8,7 +8,7 @@
 #include "Asset/FlowAssetEditor.h"
 #include "Graph/FlowGraphConnectionDrawingPolicy.h"
 #include "Graph/FlowGraphSettings.h"
-#include "LevelEditor/SLevelEditorFlow.h"
+#include "Utils/SLevelEditorFlow.h"
 #include "MovieScene/FlowTrackEditor.h"
 #include "Nodes/AssetTypeActions_FlowNodeBlueprint.h"
 #include "Nodes/Customizations/FlowNode_Details.h"
