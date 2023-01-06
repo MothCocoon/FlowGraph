@@ -4,7 +4,7 @@
 
 #include "AssetTypeActions/AssetTypeActions_Blueprint.h"
 
-class FLOWEDITOR_API FAssetTypeActions_FlowNodeBlueprint final : public FAssetTypeActions_Blueprint
+class FLOWEDITOR_API FAssetTypeActions_FlowNodeBlueprint : public FAssetTypeActions_Blueprint
 {
 public:
 	virtual FText GetName() const override;

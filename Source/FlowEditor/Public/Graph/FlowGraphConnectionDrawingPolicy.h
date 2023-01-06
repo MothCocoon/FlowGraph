@@ -12,7 +12,7 @@ enum class EFlowConnectionDrawType : uint8
 	Circuit
 };
 
-struct FFlowGraphConnectionDrawingPolicyFactory : public FGraphPanelPinConnectionFactory
+struct FLOWEDITOR_API FFlowGraphConnectionDrawingPolicyFactory : public FGraphPanelPinConnectionFactory
 {
 	virtual ~FFlowGraphConnectionDrawingPolicyFactory() override
 	{

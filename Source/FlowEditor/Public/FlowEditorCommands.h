@@ -7,7 +7,7 @@
 #include "Framework/Commands/UICommandInfo.h"
 #include "Templates/SharedPointer.h"
 
-class FLOWEDITOR_API FFlowToolbarCommands final : public TCommands<FFlowToolbarCommands>
+class FLOWEDITOR_API FFlowToolbarCommands : public TCommands<FFlowToolbarCommands>
 {
 public:
 	FFlowToolbarCommands();
@@ -20,7 +20,7 @@ public:
 };
 
 /** Generic graph commands for the flow graph */
-class FFlowGraphCommands final : public TCommands<FFlowGraphCommands>
+class FLOWEDITOR_API FFlowGraphCommands : public TCommands<FFlowGraphCommands>
 {
 public:
 	FFlowGraphCommands();
@@ -54,7 +54,7 @@ public:
 };
 
 /** Handles spawning nodes by keyboard shortcut */
-class FFlowSpawnNodeCommands : public TCommands<FFlowSpawnNodeCommands>
+class FLOWEDITOR_API FFlowSpawnNodeCommands : public TCommands<FFlowSpawnNodeCommands>
 {
 public:
 	FFlowSpawnNodeCommands();

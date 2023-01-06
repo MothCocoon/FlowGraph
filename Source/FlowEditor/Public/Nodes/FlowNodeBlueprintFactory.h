@@ -5,8 +5,8 @@
 #include "Factories/Factory.h"
 #include "FlowNodeBlueprintFactory.generated.h"
 
-UCLASS(hidecategories=Object, MinimalAPI)
-class UFlowNodeBlueprintFactory : public UFactory
+UCLASS(hidecategories=Object)
+class FLOWEDITOR_API UFlowNodeBlueprintFactory : public UFactory
 {
 	GENERATED_UCLASS_BODY()
 
