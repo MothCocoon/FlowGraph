@@ -12,7 +12,7 @@ class UFlowNode;
  *
  */
 UCLASS(Config = Game, defaultconfig, meta = (DisplayName = "Flow"))
-class UFlowSettings final : public UDeveloperSettings
+class FLOW_API UFlowSettings : public UDeveloperSettings
 {
 	GENERATED_UCLASS_BODY()
 
@@ -29,4 +29,8 @@ class UFlowSettings final : public UDeveloperSettings
 	
 	UPROPERTY(Config, EditAnywhere, Category = "SaveSystem")
 	bool bWarnAboutMissingIdentityTags;
+
+	// How many nodes of given class should be preloaded with the Flow Asset instance?
+	UPROPERTY(Config, EditAnywhere, Category = "Importer")
+	TMap<FName, TSubclassOf<UFlowNode>> BlueprintFunctionsToFlowNodes;
 };
