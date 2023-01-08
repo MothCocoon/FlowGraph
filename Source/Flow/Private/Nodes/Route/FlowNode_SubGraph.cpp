@@ -117,9 +117,9 @@ EDataValidationResult UFlowNode_SubGraph::ValidateNode()
 	return EDataValidationResult::Valid;
 }
 
-TArray<FName> UFlowNode_SubGraph::GetContextInputs()
+TArray<FFlowPin> UFlowNode_SubGraph::GetContextInputs()
 {
-	TArray<FName> EventNames;
+	TArray<FFlowPin> EventNames;
 
 	if (!Asset.IsNull())
 	{
@@ -136,9 +136,9 @@ TArray<FName> UFlowNode_SubGraph::GetContextInputs()
 	return EventNames;
 }
 
-TArray<FName> UFlowNode_SubGraph::GetContextOutputs()
+TArray<FFlowPin> UFlowNode_SubGraph::GetContextOutputs()
 {
-	TArray<FName> EventNames;
+	TArray<FFlowPin> Pins;
 
 	if (!Asset.IsNull())
 	{
@@ -147,12 +147,12 @@ TArray<FName> UFlowNode_SubGraph::GetContextOutputs()
 		{
 			if (!PinName.IsNone())
 			{
-				EventNames.Emplace(PinName);
+				Pins.Emplace(PinName);
 			}
 		}
 	}
 
-	return EventNames;
+	return Pins;
 }
 
 void UFlowNode_SubGraph::PostLoad()

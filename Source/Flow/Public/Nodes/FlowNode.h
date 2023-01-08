@@ -149,8 +149,8 @@ protected:
 	UPROPERTY(EditDefaultsOnly, Category = "FlowNode")
 	TArray<FFlowPin> OutputPins;
 
-	void AddInputPins(TArray<FName> PinNames);
-	void AddOutputPins(TArray<FName> PinNames);
+	void AddInputPins(TArray<FFlowPin> Pins);
+	void AddOutputPins(TArray<FFlowPin> Pins);
 
 	// always use default range for nodes with user-created outputs i.e. Execution Sequence
 	void SetNumberedInputPins(const uint8 FirstNumber = 0, const uint8 LastNumber = 1);
@@ -175,8 +175,8 @@ public:
 	// Be careful, enabling it might cause loading gigabytes of data as nodes would load all related data (i.e. Level Sequences)
 	virtual bool CanRefreshContextPinsOnLoad() const { return false; }
 
-	virtual TArray<FName> GetContextInputs() { return TArray<FName>(); }
-	virtual TArray<FName> GetContextOutputs() { return TArray<FName>(); }
+	virtual TArray<FFlowPin> GetContextInputs() { return TArray<FFlowPin>(); }
+	virtual TArray<FFlowPin> GetContextOutputs() { return TArray<FFlowPin>(); }
 
 	virtual bool CanUserAddInput() const;
 	virtual bool CanUserAddOutput() const;
