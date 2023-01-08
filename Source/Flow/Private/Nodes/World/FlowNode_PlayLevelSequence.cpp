@@ -46,14 +46,14 @@ UFlowNode_PlayLevelSequence::UFlowNode_PlayLevelSequence(const FObjectInitialize
 }
 
 #if WITH_EDITOR
-TArray<FName> UFlowNode_PlayLevelSequence::GetContextOutputs()
+TArray<FFlowPin> UFlowNode_PlayLevelSequence::GetContextOutputs()
 {
 	if (Sequence.IsNull())
 	{
-		return TArray<FName>();
+		return TArray<FFlowPin>();
 	}
 
-	TArray<FName> PinNames = {};
+	TArray<FFlowPin> Pins = {};
 
 	Sequence = Sequence.LoadSynchronous();
 	if (Sequence && Sequence->GetMovieScene())
@@ -70,7 +70,7 @@ TArray<FName> UFlowNode_PlayLevelSequence::GetContextOutputs()
 						{
 							if (!EventName.IsEmpty())
 							{
-								PinNames.Emplace(EventName);
+								Pins.Emplace(EventName);
 							}
 						}
 					}
@@ -79,7 +79,7 @@ TArray<FName> UFlowNode_PlayLevelSequence::GetContextOutputs()
 		}
 	}
 
-	return PinNames;
+	return Pins;
 }
 
 void UFlowNode_PlayLevelSequence::PostEditChangeProperty(FPropertyChangedEvent& PropertyChangedEvent)

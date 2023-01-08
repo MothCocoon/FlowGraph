@@ -56,8 +56,8 @@ public:
 	
 	virtual bool SupportsContextPins() const override { return true; }
 
-	virtual TArray<FName> GetContextInputs() override;
-	virtual TArray<FName> GetContextOutputs() override;
+	virtual TArray<FFlowPin> GetContextInputs() override;
+	virtual TArray<FFlowPin> GetContextOutputs() override;
 
 	// UObject
 	virtual void PostLoad() override;
