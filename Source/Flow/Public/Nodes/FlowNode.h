@@ -77,6 +77,9 @@ public:
 	virtual void FixNode(UEdGraphNode* NewGraphNode);
 
 	virtual EDataValidationResult ValidateNode() { return EDataValidationResult::NotValidated; }
+
+	// used when import graph from another asset
+	virtual void PostImport() {}
 #endif
 
 	UEdGraphNode* GetGraphNode() const { return GraphNode; }

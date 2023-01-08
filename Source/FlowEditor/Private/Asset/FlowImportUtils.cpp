@@ -1,8 +1,10 @@
 // Copyright https://github.com/MothCocoon/FlowGraph/graphs/contributors
 
 #include "Asset/FlowImportUtils.h"
+
 #include "Asset/FlowAssetFactory.h"
 #include "Graph/FlowGraphSchema_Actions.h"
+#include "Graph/FlowGraph.h"
 
 #include "FlowAsset.h"
 #include "FlowSettings.h"
@@ -11,7 +13,9 @@
 
 #include "AssetRegistry/AssetRegistryModule.h"
 #include "AssetToolsModule.h"
+#include "EdGraphNode_Comment.h"
 #include "EditorAssetLibrary.h"
+#include "K2Node_BaseAsyncTask.h"
 #include "K2Node_CallFunction.h"
 #include "K2Node_Event.h"
 #include "Misc/ScopedSlowTask.h"
@@ -38,7 +42,6 @@ UFlowAsset* UFlowImportUtils::ImportBlueprintGraph(UObject* BlueprintAsset, TSub
 
 		if (UObject* NewAsset = AssetTools.CreateAsset(FlowAssetName, PackageFolder, FlowAssetClass, Factory))
 		{
-			UEditorAssetLibrary::SaveLoadedAsset(NewAsset->GetPackage());
 			FlowAsset = Cast<UFlowAsset>(NewAsset);
 		}
 	}
@@ -56,6 +59,9 @@ UFlowAsset* UFlowImportUtils::ImportBlueprintGraph(UObject* BlueprintAsset, TSub
 	if (FlowAsset)
 	{
 		ImportBlueprintGraph(Blueprint, FlowAsset, StartEventName);
+
+		Cast<UFlowGraph>(FlowAsset->GetGraph())->RefreshGraph();
+		UEditorAssetLibrary::SaveLoadedAsset(FlowAsset->GetPackage());
 	}
 
 	return FlowAsset;
@@ -81,47 +87,63 @@ void UFlowImportUtils::ImportBlueprintGraph(UBlueprint* Blueprint, const UFlowAs
 	{
 		ExecuteAssetTask.EnterProgressFrame(1, FText::Format(LOCTEXT("FFlowGraphUtils::ImportBlueprintGraph", "Processing blueprint node: {0}"), ThisNode->GetNodeTitle(ENodeTitleType::ListView)));
 
-		const UK2Node* K2Node = Cast<UK2Node>(ThisNode);
-		if (K2Node == nullptr || K2Node->IsNodePure())
+		if (UEdGraphNode_Comment* CommentNode = Cast<UEdGraphNode_Comment>(ThisNode))
 		{
-			continue;
-		}
-
-		// create map of all non-pure blueprint nodes with theirs pin connections
-		for (const UEdGraphPin* ThisPin : ThisNode->Pins)
-		{
-			if (ThisPin->Direction == EGPD_Output && ThisPin->LinkedTo.Num() > 0)
+			// special case: recreate Comment node
+			FFlowGraphSchemaAction_NewComment CommentAction;
+			UEdGraphNode* NewNode = CommentAction.PerformAction(FlowAsset->GetGraph(), nullptr, FVector2D(CommentNode->NodePosX, CommentNode->NodePosY), false);
+			if (UEdGraphNode_Comment* CommentCopy = Cast<UEdGraphNode_Comment>(NewNode))
 			{
-				if (const UEdGraphPin* LinkedPin = ThisPin->LinkedTo[0])
-				{
-					UEdGraphNode* LinkedNode = LinkedPin->GetOwningNode();
+				CommentCopy->NodeComment = CommentNode->NodeComment;
 
-					// we assume all imported nodes except the entry point node represent functions
-					// only the first node from the left in the blueprint uber-graph has to be the Event node (UK2Node_Event)
-					const UK2Node_CallFunction* LinkedFunctionNode = Cast<UK2Node_CallFunction>(LinkedNode);
-					if (LinkedFunctionNode && !LinkedFunctionNode->IsNodePure())
-					{
-						FGraphNodeImport& ThisNodeImport = ImportedNodes.FindOrAdd(ThisNode->NodeGuid);
-						ThisNodeImport.Outputs.Add(FConnectedPin(LinkedNode->NodeGuid, LinkedPin->PinName));
-
-						FGraphNodeImport& LinkedNodeImport = ImportedNodes.FindOrAdd(LinkedNode->NodeGuid);
-						LinkedNodeImport.SourceGraphNode = LinkedNode;
-						LinkedNodeImport.Inputs.Add(FConnectedPin(ThisNode->NodeGuid, ThisPin->PinName));
-					}
-				}
+				CommentCopy->CommentColor = CommentNode->CommentColor;
+				CommentCopy->FontSize = CommentNode->FontSize;
+				CommentCopy->bCommentBubbleVisible_InDetailsPanel = CommentNode->bCommentBubbleVisible_InDetailsPanel;
+				CommentCopy->bColorCommentBubble = CommentNode->bColorCommentBubble;
+				CommentCopy->MoveMode = CommentNode->MoveMode;
 			}
 		}
-
-		// we need to know the default entry point of blueprint graph
-		const UK2Node_Event* EventNode = Cast<UK2Node_Event>(ThisNode);
-		if (EventNode && (EventNode->EventReference.GetMemberName() == StartEventName || EventNode->CustomFunctionName == StartEventName))
+		else // non-pure K2Nodes
 		{
-			StartNode = ThisNode;
+			const UK2Node* K2Node = Cast<UK2Node>(ThisNode);
+			if (K2Node && !K2Node->IsNodePure())
+			{
+				// create map of all non-pure blueprint nodes with theirs pin connections
+				for (const UEdGraphPin* ThisPin : ThisNode->Pins)
+				{
+					if (ThisPin->Direction == EGPD_Output && ThisPin->LinkedTo.Num() > 0)
+					{
+						if (const UEdGraphPin* LinkedPin = ThisPin->LinkedTo[0])
+						{
+							UEdGraphNode* LinkedNode = LinkedPin->GetOwningNode();
+
+							// we assume all imported nodes except the entry point node represent functions
+							// only the first node from the left in the blueprint uber-graph has to be the Event node (UK2Node_Event)
+							const UK2Node_CallFunction* LinkedFunctionNode = Cast<UK2Node_CallFunction>(LinkedNode);
+							const UK2Node_BaseAsyncTask* LinkedAsyncTaskNode = Cast<UK2Node_BaseAsyncTask>(LinkedNode);
+							if ((LinkedFunctionNode && !LinkedFunctionNode->IsNodePure()) || LinkedAsyncTaskNode)
+							{
+								FGraphNodeImport& ThisNodeImport = ImportedNodes.FindOrAdd(ThisNode->NodeGuid);
+								ThisNodeImport.Connections.Add(ThisPin->PinName, FConnectedPin(LinkedNode->NodeGuid, LinkedPin->PinName));
+
+								FGraphNodeImport& LinkedNodeImport = ImportedNodes.FindOrAdd(LinkedNode->NodeGuid);
+								LinkedNodeImport.SourceGraphNode = LinkedNode;
+							}
+						}
+					}
+				}
+
+				// we need to know the default entry point of blueprint graph
+				const UK2Node_Event* EventNode = Cast<UK2Node_Event>(ThisNode);
+				if (EventNode && (EventNode->EventReference.GetMemberName() == StartEventName || EventNode->CustomFunctionName == StartEventName))
+				{
+					StartNode = ThisNode;
+				}
+			}
 		}
 	}
 
 	// can't start import if provided graph doesn't have required start node
-	// todo: do we really needs this?
 	if (StartNode == nullptr)
 	{
 		return;
@@ -146,26 +168,46 @@ void UFlowImportUtils::ImportBlueprintFunction_Recursive(UEdGraphNode* Preceding
 	UEdGraph* Graph = PrecedingGraphNode->GetGraph();
 	const FGraphNodeImport& PrecedingNode = SourceNodes.FindRef(PrecedingGraphNode->NodeGuid);
 
-	for (const FConnectedPin& Output : PrecedingNode.Outputs)
+	const UFlowGraphNode* PrecedingFlowGraphNode = Cast<UFlowGraphNode>(PrecedingGraphNode);
+	if (PrecedingFlowGraphNode == nullptr || PrecedingFlowGraphNode->OutputPins.IsEmpty())
 	{
-		// todo: support multiple output pins
-		//UFlowNode* LinkedNodeDefaults = MatchingFlowNodeClass.GetDefaultObject();
-		//const FName PinName = LinkedNodeDefaults->OutputPins[0].PinName;
-		UEdGraphPin* OutputPin = Cast<UFlowGraphNode>(PrecedingGraphNode)->OutputPins[0];
+		return;
+	}
 
-		const FGuid& LinkedNodeGuid = Output.NodeGuid;
+	for (const TPair<FName, FConnectedPin>& Connection : PrecedingNode.Connections)
+	{
+		const FGuid& LinkedNodeGuid = Connection.Value.NodeGuid;
 		const FGraphNodeImport& LinkedNodeImport = SourceNodes.FindRef(LinkedNodeGuid);
 
-		// we only accept here blueprint nodes representing functions
-		const UK2Node_CallFunction* FunctionNode = Cast<UK2Node_CallFunction>(LinkedNodeImport.SourceGraphNode);
-		if (FunctionNode == nullptr)
+		// find FlowNode class matching provided UFunction name
+		TSubclassOf<UFlowNode> MatchingFlowNodeClass = nullptr;
+		if (const UK2Node_CallFunction* FunctionNode = Cast<UK2Node_CallFunction>(LinkedNodeImport.SourceGraphNode))
+		{
+			// find FlowNode class matching provided UFunction name
+			MatchingFlowNodeClass = UFlowSettings::Get()->BlueprintFunctionsToFlowNodes.FindRef(FunctionNode->GetFunctionName());
+		}
+		else if (const UK2Node_BaseAsyncTask* AsyncTaskNode = Cast<UK2Node_BaseAsyncTask>(LinkedNodeImport.SourceGraphNode))
+		{
+			// find FlowNode class matching provided AsyncTask name
+			MatchingFlowNodeClass = UFlowSettings::Get()->BlueprintFunctionsToFlowNodes.FindRef(AsyncTaskNode->GetProxyFactoryFunctionName());
+		}
+
+		if (MatchingFlowNodeClass == nullptr)
 		{
 			continue;
 		}
 
-		// find FlowNode class matching provided UFunction name
-		const TSubclassOf<UFlowNode> MatchingFlowNodeClass = UFlowSettings::Get()->BlueprintFunctionsToFlowNodes.FindRef(FunctionNode->GetFunctionName());
-		if (MatchingFlowNodeClass == nullptr)
+		// find output pin of preceding node
+		UEdGraphPin* OutputPin = nullptr;
+		for (UEdGraphPin* Pin : PrecedingFlowGraphNode->OutputPins)
+		{
+			if (Pin->PinName == Connection.Key || PrecedingFlowGraphNode->OutputPins.Num() == 1)
+			{
+				OutputPin = Pin;
+				break;
+			}
+		}
+		if (OutputPin == nullptr)
 		{
 			continue;
 		}
@@ -193,7 +235,7 @@ void UFlowImportUtils::ImportBlueprintFunction_Recursive(UEdGraphNode* Preceding
 			UEdGraphPin* LinkedPin = nullptr;
 			for (UEdGraphPin* InputPin : LinkedGraphNode->InputPins)
 			{
-				if (InputPin->PinName == Output.PinName)
+				if (InputPin->PinName == Connection.Value.PinName || LinkedGraphNode->InputPins.Num() == 1)
 				{
 					LinkedPin = InputPin;
 					break;
@@ -201,7 +243,10 @@ void UFlowImportUtils::ImportBlueprintFunction_Recursive(UEdGraphNode* Preceding
 			}
 
 			// just link the pin to existing node
-			Graph->GetSchema()->TryCreateConnection(OutputPin, LinkedPin);
+			if (LinkedPin)
+			{
+				Graph->GetSchema()->TryCreateConnection(OutputPin, LinkedPin);
+			}
 		}
 
 		if (LinkedGraphNode)
@@ -209,7 +254,7 @@ void UFlowImportUtils::ImportBlueprintFunction_Recursive(UEdGraphNode* Preceding
 			// transfer properties from UFunction input parameters to Flow Node properties
 			{
 				TMap<FName, UEdGraphPin*> InputPins;
-				for (UEdGraphPin* Pin : FunctionNode->Pins)
+				for (UEdGraphPin* Pin : LinkedNodeImport.SourceGraphNode->Pins)
 				{
 					if (Pin->Direction == EGPD_Input && !Pin->bHidden && !Pin->bOrphanedPin)
 					{
@@ -232,6 +277,8 @@ void UFlowImportUtils::ImportBlueprintFunction_Recursive(UEdGraphNode* Preceding
 					}
 				}
 			}
+
+			LinkedGraphNode->GetFlowNode()->PostImport();
 
 			// iterate next nodes
 			ImportBlueprintFunction_Recursive(LinkedGraphNode, SourceNodes);

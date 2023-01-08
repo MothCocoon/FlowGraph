@@ -133,19 +133,19 @@ UFlowAsset* UFlowNode::GetFlowAsset() const
 	return GetOuter() ? Cast<UFlowAsset>(GetOuter()) : nullptr;
 }
 
-void UFlowNode::AddInputPins(TArray<FName> PinNames)
+void UFlowNode::AddInputPins(TArray<FFlowPin> Pins)
 {
-	for (const FName& PinName : PinNames)
+	for (const FFlowPin& Pin : Pins)
 	{
-		InputPins.Emplace(PinName);
+		InputPins.Emplace(Pin);
 	}
 }
 
-void UFlowNode::AddOutputPins(TArray<FName> PinNames)
+void UFlowNode::AddOutputPins(TArray<FFlowPin> Pins)
 {
-	for (const FName& PinName : PinNames)
+	for (const FFlowPin& Pin : Pins)
 	{
-		OutputPins.Emplace(PinName);
+		OutputPins.Emplace(Pin);
 	}
 }
 

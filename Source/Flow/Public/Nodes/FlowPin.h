@@ -182,23 +182,6 @@ struct FLOW_API FConnectedPin
 	}
 };
 
-USTRUCT()
-struct FLOW_API FGraphNodeImport
-{
-	GENERATED_USTRUCT_BODY()
-
-	UPROPERTY()
-	UEdGraphNode* SourceGraphNode;
-
-	TArray<FConnectedPin> Inputs;
-	TArray<FConnectedPin> Outputs;
-
-	FGraphNodeImport()
-		: SourceGraphNode(nullptr)
-	{
-	}
-};
-
 UENUM(BlueprintType)
 enum class EFlowPinActivationType : uint8
 {

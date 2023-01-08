@@ -5,6 +5,22 @@
 #include "FlowAsset.h"
 #include "FlowImportUtils.generated.h"
 
+USTRUCT()
+struct FLOWEDITOR_API FGraphNodeImport
+{
+	GENERATED_USTRUCT_BODY()
+
+	UPROPERTY()
+	UEdGraphNode* SourceGraphNode;
+
+	TMap<FName, FConnectedPin> Connections
+
+	FGraphNodeImport()
+		: SourceGraphNode(nullptr)
+	{
+	}
+};
+
 /**
  * 
  */
