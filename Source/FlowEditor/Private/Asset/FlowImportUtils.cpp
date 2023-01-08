@@ -15,7 +15,6 @@
 #include "K2Node_CallFunction.h"
 #include "K2Node_Event.h"
 #include "Misc/ScopedSlowTask.h"
-#include "PropertyPathHelpers.h"
 
 #define LOCTEXT_NAMESPACE "FlowImportUtils"
 
@@ -48,7 +47,7 @@ UFlowAsset* UFlowImportUtils::ImportBlueprintGraph(UObject* BlueprintAsset, TSub
 		const FAssetRegistryModule& AssetRegistryModule = FModuleManager::LoadModuleChecked<FAssetRegistryModule>(AssetRegistryConstants::ModuleName);
 
 		const FString PackageName = PackageFolder / (FlowAssetName + TEXT(".") + FlowAssetName);
-		const FAssetData& FoundAssetData = AssetRegistryModule.GetRegistry().GetAssetByObjectPath(*PackageName);
+		const FAssetData& FoundAssetData = AssetRegistryModule.GetRegistry().GetAssetByObjectPath(FSoftObjectPath(PackageName));
 
 		FlowAsset = Cast<UFlowAsset>(FoundAssetData.GetAsset());
 	}
@@ -218,17 +217,17 @@ void UFlowImportUtils::ImportBlueprintFunction_Recursive(UEdGraphNode* Preceding
 					}
 				}
 
-				for (TFieldIterator<FProperty> PropIt(LinkedGraphNode->GetFlowNode()->GetClass(), EFieldIteratorFlags::IncludeSuper); PropIt; ++PropIt)
+				for (TFieldIterator<FProperty> PropIt(LinkedGraphNode->GetFlowNode()->GetClass(), EFieldIteratorFlags::IncludeSuper); PropIt && (PropIt->PropertyFlags & CPF_Edit); ++PropIt)
 				{
 					const FProperty* Param = *PropIt;
-					const bool bIsEditable = !Param->HasAnyPropertyFlags(CPF_Edit | CPF_Deprecated);
+					const bool bIsEditable = !Param->HasAnyPropertyFlags(CPF_Deprecated);
 					if (bIsEditable)
 					{
 						if (const UEdGraphPin* InputPin = InputPins.FindRef(*Param->GetAuthoredName()))
 						{
 							FString const PinValue = InputPin->GetDefaultAsString();
 							uint8* Offset = Param->ContainerPtrToValuePtr<uint8>(LinkedGraphNode->GetFlowNode());
-							Param->ImportText(*PinValue, Offset, PPF_Copy, nullptr, GLog);
+							Param->ImportText_Direct(*PinValue, Offset, LinkedGraphNode->GetFlowNode(), PPF_Copy, GLog);
 						}
 					}
 				}
