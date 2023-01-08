@@ -5,8 +5,8 @@
 #include "EdGraph/EdGraphSchema.h"
 #include "FlowGraphSchema.generated.h"
 
-class UFlowNode;
 class UFlowAsset;
+class UFlowNode;
 
 DECLARE_MULTICAST_DELEGATE(FFlowGraphSchemaRefresh);
 
@@ -16,7 +16,7 @@ class FLOWEDITOR_API UFlowGraphSchema : public UEdGraphSchema
 	GENERATED_UCLASS_BODY()
 
 	friend class UFlowGraph;
-	
+
 private:
 	static bool bInitialGatherPerformed;
 	static TArray<UClass*> NativeFlowNodes;

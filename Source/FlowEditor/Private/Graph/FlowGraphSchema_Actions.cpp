@@ -77,7 +77,7 @@ UFlowGraphNode* FFlowGraphSchemaAction_NewNode::CreateNode(UEdGraph* ParentGraph
 	ParentGraph->NotifyGraphChanged();
 
 	FlowAsset->PostEditChange();
-	
+
 	// select in editor UI
 	if (bSelectNewNode)
 	{
@@ -147,6 +147,46 @@ UFlowGraphNode* FFlowGraphSchemaAction_NewNode::RecreateNode(UEdGraph* ParentGra
 	{
 		OldInstance->DestroyNode();
 	}
+
+	// call notifies
+	NewGraphNode->PostPlacedNewNode();
+	ParentGraph->NotifyGraphChanged();
+
+	return NewGraphNode;
+}
+
+UFlowGraphNode* FFlowGraphSchemaAction_NewNode::ImportNode(UEdGraph* ParentGraph, UEdGraphPin* FromPin, const UClass* NodeClass, const FGuid& NodeGuid, const FVector2D Location)
+{
+	check(NodeClass);
+
+	ParentGraph->Modify();
+	if (FromPin)
+	{
+		FromPin->Modify();
+	}
+
+	UFlowAsset* FlowAsset = CastChecked<UFlowGraph>(ParentGraph)->GetFlowAsset();
+	FlowAsset->Modify();
+
+	// create new Flow Graph node
+	const UClass* GraphNodeClass = UFlowGraphSchema::GetAssignedGraphNodeClass(NodeClass);
+	UFlowGraphNode* NewGraphNode = NewObject<UFlowGraphNode>(ParentGraph, GraphNodeClass, NAME_None, RF_Transactional);
+
+	// register to the graph
+	NewGraphNode->NodeGuid = NodeGuid;
+	ParentGraph->AddNode(NewGraphNode, false, false);
+
+	// link editor and runtime nodes together
+	UFlowNode* FlowNode = FlowAsset->CreateNode(NodeClass, NewGraphNode);
+	NewGraphNode->SetNodeTemplate(FlowNode);
+
+	// create pins and connections
+	NewGraphNode->AllocateDefaultPins();
+	NewGraphNode->AutowireNewNode(FromPin);
+
+	// set position
+	NewGraphNode->NodePosX = Location.X;
+	NewGraphNode->NodePosY = Location.Y;
 
 	// call notifies
 	NewGraphNode->PostPlacedNewNode();

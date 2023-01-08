@@ -21,7 +21,7 @@ struct FLOW_API FFlowPin
 	FString PinToolTip;
 
 	static inline FName AnyPinName = TEXT("AnyPinName");
-	
+
 	FFlowPin()
 		: PinName(NAME_None)
 	{
@@ -179,6 +179,23 @@ struct FLOW_API FConnectedPin
 	friend uint32 GetTypeHash(const FConnectedPin& ConnectedPin)
 	{
 		return GetTypeHash(ConnectedPin.NodeGuid) + GetTypeHash(ConnectedPin.PinName);
+	}
+};
+
+USTRUCT()
+struct FLOW_API FGraphNodeImport
+{
+	GENERATED_USTRUCT_BODY()
+
+	UPROPERTY()
+	UEdGraphNode* SourceGraphNode;
+
+	TArray<FConnectedPin> Inputs;
+	TArray<FConnectedPin> Outputs;
+
+	FGraphNodeImport()
+		: SourceGraphNode(nullptr)
+	{
 	}
 };
 
