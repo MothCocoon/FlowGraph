@@ -15,7 +15,6 @@
 #include "K2Node_CallFunction.h"
 #include "K2Node_Event.h"
 #include "Misc/ScopedSlowTask.h"
-#include "PropertyPathHelpers.h"
 
 #define LOCTEXT_NAMESPACE "FlowImportUtils"
 
@@ -218,10 +217,10 @@ void UFlowImportUtils::ImportBlueprintFunction_Recursive(UEdGraphNode* Preceding
 					}
 				}
 
-				for (TFieldIterator<FProperty> PropIt(LinkedGraphNode->GetFlowNode()->GetClass(), EFieldIteratorFlags::IncludeSuper); PropIt; ++PropIt)
+				for (TFieldIterator<FProperty> PropIt(LinkedGraphNode->GetFlowNode()->GetClass(), EFieldIteratorFlags::IncludeSuper); PropIt && (PropIt->PropertyFlags & CPF_Edit); ++PropIt)
 				{
 					const FProperty* Param = *PropIt;
-					const bool bIsEditable = !Param->HasAnyPropertyFlags(CPF_Edit | CPF_Deprecated);
+					const bool bIsEditable = !Param->HasAnyPropertyFlags(CPF_Deprecated);
 					if (bIsEditable)
 					{
 						if (const UEdGraphPin* InputPin = InputPins.FindRef(*Param->GetAuthoredName()))
