@@ -15,7 +15,6 @@
 #include "AssetToolsModule.h"
 #include "EdGraphNode_Comment.h"
 #include "EditorAssetLibrary.h"
-#include "K2Node_BaseAsyncTask.h"
 #include "K2Node_CallFunction.h"
 #include "K2Node_Event.h"
 #include "Misc/ScopedSlowTask.h"
@@ -183,10 +182,6 @@ void UFlowImportUtils::ImportBlueprintFunction(UFlowAsset* FlowAsset, const FImp
 	if (const UK2Node_CallFunction* FunctionNode = Cast<UK2Node_CallFunction>(NodeImport.SourceGraphNode))
 	{
 		FunctionName = FunctionNode->GetFunctionName();
-	}
-	else if (const UK2Node_BaseAsyncTask* AsyncTaskNode = Cast<UK2Node_BaseAsyncTask>(NodeImport.SourceGraphNode))
-	{
-		FunctionName = AsyncTaskNode->GetProxyFactoryFunctionName();
 	}
 
 	if (!FunctionName.IsNone())
