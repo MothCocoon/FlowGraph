@@ -29,8 +29,4 @@ class FLOW_API UFlowSettings : public UDeveloperSettings
 	
 	UPROPERTY(Config, EditAnywhere, Category = "SaveSystem")
 	bool bWarnAboutMissingIdentityTags;
-
-	// How many nodes of given class should be preloaded with the Flow Asset instance?
-	UPROPERTY(Config, EditAnywhere, Category = "Importer")
-	TMap<FName, TSubclassOf<UFlowNode>> BlueprintFunctionsToFlowNodes;
 };

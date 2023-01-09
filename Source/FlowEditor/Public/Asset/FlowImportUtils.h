@@ -6,16 +6,17 @@
 #include "FlowImportUtils.generated.h"
 
 USTRUCT()
-struct FLOWEDITOR_API FGraphNodeImport
+struct FLOWEDITOR_API FImportedGraphNode
 {
 	GENERATED_USTRUCT_BODY()
 
 	UPROPERTY()
 	UEdGraphNode* SourceGraphNode;
 
-	TMap<FName, FConnectedPin> Connections
+	TMultiMap<FName, FConnectedPin> Incoming;
+	TMultiMap<FName, FConnectedPin> Outgoing;
 
-	FGraphNodeImport()
+	FImportedGraphNode()
 		: SourceGraphNode(nullptr)
 	{
 	}
@@ -25,14 +26,16 @@ struct FLOWEDITOR_API FGraphNodeImport
  * 
  */
 UCLASS(meta = (ScriptName = "FlowImportUtils"))
-class FLOWEDITOR_API UFlowImportUtils final : public UBlueprintFunctionLibrary
+class FLOWEDITOR_API UFlowImportUtils : public UBlueprintFunctionLibrary
 {
 	GENERATED_BODY()
 
 public:
+	static TMap<FName, TSubclassOf<UFlowNode>> FunctionsToFlowNodes;
+	
 	UFUNCTION(BlueprintCallable, Category = "FlowImportUtils")
-	static UFlowAsset* ImportBlueprintGraph(UObject* BlueprintAsset, TSubclassOf<UFlowAsset> FlowAssetClass, FString FlowAssetName, const FName StartEventName = TEXT("BeginPlay"));
+	static UFlowAsset* ImportBlueprintGraph(UObject* BlueprintAsset, TSubclassOf<UFlowAsset> FlowAssetClass, FString FlowAssetName, TMap<FName, TSubclassOf<UFlowNode>> BlueprintFunctionsToFlowNodes, const FName StartEventName = TEXT("BeginPlay"));
 
-	static void ImportBlueprintGraph(UBlueprint* Blueprint, const UFlowAsset* FlowAsset, const FName StartEventName = TEXT("BeginPlay"));
-	static void ImportBlueprintFunction_Recursive(UEdGraphNode* PrecedingGraphNode, const TMap<FGuid, struct FGraphNodeImport> SourceNodes);
+	static void ImportBlueprintGraph(UBlueprint* Blueprint, UFlowAsset* FlowAsset, const FName StartEventName = TEXT("BeginPlay"));
+	static void ImportBlueprintFunction(UFlowAsset* FlowAsset, const FImportedGraphNode& NodeImport, const TMap<FGuid, struct FImportedGraphNode>& SourceNodes, TMap<FGuid, UFlowGraphNode*>& TargetNodes);
 };
