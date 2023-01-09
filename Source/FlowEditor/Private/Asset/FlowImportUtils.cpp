@@ -3,11 +3,11 @@
 #include "Asset/FlowImportUtils.h"
 
 #include "Asset/FlowAssetFactory.h"
+#include "FlowEditorModule.h"
 #include "Graph/FlowGraphSchema_Actions.h"
 #include "Graph/FlowGraph.h"
 
 #include "FlowAsset.h"
-#include "FlowSettings.h"
 #include "Nodes/FlowPin.h"
 #include "Nodes/Route/FlowNode_Start.h"
 
@@ -22,7 +22,9 @@
 
 #define LOCTEXT_NAMESPACE "FlowImportUtils"
 
-UFlowAsset* UFlowImportUtils::ImportBlueprintGraph(UObject* BlueprintAsset, TSubclassOf<UFlowAsset> FlowAssetClass, FString FlowAssetName, const FName StartEventName)
+TMap<FName, TSubclassOf<UFlowNode>> UFlowImportUtils::FunctionsToFlowNodes = TMap<FName, TSubclassOf<UFlowNode>>();
+
+UFlowAsset* UFlowImportUtils::ImportBlueprintGraph(UObject* BlueprintAsset, TSubclassOf<UFlowAsset> FlowAssetClass, FString FlowAssetName, TMap<FName, TSubclassOf<UFlowNode>> BlueprintFunctionsToFlowNodes, const FName StartEventName)
 {
 	if (BlueprintAsset == nullptr || FlowAssetClass == nullptr || FlowAssetName.IsEmpty() || StartEventName.IsNone())
 	{
@@ -58,7 +60,9 @@ UFlowAsset* UFlowImportUtils::ImportBlueprintGraph(UObject* BlueprintAsset, TSub
 	// import graph
 	if (FlowAsset)
 	{
+		FunctionsToFlowNodes = BlueprintFunctionsToFlowNodes;
 		ImportBlueprintGraph(Blueprint, FlowAsset, StartEventName);
+		FunctionsToFlowNodes.Empty();
 
 		Cast<UFlowGraph>(FlowAsset->GetGraph())->RefreshGraph();
 		UEditorAssetLibrary::SaveLoadedAsset(FlowAsset->GetPackage());
@@ -67,7 +71,7 @@ UFlowAsset* UFlowImportUtils::ImportBlueprintGraph(UObject* BlueprintAsset, TSub
 	return FlowAsset;
 }
 
-void UFlowImportUtils::ImportBlueprintGraph(UBlueprint* Blueprint, const UFlowAsset* FlowAsset, const FName StartEventName)
+void UFlowImportUtils::ImportBlueprintGraph(UBlueprint* Blueprint, UFlowAsset* FlowAsset, const FName StartEventName)
 {
 	ensureAlways(Blueprint && FlowAsset);
 
@@ -80,7 +84,7 @@ void UFlowImportUtils::ImportBlueprintGraph(UBlueprint* Blueprint, const UFlowAs
 	FScopedSlowTask ExecuteAssetTask(BlueprintGraph->Nodes.Num(), FText::Format(LOCTEXT("FFlowGraphUtils::ImportBlueprintGraph", "Reading {0}"), FText::FromString(Blueprint->GetFriendlyName())));
 	ExecuteAssetTask.MakeDialog();
 
-	TMap<FGuid, FGraphNodeImport> ImportedNodes;
+	TMap<FGuid, FImportedGraphNode> SourceNodes;
 	UEdGraphNode* StartNode = nullptr;
 
 	for (UEdGraphNode* ThisNode : BlueprintGraph->Nodes)
@@ -108,26 +112,25 @@ void UFlowImportUtils::ImportBlueprintGraph(UBlueprint* Blueprint, const UFlowAs
 			const UK2Node* K2Node = Cast<UK2Node>(ThisNode);
 			if (K2Node && !K2Node->IsNodePure())
 			{
+				FImportedGraphNode& NodeImport = SourceNodes.FindOrAdd(ThisNode->NodeGuid);
+				NodeImport.SourceGraphNode = ThisNode;
+
 				// create map of all non-pure blueprint nodes with theirs pin connections
 				for (const UEdGraphPin* ThisPin : ThisNode->Pins)
 				{
-					if (ThisPin->Direction == EGPD_Output && ThisPin->LinkedTo.Num() > 0)
+					for (const UEdGraphPin* LinkedPin : ThisPin->LinkedTo)
 					{
-						if (const UEdGraphPin* LinkedPin = ThisPin->LinkedTo[0])
+						if (LinkedPin && LinkedPin->GetOwningNode())
 						{
-							UEdGraphNode* LinkedNode = LinkedPin->GetOwningNode();
+							const FConnectedPin ConnectedPin(LinkedPin->GetOwningNode()->NodeGuid, LinkedPin->PinName);
 
-							// we assume all imported nodes except the entry point node represent functions
-							// only the first node from the left in the blueprint uber-graph has to be the Event node (UK2Node_Event)
-							const UK2Node_CallFunction* LinkedFunctionNode = Cast<UK2Node_CallFunction>(LinkedNode);
-							const UK2Node_BaseAsyncTask* LinkedAsyncTaskNode = Cast<UK2Node_BaseAsyncTask>(LinkedNode);
-							if ((LinkedFunctionNode && !LinkedFunctionNode->IsNodePure()) || LinkedAsyncTaskNode)
+							if (ThisPin->Direction == EGPD_Input)
 							{
-								FGraphNodeImport& ThisNodeImport = ImportedNodes.FindOrAdd(ThisNode->NodeGuid);
-								ThisNodeImport.Connections.Add(ThisPin->PinName, FConnectedPin(LinkedNode->NodeGuid, LinkedPin->PinName));
-
-								FGraphNodeImport& LinkedNodeImport = ImportedNodes.FindOrAdd(LinkedNode->NodeGuid);
-								LinkedNodeImport.SourceGraphNode = LinkedNode;
+								NodeImport.Incoming.Add(ThisPin->PinName, ConnectedPin);
+							}
+							else
+							{
+								NodeImport.Outgoing.Add(ThisPin->PinName, ConnectedPin);
 							}
 						}
 					}
@@ -150,138 +153,165 @@ void UFlowImportUtils::ImportBlueprintGraph(UBlueprint* Blueprint, const UFlowAs
 	}
 
 	// clear existing graph
-	UEdGraph* FlowGraph = FlowAsset->GetGraph();
+	UFlowGraph* FlowGraph = Cast<UFlowGraph>(FlowAsset->GetGraph());
 	FlowGraph->Nodes.Empty();
 
+	TMap<FGuid, UFlowGraphNode*> TargetNodes;
+	
 	// recreated UFlowNode_Start, assign it a blueprint node FGuid
-	UFlowGraphNode* NewGraphNode = FFlowGraphSchemaAction_NewNode::CreateNode(FlowGraph, nullptr, UFlowNode_Start::StaticClass(), FVector2D::ZeroVector);
-	FlowGraph->GetSchema()->SetNodeMetaData(NewGraphNode, FNodeMetadata::DefaultGraphNode);
-	NewGraphNode->NodeGuid = StartNode->NodeGuid;
-	NewGraphNode->GetFlowNode()->SetGuid(StartNode->NodeGuid);
+	UFlowGraphNode* StartGraphNode = FFlowGraphSchemaAction_NewNode::CreateNode(FlowGraph, nullptr, UFlowNode_Start::StaticClass(), FVector2D::ZeroVector);
+	FlowGraph->GetSchema()->SetNodeMetaData(StartGraphNode, FNodeMetadata::DefaultGraphNode);
+	StartGraphNode->NodeGuid = StartNode->NodeGuid;
+	StartGraphNode->GetFlowNode()->SetGuid(StartNode->NodeGuid);
+	TargetNodes.Add(StartGraphNode->NodeGuid, StartGraphNode);
 
 	// execute graph import
-	ImportBlueprintFunction_Recursive(FlowGraph->Nodes[0], ImportedNodes);
+	// iterate all nodes separately, ensures we import all possible nodes and connect them together
+	for (const TPair<FGuid, FImportedGraphNode>& SourceNode : SourceNodes)
+	{
+		ImportBlueprintFunction(FlowAsset, SourceNode.Value, SourceNodes, TargetNodes);
+	}
 }
 
-void UFlowImportUtils::ImportBlueprintFunction_Recursive(UEdGraphNode* PrecedingGraphNode, const TMap<FGuid, FGraphNodeImport> SourceNodes)
+void UFlowImportUtils::ImportBlueprintFunction(UFlowAsset* FlowAsset, const FImportedGraphNode& NodeImport, const TMap<FGuid, FImportedGraphNode>& SourceNodes, TMap<FGuid, UFlowGraphNode*>& TargetNodes)
 {
-	UEdGraph* Graph = PrecedingGraphNode->GetGraph();
-	const FGraphNodeImport& PrecedingNode = SourceNodes.FindRef(PrecedingGraphNode->NodeGuid);
+	ensureAlways(NodeImport.SourceGraphNode);
+	TSubclassOf<UFlowNode> MatchingFlowNodeClass = nullptr;
 
-	const UFlowGraphNode* PrecedingFlowGraphNode = Cast<UFlowGraphNode>(PrecedingGraphNode);
-	if (PrecedingFlowGraphNode == nullptr || PrecedingFlowGraphNode->OutputPins.IsEmpty())
+	// find FlowNode class matching provided UFunction name
+	FName FunctionName = NAME_None;
+	if (const UK2Node_CallFunction* FunctionNode = Cast<UK2Node_CallFunction>(NodeImport.SourceGraphNode))
 	{
+		FunctionName = FunctionNode->GetFunctionName();
+	}
+	else if (const UK2Node_BaseAsyncTask* AsyncTaskNode = Cast<UK2Node_BaseAsyncTask>(NodeImport.SourceGraphNode))
+	{
+		FunctionName = AsyncTaskNode->GetProxyFactoryFunctionName();
+	}
+
+	if (!FunctionName.IsNone())
+	{
+		// find FlowNode class matching provided UFunction name
+		MatchingFlowNodeClass = FunctionsToFlowNodes.FindRef(FunctionName);
+	}
+	
+	if (MatchingFlowNodeClass == nullptr)
+	{
+		UE_LOG(LogFlowEditor, Error, TEXT("Can't find Flow Node class for K2Node, function name %s"), *FunctionName.ToString());
 		return;
 	}
 
-	for (const TPair<FName, FConnectedPin>& Connection : PrecedingNode.Connections)
+	const FGuid& NodeGuid = NodeImport.SourceGraphNode->NodeGuid;
+
+	// create a new Flow Graph node
+	const FVector2d Location = FVector2D(NodeImport.SourceGraphNode->NodePosX, NodeImport.SourceGraphNode->NodePosY);
+	UFlowGraphNode* FlowGraphNode = FFlowGraphSchemaAction_NewNode::ImportNode(FlowAsset->GetGraph(), nullptr, MatchingFlowNodeClass, NodeGuid, Location);
+
+	if (FlowGraphNode == nullptr)
 	{
-		const FGuid& LinkedNodeGuid = Connection.Value.NodeGuid;
-		const FGraphNodeImport& LinkedNodeImport = SourceNodes.FindRef(LinkedNodeGuid);
+		return;
+	}
+	TargetNodes.Add(NodeGuid, FlowGraphNode);
 
-		// find FlowNode class matching provided UFunction name
-		TSubclassOf<UFlowNode> MatchingFlowNodeClass = nullptr;
-		if (const UK2Node_CallFunction* FunctionNode = Cast<UK2Node_CallFunction>(LinkedNodeImport.SourceGraphNode))
+	// transfer properties from UFunction input parameters to Flow Node properties
+	{
+		TMap<FName, UEdGraphPin*> InputPins;
+		for (UEdGraphPin* Pin : NodeImport.SourceGraphNode->Pins)
 		{
-			// find FlowNode class matching provided UFunction name
-			MatchingFlowNodeClass = UFlowSettings::Get()->BlueprintFunctionsToFlowNodes.FindRef(FunctionNode->GetFunctionName());
-		}
-		else if (const UK2Node_BaseAsyncTask* AsyncTaskNode = Cast<UK2Node_BaseAsyncTask>(LinkedNodeImport.SourceGraphNode))
-		{
-			// find FlowNode class matching provided AsyncTask name
-			MatchingFlowNodeClass = UFlowSettings::Get()->BlueprintFunctionsToFlowNodes.FindRef(AsyncTaskNode->GetProxyFactoryFunctionName());
-		}
-
-		if (MatchingFlowNodeClass == nullptr)
-		{
-			continue;
-		}
-
-		// find output pin of preceding node
-		UEdGraphPin* OutputPin = nullptr;
-		for (UEdGraphPin* Pin : PrecedingFlowGraphNode->OutputPins)
-		{
-			if (Pin->PinName == Connection.Key || PrecedingFlowGraphNode->OutputPins.Num() == 1)
+			if (Pin->Direction == EGPD_Input && !Pin->bHidden && !Pin->bOrphanedPin)
 			{
-				OutputPin = Pin;
-				break;
-			}
-		}
-		if (OutputPin == nullptr)
-		{
-			continue;
-		}
-
-		// check if already imported connected node
-		// todo: optimize?
-		UFlowGraphNode* LinkedGraphNode = nullptr;
-		for (const TObjectPtr<UEdGraphNode> ExistingGraphNode : Graph->Nodes)
-		{
-			if (ExistingGraphNode->NodeGuid == LinkedNodeGuid)
-			{
-				LinkedGraphNode = Cast<UFlowGraphNode>(ExistingGraphNode);
-				break;
+				InputPins.Add(Pin->PinName, Pin);
 			}
 		}
 
-		if (LinkedGraphNode == nullptr)
+		for (TFieldIterator<FProperty> PropIt(FlowGraphNode->GetFlowNode()->GetClass(), EFieldIteratorFlags::IncludeSuper); PropIt && (PropIt->PropertyFlags & CPF_Edit); ++PropIt)
 		{
-			// create a new Flow Graph node
-			const FVector2d Location = FVector2D(LinkedNodeImport.SourceGraphNode->NodePosX, LinkedNodeImport.SourceGraphNode->NodePosY);
-			LinkedGraphNode = FFlowGraphSchemaAction_NewNode::ImportNode(PrecedingGraphNode->GetGraph(), OutputPin, MatchingFlowNodeClass, LinkedNodeGuid, Location);
-		}
-		else
-		{
-			UEdGraphPin* LinkedPin = nullptr;
-			for (UEdGraphPin* InputPin : LinkedGraphNode->InputPins)
+			const FProperty* Param = *PropIt;
+			const bool bIsEditable = !Param->HasAnyPropertyFlags(CPF_Deprecated);
+			if (bIsEditable)
 			{
-				if (InputPin->PinName == Connection.Value.PinName || LinkedGraphNode->InputPins.Num() == 1)
+				if (const UEdGraphPin* InputPin = InputPins.FindRef(*Param->GetAuthoredName()))
 				{
-					LinkedPin = InputPin;
+					FString const PinValue = InputPin->GetDefaultAsString();
+					uint8* Offset = Param->ContainerPtrToValuePtr<uint8>(FlowGraphNode->GetFlowNode());
+					Param->ImportText_Direct(*PinValue, Offset, FlowGraphNode->GetFlowNode(), PPF_Copy, GLog);
+				}
+			}
+		}
+	}
+
+	// Flow Nodes with Context Pins needs to update related data and call OnReconstructionRequested.ExecuteIfBound() in order to fully construct a graph node
+	FlowGraphNode->GetFlowNode()->PostImport();
+
+	// connect new node to all already recreated nodes
+	for (const TPair<FName, FConnectedPin>& Connection : NodeImport.Incoming)
+	{
+		UEdGraphPin* ThisPin = nullptr;
+		for (UEdGraphPin* Pin : FlowGraphNode->InputPins)
+		{
+			if (Pin->PinName == Connection.Key || FlowGraphNode->InputPins.Num() == 1)
+			{
+				ThisPin = Pin;
+				break;
+			}
+		}
+		if (ThisPin == nullptr)
+		{
+			continue;
+		}
+		
+		UEdGraphPin* ConnectedPin = nullptr;
+		if (UFlowGraphNode* ConnectedNode = TargetNodes.FindRef(Connection.Value.NodeGuid))
+		{
+			for (UEdGraphPin* Pin : ConnectedNode->OutputPins)
+			{
+				if (ConnectedNode->OutputPins.Num() == 1 || Pin->PinName == Connection.Value.PinName)
+				{
+					ConnectedPin = Pin;
 					break;
 				}
 			}
+		}
 
-			// just link the pin to existing node
-			if (LinkedPin)
+		// link the pin to existing node
+		if (ConnectedPin)
+		{
+			FlowAsset->GetGraph()->GetSchema()->TryCreateConnection(ThisPin, ConnectedPin);
+		}
+	}
+	for (const TPair<FName, FConnectedPin>& Connection : NodeImport.Outgoing)
+	{
+		UEdGraphPin* ThisPin = nullptr;
+		for (UEdGraphPin* Pin : FlowGraphNode->OutputPins)
+		{
+			if (Pin->PinName == Connection.Key || FlowGraphNode->OutputPins.Num() == 1)
 			{
-				Graph->GetSchema()->TryCreateConnection(OutputPin, LinkedPin);
+				ThisPin = Pin;
+				break;
+			}
+		}
+		if (ThisPin == nullptr)
+		{
+			continue;
+		}
+		
+		UEdGraphPin* ConnectedPin = nullptr;
+		if (UFlowGraphNode* ConnectedNode = TargetNodes.FindRef(Connection.Value.NodeGuid))
+		{
+			for (UEdGraphPin* Pin : ConnectedNode->InputPins)
+			{
+				if (ConnectedNode->InputPins.Num() == 1 || Pin->PinName == Connection.Value.PinName)
+				{
+					ConnectedPin = Pin;
+					break;
+				}
 			}
 		}
 
-		if (LinkedGraphNode)
+		// link the pin to existing node
+		if (ConnectedPin)
 		{
-			// transfer properties from UFunction input parameters to Flow Node properties
-			{
-				TMap<FName, UEdGraphPin*> InputPins;
-				for (UEdGraphPin* Pin : LinkedNodeImport.SourceGraphNode->Pins)
-				{
-					if (Pin->Direction == EGPD_Input && !Pin->bHidden && !Pin->bOrphanedPin)
-					{
-						InputPins.Add(Pin->PinName, Pin);
-					}
-				}
-
-				for (TFieldIterator<FProperty> PropIt(LinkedGraphNode->GetFlowNode()->GetClass(), EFieldIteratorFlags::IncludeSuper); PropIt && (PropIt->PropertyFlags & CPF_Edit); ++PropIt)
-				{
-					const FProperty* Param = *PropIt;
-					const bool bIsEditable = !Param->HasAnyPropertyFlags(CPF_Deprecated);
-					if (bIsEditable)
-					{
-						if (const UEdGraphPin* InputPin = InputPins.FindRef(*Param->GetAuthoredName()))
-						{
-							FString const PinValue = InputPin->GetDefaultAsString();
-							uint8* Offset = Param->ContainerPtrToValuePtr<uint8>(LinkedGraphNode->GetFlowNode());
-							Param->ImportText_Direct(*PinValue, Offset, LinkedGraphNode->GetFlowNode(), PPF_Copy, GLog);
-						}
-					}
-				}
-			}
-
-			LinkedGraphNode->GetFlowNode()->PostImport();
-
-			// iterate next nodes
-			ImportBlueprintFunction_Recursive(LinkedGraphNode, SourceNodes);
+			FlowAsset->GetGraph()->GetSchema()->TryCreateConnection(ThisPin, ConnectedPin);
 		}
 	}
 }
