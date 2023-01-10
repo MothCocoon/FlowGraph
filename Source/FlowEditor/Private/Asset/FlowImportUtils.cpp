@@ -229,7 +229,7 @@ void UFlowImportUtils::ImportBlueprintFunction(UFlowAsset* FlowAsset, const FImp
 				{
 					FString const PinValue = InputPin->GetDefaultAsString();
 					uint8* Offset = Param->ContainerPtrToValuePtr<uint8>(FlowGraphNode->GetFlowNode());
-					Param->ImportText_Direct(*PinValue, Offset, FlowGraphNode->GetFlowNode(), PPF_Copy, GLog);
+					Param->ImportText(*PinValue, Offset, PPF_Copy, nullptr, GLog);
 				}
 			}
 		}
