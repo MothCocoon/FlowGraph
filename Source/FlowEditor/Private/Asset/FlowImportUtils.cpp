@@ -15,11 +15,14 @@
 #include "AssetToolsModule.h"
 #include "EdGraphNode_Comment.h"
 #include "EditorAssetLibrary.h"
+#include "Misc/ScopedSlowTask.h"
+
+#if ENABLE_ASYNC_NODES_IMPORT
 #include "K2Node_BaseAsyncTask.h"
+#endif
 #include "K2Node_CallFunction.h"
 #include "K2Node_Event.h"
 #include "K2Node_IfThenElse.h"
-#include "Misc/ScopedSlowTask.h"
 
 #define LOCTEXT_NAMESPACE "FlowImportUtils"
 
@@ -37,7 +40,7 @@ UFlowAsset* UFlowImportUtils::ImportBlueprintGraph(UObject* BlueprintAsset, cons
 	UBlueprint* Blueprint = Cast<UBlueprint>(BlueprintAsset);
 	UFlowAsset* FlowAsset = nullptr;
 
-	// we assume that users want to have a converted asset in the same folder as the legacy blueprint  
+	// we assume that users want to have a converted asset in the same folder as the legacy blueprint
 	const FString PackageFolder = FPaths::GetPath(Blueprint->GetOuter()->GetPathName());
 
 	if (!FPackageName::DoesPackageExist(PackageFolder / FlowAssetName, nullptr)) // create a new asset
@@ -189,10 +192,12 @@ void UFlowImportUtils::ImportBlueprintFunction(const UFlowAsset* FlowAsset, cons
 	{
 		FunctionName = FunctionNode->GetFunctionName();
 	}
+#if ENABLE_ASYNC_NODES_IMPORT
 	else if (const UK2Node_BaseAsyncTask* AsyncTaskNode = Cast<UK2Node_BaseAsyncTask>(NodeImport.SourceGraphNode))
 	{
 		FunctionName = AsyncTaskNode->GetProxyFactoryFunctionName();
 	}
+#endif
 	else if (Cast<UK2Node_IfThenElse>(NodeImport.SourceGraphNode))
 	{
 		FunctionName = TEXT("Branch");
