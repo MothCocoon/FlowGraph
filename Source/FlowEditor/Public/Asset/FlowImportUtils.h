@@ -5,6 +5,7 @@
 #include "FlowAsset.h"
 #include "FlowImportUtils.generated.h"
 
+// Helper structure allowing to recreate blueprint graph as Flow Graph
 USTRUCT()
 struct FLOWEDITOR_API FImportedGraphNode
 {
@@ -22,6 +23,22 @@ struct FLOWEDITOR_API FImportedGraphNode
 	}
 };
 
+// Helper structure allowing to copy properties from blueprint function pin to the Flow Node property of different name
+USTRUCT(BlueprintType)
+struct FLOWEDITOR_API FBlueprintToFlowPinName
+{
+	GENERATED_USTRUCT_BODY()
+
+	// Key represents Flow Node property name
+	// Value represents Input Pin name of blueprint function
+	UPROPERTY(EditAnywhere, BlueprintReadWrite)
+	TMap<FName, FName> NodePropertiesToFunctionPins;
+
+	FBlueprintToFlowPinName()
+	{
+	}
+};
+
 /**
  * 
  */
@@ -32,10 +49,15 @@ class FLOWEDITOR_API UFlowImportUtils : public UBlueprintFunctionLibrary
 
 public:
 	static TMap<FName, TSubclassOf<UFlowNode>> FunctionsToFlowNodes;
-	
+	static TMap<TSubclassOf<UFlowNode>, FBlueprintToFlowPinName> PinMappings;
+
 	UFUNCTION(BlueprintCallable, Category = "FlowImportUtils")
-	static UFlowAsset* ImportBlueprintGraph(UObject* BlueprintAsset, TSubclassOf<UFlowAsset> FlowAssetClass, FString FlowAssetName, TMap<FName, TSubclassOf<UFlowNode>> BlueprintFunctionsToFlowNodes, const FName StartEventName = TEXT("BeginPlay"));
+	static UFlowAsset* ImportBlueprintGraph(UObject* BlueprintAsset, const TSubclassOf<UFlowAsset> FlowAssetClass, const FString FlowAssetName,
+											const TMap<FName, TSubclassOf<UFlowNode>> InFunctionsToFlowNodes, const TMap<TSubclassOf<UFlowNode>, FBlueprintToFlowPinName> InPinMappings, const FName StartEventName = TEXT("BeginPlay"));
 
 	static void ImportBlueprintGraph(UBlueprint* Blueprint, UFlowAsset* FlowAsset, const FName StartEventName = TEXT("BeginPlay"));
-	static void ImportBlueprintFunction(UFlowAsset* FlowAsset, const FImportedGraphNode& NodeImport, const TMap<FGuid, struct FImportedGraphNode>& SourceNodes, TMap<FGuid, UFlowGraphNode*>& TargetNodes);
+	static void ImportBlueprintFunction(const UFlowAsset* FlowAsset, const FImportedGraphNode& NodeImport, const TMap<FGuid, struct FImportedGraphNode>& SourceNodes, TMap<FGuid, UFlowGraphNode*>& TargetNodes);
+
+	static void GetValidInputPins(const UEdGraphNode* GraphNode, TMap<const FName, const UEdGraphPin*>& Result);
+	static const UEdGraphPin* FindPinMatchingToProperty(UClass* FlowNodeClass, const FProperty* Property, const TMap<const FName, const UEdGraphPin*>Pins);
 };
