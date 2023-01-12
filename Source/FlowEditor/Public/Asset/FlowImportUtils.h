@@ -31,7 +31,7 @@ struct FLOWEDITOR_API FBlueprintToFlowPinName
 
 	// Key represents Flow Node property name
 	// Value represents Input Pin name of blueprint function
-	UPROPERTY(EditAnywhere, BlueprintReadWrite)
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Pins")
 	TMap<FName, FName> NodePropertiesToFunctionPins;
 
 	FBlueprintToFlowPinName()
