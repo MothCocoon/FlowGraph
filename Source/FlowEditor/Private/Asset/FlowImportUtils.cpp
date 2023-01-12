@@ -15,15 +15,19 @@
 #include "AssetToolsModule.h"
 #include "EdGraphNode_Comment.h"
 #include "EditorAssetLibrary.h"
+#include "K2Node_BaseAsyncTask.h"
 #include "K2Node_CallFunction.h"
 #include "K2Node_Event.h"
+#include "K2Node_IfThenElse.h"
 #include "Misc/ScopedSlowTask.h"
 
 #define LOCTEXT_NAMESPACE "FlowImportUtils"
 
 TMap<FName, TSubclassOf<UFlowNode>> UFlowImportUtils::FunctionsToFlowNodes = TMap<FName, TSubclassOf<UFlowNode>>();
+TMap<TSubclassOf<UFlowNode>, FBlueprintToFlowPinName> UFlowImportUtils::PinMappings = TMap<TSubclassOf<UFlowNode>, FBlueprintToFlowPinName>();
 
-UFlowAsset* UFlowImportUtils::ImportBlueprintGraph(UObject* BlueprintAsset, TSubclassOf<UFlowAsset> FlowAssetClass, FString FlowAssetName, TMap<FName, TSubclassOf<UFlowNode>> BlueprintFunctionsToFlowNodes, const FName StartEventName)
+UFlowAsset* UFlowImportUtils::ImportBlueprintGraph(UObject* BlueprintAsset, const TSubclassOf<UFlowAsset> FlowAssetClass, const FString FlowAssetName,
+													const TMap<FName, TSubclassOf<UFlowNode>> InFunctionsToFlowNodes, const TMap<TSubclassOf<UFlowNode>, FBlueprintToFlowPinName> InPinMappings, const FName StartEventName)
 {
 	if (BlueprintAsset == nullptr || FlowAssetClass == nullptr || FlowAssetName.IsEmpty() || StartEventName.IsNone())
 	{
@@ -33,7 +37,7 @@ UFlowAsset* UFlowImportUtils::ImportBlueprintGraph(UObject* BlueprintAsset, TSub
 	UBlueprint* Blueprint = Cast<UBlueprint>(BlueprintAsset);
 	UFlowAsset* FlowAsset = nullptr;
 
-	// we assume that users want to have a converted asset in the same folder as the legacy blueprint
+	// we assume that users want to have a converted asset in the same folder as the legacy blueprint  
 	const FString PackageFolder = FPaths::GetPath(Blueprint->GetOuter()->GetPathName());
 
 	if (!FPackageName::DoesPackageExist(PackageFolder / FlowAssetName, nullptr)) // create a new asset
@@ -59,7 +63,9 @@ UFlowAsset* UFlowImportUtils::ImportBlueprintGraph(UObject* BlueprintAsset, TSub
 	// import graph
 	if (FlowAsset)
 	{
-		FunctionsToFlowNodes = BlueprintFunctionsToFlowNodes;
+		FunctionsToFlowNodes = InFunctionsToFlowNodes;
+		PinMappings = InPinMappings;
+
 		ImportBlueprintGraph(Blueprint, FlowAsset, StartEventName);
 		FunctionsToFlowNodes.Empty();
 
@@ -156,7 +162,7 @@ void UFlowImportUtils::ImportBlueprintGraph(UBlueprint* Blueprint, UFlowAsset* F
 	FlowGraph->Nodes.Empty();
 
 	TMap<FGuid, UFlowGraphNode*> TargetNodes;
-	
+
 	// recreated UFlowNode_Start, assign it a blueprint node FGuid
 	UFlowGraphNode* StartGraphNode = FFlowGraphSchemaAction_NewNode::CreateNode(FlowGraph, nullptr, UFlowNode_Start::StaticClass(), FVector2D::ZeroVector);
 	FlowGraph->GetSchema()->SetNodeMetaData(StartGraphNode, FNodeMetadata::DefaultGraphNode);
@@ -172,7 +178,7 @@ void UFlowImportUtils::ImportBlueprintGraph(UBlueprint* Blueprint, UFlowAsset* F
 	}
 }
 
-void UFlowImportUtils::ImportBlueprintFunction(UFlowAsset* FlowAsset, const FImportedGraphNode& NodeImport, const TMap<FGuid, FImportedGraphNode>& SourceNodes, TMap<FGuid, UFlowGraphNode*>& TargetNodes)
+void UFlowImportUtils::ImportBlueprintFunction(const UFlowAsset* FlowAsset, const FImportedGraphNode& NodeImport, const TMap<FGuid, FImportedGraphNode>& SourceNodes, TMap<FGuid, UFlowGraphNode*>& TargetNodes)
 {
 	ensureAlways(NodeImport.SourceGraphNode);
 	TSubclassOf<UFlowNode> MatchingFlowNodeClass = nullptr;
@@ -183,13 +189,21 @@ void UFlowImportUtils::ImportBlueprintFunction(UFlowAsset* FlowAsset, const FImp
 	{
 		FunctionName = FunctionNode->GetFunctionName();
 	}
+	else if (const UK2Node_BaseAsyncTask* AsyncTaskNode = Cast<UK2Node_BaseAsyncTask>(NodeImport.SourceGraphNode))
+	{
+		FunctionName = AsyncTaskNode->GetProxyFactoryFunctionName();
+	}
+	else if (Cast<UK2Node_IfThenElse>(NodeImport.SourceGraphNode))
+	{
+		FunctionName = TEXT("Branch");
+	}
 
 	if (!FunctionName.IsNone())
 	{
 		// find FlowNode class matching provided UFunction name
 		MatchingFlowNodeClass = FunctionsToFlowNodes.FindRef(FunctionName);
 	}
-	
+
 	if (MatchingFlowNodeClass == nullptr)
 	{
 		UE_LOG(LogFlowEditor, Error, TEXT("Can't find Flow Node class for K2Node, function name %s"), *FunctionName.ToString());
@@ -210,26 +224,67 @@ void UFlowImportUtils::ImportBlueprintFunction(UFlowAsset* FlowAsset, const FImp
 
 	// transfer properties from UFunction input parameters to Flow Node properties
 	{
-		TMap<FName, UEdGraphPin*> InputPins;
-		for (UEdGraphPin* Pin : NodeImport.SourceGraphNode->Pins)
-		{
-			if (Pin->Direction == EGPD_Input && !Pin->bHidden && !Pin->bOrphanedPin)
-			{
-				InputPins.Add(Pin->PinName, Pin);
-			}
-		}
+		TMap<const FName, const UEdGraphPin*> InputPins;
+		GetValidInputPins(NodeImport.SourceGraphNode, InputPins);
 
-		for (TFieldIterator<FProperty> PropIt(FlowGraphNode->GetFlowNode()->GetClass(), EFieldIteratorFlags::IncludeSuper); PropIt && (PropIt->PropertyFlags & CPF_Edit); ++PropIt)
+		UClass* FlowNodeClass = FlowGraphNode->GetFlowNode()->GetClass();
+		for (TFieldIterator<FProperty> PropIt(FlowNodeClass, EFieldIteratorFlags::IncludeSuper); PropIt && (PropIt->PropertyFlags & CPF_Edit); ++PropIt)
 		{
 			const FProperty* Param = *PropIt;
 			const bool bIsEditable = !Param->HasAnyPropertyFlags(CPF_Deprecated);
 			if (bIsEditable)
 			{
-				if (const UEdGraphPin* InputPin = InputPins.FindRef(*Param->GetAuthoredName()))
+				if (const UEdGraphPin* MatchingInputPin = FindPinMatchingToProperty(FlowNodeClass, Param, InputPins))
 				{
-					FString const PinValue = InputPin->GetDefaultAsString();
-					uint8* Offset = Param->ContainerPtrToValuePtr<uint8>(FlowGraphNode->GetFlowNode());
-					Param->ImportText_Direct(*PinValue, Offset, FlowGraphNode->GetFlowNode(), PPF_Copy, GLog);
+					if (MatchingInputPin->LinkedTo.Num() == 0) // nothing connected to pin, so user can set value directly on this pin
+					{
+						FString const PinValue = MatchingInputPin->GetDefaultAsString();
+						uint8* Offset = Param->ContainerPtrToValuePtr<uint8>(FlowGraphNode->GetFlowNode());
+						Param->ImportText_Direct(*PinValue, Offset, FlowGraphNode->GetFlowNode(), PPF_Copy, GLog);
+					}
+				}
+				else // try to find matching Pin in connected pure nodes
+				{
+					bool bPinFound = false;
+					for (const TPair<const FName, const UEdGraphPin*> InputPin : InputPins)
+					{
+						for (const UEdGraphPin* LinkedPin : InputPin.Value->LinkedTo)
+						{
+							if (LinkedPin && LinkedPin->GetOwningNode()) // try to read value from the first pure node connected to the pin
+							{
+								// in theory, we could put this part in recursive loop, iterating pure nodes until we find one with matching Pin Name
+								// in practice, iterating blueprint graph isn't that easy as might encounter Make/Break nodes, array builders
+								// if someone is willing put work to it, you're welcome to make a pull request
+
+								UK2Node* LinkedK2Node = Cast<UK2Node>(LinkedPin->GetOwningNode());
+								if (LinkedK2Node && LinkedK2Node->IsNodePure())
+								{
+									TMap<const FName, const UEdGraphPin*> PureNodePins;
+									GetValidInputPins(LinkedK2Node, PureNodePins);
+
+									if (const UEdGraphPin* PureInputPin = FindPinMatchingToProperty(FlowNodeClass, Param, PureNodePins))
+									{
+										if (PureInputPin->LinkedTo.Num() == 0) // nothing connected to pin, so user can set value directly on this pin
+										{
+											FString const PinValue = PureInputPin->GetDefaultAsString();
+											uint8* Offset = Param->ContainerPtrToValuePtr<uint8>(FlowGraphNode->GetFlowNode());
+											Param->ImportText_Direct(*PinValue, Offset, FlowGraphNode->GetFlowNode(), PPF_Copy, GLog);
+
+											bPinFound = true;
+										}
+									}
+								}
+
+								// there can be only single valid connection on input parameter pin
+								break;
+							}
+						}
+
+						if (bPinFound)
+						{
+							break;
+						}
+					}
 				}
 			}
 		}
@@ -242,11 +297,11 @@ void UFlowImportUtils::ImportBlueprintFunction(UFlowAsset* FlowAsset, const FImp
 	for (const TPair<FName, FConnectedPin>& Connection : NodeImport.Incoming)
 	{
 		UEdGraphPin* ThisPin = nullptr;
-		for (UEdGraphPin* Pin : FlowGraphNode->InputPins)
+		for (UEdGraphPin* FlowInputPin : FlowGraphNode->InputPins)
 		{
-			if (Pin->PinName == Connection.Key || FlowGraphNode->InputPins.Num() == 1)
+			if (FlowGraphNode->InputPins.Num() == 1 || Connection.Key == FlowInputPin->PinName)
 			{
-				ThisPin = Pin;
+				ThisPin = FlowInputPin;
 				break;
 			}
 		}
@@ -254,15 +309,17 @@ void UFlowImportUtils::ImportBlueprintFunction(UFlowAsset* FlowAsset, const FImp
 		{
 			continue;
 		}
-		
+
 		UEdGraphPin* ConnectedPin = nullptr;
 		if (UFlowGraphNode* ConnectedNode = TargetNodes.FindRef(Connection.Value.NodeGuid))
 		{
-			for (UEdGraphPin* Pin : ConnectedNode->OutputPins)
+			for (UEdGraphPin* FlowOutputPin : ConnectedNode->OutputPins)
 			{
-				if (ConnectedNode->OutputPins.Num() == 1 || Pin->PinName == Connection.Value.PinName)
+				if (ConnectedNode->OutputPins.Num() == 1 || Connection.Value.PinName == FlowOutputPin->PinName
+					|| (Connection.Value.PinName == UEdGraphSchema_K2::PN_Then && FlowOutputPin->PinName == FName("TRUE"))
+					|| (Connection.Value.PinName == UEdGraphSchema_K2::PN_Else && FlowOutputPin->PinName == FName("FALSE")))
 				{
-					ConnectedPin = Pin;
+					ConnectedPin = FlowOutputPin;
 					break;
 				}
 			}
@@ -277,11 +334,13 @@ void UFlowImportUtils::ImportBlueprintFunction(UFlowAsset* FlowAsset, const FImp
 	for (const TPair<FName, FConnectedPin>& Connection : NodeImport.Outgoing)
 	{
 		UEdGraphPin* ThisPin = nullptr;
-		for (UEdGraphPin* Pin : FlowGraphNode->OutputPins)
+		for (UEdGraphPin* FlowOutputPin : FlowGraphNode->OutputPins)
 		{
-			if (Pin->PinName == Connection.Key || FlowGraphNode->OutputPins.Num() == 1)
+			if (FlowGraphNode->OutputPins.Num() == 1 || Connection.Key == FlowOutputPin->PinName
+				|| (Connection.Key == UEdGraphSchema_K2::PN_Then && FlowOutputPin->PinName == FName("TRUE"))
+				|| (Connection.Key == UEdGraphSchema_K2::PN_Else && FlowOutputPin->PinName == FName("FALSE")))
 			{
-				ThisPin = Pin;
+				ThisPin = FlowOutputPin;
 				break;
 			}
 		}
@@ -289,15 +348,15 @@ void UFlowImportUtils::ImportBlueprintFunction(UFlowAsset* FlowAsset, const FImp
 		{
 			continue;
 		}
-		
+
 		UEdGraphPin* ConnectedPin = nullptr;
 		if (UFlowGraphNode* ConnectedNode = TargetNodes.FindRef(Connection.Value.NodeGuid))
 		{
-			for (UEdGraphPin* Pin : ConnectedNode->InputPins)
+			for (UEdGraphPin* FlowInputPin : ConnectedNode->InputPins)
 			{
-				if (ConnectedNode->InputPins.Num() == 1 || Pin->PinName == Connection.Value.PinName)
+				if (ConnectedNode->InputPins.Num() == 1 || Connection.Value.PinName == FlowInputPin->PinName)
 				{
-					ConnectedPin = Pin;
+					ConnectedPin = FlowInputPin;
 					break;
 				}
 			}
@@ -309,6 +368,42 @@ void UFlowImportUtils::ImportBlueprintFunction(UFlowAsset* FlowAsset, const FImp
 			FlowAsset->GetGraph()->GetSchema()->TryCreateConnection(ThisPin, ConnectedPin);
 		}
 	}
+}
+
+void UFlowImportUtils::GetValidInputPins(const UEdGraphNode* GraphNode, TMap<const FName, const UEdGraphPin*>& Result)
+{
+	for (const UEdGraphPin* Pin : GraphNode->Pins)
+	{
+		if (Pin->Direction == EGPD_Input && !Pin->bHidden && !Pin->bOrphanedPin)
+		{
+			Result.Add(Pin->PinName, Pin);
+		}
+	}
+}
+
+const UEdGraphPin* UFlowImportUtils::FindPinMatchingToProperty(UClass* FlowNodeClass, const FProperty* Property, const TMap<const FName, const UEdGraphPin*> Pins)
+{
+	const FName& PropertyAuthoredName = *Property->GetAuthoredName();
+
+	// if Pin Name is exactly the same as Flow Node property name
+	if (const UEdGraphPin* Pin = Pins.FindRef(PropertyAuthoredName))
+	{
+		return Pin;
+	}
+
+	// if not, check if appropriate Pin Mapping has been provided
+	if (const FBlueprintToFlowPinName* PinMapping = PinMappings.Find(FlowNodeClass))
+	{
+		if (const FName* MappedPinName = PinMapping->NodePropertiesToFunctionPins.Find(PropertyAuthoredName))
+		{
+			if (const UEdGraphPin* Pin = Pins.FindRef(*MappedPinName))
+			{
+				return Pin;
+			}
+		}
+	}
+
+	return nullptr;
 }
 
 #undef LOCTEXT_NAMESPACE
