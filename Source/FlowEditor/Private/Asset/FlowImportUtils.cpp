@@ -71,6 +71,7 @@ UFlowAsset* UFlowImportUtils::ImportBlueprintGraph(UObject* BlueprintAsset, cons
 
 		ImportBlueprintGraph(Blueprint, FlowAsset, StartEventName);
 		FunctionsToFlowNodes.Empty();
+		PinMappings.Empty();
 
 		Cast<UFlowGraph>(FlowAsset->GetGraph())->RefreshGraph();
 		UEditorAssetLibrary::SaveLoadedAsset(FlowAsset->GetPackage());
@@ -107,6 +108,8 @@ void UFlowImportUtils::ImportBlueprintGraph(UBlueprint* Blueprint, UFlowAsset* F
 			if (UEdGraphNode_Comment* CommentCopy = Cast<UEdGraphNode_Comment>(NewNode))
 			{
 				CommentCopy->NodeComment = CommentNode->NodeComment;
+				CommentCopy->NodeWidth = CommentNode->NodeWidth;
+				CommentCopy->NodeHeight = CommentNode->NodeHeight;
 
 				CommentCopy->CommentColor = CommentNode->CommentColor;
 				CommentCopy->FontSize = CommentNode->FontSize;
