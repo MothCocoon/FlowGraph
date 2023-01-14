@@ -151,6 +151,8 @@ public:
 	TArray<FName> GetCustomInputs() const { return CustomInputs; }
 	TArray<FName> GetCustomOutputs() const { return CustomOutputs; }
 
+	UFlowNode_Start* GetStartNode() const;
+
 //////////////////////////////////////////////////////////////////////////
 // Instances of the template asset
 
