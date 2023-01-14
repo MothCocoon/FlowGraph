@@ -195,7 +195,7 @@ protected:
 //////////////////////////////////////////////////////////////////////////
 // Connections to other nodes
 
-private:
+protected:
 	// Map outputs to the connected node and input pin
 	UPROPERTY()
 	TMap<FName, FConnectedPin> Connections;
@@ -203,7 +203,9 @@ private:
 public:
 	void SetConnections(const TMap<FName, FConnectedPin>& InConnections) { Connections = InConnections; }
 	FConnectedPin GetConnection(const FName OutputName) const { return Connections.FindRef(OutputName); }
+
 	TSet<UFlowNode*> GetConnectedNodes() const;
+	FName GetPinConnectedToNode(const FGuid& OtherNodeGuid);
 
 	UFUNCTION(BlueprintPure, Category= "FlowNode")
 	bool IsInputConnected(const FName& PinName) const;

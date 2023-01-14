@@ -271,6 +271,19 @@ TSet<UFlowNode*> UFlowNode::GetConnectedNodes() const
 	return Result;
 }
 
+FName UFlowNode::GetPinConnectedToNode(const FGuid& OtherNodeGuid)
+{
+	for (const TPair<FName, FConnectedPin>& Connection : Connections)
+	{
+		if (Connection.Value.NodeGuid == OtherNodeGuid)
+		{
+			return Connection.Key;
+		}
+	}
+
+	return NAME_None;
+}
+
 bool UFlowNode::IsInputConnected(const FName& PinName) const
 {
 	if (GetFlowAsset())
@@ -676,11 +689,11 @@ void UFlowNode::LogError(FString Message, const EFlowOnScreenMessageType OnScree
 		GEngine->AddOnScreenDebugMessage(-1, 2.0f, FColor::Red, Message);
 	}
 
-#if WITH_EDITOR	
+#if WITH_EDITOR
 	// Message Log - not yet functional
 	{
 		Log.Error(*Message, GetGraphNode());
-		
+
 		FMessageLog MessageLog("FlowGraph");
 		MessageLog.AddMessages(Log.Messages);
 	}
@@ -696,11 +709,11 @@ void UFlowNode::LogWarning(FString Message)
 #if !UE_BUILD_SHIPPING
 	BuildMessage(Message);
 
-#if WITH_EDITOR	
+#if WITH_EDITOR
 	// Message Log - not yet functional
 	{
 		Log.Warning(*Message, GetGraphNode());
-		
+
 		FMessageLog MessageLog("FlowGraph");
 		MessageLog.AddMessages(Log.Messages);
 	}
@@ -716,11 +729,11 @@ void UFlowNode::LogNote(FString Message)
 #if !UE_BUILD_SHIPPING
 	BuildMessage(Message);
 
-#if WITH_EDITOR	
+#if WITH_EDITOR
 	// Message Log - not yet functional
 	{
 		Log.Note(*Message, GetGraphNode());
-		
+
 		FMessageLog MessageLog("FlowGraph");
 		MessageLog.AddMessages(Log.Messages);
 	}
