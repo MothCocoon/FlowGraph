@@ -196,6 +196,21 @@ void UFlowAsset::HarvestNodeConnections()
 }
 #endif
 
+UFlowNode_Start* UFlowAsset::GetStartNode() const
+{
+	for (const TPair<FGuid, UFlowNode*>& Node : Nodes)
+	{
+		// there can be only one, automatically added while creating graph
+		if (UFlowNode_Start* TestedNode = Cast<UFlowNode_Start>(Node.Value))
+		{
+			return TestedNode;
+		}
+	}
+
+	// shouldn't ever get here, Start Node is a default node that can't be deleted by user
+	return nullptr;
+}
+
 void UFlowAsset::AddInstance(UFlowAsset* Instance)
 {
 	ActiveInstances.Add(Instance);
