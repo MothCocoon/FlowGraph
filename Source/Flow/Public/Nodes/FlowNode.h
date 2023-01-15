@@ -162,13 +162,13 @@ protected:
 	TArray<FFlowPin> GetInputPins() const { return InputPins; }
 	TArray<FFlowPin> GetOutputPins() const { return OutputPins; }
 
+public:
 	UFUNCTION(BlueprintPure, Category = "FlowNode")
 	TArray<FName> GetInputNames() const;
 
 	UFUNCTION(BlueprintPure, Category = "FlowNode")
 	TArray<FName> GetOutputNames() const;
 
-public:
 #if WITH_EDITOR
 	virtual bool SupportsContextPins() const { return false; }
 
