@@ -145,7 +145,16 @@ void UFlowImportUtils::ImportBlueprintGraph(UBlueprint* Blueprint, UFlowAsset* F
 
 	// clear existing graph
 	UFlowGraph* FlowGraph = Cast<UFlowGraph>(FlowAsset->GetGraph());
-	FlowGraph->Nodes.Empty();
+	for (const TPair<FGuid, UFlowNode*>& Node : FlowAsset->GetNodes())
+	{
+		if (UFlowGraphNode* FlowGraphNode = Cast<UFlowGraphNode>(Node.Value->GetGraphNode()))
+		{
+			FlowGraph->GetSchema()->BreakNodeLinks(*FlowGraphNode);
+			FlowGraphNode->DestroyNode();
+		}
+
+		FlowAsset->UnregisterNode(Node.Key);
+	}
 
 	TMap<FGuid, UFlowGraphNode*> TargetNodes;
 
