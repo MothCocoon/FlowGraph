@@ -5,8 +5,8 @@
 #include "EdGraph/EdGraphNode.h"
 #include "Engine/StreamableManager.h"
 #include "GameplayTagContainer.h"
-#include "VisualLogger/VisualLoggerDebugSnapshotInterface.h"
 #include "Templates/SubclassOf.h"
+#include "VisualLogger/VisualLoggerDebugSnapshotInterface.h"
 
 #include "FlowMessageLog.h"
 #include "FlowTypes.h"
@@ -360,20 +360,6 @@ protected:
 
 	UFUNCTION(BlueprintImplementableEvent, Category = "FlowNode", meta = (DisplayName = "Get Actor To Focus"))
 	AActor* K2_GetActorToFocus();
-
-	template <typename T>
-	T* LoadAsset(TSoftObjectPtr<UObject> AssetPtr)
-	{
-		ensure(!AssetPtr.IsNull());
-
-		if (AssetPtr.IsPending())
-		{
-			const FSoftObjectPath& AssetRef = AssetPtr.ToSoftObjectPath();
-			AssetPtr = Cast<T>(StreamableManager.LoadSynchronous(AssetRef, false));
-		}
-
-		return Cast<T>(AssetPtr.Get());
-	}
 
 public:
 	UFUNCTION(BlueprintPure, Category = "FlowNode")
