@@ -103,7 +103,7 @@ FString UFlowNode_SubGraph::GetNodeDescription() const
 
 UObject* UFlowNode_SubGraph::GetAssetToEdit()
 {
-	return Asset.IsNull() ? nullptr : LoadAsset<UObject>(Asset);
+	return Asset.IsNull() ? nullptr : Asset.LoadSynchronous();
 }
 
 EDataValidationResult UFlowNode_SubGraph::ValidateNode()

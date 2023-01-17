@@ -127,7 +127,7 @@ void UFlowNode_PlayLevelSequence::InitializeInstance()
 
 void UFlowNode_PlayLevelSequence::CreatePlayer()
 {
-	LoadedSequence = LoadAsset<ULevelSequence>(Sequence);
+	LoadedSequence = Sequence.LoadSynchronous();
 	if (LoadedSequence)
 	{
 		ALevelSequenceActor* SequenceActor;
@@ -175,7 +175,7 @@ void UFlowNode_PlayLevelSequence::ExecuteInput(const FName& PinName)
 {
 	if (PinName == TEXT("Start"))
 	{
-		LoadedSequence = LoadAsset<ULevelSequence>(Sequence);
+		LoadedSequence = Sequence.LoadSynchronous();
 
 		if (GetFlowSubsystem()->GetWorld() && LoadedSequence)
 		{
@@ -220,7 +220,7 @@ void UFlowNode_PlayLevelSequence::OnLoad_Implementation()
 {
 	if (ElapsedTime != 0.0f)
 	{
-		LoadedSequence = LoadAsset<ULevelSequence>(Sequence);
+		LoadedSequence = Sequence.LoadSynchronous();
 		if (GetFlowSubsystem()->GetWorld() && LoadedSequence)
 		{
 			CreatePlayer();
@@ -332,7 +332,7 @@ FString UFlowNode_PlayLevelSequence::GetStatusString() const
 
 UObject* UFlowNode_PlayLevelSequence::GetAssetToEdit()
 {
-	return Sequence.IsNull() ? nullptr : LoadAsset<UObject>(Sequence);
+	return Sequence.IsNull() ? nullptr : Sequence.LoadSynchronous();
 }
 #endif
 
