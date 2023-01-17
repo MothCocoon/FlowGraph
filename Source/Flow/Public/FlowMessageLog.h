@@ -57,24 +57,27 @@ public:
 	}
 
 	template <typename T>
-	void Error(const TCHAR* Format, T* Object)
+	TSharedRef<FTokenizedMessage> Error(const TCHAR* Format, T* Object)
 	{
 		TSharedRef<FTokenizedMessage> Message = FTokenizedMessage::Create(EMessageSeverity::Error);
 		AddMessage<T>(NAME_None, Format, Message, Object);
+		return Message;
 	}
 
 	template <typename T>
-	void Warning(const TCHAR* Format, T* Object)
+	TSharedRef<FTokenizedMessage> Warning(const TCHAR* Format, T* Object)
 	{
 		TSharedRef<FTokenizedMessage> Message = FTokenizedMessage::Create(EMessageSeverity::Warning);
 		AddMessage<T>(NAME_None, Format, Message, Object);
+		return Message;
 	}
 
 	template <typename T>
-	void Note(const TCHAR* Format, T* Object)
+	TSharedRef<FTokenizedMessage> Note(const TCHAR* Format, T* Object)
 	{
 		TSharedRef<FTokenizedMessage> Message = FTokenizedMessage::Create(EMessageSeverity::Info);
 		AddMessage<T>(NAME_None, Format, Message, Object);
+		return Message;
 	}
 
 protected:

@@ -47,9 +47,10 @@
 
 const FName FFlowAssetEditor::DetailsTab(TEXT("Details"));
 const FName FFlowAssetEditor::GraphTab(TEXT("Graph"));
-const FName FFlowAssetEditor::MessagesTab(TEXT("Messages"));
 const FName FFlowAssetEditor::PaletteTab(TEXT("Palette"));
+const FName FFlowAssetEditor::RuntimeLogTab(TEXT("RuntimeLog"));
 const FName FFlowAssetEditor::SearchTab(TEXT("Search"));
+const FName FFlowAssetEditor::ValidationLogTab(TEXT("ValidationLog"));
 
 FFlowAssetEditor::FFlowAssetEditor()
 	: FlowAsset(nullptr)
@@ -124,26 +125,31 @@ void FFlowAssetEditor::RegisterTabSpawners(const TSharedRef<class FTabManager>& 
 				.SetIcon(FSlateIcon(FAppStyle::GetAppStyleSetName(), "LevelEditor.Tabs.Details"));
 
 	InTabManager->RegisterTabSpawner(GraphTab, FOnSpawnTab::CreateSP(this, &FFlowAssetEditor::SpawnTab_Graph))
-				.SetDisplayName(LOCTEXT("GraphTab", "Viewport"))
+				.SetDisplayName(LOCTEXT("GraphTab", "Graph"))
 				.SetGroup(WorkspaceMenuCategoryRef)
 				.SetIcon(FSlateIcon(FAppStyle::GetAppStyleSetName(), "GraphEditor.EventGraph_16x"));
-
-	InTabManager->RegisterTabSpawner(MessagesTab, FOnSpawnTab::CreateSP(this, &FFlowAssetEditor::SpawnTab_MessageLog))
-				.SetDisplayName(LOCTEXT("MessagesTab", "Messages"))
-				.SetGroup(WorkspaceMenuCategoryRef)
-				.SetIcon(FSlateIcon(FAppStyle::GetAppStyleSetName(), "Kismet.Tabs.CompilerResults"));
 	
 	InTabManager->RegisterTabSpawner(PaletteTab, FOnSpawnTab::CreateSP(this, &FFlowAssetEditor::SpawnTab_Palette))
 				.SetDisplayName(LOCTEXT("PaletteTab", "Palette"))
 				.SetGroup(WorkspaceMenuCategoryRef)
 				.SetIcon(FSlateIcon(FAppStyle::GetAppStyleSetName(), "Kismet.Tabs.Palette"));
 
+	InTabManager->RegisterTabSpawner(RuntimeLogTab, FOnSpawnTab::CreateSP(this, &FFlowAssetEditor::SpawnTab_RuntimeLog))
+				.SetDisplayName(LOCTEXT("RuntimeLog", "RuntimeLog"))
+				.SetGroup(WorkspaceMenuCategoryRef)
+				.SetIcon(FSlateIcon(FAppStyle::GetAppStyleSetName(), "Kismet.Tabs.CompilerResults"));
+
 #if ENABLE_SEARCH_IN_ASSET_EDITOR
 	InTabManager->RegisterTabSpawner(SearchTab, FOnSpawnTab::CreateSP(this, &FFlowAssetEditor::SpawnTab_Search))
 				.SetDisplayName(LOCTEXT("SearchTab", "Search"))
 				.SetGroup(WorkspaceMenuCategoryRef)
 				.SetIcon(FSlateIcon(FAppStyle::GetAppStyleSetName(), "Kismet.Tabs.FindResults"));
-#endif	
+#endif
+
+	InTabManager->RegisterTabSpawner(ValidationLogTab, FOnSpawnTab::CreateSP(this, &FFlowAssetEditor::SpawnTab_ValidationLog))
+			.SetDisplayName(LOCTEXT("ValidationLog", "Validation Log"))
+			.SetGroup(WorkspaceMenuCategoryRef)
+			.SetIcon(FSlateIcon(FAppStyle::GetAppStyleSetName(), "Kismet.Tabs.CompilerResults"));
 }
 
 void FFlowAssetEditor::UnregisterTabSpawners(const TSharedRef<class FTabManager>& InTabManager)
@@ -152,7 +158,7 @@ void FFlowAssetEditor::UnregisterTabSpawners(const TSharedRef<class FTabManager>
 
 	InTabManager->UnregisterTabSpawner(DetailsTab);
 	InTabManager->UnregisterTabSpawner(GraphTab);
-	InTabManager->UnregisterTabSpawner(MessagesTab);
+	InTabManager->UnregisterTabSpawner(ValidationLogTab);
 	InTabManager->UnregisterTabSpawner(PaletteTab);
 #if ENABLE_SEARCH_IN_ASSET_EDITOR
 	InTabManager->UnregisterTabSpawner(SearchTab);
@@ -167,6 +173,43 @@ TSharedRef<SDockTab> FFlowAssetEditor::SpawnTab_Details(const FSpawnTabArgs& Arg
 		.Label(LOCTEXT("FlowDetailsTitle", "Details"))
 		[
 			DetailsView.ToSharedRef()
+		];
+}
+
+TSharedRef<SDockTab> FFlowAssetEditor::SpawnTab_Graph(const FSpawnTabArgs& Args) const
+{
+	check(Args.GetTabId() == GraphTab);
+
+	TSharedRef<SDockTab> SpawnedTab = SNew(SDockTab)
+		.Label(LOCTEXT("FlowGraphTitle", "Graph"));
+
+	if (GraphEditor.IsValid())
+	{
+		SpawnedTab->SetContent(GraphEditor.ToSharedRef());
+	}
+
+	return SpawnedTab;
+}
+
+TSharedRef<SDockTab> FFlowAssetEditor::SpawnTab_Palette(const FSpawnTabArgs& Args) const
+{
+	check(Args.GetTabId() == PaletteTab);
+
+	return SNew(SDockTab)
+		.Label(LOCTEXT("FlowPaletteTitle", "Palette"))
+		[
+			Palette.ToSharedRef()
+		];
+}
+
+TSharedRef<SDockTab> FFlowAssetEditor::SpawnTab_RuntimeLog(const FSpawnTabArgs& Args) const
+{
+	check(Args.GetTabId() == RuntimeLogTab);
+
+	return SNew(SDockTab)
+		.Label(LOCTEXT("FlowRuntimeLogTitle", "Runtime Log"))
+		[
+			RuntimeLog.ToSharedRef()
 		];
 }
 
@@ -187,40 +230,14 @@ TSharedRef<SDockTab> FFlowAssetEditor::SpawnTab_Search(const FSpawnTabArgs& Args
 }
 #endif
 
-TSharedRef<SDockTab> FFlowAssetEditor::SpawnTab_Graph(const FSpawnTabArgs& Args) const
+TSharedRef<SDockTab> FFlowAssetEditor::SpawnTab_ValidationLog(const FSpawnTabArgs& Args) const
 {
-	check(Args.GetTabId() == GraphTab);
-
-	TSharedRef<SDockTab> SpawnedTab = SNew(SDockTab)
-		.Label(LOCTEXT("FlowGraphTitle", "Graph"));
-
-	if (GraphEditor.IsValid())
-	{
-		SpawnedTab->SetContent(GraphEditor.ToSharedRef());
-	}
-
-	return SpawnedTab;
-}
-
-TSharedRef<SDockTab> FFlowAssetEditor::SpawnTab_MessageLog(const FSpawnTabArgs& Args) const
-{
-	check(Args.GetTabId() == MessagesTab);
+	check(Args.GetTabId() == ValidationLogTab);
 
 	return SNew(SDockTab)
-		.Label(LOCTEXT("FlowMessagesTitle", "Messages"))
+		.Label(LOCTEXT("FlowValidationLogTitle", "Validation Log"))
 		[
-			MessageLog.ToSharedRef()
-		];
-}
-
-TSharedRef<SDockTab> FFlowAssetEditor::SpawnTab_Palette(const FSpawnTabArgs& Args) const
-{
-	check(Args.GetTabId() == PaletteTab);
-
-	return SNew(SDockTab)
-		.Label(LOCTEXT("FlowPaletteTitle", "Palette"))
-		[
-			Palette.ToSharedRef()
+			ValidationLog.ToSharedRef()
 		];
 }
 
@@ -241,7 +258,10 @@ void FFlowAssetEditor::InitFlowAssetEditor(const EToolkitMode::Type Mode, const 
 	BindGraphCommands();
 	CreateWidgets();
 
-	const TSharedRef<FTabManager::FLayout> StandaloneDefaultLayout = FTabManager::NewLayout("FlowAssetEditor_Layout_v5")
+	FlowAsset->OnRuntimeMessageAdded().AddSP(this, &FFlowAssetEditor::OnRuntimeMessageAdded);
+	FEditorDelegates::BeginPIE.AddSP(this, &FFlowAssetEditor::OnBeginPIE);
+
+	const TSharedRef<FTabManager::FLayout> StandaloneDefaultLayout = FTabManager::NewLayout("FlowAssetEditor_Layout_v5.1")
 		->AddArea
 		(
 			FTabManager::NewPrimaryArea()->SetOrientation(Orient_Horizontal)
@@ -266,14 +286,20 @@ void FFlowAssetEditor::InitFlowAssetEditor(const EToolkitMode::Type Mode, const 
 					->Split
 					(
 						FTabManager::NewStack()
-						->SetSizeCoefficient(0.2f)
-						->AddTab(MessagesTab, ETabState::ClosedTab)
+						->SetSizeCoefficient(0.15f)
+						->AddTab(RuntimeLogTab, ETabState::ClosedTab)
 					)
 					->Split
 					(
 						FTabManager::NewStack()
-						->SetSizeCoefficient(0.2f)
+						->SetSizeCoefficient(0.15f)
 						->AddTab(SearchTab, ETabState::ClosedTab)
+					)
+					->Split
+					(
+						FTabManager::NewStack()
+						->SetSizeCoefficient(0.15f)
+						->AddTab(ValidationLogTab, ETabState::ClosedTab)
 					)
 				)
 				->Split
@@ -343,13 +369,13 @@ void FFlowAssetEditor::RefreshAsset()
 	FlowAsset->ValidateAsset(LogResults);
 
 	// push messages to its window
-	MessageLogListing->ClearMessages();
+	ValidationLogListing->ClearMessages();
 	if (LogResults.Messages.Num() > 0)
 	{
-		TabManager->TryInvokeTab(MessagesTab);
-		MessageLogListing->AddMessages(LogResults.Messages);
+		TabManager->TryInvokeTab(ValidationLogTab);
+		ValidationLogListing->AddMessages(LogResults.Messages);
 	}
-	MessageLogListing->OnDataChanged().Broadcast();
+	ValidationLogListing->OnDataChanged().Broadcast();
 }
 
 #if ENABLE_SEARCH_IN_ASSET_EDITOR
@@ -394,14 +420,18 @@ void FFlowAssetEditor::CreateWidgets()
 
 #if ENABLE_SEARCH_IN_ASSET_EDITOR
 	SearchBrowser = SNew(SSearchBrowser, GetFlowAsset());
-#endif	
+#endif
 
+	FMessageLogModule& MessageLogModule = FModuleManager::LoadModuleChecked<FMessageLogModule>("MessageLog");
 	{
-		MessageLogListing = FFlowMessageLogListing::GetLogListing(FlowAsset);
-		MessageLogListing->OnMessageTokenClicked().AddSP(this, &FFlowAssetEditor::OnLogTokenClicked);
-		
-		FMessageLogModule& MessageLogModule = FModuleManager::LoadModuleChecked<FMessageLogModule>("MessageLog");
-		MessageLog = MessageLogModule.CreateLogListingWidget(MessageLogListing.ToSharedRef());
+		RuntimeLogListing = FFlowMessageLogListing::GetLogListing(FlowAsset, EFlowLogType::Runtime);
+		RuntimeLogListing->OnMessageTokenClicked().AddSP(this, &FFlowAssetEditor::OnLogTokenClicked);
+		RuntimeLog = MessageLogModule.CreateLogListingWidget(RuntimeLogListing.ToSharedRef());
+	}
+	{
+		ValidationLogListing = FFlowMessageLogListing::GetLogListing(FlowAsset, EFlowLogType::Validation);
+		ValidationLogListing->OnMessageTokenClicked().AddSP(this, &FFlowAssetEditor::OnLogTokenClicked);
+		ValidationLog = MessageLogModule.CreateLogListingWidget(ValidationLogListing.ToSharedRef());
 	}
 }
 
@@ -698,6 +728,11 @@ EVisibility FFlowAssetEditor::GetDebuggerVisibility()
 	return GEditor->PlayWorld ? EVisibility::Visible : EVisibility::Collapsed;
 }
 
+void FFlowAssetEditor::OnBeginPIE(const bool bInSimulateInEditor) const
+{
+	RuntimeLogListing->ClearMessages();
+}
+
 TSet<UFlowGraphNode*> FFlowAssetEditor::GetSelectedFlowNodes() const
 {
 	TSet<UFlowGraphNode*> Result;
@@ -771,6 +806,14 @@ void FFlowAssetEditor::JumpToInnerObject(UObject* InnerObject)
 	}
 }
 #endif
+
+void FFlowAssetEditor::OnRuntimeMessageAdded(const UFlowAsset* AssetInstance, const TSharedRef<FTokenizedMessage>& Message) const
+{
+	// push messages to its window
+	TabManager->TryInvokeTab(RuntimeLogTab);
+	RuntimeLogListing->AddMessage(Message);
+	RuntimeLogListing->OnDataChanged().Broadcast();
+}
 
 void FFlowAssetEditor::OnLogTokenClicked(const TSharedRef<IMessageToken>& Token) const
 {

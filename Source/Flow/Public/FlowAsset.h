@@ -163,6 +163,9 @@ private:
 
 #if WITH_EDITORONLY_DATA
 	TWeakObjectPtr<UFlowAsset> InspectedInstance;
+
+	// Message log for storing runtime errors/notes/warnings that will only last until the next game run
+	TSharedPtr<class FFlowMessageLog> RuntimeLog;
 #endif
 
 public:
@@ -182,8 +185,13 @@ public:
 	FRefreshDebuggerEvent& OnDebuggerRefresh() { return RefreshDebuggerEvent; }
 	FRefreshDebuggerEvent RefreshDebuggerEvent;
 
+	DECLARE_EVENT_TwoParams(UFlowAsset, FRuntimeMessageEvent, const UFlowAsset*, const TSharedRef<FTokenizedMessage>&);
+	FRuntimeMessageEvent& OnRuntimeMessageAdded() { return RuntimeMessageEvent; }
+	FRuntimeMessageEvent RuntimeMessageEvent;
+
 private:
-	void BroadcastDebuggerRefresh() const { RefreshDebuggerEvent.Broadcast(); }
+	void BroadcastDebuggerRefresh() const;
+	void BroadcastRuntimeMessageAdded(const UFlowAsset* AssetInstance, const TSharedRef<FTokenizedMessage>& Message) const;;
 #endif
 
 //////////////////////////////////////////////////////////////////////////
@@ -278,6 +286,12 @@ public:
 	// Returns nodes active in the past, done their work
 	UFUNCTION(BlueprintPure, Category = "Flow")
 	TArray<UFlowNode*> GetRecordedNodes() const { return RecordedNodes; }
+
+#if WITH_EDITOR
+	void LogError(const FString& MessageToLog, UFlowNode* Node) const;
+	void LogWarning(const FString& MessageToLog, UFlowNode* Node) const;
+	void LogNote(const FString& MessageToLog, UFlowNode* Node) const;
+#endif
 
 //////////////////////////////////////////////////////////////////////////
 // SaveGame

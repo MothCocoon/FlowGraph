@@ -77,10 +77,10 @@ EDataValidationResult UFlowAsset::ValidateAsset(FFlowMessageLog& MessageLog)
 	{
 		if (Node.Value)
 		{
-			Node.Value->Log.Messages.Empty();
+			Node.Value->ValidationLog.Messages.Empty();
 			if (Node.Value->ValidateNode() == EDataValidationResult::Invalid)
 			{
-				MessageLog.Messages.Append(Node.Value->Log.Messages);
+				MessageLog.Messages.Append(Node.Value->ValidationLog.Messages);
 			}
 		}
 	}
@@ -280,6 +280,16 @@ void UFlowAsset::SetInspectedInstance(const FName& NewInspectedInstanceName)
 	}
 
 	BroadcastDebuggerRefresh();
+}
+
+void UFlowAsset::BroadcastDebuggerRefresh() const
+{
+	RefreshDebuggerEvent.Broadcast();
+}
+
+void UFlowAsset::BroadcastRuntimeMessageAdded(const UFlowAsset* AssetInstance, const TSharedRef<FTokenizedMessage>& Message) const
+{
+	RuntimeMessageEvent.Broadcast(AssetInstance, Message);
 }
 #endif
 
@@ -496,6 +506,35 @@ UFlowAsset* UFlowAsset::GetParentInstance() const
 {
 	return NodeOwningThisAssetInstance.IsValid() ? NodeOwningThisAssetInstance.Get()->GetFlowAsset() : nullptr;
 }
+
+#if WITH_EDITOR
+void UFlowAsset::LogError(const FString& MessageToLog, UFlowNode* Node) const
+{
+	if (RuntimeLog.IsValid())
+	{
+		const TSharedRef<FTokenizedMessage> TokenizedMessage = RuntimeLog.Get()->Error(*MessageToLog, Node);
+		BroadcastRuntimeMessageAdded(this, TokenizedMessage);
+	}
+}
+
+void UFlowAsset::LogWarning(const FString& MessageToLog, UFlowNode* Node) const
+{
+	if (RuntimeLog.IsValid())
+	{
+		const TSharedRef<FTokenizedMessage> TokenizedMessage = RuntimeLog.Get()->Warning(*MessageToLog, Node);
+		BroadcastRuntimeMessageAdded(this, TokenizedMessage);
+	}
+}
+
+void UFlowAsset::LogNote(const FString& MessageToLog, UFlowNode* Node) const
+{
+	if (RuntimeLog.IsValid())
+	{
+		const TSharedRef<FTokenizedMessage> TokenizedMessage = RuntimeLog.Get()->Note(*MessageToLog, Node);
+		BroadcastRuntimeMessageAdded(this, TokenizedMessage);
+	}
+}
+#endif
 
 FFlowAssetSaveData UFlowAsset::SaveInstance(TArray<FFlowAssetSaveData>& SavedFlowInstances)
 {

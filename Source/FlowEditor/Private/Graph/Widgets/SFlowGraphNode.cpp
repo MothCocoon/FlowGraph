@@ -360,10 +360,10 @@ void SFlowGraphNode::UpdateErrorInfo()
 {
 	if (const UFlowNode* FlowNode = FlowGraphNode->GetFlowNode())
 	{
-		if (FlowNode->Log.Messages.Num() > 0)
+		if (FlowNode->ValidationLog.Messages.Num() > 0)
 		{
 			EMessageSeverity::Type MaxSeverity = EMessageSeverity::Info;
-			for (const TSharedRef<FTokenizedMessage>& Message : FlowNode->Log.Messages)
+			for (const TSharedRef<FTokenizedMessage>& Message : FlowNode->ValidationLog.Messages)
 			{
 				if (Message->GetSeverity() < MaxSeverity)
 				{

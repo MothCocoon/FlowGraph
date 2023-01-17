@@ -318,7 +318,7 @@ EDataValidationResult UFlowNode_PlayLevelSequence::ValidateNode()
 {
 	if (Sequence.IsNull())
 	{
-		Log.Error<UFlowNode>(TEXT("Level Sequence asset not assigned or invalid!"), this);
+		ValidationLog.Error<UFlowNode>(TEXT("Level Sequence asset not assigned or invalid!"), this);
 		return EDataValidationResult::Invalid;
 	}
 

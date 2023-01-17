@@ -29,7 +29,7 @@ EDataValidationResult UFlowNode_CustomInput::ValidateNode()
 {
 	if (EventName.IsNone())
 	{
-		Log.Error<UFlowNode>(TEXT("Event Name is empty!"), this);
+		ValidationLog.Error<UFlowNode>(TEXT("Event Name is empty!"), this);
 		return EDataValidationResult::Invalid;
 	}
 

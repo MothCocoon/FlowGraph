@@ -3,7 +3,6 @@
 #include "Nodes/FlowNode.h"
 
 #include "FlowAsset.h"
-#include "FlowMessageLog.h"
 #include "FlowModule.h"
 #include "FlowSubsystem.h"
 #include "FlowTypes.h"
@@ -666,6 +665,7 @@ FString UFlowNode::GetProgressAsString(float Value)
 void UFlowNode::LogError(FString Message, const EFlowOnScreenMessageType OnScreenMessageType)
 {
 #if !UE_BUILD_SHIPPING
+
 	BuildMessage(Message);
 
 	// OnScreen Message
@@ -689,58 +689,48 @@ void UFlowNode::LogError(FString Message, const EFlowOnScreenMessageType OnScree
 		GEngine->AddOnScreenDebugMessage(-1, 2.0f, FColor::Red, Message);
 	}
 
-#if WITH_EDITOR
-	// Message Log - not yet functional
-	{
-		Log.Error(*Message, GetGraphNode());
-
-		FMessageLog MessageLog("FlowGraph");
-		MessageLog.AddMessages(Log.Messages);
-	}
-#endif
-
 	// Output Log
 	UE_LOG(LogFlow, Error, TEXT("%s"), *Message);
+
+	// Message Log
+#if WITH_EDITOR
+	GetFlowAsset()->GetTemplateAsset()->LogError(Message, this);
+#endif
+
 #endif
 }
 
 void UFlowNode::LogWarning(FString Message)
 {
 #if !UE_BUILD_SHIPPING
+
 	BuildMessage(Message);
-
-#if WITH_EDITOR
-	// Message Log - not yet functional
-	{
-		Log.Warning(*Message, GetGraphNode());
-
-		FMessageLog MessageLog("FlowGraph");
-		MessageLog.AddMessages(Log.Messages);
-	}
-#endif
 
 	// Output Log
 	UE_LOG(LogFlow, Warning, TEXT("%s"), *Message);
+
+	// Message Log
+#if WITH_EDITOR
+	GetFlowAsset()->GetTemplateAsset()->LogWarning(Message, this);
+#endif
+
 #endif
 }
 
 void UFlowNode::LogNote(FString Message)
 {
 #if !UE_BUILD_SHIPPING
+
 	BuildMessage(Message);
-
-#if WITH_EDITOR
-	// Message Log - not yet functional
-	{
-		Log.Note(*Message, GetGraphNode());
-
-		FMessageLog MessageLog("FlowGraph");
-		MessageLog.AddMessages(Log.Messages);
-	}
-#endif
 
 	// Output Log
 	UE_LOG(LogFlow, Log, TEXT("%s"), *Message);
+
+	// Message Log
+#if WITH_EDITOR
+	GetFlowAsset()->GetTemplateAsset()->LogNote(Message, this);
+#endif
+
 #endif
 }
 
