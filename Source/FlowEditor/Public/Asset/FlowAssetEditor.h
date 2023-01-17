@@ -36,21 +36,27 @@ protected:
 	TSharedPtr<SGraphEditor> GraphEditor;
 	TSharedPtr<class IDetailsView> DetailsView;
 	TSharedPtr<class SFlowPalette> Palette;
+
 #if ENABLE_SEARCH_IN_ASSET_EDITOR
 	TSharedPtr<class SSearchBrowser> SearchBrowser;
 #endif
 
-	/** Message log, with the log listing that it reflects */
-	TSharedPtr<class SWidget> MessageLog;
-	TSharedPtr<class IMessageLogListing> MessageLogListing;
+	/** Runtime message log, with the log listing that it reflects */
+	TSharedPtr<class SWidget> RuntimeLog;
+	TSharedPtr<class IMessageLogListing> RuntimeLogListing;
+
+	/** Asset Validation message log, with the log listing that it reflects */
+	TSharedPtr<class SWidget> ValidationLog;
+	TSharedPtr<class IMessageLogListing> ValidationLogListing;
 
 public:
 	/**	The tab ids for all the tabs used */
 	static const FName DetailsTab;
 	static const FName GraphTab;
-	static const FName MessagesTab;
 	static const FName PaletteTab;
+	static const FName RuntimeLogTab;
 	static const FName SearchTab;
+	static const FName ValidationLogTab;
 
 private:
 	/** The current UI selection state of this editor */
@@ -95,11 +101,12 @@ public:
 private:
 	TSharedRef<SDockTab> SpawnTab_Details(const FSpawnTabArgs& Args) const;
 	TSharedRef<SDockTab> SpawnTab_Graph(const FSpawnTabArgs& Args) const;
-	TSharedRef<SDockTab> SpawnTab_MessageLog(const FSpawnTabArgs& Args) const;
 	TSharedRef<SDockTab> SpawnTab_Palette(const FSpawnTabArgs& Args) const;
+	TSharedRef<SDockTab> SpawnTab_RuntimeLog(const FSpawnTabArgs& Args) const;
 #if ENABLE_SEARCH_IN_ASSET_EDITOR
 	TSharedRef<SDockTab> SpawnTab_Search(const FSpawnTabArgs& Args) const;
 #endif
+	TSharedRef<SDockTab> SpawnTab_ValidationLog(const FSpawnTabArgs& Args) const;
 
 public:
 	/** Edits the specified FlowAsset object */
@@ -107,9 +114,10 @@ public:
 
 protected:
 	virtual void CreateToolbar();
-
 	virtual void BindToolbarCommands();
+	
 	virtual void RefreshAsset();
+
 #if ENABLE_SEARCH_IN_ASSET_EDITOR
 	virtual void SearchInAsset();
 #endif
@@ -147,6 +155,8 @@ public:
 	static bool IsPIE();
 	static EVisibility GetDebuggerVisibility();
 
+	void OnBeginPIE(const bool bInSimulateInEditor) const;
+
 	TSet<UFlowGraphNode*> GetSelectedFlowNodes() const;
 	int32 GetNumberOfSelectedNodes() const;
 	bool GetBoundsForSelectedNodes(class FSlateRect& Rect, float Padding) const;
@@ -164,6 +174,7 @@ public:
 #endif
 
 protected:
+	void OnRuntimeMessageAdded(const UFlowAsset* AssetInstance, const TSharedRef<FTokenizedMessage>& Message) const;
 	void OnLogTokenClicked(const TSharedRef<class IMessageToken>& Token) const;
 	
 	virtual void SelectAllNodes() const;

@@ -6,8 +6,8 @@
 
 #define LOCTEXT_NAMESPACE "FlowMessageLogListing"
 
-FFlowMessageLogListing::FFlowMessageLogListing(const UFlowAsset* InFlowAsset)
-	: Log(RegisterLogListing(InFlowAsset))
+FFlowMessageLogListing::FFlowMessageLogListing(const UFlowAsset* InFlowAsset, const EFlowLogType Type)
+	: Log(RegisterLogListing(InFlowAsset, Type))
 {
 }
 
@@ -21,11 +21,11 @@ FFlowMessageLogListing::~FFlowMessageLogListing()
 	}
 }
 
-TSharedRef<IMessageLogListing> FFlowMessageLogListing::RegisterLogListing(const UFlowAsset* InFlowAsset)
+TSharedRef<IMessageLogListing> FFlowMessageLogListing::RegisterLogListing(const UFlowAsset* InFlowAsset, const EFlowLogType Type)
 {
 	FMessageLogModule& MessageLogModule = FModuleManager::LoadModuleChecked<FMessageLogModule>("MessageLog");
 
-	const FName LogName = GetListingName(InFlowAsset);
+	const FName LogName = GetListingName(InFlowAsset, Type);
 
 	// Register the log (this will return an existing log if it has been used before)
 	FMessageLogInitializationOptions LogInitOptions;
@@ -34,11 +34,11 @@ TSharedRef<IMessageLogListing> FFlowMessageLogListing::RegisterLogListing(const 
 	return MessageLogModule.GetLogListing(LogName);
 }
 
-TSharedRef<IMessageLogListing> FFlowMessageLogListing::GetLogListing(const UFlowAsset* InFlowAsset)
+TSharedRef<IMessageLogListing> FFlowMessageLogListing::GetLogListing(const UFlowAsset* InFlowAsset, const EFlowLogType Type)
 {
 	FMessageLogModule& MessageLogModule = FModuleManager::LoadModuleChecked<FMessageLogModule>("MessageLog");
 
-	const FName LogName = GetListingName(InFlowAsset);
+	const FName LogName = GetListingName(InFlowAsset, Type);
 
 	// Reuse any existing log, or create a new one (that is not held onto bey the message log system)
 	if(MessageLogModule.IsRegisteredLogListing(LogName))
@@ -53,12 +53,13 @@ TSharedRef<IMessageLogListing> FFlowMessageLogListing::GetLogListing(const UFlow
 	}
 }
 
-FName FFlowMessageLogListing::GetListingName(const UFlowAsset* InFlowAsset)
+FName FFlowMessageLogListing::GetListingName(const UFlowAsset* InFlowAsset, const EFlowLogType Type)
 {
 	FName LogListingName;
 	if (InFlowAsset)
 	{
-		LogListingName = *FString::Printf(TEXT("%s_%s_FlowMessageLog"), *InFlowAsset->AssetGuid.ToString(), *InFlowAsset->GetName());
+		const FString TypeAsString = StaticEnum<EFlowLogType>()->GetNameStringByIndex(static_cast<int32>(Type));
+		LogListingName = *FString::Printf(TEXT("FlowLog_%s_%s_%s_"), *TypeAsString, *InFlowAsset->AssetGuid.ToString(), *InFlowAsset->GetName());
 	}
 	else
 	{

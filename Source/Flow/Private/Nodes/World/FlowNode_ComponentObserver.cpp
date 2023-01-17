@@ -155,7 +155,7 @@ EDataValidationResult UFlowNode_ComponentObserver::ValidateNode()
 {
 	if (IdentityTags.IsEmpty())
 	{
-		Log.Error<UFlowNode>(*UFlowNode::MissingIdentityTag, this);
+		ValidationLog.Error<UFlowNode>(*UFlowNode::MissingIdentityTag, this);
 		return EDataValidationResult::Invalid;
 	}
 

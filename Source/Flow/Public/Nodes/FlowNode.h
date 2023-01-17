@@ -130,7 +130,7 @@ protected:
 	EFlowSignalMode SignalMode;
 
 #if WITH_EDITOR
-	FFlowMessageLog Log;
+	FFlowMessageLog ValidationLog;
 #endif	
 	
 //////////////////////////////////////////////////////////////////////////

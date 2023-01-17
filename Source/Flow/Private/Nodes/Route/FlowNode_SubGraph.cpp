@@ -110,7 +110,7 @@ EDataValidationResult UFlowNode_SubGraph::ValidateNode()
 {
 	if (Asset.IsNull())
 	{
-		Log.Error<UFlowNode>(TEXT("Flow Asset not assigned or invalid!"), this);
+		ValidationLog.Error<UFlowNode>(TEXT("Flow Asset not assigned or invalid!"), this);
 		return EDataValidationResult::Invalid;
 	}
 
