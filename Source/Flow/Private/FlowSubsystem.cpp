@@ -223,13 +223,19 @@ void UFlowSubsystem::AddInstancedTemplate(UFlowAsset* Template)
 	if (!InstancedTemplates.Contains(Template))
 	{
 		InstancedTemplates.Add(Template);
+
+#if WITH_EDITOR
 		Template->RuntimeLog = MakeShareable(new FFlowMessageLog());
+#endif
 	}
 }
 
 void UFlowSubsystem::RemoveInstancedTemplate(UFlowAsset* Template)
 {
+#if WITH_EDITOR
 	Template->RuntimeLog.Reset();
+#endif
+
 	InstancedTemplates.Remove(Template);
 }
 
