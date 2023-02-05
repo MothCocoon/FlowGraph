@@ -6,6 +6,7 @@
 #include "FlowEditorModule.h"
 #include "FlowMessageLog.h"
 
+#include "Asset/FlowAssetEditorContext.h"
 #include "Asset/FlowAssetToolbar.h"
 #include "Asset/FlowDebugger.h"
 #include "Asset/FlowMessageLogListing.h"
@@ -163,6 +164,15 @@ void FFlowAssetEditor::UnregisterTabSpawners(const TSharedRef<class FTabManager>
 #if ENABLE_SEARCH_IN_ASSET_EDITOR
 	InTabManager->UnregisterTabSpawner(SearchTab);
 #endif	
+}
+
+void FFlowAssetEditor::InitToolMenuContext(FToolMenuContext& MenuContext)
+{
+	FAssetEditorToolkit::InitToolMenuContext(MenuContext);
+
+	UFlowAssetEditorContext* Context = NewObject<UFlowAssetEditorContext>();
+	Context->FlowAssetEditor = SharedThis(this);
+	MenuContext.AddObject(Context);
 }
 
 TSharedRef<SDockTab> FFlowAssetEditor::SpawnTab_Details(const FSpawnTabArgs& Args) const
