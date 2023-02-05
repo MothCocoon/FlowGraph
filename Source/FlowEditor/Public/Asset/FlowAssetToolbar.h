@@ -46,15 +46,15 @@ private:
  */
 struct FLOWEDITOR_API FFlowBreadcrumb
 {
-	FString AssetPathName;
-	FName InstanceName;
+	const FString AssetPathName;
+	const FName InstanceName;
 
 	FFlowBreadcrumb()
 		: AssetPathName(FString())
 		, InstanceName(NAME_None)
 	{}
 
-	FFlowBreadcrumb(const UFlowAsset* FlowAsset)
+	explicit FFlowBreadcrumb(const TWeakObjectPtr<UFlowAsset> FlowAsset)
 		: AssetPathName(FlowAsset->GetTemplateAsset()->GetPathName())
 		, InstanceName(FlowAsset->GetDisplayName())
 	{}
@@ -87,14 +87,8 @@ private:
 	void BuildAssetToolbar(UToolMenu* ToolbarMenu) const;
 	TSharedRef<SWidget> MakeDiffMenu() const;
 	
-	void BuildDebuggerToolbar(UToolMenu* ToolbarMenu);
-
-public:
-	TSharedPtr<SFlowAssetInstanceList> GetAssetInstanceList() const { return AssetInstanceList; }
+	void BuildDebuggerToolbar(UToolMenu* ToolbarMenu) const;
 
 private:
 	TWeakPtr<FFlowAssetEditor> FlowAssetEditor;
-
-	TSharedPtr<SFlowAssetInstanceList> AssetInstanceList;
-	TSharedPtr<SFlowAssetBreadcrumb> Breadcrumb;
 };

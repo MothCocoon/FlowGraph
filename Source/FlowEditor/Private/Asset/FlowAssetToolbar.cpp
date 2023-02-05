@@ -3,6 +3,7 @@
 #include "Asset/FlowAssetToolbar.h"
 
 #include "Asset/FlowAssetEditor.h"
+#include "Asset/FlowAssetEditorContext.h"
 #include "Asset/SAssetRevisionMenu.h"
 #include "FlowEditorCommands.h"
 
@@ -45,10 +46,10 @@ void SFlowAssetInstanceList::Construct(const FArguments& InArgs, const TWeakObje
 		.OnGenerateWidget(this, &SFlowAssetInstanceList::OnGenerateWidget)
 		.OnSelectionChanged(this, &SFlowAssetInstanceList::OnSelectionChanged)
 		.Visibility_Static(&FFlowAssetEditor::GetDebuggerVisibility)
-	[
-		SNew(STextBlock)
-		.Text(this, &SFlowAssetInstanceList::GetSelectedInstanceName)
-	];
+		[
+			SNew(STextBlock)
+			.Text(this, &SFlowAssetInstanceList::GetSelectedInstanceName)
+		];
 
 	ChildSlot
 	[
@@ -134,10 +135,10 @@ void SFlowAssetBreadcrumb::Construct(const FArguments& InArgs, const TWeakObject
 	[
 		SNew(SVerticalBox)
 		+ SVerticalBox::Slot()
-		.HAlign(HAlign_Right)
-		.VAlign(VAlign_Center)
-		.AutoHeight()
-		.Padding(25.0f, 10.0f)
+		  .HAlign(HAlign_Right)
+		  .VAlign(VAlign_Center)
+		  .AutoHeight()
+		  .Padding(25.0f, 10.0f)
 		[
 			BreadcrumbTrail.ToSharedRef()
 		]
@@ -147,7 +148,7 @@ void SFlowAssetBreadcrumb::Construct(const FArguments& InArgs, const TWeakObject
 	BreadcrumbTrail->ClearCrumbs();
 	if (UFlowAsset* InspectedInstance = TemplateAsset->GetInspectedInstance())
 	{
-		TArray<UFlowAsset*> InstancesFromRoot = {InspectedInstance};
+		TArray<TWeakObjectPtr<UFlowAsset>> InstancesFromRoot = {InspectedInstance};
 
 		const UFlowAsset* CheckedInstance = InspectedInstance;
 		while (UFlowAsset* ParentInstance = CheckedInstance->GetParentInstance())
@@ -156,23 +157,21 @@ void SFlowAssetBreadcrumb::Construct(const FArguments& InArgs, const TWeakObject
 			CheckedInstance = ParentInstance;
 		}
 
-		for (UFlowAsset* Instance : InstancesFromRoot)
+		for (TWeakObjectPtr<UFlowAsset> Instance : InstancesFromRoot)
 		{
-			TAttribute<FText> CrumbText = MakeAttributeLambda([Instance]()
+			if (Instance.IsValid())
 			{
-				return Instance ? FText::FromName(Instance->GetDisplayName()) : FText();
-			});
-
-			BreadcrumbTrail->PushCrumb(CrumbText, FFlowBreadcrumb(Instance));
+				const FFlowBreadcrumb NewBreadcrumb = FFlowBreadcrumb(Instance);
+				BreadcrumbTrail->PushCrumb(FText::FromName(NewBreadcrumb.InstanceName), FFlowBreadcrumb(Instance));
+			}
 		}
 	}
 }
 
 void SFlowAssetBreadcrumb::OnCrumbClicked(const FFlowBreadcrumb& Item) const
 {
-	ensure(TemplateAsset->GetInspectedInstance());
-
-	if (Item.InstanceName != TemplateAsset->GetInspectedInstance()->GetDisplayName())
+	const UFlowAsset* InspectedInstance = TemplateAsset->GetInspectedInstance();
+	if (InspectedInstance == nullptr || Item.InstanceName != InspectedInstance->GetDisplayName())
 	{
 		GEditor->GetEditorSubsystem<UAssetEditorSubsystem>()->OpenEditorForAsset(Item.AssetPathName);
 	}
@@ -197,7 +196,7 @@ void FFlowAssetToolbar::BuildAssetToolbar(UToolMenu* ToolbarMenu) const
 	Section.AddEntry(FToolMenuEntry::InitToolBarButton(FFlowToolbarCommands::Get().RefreshAsset));
 #if ENABLE_SEARCH_IN_ASSET_EDITOR
 	Section.AddEntry(FToolMenuEntry::InitToolBarButton(FFlowToolbarCommands::Get().SearchInAsset));
-#endif	
+#endif
 
 	// Visual Diff: menu to choose asset revision compared with the current one 
 	Section.AddDynamicEntry("SourceControlCommands", FNewToolMenuSectionDelegate::CreateLambda([this](FToolMenuSection& InSection)
@@ -290,22 +289,24 @@ TSharedRef<SWidget> FFlowAssetToolbar::MakeDiffMenu() const
 	return MenuBuilder.MakeWidget();
 }
 
-void FFlowAssetToolbar::BuildDebuggerToolbar(UToolMenu* ToolbarMenu)
+void FFlowAssetToolbar::BuildDebuggerToolbar(UToolMenu* ToolbarMenu) const
 {
 	FToolMenuSection& Section = ToolbarMenu->AddSection("Debugging");
 	Section.InsertPosition = FToolMenuInsert("Asset", EToolMenuInsertType::After);
 
-	FPlayWorldCommands::BuildToolbar(Section);
+	Section.AddDynamicEntry("DebuggingCommands", FNewToolMenuSectionDelegate::CreateLambda([](FToolMenuSection& InSection)
+	{
+		const UFlowAssetEditorContext* Context = InSection.FindContext<UFlowAssetEditorContext>();
+		if (Context && Context->GetFlowAsset())
+		{
+			FPlayWorldCommands::BuildToolbar(InSection);
 
-	TWeakObjectPtr<UFlowAsset> TemplateAsset = FlowAssetEditor.Pin()->GetFlowAsset();
+			InSection.AddEntry(FToolMenuEntry::InitWidget("AssetInstances", SNew(SFlowAssetInstanceList, Context->GetFlowAsset()), FText(), true));
 
-	AssetInstanceList = SNew(SFlowAssetInstanceList, TemplateAsset);
-	Section.AddEntry(FToolMenuEntry::InitWidget("AssetInstances", AssetInstanceList.ToSharedRef(), FText(), true));
-
-	Section.AddEntry(FToolMenuEntry::InitToolBarButton(FFlowToolbarCommands::Get().GoToParentInstance));
-
-	Breadcrumb = SNew(SFlowAssetBreadcrumb, TemplateAsset);
-	Section.AddEntry(FToolMenuEntry::InitWidget("AssetBreadcrumb", Breadcrumb.ToSharedRef(), FText(), true));
+			InSection.AddEntry(FToolMenuEntry::InitToolBarButton(FFlowToolbarCommands::Get().GoToParentInstance));
+			InSection.AddEntry(FToolMenuEntry::InitWidget("AssetBreadcrumb", SNew(SFlowAssetBreadcrumb, Context->GetFlowAsset()), FText(), true));
+		}
+	}));
 }
 
 #undef LOCTEXT_NAMESPACE

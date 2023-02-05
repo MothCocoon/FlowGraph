@@ -66,7 +66,7 @@ public:
 	FFlowAssetEditor();
 	virtual ~FFlowAssetEditor() override;
 
-	UFlowAsset* GetFlowAsset() const { return FlowAsset; };
+	UFlowAsset* GetFlowAsset() const { return FlowAsset; }
 
 	// FGCObject
 	virtual void AddReferencedObjects(FReferenceCollector& Collector) override;
@@ -96,6 +96,10 @@ public:
 
 	virtual void RegisterTabSpawners(const TSharedRef<class FTabManager>& TabManager) override;
 	virtual void UnregisterTabSpawners(const TSharedRef<class FTabManager>& TabManager) override;
+	// --
+
+	// FAssetEditorToolkit
+	virtual void InitToolMenuContext(FToolMenuContext& MenuContext) override;
 	// --
 
 private:
