@@ -10,6 +10,7 @@
 #include "Asset/FlowAssetToolbar.h"
 #include "Asset/FlowDebugger.h"
 #include "Asset/FlowMessageLogListing.h"
+#include "Graph/FlowGraph.h"
 #include "Graph/FlowGraphEditorSettings.h"
 #include "Graph/FlowGraphSchema.h"
 #include "Graph/FlowGraphSchema_Actions.h"
@@ -136,7 +137,7 @@ void FFlowAssetEditor::RegisterTabSpawners(const TSharedRef<class FTabManager>& 
 				.SetIcon(FSlateIcon(FAppStyle::GetAppStyleSetName(), "Kismet.Tabs.Palette"));
 
 	InTabManager->RegisterTabSpawner(RuntimeLogTab, FOnSpawnTab::CreateSP(this, &FFlowAssetEditor::SpawnTab_RuntimeLog))
-				.SetDisplayName(LOCTEXT("RuntimeLog", "RuntimeLog"))
+				.SetDisplayName(LOCTEXT("RuntimeLog", "Runtime Log"))
 				.SetGroup(WorkspaceMenuCategoryRef)
 				.SetIcon(FSlateIcon(FAppStyle::GetAppStyleSetName(), "Kismet.Tabs.CompilerResults"));
 
@@ -150,7 +151,7 @@ void FFlowAssetEditor::RegisterTabSpawners(const TSharedRef<class FTabManager>& 
 	InTabManager->RegisterTabSpawner(ValidationLogTab, FOnSpawnTab::CreateSP(this, &FFlowAssetEditor::SpawnTab_ValidationLog))
 			.SetDisplayName(LOCTEXT("ValidationLog", "Validation Log"))
 			.SetGroup(WorkspaceMenuCategoryRef)
-			.SetIcon(FSlateIcon(FAppStyle::GetAppStyleSetName(), "Kismet.Tabs.CompilerResults"));
+			.SetIcon(FSlateIcon(FAppStyle::GetAppStyleSetName(), "Debug"));
 }
 
 void FFlowAssetEditor::UnregisterTabSpawners(const TSharedRef<class FTabManager>& InTabManager)
@@ -355,6 +356,10 @@ void FFlowAssetEditor::BindToolbarCommands()
 		FExecuteAction::CreateSP(this, &FFlowAssetEditor::RefreshAsset),
 		FCanExecuteAction::CreateStatic(&FFlowAssetEditor::CanEdit));
 
+	ToolkitCommands->MapAction(ToolbarCommands.ValidateAsset,
+			FExecuteAction::CreateSP(this, &FFlowAssetEditor::ValidateAsset),
+			FCanExecuteAction());
+
 #if ENABLE_SEARCH_IN_ASSET_EDITOR
 	ToolkitCommands->MapAction(ToolbarCommands.SearchInAsset,
 		FExecuteAction::CreateSP(this, &FFlowAssetEditor::SearchInAsset),
@@ -374,7 +379,12 @@ void FFlowAssetEditor::BindToolbarCommands()
 
 void FFlowAssetEditor::RefreshAsset()
 {
-	// Refresh and validate asset, including graph
+	// attempt to refresh graph, fix common issues automatically
+	CastChecked<UFlowGraph>(FlowAsset->GetGraph())->RefreshGraph();
+}
+
+void FFlowAssetEditor::ValidateAsset()
+{
 	FFlowMessageLog LogResults;
 	FlowAsset->ValidateAsset(LogResults);
 

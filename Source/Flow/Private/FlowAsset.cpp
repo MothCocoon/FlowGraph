@@ -66,12 +66,6 @@ void UFlowAsset::PostDuplicate(bool bDuplicateForPIE)
 
 EDataValidationResult UFlowAsset::ValidateAsset(FFlowMessageLog& MessageLog)
 {
-	// first attempt to refresh graph, fix common issues automatically
-	if (GetFlowGraphInterface().IsValid())
-	{
-		GetFlowGraphInterface()->RefreshGraph(this);
-	}
-
 	// validate nodes
 	for (const TPair<FGuid, UFlowNode*>& Node : Nodes)
 	{

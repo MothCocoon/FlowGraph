@@ -9,11 +9,6 @@
 
 #include "Kismet2/BlueprintEditorUtils.h"
 
-void FFlowGraphInterface::RefreshGraph(UFlowAsset* FlowAsset)
-{
-	CastChecked<UFlowGraph>(FlowAsset->GetGraph())->RefreshGraph();
-}
-
 void FFlowGraphInterface::OnInputTriggered(UEdGraphNode* GraphNode, const int32 Index) const
 {
 	CastChecked<UFlowGraphNode>(GraphNode)->OnInputTriggered(Index);

@@ -26,8 +26,6 @@ public:
 	IFlowGraphInterface() {}
 	virtual ~IFlowGraphInterface() {}
 
-	virtual void RefreshGraph(UFlowAsset* FlowAsset) {}
-
 	virtual void OnInputTriggered(UEdGraphNode* GraphNode, const int32 Index) const {}
 	virtual void OnOutputTriggered(UEdGraphNode* GraphNode, const int32 Index) const {}
 };

@@ -121,6 +121,7 @@ protected:
 	virtual void BindToolbarCommands();
 	
 	virtual void RefreshAsset();
+	virtual void ValidateAsset();
 
 #if ENABLE_SEARCH_IN_ASSET_EDITOR
 	virtual void SearchInAsset();

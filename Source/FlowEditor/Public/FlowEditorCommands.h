@@ -13,6 +13,8 @@ public:
 	FFlowToolbarCommands();
 
 	TSharedPtr<FUICommandInfo> RefreshAsset;
+	TSharedPtr<FUICommandInfo> ValidateAsset;
+
 	TSharedPtr<FUICommandInfo> SearchInAsset;
 	TSharedPtr<FUICommandInfo> GoToParentInstance;
 
