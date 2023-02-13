@@ -32,6 +32,8 @@ void FFlowEditorStyle::Initialize()
 	StyleSet->SetContentRoot(FPaths::EngineContentDir() / TEXT("Editor/Slate/"));
 
 	StyleSet->Set("FlowToolbar.RefreshAsset", new IMAGE_BRUSH_SVG( "Starship/Common/Apply", Icon20));
+	StyleSet->Set("FlowToolbar.ValidateAsset", new IMAGE_BRUSH_SVG( "Starship/Common/Debug", Icon20));
+	
 	StyleSet->Set("FlowToolbar.SearchInAsset", new IMAGE_BRUSH_SVG( "Starship/Common/Search", Icon20));
 	StyleSet->Set("FlowToolbar.GoToParentInstance", new IMAGE_BRUSH("Icons/icon_DebugStepOut_40x", Icon40));
 
