@@ -200,6 +200,7 @@ void FFlowAssetToolbar::BuildAssetToolbar(UToolMenu* ToolbarMenu) const
 		Section.AddEntry(FToolMenuEntry::InitToolBarButton(FFlowToolbarCommands::Get().ValidateAsset));
 	}
 	
+#if defined ENABLE_SEARCH_IN_ASSET_EDITOR || defined ENABLE_FLOW_DIFF
 	{
 		FToolMenuSection& Section = ToolbarMenu->AddSection("View");
 		Section.InsertPosition = FToolMenuInsert("FlowAsset", EToolMenuInsertType::After);
@@ -224,6 +225,7 @@ void FFlowAssetToolbar::BuildAssetToolbar(UToolMenu* ToolbarMenu) const
 			DiffEntry.StyleNameOverride = "CalloutToolbar";
 			InSection.AddEntry(DiffEntry);
 		}));
+#endif
 	}
 #endif	
 }
