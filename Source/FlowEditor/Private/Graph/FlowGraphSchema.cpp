@@ -84,6 +84,33 @@ void UFlowGraphSchema::CreateDefaultNodesForGraph(UEdGraph& Graph) const
 	CastChecked<UFlowGraph>(&Graph)->GetFlowAsset()->HarvestNodeConnections();
 }
 
+static FText GetPinIncompatibilityReason(const UEdGraphPin* PinA, const UEdGraphPin* PinB, bool* bIsFatalOut = nullptr)
+{
+	const FEdGraphPinType& PinAType = PinA->PinType;
+	const FEdGraphPinType& PinBType = PinB->PinType;
+
+	FFormatNamedArguments MessageArgs;
+	MessageArgs.Add(TEXT("PinAName"), PinA->GetDisplayName());
+	MessageArgs.Add(TEXT("PinBName"), PinB->GetDisplayName());
+	MessageArgs.Add(TEXT("PinAType"), UEdGraphSchema_K2::TypeToText(PinAType));
+	MessageArgs.Add(TEXT("PinBType"), UEdGraphSchema_K2::TypeToText(PinBType));
+
+	const UEdGraphPin* InputPin = (PinA->Direction == EGPD_Input) ? PinA : PinB;
+	const FEdGraphPinType& InputType = InputPin->PinType;
+	const UEdGraphPin* OutputPin = (InputPin == PinA) ? PinB : PinA;
+	const FEdGraphPinType& OutputType = OutputPin->PinType;
+
+	FText MessageFormat = LOCTEXT("DefaultPinIncompatibilityMessage", "{PinAType} is not compatible with {PinBType}.");
+
+	if (bIsFatalOut != nullptr)
+	{
+		// the incompatible pins should generate an error by default
+		*bIsFatalOut = true;
+	}
+
+	return FText::Format(MessageFormat, MessageArgs);
+}
+
 const FPinConnectionResponse UFlowGraphSchema::CanCreateConnection(const UEdGraphPin* PinA, const UEdGraphPin* PinB) const
 {
 	const UFlowGraphNode* OwningNodeA = Cast<UFlowGraphNode>(PinA->GetOwningNodeUnchecked());
@@ -114,6 +141,25 @@ const FPinConnectionResponse UFlowGraphSchema::CanCreateConnection(const UEdGrap
 		return FPinConnectionResponse(CONNECT_RESPONSE_DISALLOW, TEXT("Directions are not compatible"));
 	}
 
+	const bool bPinsAreCompatible = PinA->PinType.PinCategory.IsEqual(PinB->PinType.PinCategory);
+	if (bPinsAreCompatible == false)
+	{
+		bool bIsFatal = true;
+		const FText IncompatibleReason = GetPinIncompatibilityReason(PinA, PinB, &bIsFatal);
+		FPinConnectionResponse ConnectionResponse(CONNECT_RESPONSE_DISALLOW, IncompatibleReason.ToString());
+		if (bIsFatal)
+		{
+			ConnectionResponse.SetFatal();
+		}
+		return ConnectionResponse;
+	}
+
+	if (InputPin->PinType.PinCategory != PC_Exec)
+	{
+		constexpr ECanCreateConnectionResponse ReplyBreakInputs = CONNECT_RESPONSE_BREAK_OTHERS_AB;
+		return FPinConnectionResponse(ReplyBreakInputs, TEXT("Replace all existing connections"));
+	}
+
 	// Break existing connections on outputs only - multiple input connections are acceptable
 	if (OutputPin->LinkedTo.Num() > 0)
 	{
@@ -141,23 +187,36 @@ bool UFlowGraphSchema::ShouldHidePinDefaultValue(UEdGraphPin* Pin) const
 	return true;
 }
 
-FLinearColor UFlowGraphSchema::GetPinTypeColor(const FEdGraphPinType& PinType) const
-{
-	return FLinearColor::White;
-}
-
 void UFlowGraphSchema::BreakNodeLinks(UEdGraphNode& TargetNode) const
 {
-	Super::BreakNodeLinks(TargetNode);
+	// DO NOT CALL Super:: since UEdGraphSchema_K2 calls FindBlueprintForNodeChecked which will crash. Instead directly call from UEdGraphSchema.
+	// Same as Super::Super::BreakNodeLinks(TargetNode);
+	UEdGraphSchema::BreakNodeLinks(TargetNode);
 
 	TargetNode.GetGraph()->NotifyGraphChanged();
+}
+
+void UFlowGraphSchema::BreakSinglePinLink(UEdGraphPin* SourcePin, UEdGraphPin* TargetPin) const
+{
+	// DO NOT CALL Super:: since UEdGraphSchema_K2 calls FindBlueprintForNodeChecked which will crash. Instead directly call from UEdGraphSchema.
+	// Same as Super::Super::BreakSinglePinLink(SourcePin, TargetPin);
+	UEdGraphSchema::BreakSinglePinLink(SourcePin, TargetPin);
+}
+
+void UFlowGraphSchema::GetContextMenuActions(UToolMenu* Menu, UGraphNodeContextMenuContext* Context) const
+{
+	// DO NOT CALL Super:: since UEdGraphSchema_K2 calls FindBlueprintForNodeChecked which will crash. Instead directly call from UEdGraphSchema.
+	// Same as Super::Super::GetContextMenuActions(SourcePin, TargetPin);
+	UEdGraphSchema::GetContextMenuActions(Menu, Context);
 }
 
 void UFlowGraphSchema::BreakPinLinks(UEdGraphPin& TargetPin, bool bSendsNodeNotification) const
 {
 	const FScopedTransaction Transaction(LOCTEXT("GraphEd_BreakPinLinks", "Break Pin Links"));
 
-	Super::BreakPinLinks(TargetPin, bSendsNodeNotification);
+	// DO NOT CALL Super:: since UEdGraphSchema_K2 calls FindBlueprintForNodeChecked which will crash. Instead directly call from UEdGraphSchema.
+	// Same as Super::Super::BreakPinLinks(TargetPin, bSendsNodeNotification);
+	UEdGraphSchema::BreakPinLinks(TargetPin, bSendsNodeNotification);
 
 	if (TargetPin.bOrphanedPin)
 	{
@@ -194,6 +253,7 @@ void UFlowGraphSchema::OnPinConnectionDoubleCicked(UEdGraphPin* PinA, UEdGraphPi
 	PinA->MakeLinkTo((PinA->Direction == EGPD_Output) ? NewReroute->InputPins[0] : NewReroute->OutputPins[0]);
 	PinB->MakeLinkTo((PinB->Direction == EGPD_Output) ? NewReroute->InputPins[0] : NewReroute->OutputPins[0]);
 }
+
 
 TArray<TSharedPtr<FString>> UFlowGraphSchema::GetFlowNodeCategories()
 {

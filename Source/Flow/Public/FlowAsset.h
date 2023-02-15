@@ -5,6 +5,7 @@
 #include "FlowMessageLog.h"
 #include "FlowSave.h"
 #include "FlowTypes.h"
+#include "Nodes/FlowPin.h"
 #include "FlowAsset.generated.h"
 
 class UFlowNode;
@@ -261,7 +262,7 @@ private:
 	void TriggerCustomEvent(UFlowNode_SubGraph* Node, const FName& EventName) const;
 	void TriggerCustomOutput(const FName& EventName) const;
 
-	void TriggerInput(const FGuid& NodeGuid, const FName& PinName);
+	void TriggerInput(const FConnectedPin& InConnectedPin);
 
 	void FinishNode(UFlowNode* Node);
 	void ResetNodes();

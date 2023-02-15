@@ -79,9 +79,6 @@ class FLOWEDITOR_API UFlowGraphSettings : public UDeveloperSettings
 
 	UPROPERTY(config, EditAnywhere, Category = "Wires", meta = (EditCondition = "ConnectionDrawType == EFlowConnectionDrawType::Circuit"))
 	FVector2D CircuitConnectionSpacing;
-	
-	UPROPERTY(EditAnywhere, config, Category = "Wires")
-	FLinearColor InactiveWireColor;
 
 	UPROPERTY(EditAnywhere, config, Category = "Wires", meta = (ClampMin = 0.0f))
 	float InactiveWireThickness;

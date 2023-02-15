@@ -280,7 +280,7 @@ protected:
 	void K2_OnActivate();
 	
 	// Trigger execution of input pin
-	void TriggerInput(const FName& PinName, const EFlowPinActivationType ActivationType = EFlowPinActivationType::Default);
+	void TriggerInput(const FConnectedPin& ConnectedPin, const EFlowPinActivationType ActivationType = EFlowPinActivationType::Default);
 
 	// Method reacting on triggering Input pin
 	virtual void ExecuteInput(const FName& PinName);
@@ -407,4 +407,8 @@ protected:
 
 	UFUNCTION(BlueprintNativeEvent, Category = "FlowNode")
 	void OnPassThrough();
+
+public:
+
+	FORCEINLINE bool IsSignalModeEnabled() const { return SignalMode == EFlowSignalMode::Enabled; }
 };

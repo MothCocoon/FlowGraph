@@ -25,6 +25,7 @@
 #include "SourceCodeNavigation.h"
 #include "Textures/SlateIcon.h"
 #include "ToolMenuSection.h"
+#include "Nodes/FlowPropertyHelpers.h"
 
 #define LOCTEXT_NAMESPACE "FlowGraphNode"
 
@@ -367,6 +368,18 @@ void UFlowGraphNode::AllocateDefaultPins()
 		for (const FFlowPin& OutputPin : FlowNode->OutputPins)
 		{
 			CreateOutputPin(OutputPin);
+		}
+
+		const auto FlowInputPin = FlowPropertyHelpers::GetInputFlowPropertyBag(FlowNode);
+		if (FlowInputPin.IsValid())
+		{
+			CreateInputPropertyPin(FlowInputPin);
+		}
+
+		const auto FlowOutputPin = FlowPropertyHelpers::GetOutputFlowPropertyBag(FlowNode);
+		if (FlowOutputPin.IsValid())
+		{
+			CreateOutputPropertyPin(FlowOutputPin);
 		}
 	}
 }
@@ -800,6 +813,28 @@ void UFlowGraphNode::CreateOutputPin(const FFlowPin& FlowPin, const int32 Index 
 	NewPin->PinToolTip = FlowPin.PinToolTip;
 
 	OutputPins.Emplace(NewPin);
+}
+
+void UFlowGraphNode::CreateInputPropertyPin(const FFlowPropertyBag& FlowPropertyPin, const int32 Index)
+{
+	check(!FlowPropertyPin.PropertyName.IsNone());
+
+	FCreatePinParams CreatePinParams;
+	CreatePinParams.Index = Index;
+	UEdGraphPin* NewPin = CreatePin(EGPD_Input, UEdGraphSchema_K2::PC_Struct, nullptr, FlowPropertyPin.PropertyName, CreatePinParams);
+	NewPin->PinToolTip = FlowPropertyPin.PinTooltip;
+	NewPin->PinType.PinSubCategoryObject = TBaseStructure<FFlowPropertyBag>::Get();
+}
+
+void UFlowGraphNode::CreateOutputPropertyPin(const FFlowPropertyBag& FlowPropertyPin, const int32 Index)
+{
+	check(!FlowPropertyPin.PropertyName.IsNone());
+
+	FCreatePinParams CreatePinParams;
+	CreatePinParams.Index = Index;
+	UEdGraphPin* NewPin = CreatePin(EGPD_Output, UEdGraphSchema_K2::PC_Struct, nullptr, FlowPropertyPin.PropertyName, CreatePinParams);
+	NewPin->PinToolTip = FlowPropertyPin.PinTooltip;
+	NewPin->PinType.PinSubCategoryObject = TBaseStructure<FFlowPropertyBag>::Get();
 }
 
 void UFlowGraphNode::RemoveOrphanedPin(UEdGraphPin* Pin)

@@ -144,7 +144,12 @@ void UFlowAsset::HarvestNodeConnections()
 				if (const UEdGraphPin* LinkedPin = ThisPin->LinkedTo[0])
 				{
 					const UEdGraphNode* LinkedNode = LinkedPin->GetOwningNode();
-					FoundConnections.Add(ThisPin->PinName, FConnectedPin(LinkedNode->NodeGuid, LinkedPin->PinName));
+					FFlowInputOutputPin VariablePin;
+					if (ThisPin->PinType.PinCategory != UEdGraphSchema_K2::PC_Exec)
+					{
+						VariablePin = FFlowInputOutputPin(LinkedPin->PinName, ThisPin->PinName, LinkedNode->NodeGuid, Node->NodeGuid);
+					}
+					FoundConnections.Add(ThisPin->PinName, FConnectedPin(LinkedNode->NodeGuid, LinkedPin->PinName, VariablePin));
 				}
 			}
 		}
@@ -436,9 +441,9 @@ void UFlowAsset::TriggerCustomOutput(const FName& EventName) const
 	NodeOwningThisAssetInstance->TriggerOutput(EventName);
 }
 
-void UFlowAsset::TriggerInput(const FGuid& NodeGuid, const FName& PinName)
+void UFlowAsset::TriggerInput(const FConnectedPin& InConnectedPin)
 {
-	if (UFlowNode* Node = Nodes.FindRef(NodeGuid))
+	if (UFlowNode* Node = Nodes.FindRef(InConnectedPin.NodeGuid))
 	{
 		if (!ActiveNodes.Contains(Node))
 		{
@@ -446,7 +451,7 @@ void UFlowAsset::TriggerInput(const FGuid& NodeGuid, const FName& PinName)
 			RecordedNodes.Add(Node);
 		}
 
-		Node->TriggerInput(PinName);
+		Node->TriggerInput(InConnectedPin);
 	}
 }
 

@@ -29,7 +29,6 @@ class FLOWEDITOR_API FFlowGraphConnectionDrawingPolicy : public FConnectionDrawi
 {
 	float RecentWireDuration;
 
-	FLinearColor InactiveColor;
 	FLinearColor RecentColor;
 	FLinearColor RecordedColor;
 	FLinearColor SelectedColor;

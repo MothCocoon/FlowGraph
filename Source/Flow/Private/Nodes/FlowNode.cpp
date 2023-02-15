@@ -12,6 +12,7 @@
 #include "Engine/World.h"
 #include "Misc/App.h"
 #include "Misc/Paths.h"
+#include "Nodes/FlowPropertyHelpers.h"
 #include "Serialization/MemoryReader.h"
 #include "Serialization/MemoryWriter.h"
 
@@ -380,14 +381,14 @@ void UFlowNode::OnActivate()
 	K2_OnActivate();
 }
 
-void UFlowNode::TriggerInput(const FName& PinName, const EFlowPinActivationType ActivationType /*= Default*/)
+void UFlowNode::TriggerInput(const FConnectedPin& ConnectedPin, const EFlowPinActivationType ActivationType /*= Default*/)
 {
 	if (SignalMode == EFlowSignalMode::Disabled)
 	{
 		// entirely ignore any Input activation
 	}
 
-	if (InputPins.Contains(PinName))
+	if (InputPins.Contains(ConnectedPin.PinName))
 	{
 		if (SignalMode == EFlowSignalMode::Enabled)
 		{
@@ -402,21 +403,21 @@ void UFlowNode::TriggerInput(const FName& PinName, const EFlowPinActivationType 
 
 #if !UE_BUILD_SHIPPING
 		// record for debugging
-		TArray<FPinRecord>& Records = InputRecords.FindOrAdd(PinName);
+		TArray<FPinRecord>& Records = InputRecords.FindOrAdd(ConnectedPin.PinName);
 		Records.Add(FPinRecord(FApp::GetCurrentTime(), ActivationType));
 #endif // UE_BUILD_SHIPPING
 
 #if WITH_EDITOR
 		if (GEditor && UFlowAsset::GetFlowGraphInterface().IsValid())
 		{
-			UFlowAsset::GetFlowGraphInterface()->OnInputTriggered(GraphNode, InputPins.IndexOfByKey(PinName));
+			UFlowAsset::GetFlowGraphInterface()->OnInputTriggered(GraphNode, InputPins.IndexOfByKey(ConnectedPin.PinName));
 		}
 #endif // WITH_EDITOR
 	}
 	else
 	{
 #if !UE_BUILD_SHIPPING
-		LogError(FString::Printf(TEXT("Input Pin name %s invalid"), *PinName.ToString()));
+		LogError(FString::Printf(TEXT("Input Pin name %s invalid"), *ConnectedPin.PinName.ToString()));
 #endif // UE_BUILD_SHIPPING
 		return;
 	}
@@ -424,13 +425,14 @@ void UFlowNode::TriggerInput(const FName& PinName, const EFlowPinActivationType 
 	switch (SignalMode)
 	{
 		case EFlowSignalMode::Enabled:
-			ExecuteInput(PinName);
+			FlowPropertyHelpers::SetPropertyValue(this, ConnectedPin);
+			ExecuteInput(ConnectedPin.PinName);
 			break;
 		case EFlowSignalMode::Disabled:
-			LogNote(FString::Printf(TEXT("Node disabled while triggering input %s"), *PinName.ToString()));
+			LogNote(FString::Printf(TEXT("Node disabled while triggering input %s"), *ConnectedPin.PinName.ToString()));
 			break;
 		case EFlowSignalMode::PassThrough:
-			LogNote(FString::Printf(TEXT("Signal pass-through on triggering input %s"), *PinName.ToString()));
+			LogNote(FString::Printf(TEXT("Signal pass-through on triggering input %s"), *ConnectedPin.PinName.ToString()));
 			OnPassThrough();
 			break;
 		default: ;
@@ -481,8 +483,9 @@ void UFlowNode::TriggerOutput(const FName& PinName, const bool bFinish /*= false
 	// call the next node
 	if (OutputPins.Contains(PinName) && Connections.Contains(PinName))
 	{
-		const FConnectedPin FlowPin = GetConnection(PinName);
-		GetFlowAsset()->TriggerInput(FlowPin.NodeGuid, FlowPin.PinName);
+		FConnectedPin FlowPin = GetConnection(PinName);
+		FlowPropertyHelpers::SetVariablePin(this, FlowPin);
+		GetFlowAsset()->TriggerInput(FlowPin);
 	}
 }
 

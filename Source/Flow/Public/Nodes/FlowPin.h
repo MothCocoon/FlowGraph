@@ -1,6 +1,7 @@
 // Copyright https://github.com/MothCocoon/FlowGraph/graphs/contributors
 
 #pragma once
+#include "FlowVariable.h"
 
 #include "FlowPin.generated.h"
 
@@ -154,9 +155,17 @@ struct FLOW_API FConnectedPin
 	UPROPERTY()
 	FName PinName;
 
+	UPROPERTY()
+	FFlowInputOutputPin VariablePin;
+
 	FConnectedPin()
 		: NodeGuid(FGuid())
 		, PinName(NAME_None)
+	{
+	}
+
+	// @TODO This is a temporary fix to prevent compile error from UFlowGraphNode::ForcePinActivation 
+	FConnectedPin(const FName& PinName) : PinName(PinName)
 	{
 	}
 
@@ -165,6 +174,15 @@ struct FLOW_API FConnectedPin
 		, PinName(InPinName)
 	{
 	}
+
+	FConnectedPin(const FGuid NodeGuid, const FName& PinName, const FFlowInputOutputPin& VariablePin)
+		: NodeGuid(NodeGuid)
+		, PinName(PinName)
+		, VariablePin(VariablePin)
+	{
+	}
+
+	FORCEINLINE bool IsValidPin() const { return PinName != NAME_None && NodeGuid.IsValid(); }
 
 	FORCEINLINE bool operator==(const FConnectedPin& Other) const
 	{
