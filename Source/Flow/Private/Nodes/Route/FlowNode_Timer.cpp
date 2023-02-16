@@ -9,6 +9,7 @@ UFlowNode_Timer::UFlowNode_Timer(const FObjectInitializer& ObjectInitializer)
 	: Super(ObjectInitializer)
 	, CompletionTime(1.0f)
 	, StepTime(0.0f)
+	, bLoopIndefinitely(false)
 	, SumOfSteps(0.0f)
 	, RemainingCompletionTime(0.0f)
 	, RemainingStepTime(0.0f)
@@ -29,7 +30,7 @@ UFlowNode_Timer::UFlowNode_Timer(const FObjectInitializer& ObjectInitializer)
 
 void UFlowNode_Timer::ExecuteInput(const FName& PinName)
 {
-	if (CompletionTime == 0.0f)
+	if (CompletionTime == 0.0f && (!bLoopIndefinitely || StepTime == 0.f))
 	{
 		LogError(TEXT("Invalid Timer settings"));
 		TriggerOutput(TEXT("Completed"), true);
@@ -65,7 +66,10 @@ void UFlowNode_Timer::SetTimer()
 			GetWorld()->GetTimerManager().SetTimer(StepTimerHandle, this, &UFlowNode_Timer::OnStep, StepTime, true);
 		}
 
-		GetWorld()->GetTimerManager().SetTimer(CompletionTimerHandle, this, &UFlowNode_Timer::OnCompletion, CompletionTime, false);
+		if (!bLoopIndefinitely || StepTime == 0.f)
+		{
+			GetWorld()->GetTimerManager().SetTimer(CompletionTimerHandle, this, &UFlowNode_Timer::OnCompletion, CompletionTime, false);
+		}
 	}
 	else
 	{
@@ -86,9 +90,12 @@ void UFlowNode_Timer::Restart()
 
 void UFlowNode_Timer::OnStep()
 {
-	SumOfSteps += StepTime;
+	if (!bLoopIndefinitely)
+	{
+		SumOfSteps += StepTime;
+	}
 
-	if (SumOfSteps >= CompletionTime)
+	if (SumOfSteps >= CompletionTime && CompletionTime > 0.f)
 	{
 		TriggerOutput(TEXT("Completed"), true);
 	}
@@ -155,11 +162,23 @@ void UFlowNode_Timer::OnLoad_Implementation()
 #if WITH_EDITOR
 FString UFlowNode_Timer::GetNodeDescription() const
 {
+	if (StepTime > 0.0f && bLoopIndefinitely)
+	{
+		const auto NodeDescription = FString::SanitizeFloat(CompletionTime, 2).Append(TEXT(", step by ")).Append(FString::SanitizeFloat(StepTime, 2));
+		return FString::Printf(TEXT("%s (Loops)"), *NodeDescription);
+	}
+	
 	if (CompletionTime > 0.0f)
 	{
 		if (StepTime > 0.0f)
 		{
-			return FString::SanitizeFloat(CompletionTime, 2).Append(TEXT(", step by ")).Append(FString::SanitizeFloat(StepTime, 2));
+			const auto NodeDescription = FString::SanitizeFloat(CompletionTime, 2).Append(TEXT(", step by ")).Append(FString::SanitizeFloat(StepTime, 2));
+			if (bLoopIndefinitely)
+			{
+				return FString::Printf(TEXT("%s (Loops)"), *NodeDescription);
+			}
+			
+			return NodeDescription;
 		}
 
 		return FString::SanitizeFloat(CompletionTime, 2);

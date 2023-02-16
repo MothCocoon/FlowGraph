@@ -15,12 +15,16 @@ class FLOW_API UFlowNode_Timer : public UFlowNode
 	GENERATED_UCLASS_BODY()
 
 protected:
-	UPROPERTY(EditAnywhere, Category = "Timer", meta = (ClampMin = 0.0f))
+	UPROPERTY(EditAnywhere, Category = "Timer", meta = (ClampMin = 0.0f, EditCondition = "StepTime == 0.0 || !bLoopIndefinitely"))
 	float CompletionTime;
 
 	// this allows to trigger other nodes multiple times before completing the Timer
 	UPROPERTY(EditAnywhere, Category = "Timer", meta = (ClampMin = 0.0f))
 	float StepTime;
+
+	// Set this to true if you want the timer to run forever. Execute Skip to stop
+	UPROPERTY(EditAnywhere, Category = "Timer", meta = (EditCondition = "StepTime > 0.0"))
+	bool bLoopIndefinitely;
 
 private:
 	FTimerHandle CompletionTimerHandle;
