@@ -242,7 +242,7 @@ public:
 	UObject* GetOwner() const { return Owner.Get(); }
 
 	template <class T>
-	TWeakObjectPtr<T*> GetOwner() const
+	TWeakObjectPtr<T> GetOwner() const
 	{
 		return Owner.IsValid() ? Cast<T>(Owner) : nullptr;
 	}
