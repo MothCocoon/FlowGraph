@@ -377,14 +377,17 @@ public:
 	UFUNCTION(BlueprintPure, Category = "FlowNode")
 	static FString GetProgressAsString(float Value);
 
-	UFUNCTION(BlueprintCallable, Category = "FlowNode", meta = (DevelopmentOnly))
+	UFUNCTION(BlueprintCallable, Category = "FlowNode", meta = (DevelopmentOnly), meta=(DeprecatedFunction, DeprecationMessage="Use LogRuntimeError instead."))
 	void LogError(FString Message, const EFlowOnScreenMessageType OnScreenMessageType = EFlowOnScreenMessageType::Permanent);
 
 	UFUNCTION(BlueprintCallable, Category = "FlowNode", meta = (DevelopmentOnly))
-	void LogWarning(FString Message);
+	void LogRuntimeError(FString Message, const EFlowOnScreenMessageType OnScreenMessageType = EFlowOnScreenMessageType::Permanent);
+
+	UFUNCTION(BlueprintCallable, Category = "FlowNode", meta = (DevelopmentOnly))
+	void LogRuntimeWarning(FString Message);
 	
 	UFUNCTION(BlueprintCallable, Category = "FlowNode", meta = (DevelopmentOnly))
-	void LogNote(FString Message);
+	void LogRuntimeNote(FString Message);
 
 #if !UE_BUILD_SHIPPING
 private:
