@@ -12,6 +12,7 @@
 #include "FlowEditorDefines.h"
 #include "FlowTypes.h"
 
+class FFlowMessageLog;
 class SFlowPalette;
 class UFlowAsset;
 class UFlowGraphNode;
@@ -27,7 +28,7 @@ struct Rect;
 class FLOWEDITOR_API FFlowAssetEditor : public FAssetEditorToolkit, public FEditorUndoClient, public FGCObject, public FNotifyHook
 {
 protected:
-	/** The FlowAsset asset being inspected */
+	/** The Flow Asset being edited */
 	UFlowAsset* FlowAsset;
 
 	TSharedPtr<class FFlowAssetToolbar> AssetToolbar;
@@ -121,7 +122,12 @@ protected:
 	virtual void BindToolbarCommands();
 	
 	virtual void RefreshAsset();
-	virtual void ValidateAsset();
+
+private:
+	void ValidateAsset_Internal();
+
+protected:
+	virtual void ValidateAsset(FFlowMessageLog& MessageLog);
 
 #if ENABLE_SEARCH_IN_ASSET_EDITOR
 	virtual void SearchInAsset();
