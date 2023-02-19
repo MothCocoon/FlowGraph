@@ -416,7 +416,7 @@ void UFlowNode::TriggerInput(const FName& PinName, const EFlowPinActivationType 
 	else
 	{
 #if !UE_BUILD_SHIPPING
-		LogError(FString::Printf(TEXT("Input Pin name %s invalid"), *PinName.ToString()));
+		LogRuntimeError(FString::Printf(TEXT("Input Pin name %s invalid"), *PinName.ToString()));
 #endif // UE_BUILD_SHIPPING
 		return;
 	}
@@ -427,10 +427,10 @@ void UFlowNode::TriggerInput(const FName& PinName, const EFlowPinActivationType 
 			ExecuteInput(PinName);
 			break;
 		case EFlowSignalMode::Disabled:
-			LogNote(FString::Printf(TEXT("Node disabled while triggering input %s"), *PinName.ToString()));
+			LogRuntimeNote(FString::Printf(TEXT("Node disabled while triggering input %s"), *PinName.ToString()));
 			break;
 		case EFlowSignalMode::PassThrough:
-			LogNote(FString::Printf(TEXT("Signal pass-through on triggering input %s"), *PinName.ToString()));
+			LogRuntimeNote(FString::Printf(TEXT("Signal pass-through on triggering input %s"), *PinName.ToString()));
 			OnPassThrough();
 			break;
 		default: ;
@@ -474,7 +474,7 @@ void UFlowNode::TriggerOutput(const FName& PinName, const bool bFinish /*= false
 	}
 	else
 	{
-		LogError(FString::Printf(TEXT("Output Pin name %s invalid"), *PinName.ToString()));
+		LogRuntimeError(FString::Printf(TEXT("Output Pin name %s invalid"), *PinName.ToString()));
 	}
 #endif // UE_BUILD_SHIPPING
 
@@ -662,7 +662,12 @@ FString UFlowNode::GetProgressAsString(float Value)
 	return TempString;
 }
 
-void UFlowNode::LogError(FString Message, const EFlowOnScreenMessageType OnScreenMessageType)
+void UFlowNode::LogError(const FString Message, const EFlowOnScreenMessageType OnScreenMessageType)
+{
+	LogRuntimeError(Message, OnScreenMessageType);
+}
+
+void UFlowNode::LogRuntimeError(FString Message, const EFlowOnScreenMessageType OnScreenMessageType)
 {
 #if !UE_BUILD_SHIPPING
 
@@ -694,13 +699,16 @@ void UFlowNode::LogError(FString Message, const EFlowOnScreenMessageType OnScree
 
 	// Message Log
 #if WITH_EDITOR
-	GetFlowAsset()->GetTemplateAsset()->LogError(Message, this);
+	if (GetFlowAsset()->GetTemplateAsset())
+	{
+		GetFlowAsset()->GetTemplateAsset()->LogError(Message, this);
+	}
 #endif
 
 #endif
 }
 
-void UFlowNode::LogWarning(FString Message)
+void UFlowNode::LogRuntimeWarning(FString Message)
 {
 #if !UE_BUILD_SHIPPING
 
@@ -711,13 +719,16 @@ void UFlowNode::LogWarning(FString Message)
 
 	// Message Log
 #if WITH_EDITOR
-	GetFlowAsset()->GetTemplateAsset()->LogWarning(Message, this);
+	if (GetFlowAsset()->GetTemplateAsset())
+	{
+		GetFlowAsset()->GetTemplateAsset()->LogWarning(Message, this);
+	}
 #endif
 
 #endif
 }
 
-void UFlowNode::LogNote(FString Message)
+void UFlowNode::LogRuntimeNote(FString Message)
 {
 #if !UE_BUILD_SHIPPING
 
@@ -770,11 +781,11 @@ void UFlowNode::LoadInstance(const FFlowNodeSaveData& NodeRecord)
 			break;
 		case EFlowSignalMode::Disabled:
 			// designer doesn't want to execute this node's logic at all, so we kill it
-			LogNote(TEXT("Signal disabled while loading Flow Node from SaveGame"));
+			LogRuntimeNote(TEXT("Signal disabled while loading Flow Node from SaveGame"));
 			Finish();
 			break;
 		case EFlowSignalMode::PassThrough:
-			LogNote(TEXT("Signal pass-through on loading Flow Node from SaveGame"));
+			LogRuntimeNote(TEXT("Signal pass-through on loading Flow Node from SaveGame"));
 			OnPassThrough();
 			break;
 		default: ;
