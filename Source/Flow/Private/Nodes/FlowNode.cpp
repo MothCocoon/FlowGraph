@@ -626,40 +626,9 @@ FString UFlowNode::GetClassDescription(const TSubclassOf<UObject> Class)
 	return Class ? Class->GetName() : MissingClass;
 }
 
-FString UFlowNode::GetProgressAsString(float Value)
+FString UFlowNode::GetProgressAsString(const float Value)
 {
-	// Avoids negative zero
-	if (Value == 0)
-	{
-		Value = 0;
-	}
-
-	// First create the string
-	FString TempString = FString::Printf(TEXT("%f"), Value);
-	if (!TempString.IsNumeric())
-	{
-		// String did not format as a valid decimal number so avoid messing with it
-		return TempString;
-	}
-
-	// Get position of the first digit after decimal separator
-	int32 TrimIndex = INDEX_NONE;
-	for (int32 CharIndex = 0; CharIndex < TempString.Len(); CharIndex++)
-	{
-		const TCHAR Char = TempString[CharIndex];
-		if (Char == TEXT('.'))
-		{
-			TrimIndex = CharIndex + 2;
-			break;
-		}
-		if (TrimIndex == INDEX_NONE && Char != TEXT('0'))
-		{
-			TrimIndex = CharIndex + 1;
-		}
-	}
-
-	TempString.RemoveAt(TrimIndex, TempString.Len() - TrimIndex, /*bAllowShrinking*/false);
-	return TempString;
+	return FString::Printf(TEXT("%.*f"), 2, Value);
 }
 
 void UFlowNode::SaveInstance(FFlowNodeSaveData& NodeRecord)

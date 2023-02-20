@@ -302,7 +302,7 @@ FString UFlowNode_PlayLevelSequence::GetPlaybackProgress() const
 {
 	if (SequencePlayer && SequencePlayer->IsPlaying())
 	{
-		return GetProgressAsString(SequencePlayer->GetCurrentTime().AsSeconds() - StartTime).Append(TEXT(" / ")).Append(GetProgressAsString(SequencePlayer->GetDuration().AsSeconds()));
+		return FString::Printf(TEXT("%.*f / %.*f"), 2, SequencePlayer->GetCurrentTime().AsSeconds() - StartTime, 2, SequencePlayer->GetDuration().AsSeconds());
 	}
 
 	return FString();
