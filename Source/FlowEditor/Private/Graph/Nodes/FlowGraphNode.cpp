@@ -778,6 +778,7 @@ void UFlowGraphNode::CreateInputPin(const FFlowPin& FlowPin, const int32 Index /
 			NewPin->PinFriendlyName = FText::FromString(FName::NameToDisplayString(FlowPin.PinName.ToString(), false));
 		}
 	}
+	else
 	{
 		NewPin->bAllowFriendlyName = true;
 		NewPin->PinFriendlyName = FlowPin.PinFriendlyName;
