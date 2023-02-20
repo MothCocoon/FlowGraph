@@ -49,11 +49,11 @@ void UFlowNode_SubGraph::ExecuteInput(const FName& PinName)
 	{
 		if (Asset.IsNull())
 		{
-			LogError(TEXT("Missing Flow Asset"));
+			LogRuntimeError(TEXT("Missing Flow Asset"));
 		}
 		else
 		{
-			LogError(FString::Printf(TEXT("Asset %s cannot be instance, probably is the same as the asset owning this SubGraph node."), *Asset->GetPathName()));
+			LogRuntimeError(FString::Printf(TEXT("Asset %s cannot be instance, probably is the same as the asset owning this SubGraph node."), *Asset->GetPathName()));
 		}
 		
 		Finish();

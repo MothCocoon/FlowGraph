@@ -377,6 +377,7 @@ public:
 	UFUNCTION(BlueprintPure, Category = "FlowNode")
 	static FString GetProgressAsString(float Value);
 
+	UE_DEPRECATED(5.0, "LogError has been deprecated. Use LogRuntimeError instead.")
 	UFUNCTION(BlueprintCallable, Category = "FlowNode", meta = (DevelopmentOnly), meta=(DeprecatedFunction, DeprecationMessage="Use LogRuntimeError instead."))
 	void LogError(FString Message, const EFlowOnScreenMessageType OnScreenMessageType = EFlowOnScreenMessageType::Permanent);
 
