@@ -24,7 +24,7 @@
 bool UFlowGraphSchema::bInitialGatherPerformed = false;
 TArray<UClass*> UFlowGraphSchema::NativeFlowNodes;
 TMap<FName, FAssetData> UFlowGraphSchema::BlueprintFlowNodes;
-TMap<UClass*, UClass*> UFlowGraphSchema::AssignedGraphNodeClasses;
+TMap<UClass*, UClass*> UFlowGraphSchema::GraphNodesByFlowNodes;
 
 bool UFlowGraphSchema::bBlueprintCompilationPending;
 
@@ -237,9 +237,12 @@ TArray<TSharedPtr<FString>> UFlowGraphSchema::GetFlowNodeCategories()
 
 UClass* UFlowGraphSchema::GetAssignedGraphNodeClass(const UClass* FlowNodeClass)
 {
-	if (UClass* AssignedGraphNode = AssignedGraphNodeClasses.FindRef(FlowNodeClass))
+	for (const TPair<UClass*, UClass*>& GraphNodeByFlowNode : GraphNodesByFlowNodes)
 	{
-		return AssignedGraphNode;
+		if (FlowNodeClass->IsChildOf(GraphNodeByFlowNode.Key))
+		{
+			return GraphNodeByFlowNode.Value;
+		}
 	}
 
 	return UFlowGraphNode::StaticClass();
@@ -422,14 +425,14 @@ void UFlowGraphSchema::GatherNativeNodes()
 
 	TArray<UClass*> GraphNodes;
 	GetDerivedClasses(UFlowGraphNode::StaticClass(), GraphNodes);
-	for (UClass* Class : GraphNodes)
+	for (UClass* GraphNodeClass : GraphNodes)
 	{
-		const UFlowGraphNode* DefaultObject = Class->GetDefaultObject<UFlowGraphNode>();
-		for (UClass* AssignedClass : DefaultObject->AssignedNodeClasses)
+		const UFlowGraphNode* GraphNodeCDO = GraphNodeClass->GetDefaultObject<UFlowGraphNode>();
+		for (UClass* AssignedClass : GraphNodeCDO->AssignedNodeClasses)
 		{
 			if (AssignedClass->IsChildOf(UFlowNode::StaticClass()))
 			{
-				AssignedGraphNodeClasses.Emplace(AssignedClass, Class);
+				GraphNodesByFlowNodes.Emplace(AssignedClass, GraphNodeClass);
 			}
 		}
 	}
