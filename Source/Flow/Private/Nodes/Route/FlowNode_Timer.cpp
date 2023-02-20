@@ -159,10 +159,10 @@ FString UFlowNode_Timer::GetNodeDescription() const
 	{
 		if (StepTime > 0.0f)
 		{
-			return FString::SanitizeFloat(CompletionTime, 2).Append(TEXT(", step by ")).Append(FString::SanitizeFloat(StepTime, 2));
+			return FString::Printf(TEXT("%.*f, step by %.*f"), 2, CompletionTime, 2, StepTime);
 		}
 
-		return FString::SanitizeFloat(CompletionTime, 2);
+		return FString::Printf(TEXT("%.*f"), 2, CompletionTime);
 	}
 
 	return TEXT("Invalid settings");
@@ -172,12 +172,12 @@ FString UFlowNode_Timer::GetStatusString() const
 {
 	if (StepTime > 0.0f)
 	{
-		return TEXT("Progress: ") + GetProgressAsString(SumOfSteps);
+		return FString::Printf(TEXT("Progress: %.*f"), 2, SumOfSteps);
 	}
 
 	if (CompletionTimerHandle.IsValid() && GetWorld())
 	{
-		return TEXT("Progress: ") + GetProgressAsString(GetWorld()->GetTimerManager().GetTimerElapsed(CompletionTimerHandle));
+		return FString::Printf(TEXT("Progress: %.*f"), 2, GetWorld()->GetTimerManager().GetTimerElapsed(CompletionTimerHandle));
 	}
 
 	return FString();
