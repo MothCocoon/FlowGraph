@@ -377,24 +377,6 @@ public:
 	UFUNCTION(BlueprintPure, Category = "FlowNode")
 	static FString GetProgressAsString(float Value);
 
-	UE_DEPRECATED(5.0, "LogError has been deprecated. Use LogRuntimeError instead.")
-	UFUNCTION(BlueprintCallable, Category = "FlowNode", meta = (DevelopmentOnly), meta=(DeprecatedFunction, DeprecationMessage="Use LogRuntimeError instead."))
-	void LogError(FString Message, const EFlowOnScreenMessageType OnScreenMessageType = EFlowOnScreenMessageType::Permanent);
-
-	UFUNCTION(BlueprintCallable, Category = "FlowNode", meta = (DevelopmentOnly))
-	void LogRuntimeError(FString Message, const EFlowOnScreenMessageType OnScreenMessageType = EFlowOnScreenMessageType::Permanent);
-
-	UFUNCTION(BlueprintCallable, Category = "FlowNode", meta = (DevelopmentOnly))
-	void LogRuntimeWarning(FString Message);
-	
-	UFUNCTION(BlueprintCallable, Category = "FlowNode", meta = (DevelopmentOnly))
-	void LogRuntimeNote(FString Message);
-
-#if !UE_BUILD_SHIPPING
-private:
-	void BuildMessage(FString& Message) const;
-#endif
-	
 public:	
 	UFUNCTION(BlueprintCallable, Category = "FlowNode")
 	void SaveInstance(FFlowNodeSaveData& NodeRecord);
@@ -411,4 +393,19 @@ protected:
 
 	UFUNCTION(BlueprintNativeEvent, Category = "FlowNode")
 	void OnPassThrough();
+
+public:
+	UFUNCTION(BlueprintCallable, Category = "FlowNode", meta = (DevelopmentOnly))
+	void LogError(FString Message, const EFlowOnScreenMessageType OnScreenMessageType = EFlowOnScreenMessageType::Permanent);
+
+	UFUNCTION(BlueprintCallable, Category = "FlowNode", meta = (DevelopmentOnly))
+	void LogWarning(FString Message);
+	
+	UFUNCTION(BlueprintCallable, Category = "FlowNode", meta = (DevelopmentOnly))
+	void LogNote(FString Message);
+
+#if !UE_BUILD_SHIPPING
+private:
+	bool BuildMessage(FString& Message) const;
+#endif
 };
