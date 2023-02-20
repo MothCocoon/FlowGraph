@@ -416,7 +416,7 @@ void UFlowNode::TriggerInput(const FName& PinName, const EFlowPinActivationType 
 	else
 	{
 #if !UE_BUILD_SHIPPING
-		LogRuntimeError(FString::Printf(TEXT("Input Pin name %s invalid"), *PinName.ToString()));
+		LogError(FString::Printf(TEXT("Input Pin name %s invalid"), *PinName.ToString()));
 #endif // UE_BUILD_SHIPPING
 		return;
 	}
@@ -427,10 +427,10 @@ void UFlowNode::TriggerInput(const FName& PinName, const EFlowPinActivationType 
 			ExecuteInput(PinName);
 			break;
 		case EFlowSignalMode::Disabled:
-			LogRuntimeNote(FString::Printf(TEXT("Node disabled while triggering input %s"), *PinName.ToString()));
+			LogNote(FString::Printf(TEXT("Node disabled while triggering input %s"), *PinName.ToString()));
 			break;
 		case EFlowSignalMode::PassThrough:
-			LogRuntimeNote(FString::Printf(TEXT("Signal pass-through on triggering input %s"), *PinName.ToString()));
+			LogNote(FString::Printf(TEXT("Signal pass-through on triggering input %s"), *PinName.ToString()));
 			OnPassThrough();
 			break;
 		default: ;
@@ -474,7 +474,7 @@ void UFlowNode::TriggerOutput(const FName& PinName, const bool bFinish /*= false
 	}
 	else
 	{
-		LogRuntimeError(FString::Printf(TEXT("Output Pin name %s invalid"), *PinName.ToString()));
+		LogError(FString::Printf(TEXT("Output Pin name %s invalid"), *PinName.ToString()));
 	}
 #endif // UE_BUILD_SHIPPING
 
@@ -662,97 +662,6 @@ FString UFlowNode::GetProgressAsString(float Value)
 	return TempString;
 }
 
-void UFlowNode::LogError(const FString Message, const EFlowOnScreenMessageType OnScreenMessageType)
-{
-	LogRuntimeError(Message, OnScreenMessageType);
-}
-
-void UFlowNode::LogRuntimeError(FString Message, const EFlowOnScreenMessageType OnScreenMessageType)
-{
-#if !UE_BUILD_SHIPPING
-
-	BuildMessage(Message);
-
-	// OnScreen Message
-	if (OnScreenMessageType == EFlowOnScreenMessageType::Permanent)
-	{
-		if (GetWorld())
-		{
-			if (UViewportStatsSubsystem* StatsSubsystem = GetWorld()->GetSubsystem<UViewportStatsSubsystem>())
-			{
-				StatsSubsystem->AddDisplayDelegate([this, Message](FText& OutText, FLinearColor& OutColor)
-				{
-					OutText = FText::FromString(Message);
-					OutColor = FLinearColor::Red;
-					return IsValid(this) && ActivationState != EFlowNodeState::NeverActivated;
-				});
-			}
-		}
-	}
-	else
-	{
-		GEngine->AddOnScreenDebugMessage(-1, 2.0f, FColor::Red, Message);
-	}
-
-	// Output Log
-	UE_LOG(LogFlow, Error, TEXT("%s"), *Message);
-
-	// Message Log
-#if WITH_EDITOR
-	if (GetFlowAsset()->GetTemplateAsset())
-	{
-		GetFlowAsset()->GetTemplateAsset()->LogError(Message, this);
-	}
-#endif
-
-#endif
-}
-
-void UFlowNode::LogRuntimeWarning(FString Message)
-{
-#if !UE_BUILD_SHIPPING
-
-	BuildMessage(Message);
-
-	// Output Log
-	UE_LOG(LogFlow, Warning, TEXT("%s"), *Message);
-
-	// Message Log
-#if WITH_EDITOR
-	if (GetFlowAsset()->GetTemplateAsset())
-	{
-		GetFlowAsset()->GetTemplateAsset()->LogWarning(Message, this);
-	}
-#endif
-
-#endif
-}
-
-void UFlowNode::LogRuntimeNote(FString Message)
-{
-#if !UE_BUILD_SHIPPING
-
-	BuildMessage(Message);
-
-	// Output Log
-	UE_LOG(LogFlow, Log, TEXT("%s"), *Message);
-
-	// Message Log
-#if WITH_EDITOR
-	GetFlowAsset()->GetTemplateAsset()->LogNote(Message, this);
-#endif
-
-#endif
-}
-
-#if !UE_BUILD_SHIPPING
-void UFlowNode::BuildMessage(FString& Message) const
-{
-	const FString TemplatePath = GetFlowAsset()->TemplateAsset->GetPathName();
-	Message.Append(TEXT(" --- node ")).Append(GetName()).Append(TEXT(", asset ")).Append(FPaths::GetPath(TemplatePath) / FPaths::GetBaseFilename(TemplatePath));
-}
-#endif
-
 void UFlowNode::SaveInstance(FFlowNodeSaveData& NodeRecord)
 {
 	NodeRecord.NodeGuid = NodeGuid;
@@ -781,11 +690,11 @@ void UFlowNode::LoadInstance(const FFlowNodeSaveData& NodeRecord)
 			break;
 		case EFlowSignalMode::Disabled:
 			// designer doesn't want to execute this node's logic at all, so we kill it
-			LogRuntimeNote(TEXT("Signal disabled while loading Flow Node from SaveGame"));
+			LogNote(TEXT("Signal disabled while loading Flow Node from SaveGame"));
 			Finish();
 			break;
 		case EFlowSignalMode::PassThrough:
-			LogRuntimeNote(TEXT("Signal pass-through on loading Flow Node from SaveGame"));
+			LogNote(TEXT("Signal pass-through on loading Flow Node from SaveGame"));
 			OnPassThrough();
 			break;
 		default: ;
@@ -815,3 +724,89 @@ void UFlowNode::OnPassThrough_Implementation()
 	// deactivate node, so it doesn't get saved to a new SaveGame
 	Finish();
 }
+
+void UFlowNode::LogError(FString Message, const EFlowOnScreenMessageType OnScreenMessageType)
+{
+#if !UE_BUILD_SHIPPING
+	if (BuildMessage(Message))
+	{
+		// OnScreen Message
+		if (OnScreenMessageType == EFlowOnScreenMessageType::Permanent)
+		{
+			if (GetWorld())
+			{
+				if (UViewportStatsSubsystem* StatsSubsystem = GetWorld()->GetSubsystem<UViewportStatsSubsystem>())
+				{
+					StatsSubsystem->AddDisplayDelegate([this, Message](FText& OutText, FLinearColor& OutColor)
+					{
+						OutText = FText::FromString(Message);
+						OutColor = FLinearColor::Red;
+						return IsValid(this) && ActivationState != EFlowNodeState::NeverActivated;
+					});
+				}
+			}
+		}
+		else
+		{
+			GEngine->AddOnScreenDebugMessage(-1, 2.0f, FColor::Red, Message);
+		}
+
+		// Output Log
+		UE_LOG(LogFlow, Error, TEXT("%s"), *Message);
+
+		// Message Log
+#if WITH_EDITOR
+		GetFlowAsset()->GetTemplateAsset()->LogError(Message, this);
+#endif
+	}
+#endif
+}
+
+void UFlowNode::LogWarning(FString Message)
+{
+#if !UE_BUILD_SHIPPING
+	if (BuildMessage(Message))
+	{
+		// Output Log
+		UE_LOG(LogFlow, Warning, TEXT("%s"), *Message);
+
+		// Message Log
+#if WITH_EDITOR
+		if (GetFlowAsset()->GetTemplateAsset())
+		{
+			GetFlowAsset()->GetTemplateAsset()->LogWarning(Message, this);
+		}
+#endif
+	}
+#endif
+}
+
+void UFlowNode::LogNote(FString Message)
+{
+#if !UE_BUILD_SHIPPING
+	if (BuildMessage(Message))
+	{
+		// Output Log
+		UE_LOG(LogFlow, Log, TEXT("%s"), *Message);
+
+		// Message Log
+#if WITH_EDITOR
+		GetFlowAsset()->GetTemplateAsset()->LogNote(Message, this);
+#endif
+	}
+#endif
+}
+
+#if !UE_BUILD_SHIPPING
+bool UFlowNode::BuildMessage(FString& Message) const
+{
+	if (GetFlowAsset()->TemplateAsset) // this is runtime log which is should be only called on runtime instances of asset
+	{
+		const FString TemplatePath = GetFlowAsset()->TemplateAsset->GetPathName();
+		Message.Append(TEXT(" --- node ")).Append(GetName()).Append(TEXT(", asset ")).Append(FPaths::GetPath(TemplatePath) / FPaths::GetBaseFilename(TemplatePath));
+		return true;
+	}
+
+	return false;
+}
+#endif

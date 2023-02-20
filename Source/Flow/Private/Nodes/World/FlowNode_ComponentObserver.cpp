@@ -33,7 +33,7 @@ void UFlowNode_ComponentObserver::ExecuteInput(const FName& PinName)
 	}
 	else
 	{
-		LogRuntimeError(MissingIdentityTag);
+		LogError(MissingIdentityTag);
 	}
 }
 
