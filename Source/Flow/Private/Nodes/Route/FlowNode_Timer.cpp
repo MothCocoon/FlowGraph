@@ -165,7 +165,7 @@ FString UFlowNode_Timer::GetNodeDescription() const
 		return FString::SanitizeFloat(CompletionTime, 2);
 	}
 
-	return TEXT("Completes in next frame");
+	return TEXT("Completes in next tick");
 }
 
 FString UFlowNode_Timer::GetStatusString() const
