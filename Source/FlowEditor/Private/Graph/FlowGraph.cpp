@@ -19,6 +19,11 @@ void FFlowGraphInterface::OnOutputTriggered(UEdGraphNode* GraphNode, const int32
 	CastChecked<UFlowGraphNode>(GraphNode)->OnOutputTriggered(Index);
 }
 
+void FFlowGraphInterface::OnNodeSignalModeChangedRuntime(UEdGraphNode* GraphNode, const EFlowSignalMode NewSignalMode) const
+{
+	CastChecked<UFlowGraphNode>(GraphNode)->SetSignalMode(NewSignalMode);
+}
+
 UFlowGraph::UFlowGraph(const FObjectInitializer& ObjectInitializer)
 	: Super(ObjectInitializer)
 {

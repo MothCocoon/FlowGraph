@@ -28,6 +28,8 @@ public:
 
 	virtual void OnInputTriggered(UEdGraphNode* GraphNode, const int32 Index) const {}
 	virtual void OnOutputTriggered(UEdGraphNode* GraphNode, const int32 Index) const {}
+
+	virtual void OnNodeSignalModeChangedRuntime(UEdGraphNode* GraphNode, const EFlowSignalMode NewSignalMode) const {}
 };
 
 DECLARE_DELEGATE(FFlowAssetEvent);
@@ -69,6 +71,13 @@ class FLOW_API UFlowAsset : public UObject
 	// --
 
 	virtual EDataValidationResult ValidateAsset(FFlowMessageLog& MessageLog);
+
+	void ResumePIE(const bool bIsSimulating);
+	void EndPIE(const bool bIsSimulating);
+
+protected:
+	virtual void OnResumePIE(const bool bIsSimulating) {}
+	virtual void OnEndPIE(const bool bIsSimulating) {}
 #endif
 
 	// IFlowGraphInterface

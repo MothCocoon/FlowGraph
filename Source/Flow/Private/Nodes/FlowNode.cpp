@@ -512,6 +512,48 @@ void UFlowNode::Finish()
 	GetFlowAsset()->FinishNode(this);
 }
 
+bool UFlowNode::SetSignalModeRuntime(const EFlowSignalMode NewSignalMode)
+{
+	const UWorld* FlowWorld = GetWorld();
+	if (!IsValid(FlowWorld))
+	{
+		return false;
+	}
+
+	if (!FlowWorld->IsGameWorld())
+	{
+		LogError("'Set Signal Mode Runtime' should only be called at runtime.");
+		return false;
+	}
+	
+	if (SignalMode != NewSignalMode)
+	{
+#if WITH_EDITOR
+		if (!EditorSignalMode.IsSet())
+		{
+			EditorSignalMode = SignalMode;
+		}
+		UFlowAsset::GetFlowGraphInterface()->OnNodeSignalModeChangedRuntime(GetGraphNode(), NewSignalMode);
+#else
+		SignalMode = NewSignalMode;
+#endif
+
+		return true;
+	}
+
+	return false;
+}
+
+#if WITH_EDITOR
+void UFlowNode::ResetSignalMode()
+{
+	if (EditorSignalMode.IsSet())
+	{
+		UFlowAsset::GetFlowGraphInterface()->OnNodeSignalModeChangedRuntime(GetGraphNode(), EditorSignalMode.GetValue());
+	}
+}
+#endif
+
 void UFlowNode::Deactivate()
 {
 	if (GetFlowAsset()->FinishPolicy == EFlowFinishPolicy::Abort)

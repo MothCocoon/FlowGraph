@@ -82,6 +82,22 @@ EDataValidationResult UFlowAsset::ValidateAsset(FFlowMessageLog& MessageLog)
 	return MessageLog.Messages.Num() > 0 ? EDataValidationResult::Invalid : EDataValidationResult::Valid;
 }
 
+void UFlowAsset::ResumePIE(const bool bIsSimulating)
+{
+	OnResumePIE(bIsSimulating);
+}
+
+void UFlowAsset::EndPIE(const bool bIsSimulating)
+{
+	// Intentionally using RecordedNodes. We only need to reset signal mode if the node was ever called. @See SetSignalModeRuntime in FlowNode
+	for (UFlowNode* Node : RecordedNodes)
+	{
+		Node->ResetSignalMode();
+	}
+
+	OnEndPIE(bIsSimulating);
+}
+
 TSharedPtr<IFlowGraphInterface> UFlowAsset::FlowGraphInterface = nullptr;
 
 void UFlowAsset::SetFlowGraphInterface(TSharedPtr<IFlowGraphInterface> InFlowAssetEditor)
@@ -372,6 +388,12 @@ void UFlowAsset::PreStartFlow()
 	{
 		// request to refresh list to show newly created instance
 		TemplateAsset->BroadcastDebuggerRefresh();
+	}
+
+	if (!FEditorDelegates::ResumePIE.IsBoundToObject(this))
+	{
+		FEditorDelegates::ResumePIE.AddUObject(this, &UFlowAsset::ResumePIE);
+		FEditorDelegates::EndPIE.AddUObject(this, &UFlowAsset::EndPIE);
 	}
 #endif
 }

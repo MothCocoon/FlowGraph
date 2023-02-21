@@ -130,6 +130,8 @@ protected:
 	EFlowSignalMode SignalMode;
 
 #if WITH_EDITOR
+	TOptional<EFlowSignalMode> EditorSignalMode;
+	
 	FFlowMessageLog ValidationLog;
 #endif
 
@@ -307,6 +309,14 @@ protected:
 	// Finish execution of node, it will call Cleanup
 	UFUNCTION(BlueprintCallable, Category = "FlowNode")
 	void Finish();
+
+	// Sets the signal mode. Should be used only at runtime.
+	UFUNCTION(BlueprintCallable, Category = "FlowNode")
+	bool SetSignalModeRuntime(const EFlowSignalMode NewSignalMode);
+
+#if WITH_EDITOR
+	void ResetSignalMode();
+#endif
 
 	void Deactivate();
 

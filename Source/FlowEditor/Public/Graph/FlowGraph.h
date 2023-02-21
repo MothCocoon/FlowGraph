@@ -14,6 +14,7 @@ public:
 
 	virtual void OnInputTriggered(UEdGraphNode* GraphNode, const int32 Index) const override;
 	virtual void OnOutputTriggered(UEdGraphNode* GraphNode, const int32 Index) const override;
+	virtual void OnNodeSignalModeChangedRuntime(UEdGraphNode* GraphNode, const EFlowSignalMode NewSignalMode) const override;
 };
 
 UCLASS()
