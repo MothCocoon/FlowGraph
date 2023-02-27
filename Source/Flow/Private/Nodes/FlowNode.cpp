@@ -4,6 +4,7 @@
 
 #include "FlowAsset.h"
 #include "FlowModule.h"
+#include "FlowSettings.h"
 #include "FlowSubsystem.h"
 #include "FlowTypes.h"
 
@@ -427,10 +428,16 @@ void UFlowNode::TriggerInput(const FName& PinName, const EFlowPinActivationType 
 			ExecuteInput(PinName);
 			break;
 		case EFlowSignalMode::Disabled:
-			LogNote(FString::Printf(TEXT("Node disabled while triggering input %s"), *PinName.ToString()));
+			if (UFlowSettings::Get()->bLogOnSignalDisabled)
+			{
+				LogNote(FString::Printf(TEXT("Node disabled while triggering input %s"), *PinName.ToString()));
+			}
 			break;
 		case EFlowSignalMode::PassThrough:
-			LogNote(FString::Printf(TEXT("Signal pass-through on triggering input %s"), *PinName.ToString()));
+			if (UFlowSettings::Get()->bLogOnSignalPassthrough)
+			{
+				LogNote(FString::Printf(TEXT("Signal pass-through on triggering input %s"), *PinName.ToString()));
+			}
 			OnPassThrough();
 			break;
 		default: ;
