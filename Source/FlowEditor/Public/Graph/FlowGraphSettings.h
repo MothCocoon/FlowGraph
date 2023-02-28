@@ -32,6 +32,10 @@ class FLOWEDITOR_API UFlowGraphSettings : public UDeveloperSettings
 	UPROPERTY(EditAnywhere, config, Category = "Default UI", meta = (ConfigRestartRequired = true))
 	bool bShowAssetToolbarAboveLevelEditor;
 
+	/** If enabled and when a runtime message is added, the target graph will automatically open and invokes runtime message tab. */
+	UPROPERTY(EditAnywhere, config, Category = "Default UI")
+	bool bAutoFocusOnRuntimeMessageAdded;
+
 	UPROPERTY(EditAnywhere, config, Category = "Default UI", meta = (ConfigRestartRequired = true))
 	FText FlowAssetCategoryName;
 

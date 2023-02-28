@@ -39,6 +39,7 @@
 #include "ScopedTransaction.h"
 #include "SNodePanel.h"
 #include "ToolMenus.h"
+#include "Graph/FlowGraphSettings.h"
 #include "Widgets/Docking/SDockTab.h"
 
 #if ENABLE_SEARCH_IN_ASSET_EDITOR
@@ -834,8 +835,11 @@ void FFlowAssetEditor::JumpToInnerObject(UObject* InnerObject)
 
 void FFlowAssetEditor::OnRuntimeMessageAdded(const UFlowAsset* AssetInstance, const TSharedRef<FTokenizedMessage>& Message) const
 {
-	// push messages to its window
-	TabManager->TryInvokeTab(RuntimeLogTab);
+	if (UFlowGraphSettings::Get()->bAutoFocusOnRuntimeMessageAdded)
+	{
+		// push messages to its window
+		TabManager->TryInvokeTab(RuntimeLogTab);
+	}
 	RuntimeLogListing->AddMessage(Message);
 	RuntimeLogListing->OnDataChanged().Broadcast();
 }

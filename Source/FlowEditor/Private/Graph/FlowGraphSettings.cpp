@@ -11,6 +11,7 @@ UFlowGraphSettings::UFlowGraphSettings(const FObjectInitializer& ObjectInitializ
 	, bExposeFlowAssetCreation(true)
 	, bExposeFlowNodeCreation(true)
 	, bShowAssetToolbarAboveLevelEditor(true)
+	, bAutoFocusOnRuntimeMessageAdded(false)
 	, FlowAssetCategoryName(LOCTEXT("FlowAssetCategory", "Flow"))
 	, DefaultFlowAssetClass(UFlowAsset::StaticClass())
 	, WorldAssetClass(UFlowAsset::StaticClass())
