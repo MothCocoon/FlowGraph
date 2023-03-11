@@ -21,7 +21,7 @@ enum class EFlowLogVerbosity : uint8
  * Adds message to log
  * Optionally shows message on screen
  */
-UCLASS(NotBlueprintable, meta = (DisplayName = "Log"))
+UCLASS(NotBlueprintable, meta = (DisplayName = "Log", Keywords = "print"))
 class FLOW_API UFlowNode_Log : public UFlowNode
 {
 	GENERATED_UCLASS_BODY()
