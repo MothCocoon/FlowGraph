@@ -8,7 +8,7 @@
 /**
  * Triggers output when Flow Component with matching Identity Tag appears in the world
  */
-UCLASS(NotBlueprintable, meta = (DisplayName = "On Actor Registered"))
+UCLASS(NotBlueprintable, meta = (DisplayName = "On Actor Registered", Keywords = "bind"))
 class FLOW_API UFlowNode_OnActorRegistered : public UFlowNode_ComponentObserver
 {
 	GENERATED_UCLASS_BODY()

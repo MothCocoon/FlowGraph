@@ -9,7 +9,7 @@
  * Logical OR
  * Output will be triggered only once
  */
-UCLASS(NotBlueprintable, meta = (DisplayName = "OR"))
+UCLASS(NotBlueprintable, meta = (DisplayName = "OR", Keywords = "|"))
 class FLOW_API UFlowNode_LogicalOR final : public UFlowNode
 {
 	GENERATED_UCLASS_BODY()
