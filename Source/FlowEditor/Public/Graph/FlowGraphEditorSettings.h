@@ -32,7 +32,7 @@ class FLOWEDITOR_API UFlowGraphEditorSettings : public UDeveloperSettings
 
 	// Hides the node description when you play in editor and only shows node status string.
 	UPROPERTY(config, EditAnywhere, Category = "Nodes")
-	bool bHideNodeDescriptionOnPIE;
+	bool bShowNodeDescriptionInPIE;
 
 	// Renders preview of entire graph while hovering over 
 	UPROPERTY(config, EditAnywhere, Category = "Nodes")
