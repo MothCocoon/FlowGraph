@@ -329,8 +329,30 @@ protected:
 private:
 	void ResetRecords();
 
-#if WITH_EDITOR
+//////////////////////////////////////////////////////////////////////////
+// SaveGame support
 
+public:
+	UFUNCTION(BlueprintCallable, Category = "FlowNode")
+	void SaveInstance(FFlowNodeSaveData& NodeRecord);
+
+	UFUNCTION(BlueprintCallable, Category = "FlowNode")
+	void LoadInstance(const FFlowNodeSaveData& NodeRecord);
+
+protected:
+	UFUNCTION(BlueprintNativeEvent, Category = "FlowNode")
+	void OnSave();
+
+	UFUNCTION(BlueprintNativeEvent, Category = "FlowNode")
+	void OnLoad();
+
+	UFUNCTION(BlueprintNativeEvent, Category = "FlowNode")
+	void OnPassThrough();
+	
+//////////////////////////////////////////////////////////////////////////
+// Utils
+
+#if WITH_EDITOR
 public:
 	UFlowNode* GetInspectedInstance() const;
 
@@ -378,23 +400,6 @@ public:
 
 	UFUNCTION(BlueprintPure, Category = "FlowNode")
 	static FString GetProgressAsString(float Value);
-
-public:
-	UFUNCTION(BlueprintCallable, Category = "FlowNode")
-	void SaveInstance(FFlowNodeSaveData& NodeRecord);
-
-	UFUNCTION(BlueprintCallable, Category = "FlowNode")
-	void LoadInstance(const FFlowNodeSaveData& NodeRecord);
-
-protected:
-	UFUNCTION(BlueprintNativeEvent, Category = "FlowNode")
-	void OnSave();
-
-	UFUNCTION(BlueprintNativeEvent, Category = "FlowNode")
-	void OnLoad();
-
-	UFUNCTION(BlueprintNativeEvent, Category = "FlowNode")
-	void OnPassThrough();
 
 public:
 	UFUNCTION(BlueprintCallable, Category = "FlowNode", meta = (DevelopmentOnly))
