@@ -9,7 +9,7 @@
  * Finish execution of this Flow Asset
  * All active nodes and sub graphs will be deactivated
  */
-UCLASS(NotBlueprintable, meta = (DisplayName = "Finish", Keywords = "stop, disable, deactivate"))
+UCLASS(NotBlueprintable, meta = (DisplayName = "Finish"))
 class FLOW_API UFlowNode_Finish : public UFlowNode
 {
 	GENERATED_UCLASS_BODY()
