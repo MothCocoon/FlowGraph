@@ -546,6 +546,69 @@ void UFlowNode::ResetRecords()
 #endif
 }
 
+void UFlowNode::SaveInstance(FFlowNodeSaveData& NodeRecord)
+{
+	NodeRecord.NodeGuid = NodeGuid;
+	OnSave();
+
+	FMemoryWriter MemoryWriter(NodeRecord.NodeData, true);
+	FFlowArchive Ar(MemoryWriter);
+	Serialize(Ar);
+}
+
+void UFlowNode::LoadInstance(const FFlowNodeSaveData& NodeRecord)
+{
+	FMemoryReader MemoryReader(NodeRecord.NodeData, true);
+	FFlowArchive Ar(MemoryReader);
+	Serialize(Ar);
+
+	if (UFlowAsset* FlowAsset = GetFlowAsset())
+	{
+		FlowAsset->OnActivationStateLoaded(this);
+	}
+
+	switch (SignalMode)
+	{
+		case EFlowSignalMode::Enabled:
+			OnLoad();
+		break;
+		case EFlowSignalMode::Disabled:
+			// designer doesn't want to execute this node's logic at all, so we kill it
+			LogNote(TEXT("Signal disabled while loading Flow Node from SaveGame"));
+		Finish();
+		break;
+		case EFlowSignalMode::PassThrough:
+			LogNote(TEXT("Signal pass-through on loading Flow Node from SaveGame"));
+		OnPassThrough();
+		break;
+		default: ;
+	}
+}
+
+void UFlowNode::OnSave_Implementation()
+{
+}
+
+void UFlowNode::OnLoad_Implementation()
+{
+}
+
+void UFlowNode::OnPassThrough_Implementation()
+{
+	// trigger all connected outputs
+	// pin connections aren't serialized to the SaveGame, so users can safely change connections post game release
+	for (const FFlowPin& OutputPin : OutputPins)
+	{
+		if (Connections.Contains(OutputPin.PinName))
+		{
+			TriggerOutput(OutputPin.PinName, false, EFlowPinActivationType::PassThrough);
+		}
+	}
+
+	// deactivate node, so it doesn't get saved to a new SaveGame
+	Finish();
+}
+
 #if WITH_EDITOR
 UFlowNode* UFlowNode::GetInspectedInstance() const
 {
@@ -629,69 +692,6 @@ FString UFlowNode::GetClassDescription(const TSubclassOf<UObject> Class)
 FString UFlowNode::GetProgressAsString(const float Value)
 {
 	return FString::Printf(TEXT("%.*f"), 2, Value);
-}
-
-void UFlowNode::SaveInstance(FFlowNodeSaveData& NodeRecord)
-{
-	NodeRecord.NodeGuid = NodeGuid;
-	OnSave();
-
-	FMemoryWriter MemoryWriter(NodeRecord.NodeData, true);
-	FFlowArchive Ar(MemoryWriter);
-	Serialize(Ar);
-}
-
-void UFlowNode::LoadInstance(const FFlowNodeSaveData& NodeRecord)
-{
-	FMemoryReader MemoryReader(NodeRecord.NodeData, true);
-	FFlowArchive Ar(MemoryReader);
-	Serialize(Ar);
-
-	if (UFlowAsset* FlowAsset = GetFlowAsset())
-	{
-		FlowAsset->OnActivationStateLoaded(this);
-	}
-
-	switch (SignalMode)
-	{
-		case EFlowSignalMode::Enabled:
-			OnLoad();
-			break;
-		case EFlowSignalMode::Disabled:
-			// designer doesn't want to execute this node's logic at all, so we kill it
-			LogNote(TEXT("Signal disabled while loading Flow Node from SaveGame"));
-			Finish();
-			break;
-		case EFlowSignalMode::PassThrough:
-			LogNote(TEXT("Signal pass-through on loading Flow Node from SaveGame"));
-			OnPassThrough();
-			break;
-		default: ;
-	}
-}
-
-void UFlowNode::OnSave_Implementation()
-{
-}
-
-void UFlowNode::OnLoad_Implementation()
-{
-}
-
-void UFlowNode::OnPassThrough_Implementation()
-{
-	// trigger all connected outputs
-	// pin connections aren't serialized to the SaveGame, so users can safely change connections post game release
-	for (const FFlowPin& OutputPin : OutputPins)
-	{
-		if (Connections.Contains(OutputPin.PinName))
-		{
-			TriggerOutput(OutputPin.PinName, false, EFlowPinActivationType::PassThrough);
-		}
-	}
-
-	// deactivate node, so it doesn't get saved to a new SaveGame
-	Finish();
 }
 
 void UFlowNode::LogError(FString Message, const EFlowOnScreenMessageType OnScreenMessageType)
