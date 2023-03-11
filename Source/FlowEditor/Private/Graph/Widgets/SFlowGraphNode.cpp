@@ -21,6 +21,7 @@
 #include "SNodePanel.h"
 #include "Styling/SlateColor.h"
 #include "TutorialMetaData.h"
+#include "Graph/FlowGraphEditorSettings.h"
 #include "Widgets/Images/SImage.h"
 #include "Widgets/Input/SButton.h"
 #include "Widgets/Layout/SBorder.h"
@@ -55,7 +56,7 @@ void SFlowGraphNode::Construct(const FArguments& InArgs, UFlowGraphNode* InNode)
 
 void SFlowGraphNode::GetNodeInfoPopups(FNodeInfoContext* Context, TArray<FGraphInformationPopupInfo>& Popups) const
 {
-	const FString Description = FlowGraphNode->GetNodeDescription();
+	const FString Description = GEditor->PlayWorld && UFlowGraphEditorSettings::Get()->bHideNodeDescriptionOnPIE ? "" : FlowGraphNode->GetNodeDescription();	
 	if (!Description.IsEmpty())
 	{
 		const FGraphInformationPopupInfo DescriptionPopup = FGraphInformationPopupInfo(nullptr, UFlowGraphSettings::Get()->NodeDescriptionBackground, Description);
