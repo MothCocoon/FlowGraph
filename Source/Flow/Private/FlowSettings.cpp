@@ -6,5 +6,7 @@ UFlowSettings::UFlowSettings(const FObjectInitializer& ObjectInitializer)
 	: Super(ObjectInitializer)
 	, bCreateFlowSubsystemOnClients(true)
 	, bWarnAboutMissingIdentityTags(true)
+	, bLogOnSignalDisabled(true)
+	, bLogOnSignalPassthrough(true)
 {
 }
