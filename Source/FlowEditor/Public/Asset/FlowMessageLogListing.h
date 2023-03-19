@@ -33,4 +33,5 @@ private:
 
 public:
 	static TSharedRef<IMessageLogListing> GetLogListing(const UFlowAsset* InFlowAsset, const EFlowLogType Type);
+	static FString GetLogLabel(const EFlowLogType Type);
 };

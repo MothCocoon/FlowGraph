@@ -14,6 +14,9 @@
 #include "Misc/Paths.h"
 #include "UObject/UObjectHash.h"
 
+FNativeFlowAssetEvent UFlowSubsystem::OnInstancedTemplateAdded;
+FNativeFlowAssetEvent UFlowSubsystem::OnInstancedTemplateRemoved;
+
 UFlowSubsystem::UFlowSubsystem()
 	: UGameInstanceSubsystem()
 {
@@ -226,6 +229,7 @@ void UFlowSubsystem::AddInstancedTemplate(UFlowAsset* Template)
 
 #if WITH_EDITOR
 		Template->RuntimeLog = MakeShareable(new FFlowMessageLog());
+		OnInstancedTemplateAdded.ExecuteIfBound(Template);
 #endif
 	}
 }
@@ -233,6 +237,7 @@ void UFlowSubsystem::AddInstancedTemplate(UFlowAsset* Template)
 void UFlowSubsystem::RemoveInstancedTemplate(UFlowAsset* Template)
 {
 #if WITH_EDITOR
+	OnInstancedTemplateRemoved.ExecuteIfBound(Template);
 	Template->RuntimeLog.Reset();
 #endif
 

@@ -30,7 +30,8 @@ public:
 	virtual void OnOutputTriggered(UEdGraphNode* GraphNode, const int32 Index) const {}
 };
 
-DECLARE_DELEGATE(FFlowAssetEvent);
+DECLARE_DELEGATE(FFlowGraphEvent);
+
 #endif
 
 /**
@@ -119,7 +120,7 @@ private:
 
 public:
 #if WITH_EDITOR
-	FFlowAssetEvent OnSubGraphReconstructionRequested;
+	FFlowGraphEvent OnSubGraphReconstructionRequested;
 
 	UFlowNode* CreateNode(const UClass* NodeClass, UEdGraphNode* GraphNode);
 
@@ -163,6 +164,7 @@ private:
 	TWeakObjectPtr<UFlowAsset> InspectedInstance;
 
 	// Message log for storing runtime errors/notes/warnings that will only last until the next game run
+	// Log lives in the asset template, so it can be inspected after ending the PIE
 	TSharedPtr<class FFlowMessageLog> RuntimeLog;
 #endif
 
@@ -184,14 +186,14 @@ public:
 	FRefreshDebuggerEvent& OnDebuggerRefresh() { return RefreshDebuggerEvent; }
 	FRefreshDebuggerEvent RefreshDebuggerEvent;
 
-	DECLARE_EVENT_TwoParams(UFlowAsset, FRuntimeMessageEvent, const UFlowAsset*, const TSharedRef<FTokenizedMessage>&);
+	DECLARE_EVENT_TwoParams(UFlowAsset, FRuntimeMessageEvent, UFlowAsset*, const TSharedRef<FTokenizedMessage>&);
 
 	FRuntimeMessageEvent& OnRuntimeMessageAdded() { return RuntimeMessageEvent; }
 	FRuntimeMessageEvent RuntimeMessageEvent;
 
 private:
 	void BroadcastDebuggerRefresh() const;
-	void BroadcastRuntimeMessageAdded(const UFlowAsset* AssetInstance, const TSharedRef<FTokenizedMessage>& Message) const;;
+	void BroadcastRuntimeMessageAdded(const TSharedRef<FTokenizedMessage>& Message);
 #endif
 
 //////////////////////////////////////////////////////////////////////////
@@ -287,14 +289,8 @@ public:
 	UFUNCTION(BlueprintPure, Category = "Flow")
 	TArray<UFlowNode*> GetRecordedNodes() const { return RecordedNodes; }
 
-#if WITH_EDITOR
-	void LogError(const FString& MessageToLog, UFlowNode* Node) const;
-	void LogWarning(const FString& MessageToLog, UFlowNode* Node) const;
-	void LogNote(const FString& MessageToLog, UFlowNode* Node) const;
-#endif
-
 //////////////////////////////////////////////////////////////////////////
-// SaveGame
+// SaveGame support
 
 	UFUNCTION(BlueprintCallable, Category = "SaveGame")
 	FFlowAssetSaveData SaveInstance(TArray<FFlowAssetSaveData>& SavedFlowInstances);
@@ -315,4 +311,14 @@ protected:
 public:
 	UFUNCTION(BlueprintNativeEvent, Category = "SaveGame")
 	bool IsBoundToWorld();
+
+//////////////////////////////////////////////////////////////////////////
+// Utils
+
+#if WITH_EDITOR
+public:
+	void LogError(const FString& MessageToLog, UFlowNode* Node);
+	void LogWarning(const FString& MessageToLog, UFlowNode* Node);
+	void LogNote(const FString& MessageToLog, UFlowNode* Node);
+#endif
 };
