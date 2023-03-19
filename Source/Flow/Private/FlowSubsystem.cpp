@@ -14,8 +14,10 @@
 #include "Misc/Paths.h"
 #include "UObject/UObjectHash.h"
 
+#if WITH_EDITOR
 FNativeFlowAssetEvent UFlowSubsystem::OnInstancedTemplateAdded;
 FNativeFlowAssetEvent UFlowSubsystem::OnInstancedTemplateRemoved;
+#endif
 
 UFlowSubsystem::UFlowSubsystem()
 	: UGameInstanceSubsystem()
