@@ -8,7 +8,7 @@
 
 #include "Asset/FlowAssetEditorContext.h"
 #include "Asset/FlowAssetToolbar.h"
-#include "Asset/FlowDebugger.h"
+#include "Asset/FlowDebuggerSubsystem.h"
 #include "Asset/FlowMessageLogListing.h"
 #include "Graph/FlowGraph.h"
 #include "Graph/FlowGraphEditorSettings.h"
@@ -261,16 +261,12 @@ void FFlowAssetEditor::InitFlowAssetEditor(const EToolkitMode::Type Mode, const 
 	GEditor->RegisterForUndo(this);
 
 	UFlowGraphSchema::SubscribeToAssetChanges();
-	FlowDebugger = MakeShareable(new FFlowDebugger);
 
 	BindToolbarCommands();
 	CreateToolbar();
 
 	BindGraphCommands();
 	CreateWidgets();
-
-	FlowAsset->OnRuntimeMessageAdded().AddSP(this, &FFlowAssetEditor::OnRuntimeMessageAdded);
-	FEditorDelegates::BeginPIE.AddSP(this, &FFlowAssetEditor::OnBeginPIE);
 
 	const TSharedRef<FTabManager::FLayout> StandaloneDefaultLayout = FTabManager::NewLayout("FlowAssetEditor_Layout_v5.1")
 		->AddArea
@@ -483,7 +479,7 @@ FGraphAppearanceInfo FFlowAssetEditor::GetGraphAppearanceInfo() const
 	FGraphAppearanceInfo AppearanceInfo;
 	AppearanceInfo.CornerText = GetCornerText();
 
-	if (FlowDebugger.IsValid() && FFlowDebugger::IsPlaySessionPaused())
+	if (UFlowDebuggerSubsystem::IsPlaySessionPaused())
 	{
 		AppearanceInfo.PIENotifyText = LOCTEXT("PausedLabel", "PAUSED");
 	}
@@ -753,11 +749,6 @@ EVisibility FFlowAssetEditor::GetDebuggerVisibility()
 	return GEditor->PlayWorld ? EVisibility::Visible : EVisibility::Collapsed;
 }
 
-void FFlowAssetEditor::OnBeginPIE(const bool bInSimulateInEditor) const
-{
-	RuntimeLogListing->ClearMessages();
-}
-
 TSet<UFlowGraphNode*> FFlowAssetEditor::GetSelectedFlowNodes() const
 {
 	TSet<UFlowGraphNode*> Result;
@@ -831,14 +822,6 @@ void FFlowAssetEditor::JumpToInnerObject(UObject* InnerObject)
 	}
 }
 #endif
-
-void FFlowAssetEditor::OnRuntimeMessageAdded(const UFlowAsset* AssetInstance, const TSharedRef<FTokenizedMessage>& Message) const
-{
-	// push messages to its window
-	TabManager->TryInvokeTab(RuntimeLogTab);
-	RuntimeLogListing->AddMessage(Message);
-	RuntimeLogListing->OnDataChanged().Broadcast();
-}
 
 void FFlowAssetEditor::OnLogTokenClicked(const TSharedRef<IMessageToken>& Token) const
 {

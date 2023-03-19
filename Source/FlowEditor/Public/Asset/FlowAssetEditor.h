@@ -32,7 +32,6 @@ protected:
 	UFlowAsset* FlowAsset;
 
 	TSharedPtr<class FFlowAssetToolbar> AssetToolbar;
-	TSharedPtr<class FFlowDebugger> FlowDebugger;
 
 	TSharedPtr<SGraphEditor> GraphEditor;
 	TSharedPtr<class IDetailsView> DetailsView;
@@ -166,8 +165,6 @@ public:
 	static bool IsPIE();
 	static EVisibility GetDebuggerVisibility();
 
-	void OnBeginPIE(const bool bInSimulateInEditor) const;
-
 	TSet<UFlowGraphNode*> GetSelectedFlowNodes() const;
 	int32 GetNumberOfSelectedNodes() const;
 	bool GetBoundsForSelectedNodes(class FSlateRect& Rect, float Padding) const;
@@ -185,7 +182,6 @@ public:
 #endif
 
 protected:
-	void OnRuntimeMessageAdded(const UFlowAsset* AssetInstance, const TSharedRef<FTokenizedMessage>& Message) const;
 	void OnLogTokenClicked(const TSharedRef<class IMessageToken>& Token) const;
 	
 	virtual void SelectAllNodes() const;

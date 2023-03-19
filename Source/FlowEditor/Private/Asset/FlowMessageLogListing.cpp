@@ -14,7 +14,7 @@ FFlowMessageLogListing::FFlowMessageLogListing(const UFlowAsset* InFlowAsset, co
 FFlowMessageLogListing::~FFlowMessageLogListing()
 {
 	// Unregister the log so it will be ref-counted to zero if it has no messages
-	if(Log->NumMessages(EMessageSeverity::Info) == 0)
+	if (Log->NumMessages(EMessageSeverity::Info) == 0)
 	{
 		FMessageLogModule& MessageLogModule = FModuleManager::LoadModuleChecked<FMessageLogModule>("MessageLog");
 		MessageLogModule.UnregisterLogListing(Log->GetName());
@@ -37,20 +37,21 @@ TSharedRef<IMessageLogListing> FFlowMessageLogListing::RegisterLogListing(const 
 TSharedRef<IMessageLogListing> FFlowMessageLogListing::GetLogListing(const UFlowAsset* InFlowAsset, const EFlowLogType Type)
 {
 	FMessageLogModule& MessageLogModule = FModuleManager::LoadModuleChecked<FMessageLogModule>("MessageLog");
-
 	const FName LogName = GetListingName(InFlowAsset, Type);
 
-	// Reuse any existing log, or create a new one (that is not held onto bey the message log system)
-	if(MessageLogModule.IsRegisteredLogListing(LogName))
+	// Create a new message log
+	if (!MessageLogModule.IsRegisteredLogListing(LogName))
 	{
-		return MessageLogModule.GetLogListing(LogName);
+		MessageLogModule.RegisterLogListing(LogName, FText::FromString(GetLogLabel(Type)));
 	}
-	else
-	{
-		FMessageLogInitializationOptions LogInitOptions;
-		LogInitOptions.bShowInLogWindow = false;
-		return MessageLogModule.CreateLogListing(LogName, LogInitOptions);
-	}
+
+	return MessageLogModule.GetLogListing(LogName);
+}
+
+FString FFlowMessageLogListing::GetLogLabel(const EFlowLogType Type)
+{
+	const FString TypeAsString = StaticEnum<EFlowLogType>()->GetNameStringByIndex(static_cast<int32>(Type));
+	return FString::Printf(TEXT("Flow%sLog"), *TypeAsString);
 }
 
 FName FFlowMessageLogListing::GetListingName(const UFlowAsset* InFlowAsset, const EFlowLogType Type)
@@ -58,8 +59,7 @@ FName FFlowMessageLogListing::GetListingName(const UFlowAsset* InFlowAsset, cons
 	FName LogListingName;
 	if (InFlowAsset)
 	{
-		const FString TypeAsString = StaticEnum<EFlowLogType>()->GetNameStringByIndex(static_cast<int32>(Type));
-		LogListingName = *FString::Printf(TEXT("FlowLog_%s_%s_%s_"), *TypeAsString, *InFlowAsset->AssetGuid.ToString(), *InFlowAsset->GetName());
+		LogListingName = *FString::Printf(TEXT("%s::%s::%s"), *GetLogLabel(Type), *InFlowAsset->GetName(), *InFlowAsset->AssetGuid.ToString());
 	}
 	else
 	{
