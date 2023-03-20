@@ -237,15 +237,54 @@ TArray<TSharedPtr<FString>> UFlowGraphSchema::GetFlowNodeCategories()
 
 UClass* UFlowGraphSchema::GetAssignedGraphNodeClass(const UClass* FlowNodeClass)
 {
+	TArray<UClass*> FoundParentClasses;
+	UClass* ReturnClass = nullptr;
+
+	// Collect all possible parents and their corresponding GraphNodeClasses
 	for (const TPair<UClass*, UClass*>& GraphNodeByFlowNode : GraphNodesByFlowNodes)
 	{
-		if (FlowNodeClass->IsChildOf(GraphNodeByFlowNode.Key))
+		if (FlowNodeClass == GraphNodeByFlowNode.Key)
 		{
 			return GraphNodeByFlowNode.Value;
 		}
+		
+		if (FlowNodeClass->IsChildOf(GraphNodeByFlowNode.Key))
+		{
+			FoundParentClasses.Add(GraphNodeByFlowNode.Key);
+		}
 	}
 
-	return UFlowGraphNode::StaticClass();
+	// Of only one parent found set the return to its GraphNodeClass
+	if (FoundParentClasses.Num() == 1)
+	{
+		ReturnClass = GraphNodesByFlowNodes.FindRef(FoundParentClasses[0]);
+	}
+	
+	// If multiple parents found, find the closest one and set the return to its GraphNodeClass
+	else if (!FoundParentClasses.IsEmpty())
+	{
+		TPair<int32, UClass*> ClosestParentMatch = {1000, nullptr};
+		for (const auto& ParentClass : FoundParentClasses)
+		{
+			int32 StepsTillExactMatch = 0;
+			const UClass* LocalParentClass = FlowNodeClass;
+			
+			while (IsValid(LocalParentClass) && LocalParentClass != ParentClass && LocalParentClass != UFlowNode::StaticClass())
+			{
+				StepsTillExactMatch++;
+				LocalParentClass = LocalParentClass->GetSuperClass();
+			}
+	
+			if (StepsTillExactMatch != 0 && StepsTillExactMatch < ClosestParentMatch.Key)
+			{
+				ClosestParentMatch = {StepsTillExactMatch, ParentClass};
+			}
+		}
+
+		ReturnClass = GraphNodesByFlowNodes.FindRef(ClosestParentMatch.Value);
+	}
+	
+	return IsValid(ReturnClass) ? ReturnClass : UFlowGraphNode::StaticClass();
 }
 
 void UFlowGraphSchema::ApplyNodeFilter(const UFlowAsset* AssetClassDefaults, const UClass* FlowNodeClass, TArray<UFlowNode*>& FilteredNodes)
