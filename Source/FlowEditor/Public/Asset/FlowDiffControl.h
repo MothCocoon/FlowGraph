@@ -15,7 +15,7 @@ class SFlowDiff;
 
 /////////////////////////////////////////////////////////////////////////////
 /// FFlowAssetDiffControl
-class FLOWEDITOR_API FFlowAssetDiffControl : public TDetailsDiffControl<false>
+class FLOWEDITOR_API FFlowAssetDiffControl : public FDetailsDiffControl
 {
 public:
 	FFlowAssetDiffControl(const UFlowAsset* InOldFlowAsset, const UFlowAsset* InNewFlowAsset, FOnDiffEntryFocused InSelectionCallback);
