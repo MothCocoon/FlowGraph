@@ -5,11 +5,10 @@
 #include "FlowMessageLog.h"
 #include "FlowSave.h"
 #include "FlowTypes.h"
-#include "Nodes/FlowNode.h"
+#include "Nodes/Route/FlowNode_Start.h"
 #include "FlowAsset.generated.h"
 
 class UFlowNode_CustomInput;
-class UFlowNode_Start;
 class UFlowNode_SubGraph;
 class UFlowSubsystem;
 
