@@ -32,6 +32,8 @@ protected:
 	TWeakPtr<FFlowAssetEditor> FlowAssetEditor;
 	TSharedPtr<IDetailsView> DetailsView;
 
+	TSharedPtr<FUICommandList> CommandList;
+
 public:
 	void Construct(const FArguments& InArgs, const TSharedPtr<FFlowAssetEditor> InAssetEditor);
 
