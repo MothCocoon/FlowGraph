@@ -5,11 +5,13 @@
 #include "CoreMinimal.h"
 
 class FFlowAssetEditor;
+class SFlowGraphEditor;
 
 class FLOWEDITOR_API FFlowGraphUtils
 {
 public:
 	FFlowGraphUtils() {}
 
-	static TSharedPtr<FFlowAssetEditor> GetFlowAssetEditor(const UObject* ObjectToFocusOn);
+	static TSharedPtr<FFlowAssetEditor> GetFlowAssetEditor(const UEdGraph* Graph);
+	static TSharedPtr<SFlowGraphEditor> GetFlowGraphEditor(const UEdGraph* Graph);
 };

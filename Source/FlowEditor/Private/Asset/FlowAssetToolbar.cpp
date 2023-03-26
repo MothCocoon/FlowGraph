@@ -45,9 +45,9 @@ void SFlowAssetInstanceList::Construct(const FArguments& InArgs, const TWeakObje
 	// create dropdown
 	SAssignNew(Dropdown, SComboBox<TSharedPtr<FName>>)
 		.OptionsSource(&InstanceNames)
+		.Visibility_Static(&SFlowAssetInstanceList::GetDebuggerVisibility)
 		.OnGenerateWidget(this, &SFlowAssetInstanceList::OnGenerateWidget)
 		.OnSelectionChanged(this, &SFlowAssetInstanceList::OnSelectionChanged)
-		.Visibility_Static(&FFlowAssetEditor::GetDebuggerVisibility)
 		[
 			SNew(STextBlock)
 			.Text(this, &SFlowAssetInstanceList::GetSelectedInstanceName)
@@ -93,6 +93,11 @@ void SFlowAssetInstanceList::RefreshInstances()
 	}
 }
 
+EVisibility SFlowAssetInstanceList::GetDebuggerVisibility()
+{
+	return GEditor->PlayWorld ? EVisibility::Visible : EVisibility::Collapsed;
+}
+
 TSharedRef<SWidget> SFlowAssetInstanceList::OnGenerateWidget(const TSharedPtr<FName> Item) const
 {
 	return SNew(STextBlock).Text(FText::FromName(*Item.Get()));
@@ -127,7 +132,7 @@ void SFlowAssetBreadcrumb::Construct(const FArguments& InArgs, const TWeakObject
 	// create breadcrumb
 	SAssignNew(BreadcrumbTrail, SBreadcrumbTrail<FFlowBreadcrumb>)
 		.OnCrumbClicked(this, &SFlowAssetBreadcrumb::OnCrumbClicked)
-		.Visibility_Static(&FFlowAssetEditor::GetDebuggerVisibility)
+		.Visibility_Static(&SFlowAssetInstanceList::GetDebuggerVisibility)
 		.ButtonStyle(FEditorStyle::Get(), "FlatButton")
 		.DelimiterImage(FEditorStyle::GetBrush("Sequencer.BreadcrumbIcon"))
 		.PersistentBreadcrumbs(true)
