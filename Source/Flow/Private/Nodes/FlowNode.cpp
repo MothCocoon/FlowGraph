@@ -578,16 +578,16 @@ void UFlowNode::LoadInstance(const FFlowNodeSaveData& NodeRecord)
 	{
 		case EFlowSignalMode::Enabled:
 			OnLoad();
-		break;
+			break;
 		case EFlowSignalMode::Disabled:
 			// designer doesn't want to execute this node's logic at all, so we kill it
 			LogNote(TEXT("Signal disabled while loading Flow Node from SaveGame"));
-		Finish();
-		break;
+			Finish();
+			break;
 		case EFlowSignalMode::PassThrough:
 			LogNote(TEXT("Signal pass-through on loading Flow Node from SaveGame"));
-		OnPassThrough();
-		break;
+			OnPassThrough();
+			break;
 		default: ;
 	}
 }
