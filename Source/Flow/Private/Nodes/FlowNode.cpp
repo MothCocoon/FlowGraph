@@ -236,12 +236,26 @@ void UFlowNode::RemoveUserInput(const FName& PinName)
 {
 	Modify();
 
+	int32 RemovedPinIndex = INDEX_NONE;
 	for (int32 i = 0; i < InputPins.Num(); i++)
 	{
 		if (InputPins[i].PinName == PinName)
 		{
 			InputPins.RemoveAt(i);
+			RemovedPinIndex = i;
 			break;
+		}
+	}
+
+	// update remaining pins
+	if (RemovedPinIndex > INDEX_NONE)
+	{
+		for (int32 i = RemovedPinIndex; i < InputPins.Num(); ++i)
+		{
+			if (InputPins[i].PinName.ToString().IsNumeric())
+			{
+				InputPins[i].PinName = *FString::FromInt(i);
+			}
 		}
 	}
 }
@@ -250,12 +264,26 @@ void UFlowNode::RemoveUserOutput(const FName& PinName)
 {
 	Modify();
 
+	int32 RemovedPinIndex = INDEX_NONE;
 	for (int32 i = 0; i < OutputPins.Num(); i++)
 	{
 		if (OutputPins[i].PinName == PinName)
 		{
 			OutputPins.RemoveAt(i);
+			RemovedPinIndex = i;
 			break;
+		}
+	}
+
+	// update remaining pins
+	if (RemovedPinIndex > INDEX_NONE)
+	{
+		for (int32 i = RemovedPinIndex; i < OutputPins.Num(); ++i)
+		{
+			if (OutputPins[i].PinName.ToString().IsNumeric())
+			{
+				OutputPins[i].PinName = *FString::FromInt(i);
+			}
 		}
 	}
 }
