@@ -100,7 +100,7 @@ FText SFlowPaletteItem::GetItemTooltip() const
 
 void SFlowPalette::Construct(const FArguments& InArgs, TWeakPtr<FFlowAssetEditor> InFlowAssetEditor)
 {
-	FlowAssetEditorPtr = InFlowAssetEditor;
+	FlowAssetEditor = InFlowAssetEditor;
 
 	UpdateCategoryNames();
 	UFlowGraphSchema::OnNodeListChanged.AddSP(this, &SFlowPalette::Refresh);
@@ -182,13 +182,8 @@ TSharedRef<SWidget> SFlowPalette::OnCreateWidgetForAction(FCreateWidgetForAction
 
 void SFlowPalette::CollectAllActions(FGraphActionListBuilderBase& OutAllActions)
 {
-	const UClass* AssetClass = UFlowAsset::StaticClass();
-	
-	const TSharedPtr<FFlowAssetEditor> FlowAssetEditor = FlowAssetEditorPtr.Pin();
-	if (FlowAssetEditor && FlowAssetEditor->GetFlowAsset())
-	{
-		AssetClass = FlowAssetEditor->GetFlowAsset()->GetClass();
-	}
+	ensureAlways(FlowAssetEditor.Pin() && FlowAssetEditor.Pin()->GetFlowAsset());
+	const UClass* AssetClass = FlowAssetEditor.Pin()->GetFlowAsset()->GetClass();
 	
 	FGraphActionMenuBuilder ActionMenuBuilder;
 	UFlowGraphSchema::GetPaletteActions(ActionMenuBuilder, AssetClass, GetFilterCategoryName());
@@ -214,11 +209,7 @@ void SFlowPalette::OnActionSelected(const TArray<TSharedPtr<FEdGraphSchemaAction
 {
 	if (InSelectionType == ESelectInfo::OnMouseClick || InSelectionType == ESelectInfo::OnKeyPress || InSelectionType == ESelectInfo::OnNavigation || InActions.Num() == 0)
 	{
-		const TSharedPtr<FFlowAssetEditor> FlowAssetEditor = FlowAssetEditorPtr.Pin();
-		if (FlowAssetEditor)
-		{
-			FlowAssetEditor->SetUISelectionState(FFlowAssetEditor::PaletteTab);
-		}
+		FlowAssetEditor.Pin()->SetUISelectionState(FFlowAssetEditor::PaletteTab);
 	}
 }
 

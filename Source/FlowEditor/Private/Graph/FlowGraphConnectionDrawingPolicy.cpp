@@ -2,8 +2,8 @@
 
 #include "Graph/FlowGraphConnectionDrawingPolicy.h"
 
-#include "Asset/FlowAssetEditor.h"
 #include "Graph/FlowGraph.h"
+#include "Graph/FlowGraphEditor.h"
 #include "Graph/FlowGraphEditorSettings.h"
 #include "Graph/FlowGraphSchema.h"
 #include "Graph/FlowGraphSettings.h"
@@ -81,10 +81,10 @@ void FFlowGraphConnectionDrawingPolicy::BuildPaths()
 
 	if (GraphObj && (UFlowGraphEditorSettings::Get()->bHighlightInputWiresOfSelectedNodes || UFlowGraphEditorSettings::Get()->bHighlightOutputWiresOfSelectedNodes))
 	{
-		const TSharedPtr<FFlowAssetEditor> FlowAssetEditor = FFlowGraphUtils::GetFlowAssetEditor(GraphObj);
-		if (FlowAssetEditor.IsValid())
+		const TSharedPtr<SFlowGraphEditor> FlowGraphEditor = FFlowGraphUtils::GetFlowGraphEditor(GraphObj);
+		if (FlowGraphEditor.IsValid())
 		{
-			for (UFlowGraphNode* SelectedNode : FlowAssetEditor->GetSelectedFlowNodes())
+			for (UFlowGraphNode* SelectedNode : FlowGraphEditor->GetSelectedFlowNodes())
 			{
 				for (UEdGraphPin* Pin : SelectedNode->Pins)
 				{
