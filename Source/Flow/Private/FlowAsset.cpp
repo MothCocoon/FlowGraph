@@ -555,8 +555,8 @@ void UFlowAsset::LoadInstance(const FFlowAssetSaveData& AssetRecord)
 
 	PreStartFlow();
 
-	// iterate nodes from "the end" of graph, backwards to execution order
-	// prevents issue when preceding node would instantly fire output to not-yet-loaded node
+	// iterate graph "from the end", backward to execution order
+	// prevents issue when the preceding node would instantly fire output to a not-yet-loaded node
 	for (int32 i = AssetRecord.NodeRecords.Num() - 1; i >= 0; i--)
 	{
 		if (UFlowNode* Node = Nodes.FindRef(AssetRecord.NodeRecords[i].NodeGuid))
