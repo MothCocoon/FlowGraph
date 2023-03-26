@@ -2,8 +2,8 @@
 
 #include "Graph/FlowGraphSchema_Actions.h"
 
-#include "Asset/FlowAssetEditor.h"
 #include "Graph/FlowGraph.h"
+#include "Graph/FlowGraphEditor.h"
 #include "Graph/FlowGraphSchema.h"
 #include "Graph/FlowGraphUtils.h"
 #include "Graph/Nodes/FlowGraphNode.h"
@@ -81,10 +81,10 @@ UFlowGraphNode* FFlowGraphSchemaAction_NewNode::CreateNode(UEdGraph* ParentGraph
 	// select in editor UI
 	if (bSelectNewNode)
 	{
-		const TSharedPtr<FFlowAssetEditor> FlowEditor = FFlowGraphUtils::GetFlowAssetEditor(ParentGraph);
-		if (FlowEditor.IsValid())
+		const TSharedPtr<SFlowGraphEditor> FlowGraphEditor = FFlowGraphUtils::GetFlowGraphEditor(ParentGraph);
+		if (FlowGraphEditor.IsValid())
 		{
-			FlowEditor->SelectSingleNode(NewGraphNode);
+			FlowGraphEditor->SelectSingleNode(NewGraphNode);
 		}
 	}
 
@@ -200,7 +200,7 @@ UEdGraphNode* FFlowGraphSchemaAction_Paste::PerformAction(class UEdGraph* Parent
 	// prevent adding new nodes while playing
 	if (GEditor->PlayWorld == nullptr)
 	{
-		FFlowGraphUtils::GetFlowAssetEditor(ParentGraph)->PasteNodesHere(Location);
+		FFlowGraphUtils::GetFlowGraphEditor(ParentGraph)->PasteNodesHere(Location);
 	}
 
 	return nullptr;
@@ -220,11 +220,11 @@ UEdGraphNode* FFlowGraphSchemaAction_NewComment::PerformAction(class UEdGraph* P
 	UEdGraphNode_Comment* CommentTemplate = NewObject<UEdGraphNode_Comment>();
 	FVector2D SpawnLocation = Location;
 
-	const TSharedPtr<FFlowAssetEditor> FlowAssetEditor = FFlowGraphUtils::GetFlowAssetEditor(ParentGraph);
-	if (FlowAssetEditor.IsValid())
+	const TSharedPtr<SFlowGraphEditor> FlowGraphEditor = FFlowGraphUtils::GetFlowGraphEditor(ParentGraph);
+	if (FlowGraphEditor.IsValid())
 	{
 		FSlateRect Bounds;
-		if (FlowAssetEditor->GetBoundsForSelectedNodes(Bounds, 50.0f))
+		if (FlowGraphEditor->GetBoundsForSelectedNodes(Bounds, 50.0f))
 		{
 			CommentTemplate->SetBounds(Bounds);
 			SpawnLocation.X = CommentTemplate->NodePosX;
