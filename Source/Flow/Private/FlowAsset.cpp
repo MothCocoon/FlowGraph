@@ -511,12 +511,15 @@ FFlowAssetSaveData UFlowAsset::SaveInstance(TArray<FFlowAssetSaveData>& SavedFlo
 	// opportunity to collect data before serializing asset
 	OnSave();
 
-	// iterate SubGraphs
-	for (const TPair<FGuid, UFlowNode*>& Node : Nodes)
+	// iterate nodes
+	TArray<UFlowNode*> NodesInExecutionOrder;
+	GetNodesInExecutionOrder<UFlowNode>(NodesInExecutionOrder);
+	for (UFlowNode* Node : NodesInExecutionOrder)
 	{
-		if (Node.Value && Node.Value->ActivationState == EFlowNodeState::Active)
+		if (Node && Node->ActivationState == EFlowNodeState::Active)
 		{
-			if (UFlowNode_SubGraph* SubGraphNode = Cast<UFlowNode_SubGraph>(Node.Value))
+			// iterate SubGraphs
+			if (UFlowNode_SubGraph* SubGraphNode = Cast<UFlowNode_SubGraph>(Node))
 			{
 				const TWeakObjectPtr<UFlowAsset> SubFlowInstance = GetFlowInstance(SubGraphNode);
 				if (SubFlowInstance.IsValid())
@@ -527,7 +530,7 @@ FFlowAssetSaveData UFlowAsset::SaveInstance(TArray<FFlowAssetSaveData>& SavedFlo
 			}
 
 			FFlowNodeSaveData NodeRecord;
-			Node.Value->SaveInstance(NodeRecord);
+			Node->SaveInstance(NodeRecord);
 
 			AssetRecord.NodeRecords.Emplace(NodeRecord);
 		}
@@ -552,11 +555,13 @@ void UFlowAsset::LoadInstance(const FFlowAssetSaveData& AssetRecord)
 
 	PreStartFlow();
 
-	for (const FFlowNodeSaveData& NodeRecord : AssetRecord.NodeRecords)
+	// iterate nodes from "the end" of graph, backwards to execution order
+	// prevents issue when preceding node would instantly fire output to not-yet-loaded node
+	for (int32 i = AssetRecord.NodeRecords.Num() - 1; i >= 0; i--)
 	{
-		if (UFlowNode* Node = Nodes.FindRef(NodeRecord.NodeGuid))
+		if (UFlowNode* Node = Nodes.FindRef(AssetRecord.NodeRecords[i].NodeGuid))
 		{
-			Node->LoadInstance(NodeRecord);
+			Node->LoadInstance(AssetRecord.NodeRecords[i]);
 		}
 	}
 
