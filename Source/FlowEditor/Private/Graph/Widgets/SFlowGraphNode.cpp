@@ -56,7 +56,7 @@ void SFlowGraphNode::Construct(const FArguments& InArgs, UFlowGraphNode* InNode)
 
 void SFlowGraphNode::GetNodeInfoPopups(FNodeInfoContext* Context, TArray<FGraphInformationPopupInfo>& Popups) const
 {
-	const FString Description = GEditor->PlayWorld && UFlowGraphEditorSettings::Get()->bShowNodeDescriptionInPIE ? FString() : FlowGraphNode->GetNodeDescription();
+	const FString& Description = FlowGraphNode->GetNodeDescription(); 
 	if (!Description.IsEmpty())
 	{
 		const FGraphInformationPopupInfo DescriptionPopup = FGraphInformationPopupInfo(nullptr, UFlowGraphSettings::Get()->NodeDescriptionBackground, Description);

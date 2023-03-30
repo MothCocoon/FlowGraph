@@ -653,7 +653,12 @@ FText UFlowGraphNode::GetTooltipText() const
 
 FString UFlowGraphNode::GetNodeDescription() const
 {
-	return FlowNode ? FlowNode->GetNodeDescription() : FString();
+	if (FlowNode && (GEditor->PlayWorld == nullptr || UFlowGraphEditorSettings::Get()->bShowNodeDescriptionWhilePlaying))
+	{
+		return FlowNode->GetNodeDescription();
+	}
+
+	return FString();
 }
 
 UFlowNode* UFlowGraphNode::GetInspectedNodeInstance() const
