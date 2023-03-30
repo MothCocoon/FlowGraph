@@ -9,7 +9,6 @@
 #include "UObject/GCObject.h"
 
 #include "FlowEditorDefines.h"
-#include "FlowTypes.h"
 
 class FFlowMessageLog;
 class SFlowGraphEditor;
