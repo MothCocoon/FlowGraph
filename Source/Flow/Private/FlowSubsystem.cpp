@@ -82,11 +82,13 @@ void UFlowSubsystem::StartRootFlow(UObject* Owner, UFlowAsset* FlowAsset, const 
 			NewFlow->StartFlow();
 		}
 	}
+#if WITH_EDITOR	
 	else
 	{
 		FMessageLog("PIE").Error(LOCTEXT("StartRootFlowNullAsset", "Attempted to start Root Flow with a null asset."))
 		                  ->AddToken(FUObjectToken::Create(Owner));
 	}
+#endif
 }
 
 UFlowAsset* UFlowSubsystem::CreateRootFlow(UObject* Owner, UFlowAsset* FlowAsset, const bool bAllowMultipleInstances)
