@@ -58,7 +58,7 @@ TArray<FFlowPin> UFlowNode_PlayLevelSequence::GetContextOutputs()
 	Sequence = Sequence.LoadSynchronous();
 	if (Sequence && Sequence->GetMovieScene())
 	{
-		for (const UMovieSceneTrack* Track : Sequence->GetMovieScene()->GetMasterTracks())
+		for (const UMovieSceneTrack* Track : Sequence->GetMovieScene()->GetTracks())
 		{
 			if (Track->GetClass() == UMovieSceneFlowTrack::StaticClass())
 			{

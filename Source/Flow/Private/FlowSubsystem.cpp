@@ -15,6 +15,8 @@
 #include "UObject/UObjectHash.h"
 
 #if WITH_EDITOR
+#include "Logging/MessageLog.h"
+
 FNativeFlowAssetEvent UFlowSubsystem::OnInstancedTemplateAdded;
 FNativeFlowAssetEvent UFlowSubsystem::OnInstancedTemplateRemoved;
 #endif
