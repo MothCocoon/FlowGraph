@@ -9,7 +9,7 @@
 /**
  * Triggers outputs after time elapsed
  */
-UCLASS(NotBlueprintable, meta = (DisplayName = "Timer"))
+UCLASS(NotBlueprintable, meta = (DisplayName = "Timer", Keywords = "delay, step, tick"))
 class FLOW_API UFlowNode_Timer : public UFlowNode
 {
 	GENERATED_UCLASS_BODY()

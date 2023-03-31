@@ -48,7 +48,7 @@ public:
 	void ClearGraphActionMenuSelection() const;
 
 protected:
-	TWeakPtr<FFlowAssetEditor> FlowAssetEditorPtr;
+	TWeakPtr<FFlowAssetEditor> FlowAssetEditor;
 	TArray<TSharedPtr<FString>> CategoryNames;
 	TSharedPtr<STextComboBox> CategoryComboBox;
 };

@@ -8,6 +8,7 @@ UFlowGraphEditorSettings::UFlowGraphEditorSettings(const FObjectInitializer& Obj
 	: Super(ObjectInitializer)
 	, NodeDoubleClickTarget(EFlowNodeDoubleClickTarget::PrimaryAsset)
 	, bShowNodeClass(false)
+	, bShowNodeDescriptionWhilePlaying(true)
 	, bShowSubGraphPreview(true)
 	, bShowSubGraphPath(true)
 	, SubGraphPreviewSize(FVector2D(640.f, 360.f))

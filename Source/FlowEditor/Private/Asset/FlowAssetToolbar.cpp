@@ -43,9 +43,9 @@ void SFlowAssetInstanceList::Construct(const FArguments& InArgs, const TWeakObje
 	// create dropdown
 	SAssignNew(Dropdown, SComboBox<TSharedPtr<FName>>)
 		.OptionsSource(&InstanceNames)
+		.Visibility_Static(&SFlowAssetInstanceList::GetDebuggerVisibility)
 		.OnGenerateWidget(this, &SFlowAssetInstanceList::OnGenerateWidget)
 		.OnSelectionChanged(this, &SFlowAssetInstanceList::OnSelectionChanged)
-		.Visibility_Static(&FFlowAssetEditor::GetDebuggerVisibility)
 		[
 			SNew(STextBlock)
 			.Text(this, &SFlowAssetInstanceList::GetSelectedInstanceName)
@@ -91,6 +91,11 @@ void SFlowAssetInstanceList::RefreshInstances()
 	}
 }
 
+EVisibility SFlowAssetInstanceList::GetDebuggerVisibility()
+{
+	return GEditor->PlayWorld ? EVisibility::Visible : EVisibility::Collapsed;
+}
+
 TSharedRef<SWidget> SFlowAssetInstanceList::OnGenerateWidget(const TSharedPtr<FName> Item) const
 {
 	return SNew(STextBlock).Text(FText::FromName(*Item.Get()));
@@ -125,7 +130,7 @@ void SFlowAssetBreadcrumb::Construct(const FArguments& InArgs, const TWeakObject
 	// create breadcrumb
 	SAssignNew(BreadcrumbTrail, SBreadcrumbTrail<FFlowBreadcrumb>)
 		.OnCrumbClicked(this, &SFlowAssetBreadcrumb::OnCrumbClicked)
-		.Visibility_Static(&FFlowAssetEditor::GetDebuggerVisibility)
+		.Visibility_Static(&SFlowAssetInstanceList::GetDebuggerVisibility)
 		.ButtonStyle(FAppStyle::Get(), "FlatButton")
 		.DelimiterImage(FAppStyle::GetBrush("Sequencer.BreadcrumbIcon"))
 		.PersistentBreadcrumbs(true)
@@ -189,30 +194,39 @@ FFlowAssetToolbar::FFlowAssetToolbar(const TSharedPtr<FFlowAssetEditor> InAssetE
 
 void FFlowAssetToolbar::BuildAssetToolbar(UToolMenu* ToolbarMenu) const
 {
-	FToolMenuSection& Section = ToolbarMenu->AddSection("Editing");
-	Section.InsertPosition = FToolMenuInsert("Asset", EToolMenuInsertType::After);
+	{
+		FToolMenuSection& Section = ToolbarMenu->AddSection("FlowAsset");
+		Section.InsertPosition = FToolMenuInsert("Asset", EToolMenuInsertType::After);
 
-	// add buttons
-	Section.AddEntry(FToolMenuEntry::InitToolBarButton(FFlowToolbarCommands::Get().RefreshAsset));
+		// add buttons
+		Section.AddEntry(FToolMenuEntry::InitToolBarButton(FFlowToolbarCommands::Get().RefreshAsset));
+		Section.AddEntry(FToolMenuEntry::InitToolBarButton(FFlowToolbarCommands::Get().ValidateAsset));
+	}
+	
+	{
+		FToolMenuSection& Section = ToolbarMenu->AddSection("View");
+		Section.InsertPosition = FToolMenuInsert("FlowAsset", EToolMenuInsertType::After);
+
 #if ENABLE_SEARCH_IN_ASSET_EDITOR
-	Section.AddEntry(FToolMenuEntry::InitToolBarButton(FFlowToolbarCommands::Get().SearchInAsset));
+		Section.AddEntry(FToolMenuEntry::InitToolBarButton(FFlowToolbarCommands::Get().SearchInAsset));
 #endif
 
-	// Visual Diff: menu to choose asset revision compared with the current one 
-	Section.AddDynamicEntry("SourceControlCommands", FNewToolMenuSectionDelegate::CreateLambda([this](FToolMenuSection& InSection)
-	{
-		InSection.InsertPosition = FToolMenuInsert();
-		FToolMenuEntry DiffEntry = FToolMenuEntry::InitComboButton(
-			"Diff",
-			FUIAction(),
-			FOnGetContent::CreateRaw(this, &FFlowAssetToolbar::MakeDiffMenu),
-			LOCTEXT("Diff", "Diff"),
-			LOCTEXT("FlowAssetEditorDiffToolTip", "Diff against previous revisions"),
-			FSlateIcon(FAppStyle::Get().GetStyleSetName(), "BlueprintDiff.ToolbarIcon")
-		);
-		DiffEntry.StyleNameOverride = "CalloutToolbar";
-		InSection.AddEntry(DiffEntry);
-	}));
+		// Visual Diff: menu to choose asset revision compared with the current one 
+		Section.AddDynamicEntry("SourceControlCommands", FNewToolMenuSectionDelegate::CreateLambda([this](FToolMenuSection& InSection)
+		{
+			InSection.InsertPosition = FToolMenuInsert();
+			FToolMenuEntry DiffEntry = FToolMenuEntry::InitComboButton(
+				"Diff",
+				FUIAction(),
+				FOnGetContent::CreateRaw(this, &FFlowAssetToolbar::MakeDiffMenu),
+				LOCTEXT("Diff", "Diff"),
+				LOCTEXT("FlowAssetEditorDiffToolTip", "Diff against previous revisions"),
+				FSlateIcon(FAppStyle::Get().GetStyleSetName(), "BlueprintDiff.ToolbarIcon")
+			);
+			DiffEntry.StyleNameOverride = "CalloutToolbar";
+			InSection.AddEntry(DiffEntry);
+		}));
+	}
 }
 
 /** Delegate called to diff a specific revision with the current */
@@ -291,8 +305,8 @@ TSharedRef<SWidget> FFlowAssetToolbar::MakeDiffMenu() const
 
 void FFlowAssetToolbar::BuildDebuggerToolbar(UToolMenu* ToolbarMenu) const
 {
-	FToolMenuSection& Section = ToolbarMenu->AddSection("Debugging");
-	Section.InsertPosition = FToolMenuInsert("Asset", EToolMenuInsertType::After);
+	FToolMenuSection& Section = ToolbarMenu->AddSection("Debug");
+	Section.InsertPosition = FToolMenuInsert("View", EToolMenuInsertType::After);
 
 	Section.AddDynamicEntry("DebuggingCommands", FNewToolMenuSectionDelegate::CreateLambda([](FToolMenuSection& InSection)
 	{

@@ -21,7 +21,7 @@ private:
 	static bool bInitialGatherPerformed;
 	static TArray<UClass*> NativeFlowNodes;
 	static TMap<FName, FAssetData> BlueprintFlowNodes;
-	static TMap<UClass*, UClass*> AssignedGraphNodeClasses;
+	static TMap<UClass*, UClass*> GraphNodesByFlowNodes;
 
 	static bool bBlueprintCompilationPending;
 

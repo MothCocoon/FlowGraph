@@ -2,7 +2,7 @@
 
 #include "Graph/Nodes/FlowGraphNode.h"
 
-#include "Asset/FlowDebugger.h"
+#include "Asset/FlowDebuggerSubsystem.h"
 #include "FlowEditorCommands.h"
 #include "Graph/FlowGraph.h"
 #include "Graph/FlowGraphEditorSettings.h"
@@ -653,7 +653,12 @@ FText UFlowGraphNode::GetTooltipText() const
 
 FString UFlowGraphNode::GetNodeDescription() const
 {
-	return FlowNode ? FlowNode->GetNodeDescription() : FString();
+	if (FlowNode && (GEditor->PlayWorld == nullptr || UFlowGraphEditorSettings::Get()->bShowNodeDescriptionWhilePlaying))
+	{
+		return FlowNode->GetNodeDescription();
+	}
+
+	return FString();
 }
 
 UFlowNode* UFlowGraphNode::GetInspectedNodeInstance() const
@@ -1029,7 +1034,7 @@ void UFlowGraphNode::TryPausingSession(bool bPauseSession)
 		FEditorDelegates::ResumePIE.AddUObject(this, &UFlowGraphNode::OnResumePIE);
 		FEditorDelegates::EndPIE.AddUObject(this, &UFlowGraphNode::OnEndPIE);
 
-		FFlowDebugger::PausePlaySession();
+		UFlowDebuggerSubsystem::PausePlaySession();
 	}
 }
 

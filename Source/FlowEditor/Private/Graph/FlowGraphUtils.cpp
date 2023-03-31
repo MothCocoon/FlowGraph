@@ -8,12 +8,12 @@
 
 #include "Toolkits/ToolkitManager.h"
 
-TSharedPtr<FFlowAssetEditor> FFlowGraphUtils::GetFlowAssetEditor(const UObject* ObjectToFocusOn)
+TSharedPtr<FFlowAssetEditor> FFlowGraphUtils::GetFlowAssetEditor(const UEdGraph* Graph)
 {
-	check(ObjectToFocusOn);
+	check(Graph);
 
 	TSharedPtr<FFlowAssetEditor> FlowAssetEditor;
-	if (const UFlowAsset* FlowAsset = Cast<const UFlowGraph>(ObjectToFocusOn)->GetFlowAsset())
+	if (const UFlowAsset* FlowAsset = Cast<const UFlowGraph>(Graph)->GetFlowAsset())
 	{
 		const TSharedPtr<IToolkit> FoundAssetEditor = FToolkitManager::Get().FindEditorForAsset(FlowAsset);
 		if (FoundAssetEditor.IsValid())
@@ -22,4 +22,17 @@ TSharedPtr<FFlowAssetEditor> FFlowGraphUtils::GetFlowAssetEditor(const UObject* 
 		}
 	}
 	return FlowAssetEditor;
+}
+
+TSharedPtr<SFlowGraphEditor> FFlowGraphUtils::GetFlowGraphEditor(const UEdGraph* Graph)
+{
+	TSharedPtr<SFlowGraphEditor> FlowGraphEditor;
+	
+	const TSharedPtr<FFlowAssetEditor> FlowEditor = GetFlowAssetEditor(Graph);
+	if (FlowEditor.IsValid())
+	{
+		FlowGraphEditor = FlowEditor->GetFlowGraph();
+	}
+
+	return FlowGraphEditor;
 }
