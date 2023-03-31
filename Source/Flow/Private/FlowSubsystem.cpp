@@ -19,6 +19,8 @@ FNativeFlowAssetEvent UFlowSubsystem::OnInstancedTemplateAdded;
 FNativeFlowAssetEvent UFlowSubsystem::OnInstancedTemplateRemoved;
 #endif
 
+#define LOCTEXT_NAMESPACE "FlowSubsystem"
+
 UFlowSubsystem::UFlowSubsystem()
 	: UGameInstanceSubsystem()
 {
@@ -73,6 +75,12 @@ void UFlowSubsystem::AbortActiveFlows()
 
 void UFlowSubsystem::StartRootFlow(UObject* Owner, UFlowAsset* FlowAsset, const bool bAllowMultipleInstances /* = true */)
 {
+	if (!FlowAsset)
+	{
+		FMessageLog("PIE").Error(LOCTEXT("StartRootFlowNullAsset", "Attempted to start Root Flow with null asset."))
+		                  ->AddToken(FUObjectToken::Create(Owner));
+		return;
+	}
 	UFlowAsset* NewFlow = CreateRootFlow(Owner, FlowAsset, bAllowMultipleInstances);
 	if (NewFlow)
 	{
@@ -644,3 +652,5 @@ void UFlowSubsystem::FindComponents(const FGameplayTagContainer& Tags, const EGa
 		}
 	}
 }
+
+#undef LOCTEXT_NAMESPACE
