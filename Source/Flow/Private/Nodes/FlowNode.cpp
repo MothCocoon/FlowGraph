@@ -40,6 +40,7 @@ UFlowNode::UFlowNode(const FObjectInitializer& ObjectInitializer)
 #if WITH_EDITOR
 	Category = TEXT("Uncategorized");
 	NodeStyle = EFlowNodeStyle::Default;
+	NodeColor = FLinearColor::Black;
 #endif
 
 	InputPins = {DefaultInputPin};
@@ -120,6 +121,17 @@ FText UFlowNode::GetNodeToolTip() const
 	}
 
 	return GetClass()->GetToolTipText();
+}
+
+bool UFlowNode::GetDynamicTitleColor(FLinearColor& OutColor) const
+{
+	if (NodeStyle == EFlowNodeStyle::Custom)
+	{
+		OutColor = NodeColor;
+		return true;
+	}
+
+	return false;
 }
 
 FString UFlowNode::GetNodeDescription() const

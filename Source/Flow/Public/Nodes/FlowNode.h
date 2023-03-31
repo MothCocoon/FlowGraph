@@ -53,6 +53,10 @@ protected:
 	UPROPERTY(EditDefaultsOnly, Category = "FlowNode")
 	EFlowNodeStyle NodeStyle;
 
+	// Set Node Style to custom to use your own color for this node
+	UPROPERTY(EditDefaultsOnly, Category = "FlowNode", meta = (EditCondition = "NodeStyle == EFlowNodeStyle::Custom"))
+	FLinearColor NodeColor;
+
 	uint8 bCanDelete : 1;
 	uint8 bCanDuplicate : 1;
 
@@ -93,7 +97,7 @@ public:
 	virtual FText GetNodeToolTip() const;
 
 	// This method allows to have different for every node instance, i.e. Red if node represents enemy, Green if node represents a friend
-	virtual bool GetDynamicTitleColor(FLinearColor& OutColor) const { return false; }
+	virtual bool GetDynamicTitleColor(FLinearColor& OutColor) const;
 
 	EFlowNodeStyle GetNodeStyle() const { return NodeStyle; }
 
