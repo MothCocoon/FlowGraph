@@ -75,16 +75,17 @@ void UFlowSubsystem::AbortActiveFlows()
 
 void UFlowSubsystem::StartRootFlow(UObject* Owner, UFlowAsset* FlowAsset, const bool bAllowMultipleInstances /* = true */)
 {
-	if (!FlowAsset)
+	if (FlowAsset)
 	{
-		FMessageLog("PIE").Error(LOCTEXT("StartRootFlowNullAsset", "Attempted to start Root Flow with null asset."))
-		                  ->AddToken(FUObjectToken::Create(Owner));
-		return;
+		if (UFlowAsset* NewFlow = CreateRootFlow(Owner, FlowAsset, bAllowMultipleInstances))
+		{
+			NewFlow->StartFlow();
+		}
 	}
-	UFlowAsset* NewFlow = CreateRootFlow(Owner, FlowAsset, bAllowMultipleInstances);
-	if (NewFlow)
+	else
 	{
-		NewFlow->StartFlow();
+		FMessageLog("PIE").Error(LOCTEXT("StartRootFlowNullAsset", "Attempted to start Root Flow with a null asset."))
+		                  ->AddToken(FUObjectToken::Create(Owner));
 	}
 }
 
