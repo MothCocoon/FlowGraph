@@ -13,6 +13,7 @@
 
 #include "AssetRegistry/AssetRegistryModule.h"
 #include "AssetToolsModule.h"
+#include "EdGraphSchema_K2.h"
 #include "EditorAssetLibrary.h"
 #include "Misc/ScopedSlowTask.h"
 
