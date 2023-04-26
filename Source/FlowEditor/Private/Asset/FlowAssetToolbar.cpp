@@ -11,6 +11,7 @@
 
 #include "Kismet2/DebuggerCommands.h"
 #include "Misc/Attribute.h"
+#include "Misc/MessageDialog.h"
 #include "Subsystems/AssetEditorSubsystem.h"
 #include "ToolMenu.h"
 #include "ToolMenuSection.h"
