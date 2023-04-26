@@ -8,6 +8,9 @@
 #include "FlowSubsystem.h"
 #include "FlowTypes.h"
 
+#if WITH_EDITOR
+#include "Editor.h"
+#endif
 #include "Engine/Engine.h"
 #include "Engine/ViewportStatsSubsystem.h"
 #include "Engine/World.h"
