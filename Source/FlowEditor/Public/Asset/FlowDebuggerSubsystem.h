@@ -3,6 +3,7 @@
 #pragma once
 
 #include "EditorSubsystem.h"
+#include "Logging/TokenizedMessage.h"
 #include "FlowDebuggerSubsystem.generated.h"
 
 class UFlowAsset;
