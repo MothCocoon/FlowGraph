@@ -2,7 +2,6 @@
 
 #include "Graph/FlowGraphSchema.h"
 
-#include "Asset/FlowAssetEditor.h"
 #include "Graph/FlowGraph.h"
 #include "Graph/FlowGraphEditor.h"
 #include "Graph/FlowGraphSchema_Actions.h"
@@ -248,7 +247,7 @@ UClass* UFlowGraphSchema::GetAssignedGraphNodeClass(const UClass* FlowNodeClass)
 		{
 			return GraphNodeByFlowNode.Value;
 		}
-		
+
 		if (FlowNodeClass->IsChildOf(GraphNodeByFlowNode.Key))
 		{
 			FoundParentClasses.Add(GraphNodeByFlowNode.Key);
@@ -260,22 +259,21 @@ UClass* UFlowGraphSchema::GetAssignedGraphNodeClass(const UClass* FlowNodeClass)
 	{
 		ReturnClass = GraphNodesByFlowNodes.FindRef(FoundParentClasses[0]);
 	}
-	
 	// If multiple parents found, find the closest one and set the return to its GraphNodeClass
-	else if (!FoundParentClasses.IsEmpty())
+	else if (FoundParentClasses.Num() > 1)
 	{
 		TPair<int32, UClass*> ClosestParentMatch = {1000, nullptr};
 		for (const auto& ParentClass : FoundParentClasses)
 		{
 			int32 StepsTillExactMatch = 0;
 			const UClass* LocalParentClass = FlowNodeClass;
-			
+
 			while (IsValid(LocalParentClass) && LocalParentClass != ParentClass && LocalParentClass != UFlowNode::StaticClass())
 			{
 				StepsTillExactMatch++;
 				LocalParentClass = LocalParentClass->GetSuperClass();
 			}
-	
+
 			if (StepsTillExactMatch != 0 && StepsTillExactMatch < ClosestParentMatch.Key)
 			{
 				ClosestParentMatch = {StepsTillExactMatch, ParentClass};
@@ -284,7 +282,7 @@ UClass* UFlowGraphSchema::GetAssignedGraphNodeClass(const UClass* FlowNodeClass)
 
 		ReturnClass = GraphNodesByFlowNodes.FindRef(ClosestParentMatch.Value);
 	}
-	
+
 	return IsValid(ReturnClass) ? ReturnClass : UFlowGraphNode::StaticClass();
 }
 
