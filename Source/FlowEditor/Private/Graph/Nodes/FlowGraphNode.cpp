@@ -26,6 +26,7 @@
 #include "SourceCodeNavigation.h"
 #include "Textures/SlateIcon.h"
 #include "ToolMenuSection.h"
+#include "Settings/EditorStyleSettings.h"
 
 #define LOCTEXT_NAMESPACE "FlowGraphNode"
 
@@ -775,7 +776,15 @@ void UFlowGraphNode::CreateInputPin(const FFlowPin& FlowPin, const int32 Index /
 	UEdGraphPin* NewPin = CreatePin(EGPD_Input, PinType, FlowPin.PinName, Index);
 	check(NewPin);
 
-	if (!FlowPin.PinFriendlyName.IsEmpty())
+	if (FlowPin.PinFriendlyName.IsEmpty())
+	{
+		if (GetDefault<UEditorStyleSettings>()->bShowFriendlyNames)
+		{
+			NewPin->bAllowFriendlyName = true;
+			NewPin->PinFriendlyName = FText::FromString(FName::NameToDisplayString(FlowPin.PinName.ToString(), false));
+		}
+	}
+	else
 	{
 		NewPin->bAllowFriendlyName = true;
 		NewPin->PinFriendlyName = FlowPin.PinFriendlyName;
@@ -797,7 +806,15 @@ void UFlowGraphNode::CreateOutputPin(const FFlowPin& FlowPin, const int32 Index 
 	UEdGraphPin* NewPin = CreatePin(EGPD_Output, PinType, FlowPin.PinName, Index);
 	check(NewPin);
 
-	if (!FlowPin.PinFriendlyName.IsEmpty())
+	if (FlowPin.PinFriendlyName.IsEmpty())
+	{
+		if (GetDefault<UEditorStyleSettings>()->bShowFriendlyNames)
+		{
+			NewPin->bAllowFriendlyName = true;
+			NewPin->PinFriendlyName = FText::FromString(FName::NameToDisplayString(FlowPin.PinName.ToString(), false));
+		}
+	}
+	else
 	{
 		NewPin->bAllowFriendlyName = true;
 		NewPin->PinFriendlyName = FlowPin.PinFriendlyName;
