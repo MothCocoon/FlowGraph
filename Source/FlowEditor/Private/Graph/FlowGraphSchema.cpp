@@ -4,6 +4,7 @@
 
 #include "Graph/FlowGraph.h"
 #include "Graph/FlowGraphEditor.h"
+#include "Graph/FlowGraphEditorSettings.h"
 #include "Graph/FlowGraphSchema_Actions.h"
 #include "Graph/FlowGraphSettings.h"
 #include "Graph/FlowGraphUtils.h"
@@ -144,6 +145,40 @@ bool UFlowGraphSchema::ShouldHidePinDefaultValue(UEdGraphPin* Pin) const
 FLinearColor UFlowGraphSchema::GetPinTypeColor(const FEdGraphPinType& PinType) const
 {
 	return FLinearColor::White;
+}
+
+FText UFlowGraphSchema::GetPinDisplayName(const UEdGraphPin* Pin) const
+{
+	FText ResultPinName;
+	check(Pin != nullptr);
+	if (Pin->PinFriendlyName.IsEmpty())
+	{
+		// We don't want to display "None" for no name
+		if (Pin->PinName.IsNone())
+		{
+			return FText::GetEmpty();
+		}
+		if (GetDefault<UFlowGraphEditorSettings>()->bEnforceFriendlyPinNames) // this option is only difference between this override and UEdGraphSchema::GetPinDisplayName
+		{
+			ResultPinName = FText::FromString(FName::NameToDisplayString(Pin->PinName.ToString(), true));
+		}
+		else
+		{
+			ResultPinName = FText::FromName(Pin->PinName);
+		}
+	}
+	else
+	{
+		ResultPinName = Pin->PinFriendlyName;
+
+		bool bShouldUseLocalizedNodeAndPinNames = false;
+		GConfig->GetBool(TEXT("Internationalization"), TEXT("ShouldUseLocalizedNodeAndPinNames"), bShouldUseLocalizedNodeAndPinNames, GEditorSettingsIni);
+		if (!bShouldUseLocalizedNodeAndPinNames)
+		{
+			ResultPinName = FText::FromString(ResultPinName.BuildSourceString());
+		}
+	}
+	return ResultPinName;
 }
 
 void UFlowGraphSchema::BreakNodeLinks(UEdGraphNode& TargetNode) const
