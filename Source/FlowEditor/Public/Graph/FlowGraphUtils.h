@@ -3,9 +3,11 @@
 #pragma once
 
 #include "CoreMinimal.h"
+#include "Templates/SharedPointer.h"
 
 class FFlowAssetEditor;
 class SFlowGraphEditor;
+class UEdGraph;
 
 class FLOWEDITOR_API FFlowGraphUtils
 {

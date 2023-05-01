@@ -265,7 +265,7 @@ TMap<UObject*, UFlowAsset*> UFlowSubsystem::GetRootInstances() const
 	{
 		Result.Emplace(RootInstance.Value.Get(), RootInstance.Key);
 	}
-	return Result;
+	return MoveTemp(Result);
 }
 
 TSet<UFlowAsset*> UFlowSubsystem::GetRootInstancesByOwner(const UObject* Owner) const
@@ -278,7 +278,7 @@ TSet<UFlowAsset*> UFlowSubsystem::GetRootInstancesByOwner(const UObject* Owner) 
 			Result.Emplace(RootInstance.Key);
 		}
 	}
-	return Result;
+	return MoveTemp(Result);
 }
 
 UFlowAsset* UFlowSubsystem::GetRootFlow(const UObject* Owner) const
@@ -537,7 +537,7 @@ TSet<UFlowComponent*> UFlowSubsystem::GetFlowComponentsByTags(const FGameplayTag
 		}
 	}
 
-	return Result;
+	return MoveTemp(Result);
 }
 
 TSet<AActor*> UFlowSubsystem::GetFlowActorsByTag(const FGameplayTag Tag, const TSubclassOf<AActor> ActorClass, const bool bExactMatch) const
@@ -554,7 +554,7 @@ TSet<AActor*> UFlowSubsystem::GetFlowActorsByTag(const FGameplayTag Tag, const T
 		}
 	}
 
-	return Result;
+	return MoveTemp(Result);
 }
 
 TSet<AActor*> UFlowSubsystem::GetFlowActorsByTags(const FGameplayTagContainer Tags, const EGameplayContainerMatchType MatchType, const TSubclassOf<AActor> ActorClass, const bool bExactMatch) const
@@ -571,7 +571,7 @@ TSet<AActor*> UFlowSubsystem::GetFlowActorsByTags(const FGameplayTagContainer Ta
 		}
 	}
 
-	return Result;
+	return MoveTemp(Result);
 }
 
 TMap<AActor*, UFlowComponent*> UFlowSubsystem::GetFlowActorsAndComponentsByTag(const FGameplayTag Tag, const TSubclassOf<AActor> ActorClass, const bool bExactMatch) const
@@ -588,7 +588,7 @@ TMap<AActor*, UFlowComponent*> UFlowSubsystem::GetFlowActorsAndComponentsByTag(c
 		}
 	}
 
-	return Result;
+	return MoveTemp(Result);
 }
 
 TMap<AActor*, UFlowComponent*> UFlowSubsystem::GetFlowActorsAndComponentsByTags(const FGameplayTagContainer Tags, const EGameplayContainerMatchType MatchType, const TSubclassOf<AActor> ActorClass, const bool bExactMatch) const
@@ -605,7 +605,7 @@ TMap<AActor*, UFlowComponent*> UFlowSubsystem::GetFlowActorsAndComponentsByTags(
 		}
 	}
 
-	return Result;
+	return MoveTemp(Result);
 }
 
 void UFlowSubsystem::FindComponents(const FGameplayTag& Tag, const bool bExactMatch, TArray<TWeakObjectPtr<UFlowComponent>>& OutComponents) const

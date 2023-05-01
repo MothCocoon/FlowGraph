@@ -133,7 +133,7 @@ public:
 	void HarvestNodeConnections();
 #endif
 
-	TMap<FGuid, UFlowNode*> GetNodes() const { return Nodes; }
+	const TMap<FGuid, UFlowNode*>& GetNodes() const { return Nodes; }
 	UFlowNode* GetNode(const FGuid& Guid) const { return Nodes.FindRef(Guid); }
 
 	template <class T>
@@ -184,8 +184,12 @@ protected:
 	}
 
 public:	
-	TArray<FName> GetCustomInputs() const { return CustomInputs; }
-	TArray<FName> GetCustomOutputs() const { return CustomOutputs; }
+	const TArray<FName>& GetCustomInputs() const { return CustomInputs; }
+	const TArray<FName>& GetCustomOutputs() const { return CustomOutputs; }
+
+protected:
+	void AddCustomInput(const FName& InName);
+	void RemoveCustomInput(const FName& InName);
 
 //////////////////////////////////////////////////////////////////////////
 // Instances of the template asset
@@ -318,11 +322,11 @@ public:
 
 	// Returns nodes that have any work left, not marked as Finished yet
 	UFUNCTION(BlueprintPure, Category = "Flow")
-	TArray<UFlowNode*> GetActiveNodes() const { return ActiveNodes; }
+	const TArray<UFlowNode*>& GetActiveNodes() const { return ActiveNodes; }
 
 	// Returns nodes active in the past, done their work
 	UFUNCTION(BlueprintPure, Category = "Flow")
-	TArray<UFlowNode*> GetRecordedNodes() const { return RecordedNodes; }
+	const TArray<UFlowNode*>& GetRecordedNodes() const { return RecordedNodes; }
 
 //////////////////////////////////////////////////////////////////////////
 // SaveGame support

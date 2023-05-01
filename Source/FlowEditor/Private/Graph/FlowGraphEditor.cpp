@@ -15,6 +15,9 @@
 #include "Framework/Commands/GenericCommands.h"
 #include "HAL/PlatformApplicationMisc.h"
 #include "LevelEditor.h"
+#include "Modules/ModuleManager.h"
+#include "ScopedTransaction.h"
+#include "Widgets/Docking/SDockTab.h"
 
 #define LOCTEXT_NAMESPACE "FlowGraphEditor"
 
@@ -33,6 +36,11 @@ void SFlowGraphEditor::Construct(const FArguments& InArgs, const TSharedPtr<FFlo
 	Arguments._GraphToEdit = FlowAsset->GetGraph();
 	Arguments._GraphEvents = InArgs._GraphEvents;
 	Arguments._AutoExpandActionMenu = true;
+
+	// QUESTION (gtaylor) Why is this code commented out?  
+	//  When commenting out code, please leave a comment as to *why* it is commented out 
+	//  and under what conditions it could be uncommented or removed.  
+	//  Stray commented code is an enigma to any future programmer trying to make sense of the code.
 	//Arguments._ShowGraphStateOverlay = false;
 
 	Arguments._GraphEvents.OnSelectionChanged = FOnSelectionChanged::CreateSP(this, &SFlowGraphEditor::OnSelectedNodesChanged);

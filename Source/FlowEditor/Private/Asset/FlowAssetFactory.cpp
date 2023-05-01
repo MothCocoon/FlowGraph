@@ -9,6 +9,7 @@
 #include "ClassViewerModule.h"
 #include "Kismet2/KismetEditorUtilities.h"
 #include "Kismet2/SClassPickerDialog.h"
+#include "Modules/ModuleManager.h"
 
 #define LOCTEXT_NAMESPACE "FlowAssetFactory"
 

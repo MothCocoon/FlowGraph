@@ -8,12 +8,14 @@
 #include "FlowSubsystem.h"
 #include "FlowTypes.h"
 
+#include "Components/ActorComponent.h"
 #if WITH_EDITOR
 #include "Editor.h"
 #endif
 #include "Engine/Engine.h"
 #include "Engine/ViewportStatsSubsystem.h"
 #include "Engine/World.h"
+#include "GameFramework/Actor.h"
 #include "Misc/App.h"
 #include "Misc/Paths.h"
 #include "Serialization/MemoryReader.h"
@@ -148,6 +150,45 @@ UFlowAsset* UFlowNode::GetFlowAsset() const
 	return GetOuter() ? Cast<UFlowAsset>(GetOuter()) : nullptr;
 }
 
+AActor* UFlowNode::TryGetRootFlowActorOwner() const
+{
+	AActor* OwningActor = nullptr;
+
+	UObject* RootFlowOwner = TryGetRootFlowObjectOwner();
+
+	if (IsValid(RootFlowOwner))
+	{
+		// Check if the immediate parent is an AActor
+		OwningActor = Cast<AActor>(RootFlowOwner);
+
+		if (!IsValid(OwningActor))
+		{
+			// Check if the if the immediate parent is an UActorComponent
+			//  and return that Component's Owning actor
+			if (const UActorComponent* OwningComponent = Cast<UActorComponent>(RootFlowOwner))
+			{
+				OwningActor = OwningComponent->GetOwner();
+			}
+		}
+	}
+
+	return OwningActor;
+}
+
+UObject* UFlowNode::TryGetRootFlowObjectOwner() const
+{
+	const UFlowAsset* FlowAsset = GetFlowAsset();
+
+	if (IsValid(FlowAsset))
+	{
+		return FlowAsset->GetOwner();
+	}
+	else
+	{
+		return nullptr;
+	}
+}
+
 void UFlowNode::AddInputPins(TArray<FFlowPin> Pins)
 {
 	for (const FFlowPin& Pin : Pins)
@@ -220,7 +261,7 @@ TArray<FName> UFlowNode::GetInputNames() const
 			Result.Emplace(Pin.PinName);
 		}
 	}
-	return Result;
+	return MoveTemp(Result);
 }
 
 TArray<FName> UFlowNode::GetOutputNames() const
@@ -233,7 +274,7 @@ TArray<FName> UFlowNode::GetOutputNames() const
 			Result.Emplace(Pin.PinName);
 		}
 	}
-	return Result;
+	return MoveTemp(Result);
 }
 
 #if WITH_EDITOR
@@ -311,7 +352,7 @@ TSet<UFlowNode*> UFlowNode::GetConnectedNodes() const
 	{
 		Result.Emplace(GetFlowAsset()->GetNode(Connection.Value.NodeGuid));
 	}
-	return Result;
+	return MoveTemp(Result);
 }
 
 FName UFlowNode::GetPinConnectedToNode(const FGuid& OtherNodeGuid)
@@ -677,7 +718,7 @@ TMap<uint8, FPinRecord> UFlowNode::GetWireRecords() const
 	{
 		Result.Emplace(OutputPins.IndexOfByKey(Record.Key), Record.Value.Last());
 	}
-	return Result;
+	return MoveTemp(Result);
 }
 
 TArray<FPinRecord> UFlowNode::GetPinRecords(const FName& PinName, const EEdGraphPinDirection PinDirection) const

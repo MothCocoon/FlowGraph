@@ -11,6 +11,7 @@
 #include "FlowGraph.h"
 
 class FFlowAssetEditor;
+class IDetailsView;
 
 /**
  *
