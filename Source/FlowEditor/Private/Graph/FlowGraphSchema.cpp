@@ -2,9 +2,9 @@
 
 #include "Graph/FlowGraphSchema.h"
 
-#include "Asset/FlowAssetEditor.h"
 #include "Graph/FlowGraph.h"
 #include "Graph/FlowGraphEditor.h"
+#include "Graph/FlowGraphEditorSettings.h"
 #include "Graph/FlowGraphSchema_Actions.h"
 #include "Graph/FlowGraphSettings.h"
 #include "Graph/FlowGraphUtils.h"
@@ -179,6 +179,40 @@ FLinearColor UFlowGraphSchema::GetPinTypeColor(const FEdGraphPinType& PinType) c
 	return FLinearColor::White;
 }
 
+FText UFlowGraphSchema::GetPinDisplayName(const UEdGraphPin* Pin) const
+{
+	FText ResultPinName;
+	check(Pin != nullptr);
+	if (Pin->PinFriendlyName.IsEmpty())
+	{
+		// We don't want to display "None" for no name
+		if (Pin->PinName.IsNone())
+		{
+			return FText::GetEmpty();
+		}
+		if (GetDefault<UFlowGraphEditorSettings>()->bEnforceFriendlyPinNames) // this option is only difference between this override and UEdGraphSchema::GetPinDisplayName
+		{
+			ResultPinName = FText::FromString(FName::NameToDisplayString(Pin->PinName.ToString(), true));
+		}
+		else
+		{
+			ResultPinName = FText::FromName(Pin->PinName);
+		}
+	}
+	else
+	{
+		ResultPinName = Pin->PinFriendlyName;
+
+		bool bShouldUseLocalizedNodeAndPinNames = false;
+		GConfig->GetBool(TEXT("Internationalization"), TEXT("ShouldUseLocalizedNodeAndPinNames"), bShouldUseLocalizedNodeAndPinNames, GEditorSettingsIni);
+		if (!bShouldUseLocalizedNodeAndPinNames)
+		{
+			ResultPinName = FText::FromString(ResultPinName.BuildSourceString());
+		}
+	}
+	return ResultPinName;
+}
+
 void UFlowGraphSchema::BreakNodeLinks(UEdGraphNode& TargetNode) const
 {
 	Super::BreakNodeLinks(TargetNode);
@@ -270,15 +304,53 @@ TArray<TSharedPtr<FString>> UFlowGraphSchema::GetFlowNodeCategories()
 
 UClass* UFlowGraphSchema::GetAssignedGraphNodeClass(const UClass* FlowNodeClass)
 {
+	TArray<UClass*> FoundParentClasses;
+	UClass* ReturnClass = nullptr;
+
+	// Collect all possible parents and their corresponding GraphNodeClasses
 	for (const TPair<UClass*, UClass*>& GraphNodeByFlowNode : GraphNodesByFlowNodes)
 	{
-		if (FlowNodeClass->IsChildOf(GraphNodeByFlowNode.Key))
+		if (FlowNodeClass == GraphNodeByFlowNode.Key)
 		{
 			return GraphNodeByFlowNode.Value;
 		}
+
+		if (FlowNodeClass->IsChildOf(GraphNodeByFlowNode.Key))
+		{
+			FoundParentClasses.Add(GraphNodeByFlowNode.Key);
+		}
 	}
 
-	return UFlowGraphNode::StaticClass();
+	// Of only one parent found set the return to its GraphNodeClass
+	if (FoundParentClasses.Num() == 1)
+	{
+		ReturnClass = GraphNodesByFlowNodes.FindRef(FoundParentClasses[0]);
+	}
+	// If multiple parents found, find the closest one and set the return to its GraphNodeClass
+	else if (FoundParentClasses.Num() > 1)
+	{
+		TPair<int32, UClass*> ClosestParentMatch = {1000, nullptr};
+		for (const auto& ParentClass : FoundParentClasses)
+		{
+			int32 StepsTillExactMatch = 0;
+			const UClass* LocalParentClass = FlowNodeClass;
+
+			while (IsValid(LocalParentClass) && LocalParentClass != ParentClass && LocalParentClass != UFlowNode::StaticClass())
+			{
+				StepsTillExactMatch++;
+				LocalParentClass = LocalParentClass->GetSuperClass();
+			}
+
+			if (StepsTillExactMatch != 0 && StepsTillExactMatch < ClosestParentMatch.Key)
+			{
+				ClosestParentMatch = {StepsTillExactMatch, ParentClass};
+			}
+		}
+
+		ReturnClass = GraphNodesByFlowNodes.FindRef(ClosestParentMatch.Value);
+	}
+
+	return IsValid(ReturnClass) ? ReturnClass : UFlowGraphNode::StaticClass();
 }
 
 void UFlowGraphSchema::ApplyNodeFilter(const UFlowAsset* AssetClassDefaults, const UClass* FlowNodeClass, TArray<UFlowNode*>& FilteredNodes)

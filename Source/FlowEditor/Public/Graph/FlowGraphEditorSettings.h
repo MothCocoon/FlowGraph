@@ -30,9 +30,13 @@ class FLOWEDITOR_API UFlowGraphEditorSettings : public UDeveloperSettings
 	UPROPERTY(config, EditAnywhere, Category = "Nodes")
 	bool bShowNodeClass;
 
-	// Hides the node description when you play in editor and only shows node status string.
+	// Shows the node description when you play in editor
 	UPROPERTY(config, EditAnywhere, Category = "Nodes")
 	bool bShowNodeDescriptionWhilePlaying;
+
+	// Pin names will will be displayed in a format that is easier to read, even if PinFriendlyName wasn't set
+	UPROPERTY(EditAnywhere, config, Category = "Nodes")
+	bool bEnforceFriendlyPinNames;
 
 	// Renders preview of entire graph while hovering over 
 	UPROPERTY(config, EditAnywhere, Category = "Nodes")

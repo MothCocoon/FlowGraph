@@ -2,6 +2,8 @@
 
 #pragma once
 
+#include "Kismet/BlueprintFunctionLibrary.h"
+
 #include "FlowAsset.h"
 #include "Kismet/BlueprintFunctionLibrary.h"
 #include "Nodes/FlowPin.h"
