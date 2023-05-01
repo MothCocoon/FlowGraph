@@ -19,6 +19,7 @@
 
 #include "AssetRegistry/AssetRegistryModule.h"
 #include "EdGraph/EdGraph.h"
+#include "Editor.h"
 #include "ScopedTransaction.h"
 
 #define LOCTEXT_NAMESPACE "FlowGraphSchema"
