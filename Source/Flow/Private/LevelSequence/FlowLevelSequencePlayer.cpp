@@ -93,5 +93,5 @@ TArray<UObject*> UFlowLevelSequencePlayer::GetEventContexts() const
 		EventContexts.Add(FlowEventReceiver);
 	}
 
-	return MoveTemp(EventContexts);
+	return EventContexts;
 }

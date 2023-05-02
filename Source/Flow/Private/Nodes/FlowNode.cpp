@@ -261,7 +261,7 @@ TArray<FName> UFlowNode::GetInputNames() const
 			Result.Emplace(Pin.PinName);
 		}
 	}
-	return MoveTemp(Result);
+	return Result;
 }
 
 TArray<FName> UFlowNode::GetOutputNames() const
@@ -274,7 +274,7 @@ TArray<FName> UFlowNode::GetOutputNames() const
 			Result.Emplace(Pin.PinName);
 		}
 	}
-	return MoveTemp(Result);
+	return Result;
 }
 
 #if WITH_EDITOR
@@ -352,7 +352,7 @@ TSet<UFlowNode*> UFlowNode::GetConnectedNodes() const
 	{
 		Result.Emplace(GetFlowAsset()->GetNode(Connection.Value.NodeGuid));
 	}
-	return MoveTemp(Result);
+	return Result;
 }
 
 FName UFlowNode::GetPinConnectedToNode(const FGuid& OtherNodeGuid)
@@ -718,7 +718,7 @@ TMap<uint8, FPinRecord> UFlowNode::GetWireRecords() const
 	{
 		Result.Emplace(OutputPins.IndexOfByKey(Record.Key), Record.Value.Last());
 	}
-	return MoveTemp(Result);
+	return Result;
 }
 
 TArray<FPinRecord> UFlowNode::GetPinRecords(const FName& PinName, const EEdGraphPinDirection PinDirection) const
