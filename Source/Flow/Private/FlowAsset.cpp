@@ -190,6 +190,8 @@ void UFlowAsset::HarvestNodeConnections()
 	}
 }
 
+#endif // WITH_EDITOR
+
 void UFlowAsset::AddCustomInput(const FName& InName)
 {
 	check(!CustomInputs.Contains(InName));
@@ -203,8 +205,6 @@ void UFlowAsset::RemoveCustomInput(const FName& InName)
 
 	CustomInputs.Remove(InName);
 }
-
-#endif // WITH_EDITOR
 
 UFlowNode_Start* UFlowAsset::GetStartNode() const
 {
