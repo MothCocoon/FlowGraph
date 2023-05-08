@@ -132,21 +132,7 @@ void UFlowNode_PlayLevelSequence::CreatePlayer()
 	{
 		ALevelSequenceActor* SequenceActor;
 
-		AActor* OwningActor = nullptr;
-		if (GetFlowAsset())
-		{
-			if (UObject* RootFlowOwner = GetFlowAsset()->GetOwner())
-			{
-				OwningActor = Cast<AActor>(RootFlowOwner); // in case Root Flow was created directly from some actor
-				if (OwningActor == nullptr)
-				{
-					if (const UActorComponent* OwningComponent = Cast<UActorComponent>(RootFlowOwner))
-					{
-						OwningActor = OwningComponent->GetOwner();
-					}
-				}
-			}
-		}
+		AActor* OwningActor = TryGetRootFlowActorOwner();
 
 		// Apply AActor::CustomTimeDilation from owner of the Root Flow
 		if (IsValid(OwningActor))

@@ -109,7 +109,7 @@ private:
 	FGameplayTagContainer RecentlySentNotifyTags;
 
 public:
-	FGameplayTagContainer GetRecentlySentNotifyTags() const { return RecentlySentNotifyTags; }
+	const FGameplayTagContainer& GetRecentlySentNotifyTags() const { return RecentlySentNotifyTags; }
 
 	// Send single notification from the actor to Flow graphs
 	// If set on server, it always going to be replicated to clients

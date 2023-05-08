@@ -3,10 +3,12 @@
 #pragma once
 
 #include "EdGraph/EdGraphSchema.h"
+#include "Templates/SubclassOf.h"
 #include "FlowGraphSchema.generated.h"
 
 class UFlowAsset;
 class UFlowNode;
+class UFlowGraphNode;
 
 DECLARE_MULTICAST_DELEGATE(FFlowGraphSchemaRefresh);
 
@@ -46,6 +48,9 @@ public:
 
 	static TArray<TSharedPtr<FString>> GetFlowNodeCategories();
 	static UClass* GetAssignedGraphNodeClass(const UClass* FlowNodeClass);
+
+protected:
+	UFlowGraphNode* CreateDefaultNode(UEdGraph& Graph, const UFlowAsset* AssetClassDefaults, const TSubclassOf<UFlowNode>& NodeClass, const FVector2D& Offset, bool bPlacedAsGhostNode) const;
 
 private:
 	static void ApplyNodeFilter(const UFlowAsset* AssetClassDefaults, const UClass* FlowNodeClass, TArray<UFlowNode*>& FilteredNodes);

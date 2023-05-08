@@ -1,101 +1,35 @@
 // Copyright https://github.com/MothCocoon/FlowGraph/graphs/contributors
 
 #include "DetailCustomizations/FlowNode_CustomInputDetails.h"
+#include "DetailLayoutBuilder.h"
 #include "FlowAsset.h"
-#include "Nodes/Route/FlowNode_CustomInput.h"
-
-#include "DetailCategoryBuilder.h"
-#include "DetailWidgetRow.h"
-#include "PropertyEditing.h"
-#include "Widgets/Input/SComboBox.h"
-#include "Widgets/Text/STextBlock.h"
 
 #define LOCTEXT_NAMESPACE "FlowNode_CustomInputDetails"
 
+FFlowNode_CustomInputDetails::FFlowNode_CustomInputDetails()
+{
+	bExcludeReferencedEvents = true;
+}
+
 void FFlowNode_CustomInputDetails::CustomizeDetails(IDetailLayoutBuilder& DetailLayout)
 {
-	DetailLayout.GetObjectsBeingCustomized(ObjectsBeingEdited);
-	GetEventNames();
+	// For backward compatability, these localized texts are in FlowNode_CustomInputDetails, 
+	//  not FlowNode_CustomNodeBase, so passing them in to a common function.
 
-	IDetailCategoryBuilder& Category = DetailLayout.EditCategory("CustomInput", LOCTEXT("CustomInputCategory", "Custom Event"));
-	Category.AddCustomRow(LOCTEXT("CustomRowName", "Event Name"))
-			.NameContent()
-				[
-					SNew(STextBlock)
-						.Text(LOCTEXT("EventName", "Event Name"))
-				]
-			.ValueContent()
-				.HAlign(HAlign_Fill)
-				[
-					SNew(SComboBox<TSharedPtr<FName>>)
-						.OptionsSource(&EventNames)
-						.OnGenerateWidget(this, &FFlowNode_CustomInputDetails::GenerateEventWidget)
-						.OnSelectionChanged(this, &FFlowNode_CustomInputDetails::PinSelectionChanged)
-						[
-							SNew(STextBlock)
-								.Text(this, &FFlowNode_CustomInputDetails::GetSelectedEventText)
-						]
-				];
+	static const FText CustomRowNameText = LOCTEXT("CustomRowName", "Event Name");
+	static const FText EventNameText = LOCTEXT("EventName", "Event Name");
+
+	CustomizeDetailsInternal(DetailLayout, CustomRowNameText, EventNameText);
 }
 
-void FFlowNode_CustomInputDetails::GetEventNames()
+IDetailCategoryBuilder& FFlowNode_CustomInputDetails::CreateDetailCategory(IDetailLayoutBuilder& DetailLayout) const
 {
-	EventNames.Empty();
-	EventNames.Emplace(MakeShareable(new FName(NAME_None)));
-
-	if (ObjectsBeingEdited[0].IsValid() && ObjectsBeingEdited[0].Get()->GetOuter())
-	{
-		const UFlowAsset* FlowAsset = Cast<UFlowAsset>(ObjectsBeingEdited[0].Get()->GetOuter());
-		TArray<FName> SortedNames = FlowAsset->GetCustomInputs();
-
-		for (const TPair<FGuid, UFlowNode*>& Node : FlowAsset->GetNodes())
-		{
-			if (Node.Value->GetClass()->IsChildOf(UFlowNode_CustomInput::StaticClass()))
-			{
-				SortedNames.Remove(Cast<UFlowNode_CustomInput>(Node.Value)->EventName);
-			}
-		}
-
-		SortedNames.Sort([](const FName& A, const FName& B)
-		{
-			return A.LexicalLess(B);
-		});
-
-		for (const FName& EventName : SortedNames)
-		{
-			if (!EventName.IsNone())
-			{
-				EventNames.Emplace(MakeShareable(new FName(EventName)));
-			}
-		}
-	}
+	return DetailLayout.EditCategory("CustomInput", LOCTEXT("CustomInputCategory", "Custom Event"));
 }
 
-TSharedRef<SWidget> FFlowNode_CustomInputDetails::GenerateEventWidget(const TSharedPtr<FName> Item) const
+TArray<FName> FFlowNode_CustomInputDetails::BuildEventNames(const UFlowAsset& FlowAsset) const
 {
-	return SNew(STextBlock).Text(FText::FromName(*Item.Get()));
-}
-
-FText FFlowNode_CustomInputDetails::GetSelectedEventText() const
-{
-	FText PropertyValue;
-
-	ensure(ObjectsBeingEdited[0].IsValid());
-	if (const UFlowNode_CustomInput* Node = Cast<UFlowNode_CustomInput>(ObjectsBeingEdited[0].Get()))
-	{
-		PropertyValue = FText::FromName(Node->EventName);
-	}
-
-	return PropertyValue;
-}
-
-void FFlowNode_CustomInputDetails::PinSelectionChanged(const TSharedPtr<FName> Item, ESelectInfo::Type SelectInfo) const
-{
-	ensure(ObjectsBeingEdited[0].IsValid());
-	if (UFlowNode_CustomInput* Node = Cast<UFlowNode_CustomInput>(ObjectsBeingEdited[0].Get()))
-	{
-		Node->EventName = *Item.Get();
-	}
+	return FlowAsset.GetCustomInputs();
 }
 
 #undef LOCTEXT_NAMESPACE

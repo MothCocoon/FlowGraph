@@ -8,5 +8,6 @@ UFlowSettings::UFlowSettings(const FObjectInitializer& ObjectInitializer)
 	, bWarnAboutMissingIdentityTags(true)
 	, bLogOnSignalDisabled(true)
 	, bLogOnSignalPassthrough(true)
+	, bUseAdaptiveNodeTitles(false)
 {
 }

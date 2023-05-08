@@ -44,7 +44,10 @@ private:
 #if WITH_EDITORONLY_DATA
 
 protected:
+	UPROPERTY()
 	TArray<TSubclassOf<UFlowAsset>> AllowedAssetClasses;
+
+	UPROPERTY()
 	TArray<TSubclassOf<UFlowAsset>> DeniedAssetClasses;
 
 	UPROPERTY()
@@ -121,7 +124,15 @@ public:
 	UFUNCTION(BlueprintPure, Category = "FlowNode")
 	UFlowAsset* GetFlowAsset() const;
 
+	// Gets the Owning Actor for this Node's RootFlow
+	//  (if the immediate parent is an UActorComponent, it will get that Component's actor)
+	AActor* TryGetRootFlowActorOwner() const;
+
 protected:
+
+	// Gets the Owning Object for this Node's RootFlow
+	UObject* TryGetRootFlowObjectOwner() const;
+
 	virtual bool CanFinishGraph() const { return false; }
 
 protected:
@@ -163,8 +174,8 @@ protected:
 	uint8 CountNumberedInputs() const;
 	uint8 CountNumberedOutputs() const;
 
-	TArray<FFlowPin> GetInputPins() const { return InputPins; }
-	TArray<FFlowPin> GetOutputPins() const { return OutputPins; }
+	const TArray<FFlowPin>& GetInputPins() const { return InputPins; }
+	const TArray<FFlowPin>& GetOutputPins() const { return OutputPins; }
 
 public:
 	UFUNCTION(BlueprintPure, Category = "FlowNode")
