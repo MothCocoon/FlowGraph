@@ -1,17 +1,14 @@
 // Copyright https://github.com/MothCocoon/FlowGraph/graphs/contributors
 
 #include "Nodes/Route/FlowNode_CustomInput.h"
+#include "FlowSettings.h"
+
+#define LOCTEXT_NAMESPACE "FlowNode"
 
 UFlowNode_CustomInput::UFlowNode_CustomInput(const FObjectInitializer& ObjectInitializer)
 	: Super(ObjectInitializer)
 {
-#if WITH_EDITOR
-	Category = TEXT("Route");
-	NodeStyle = EFlowNodeStyle::InOut;
-#endif
-
 	InputPins.Empty();
-	AllowedSignalModes = {EFlowSignalMode::Enabled, EFlowSignalMode::Disabled};
 }
 
 void UFlowNode_CustomInput::ExecuteInput(const FName& PinName)
@@ -20,19 +17,19 @@ void UFlowNode_CustomInput::ExecuteInput(const FName& PinName)
 }
 
 #if WITH_EDITOR
-FString UFlowNode_CustomInput::GetNodeDescription() const
+FText UFlowNode_CustomInput::GetNodeTitle() const
 {
-	return EventName.ToString();
-}
+	const bool bUseAdaptiveNodeTitles = UFlowSettings::Get()->bUseAdaptiveNodeTitles;
 
-EDataValidationResult UFlowNode_CustomInput::ValidateNode()
-{
-	if (EventName.IsNone())
+	if (bUseAdaptiveNodeTitles && !EventName.IsNone())
 	{
-		ValidationLog.Error<UFlowNode>(TEXT("Event Name is empty!"), this);
-		return EDataValidationResult::Invalid;
+		return FText::Format(LOCTEXT("CustomInputTitle", "{0} Input"), { FText::FromString(EventName.ToString()) });
 	}
-
-	return EDataValidationResult::Valid;
+	else
+	{
+		return Super::GetNodeTitle();
+	}
 }
 #endif
+
+#undef LOCTEXT_NAMESPACE

@@ -2,13 +2,14 @@
 
 #pragma once
 
-#include "IDetailCustomization.h"
+#include "FlowNode_CustomNodeBaseDetails.h"
 #include "Templates/SharedPointer.h"
-#include "Widgets/SWidget.h"
 
-class FFlowNode_CustomInputDetails final : public IDetailCustomization
+class FFlowNode_CustomInputDetails final : public FFlowNode_CustomNodeBaseDetails
 {
 public:
+	FFlowNode_CustomInputDetails();
+
 	static TSharedRef<IDetailCustomization> MakeInstance()
 	{
 		return MakeShareable(new FFlowNode_CustomInputDetails());
@@ -18,12 +19,7 @@ public:
 	virtual void CustomizeDetails(IDetailLayoutBuilder& DetailLayout) override;
 	// --
 
-private:
-	void GetEventNames();
-	TSharedRef<SWidget> GenerateEventWidget(TSharedPtr<FName> Item) const;
-	FText GetSelectedEventText() const;
-	void PinSelectionChanged(TSharedPtr<FName> Item, ESelectInfo::Type SelectInfo) const;
-
-	TArray<TWeakObjectPtr<UObject>> ObjectsBeingEdited;
-	TArray<TSharedPtr<FName>> EventNames;
+protected:
+	virtual IDetailCategoryBuilder& CreateDetailCategory(IDetailLayoutBuilder& DetailLayout) const override;
+	virtual TArray<FName> BuildEventNames(const UFlowAsset& FlowAsset) const override;
 };

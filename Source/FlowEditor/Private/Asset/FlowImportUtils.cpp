@@ -3,6 +3,7 @@
 #include "Asset/FlowImportUtils.h"
 
 #include "Asset/FlowAssetFactory.h"
+#include "FlowEditorDefines.h"
 #include "FlowEditorModule.h"
 #include "Graph/FlowGraphSchema_Actions.h"
 #include "Graph/FlowGraph.h"

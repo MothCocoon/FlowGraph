@@ -2,7 +2,8 @@
 
 #pragma once
 
-#include "Nodes/FlowNode.h"
+#include "FlowNode_CustomNodeBase.h"
+
 #include "FlowNode_CustomOutput.generated.h"
 
 /**
@@ -10,18 +11,14 @@
  * Triggered output name matches EventName selected on this node
  */
 UCLASS(NotBlueprintable, meta = (DisplayName = "Custom Output"))
-class FLOW_API UFlowNode_CustomOutput final : public UFlowNode
+class FLOW_API UFlowNode_CustomOutput final : public UFlowNode_CustomNodeBase
 {
 	GENERATED_UCLASS_BODY()
 
-	UPROPERTY()
-	FName EventName;
-	
 protected:
 	virtual void ExecuteInput(const FName& PinName) override;
 
 #if WITH_EDITOR
-	virtual FString GetNodeDescription() const override;
-	virtual EDataValidationResult ValidateNode() override;
+	virtual FText GetNodeTitle() const override;
 #endif
 };

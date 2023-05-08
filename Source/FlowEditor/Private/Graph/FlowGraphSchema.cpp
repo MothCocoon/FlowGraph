@@ -13,11 +13,13 @@
 #include "FlowAsset.h"
 #include "Nodes/FlowNode.h"
 #include "Nodes/FlowNodeBlueprint.h"
+#include "Nodes/Route/FlowNode_CustomInput.h"
 #include "Nodes/Route/FlowNode_Start.h"
 #include "Nodes/Route/FlowNode_Reroute.h"
 
 #include "AssetRegistry/AssetRegistryModule.h"
 #include "EdGraph/EdGraph.h"
+#include "Editor.h"
 #include "ScopedTransaction.h"
 
 #define LOCTEXT_NAMESPACE "FlowGraphSchema"
@@ -72,17 +74,48 @@ void UFlowGraphSchema::GetGraphContextActions(FGraphContextMenuBuilder& ContextM
 
 void UFlowGraphSchema::CreateDefaultNodesForGraph(UEdGraph& Graph) const
 {
+	const UFlowAsset* AssetClassDefaults = GetAssetClassDefaults(&Graph);
+
+	static const FVector2D NodeOffsetIncrement = FVector2D(0, 128);
+
+	FVector2D NodeOffset = FVector2D::ZeroVector;
+
 	// Start node
-	UFlowGraphNode* NewGraphNode = FFlowGraphSchemaAction_NewNode::CreateNode(&Graph, nullptr, UFlowNode_Start::StaticClass(), FVector2D::ZeroVector);
+	const bool bStartNodePlacedAsGhostNode = IsValid(AssetClassDefaults) ? AssetClassDefaults->bStartNodePlacedAsGhostNode : false;
+	UFlowGraphNode* StartGraphNode = CreateDefaultNode(Graph, AssetClassDefaults, UFlowNode_Start::StaticClass(), NodeOffset, bStartNodePlacedAsGhostNode);
+	check(IsValid(StartGraphNode));
+
+	// Add default nodes for all of the CustomInputs
+	if (IsValid(AssetClassDefaults))
+	{
+		for (const FName& CustomInputName : AssetClassDefaults->CustomInputs)
+		{
+			NodeOffset += NodeOffsetIncrement;
+
+			constexpr bool bCustomInputPlacedAsGhostNode = true;
+			UFlowGraphNode* NewFlowGraphNode = CreateDefaultNode(Graph, AssetClassDefaults, UFlowNode_CustomInput::StaticClass(), NodeOffset, bCustomInputPlacedAsGhostNode);
+			UFlowNode_CustomInput* CustomInputNode = CastChecked<UFlowNode_CustomInput>(NewFlowGraphNode->GetFlowNode());
+
+			CustomInputNode->SetEventName(CustomInputName);
+		}
+	}
+
+	CastChecked<UFlowGraph>(&Graph)->GetFlowAsset()->HarvestNodeConnections();
+}
+
+UFlowGraphNode* UFlowGraphSchema::CreateDefaultNode(UEdGraph& Graph, const UFlowAsset* AssetClassDefaults, const TSubclassOf<UFlowNode>& NodeClass, const FVector2D& Offset, bool bPlacedAsGhostNode) const
+{
+	constexpr UEdGraphPin* FromNode = nullptr;
+	UFlowGraphNode* NewGraphNode = FFlowGraphSchemaAction_NewNode::CreateNode(&Graph, FromNode, NodeClass, Offset);
+
 	SetNodeMetaData(NewGraphNode, FNodeMetadata::DefaultGraphNode);
 
-	const UFlowAsset* AssetClassDefaults = GetAssetClassDefaults(&Graph);
-	if (AssetClassDefaults && AssetClassDefaults->bStartNodePlacedAsGhostNode)
+	if (bPlacedAsGhostNode)
 	{
 		NewGraphNode->MakeAutomaticallyPlacedGhostNode();
 	}
 
-	CastChecked<UFlowGraph>(&Graph)->GetFlowAsset()->HarvestNodeConnections();
+	return NewGraphNode;
 }
 
 const FPinConnectionResponse UFlowGraphSchema::CanCreateConnection(const UEdGraphPin* PinA, const UEdGraphPin* PinB) const

@@ -13,6 +13,8 @@ class FLOW_API UFlowNode_Start : public UFlowNode
 {
 	GENERATED_UCLASS_BODY()
 
+	friend class UFlowAsset;
+
 protected:
 	virtual void ExecuteInput(const FName& PinName) override;
 };
