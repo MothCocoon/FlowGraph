@@ -50,7 +50,7 @@ public:
 	static UClass* GetAssignedGraphNodeClass(const UClass* FlowNodeClass);
 
 protected:
-	UFlowGraphNode* CreateDefaultNode(UEdGraph& Graph, const UFlowAsset* AssetClassDefaults, const TSubclassOf<UFlowNode>& NodeClass, const FVector2D& Offset, bool bPlacedAsGhostNode) const;
+	static UFlowGraphNode* CreateDefaultNode(UEdGraph& Graph, const UFlowAsset* AssetClassDefaults, const TSubclassOf<UFlowNode>& NodeClass, const FVector2D& Offset, bool bPlacedAsGhostNode);
 
 private:
 	static void ApplyNodeFilter(const UFlowAsset* AssetClassDefaults, const UClass* FlowNodeClass, TArray<UFlowNode*>& FilteredNodes);
