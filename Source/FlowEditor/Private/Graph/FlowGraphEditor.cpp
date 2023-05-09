@@ -37,12 +37,6 @@ void SFlowGraphEditor::Construct(const FArguments& InArgs, const TSharedPtr<FFlo
 	Arguments._GraphEvents = InArgs._GraphEvents;
 	Arguments._AutoExpandActionMenu = true;
 
-	// QUESTION (gtaylor) Why is this code commented out?  
-	//  When commenting out code, please leave a comment as to *why* it is commented out 
-	//  and under what conditions it could be uncommented or removed.  
-	//  Stray commented code is an enigma to any future programmer trying to make sense of the code.
-	//Arguments._ShowGraphStateOverlay = false;
-
 	Arguments._GraphEvents.OnSelectionChanged = FOnSelectionChanged::CreateSP(this, &SFlowGraphEditor::OnSelectedNodesChanged);
 	Arguments._GraphEvents.OnNodeDoubleClicked = FSingleNodeEvent::CreateSP(this, &SFlowGraphEditor::OnNodeDoubleClicked);
 	Arguments._GraphEvents.OnTextCommitted = FOnNodeTextCommitted::CreateSP(this, &SFlowGraphEditor::OnNodeTitleCommitted);
