@@ -4,7 +4,7 @@
 #include "FlowAsset.h"
 #include "FlowSettings.h"
 
-#define LOCTEXT_NAMESPACE "FlowNode"
+#define LOCTEXT_NAMESPACE "FlowNode_CustomOutput"
 
 UFlowNode_CustomOutput::UFlowNode_CustomOutput(const FObjectInitializer& ObjectInitializer)
 	: Super(ObjectInitializer)
@@ -23,16 +23,12 @@ void UFlowNode_CustomOutput::ExecuteInput(const FName& PinName)
 #if WITH_EDITOR
 FText UFlowNode_CustomOutput::GetNodeTitle() const
 {
-	const bool bUseAdaptiveNodeTitles = UFlowSettings::Get()->bUseAdaptiveNodeTitles;
+	if (!EventName.IsNone() && UFlowSettings::Get()->bUseAdaptiveNodeTitles)
+	{
+		return FText::Format(LOCTEXT("CustomOutputTitle", "{0} Output"), {FText::FromString(EventName.ToString())});
+	}
 
-	if (bUseAdaptiveNodeTitles && !EventName.IsNone())
-	{
-		return FText::Format(LOCTEXT("CustomOutputTitle", "{0} Output"), { FText::FromString(EventName.ToString()) });
-	}
-	else
-	{
-		return Super::GetNodeTitle();
-	}
+	return Super::GetNodeTitle();
 }
 #endif
 

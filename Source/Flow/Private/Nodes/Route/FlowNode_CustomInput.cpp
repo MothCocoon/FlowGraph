@@ -3,7 +3,7 @@
 #include "Nodes/Route/FlowNode_CustomInput.h"
 #include "FlowSettings.h"
 
-#define LOCTEXT_NAMESPACE "FlowNode"
+#define LOCTEXT_NAMESPACE "FlowNode_CustomInput"
 
 UFlowNode_CustomInput::UFlowNode_CustomInput(const FObjectInitializer& ObjectInitializer)
 	: Super(ObjectInitializer)
@@ -19,16 +19,12 @@ void UFlowNode_CustomInput::ExecuteInput(const FName& PinName)
 #if WITH_EDITOR
 FText UFlowNode_CustomInput::GetNodeTitle() const
 {
-	const bool bUseAdaptiveNodeTitles = UFlowSettings::Get()->bUseAdaptiveNodeTitles;
+	if (!EventName.IsNone() && UFlowSettings::Get()->bUseAdaptiveNodeTitles)
+	{
+		return FText::Format(LOCTEXT("CustomInputTitle", "{0} Input"), {FText::FromString(EventName.ToString())});
+	}
 
-	if (bUseAdaptiveNodeTitles && !EventName.IsNone())
-	{
-		return FText::Format(LOCTEXT("CustomInputTitle", "{0} Input"), { FText::FromString(EventName.ToString()) });
-	}
-	else
-	{
-		return Super::GetNodeTitle();
-	}
+	return Super::GetNodeTitle();
 }
 #endif
 

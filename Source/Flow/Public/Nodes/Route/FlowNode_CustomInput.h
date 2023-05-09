@@ -2,15 +2,14 @@
 
 #pragma once
 
-#include "FlowNode_CustomNodeBase.h"
-
+#include "FlowNode_CustomEventBase.h"
 #include "FlowNode_CustomInput.generated.h"
 
 /**
  * Triggers output upon activation of Input (matching this EventName) on the SubGraph node containing this graph
  */
 UCLASS(NotBlueprintable, meta = (DisplayName = "Custom Input"))
-class FLOW_API UFlowNode_CustomInput : public UFlowNode_CustomNodeBase
+class FLOW_API UFlowNode_CustomInput : public UFlowNode_CustomEventBase
 {
 	GENERATED_UCLASS_BODY()
 
