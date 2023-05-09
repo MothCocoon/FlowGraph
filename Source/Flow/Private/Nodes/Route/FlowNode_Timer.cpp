@@ -58,7 +58,7 @@ void UFlowNode_Timer::SetTimer()
 			GetWorld()->GetTimerManager().SetTimer(StepTimerHandle, this, &UFlowNode_Timer::OnStep, StepTime, true);
 		}
 
-		if (CompletionTime > UE_KINDA_SMALL_NUMBER)
+		if (CompletionTime > KINDA_SMALL_NUMBER)
 		{
 			GetWorld()->GetTimerManager().SetTimer(CompletionTimerHandle, this, &UFlowNode_Timer::OnCompletion, CompletionTime, false);
 		}
@@ -155,7 +155,7 @@ void UFlowNode_Timer::OnLoad_Implementation()
 #if WITH_EDITOR
 FString UFlowNode_Timer::GetNodeDescription() const
 {
-	if (CompletionTime > UE_KINDA_SMALL_NUMBER)
+	if (CompletionTime > KINDA_SMALL_NUMBER)
 	{
 		if (StepTime > 0.0f)
 		{
