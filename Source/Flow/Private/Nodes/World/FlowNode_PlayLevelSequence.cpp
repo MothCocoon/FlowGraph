@@ -132,21 +132,7 @@ void UFlowNode_PlayLevelSequence::CreatePlayer()
 	{
 		ALevelSequenceActor* SequenceActor;
 
-		AActor* OwningActor = nullptr;
-		if (GetFlowAsset())
-		{
-			if (UObject* RootFlowOwner = GetFlowAsset()->GetOwner())
-			{
-				OwningActor = Cast<AActor>(RootFlowOwner); // in case Root Flow was created directly from some actor
-				if (OwningActor == nullptr)
-				{
-					if (const UActorComponent* OwningComponent = Cast<UActorComponent>(RootFlowOwner))
-					{
-						OwningActor = OwningComponent->GetOwner();
-					}
-				}
-			}
-		}
+		AActor* OwningActor = TryGetRootFlowActorOwner();
 
 		// Apply AActor::CustomTimeDilation from owner of the Root Flow
 		if (IsValid(OwningActor))
@@ -302,7 +288,7 @@ FString UFlowNode_PlayLevelSequence::GetPlaybackProgress() const
 {
 	if (SequencePlayer && SequencePlayer->IsPlaying())
 	{
-		return GetProgressAsString(SequencePlayer->GetCurrentTime().AsSeconds() - StartTime).Append(TEXT(" / ")).Append(GetProgressAsString(SequencePlayer->GetDuration().AsSeconds()));
+		return FString::Printf(TEXT("%.*f / %.*f"), 2, SequencePlayer->GetCurrentTime().AsSeconds() - StartTime, 2, SequencePlayer->GetDuration().AsSeconds());
 	}
 
 	return FString();

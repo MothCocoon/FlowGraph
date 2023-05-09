@@ -29,4 +29,17 @@ class FLOW_API UFlowSettings : public UDeveloperSettings
 	
 	UPROPERTY(Config, EditAnywhere, Category = "SaveSystem")
 	bool bWarnAboutMissingIdentityTags;
+
+	// If enabled, runtime logs will be added when a flow node signal mode is set to Disabled
+	UPROPERTY(Config, EditAnywhere, Category = "Flow")
+	bool bLogOnSignalDisabled;
+
+	// If enabled, runtime logs will be added when a flow node signal mode is set to Pass-through
+	UPROPERTY(Config, EditAnywhere, Category = "Flow")
+	bool bLogOnSignalPassthrough;
+
+	// Adjust the Titles for FlowNodes to be more expressive than default
+	// by incorporating data that would otherwise go in the Description
+	UPROPERTY(EditAnywhere, config, Category = "Nodes")
+	bool bUseAdaptiveNodeTitles;
 };

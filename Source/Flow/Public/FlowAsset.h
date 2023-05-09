@@ -5,9 +5,11 @@
 #include "FlowMessageLog.h"
 #include "FlowSave.h"
 #include "FlowTypes.h"
+#include "Nodes/FlowNode.h"
+
+#include "UObject/ObjectKey.h"
 #include "FlowAsset.generated.h"
 
-class UFlowNode;
 class UFlowNode_CustomInput;
 class UFlowNode_Start;
 class UFlowNode_SubGraph;
@@ -30,7 +32,8 @@ public:
 	virtual void OnOutputTriggered(UEdGraphNode* GraphNode, const int32 Index) const {}
 };
 
-DECLARE_DELEGATE(FFlowAssetEvent);
+DECLARE_DELEGATE(FFlowGraphEvent);
+
 #endif
 
 /**
@@ -119,7 +122,7 @@ private:
 
 public:
 #if WITH_EDITOR
-	FFlowAssetEvent OnSubGraphReconstructionRequested;
+	FFlowGraphEvent OnSubGraphReconstructionRequested;
 
 	UFlowNode* CreateNode(const UClass* NodeClass, UEdGraphNode* GraphNode);
 
@@ -130,7 +133,7 @@ public:
 	void HarvestNodeConnections();
 #endif
 
-	TMap<FGuid, UFlowNode*> GetNodes() const { return Nodes; }
+	const TMap<FGuid, UFlowNode*>& GetNodes() const { return Nodes; }
 	UFlowNode* GetNode(const FGuid& Guid) const { return Nodes.FindRef(Guid); }
 
 	template <class T>
@@ -146,10 +149,47 @@ public:
 		return nullptr;
 	}
 
-	TArray<FName> GetCustomInputs() const { return CustomInputs; }
-	TArray<FName> GetCustomOutputs() const { return CustomOutputs; }
-
 	UFlowNode_Start* GetStartNode() const;
+
+	template <class T>
+	void GetNodesInExecutionOrder(TArray<T*>& OutNodes)
+	{
+		static_assert(TPointerIsConvertibleFromTo<T, const UFlowNode>::Value, "'T' template parameter to GetNodesInExecutionOrder must be derived from UFlowNode");
+
+		if (UFlowNode_Start* FoundStartNode = GetStartNode())
+		{
+			TSet<TObjectKey<UFlowNode>> IteratedNodes;
+			GetNodesInExecutionOrder_Recursive(FoundStartNode, IteratedNodes, OutNodes);
+		}
+	}
+
+protected:
+	template <class T>
+	void GetNodesInExecutionOrder_Recursive(UFlowNode* Node, TSet<TObjectKey<UFlowNode>>& IteratedNodes, TArray<T*>& OutNodes)
+	{
+		IteratedNodes.Add(Node);
+
+		if (T* NodeOfRequiredType = Cast<T>(Node))
+		{
+			OutNodes.Emplace(NodeOfRequiredType);
+		}
+
+		for (UFlowNode* ConnectedNode : Node->GetConnectedNodes())
+		{
+			if (ConnectedNode && !IteratedNodes.Contains(ConnectedNode))
+			{
+				GetNodesInExecutionOrder_Recursive(ConnectedNode, IteratedNodes, OutNodes);
+			}
+		}
+	}
+
+public:	
+	const TArray<FName>& GetCustomInputs() const { return CustomInputs; }
+	const TArray<FName>& GetCustomOutputs() const { return CustomOutputs; }
+
+protected:
+	void AddCustomInput(const FName& InName);
+	void RemoveCustomInput(const FName& InName);
 
 //////////////////////////////////////////////////////////////////////////
 // Instances of the template asset
@@ -163,6 +203,7 @@ private:
 	TWeakObjectPtr<UFlowAsset> InspectedInstance;
 
 	// Message log for storing runtime errors/notes/warnings that will only last until the next game run
+	// Log lives in the asset template, so it can be inspected after ending the PIE
 	TSharedPtr<class FFlowMessageLog> RuntimeLog;
 #endif
 
@@ -184,14 +225,14 @@ public:
 	FRefreshDebuggerEvent& OnDebuggerRefresh() { return RefreshDebuggerEvent; }
 	FRefreshDebuggerEvent RefreshDebuggerEvent;
 
-	DECLARE_EVENT_TwoParams(UFlowAsset, FRuntimeMessageEvent, const UFlowAsset*, const TSharedRef<FTokenizedMessage>&);
+	DECLARE_EVENT_TwoParams(UFlowAsset, FRuntimeMessageEvent, UFlowAsset*, const TSharedRef<FTokenizedMessage>&);
 
 	FRuntimeMessageEvent& OnRuntimeMessageAdded() { return RuntimeMessageEvent; }
 	FRuntimeMessageEvent RuntimeMessageEvent;
 
 private:
 	void BroadcastDebuggerRefresh() const;
-	void BroadcastRuntimeMessageAdded(const UFlowAsset* AssetInstance, const TSharedRef<FTokenizedMessage>& Message) const;;
+	void BroadcastRuntimeMessageAdded(const TSharedRef<FTokenizedMessage>& Message);
 #endif
 
 //////////////////////////////////////////////////////////////////////////
@@ -281,20 +322,14 @@ public:
 
 	// Returns nodes that have any work left, not marked as Finished yet
 	UFUNCTION(BlueprintPure, Category = "Flow")
-	TArray<UFlowNode*> GetActiveNodes() const { return ActiveNodes; }
+	const TArray<UFlowNode*>& GetActiveNodes() const { return ActiveNodes; }
 
 	// Returns nodes active in the past, done their work
 	UFUNCTION(BlueprintPure, Category = "Flow")
-	TArray<UFlowNode*> GetRecordedNodes() const { return RecordedNodes; }
-
-#if WITH_EDITOR
-	void LogError(const FString& MessageToLog, UFlowNode* Node) const;
-	void LogWarning(const FString& MessageToLog, UFlowNode* Node) const;
-	void LogNote(const FString& MessageToLog, UFlowNode* Node) const;
-#endif
+	const TArray<UFlowNode*>& GetRecordedNodes() const { return RecordedNodes; }
 
 //////////////////////////////////////////////////////////////////////////
-// SaveGame
+// SaveGame support
 
 	UFUNCTION(BlueprintCallable, Category = "SaveGame")
 	FFlowAssetSaveData SaveInstance(TArray<FFlowAssetSaveData>& SavedFlowInstances);
@@ -315,4 +350,14 @@ protected:
 public:
 	UFUNCTION(BlueprintNativeEvent, Category = "SaveGame")
 	bool IsBoundToWorld();
+
+//////////////////////////////////////////////////////////////////////////
+// Utils
+
+#if WITH_EDITOR
+public:
+	void LogError(const FString& MessageToLog, UFlowNode* Node);
+	void LogWarning(const FString& MessageToLog, UFlowNode* Node);
+	void LogNote(const FString& MessageToLog, UFlowNode* Node);
+#endif
 };

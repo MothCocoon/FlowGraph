@@ -29,11 +29,18 @@ UFlowNode_Timer::UFlowNode_Timer(const FObjectInitializer& ObjectInitializer)
 
 void UFlowNode_Timer::ExecuteInput(const FName& PinName)
 {
+	if (CompletionTime < 0.0f)
+	{
+		LogError(TEXT("Invalid Timer settings"));
+		TriggerOutput(TEXT("Completed"), true);
+		return;
+	}
+
 	if (PinName == TEXT("In"))
 	{
 		if (CompletionTimerHandle.IsValid() || StepTimerHandle.IsValid())
 		{
-			LogRuntimeError(TEXT("Timer already active"));
+			LogError(TEXT("Timer already active"));
 			return;
 		}
 
@@ -69,7 +76,7 @@ void UFlowNode_Timer::SetTimer()
 	}
 	else
 	{
-		LogRuntimeError(TEXT("No valid world"));
+		LogError(TEXT("No valid world"));
 		TriggerOutput(TEXT("Completed"), true);
 	}
 }
@@ -159,10 +166,10 @@ FString UFlowNode_Timer::GetNodeDescription() const
 	{
 		if (StepTime > 0.0f)
 		{
-			return FString::SanitizeFloat(CompletionTime, 2).Append(TEXT(", step by ")).Append(FString::SanitizeFloat(StepTime, 2));
+			return FString::Printf(TEXT("%.*f, step by %.*f"), 2, CompletionTime, 2, StepTime);
 		}
 
-		return FString::SanitizeFloat(CompletionTime, 2);
+		return FString::Printf(TEXT("%.*f"), 2, CompletionTime);
 	}
 
 	return TEXT("Completes in next tick");
@@ -172,12 +179,12 @@ FString UFlowNode_Timer::GetStatusString() const
 {
 	if (StepTime > 0.0f)
 	{
-		return TEXT("Progress: ") + GetProgressAsString(SumOfSteps);
+		return FString::Printf(TEXT("Progress: %.*f"), 2, SumOfSteps);
 	}
 
 	if (CompletionTimerHandle.IsValid() && GetWorld())
 	{
-		return TEXT("Progress: ") + GetProgressAsString(GetWorld()->GetTimerManager().GetTimerElapsed(CompletionTimerHandle));
+		return FString::Printf(TEXT("Progress: %.*f"), 2, GetWorld()->GetTimerManager().GetTimerElapsed(CompletionTimerHandle));
 	}
 
 	return FString();

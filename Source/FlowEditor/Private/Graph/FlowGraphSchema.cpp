@@ -2,8 +2,9 @@
 
 #include "Graph/FlowGraphSchema.h"
 
-#include "Asset/FlowAssetEditor.h"
 #include "Graph/FlowGraph.h"
+#include "Graph/FlowGraphEditor.h"
+#include "Graph/FlowGraphEditorSettings.h"
 #include "Graph/FlowGraphSchema_Actions.h"
 #include "Graph/FlowGraphSettings.h"
 #include "Graph/FlowGraphUtils.h"
@@ -12,11 +13,13 @@
 #include "FlowAsset.h"
 #include "Nodes/FlowNode.h"
 #include "Nodes/FlowNodeBlueprint.h"
+#include "Nodes/Route/FlowNode_CustomInput.h"
 #include "Nodes/Route/FlowNode_Start.h"
 #include "Nodes/Route/FlowNode_Reroute.h"
 
 #include "AssetRegistry/AssetRegistryModule.h"
 #include "EdGraph/EdGraph.h"
+#include "Editor.h"
 #include "ScopedTransaction.h"
 
 #define LOCTEXT_NAMESPACE "FlowGraphSchema"
@@ -24,7 +27,7 @@
 bool UFlowGraphSchema::bInitialGatherPerformed = false;
 TArray<UClass*> UFlowGraphSchema::NativeFlowNodes;
 TMap<FName, FAssetData> UFlowGraphSchema::BlueprintFlowNodes;
-TMap<UClass*, UClass*> UFlowGraphSchema::AssignedGraphNodeClasses;
+TMap<UClass*, UClass*> UFlowGraphSchema::GraphNodesByFlowNodes;
 
 bool UFlowGraphSchema::bBlueprintCompilationPending;
 
@@ -62,7 +65,7 @@ void UFlowGraphSchema::GetGraphContextActions(FGraphContextMenuBuilder& ContextM
 	GetFlowNodeActions(ContextMenuBuilder, GetAssetClassDefaults(ContextMenuBuilder.CurrentGraph), FString());
 	GetCommentAction(ContextMenuBuilder, ContextMenuBuilder.CurrentGraph);
 
-	if (!ContextMenuBuilder.FromPin && FFlowGraphUtils::GetFlowAssetEditor(ContextMenuBuilder.CurrentGraph)->CanPasteNodes())
+	if (!ContextMenuBuilder.FromPin && FFlowGraphUtils::GetFlowGraphEditor(ContextMenuBuilder.CurrentGraph)->CanPasteNodes())
 	{
 		const TSharedPtr<FFlowGraphSchemaAction_Paste> NewAction(new FFlowGraphSchemaAction_Paste(FText::GetEmpty(), LOCTEXT("PasteHereAction", "Paste here"), FText::GetEmpty(), 0));
 		ContextMenuBuilder.AddAction(NewAction);
@@ -71,17 +74,40 @@ void UFlowGraphSchema::GetGraphContextActions(FGraphContextMenuBuilder& ContextM
 
 void UFlowGraphSchema::CreateDefaultNodesForGraph(UEdGraph& Graph) const
 {
+	const UFlowAsset* AssetClassDefaults = GetAssetClassDefaults(&Graph);
+	static const FVector2D NodeOffsetIncrement = FVector2D(0, 128);
+	FVector2D NodeOffset = FVector2D::ZeroVector;
+
 	// Start node
-	UFlowGraphNode* NewGraphNode = FFlowGraphSchemaAction_NewNode::CreateNode(&Graph, nullptr, UFlowNode_Start::StaticClass(), FVector2D::ZeroVector);
+	CreateDefaultNode(Graph, AssetClassDefaults, UFlowNode_Start::StaticClass(), NodeOffset, AssetClassDefaults->bStartNodePlacedAsGhostNode);
+
+	// Add default nodes for all of the CustomInputs
+	if (IsValid(AssetClassDefaults))
+	{
+		for (const FName& CustomInputName : AssetClassDefaults->CustomInputs)
+		{
+			NodeOffset += NodeOffsetIncrement;
+			const UFlowGraphNode* NewFlowGraphNode = CreateDefaultNode(Graph, AssetClassDefaults, UFlowNode_CustomInput::StaticClass(), NodeOffset, true);
+
+			UFlowNode_CustomInput* CustomInputNode = CastChecked<UFlowNode_CustomInput>(NewFlowGraphNode->GetFlowNode());
+			CustomInputNode->SetEventName(CustomInputName);
+		}
+	}
+
+	CastChecked<UFlowGraph>(&Graph)->GetFlowAsset()->HarvestNodeConnections();
+}
+
+UFlowGraphNode* UFlowGraphSchema::CreateDefaultNode(UEdGraph& Graph, const UFlowAsset* AssetClassDefaults, const TSubclassOf<UFlowNode>& NodeClass, const FVector2D& Offset, const bool bPlacedAsGhostNode)
+{
+	UFlowGraphNode* NewGraphNode = FFlowGraphSchemaAction_NewNode::CreateNode(&Graph, nullptr, NodeClass, Offset);
 	SetNodeMetaData(NewGraphNode, FNodeMetadata::DefaultGraphNode);
 
-	const UFlowAsset* AssetClassDefaults = GetAssetClassDefaults(&Graph);
-	if (AssetClassDefaults && AssetClassDefaults->bStartNodePlacedAsGhostNode)
+	if (bPlacedAsGhostNode)
 	{
 		NewGraphNode->MakeAutomaticallyPlacedGhostNode();
 	}
 
-	CastChecked<UFlowGraph>(&Graph)->GetFlowAsset()->HarvestNodeConnections();
+	return NewGraphNode;
 }
 
 const FPinConnectionResponse UFlowGraphSchema::CanCreateConnection(const UEdGraphPin* PinA, const UEdGraphPin* PinB) const
@@ -146,6 +172,40 @@ FLinearColor UFlowGraphSchema::GetPinTypeColor(const FEdGraphPinType& PinType) c
 	return FLinearColor::White;
 }
 
+FText UFlowGraphSchema::GetPinDisplayName(const UEdGraphPin* Pin) const
+{
+	FText ResultPinName;
+	check(Pin != nullptr);
+	if (Pin->PinFriendlyName.IsEmpty())
+	{
+		// We don't want to display "None" for no name
+		if (Pin->PinName.IsNone())
+		{
+			return FText::GetEmpty();
+		}
+		if (GetDefault<UFlowGraphEditorSettings>()->bEnforceFriendlyPinNames) // this option is only difference between this override and UEdGraphSchema::GetPinDisplayName
+		{
+			ResultPinName = FText::FromString(FName::NameToDisplayString(Pin->PinName.ToString(), true));
+		}
+		else
+		{
+			ResultPinName = FText::FromName(Pin->PinName);
+		}
+	}
+	else
+	{
+		ResultPinName = Pin->PinFriendlyName;
+
+		bool bShouldUseLocalizedNodeAndPinNames = false;
+		GConfig->GetBool(TEXT("Internationalization"), TEXT("ShouldUseLocalizedNodeAndPinNames"), bShouldUseLocalizedNodeAndPinNames, GEditorSettingsIni);
+		if (!bShouldUseLocalizedNodeAndPinNames)
+		{
+			ResultPinName = FText::FromString(ResultPinName.BuildSourceString());
+		}
+	}
+	return ResultPinName;
+}
+
 void UFlowGraphSchema::BreakNodeLinks(UEdGraphNode& TargetNode) const
 {
 	Super::BreakNodeLinks(TargetNode);
@@ -172,7 +232,7 @@ void UFlowGraphSchema::BreakPinLinks(UEdGraphPin& TargetPin, bool bSendsNodeNoti
 
 int32 UFlowGraphSchema::GetNodeSelectionCount(const UEdGraph* Graph) const
 {
-	return FFlowGraphUtils::GetFlowAssetEditor(Graph)->GetNumberOfSelectedNodes();
+	return FFlowGraphUtils::GetFlowGraphEditor(Graph)->GetNumberOfSelectedNodes();
 }
 
 TSharedPtr<FEdGraphSchemaAction> UFlowGraphSchema::GetCreateCommentAction() const
@@ -237,12 +297,53 @@ TArray<TSharedPtr<FString>> UFlowGraphSchema::GetFlowNodeCategories()
 
 UClass* UFlowGraphSchema::GetAssignedGraphNodeClass(const UClass* FlowNodeClass)
 {
-	if (UClass* AssignedGraphNode = AssignedGraphNodeClasses.FindRef(FlowNodeClass))
+	TArray<UClass*> FoundParentClasses;
+	UClass* ReturnClass = nullptr;
+
+	// Collect all possible parents and their corresponding GraphNodeClasses
+	for (const TPair<UClass*, UClass*>& GraphNodeByFlowNode : GraphNodesByFlowNodes)
 	{
-		return AssignedGraphNode;
+		if (FlowNodeClass == GraphNodeByFlowNode.Key)
+		{
+			return GraphNodeByFlowNode.Value;
+		}
+
+		if (FlowNodeClass->IsChildOf(GraphNodeByFlowNode.Key))
+		{
+			FoundParentClasses.Add(GraphNodeByFlowNode.Key);
+		}
 	}
 
-	return UFlowGraphNode::StaticClass();
+	// Of only one parent found set the return to its GraphNodeClass
+	if (FoundParentClasses.Num() == 1)
+	{
+		ReturnClass = GraphNodesByFlowNodes.FindRef(FoundParentClasses[0]);
+	}
+	// If multiple parents found, find the closest one and set the return to its GraphNodeClass
+	else if (FoundParentClasses.Num() > 1)
+	{
+		TPair<int32, UClass*> ClosestParentMatch = {1000, nullptr};
+		for (const auto& ParentClass : FoundParentClasses)
+		{
+			int32 StepsTillExactMatch = 0;
+			const UClass* LocalParentClass = FlowNodeClass;
+
+			while (IsValid(LocalParentClass) && LocalParentClass != ParentClass && LocalParentClass != UFlowNode::StaticClass())
+			{
+				StepsTillExactMatch++;
+				LocalParentClass = LocalParentClass->GetSuperClass();
+			}
+
+			if (StepsTillExactMatch != 0 && StepsTillExactMatch < ClosestParentMatch.Key)
+			{
+				ClosestParentMatch = {StepsTillExactMatch, ParentClass};
+			}
+		}
+
+		ReturnClass = GraphNodesByFlowNodes.FindRef(ClosestParentMatch.Value);
+	}
+
+	return IsValid(ReturnClass) ? ReturnClass : UFlowGraphNode::StaticClass();
 }
 
 void UFlowGraphSchema::ApplyNodeFilter(const UFlowAsset* AssetClassDefaults, const UClass* FlowNodeClass, TArray<UFlowNode*>& FilteredNodes)
@@ -355,7 +456,7 @@ void UFlowGraphSchema::GetCommentAction(FGraphActionMenuBuilder& ActionMenuBuild
 {
 	if (!ActionMenuBuilder.FromPin)
 	{
-		const bool bIsManyNodesSelected = CurrentGraph ? (FFlowGraphUtils::GetFlowAssetEditor(CurrentGraph)->GetNumberOfSelectedNodes() > 0) : false;
+		const bool bIsManyNodesSelected = CurrentGraph ? (FFlowGraphUtils::GetFlowGraphEditor(CurrentGraph)->GetNumberOfSelectedNodes() > 0) : false;
 		const FText MenuDescription = bIsManyNodesSelected ? LOCTEXT("CreateCommentAction", "Create Comment from Selection") : LOCTEXT("AddCommentAction", "Add Comment...");
 		const FText ToolTip = LOCTEXT("CreateCommentToolTip", "Creates a comment.");
 
@@ -422,14 +523,14 @@ void UFlowGraphSchema::GatherNativeNodes()
 
 	TArray<UClass*> GraphNodes;
 	GetDerivedClasses(UFlowGraphNode::StaticClass(), GraphNodes);
-	for (UClass* Class : GraphNodes)
+	for (UClass* GraphNodeClass : GraphNodes)
 	{
-		const UFlowGraphNode* DefaultObject = Class->GetDefaultObject<UFlowGraphNode>();
-		for (UClass* AssignedClass : DefaultObject->AssignedNodeClasses)
+		const UFlowGraphNode* GraphNodeCDO = GraphNodeClass->GetDefaultObject<UFlowGraphNode>();
+		for (UClass* AssignedClass : GraphNodeCDO->AssignedNodeClasses)
 		{
 			if (AssignedClass->IsChildOf(UFlowNode::StaticClass()))
 			{
-				AssignedGraphNodeClasses.Emplace(AssignedClass, Class);
+				GraphNodesByFlowNodes.Emplace(AssignedClass, GraphNodeClass);
 			}
 		}
 	}

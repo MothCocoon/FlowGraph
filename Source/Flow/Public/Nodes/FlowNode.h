@@ -27,7 +27,6 @@ UCLASS(Abstract, Blueprintable, HideCategories = Object)
 class FLOW_API UFlowNode : public UObject, public IVisualLoggerDebugSnapshotInterface
 {
 	GENERATED_UCLASS_BODY()
-
 	friend class SFlowGraphNode;
 	friend class UFlowAsset;
 	friend class UFlowGraphNode;
@@ -43,22 +42,30 @@ private:
 	UEdGraphNode* GraphNode;
 
 #if WITH_EDITORONLY_DATA
+
 protected:
+	UPROPERTY()
 	TArray<TSubclassOf<UFlowAsset>> AllowedAssetClasses;
+
+	UPROPERTY()
 	TArray<TSubclassOf<UFlowAsset>> DeniedAssetClasses;
-	
+
 	UPROPERTY()
 	FString Category;
 
 	UPROPERTY(EditDefaultsOnly, Category = "FlowNode")
 	EFlowNodeStyle NodeStyle;
 
+	// Set Node Style to custom to use your own color for this node
+	UPROPERTY(EditDefaultsOnly, Category = "FlowNode", meta = (EditCondition = "NodeStyle == EFlowNodeStyle::Custom"))
+	FLinearColor NodeColor;
+
 	uint8 bCanDelete : 1;
 	uint8 bCanDuplicate : 1;
 
 	UPROPERTY(EditDefaultsOnly, Category = "FlowNode")
 	bool bNodeDeprecated;
-	
+
 	// If this node is deprecated, it might be replaced by another node
 	UPROPERTY(EditDefaultsOnly, Category = "FlowNode")
 	TSubclassOf<UFlowNode> ReplacedBy;
@@ -91,9 +98,9 @@ public:
 	virtual FString GetNodeCategory() const;
 	virtual FText GetNodeTitle() const;
 	virtual FText GetNodeToolTip() const;
-	
+
 	// This method allows to have different for every node instance, i.e. Red if node represents enemy, Green if node represents a friend
-	virtual bool GetDynamicTitleColor(FLinearColor& OutColor) const { return false; }
+	virtual bool GetDynamicTitleColor(FLinearColor& OutColor) const;
 
 	EFlowNodeStyle GetNodeStyle() const { return NodeStyle; }
 
@@ -117,13 +124,21 @@ public:
 	UFUNCTION(BlueprintPure, Category = "FlowNode")
 	UFlowAsset* GetFlowAsset() const;
 
+	// Gets the Owning Actor for this Node's RootFlow
+	// (if the immediate parent is an UActorComponent, it will get that Component's actor)
+	AActor* TryGetRootFlowActorOwner() const;
+
 protected:
+
+	// Gets the Owning Object for this Node's RootFlow
+	UObject* TryGetRootFlowObjectOwner() const;
+
 	virtual bool CanFinishGraph() const { return false; }
 
 protected:
 	UPROPERTY(EditDefaultsOnly, Category = "FlowNode")
 	TArray<EFlowSignalMode> AllowedSignalModes;
-	
+
 	// If enabled, signal will pass through node without calling ExecuteInput()
 	// Designed to handle patching
 	UPROPERTY()
@@ -131,8 +146,8 @@ protected:
 
 #if WITH_EDITOR
 	FFlowMessageLog ValidationLog;
-#endif	
-	
+#endif
+
 //////////////////////////////////////////////////////////////////////////
 // All created pins (default, class-specific and added by user)
 
@@ -158,9 +173,9 @@ protected:
 
 	uint8 CountNumberedInputs() const;
 	uint8 CountNumberedOutputs() const;
-	
-	TArray<FFlowPin> GetInputPins() const { return InputPins; }
-	TArray<FFlowPin> GetOutputPins() const { return OutputPins; }
+
+	const TArray<FFlowPin>& GetInputPins() const { return InputPins; }
+	const TArray<FFlowPin>& GetOutputPins() const { return OutputPins; }
 
 public:
 	UFUNCTION(BlueprintPure, Category = "FlowNode")
@@ -235,10 +250,11 @@ protected:
 	UPROPERTY(SaveGame)
 	EFlowNodeState ActivationState;
 
-public:	
+public:
 	EFlowNodeState GetActivationState() const { return ActivationState; }
-	
+
 #if !UE_BUILD_SHIPPING
+
 private:
 	TMap<FName, TArray<FPinRecord>> InputRecords;
 	TMap<FName, TArray<FPinRecord>> OutputRecords;
@@ -278,7 +294,7 @@ protected:
 
 	UFUNCTION(BlueprintImplementableEvent, Category = "FlowNode", meta = (DisplayName = "On Activate"))
 	void K2_OnActivate();
-	
+
 	// Trigger execution of input pin
 	void TriggerInput(const FName& PinName, const EFlowPinActivationType ActivationType = EFlowPinActivationType::Default);
 
@@ -327,6 +343,29 @@ protected:
 
 private:
 	void ResetRecords();
+
+//////////////////////////////////////////////////////////////////////////
+// SaveGame support
+
+public:
+	UFUNCTION(BlueprintCallable, Category = "FlowNode")
+	void SaveInstance(FFlowNodeSaveData& NodeRecord);
+
+	UFUNCTION(BlueprintCallable, Category = "FlowNode")
+	void LoadInstance(const FFlowNodeSaveData& NodeRecord);
+
+protected:
+	UFUNCTION(BlueprintNativeEvent, Category = "FlowNode")
+	void OnSave();
+
+	UFUNCTION(BlueprintNativeEvent, Category = "FlowNode")
+	void OnLoad();
+
+	UFUNCTION(BlueprintNativeEvent, Category = "FlowNode")
+	void OnPassThrough();
+	
+//////////////////////////////////////////////////////////////////////////
+// Utils
 
 #if WITH_EDITOR
 public:
@@ -377,38 +416,18 @@ public:
 	UFUNCTION(BlueprintPure, Category = "FlowNode")
 	static FString GetProgressAsString(float Value);
 
-	UE_DEPRECATED(5.0, "LogError has been deprecated. Use LogRuntimeError instead.")
-	UFUNCTION(BlueprintCallable, Category = "FlowNode", meta = (DevelopmentOnly), meta=(DeprecatedFunction, DeprecationMessage="Use LogRuntimeError instead."))
+public:
+	UFUNCTION(BlueprintCallable, Category = "FlowNode", meta = (DevelopmentOnly))
 	void LogError(FString Message, const EFlowOnScreenMessageType OnScreenMessageType = EFlowOnScreenMessageType::Permanent);
 
 	UFUNCTION(BlueprintCallable, Category = "FlowNode", meta = (DevelopmentOnly))
-	void LogRuntimeError(FString Message, const EFlowOnScreenMessageType OnScreenMessageType = EFlowOnScreenMessageType::Permanent);
+	void LogWarning(FString Message);
 
 	UFUNCTION(BlueprintCallable, Category = "FlowNode", meta = (DevelopmentOnly))
-	void LogRuntimeWarning(FString Message);
-	
-	UFUNCTION(BlueprintCallable, Category = "FlowNode", meta = (DevelopmentOnly))
-	void LogRuntimeNote(FString Message);
+	void LogNote(FString Message);
 
 #if !UE_BUILD_SHIPPING
 private:
-	void BuildMessage(FString& Message) const;
+	bool BuildMessage(FString& Message) const;
 #endif
-	
-public:	
-	UFUNCTION(BlueprintCallable, Category = "FlowNode")
-	void SaveInstance(FFlowNodeSaveData& NodeRecord);
-
-	UFUNCTION(BlueprintCallable, Category = "FlowNode")
-	void LoadInstance(const FFlowNodeSaveData& NodeRecord);
-
-protected:
-	UFUNCTION(BlueprintNativeEvent, Category = "FlowNode")
-	void OnSave();
-	
-	UFUNCTION(BlueprintNativeEvent, Category = "FlowNode")
-	void OnLoad();
-
-	UFUNCTION(BlueprintNativeEvent, Category = "FlowNode")
-	void OnPassThrough();
 };

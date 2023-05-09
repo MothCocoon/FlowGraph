@@ -3,10 +3,12 @@
 #pragma once
 
 #include "EdGraph/EdGraphSchema.h"
+#include "Templates/SubclassOf.h"
 #include "FlowGraphSchema.generated.h"
 
 class UFlowAsset;
 class UFlowNode;
+class UFlowGraphNode;
 
 DECLARE_MULTICAST_DELEGATE(FFlowGraphSchemaRefresh);
 
@@ -21,7 +23,7 @@ private:
 	static bool bInitialGatherPerformed;
 	static TArray<UClass*> NativeFlowNodes;
 	static TMap<FName, FAssetData> BlueprintFlowNodes;
-	static TMap<UClass*, UClass*> AssignedGraphNodeClasses;
+	static TMap<UClass*, UClass*> GraphNodesByFlowNodes;
 
 	static bool bBlueprintCompilationPending;
 
@@ -36,6 +38,7 @@ public:
 	virtual bool TryCreateConnection(UEdGraphPin* A, UEdGraphPin* B) const override;
 	virtual bool ShouldHidePinDefaultValue(UEdGraphPin* Pin) const override;
 	virtual FLinearColor GetPinTypeColor(const FEdGraphPinType& PinType) const override;
+	virtual FText GetPinDisplayName(const UEdGraphPin* Pin) const override;
 	virtual void BreakNodeLinks(UEdGraphNode& TargetNode) const override;
 	virtual void BreakPinLinks(UEdGraphPin& TargetPin, bool bSendsNodeNotification) const override;
 	virtual int32 GetNodeSelectionCount(const UEdGraph* Graph) const override;
@@ -45,6 +48,9 @@ public:
 
 	static TArray<TSharedPtr<FString>> GetFlowNodeCategories();
 	static UClass* GetAssignedGraphNodeClass(const UClass* FlowNodeClass);
+
+protected:
+	static UFlowGraphNode* CreateDefaultNode(UEdGraph& Graph, const UFlowAsset* AssetClassDefaults, const TSubclassOf<UFlowNode>& NodeClass, const FVector2D& Offset, bool bPlacedAsGhostNode);
 
 private:
 	static void ApplyNodeFilter(const UFlowAsset* AssetClassDefaults, const UClass* FlowNodeClass, TArray<UFlowNode*>& FilteredNodes);

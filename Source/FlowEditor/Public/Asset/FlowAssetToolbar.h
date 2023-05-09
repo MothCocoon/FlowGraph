@@ -22,9 +22,11 @@ public:
 	void Construct(const FArguments& InArgs, const TWeakObjectPtr<UFlowAsset> InTemplateAsset);
 	virtual ~SFlowAssetInstanceList() override;
 
+	static EVisibility GetDebuggerVisibility();
+
 private:
 	void RefreshInstances();
-	
+
 	TSharedRef<SWidget> OnGenerateWidget(TSharedPtr<FName> Item) const;
 	void OnSelectionChanged(TSharedPtr<FName> SelectedItem, ESelectInfo::Type SelectionType);
 	FText GetSelectedInstanceName() const;

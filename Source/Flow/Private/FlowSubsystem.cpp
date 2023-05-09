@@ -11,8 +11,16 @@
 
 #include "Engine/GameInstance.h"
 #include "Engine/World.h"
+#include "Logging/MessageLog.h"
 #include "Misc/Paths.h"
 #include "UObject/UObjectHash.h"
+
+#if WITH_EDITOR
+FNativeFlowAssetEvent UFlowSubsystem::OnInstancedTemplateAdded;
+FNativeFlowAssetEvent UFlowSubsystem::OnInstancedTemplateRemoved;
+#endif
+
+#define LOCTEXT_NAMESPACE "FlowSubsystem"
 
 UFlowSubsystem::UFlowSubsystem()
 	: UGameInstanceSubsystem()
@@ -68,11 +76,20 @@ void UFlowSubsystem::AbortActiveFlows()
 
 void UFlowSubsystem::StartRootFlow(UObject* Owner, UFlowAsset* FlowAsset, const bool bAllowMultipleInstances /* = true */)
 {
-	UFlowAsset* NewFlow = CreateRootFlow(Owner, FlowAsset, bAllowMultipleInstances);
-	if (NewFlow)
+	if (FlowAsset)
 	{
-		NewFlow->StartFlow();
+		if (UFlowAsset* NewFlow = CreateRootFlow(Owner, FlowAsset, bAllowMultipleInstances))
+		{
+			NewFlow->StartFlow();
+		}
 	}
+#if WITH_EDITOR	
+	else
+	{
+		FMessageLog("PIE").Error(LOCTEXT("StartRootFlowNullAsset", "Attempted to start Root Flow with a null asset."))
+		                  ->AddToken(FUObjectToken::Create(Owner));
+	}
+#endif
 }
 
 UFlowAsset* UFlowSubsystem::CreateRootFlow(UObject* Owner, UFlowAsset* FlowAsset, const bool bAllowMultipleInstances)
@@ -226,6 +243,7 @@ void UFlowSubsystem::AddInstancedTemplate(UFlowAsset* Template)
 
 #if WITH_EDITOR
 		Template->RuntimeLog = MakeShareable(new FFlowMessageLog());
+		OnInstancedTemplateAdded.ExecuteIfBound(Template);
 #endif
 	}
 }
@@ -233,6 +251,7 @@ void UFlowSubsystem::AddInstancedTemplate(UFlowAsset* Template)
 void UFlowSubsystem::RemoveInstancedTemplate(UFlowAsset* Template)
 {
 #if WITH_EDITOR
+	OnInstancedTemplateRemoved.ExecuteIfBound(Template);
 	Template->RuntimeLog.Reset();
 #endif
 
@@ -637,3 +656,5 @@ void UFlowSubsystem::FindComponents(const FGameplayTagContainer& Tags, const EGa
 		}
 	}
 }
+
+#undef LOCTEXT_NAMESPACE

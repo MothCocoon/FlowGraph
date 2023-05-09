@@ -3,6 +3,7 @@
 #include "FlowAsset.h"
 
 #include "FlowMessageLog.h"
+#include "FlowModule.h"
 #include "FlowSettings.h"
 #include "FlowSubsystem.h"
 
@@ -188,7 +189,19 @@ void UFlowAsset::HarvestNodeConnections()
 		}
 	}
 }
-#endif
+#endif // WITH_EDITOR
+
+void UFlowAsset::AddCustomInput(const FName& InName)
+{
+	check(!CustomInputs.Contains(InName));
+	CustomInputs.Add(InName);
+}
+
+void UFlowAsset::RemoveCustomInput(const FName& InName)
+{
+	check(CustomInputs.Contains(InName));
+	CustomInputs.Remove(InName);
+}
 
 UFlowNode_Start* UFlowAsset::GetStartNode() const
 {
@@ -281,9 +294,9 @@ void UFlowAsset::BroadcastDebuggerRefresh() const
 	RefreshDebuggerEvent.Broadcast();
 }
 
-void UFlowAsset::BroadcastRuntimeMessageAdded(const UFlowAsset* AssetInstance, const TSharedRef<FTokenizedMessage>& Message) const
+void UFlowAsset::BroadcastRuntimeMessageAdded(const TSharedRef<FTokenizedMessage>& Message)
 {
-	RuntimeMessageEvent.Broadcast(AssetInstance, Message);
+	RuntimeMessageEvent.Broadcast(this, Message);
 }
 #endif
 
@@ -501,35 +514,6 @@ UFlowAsset* UFlowAsset::GetParentInstance() const
 	return NodeOwningThisAssetInstance.IsValid() ? NodeOwningThisAssetInstance.Get()->GetFlowAsset() : nullptr;
 }
 
-#if WITH_EDITOR
-void UFlowAsset::LogError(const FString& MessageToLog, UFlowNode* Node) const
-{
-	if (RuntimeLog.IsValid())
-	{
-		const TSharedRef<FTokenizedMessage> TokenizedMessage = RuntimeLog.Get()->Error(*MessageToLog, Node);
-		BroadcastRuntimeMessageAdded(this, TokenizedMessage);
-	}
-}
-
-void UFlowAsset::LogWarning(const FString& MessageToLog, UFlowNode* Node) const
-{
-	if (RuntimeLog.IsValid())
-	{
-		const TSharedRef<FTokenizedMessage> TokenizedMessage = RuntimeLog.Get()->Warning(*MessageToLog, Node);
-		BroadcastRuntimeMessageAdded(this, TokenizedMessage);
-	}
-}
-
-void UFlowAsset::LogNote(const FString& MessageToLog, UFlowNode* Node) const
-{
-	if (RuntimeLog.IsValid())
-	{
-		const TSharedRef<FTokenizedMessage> TokenizedMessage = RuntimeLog.Get()->Note(*MessageToLog, Node);
-		BroadcastRuntimeMessageAdded(this, TokenizedMessage);
-	}
-}
-#endif
-
 FFlowAssetSaveData UFlowAsset::SaveInstance(TArray<FFlowAssetSaveData>& SavedFlowInstances)
 {
 	FFlowAssetSaveData AssetRecord;
@@ -539,12 +523,15 @@ FFlowAssetSaveData UFlowAsset::SaveInstance(TArray<FFlowAssetSaveData>& SavedFlo
 	// opportunity to collect data before serializing asset
 	OnSave();
 
-	// iterate SubGraphs
-	for (const TPair<FGuid, UFlowNode*>& Node : Nodes)
+	// iterate nodes
+	TArray<UFlowNode*> NodesInExecutionOrder;
+	GetNodesInExecutionOrder<UFlowNode>(NodesInExecutionOrder);
+	for (UFlowNode* Node : NodesInExecutionOrder)
 	{
-		if (Node.Value && Node.Value->ActivationState == EFlowNodeState::Active)
+		if (Node && Node->ActivationState == EFlowNodeState::Active)
 		{
-			if (UFlowNode_SubGraph* SubGraphNode = Cast<UFlowNode_SubGraph>(Node.Value))
+			// iterate SubGraphs
+			if (UFlowNode_SubGraph* SubGraphNode = Cast<UFlowNode_SubGraph>(Node))
 			{
 				const TWeakObjectPtr<UFlowAsset> SubFlowInstance = GetFlowInstance(SubGraphNode);
 				if (SubFlowInstance.IsValid())
@@ -555,7 +542,7 @@ FFlowAssetSaveData UFlowAsset::SaveInstance(TArray<FFlowAssetSaveData>& SavedFlo
 			}
 
 			FFlowNodeSaveData NodeRecord;
-			Node.Value->SaveInstance(NodeRecord);
+			Node->SaveInstance(NodeRecord);
 
 			AssetRecord.NodeRecords.Emplace(NodeRecord);
 		}
@@ -580,11 +567,13 @@ void UFlowAsset::LoadInstance(const FFlowAssetSaveData& AssetRecord)
 
 	PreStartFlow();
 
-	for (const FFlowNodeSaveData& NodeRecord : AssetRecord.NodeRecords)
+	// iterate graph "from the end", backward to execution order
+	// prevents issue when the preceding node would instantly fire output to a not-yet-loaded node
+	for (int32 i = AssetRecord.NodeRecords.Num() - 1; i >= 0; i--)
 	{
-		if (UFlowNode* Node = Nodes.FindRef(NodeRecord.NodeGuid))
+		if (UFlowNode* Node = Nodes.FindRef(AssetRecord.NodeRecords[i].NodeGuid))
 		{
-			Node->LoadInstance(NodeRecord);
+			Node->LoadInstance(AssetRecord.NodeRecords[i]);
 		}
 	}
 
@@ -616,3 +605,50 @@ bool UFlowAsset::IsBoundToWorld_Implementation()
 {
 	return bWorldBound;
 }
+
+#if WITH_EDITOR
+void UFlowAsset::LogError(const FString& MessageToLog, UFlowNode* Node)
+{
+	// this is runtime log which is should be only called on runtime instances of asset
+	if (TemplateAsset == nullptr)
+	{
+		UE_LOG(LogFlow, Log, TEXT("Attempted to use Runtime Log on template asset %s"), *MessageToLog);
+	}
+
+	if (RuntimeLog.Get())
+	{
+		const TSharedRef<FTokenizedMessage> TokenizedMessage = RuntimeLog.Get()->Error(*MessageToLog, Node);
+		BroadcastRuntimeMessageAdded(TokenizedMessage);
+	}
+}
+
+void UFlowAsset::LogWarning(const FString& MessageToLog, UFlowNode* Node)
+{
+	// this is runtime log which is should be only called on runtime instances of asset
+	if (TemplateAsset == nullptr)
+	{
+		UE_LOG(LogFlow, Log, TEXT("Attempted to use Runtime Log on template asset %s"), *MessageToLog);
+	}
+
+	if (RuntimeLog.Get())
+	{
+		const TSharedRef<FTokenizedMessage> TokenizedMessage = RuntimeLog.Get()->Warning(*MessageToLog, Node);
+		BroadcastRuntimeMessageAdded(TokenizedMessage);
+	}
+}
+
+void UFlowAsset::LogNote(const FString& MessageToLog, UFlowNode* Node)
+{
+	// this is runtime log which is should be only called on runtime instances of asset
+	if (TemplateAsset == nullptr)
+	{
+		UE_LOG(LogFlow, Log, TEXT("Attempted to use Runtime Log on template asset %s"), *MessageToLog);
+	}
+
+	if (RuntimeLog.Get())
+	{
+		const TSharedRef<FTokenizedMessage> TokenizedMessage = RuntimeLog.Get()->Note(*MessageToLog, Node);
+		BroadcastRuntimeMessageAdded(TokenizedMessage);
+	}
+}
+#endif

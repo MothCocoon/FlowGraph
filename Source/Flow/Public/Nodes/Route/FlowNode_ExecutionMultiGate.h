@@ -8,7 +8,7 @@
 /**
  * Executes a series of pins in order
  */
-UCLASS(NotBlueprintable, meta = (DisplayName = "Multi Gate"))
+UCLASS(NotBlueprintable, meta = (DisplayName = "Multi Gate", Keywords = "series, loop, random"))
 class FLOW_API UFlowNode_ExecutionMultiGate final : public UFlowNode
 {
 	GENERATED_UCLASS_BODY()

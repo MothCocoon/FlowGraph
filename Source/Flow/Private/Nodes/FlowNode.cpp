@@ -4,12 +4,18 @@
 
 #include "FlowAsset.h"
 #include "FlowModule.h"
+#include "FlowSettings.h"
 #include "FlowSubsystem.h"
 #include "FlowTypes.h"
 
+#include "Components/ActorComponent.h"
+#if WITH_EDITOR
+#include "Editor.h"
+#endif
 #include "Engine/Engine.h"
 #include "Engine/ViewportStatsSubsystem.h"
 #include "Engine/World.h"
+#include "GameFramework/Actor.h"
 #include "Misc/App.h"
 #include "Misc/Paths.h"
 #include "Serialization/MemoryReader.h"
@@ -39,6 +45,7 @@ UFlowNode::UFlowNode(const FObjectInitializer& ObjectInitializer)
 #if WITH_EDITOR
 	Category = TEXT("Uncategorized");
 	NodeStyle = EFlowNodeStyle::Default;
+	NodeColor = FLinearColor::Black;
 #endif
 
 	InputPins = {DefaultInputPin};
@@ -121,6 +128,17 @@ FText UFlowNode::GetNodeToolTip() const
 	return GetClass()->GetToolTipText();
 }
 
+bool UFlowNode::GetDynamicTitleColor(FLinearColor& OutColor) const
+{
+	if (NodeStyle == EFlowNodeStyle::Custom)
+	{
+		OutColor = NodeColor;
+		return true;
+	}
+
+	return false;
+}
+
 FString UFlowNode::GetNodeDescription() const
 {
 	return K2_GetNodeDescription();
@@ -130,6 +148,43 @@ FString UFlowNode::GetNodeDescription() const
 UFlowAsset* UFlowNode::GetFlowAsset() const
 {
 	return GetOuter() ? Cast<UFlowAsset>(GetOuter()) : nullptr;
+}
+
+AActor* UFlowNode::TryGetRootFlowActorOwner() const
+{
+	AActor* OwningActor = nullptr;
+
+	UObject* RootFlowOwner = TryGetRootFlowObjectOwner();
+
+	if (IsValid(RootFlowOwner))
+	{
+		// Check if the immediate parent is an AActor
+		OwningActor = Cast<AActor>(RootFlowOwner);
+
+		if (!IsValid(OwningActor))
+		{
+			// Check if the if the immediate parent is an UActorComponent
+			//  and return that Component's Owning actor
+			if (const UActorComponent* OwningComponent = Cast<UActorComponent>(RootFlowOwner))
+			{
+				OwningActor = OwningComponent->GetOwner();
+			}
+		}
+	}
+
+	return OwningActor;
+}
+
+UObject* UFlowNode::TryGetRootFlowObjectOwner() const
+{
+	const UFlowAsset* FlowAsset = GetFlowAsset();
+
+	if (IsValid(FlowAsset))
+	{
+		return FlowAsset->GetOwner();
+	}
+
+	return nullptr;
 }
 
 void UFlowNode::AddInputPins(TArray<FFlowPin> Pins)
@@ -235,12 +290,26 @@ void UFlowNode::RemoveUserInput(const FName& PinName)
 {
 	Modify();
 
+	int32 RemovedPinIndex = INDEX_NONE;
 	for (int32 i = 0; i < InputPins.Num(); i++)
 	{
 		if (InputPins[i].PinName == PinName)
 		{
 			InputPins.RemoveAt(i);
+			RemovedPinIndex = i;
 			break;
+		}
+	}
+
+	// update remaining pins
+	if (RemovedPinIndex > INDEX_NONE)
+	{
+		for (int32 i = RemovedPinIndex; i < InputPins.Num(); ++i)
+		{
+			if (InputPins[i].PinName.ToString().IsNumeric())
+			{
+				InputPins[i].PinName = *FString::FromInt(i);
+			}
 		}
 	}
 }
@@ -249,12 +318,26 @@ void UFlowNode::RemoveUserOutput(const FName& PinName)
 {
 	Modify();
 
+	int32 RemovedPinIndex = INDEX_NONE;
 	for (int32 i = 0; i < OutputPins.Num(); i++)
 	{
 		if (OutputPins[i].PinName == PinName)
 		{
 			OutputPins.RemoveAt(i);
+			RemovedPinIndex = i;
 			break;
+		}
+	}
+
+	// update remaining pins
+	if (RemovedPinIndex > INDEX_NONE)
+	{
+		for (int32 i = RemovedPinIndex; i < OutputPins.Num(); ++i)
+		{
+			if (OutputPins[i].PinName.ToString().IsNumeric())
+			{
+				OutputPins[i].PinName = *FString::FromInt(i);
+			}
 		}
 	}
 }
@@ -416,7 +499,7 @@ void UFlowNode::TriggerInput(const FName& PinName, const EFlowPinActivationType 
 	else
 	{
 #if !UE_BUILD_SHIPPING
-		LogRuntimeError(FString::Printf(TEXT("Input Pin name %s invalid"), *PinName.ToString()));
+		LogError(FString::Printf(TEXT("Input Pin name %s invalid"), *PinName.ToString()));
 #endif // UE_BUILD_SHIPPING
 		return;
 	}
@@ -427,10 +510,16 @@ void UFlowNode::TriggerInput(const FName& PinName, const EFlowPinActivationType 
 			ExecuteInput(PinName);
 			break;
 		case EFlowSignalMode::Disabled:
-			LogRuntimeNote(FString::Printf(TEXT("Node disabled while triggering input %s"), *PinName.ToString()));
+			if (UFlowSettings::Get()->bLogOnSignalDisabled)
+			{
+				LogNote(FString::Printf(TEXT("Node disabled while triggering input %s"), *PinName.ToString()));
+			}
 			break;
 		case EFlowSignalMode::PassThrough:
-			LogRuntimeNote(FString::Printf(TEXT("Signal pass-through on triggering input %s"), *PinName.ToString()));
+			if (UFlowSettings::Get()->bLogOnSignalPassthrough)
+			{
+				LogNote(FString::Printf(TEXT("Signal pass-through on triggering input %s"), *PinName.ToString()));
+			}
 			OnPassThrough();
 			break;
 		default: ;
@@ -474,7 +563,7 @@ void UFlowNode::TriggerOutput(const FName& PinName, const bool bFinish /*= false
 	}
 	else
 	{
-		LogRuntimeError(FString::Printf(TEXT("Output Pin name %s invalid"), *PinName.ToString()));
+		LogError(FString::Printf(TEXT("Output Pin name %s invalid"), *PinName.ToString()));
 	}
 #endif // UE_BUILD_SHIPPING
 
@@ -544,6 +633,69 @@ void UFlowNode::ResetRecords()
 	InputRecords.Empty();
 	OutputRecords.Empty();
 #endif
+}
+
+void UFlowNode::SaveInstance(FFlowNodeSaveData& NodeRecord)
+{
+	NodeRecord.NodeGuid = NodeGuid;
+	OnSave();
+
+	FMemoryWriter MemoryWriter(NodeRecord.NodeData, true);
+	FFlowArchive Ar(MemoryWriter);
+	Serialize(Ar);
+}
+
+void UFlowNode::LoadInstance(const FFlowNodeSaveData& NodeRecord)
+{
+	FMemoryReader MemoryReader(NodeRecord.NodeData, true);
+	FFlowArchive Ar(MemoryReader);
+	Serialize(Ar);
+
+	if (UFlowAsset* FlowAsset = GetFlowAsset())
+	{
+		FlowAsset->OnActivationStateLoaded(this);
+	}
+
+	switch (SignalMode)
+	{
+		case EFlowSignalMode::Enabled:
+			OnLoad();
+			break;
+		case EFlowSignalMode::Disabled:
+			// designer doesn't want to execute this node's logic at all, so we kill it
+			LogNote(TEXT("Signal disabled while loading Flow Node from SaveGame"));
+			Finish();
+			break;
+		case EFlowSignalMode::PassThrough:
+			LogNote(TEXT("Signal pass-through on loading Flow Node from SaveGame"));
+			OnPassThrough();
+			break;
+		default: ;
+	}
+}
+
+void UFlowNode::OnSave_Implementation()
+{
+}
+
+void UFlowNode::OnLoad_Implementation()
+{
+}
+
+void UFlowNode::OnPassThrough_Implementation()
+{
+	// trigger all connected outputs
+	// pin connections aren't serialized to the SaveGame, so users can safely change connections post game release
+	for (const FFlowPin& OutputPin : OutputPins)
+	{
+		if (Connections.Contains(OutputPin.PinName))
+		{
+			TriggerOutput(OutputPin.PinName, false, EFlowPinActivationType::PassThrough);
+		}
+	}
+
+	// deactivate node, so it doesn't get saved to a new SaveGame
+	Finish();
 }
 
 #if WITH_EDITOR
@@ -626,192 +778,90 @@ FString UFlowNode::GetClassDescription(const TSubclassOf<UObject> Class)
 	return Class ? Class->GetName() : MissingClass;
 }
 
-FString UFlowNode::GetProgressAsString(float Value)
+FString UFlowNode::GetProgressAsString(const float Value)
 {
-	// Avoids negative zero
-	if (Value == 0)
-	{
-		Value = 0;
-	}
-
-	// First create the string
-	FString TempString = FString::Printf(TEXT("%f"), Value);
-	if (!TempString.IsNumeric())
-	{
-		// String did not format as a valid decimal number so avoid messing with it
-		return TempString;
-	}
-
-	// Get position of the first digit after decimal separator
-	int32 TrimIndex = INDEX_NONE;
-	for (int32 CharIndex = 0; CharIndex < TempString.Len(); CharIndex++)
-	{
-		const TCHAR Char = TempString[CharIndex];
-		if (Char == TEXT('.'))
-		{
-			TrimIndex = CharIndex + 2;
-			break;
-		}
-		if (TrimIndex == INDEX_NONE && Char != TEXT('0'))
-		{
-			TrimIndex = CharIndex + 1;
-		}
-	}
-
-	TempString.RemoveAt(TrimIndex, TempString.Len() - TrimIndex, /*bAllowShrinking*/false);
-	return TempString;
+	return FString::Printf(TEXT("%.*f"), 2, Value);
 }
 
-void UFlowNode::LogError(const FString Message, const EFlowOnScreenMessageType OnScreenMessageType)
-{
-	LogRuntimeError(Message, OnScreenMessageType);
-}
-
-void UFlowNode::LogRuntimeError(FString Message, const EFlowOnScreenMessageType OnScreenMessageType)
+void UFlowNode::LogError(FString Message, const EFlowOnScreenMessageType OnScreenMessageType)
 {
 #if !UE_BUILD_SHIPPING
-
-	BuildMessage(Message);
-
-	// OnScreen Message
-	if (OnScreenMessageType == EFlowOnScreenMessageType::Permanent)
+	if (BuildMessage(Message))
 	{
-		if (GetWorld())
+		// OnScreen Message
+		if (OnScreenMessageType == EFlowOnScreenMessageType::Permanent)
 		{
-			if (UViewportStatsSubsystem* StatsSubsystem = GetWorld()->GetSubsystem<UViewportStatsSubsystem>())
+			if (GetWorld())
 			{
-				StatsSubsystem->AddDisplayDelegate([this, Message](FText& OutText, FLinearColor& OutColor)
+				if (UViewportStatsSubsystem* StatsSubsystem = GetWorld()->GetSubsystem<UViewportStatsSubsystem>())
 				{
-					OutText = FText::FromString(Message);
-					OutColor = FLinearColor::Red;
-					return IsValid(this) && ActivationState != EFlowNodeState::NeverActivated;
-				});
+					StatsSubsystem->AddDisplayDelegate([this, Message](FText& OutText, FLinearColor& OutColor)
+					{
+						OutText = FText::FromString(Message);
+						OutColor = FLinearColor::Red;
+						return IsValid(this) && ActivationState != EFlowNodeState::NeverActivated;
+					});
+				}
 			}
 		}
-	}
-	else
-	{
-		GEngine->AddOnScreenDebugMessage(-1, 2.0f, FColor::Red, Message);
-	}
-
-	// Output Log
-	UE_LOG(LogFlow, Error, TEXT("%s"), *Message);
-
-	// Message Log
-#if WITH_EDITOR
-	if (GetFlowAsset()->GetTemplateAsset())
-	{
-		GetFlowAsset()->GetTemplateAsset()->LogError(Message, this);
-	}
-#endif
-
-#endif
-}
-
-void UFlowNode::LogRuntimeWarning(FString Message)
-{
-#if !UE_BUILD_SHIPPING
-
-	BuildMessage(Message);
-
-	// Output Log
-	UE_LOG(LogFlow, Warning, TEXT("%s"), *Message);
-
-	// Message Log
-#if WITH_EDITOR
-	if (GetFlowAsset()->GetTemplateAsset())
-	{
-		GetFlowAsset()->GetTemplateAsset()->LogWarning(Message, this);
-	}
-#endif
-
-#endif
-}
-
-void UFlowNode::LogRuntimeNote(FString Message)
-{
-#if !UE_BUILD_SHIPPING
-
-	BuildMessage(Message);
-
-	// Output Log
-	UE_LOG(LogFlow, Log, TEXT("%s"), *Message);
-
-	// Message Log
-#if WITH_EDITOR
-	GetFlowAsset()->GetTemplateAsset()->LogNote(Message, this);
-#endif
-
-#endif
-}
-
-#if !UE_BUILD_SHIPPING
-void UFlowNode::BuildMessage(FString& Message) const
-{
-	const FString TemplatePath = GetFlowAsset()->TemplateAsset->GetPathName();
-	Message.Append(TEXT(" --- node ")).Append(GetName()).Append(TEXT(", asset ")).Append(FPaths::GetPath(TemplatePath) / FPaths::GetBaseFilename(TemplatePath));
-}
-#endif
-
-void UFlowNode::SaveInstance(FFlowNodeSaveData& NodeRecord)
-{
-	NodeRecord.NodeGuid = NodeGuid;
-	OnSave();
-
-	FMemoryWriter MemoryWriter(NodeRecord.NodeData, true);
-	FFlowArchive Ar(MemoryWriter);
-	Serialize(Ar);
-}
-
-void UFlowNode::LoadInstance(const FFlowNodeSaveData& NodeRecord)
-{
-	FMemoryReader MemoryReader(NodeRecord.NodeData, true);
-	FFlowArchive Ar(MemoryReader);
-	Serialize(Ar);
-
-	if (UFlowAsset* FlowAsset = GetFlowAsset())
-	{
-		FlowAsset->OnActivationStateLoaded(this);
-	}
-
-	switch (SignalMode)
-	{
-		case EFlowSignalMode::Enabled:
-			OnLoad();
-			break;
-		case EFlowSignalMode::Disabled:
-			// designer doesn't want to execute this node's logic at all, so we kill it
-			LogRuntimeNote(TEXT("Signal disabled while loading Flow Node from SaveGame"));
-			Finish();
-			break;
-		case EFlowSignalMode::PassThrough:
-			LogRuntimeNote(TEXT("Signal pass-through on loading Flow Node from SaveGame"));
-			OnPassThrough();
-			break;
-		default: ;
-	}
-}
-
-void UFlowNode::OnSave_Implementation()
-{
-}
-
-void UFlowNode::OnLoad_Implementation()
-{
-}
-
-void UFlowNode::OnPassThrough_Implementation()
-{
-	// trigger all connected outputs
-	// pin connections aren't serialized to the SaveGame, so users can safely change connections post game release
-	for (const FFlowPin& OutputPin : OutputPins)
-	{
-		if (Connections.Contains(OutputPin.PinName))
+		else
 		{
-			TriggerOutput(OutputPin.PinName, false, EFlowPinActivationType::PassThrough);
+			GEngine->AddOnScreenDebugMessage(-1, 2.0f, FColor::Red, Message);
 		}
+
+		// Output Log
+		UE_LOG(LogFlow, Error, TEXT("%s"), *Message);
+
+		// Message Log
+#if WITH_EDITOR
+		GetFlowAsset()->GetTemplateAsset()->LogError(Message, this);
+#endif
+	}
+#endif
+}
+
+void UFlowNode::LogWarning(FString Message)
+{
+#if !UE_BUILD_SHIPPING
+	if (BuildMessage(Message))
+	{
+		// Output Log
+		UE_LOG(LogFlow, Warning, TEXT("%s"), *Message);
+
+		// Message Log
+#if WITH_EDITOR
+		GetFlowAsset()->GetTemplateAsset()->LogWarning(Message, this);
+#endif
+	}
+#endif
+}
+
+void UFlowNode::LogNote(FString Message)
+{
+#if !UE_BUILD_SHIPPING
+	if (BuildMessage(Message))
+	{
+		// Output Log
+		UE_LOG(LogFlow, Log, TEXT("%s"), *Message);
+
+		// Message Log
+#if WITH_EDITOR
+		GetFlowAsset()->GetTemplateAsset()->LogNote(Message, this);
+#endif
+	}
+#endif
+}
+
+#if !UE_BUILD_SHIPPING
+bool UFlowNode::BuildMessage(FString& Message) const
+{
+	if (GetFlowAsset()->TemplateAsset) // this is runtime log which is should be only called on runtime instances of asset
+	{
+		const FString TemplatePath = GetFlowAsset()->TemplateAsset->GetPathName();
+		Message.Append(TEXT(" --- node ")).Append(GetName()).Append(TEXT(", asset ")).Append(FPaths::GetPath(TemplatePath) / FPaths::GetBaseFilename(TemplatePath));
+		return true;
 	}
 
-	// deactivate node, so it doesn't get saved to a new SaveGame
-	Finish();
+	return false;
 }
+#endif

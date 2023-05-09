@@ -385,9 +385,11 @@ void UFlowComponent::FinishRootFlow(UFlowAsset* TemplateAsset, const EFlowFinish
 
 TSet<UFlowAsset*> UFlowComponent::GetRootInstances(const UObject* Owner) const
 {
+	const UObject* OwnerToCheck = IsValid(Owner) ? Owner : this;
+
 	if (const UFlowSubsystem* FlowSubsystem = GetFlowSubsystem())
 	{
-		return FlowSubsystem->GetRootInstancesByOwner(this);
+		return FlowSubsystem->GetRootInstancesByOwner(OwnerToCheck);
 	}
 
 	return TSet<UFlowAsset*>();
