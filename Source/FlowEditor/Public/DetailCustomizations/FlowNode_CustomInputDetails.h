@@ -2,10 +2,10 @@
 
 #pragma once
 
-#include "FlowNode_CustomNodeBaseDetails.h"
+#include "FlowNode_CustomEventBaseDetails.h"
 #include "Templates/SharedPointer.h"
 
-class FFlowNode_CustomInputDetails final : public FFlowNode_CustomNodeBaseDetails
+class FFlowNode_CustomInputDetails final : public FFlowNode_CustomEventBaseDetails
 {
 public:
 	FFlowNode_CustomInputDetails();

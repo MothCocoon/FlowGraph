@@ -1,9 +1,9 @@
 // Copyright https://github.com/MothCocoon/FlowGraph/graphs/contributors
 
-#include "Nodes/Route/FlowNode_CustomNodeBase.h"
+#include "Nodes/Route/FlowNode_CustomEventBase.h"
 #include "FlowSettings.h"
 
-UFlowNode_CustomNodeBase::UFlowNode_CustomNodeBase(const FObjectInitializer& ObjectInitializer)
+UFlowNode_CustomEventBase::UFlowNode_CustomEventBase(const FObjectInitializer& ObjectInitializer)
 	: Super(ObjectInitializer)
 {
 #if WITH_EDITOR
@@ -14,14 +14,14 @@ UFlowNode_CustomNodeBase::UFlowNode_CustomNodeBase(const FObjectInitializer& Obj
 	AllowedSignalModes = {EFlowSignalMode::Enabled, EFlowSignalMode::Disabled};
 }
 
-void UFlowNode_CustomNodeBase::SetEventName(const FName& InEventName)
+void UFlowNode_CustomEventBase::SetEventName(const FName& InEventName)
 {
 	if (EventName != InEventName)
 	{
 		EventName = InEventName;
 
 #if WITH_EDITOR
-		// Must reconstruct the Graph Visuals if anything that is included in AdaptiveNodeTitles changes
+		// Must reconstruct the visual representation if anything that is included in AdaptiveNodeTitles changes
 		OnReconstructionRequested.ExecuteIfBound();
 #endif // WITH_EDITOR
 	}
@@ -29,21 +29,17 @@ void UFlowNode_CustomNodeBase::SetEventName(const FName& InEventName)
 
 #if WITH_EDITOR
 
-FString UFlowNode_CustomNodeBase::GetNodeDescription() const
+FString UFlowNode_CustomEventBase::GetNodeDescription() const
 {
-	const bool bUseAdaptiveNodeTitles = UFlowSettings::Get()->bUseAdaptiveNodeTitles;
-
-	if (bUseAdaptiveNodeTitles)
+	if (UFlowSettings::Get()->bUseAdaptiveNodeTitles)
 	{
 		return Super::GetNodeDescription();
 	}
-	else
-	{
-		return EventName.ToString();
-	}
+
+	return EventName.ToString();
 }
 
-EDataValidationResult UFlowNode_CustomNodeBase::ValidateNode()
+EDataValidationResult UFlowNode_CustomEventBase::ValidateNode()
 {
 	if (EventName.IsNone())
 	{

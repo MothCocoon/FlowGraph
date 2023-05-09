@@ -7,11 +7,10 @@
 #include "Types/SlateEnums.h"
 #include "Widgets/Input/SComboBox.h"
 
-// Forward Declarations
 class IDetailCategoryBuilder;
 class UFlowAsset;
 
-class FFlowNode_CustomNodeBaseDetails : public IDetailCustomization
+class FFlowNode_CustomEventBaseDetails : public IDetailCustomization
 {
 public:
 	// IDetailCustomization
@@ -19,7 +18,6 @@ public:
 	// --
 
 protected:
-
 	void CustomizeDetailsInternal(IDetailLayoutBuilder& DetailLayout, const FText& CustomRowNameText, const FText& EventNameText);
 
 	virtual IDetailCategoryBuilder& CreateDetailCategory(IDetailLayoutBuilder& DetailLayout) const = 0;

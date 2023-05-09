@@ -1,8 +1,8 @@
 // Copyright https://github.com/MothCocoon/FlowGraph/graphs/contributors
 
-#include "DetailCustomizations/FlowNode_CustomNodeBaseDetails.h"
+#include "DetailCustomizations/FlowNode_CustomEventBaseDetails.h"
 #include "FlowAsset.h"
-#include "Nodes/Route/FlowNode_CustomNodeBase.h"
+#include "Nodes/Route/FlowNode_CustomEventBase.h"
 
 #include "DetailCategoryBuilder.h"
 #include "DetailWidgetRow.h"
@@ -12,51 +12,51 @@
 #include "Widgets/SWidget.h"
 
 
-void FFlowNode_CustomNodeBaseDetails::CustomizeDetails(IDetailLayoutBuilder& DetailLayout)
+void FFlowNode_CustomEventBaseDetails::CustomizeDetails(IDetailLayoutBuilder& DetailLayout)
 {
 	// Subclasses must override this function (and call CustomizeDetailsInternal with the localized text)
 	checkNoEntry();
 }
 
-void FFlowNode_CustomNodeBaseDetails::CustomizeDetailsInternal(IDetailLayoutBuilder& DetailLayout, const FText& CustomRowNameText, const FText& EventNameText)
+void FFlowNode_CustomEventBaseDetails::CustomizeDetailsInternal(IDetailLayoutBuilder& DetailLayout, const FText& CustomRowNameText, const FText& EventNameText)
 {
 	DetailLayout.GetObjectsBeingCustomized(ObjectsBeingEdited);
 
 	if (ObjectsBeingEdited[0].IsValid())
 	{
-		UFlowNode_CustomNodeBase* FlowNodeBase = CastChecked<UFlowNode_CustomNodeBase>(ObjectsBeingEdited[0]);
-		CachedEventNameSelected = MakeShared<FName>(FlowNodeBase->GetEventName());
+		const UFlowNode_CustomEventBase* EventNode = CastChecked<UFlowNode_CustomEventBase>(ObjectsBeingEdited[0]);
+		CachedEventNameSelected = MakeShared<FName>(EventNode->GetEventName());
 	}
 
 	IDetailCategoryBuilder& Category = CreateDetailCategory(DetailLayout);
 
 	Category.AddCustomRow(CustomRowNameText)
-		.NameContent()
+	        .NameContent()
 			[
 				SNew(STextBlock)
-					.Text(EventNameText)
+				.Text(EventNameText)
 			]
-		.ValueContent()
+			.ValueContent()
 			.HAlign(HAlign_Fill)
 			[
 				SAssignNew(EventTextListWidget, SComboBox<TSharedPtr<FName>>)
-					.OptionsSource(&EventNames)
-					.OnGenerateWidget(this, &FFlowNode_CustomNodeBaseDetails::GenerateEventWidget)
-					.OnComboBoxOpening(this, &FFlowNode_CustomNodeBaseDetails::OnComboBoxOpening)
-					.OnSelectionChanged(this, &FFlowNode_CustomNodeBaseDetails::PinSelectionChanged)
-					[
-						SNew(STextBlock)
-							.Text(this, &FFlowNode_CustomNodeBaseDetails::GetSelectedEventText)
-					]
+								.OptionsSource(&EventNames)
+								.OnGenerateWidget(this, &FFlowNode_CustomEventBaseDetails::GenerateEventWidget)
+								.OnComboBoxOpening(this, &FFlowNode_CustomEventBaseDetails::OnComboBoxOpening)
+								.OnSelectionChanged(this, &FFlowNode_CustomEventBaseDetails::PinSelectionChanged)
+								[
+									SNew(STextBlock)
+									.Text(this, &FFlowNode_CustomEventBaseDetails::GetSelectedEventText)
+								]
 			];
 }
 
-void FFlowNode_CustomNodeBaseDetails::OnComboBoxOpening()
+void FFlowNode_CustomEventBaseDetails::OnComboBoxOpening()
 {
 	RebuildEventNames();
 }
 
-void FFlowNode_CustomNodeBaseDetails::RebuildEventNames()
+void FFlowNode_CustomEventBaseDetails::RebuildEventNames()
 {
 	EventNames.Empty();
 
@@ -72,9 +72,9 @@ void FFlowNode_CustomNodeBaseDetails::RebuildEventNames()
 		{
 			for (const TPair<FGuid, UFlowNode*>& Node : FlowAsset->GetNodes())
 			{
-				if (Node.Value->GetClass()->IsChildOf(UFlowNode_CustomNodeBase::StaticClass()))
+				if (Node.Value->GetClass()->IsChildOf(UFlowNode_CustomEventBase::StaticClass()))
 				{
-					SortedNames.Remove(Cast<UFlowNode_CustomNodeBase>(Node.Value)->GetEventName());
+					SortedNames.Remove(Cast<UFlowNode_CustomEventBase>(Node.Value)->GetEventName());
 				}
 			}
 		}
@@ -100,36 +100,33 @@ void FFlowNode_CustomNodeBaseDetails::RebuildEventNames()
 	}
 }
 
-bool FFlowNode_CustomNodeBaseDetails::IsInEventNames(const FName& EventName) const
+bool FFlowNode_CustomEventBaseDetails::IsInEventNames(const FName& EventName) const
 {
-	const bool bIsInEventNames =
-		EventNames.ContainsByPredicate([&EventName](const TSharedPtr<FName>& ExistingName)
-			{
-				return *ExistingName == EventName;
-			});
+	const bool bIsInEventNames = EventNames.ContainsByPredicate([&EventName](const TSharedPtr<FName>& ExistingName)
+	{
+		return *ExistingName == EventName;
+	});
 
 	return bIsInEventNames;
 }
 
-TSharedRef<SWidget> FFlowNode_CustomNodeBaseDetails::GenerateEventWidget(const TSharedPtr<FName> Item) const
+TSharedRef<SWidget> FFlowNode_CustomEventBaseDetails::GenerateEventWidget(const TSharedPtr<FName> Item) const
 {
-	return
-		SNew(STextBlock)
+	return SNew(STextBlock)
 		.Text(FText::FromName(*Item.Get()));
 }
 
-FText FFlowNode_CustomNodeBaseDetails::GetSelectedEventText() const
+FText FFlowNode_CustomEventBaseDetails::GetSelectedEventText() const
 {
 	check(CachedEventNameSelected.IsValid());
-
 	return FText::FromName(*CachedEventNameSelected.Get());
 }
 
-void FFlowNode_CustomNodeBaseDetails::PinSelectionChanged(const TSharedPtr<FName> Item, ESelectInfo::Type SelectInfo)
+void FFlowNode_CustomEventBaseDetails::PinSelectionChanged(const TSharedPtr<FName> Item, ESelectInfo::Type SelectInfo)
 {
 	ensure(ObjectsBeingEdited[0].IsValid());
 
-	UFlowNode_CustomNodeBase* Node = Cast<UFlowNode_CustomNodeBase>(ObjectsBeingEdited[0].Get());
+	UFlowNode_CustomEventBase* Node = Cast<UFlowNode_CustomEventBase>(ObjectsBeingEdited[0].Get());
 	if (IsValid(Node) && Item)
 	{
 		const bool bIsChanged = (*CachedEventNameSelected != *Item);
@@ -139,7 +136,6 @@ void FFlowNode_CustomNodeBaseDetails::PinSelectionChanged(const TSharedPtr<FName
 			CachedEventNameSelected = Item;
 
 			const FName ItemAsName = *CachedEventNameSelected;
-
 			Node->SetEventName(ItemAsName);
 
 			if (EventTextListWidget.IsValid())
