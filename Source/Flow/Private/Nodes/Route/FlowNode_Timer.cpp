@@ -29,13 +29,6 @@ UFlowNode_Timer::UFlowNode_Timer(const FObjectInitializer& ObjectInitializer)
 
 void UFlowNode_Timer::ExecuteInput(const FName& PinName)
 {
-	if (CompletionTime < 0.0f)
-	{
-		LogError(TEXT("Invalid Timer settings"));
-		TriggerOutput(TEXT("Completed"), true);
-		return;
-	}
-
 	if (PinName == TEXT("In"))
 	{
 		if (CompletionTimerHandle.IsValid() || StepTimerHandle.IsValid())
