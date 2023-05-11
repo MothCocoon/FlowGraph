@@ -11,7 +11,6 @@
 #include "FlowAsset.generated.h"
 
 class UFlowNode_CustomInput;
-class UFlowNode_Start;
 class UFlowNode_SubGraph;
 class UFlowSubsystem;
 
@@ -149,14 +148,14 @@ public:
 		return nullptr;
 	}
 
-	UFlowNode_Start* GetStartNode() const;
+	virtual UFlowNode* GetDefaultEntryNode() const;
 
 	template <class T>
 	void GetNodesInExecutionOrder(TArray<T*>& OutNodes)
 	{
 		static_assert(TPointerIsConvertibleFromTo<T, const UFlowNode>::Value, "'T' template parameter to GetNodesInExecutionOrder must be derived from UFlowNode");
 
-		if (UFlowNode_Start* FoundStartNode = GetStartNode())
+		if (UFlowNode* FoundStartNode = GetDefaultEntryNode())
 		{
 			TSet<TObjectKey<UFlowNode>> IteratedNodes;
 			GetNodesInExecutionOrder_Recursive(FoundStartNode, IteratedNodes, OutNodes);
@@ -251,10 +250,6 @@ private:
 
 	// Flow Asset instances created by SubGraph nodes placed in the current graph
 	TMap<TWeakObjectPtr<UFlowNode_SubGraph>, TWeakObjectPtr<UFlowAsset>> ActiveSubGraphs;
-
-	// Execution of the graph always starts from this node, there can be only one StartNode in the graph
-	UPROPERTY()
-	UFlowNode_Start* StartNode;
 
 	// Optional entry points to the graph, similar to blueprint Custom Events
 	UPROPERTY()
