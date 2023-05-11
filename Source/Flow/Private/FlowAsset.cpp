@@ -25,7 +25,6 @@ UFlowAsset::UFlowAsset(const FObjectInitializer& ObjectInitializer)
 	, AllowedNodeClasses({UFlowNode::StaticClass()})
 	, bStartNodePlacedAsGhostNode(false)
 	, TemplateAsset(nullptr)
-	, StartNode(nullptr)
 	, FinishPolicy(EFlowFinishPolicy::Keep)
 {
 	if (!AssetGuid.IsValid())
@@ -203,18 +202,17 @@ void UFlowAsset::RemoveCustomInput(const FName& InName)
 	CustomInputs.Remove(InName);
 }
 
-UFlowNode_Start* UFlowAsset::GetStartNode() const
+UFlowNode* UFlowAsset::GetDefaultEntryNode() const
 {
 	for (const TPair<FGuid, UFlowNode*>& Node : Nodes)
 	{
-		// there can be only one, automatically added while creating graph
-		if (UFlowNode_Start* TestedNode = Cast<UFlowNode_Start>(Node.Value))
+		UFlowNode_Start* StartNode = Cast<UFlowNode_Start>(Node.Value);
+		if (StartNode && StartNode->GetConnectedNodes().Num() > 0)
 		{
-			return TestedNode;
+			return StartNode;
 		}
 	}
 
-	// shouldn't ever get here, Start Node is a default node that can't be deleted by user
 	return nullptr;
 }
 
@@ -310,12 +308,6 @@ void UFlowAsset::InitializeInstance(const TWeakObjectPtr<UObject> InOwner, UFlow
 		UFlowNode* NewNodeInstance = NewObject<UFlowNode>(this, Node.Value->GetClass(), NAME_None, RF_Transient, Node.Value, false, nullptr);
 		Node.Value = NewNodeInstance;
 
-		// there can be only one, automatically added while creating graph
-		if (UFlowNode_Start* InNode = Cast<UFlowNode_Start>(NewNodeInstance))
-		{
-			StartNode = InNode;
-		}
-
 		if (UFlowNode_CustomInput* CustomInput = Cast<UFlowNode_CustomInput>(NewNodeInstance))
 		{
 			if (!CustomInput->EventName.IsNone())
@@ -342,7 +334,7 @@ void UFlowAsset::DeinitializeInstance()
 
 void UFlowAsset::PreloadNodes()
 {
-	TArray<UFlowNode*> GraphEntryNodes = {StartNode};
+	TArray<UFlowNode*> GraphEntryNodes = {GetDefaultEntryNode()};
 	for (UFlowNode_CustomInput* CustomInput : CustomInputNodes)
 	{
 		GraphEntryNodes.Emplace(CustomInput);
@@ -393,9 +385,11 @@ void UFlowAsset::StartFlow()
 {
 	PreStartFlow();
 
-	ensureAlways(StartNode);
-	RecordedNodes.Add(StartNode);
-	StartNode->TriggerFirstOutput(true);
+	if (UFlowNode* ConnectedEntryNode = GetDefaultEntryNode())
+	{
+		RecordedNodes.Add(ConnectedEntryNode);
+		ConnectedEntryNode->TriggerFirstOutput(true);
+	}
 }
 
 void UFlowAsset::FinishFlow(const EFlowFinishPolicy InFinishPolicy, const bool bRemoveInstance /*= true*/)
