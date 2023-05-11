@@ -188,19 +188,23 @@ void UFlowAsset::HarvestNodeConnections()
 		}
 	}
 }
-#endif // WITH_EDITOR
 
 void UFlowAsset::AddCustomInput(const FName& InName)
 {
-	check(!CustomInputs.Contains(InName));
-	CustomInputs.Add(InName);
+	if (!CustomInputs.Contains(InName))
+	{
+		CustomInputs.Add(InName);
+	}
 }
 
 void UFlowAsset::RemoveCustomInput(const FName& InName)
 {
-	check(CustomInputs.Contains(InName));
-	CustomInputs.Remove(InName);
+	if (CustomInputs.Contains(InName))
+	{
+		CustomInputs.Remove(InName);
+	}
 }
+#endif // WITH_EDITOR
 
 UFlowNode* UFlowAsset::GetDefaultEntryNode() const
 {

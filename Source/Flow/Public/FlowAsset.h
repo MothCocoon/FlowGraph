@@ -187,8 +187,10 @@ public:
 	const TArray<FName>& GetCustomOutputs() const { return CustomOutputs; }
 
 protected:
+#if WITH_EDITOR
 	void AddCustomInput(const FName& InName);
 	void RemoveCustomInput(const FName& InName);
+#endif
 
 //////////////////////////////////////////////////////////////////////////
 // Instances of the template asset
