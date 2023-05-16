@@ -270,7 +270,10 @@ void UFlowNode_PlayLevelSequence::Cleanup()
 	{
 		SequencePlayer->SetFlowEventReceiver(nullptr);
 		SequencePlayer->OnFinished.RemoveAll(this);
-		SequencePlayer->Stop();
+		if (!PlaybackSettings.bPauseAtEnd)
+		{
+			SequencePlayer->Stop();
+		}
 		SequencePlayer = nullptr;
 	}
 
