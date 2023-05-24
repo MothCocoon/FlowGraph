@@ -14,6 +14,7 @@ public:
 
 	TSharedPtr<FUICommandInfo> RefreshAsset;
 	TSharedPtr<FUICommandInfo> ValidateAsset;
+	TSharedPtr<FUICommandInfo> EditAssetDefaults;
 
 	TSharedPtr<FUICommandInfo> SearchInAsset;
 	TSharedPtr<FUICommandInfo> GoToParentInstance;
