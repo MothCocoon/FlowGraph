@@ -25,7 +25,7 @@ FText UFlowNode_CustomInput::GetNodeTitle() const
 	}
 
 	return Super::GetNodeTitle();
->
+}
 #endif
 
 #undef LOCTEXT_NAMESPACE

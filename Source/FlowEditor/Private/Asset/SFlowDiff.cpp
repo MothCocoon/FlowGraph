@@ -6,12 +6,17 @@
 #include "FlowAsset.h"
 
 #include "EdGraphUtilities.h"
+#include "Editor.h"
 #include "Framework/Commands/GenericCommands.h"
+#include "Framework/MultiBox/MultiBoxBuilder.h"
+#include "Framework/MultiBox/MultiBoxDefs.h"
 #include "GraphDiffControl.h"
 #include "HAL/PlatformApplicationMisc.h"
 #include "Internationalization/Text.h"
 #include "SBlueprintDiff.h"
 #include "SlateOptMacros.h"
+#include "Subsystems/AssetEditorSubsystem.h"
+#include "Widgets/Layout/SSpacer.h"
 
 #define LOCTEXT_NAMESPACE "SFlowDiff"
 

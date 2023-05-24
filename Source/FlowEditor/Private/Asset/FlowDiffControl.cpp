@@ -5,6 +5,7 @@
 
 #include "FlowAsset.h"
 
+#include "EdGraph/EdGraph.h"
 #include "GraphDiffControl.h"
 #include "SBlueprintDiff.h"
 
@@ -14,7 +15,8 @@
 /// FFlowAssetDiffControl
 
 FFlowAssetDiffControl::FFlowAssetDiffControl(const UFlowAsset* InOldFlowAsset, const UFlowAsset* InNewFlowAsset, FOnDiffEntryFocused InSelectionCallback)
-	: FDetailsDiffControl(InOldFlowAsset, InNewFlowAsset, InSelectionCallback, false)
+// UE 5.2	: FDetailsDiffControl(InOldFlowAsset, InNewFlowAsset, InSelectionCallback, false)
+	: FDetailsDiffControl(InOldFlowAsset, InNewFlowAsset, InSelectionCallback)
 {
 }
 

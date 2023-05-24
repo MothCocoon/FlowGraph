@@ -235,16 +235,27 @@ void UFlowAsset::RemoveCustomOutput(const FName& EventName)
 
 UFlowNode* UFlowAsset::GetDefaultEntryNode() const
 {
+	UFlowNode* FirstStartNode = nullptr;
+
 	for (const TPair<FGuid, UFlowNode*>& Node : Nodes)
 	{
 		UFlowNode_Start* StartNode = Cast<UFlowNode_Start>(Node.Value);
-		if (StartNode && StartNode->GetConnectedNodes().Num() > 0)
+		if (StartNode)
 		{
-			return StartNode;
+			if (StartNode->GetConnectedNodes().Num() > 0)
+			{
+				return StartNode;
+			}
+			else if (!FirstStartNode)
+			{
+				FirstStartNode = StartNode;
+			}
 		}
 	}
 
-	return nullptr;
+	// If none of the found start nodes have connections, 
+	//  fallback to the first start node we found
+	return FirstStartNode;
 }
 
 void UFlowAsset::AddInstance(UFlowAsset* Instance)
@@ -461,7 +472,7 @@ void UFlowAsset::FinishFlow(const EFlowFinishPolicy InFinishPolicy, const bool b
 
 bool UFlowAsset::HasStartedFlow() const
 {
-	return RecordedNodes.Contains(StartNode);
+	return RecordedNodes.Num() > 0;
 }
 
 AActor* UFlowAsset::TryFindActorOwner() const

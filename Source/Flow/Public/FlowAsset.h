@@ -186,56 +186,16 @@ public:
 	const TArray<FName>& GetCustomInputs() const { return CustomInputs; }
 	const TArray<FName>& GetCustomOutputs() const { return CustomOutputs; }
 
-protected:
-#if WITH_EDITOR
-	void AddCustomInput(const FName& InName);
-	void RemoveCustomInput(const FName& InName);
-#endif
-
-	template <class T>
-	void GetNodesInExecutionOrder(TArray<T*>& OutNodes)
-	{
-		static_assert(TPointerIsConvertibleFromTo<T, const UFlowNode>::Value, "'T' template parameter to GetNodesInExecutionOrder must be derived from UFlowNode");
-
-		if (UFlowNode_Start* FoundStartNode = GetStartNode())
-		{
-			TSet<TObjectKey<UFlowNode>> IteratedNodes;
-			GetNodesInExecutionOrder_Recursive(FoundStartNode, IteratedNodes, OutNodes);
-		}
-	}
-
-protected:
-	template <class T>
-	void GetNodesInExecutionOrder_Recursive(UFlowNode* Node, TSet<TObjectKey<UFlowNode>>& IteratedNodes, TArray<T*>& OutNodes)
-	{
-		IteratedNodes.Add(Node);
-
-		if (T* NodeOfRequiredType = Cast<T>(Node))
-		{
-			OutNodes.Emplace(NodeOfRequiredType);
-		}
-
-		for (UFlowNode* ConnectedNode : Node->GetConnectedNodes())
-		{
-			if (ConnectedNode && !IteratedNodes.Contains(ConnectedNode))
-			{
-				GetNodesInExecutionOrder_Recursive(ConnectedNode, IteratedNodes, OutNodes);
-			}
-		}
-	}
-
-public:	
-	const TArray<FName>& GetCustomInputs() const { return CustomInputs; }
-	const TArray<FName>& GetCustomOutputs() const { return CustomOutputs; }
-
 	UFlowNode_CustomInput* TryFindCustomInputNodeByEventName(const FName& EventName) const;
 
+#if WITH_EDITOR
 protected:
 	void AddCustomInput(const FName& EventName);
 	void RemoveCustomInput(const FName& EventName);
 
 	void AddCustomOutput(const FName& EventName);
 	void RemoveCustomOutput(const FName& EventName);
+#endif // WITH_EDITOR
 	
 //////////////////////////////////////////////////////////////////////////
 // Instances of the template asset

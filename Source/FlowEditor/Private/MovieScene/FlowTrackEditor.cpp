@@ -163,7 +163,8 @@ void FFlowTrackEditor::HandleAddFlowTrackMenuEntryExecute(UClass* SectionType) c
 
 	TArray<UMovieSceneFlowTrack*> NewTracks;
 
-	UMovieSceneFlowTrack* NewMasterTrack = FocusedMovieScene->AddTrack<UMovieSceneFlowTrack>();
+// UE 5.2	UMovieSceneFlowTrack* NewMasterTrack = FocusedMovieScene->AddTrack<UMovieSceneFlowTrack>();
+	UMovieSceneFlowTrack* NewMasterTrack = FocusedMovieScene->AddMasterTrack<UMovieSceneFlowTrack>();
 	NewTracks.Add(NewMasterTrack);
 	if (GetSequencer().IsValid())
 	{
