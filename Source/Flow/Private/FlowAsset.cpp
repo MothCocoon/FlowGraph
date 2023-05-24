@@ -25,7 +25,6 @@ UFlowAsset::UFlowAsset(const FObjectInitializer& ObjectInitializer)
 	, AllowedNodeClasses({UFlowNode::StaticClass()})
 	, bStartNodePlacedAsGhostNode(false)
 	, TemplateAsset(nullptr)
-	, StartNode(nullptr)
 	, FinishPolicy(EFlowFinishPolicy::Keep)
 {
 	if (!AssetGuid.IsValid())
@@ -190,8 +189,6 @@ void UFlowAsset::HarvestNodeConnections()
 	}
 }
 
-#endif // WITH_EDITOR
-
 UFlowNode_CustomInput* UFlowAsset::TryFindCustomInputNodeByEventName(const FName& EventName) const
 {
 	for (UFlowNode_CustomInput* InputNode : CustomInputNodes)
@@ -207,16 +204,18 @@ UFlowNode_CustomInput* UFlowAsset::TryFindCustomInputNodeByEventName(const FName
 
 void UFlowAsset::AddCustomInput(const FName& EventName)
 {
-	check(!CustomInputs.Contains(EventName));
-
-	CustomInputs.Add(EventName);
+	if (!CustomInputs.Contains(EventName))
+	{
+		CustomInputs.Add(EventName);
+	}
 }
 
 void UFlowAsset::RemoveCustomInput(const FName& EventName)
 {
-	check(CustomInputs.Contains(EventName));
-
-	CustomInputs.Remove(EventName);
+	if (CustomInputs.Contains(EventName))
+	{
+		CustomInputs.Remove(EventName);
+	}
 }
 
 void UFlowAsset::AddCustomOutput(const FName& EventName)
@@ -232,19 +231,19 @@ void UFlowAsset::RemoveCustomOutput(const FName& EventName)
 
 	CustomOutputs.Remove(EventName);
 }
+#endif // WITH_EDITOR
 
-UFlowNode_Start* UFlowAsset::GetStartNode() const
+UFlowNode* UFlowAsset::GetDefaultEntryNode() const
 {
 	for (const TPair<FGuid, UFlowNode*>& Node : Nodes)
 	{
-		// there can be only one, automatically added while creating graph
-		if (UFlowNode_Start* TestedNode = Cast<UFlowNode_Start>(Node.Value))
+		UFlowNode_Start* StartNode = Cast<UFlowNode_Start>(Node.Value);
+		if (StartNode && StartNode->GetConnectedNodes().Num() > 0)
 		{
-			return TestedNode;
+			return StartNode;
 		}
 	}
 
-	// shouldn't ever get here, Start Node is a default node that can't be deleted by user
 	return nullptr;
 }
 
@@ -340,12 +339,6 @@ void UFlowAsset::InitializeInstance(const TWeakObjectPtr<UObject> InOwner, UFlow
 		UFlowNode* NewNodeInstance = NewObject<UFlowNode>(this, Node.Value->GetClass(), NAME_None, RF_Transient, Node.Value, false, nullptr);
 		Node.Value = NewNodeInstance;
 
-		// there can be only one, automatically added while creating graph
-		if (UFlowNode_Start* InNode = Cast<UFlowNode_Start>(NewNodeInstance))
-		{
-			StartNode = InNode;
-		}
-
 		if (UFlowNode_CustomInput* CustomInput = Cast<UFlowNode_CustomInput>(NewNodeInstance))
 		{
 			if (!CustomInput->EventName.IsNone())
@@ -383,7 +376,7 @@ void UFlowAsset::DeinitializeInstance()
 
 void UFlowAsset::PreloadNodes()
 {
-	TArray<UFlowNode*> GraphEntryNodes = {StartNode};
+	TArray<UFlowNode*> GraphEntryNodes = {GetDefaultEntryNode()};
 	for (UFlowNode_CustomInput* CustomInput : CustomInputNodes)
 	{
 		GraphEntryNodes.Emplace(CustomInput);
@@ -434,12 +427,11 @@ void UFlowAsset::StartFlow()
 {
 	PreStartFlow();
 
-	ensureAlways(StartNode);
-	check(!HasStartedFlow());
-	RecordedNodes.Add(StartNode);
-
-	static const FName StartNodeEventName = NAME_None;
-	StartNode->ExecuteInput(StartNodeEventName);
+	if (UFlowNode* ConnectedEntryNode = GetDefaultEntryNode())
+	{
+		RecordedNodes.Add(ConnectedEntryNode);
+		ConnectedEntryNode->TriggerFirstOutput(true);
+	}
 }
 
 void UFlowAsset::FinishFlow(const EFlowFinishPolicy InFinishPolicy, const bool bRemoveInstance /*= true*/)

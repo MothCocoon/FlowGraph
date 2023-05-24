@@ -2,8 +2,7 @@
 
 #pragma once
 
-#include "FlowNode_CustomNodeBase.h"
-
+#include "FlowNode_CustomEventBase.h"
 #include "FlowNode_CustomOutput.generated.h"
 
 /**
@@ -11,7 +10,7 @@
  * Triggered output name matches EventName selected on this node
  */
 UCLASS(NotBlueprintable, meta = (DisplayName = "Custom Output"))
-class FLOW_API UFlowNode_CustomOutput final : public UFlowNode_CustomNodeBase
+class FLOW_API UFlowNode_CustomOutput final : public UFlowNode_CustomEventBase
 {
 	GENERATED_UCLASS_BODY()
 

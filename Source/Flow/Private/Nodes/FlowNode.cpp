@@ -183,10 +183,8 @@ UObject* UFlowNode::TryGetRootFlowObjectOwner() const
 	{
 		return FlowAsset->GetOwner();
 	}
-	else
-	{
-		return nullptr;
-	}
+
+	return nullptr;
 }
 
 void UFlowNode::AddInputPins(TArray<FFlowPin> Pins)

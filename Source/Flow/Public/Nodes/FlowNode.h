@@ -125,7 +125,7 @@ public:
 	UFlowAsset* GetFlowAsset() const;
 
 	// Gets the Owning Actor for this Node's RootFlow
-	//  (if the immediate parent is an UActorComponent, it will get that Component's actor)
+	// (if the immediate parent is an UActorComponent, it will get that Component's actor)
 	AActor* TryGetRootFlowActorOwner() const;
 
 protected:
