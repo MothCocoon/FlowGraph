@@ -189,19 +189,6 @@ void UFlowAsset::HarvestNodeConnections()
 	}
 }
 
-UFlowNode_CustomInput* UFlowAsset::TryFindCustomInputNodeByEventName(const FName& EventName) const
-{
-	for (UFlowNode_CustomInput* InputNode : CustomInputNodes)
-	{
-		if (IsValid(InputNode) && InputNode->GetEventName() == EventName)
-		{
-			return InputNode;
-		}
-	}
-
-	return nullptr;
-}
-
 void UFlowAsset::AddCustomInput(const FName& EventName)
 {
 	if (!CustomInputs.Contains(EventName))
@@ -230,6 +217,19 @@ void UFlowAsset::RemoveCustomOutput(const FName& EventName)
 	check(CustomOutputs.Contains(EventName));
 
 	CustomOutputs.Remove(EventName);
+}
+
+UFlowNode_CustomInput* UFlowAsset::TryFindCustomInputNodeByEventName(const FName& EventName) const
+{
+	for (UFlowNode_CustomInput* InputNode : CustomInputNodes)
+	{
+		if (IsValid(InputNode) && InputNode->GetEventName() == EventName)
+		{
+			return InputNode;
+		}
+	}
+
+	return nullptr;
 }
 #endif // WITH_EDITOR
 
