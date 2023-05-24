@@ -186,9 +186,9 @@ public:
 	const TArray<FName>& GetCustomInputs() const { return CustomInputs; }
 	const TArray<FName>& GetCustomOutputs() const { return CustomOutputs; }
 
-#if WITH_EDITOR
 	UFlowNode_CustomInput* TryFindCustomInputNodeByEventName(const FName& EventName) const;
 
+#if WITH_EDITOR
 protected:
 	void AddCustomInput(const FName& EventName);
 	void RemoveCustomInput(const FName& EventName);

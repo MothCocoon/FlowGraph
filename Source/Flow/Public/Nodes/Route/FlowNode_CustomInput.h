@@ -3,7 +3,6 @@
 #pragma once
 
 #include "FlowNode_CustomEventBase.h"
-
 #include "FlowNode_CustomInput.generated.h"
 
 /**

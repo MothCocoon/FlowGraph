@@ -218,6 +218,7 @@ void UFlowAsset::RemoveCustomOutput(const FName& EventName)
 
 	CustomOutputs.Remove(EventName);
 }
+#endif // WITH_EDITOR
 
 UFlowNode_CustomInput* UFlowAsset::TryFindCustomInputNodeByEventName(const FName& EventName) const
 {
@@ -231,7 +232,6 @@ UFlowNode_CustomInput* UFlowAsset::TryFindCustomInputNodeByEventName(const FName
 
 	return nullptr;
 }
-#endif // WITH_EDITOR
 
 UFlowNode* UFlowAsset::GetDefaultEntryNode() const
 {
