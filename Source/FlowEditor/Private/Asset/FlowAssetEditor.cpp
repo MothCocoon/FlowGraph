@@ -358,6 +358,10 @@ void FFlowAssetEditor::BindToolbarCommands()
 								FExecuteAction::CreateSP(this, &FFlowAssetEditor::ValidateAsset_Internal),
 								FCanExecuteAction());
 
+	ToolkitCommands->MapAction(ToolbarCommands.EditAssetDefaults,
+								FExecuteAction::CreateSP(this, &FFlowAssetEditor::EditAssetDefaults_Clicked),
+								FCanExecuteAction());
+
 #if ENABLE_SEARCH_IN_ASSET_EDITOR
 	ToolkitCommands->MapAction(ToolbarCommands.SearchInAsset,
 								FExecuteAction::CreateSP(this, &FFlowAssetEditor::SearchInAsset),
@@ -399,6 +403,11 @@ void FFlowAssetEditor::ValidateAsset_Internal()
 void FFlowAssetEditor::ValidateAsset(FFlowMessageLog& MessageLog)
 {
 	FlowAsset->ValidateAsset(MessageLog);
+}
+
+void FFlowAssetEditor::EditAssetDefaults_Clicked()
+{
+	DetailsView->SetObject(FlowAsset);
 }
 
 #if ENABLE_SEARCH_IN_ASSET_EDITOR

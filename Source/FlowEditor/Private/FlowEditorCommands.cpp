@@ -9,6 +9,7 @@
 
 #include "EditorStyleSet.h"
 #include "Misc/ConfigCacheIni.h"
+#include "Styling/AppStyle.h"
 
 #define LOCTEXT_NAMESPACE "FlowGraphCommands"
 
@@ -21,6 +22,7 @@ void FFlowToolbarCommands::RegisterCommands()
 {
 	UI_COMMAND(RefreshAsset, "Refresh", "Refresh asset and all nodes", EUserInterfaceActionType::Button, FInputChord());
 	UI_COMMAND(ValidateAsset, "Validate", "Validate asset and all nodes", EUserInterfaceActionType::Button, FInputChord());
+	UI_COMMAND(EditAssetDefaults, "Asset Defaults", "Edit the FlowAsset default properties", EUserInterfaceActionType::Button, FInputChord());
 
 	UI_COMMAND(SearchInAsset, "Search", "Search in the current Flow Graph", EUserInterfaceActionType::Button, FInputChord(EModifierKey::Control | EModifierKey::Shift, EKeys::F));
 	UI_COMMAND(GoToParentInstance, "Go To Parent", "Open editor for the Flow Asset that created this Flow instance", EUserInterfaceActionType::Button, FInputChord());
