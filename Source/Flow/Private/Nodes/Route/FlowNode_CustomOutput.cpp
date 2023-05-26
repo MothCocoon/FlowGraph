@@ -2,7 +2,6 @@
 
 #include "Nodes/Route/FlowNode_CustomOutput.h"
 #include "FlowAsset.h"
-#include "FlowMessageLog.h"
 #include "FlowSettings.h"
 
 #define LOCTEXT_NAMESPACE "FlowNode_CustomOutput"
@@ -20,19 +19,14 @@ void UFlowNode_CustomOutput::ExecuteInput(const FName& PinName)
 
 	if (EventName.IsNone())
 	{
-		LogWarning(
-			FString::Printf(
-				TEXT("Attempted to trigger a CustomOutput (Node %s, Asset %s), with no EventName"), 
-				*GetName(), 
-				*FlowAsset->GetPathName(),
-				*EventName.ToString()));
+		LogWarning(FString::Printf(TEXT("Attempted to trigger a CustomOutput (Node %s, Asset %s), with no EventName"),
+		                           *GetName(),
+		                           *FlowAsset->GetPathName()));
 	}
 	else if (!FlowAsset->GetCustomOutputs().Contains(EventName))
 	{
-		const TArray<FName>& CustomOutputNames = FlowAsset->GetCustomOutputs();
-
 		FString CustomOutputsString;
-		for (const FName& OutputName : CustomOutputNames)
+		for (const FName& OutputName : FlowAsset->GetCustomOutputs())
 		{
 			if (!CustomOutputsString.IsEmpty())
 			{
@@ -42,13 +36,11 @@ void UFlowNode_CustomOutput::ExecuteInput(const FName& PinName)
 			CustomOutputsString += OutputName.ToString();
 		}
 
-		LogWarning(
-			FString::Printf(
-				TEXT("Attempted to trigger a CustomOutput (Node %s, Asset %s), with EventName %s, which is not a listed CustomOutput { %s }"),
-				*GetName(),
-				*FlowAsset->GetPathName(),
-				*EventName.ToString(),
-				*CustomOutputsString));
+		LogWarning(FString::Printf(TEXT("Attempted to trigger a CustomOutput (Node %s, Asset %s), with EventName %s, which is not a listed CustomOutput { %s }"),
+		                           *GetName(),
+		                           *FlowAsset->GetPathName(),
+		                           *EventName.ToString(),
+		                           *CustomOutputsString));
 	}
 	else
 	{

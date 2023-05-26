@@ -14,9 +14,10 @@ public:
 
 	TSharedPtr<FUICommandInfo> RefreshAsset;
 	TSharedPtr<FUICommandInfo> ValidateAsset;
-	TSharedPtr<FUICommandInfo> EditAssetDefaults;
 
 	TSharedPtr<FUICommandInfo> SearchInAsset;
+	TSharedPtr<FUICommandInfo> EditAssetDefaults;
+
 	TSharedPtr<FUICommandInfo> GoToParentInstance;
 
 	virtual void RegisterCommands() override;

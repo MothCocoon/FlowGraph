@@ -14,23 +14,17 @@
 #include "Graph/Widgets/SFlowPalette.h"
 
 #include "FlowAsset.h"
-#include "Nodes/FlowNode.h"
 
-#include "EdGraphUtilities.h"
 #include "EdGraph/EdGraphNode.h"
 #include "Editor.h"
 #include "GraphEditor.h"
-#include "GraphEditorActions.h"
-#include "HAL/PlatformApplicationMisc.h"
 #include "IDetailsView.h"
 #include "IMessageLogListing.h"
 #include "Kismet2/DebuggerCommands.h"
-#include "LevelEditor.h"
 #include "MessageLogModule.h"
 #include "Misc/UObjectToken.h"
 #include "Modules/ModuleManager.h"
 #include "PropertyEditorModule.h"
-#include "SNodePanel.h"
 #include "ToolMenus.h"
 #include "Widgets/Docking/SDockTab.h"
 
@@ -358,15 +352,15 @@ void FFlowAssetEditor::BindToolbarCommands()
 								FExecuteAction::CreateSP(this, &FFlowAssetEditor::ValidateAsset_Internal),
 								FCanExecuteAction());
 
-	ToolkitCommands->MapAction(ToolbarCommands.EditAssetDefaults,
-								FExecuteAction::CreateSP(this, &FFlowAssetEditor::EditAssetDefaults_Clicked),
-								FCanExecuteAction());
-
 #if ENABLE_SEARCH_IN_ASSET_EDITOR
 	ToolkitCommands->MapAction(ToolbarCommands.SearchInAsset,
 								FExecuteAction::CreateSP(this, &FFlowAssetEditor::SearchInAsset),
 								FCanExecuteAction());
 #endif
+
+	ToolkitCommands->MapAction(ToolbarCommands.EditAssetDefaults,
+							FExecuteAction::CreateSP(this, &FFlowAssetEditor::EditAssetDefaults_Clicked),
+							FCanExecuteAction());
 
 	// Engine's Play commands
 	ToolkitCommands->Append(FPlayWorldCommands::GlobalPlayWorldActions.ToSharedRef());
@@ -405,11 +399,6 @@ void FFlowAssetEditor::ValidateAsset(FFlowMessageLog& MessageLog)
 	FlowAsset->ValidateAsset(MessageLog);
 }
 
-void FFlowAssetEditor::EditAssetDefaults_Clicked()
-{
-	DetailsView->SetObject(FlowAsset);
-}
-
 #if ENABLE_SEARCH_IN_ASSET_EDITOR
 void FFlowAssetEditor::SearchInAsset()
 {
@@ -417,6 +406,11 @@ void FFlowAssetEditor::SearchInAsset()
 	SearchBrowser->FocusForUse();
 }
 #endif
+
+void FFlowAssetEditor::EditAssetDefaults_Clicked() const
+{
+	DetailsView->SetObject(FlowAsset);
+}
 
 void FFlowAssetEditor::GoToParentInstance()
 {
