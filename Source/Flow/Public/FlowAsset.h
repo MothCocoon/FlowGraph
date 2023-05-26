@@ -186,12 +186,17 @@ public:
 	const TArray<FName>& GetCustomInputs() const { return CustomInputs; }
 	const TArray<FName>& GetCustomOutputs() const { return CustomOutputs; }
 
-protected:
-#if WITH_EDITOR
-	void AddCustomInput(const FName& InName);
-	void RemoveCustomInput(const FName& InName);
-#endif
+	UFlowNode_CustomInput* TryFindCustomInputNodeByEventName(const FName& EventName) const;
 
+#if WITH_EDITOR
+protected:
+	void AddCustomInput(const FName& EventName);
+	void RemoveCustomInput(const FName& EventName);
+
+	void AddCustomOutput(const FName& EventName);
+	void RemoveCustomOutput(const FName& EventName);
+#endif // WITH_EDITOR
+	
 //////////////////////////////////////////////////////////////////////////
 // Instances of the template asset
 
@@ -287,6 +292,10 @@ public:
 		return Owner.IsValid() ? Cast<T>(Owner) : nullptr;
 	}
 
+	// Returns the Owner as an Actor, or if Owner is a Component, return its Owner as an Actor
+	UFUNCTION(BlueprintPure, Category = "Flow")
+	AActor* TryFindActorOwner() const;
+
 	virtual void PreloadNodes();
 
 	virtual void PreStartFlow();
@@ -294,12 +303,16 @@ public:
 
 	virtual void FinishFlow(const EFlowFinishPolicy InFinishPolicy, const bool bRemoveInstance = true);
 
+	bool HasStartedFlow() const;
+	void TriggerCustomInput(const FName& EventName);
+
 	// Get Flow Asset instance created by the given SubGraph node
 	TWeakObjectPtr<UFlowAsset> GetFlowInstance(UFlowNode_SubGraph* SubGraphNode) const;
 
-private:
-	void TriggerCustomEvent(UFlowNode_SubGraph* Node, const FName& EventName) const;
-	void TriggerCustomOutput(const FName& EventName) const;
+protected:
+	// Call TriggerCustomInput on the subgraph for Node
+	void TriggerSubgraphCustomInput(UFlowNode_SubGraph& Node, const FName& EventName) const;
+	void TriggerCustomOutput(const FName& EventName);
 
 	void TriggerInput(const FGuid& NodeGuid, const FName& PinName);
 

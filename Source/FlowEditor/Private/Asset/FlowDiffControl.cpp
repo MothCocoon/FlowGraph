@@ -5,6 +5,7 @@
 
 #include "FlowAsset.h"
 
+#include "EdGraph/EdGraph.h"
 #include "GraphDiffControl.h"
 #include "SBlueprintDiff.h"
 
