@@ -409,6 +409,12 @@ UFlowAsset* UFlowComponent::GetRootFlowInstance() const
 	return nullptr;
 }
 
+void UFlowComponent::OnTriggerRootFlowOutputEventDispatcher(UFlowAsset* RootFlowInstance, const FName& EventName)
+{
+	BP_OnTriggerRootFlowOutputEvent(RootFlowInstance, EventName);
+	OnTriggerRootFlowOutputEvent(RootFlowInstance, EventName);
+}
+
 void UFlowComponent::SaveRootFlow(TArray<FFlowAssetSaveData>& SavedFlowInstances)
 {
 	if (UFlowAsset* FlowAssetInstance = GetRootFlowInstance())

@@ -210,11 +210,12 @@ public:
 	// Called when a Root flow asset triggers a CustomOutput
 	UFUNCTION(BlueprintImplementableEvent, DisplayName = "OnTriggerRootFlowOutputEvent")
 	void BP_OnTriggerRootFlowOutputEvent(UFlowAsset* RootFlowInstance, const FName& EventName);
-	virtual void OnTriggerRootFlowOutputEvent(UFlowAsset& RootFlowInstance, const FName& EventName) { }
 
-	//~Begin UFlowAsset-only access
-	FORCEINLINE void OnTriggerRootFlowOutputEventDispatcher(UFlowAsset& RootFlowInstance, const FName& EventName);
-	//~End UFlowAsset-only access
+	virtual void OnTriggerRootFlowOutputEvent(UFlowAsset* RootFlowInstance, const FName& EventName) {}
+
+	// UFlowAsset-only access
+	FORCEINLINE void OnTriggerRootFlowOutputEventDispatcher(UFlowAsset* RootFlowInstance, const FName& EventName);
+	// ---
 
 //////////////////////////////////////////////////////////////////////////
 // SaveGame
@@ -246,16 +247,3 @@ public:
 	UFlowSubsystem* GetFlowSubsystem() const;
 	bool IsFlowNetMode(const EFlowNetMode NetMode) const;
 };
-
-
-// Inline Implementations
-
-void UFlowComponent::OnTriggerRootFlowOutputEventDispatcher(UFlowAsset& RootFlowInstance, const FName& EventName)
-{
-	// Call the blueprint overrideable function
-	BP_OnTriggerRootFlowOutputEvent(&RootFlowInstance, EventName);
-
-	// Call the C++ overrideable function
-	OnTriggerRootFlowOutputEvent(RootFlowInstance, EventName);
-}
-

@@ -202,16 +202,11 @@ void FFlowAssetToolbar::BuildAssetToolbar(UToolMenu* ToolbarMenu) const
 		// add buttons
 		Section.AddEntry(FToolMenuEntry::InitToolBarButton(FFlowToolbarCommands::Get().RefreshAsset));
 		Section.AddEntry(FToolMenuEntry::InitToolBarButton(FFlowToolbarCommands::Get().ValidateAsset));
-		Section.AddEntry(FToolMenuEntry::InitToolBarButton(FFlowToolbarCommands::Get().EditAssetDefaults));
 	}
 	
 	{
 		FToolMenuSection& Section = ToolbarMenu->AddSection("View");
 		Section.InsertPosition = FToolMenuInsert("FlowAsset", EToolMenuInsertType::After);
-
-#if ENABLE_SEARCH_IN_ASSET_EDITOR
-		Section.AddEntry(FToolMenuEntry::InitToolBarButton(FFlowToolbarCommands::Get().SearchInAsset));
-#endif
 
 		// Visual Diff: menu to choose asset revision compared with the current one 
 		Section.AddDynamicEntry("SourceControlCommands", FNewToolMenuSectionDelegate::CreateLambda([this](FToolMenuSection& InSection)
@@ -228,6 +223,12 @@ void FFlowAssetToolbar::BuildAssetToolbar(UToolMenu* ToolbarMenu) const
 			DiffEntry.StyleNameOverride = "CalloutToolbar";
 			InSection.AddEntry(DiffEntry);
 		}));
+
+#if ENABLE_SEARCH_IN_ASSET_EDITOR
+		Section.AddEntry(FToolMenuEntry::InitToolBarButton(FFlowToolbarCommands::Get().SearchInAsset));
+#endif
+
+		Section.AddEntry(FToolMenuEntry::InitToolBarButton(FFlowToolbarCommands::Get().EditAssetDefaults));
 	}
 }
 
