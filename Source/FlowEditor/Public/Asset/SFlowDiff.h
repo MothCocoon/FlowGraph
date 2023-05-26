@@ -2,7 +2,10 @@
 
 #pragma once
 
+#include "IDetailsView.h"
+#include "DiffResults.h"
 #include "SDetailsDiff.h"
+#include "Textures/SlateIcon.h"
 
 struct FFlowGraphToDiff;
 class UFlowAsset;

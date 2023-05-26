@@ -69,6 +69,13 @@ UFlowAssetFactory::UFlowAssetFactory(const FObjectInitializer& ObjectInitializer
 
 bool UFlowAssetFactory::ConfigureProperties()
 {
+	const FText TitleText = LOCTEXT("CreateFlowAssetOptions", "Pick Flow Asset Class");
+
+	return ConfigurePropertiesInternal(TitleText);
+}
+
+bool UFlowAssetFactory::ConfigurePropertiesInternal(const FText& TitleText)
+{
 	AssetClass = UFlowGraphSettings::Get()->DefaultFlowAssetClass;
 	if (AssetClass) // Class was set in settings
 	{
@@ -84,13 +91,12 @@ bool UFlowAssetFactory::ConfigureProperties()
 
 	const TSharedPtr<FAssetClassParentFilter> Filter = MakeShareable(new FAssetClassParentFilter);
 	Filter->DisallowedClassFlags = CLASS_Abstract | CLASS_Deprecated | CLASS_NewerVersionExists | CLASS_HideDropDown;
-	Filter->AllowedChildrenOfClasses.Add(UFlowAsset::StaticClass());
+	Filter->AllowedChildrenOfClasses.Add(SupportedClass);
 
 	Options.ClassFilters = {Filter.ToSharedRef()};
 
-	const FText TitleText = LOCTEXT("CreateFlowAssetOptions", "Pick Flow Asset Class");
 	UClass* ChosenClass = nullptr;
-	const bool bPressedOk = SClassPickerDialog::PickClass(TitleText, Options, ChosenClass, UFlowAsset::StaticClass());
+	const bool bPressedOk = SClassPickerDialog::PickClass(TitleText, Options, ChosenClass, SupportedClass);
 
 	if (bPressedOk)
 	{
