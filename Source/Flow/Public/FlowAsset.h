@@ -310,8 +310,7 @@ public:
 	TWeakObjectPtr<UFlowAsset> GetFlowInstance(UFlowNode_SubGraph* SubGraphNode) const;
 
 protected:
-	// Call TriggerCustomInput on the subgraph for Node
-	void TriggerSubgraphCustomInput(UFlowNode_SubGraph& Node, const FName& EventName) const;
+	void TriggerCustomInput_FromSubGraph(UFlowNode_SubGraph* Node, const FName& EventName) const;
 	void TriggerCustomOutput(const FName& EventName);
 
 	void TriggerInput(const FGuid& NodeGuid, const FName& PinName);

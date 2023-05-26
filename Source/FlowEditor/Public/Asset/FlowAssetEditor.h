@@ -124,8 +124,6 @@ protected:
 	
 	virtual void RefreshAsset();
 
-	void EditAssetDefaults_Clicked();
-
 private:
 	void ValidateAsset_Internal();
 
@@ -135,6 +133,8 @@ protected:
 #if ENABLE_SEARCH_IN_ASSET_EDITOR
 	virtual void SearchInAsset();
 #endif
+
+	void EditAssetDefaults_Clicked() const;
 
 	virtual void GoToParentInstance();
 	virtual bool CanGoToParentInstance();

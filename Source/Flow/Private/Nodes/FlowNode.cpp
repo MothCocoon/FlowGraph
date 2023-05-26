@@ -613,6 +613,11 @@ void UFlowNode::Cleanup()
 	K2_Cleanup();
 }
 
+void UFlowNode::DeinitializeInstance()
+{
+	K2_DeinitializeInstance();
+}
+
 void UFlowNode::ForceFinishNode()
 {
 	K2_ForceFinishNode();
