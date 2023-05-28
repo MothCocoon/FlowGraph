@@ -14,7 +14,5 @@ class FLOW_API UFlowNode_OnActorRegistered : public UFlowNode_ComponentObserver
 	GENERATED_UCLASS_BODY()
 
 protected:
-	virtual void ExecuteInput(const FName& PinName) override;
-
 	virtual void ObserveActor(TWeakObjectPtr<AActor> Actor, TWeakObjectPtr<UFlowComponent> Component) override;
 };
