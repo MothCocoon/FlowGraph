@@ -15,7 +15,11 @@
 /// FFlowAssetDiffControl
 
 FFlowAssetDiffControl::FFlowAssetDiffControl(const UFlowAsset* InOldFlowAsset, const UFlowAsset* InNewFlowAsset, FOnDiffEntryFocused InSelectionCallback)
+#if ENGINE_MAJOR_VERSION == 5 && ENGINE_MINOR_VERSION < 2
+	: FDetailsDiffControl(InOldFlowAsset, InNewFlowAsset, InSelectionCallback)
+#else
 	: FDetailsDiffControl(InOldFlowAsset, InNewFlowAsset, InSelectionCallback, false)
+#endif
 {
 }
 

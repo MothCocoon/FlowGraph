@@ -163,7 +163,11 @@ void FFlowTrackEditor::HandleAddFlowTrackMenuEntryExecute(UClass* SectionType) c
 
 	TArray<UMovieSceneFlowTrack*> NewTracks;
 
+#if ENGINE_MAJOR_VERSION == 5 && ENGINE_MINOR_VERSION < 2
+	UMovieSceneFlowTrack* NewMasterTrack = FocusedMovieScene->AddMasterTrack<UMovieSceneFlowTrack>();
+#else
 	UMovieSceneFlowTrack* NewMasterTrack = FocusedMovieScene->AddTrack<UMovieSceneFlowTrack>();
+#endif
 	NewTracks.Add(NewMasterTrack);
 	if (GetSequencer().IsValid())
 	{
