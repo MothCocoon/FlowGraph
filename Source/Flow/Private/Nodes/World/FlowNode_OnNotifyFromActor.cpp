@@ -13,11 +13,6 @@ UFlowNode_OnNotifyFromActor::UFlowNode_OnNotifyFromActor(const FObjectInitialize
 #endif
 }
 
-void UFlowNode_OnNotifyFromActor::ExecuteInput(const FName& PinName)
-{
-	Super::ExecuteInput(PinName);
-}
-
 void UFlowNode_OnNotifyFromActor::ObserveActor(TWeakObjectPtr<AActor> Actor, TWeakObjectPtr<UFlowComponent> Component)
 {
 	if (!RegisteredActors.Contains(Actor))

@@ -332,9 +332,12 @@ protected:
 	UFUNCTION(BlueprintImplementableEvent, Category = "FlowNode", meta = (DisplayName = "Cleanup"))
 	void K2_Cleanup();
 
-	// Method called from UFlowAsset::DeinitializeInstance() 
-	//  (ie, when deinitializing the flow asset itself)
-	virtual void DeinitializeInstance() { }
+	// Method called from UFlowAsset::DeinitializeInstance()
+	virtual void DeinitializeInstance();
+
+	// Event called from UFlowAsset::DeinitializeInstance()
+	UFUNCTION(BlueprintImplementableEvent, Category = "FlowNode", meta = (DisplayName = "DeinitializeInstance"))
+	void K2_DeinitializeInstance();
 
 public:
 	// Define what happens when node is terminated from the outside

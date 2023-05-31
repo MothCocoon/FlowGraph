@@ -207,6 +207,22 @@ void UFlowAsset::RemoveCustomInput(const FName& EventName)
 
 void UFlowAsset::AddCustomOutput(const FName& EventName)
 {
+	if (!CustomOutputs.Contains(EventName))
+	{
+		CustomOutputs.Add(EventName);
+	}
+}
+
+void UFlowAsset::RemoveCustomOutput(const FName& EventName)
+{
+	if (CustomOutputs.Contains(EventName))
+	{
+		CustomOutputs.Remove(EventName);
+	}
+}
+
+void UFlowAsset::AddCustomOutput(const FName& EventName)
+{
 	check(!CustomOutputs.Contains(EventName));
 
 	CustomOutputs.Add(EventName);
@@ -239,22 +255,20 @@ UFlowNode* UFlowAsset::GetDefaultEntryNode() const
 
 	for (const TPair<FGuid, UFlowNode*>& Node : Nodes)
 	{
-		UFlowNode_Start* StartNode = Cast<UFlowNode_Start>(Node.Value);
-		if (StartNode)
+		if (UFlowNode_Start* StartNode = Cast<UFlowNode_Start>(Node.Value))
 		{
 			if (StartNode->GetConnectedNodes().Num() > 0)
 			{
 				return StartNode;
 			}
-			else if (!FirstStartNode)
+			else if (FirstStartNode == nullptr)
 			{
 				FirstStartNode = StartNode;
 			}
 		}
 	}
 
-	// If none of the found start nodes have connections, 
-	//  fallback to the first start node we found
+	// If none of the found start nodes have connections, fallback to the first start node we found
 	return FirstStartNode;
 }
 
@@ -364,14 +378,11 @@ void UFlowAsset::InitializeInstance(const TWeakObjectPtr<UObject> InOwner, UFlow
 
 void UFlowAsset::DeinitializeInstance()
 {
-	for (auto& KV : Nodes)
+	for (const TPair<FGuid, UFlowNode*>& Node : Nodes)
 	{
-		const FGuid& Guid = KV.Key;
-		UFlowNode* Node = KV.Value;
-
-		if (IsValid(Node))
+		if (IsValid(Node.Value))
 		{
-			Node->DeinitializeInstance();
+			Node.Value->DeinitializeInstance();
 		}
 	}
 
@@ -477,7 +488,7 @@ bool UFlowAsset::HasStartedFlow() const
 
 AActor* UFlowAsset::TryFindActorOwner() const
 {
-	UActorComponent* OwnerAsComponent = Cast<UActorComponent>(GetOwner());
+	const UActorComponent* OwnerAsComponent = Cast<UActorComponent>(GetOwner());
 	if (IsValid(OwnerAsComponent))
 	{
 		return Cast<AActor>(OwnerAsComponent->GetOwner());
@@ -491,7 +502,7 @@ TWeakObjectPtr<UFlowAsset> UFlowAsset::GetFlowInstance(UFlowNode_SubGraph* SubGr
 	return ActiveSubGraphs.FindRef(SubGraphNode);
 }
 
-void UFlowAsset::TriggerSubgraphCustomInput(UFlowNode_SubGraph& Node, const FName& EventName) const
+void UFlowAsset::TriggerCustomInput_FromSubGraph(UFlowNode_SubGraph* Node, const FName& EventName) const
 {
 	check(HasStartedFlow());
 
@@ -511,7 +522,6 @@ void UFlowAsset::TriggerCustomInput(const FName& EventName)
 		if (CustomInput->EventName == EventName)
 		{
 			RecordedNodes.Add(CustomInput);
-
 			CustomInput->ExecuteInput(EventName);
 		}
 	}
@@ -519,19 +529,15 @@ void UFlowAsset::TriggerCustomInput(const FName& EventName)
 
 void UFlowAsset::TriggerCustomOutput(const FName& EventName)
 {
-	check(HasStartedFlow());
-
-	const bool bIsSubgraph = NodeOwningThisAssetInstance.IsValid();
-	if (bIsSubgraph)
+	if (NodeOwningThisAssetInstance.IsValid()) // it's a SubGraph
 	{
 		NodeOwningThisAssetInstance->TriggerOutput(EventName);
 	}
-	else
+	else // it's a Root Flow, so the intention here might be to call event on the Flow Component
 	{
-		// Non-subgraphs are Root instances, so call the  OnTriggerCustomOutputEventDispatcher
 		if (UFlowComponent* FlowComponent = Cast<UFlowComponent>(GetOwner()))
 		{
-			FlowComponent->OnTriggerRootFlowOutputEventDispatcher(*this, EventName);
+			FlowComponent->OnTriggerRootFlowOutputEventDispatcher(this, EventName);
 		}
 	}
 }

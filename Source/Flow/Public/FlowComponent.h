@@ -210,11 +210,11 @@ public:
 	// Called when a Root flow asset triggers a CustomOutput
 	UFUNCTION(BlueprintImplementableEvent, DisplayName = "OnTriggerRootFlowOutputEvent")
 	void BP_OnTriggerRootFlowOutputEvent(UFlowAsset* RootFlowInstance, const FName& EventName);
-	virtual void OnTriggerRootFlowOutputEvent(UFlowAsset& RootFlowInstance, const FName& EventName) { }
+	virtual void OnTriggerRootFlowOutputEvent(UFlowAsset* RootFlowInstance, const FName& EventName) {}
 
-	//~Begin UFlowAsset-only access
-	FORCEINLINE void OnTriggerRootFlowOutputEventDispatcher(UFlowAsset& RootFlowInstance, const FName& EventName);
-	//~End UFlowAsset-only access
+	// UFlowAsset-only access
+	FORCEINLINE void OnTriggerRootFlowOutputEventDispatcher(UFlowAsset* RootFlowInstance, const FName& EventName);
+	// ---
 
 //////////////////////////////////////////////////////////////////////////
 // SaveGame

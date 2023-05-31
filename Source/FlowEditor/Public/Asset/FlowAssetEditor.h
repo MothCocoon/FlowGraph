@@ -136,6 +136,8 @@ protected:
 	virtual void SearchInAsset();
 #endif
 
+	void EditAssetDefaults_Clicked() const;
+
 	virtual void GoToParentInstance();
 	virtual bool CanGoToParentInstance();
 

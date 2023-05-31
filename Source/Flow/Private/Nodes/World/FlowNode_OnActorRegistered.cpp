@@ -7,11 +7,6 @@ UFlowNode_OnActorRegistered::UFlowNode_OnActorRegistered(const FObjectInitialize
 {
 }
 
-void UFlowNode_OnActorRegistered::ExecuteInput(const FName& PinName)
-{
-	Super::ExecuteInput(PinName);
-}
-
 void UFlowNode_OnActorRegistered::ObserveActor(TWeakObjectPtr<AActor> Actor, TWeakObjectPtr<UFlowComponent> Component)
 {
 	if (!RegisteredActors.Contains(Actor))
