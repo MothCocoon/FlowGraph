@@ -258,6 +258,24 @@ UFlowNode* UFlowAsset::GetDefaultEntryNode() const
 	return FirstStartNode;
 }
 
+TArray<UFlowNode*> UFlowAsset::GetNodesInExecutionOrder(const TSubclassOf<UFlowNode> FlowNodeClass)
+{
+	TArray<UFlowNode*> FoundNodes;
+	GetNodesInExecutionOrder<UFlowNode>(FoundNodes);
+
+	// filter out nodes by class
+	for (int32 i = FoundNodes.Num() - 1; i >= 0; i--)
+	{
+		if (!FoundNodes[i]->GetClass()->IsChildOf(FlowNodeClass))
+		{
+			FoundNodes.RemoveAt(i);
+		}
+	}
+	FoundNodes.Shrink();
+	
+	return FoundNodes;
+}
+
 void UFlowAsset::AddInstance(UFlowAsset* Instance)
 {
 	ActiveInstances.Add(Instance);
