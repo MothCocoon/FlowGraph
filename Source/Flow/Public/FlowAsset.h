@@ -150,6 +150,9 @@ public:
 
 	virtual UFlowNode* GetDefaultEntryNode() const;
 
+	UFUNCTION(BlueprintPure, Category = "FlowAsset", meta = (DeterminesOutputType = "FlowNodeClass"))
+	TArray<UFlowNode*> GetNodesInExecutionOrder(const TSubclassOf<UFlowNode> FlowNodeClass);
+
 	template <class T>
 	void GetNodesInExecutionOrder(TArray<T*>& OutNodes)
 	{
