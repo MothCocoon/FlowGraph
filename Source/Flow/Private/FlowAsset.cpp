@@ -31,6 +31,8 @@ UFlowAsset::UFlowAsset(const FObjectInitializer& ObjectInitializer)
 	{
 		AssetGuid = FGuid::NewGuid();
 	}
+
+	ExpectedOwnerClass = UFlowSettings::Get()->GetDefaultExpectedOwnerClass();
 }
 
 #if WITH_EDITOR
