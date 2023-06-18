@@ -17,6 +17,7 @@
 
 #include "EdGraph/EdGraphNode.h"
 #include "Editor.h"
+#include "EditorClassUtils.h"
 #include "GraphEditor.h"
 #include "IDetailsView.h"
 #include "IMessageLogListing.h"
@@ -161,6 +162,30 @@ void FFlowAssetEditor::InitToolMenuContext(FToolMenuContext& MenuContext)
 	UFlowAssetEditorContext* Context = NewObject<UFlowAssetEditorContext>();
 	Context->FlowAssetEditor = SharedThis(this);
 	MenuContext.AddObject(Context);
+}
+
+void FFlowAssetEditor::PostRegenerateMenusAndToolbars()
+{
+	// Provide a hyperlink to view our class
+	const TSharedRef<SHorizontalBox> MenuOverlayBox = SNew(SHorizontalBox)
+		+ SHorizontalBox::Slot()
+		.AutoWidth()
+		.VAlign(VAlign_Center)
+		[
+			SNew(STextBlock)
+			.ColorAndOpacity(FSlateColor::UseSubduedForeground())
+			.ShadowOffset(FVector2D::UnitVector)
+			.Text(LOCTEXT("FlowAssetEditor_AssetType", "Asset Type: "))
+		]
+		+ SHorizontalBox::Slot()
+		.AutoWidth()
+		.VAlign(VAlign_Center)
+		.Padding(0.0f, 0.0f, 8.0f, 0.0f)
+		[
+			FEditorClassUtils::GetSourceLink(FlowAsset->GetClass())
+		];
+
+	SetMenuOverlay(MenuOverlayBox);
 }
 
 bool FFlowAssetEditor::IsTabFocused(const FTabId& TabId) const
