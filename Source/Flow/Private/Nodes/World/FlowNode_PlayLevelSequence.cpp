@@ -38,6 +38,8 @@ UFlowNode_PlayLevelSequence::UFlowNode_PlayLevelSequence(const FObjectInitialize
 	InputPins.Empty();
 	InputPins.Add(FFlowPin(TEXT("Start")));
 	InputPins.Add(FFlowPin(TEXT("Stop")));
+	InputPins.Add(FFlowPin(TEXT("Pause")));
+	InputPins.Add(FFlowPin(TEXT("Resume")));
 
 	OutputPins.Add(FFlowPin(TEXT("PreStart")));
 	OutputPins.Add(FFlowPin(TEXT("Started")));
@@ -191,6 +193,14 @@ void UFlowNode_PlayLevelSequence::ExecuteInput(const FName& PinName)
 	else if (PinName == TEXT("Stop"))
 	{
 		StopPlayback();
+	}
+	else if (PinName == TEXT("Pause"))
+	{
+		SequencePlayer->Pause();
+	}
+	else if (PinName == TEXT("Resume") && SequencePlayer->IsPaused())
+	{
+		SequencePlayer->Play();
 	}
 }
 
