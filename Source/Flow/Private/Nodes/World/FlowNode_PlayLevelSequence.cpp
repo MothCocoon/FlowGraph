@@ -37,9 +37,9 @@ UFlowNode_PlayLevelSequence::UFlowNode_PlayLevelSequence(const FObjectInitialize
 
 	InputPins.Empty();
 	InputPins.Add(FFlowPin(TEXT("Start")));
-	InputPins.Add(FFlowPin(TEXT("Stop")));
 	InputPins.Add(FFlowPin(TEXT("Pause")));
 	InputPins.Add(FFlowPin(TEXT("Resume")));
+	InputPins.Add(FFlowPin(TEXT("Stop")));
 
 	OutputPins.Add(FFlowPin(TEXT("PreStart")));
 	OutputPins.Add(FFlowPin(TEXT("Started")));
