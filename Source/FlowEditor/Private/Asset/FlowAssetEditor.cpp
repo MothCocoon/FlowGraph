@@ -539,6 +539,10 @@ void FFlowAssetEditor::JumpToInnerObject(UObject* InnerObject)
 	{
 		GraphEditor->JumpToNode(FlowNode->GetGraphNode(), true);
 	}
+	else if (const UEdGraphNode* GraphNode = Cast<UEdGraphNode>(InnerObject))
+	{
+		GraphEditor->JumpToNode(GraphNode, true);
+	}
 }
 #endif
 
