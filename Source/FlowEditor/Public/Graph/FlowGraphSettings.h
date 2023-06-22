@@ -106,4 +106,9 @@ class FLOWEDITOR_API UFlowGraphSettings : public UDeveloperSettings
 
 	UPROPERTY(EditAnywhere, config, Category = "Wires", meta = (ClampMin = 0.0f))
 	float SelectedWireThickness;
+
+public:
+	
+	virtual FName GetCategoryName() const override { return FName("Flow Graph"); }
+	virtual FText GetSectionText() const override { return INVTEXT("Graph Settings"); }
 };
