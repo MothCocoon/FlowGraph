@@ -4,6 +4,7 @@
 
 #include "FlowAsset.h"
 #include "FlowModule.h"
+#include "FlowOwnerInterface.h"
 #include "FlowSettings.h"
 #include "FlowSubsystem.h"
 #include "FlowTypes.h"
@@ -185,6 +186,80 @@ UObject* UFlowNode::TryGetRootFlowObjectOwner() const
 	}
 
 	return nullptr;
+}
+
+IFlowOwnerInterface* UFlowNode::GetFlowOwnerInterface() const
+{
+	const UFlowAsset* FlowAsset = GetFlowAsset();
+	if (!IsValid(FlowAsset))
+	{
+		return nullptr;
+	}
+
+	const UClass* ExpectedOwnerClass = FlowAsset->GetExpectedOwnerClass();
+	if (!IsValid(ExpectedOwnerClass))
+	{
+		return nullptr;
+	}
+
+	UObject* RootFlowOwner = FlowAsset->GetOwner();
+	if (!IsValid(RootFlowOwner))
+	{
+		return nullptr;
+	}
+
+	if (IFlowOwnerInterface* FlowOwnerInterface = TryGetFlowOwnerInterfaceFromRootFlowOwner(*RootFlowOwner, *ExpectedOwnerClass))
+	{
+		return FlowOwnerInterface;
+	}
+
+	if (IFlowOwnerInterface* FlowOwnerInterface = TryGetFlowOwnerInterfaceActor(*RootFlowOwner, *ExpectedOwnerClass))
+	{
+		return FlowOwnerInterface;
+	}
+
+	return nullptr;
+}
+
+IFlowOwnerInterface* UFlowNode::TryGetFlowOwnerInterfaceFromRootFlowOwner(UObject& RootFlowOwner, const UClass& ExpectedOwnerClass) const
+{
+	const UClass* RootFlowOwnerClass = RootFlowOwner.GetClass();
+	if (!IsValid(RootFlowOwnerClass))
+	{
+		return nullptr;
+	}
+
+	if (!RootFlowOwnerClass->IsChildOf(&ExpectedOwnerClass))
+	{
+		return nullptr;
+	}
+
+	// If the immediate owner is the expected class type, return its FlowOwnerInterface
+	return CastChecked<IFlowOwnerInterface>(&RootFlowOwner);
+}
+
+IFlowOwnerInterface* UFlowNode::TryGetFlowOwnerInterfaceActor(UObject& RootFlowOwner, const UClass& ExpectedOwnerClass) const
+{
+	// Special case if the immediate owner is a component, also consider the component's owning actor
+	const UActorComponent* FlowComponent = Cast<UActorComponent>(&RootFlowOwner);
+	if (!IsValid(FlowComponent))
+	{
+		return nullptr;
+	}
+
+	AActor* ActorOwner = FlowComponent->GetOwner();
+	if (!IsValid(ActorOwner))
+	{
+		return nullptr;
+	}
+
+	const UClass* ActorOwnerClass = ActorOwner->GetClass();
+	if (!ActorOwnerClass->IsChildOf(&ExpectedOwnerClass))
+	{
+		return nullptr;
+	}
+
+	return CastChecked<IFlowOwnerInterface>(ActorOwner);
 }
 
 void UFlowNode::AddInputPins(TArray<FFlowPin> Pins)

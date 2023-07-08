@@ -20,6 +20,7 @@
 #include "DetailCustomizations/FlowNode_CustomInputDetails.h"
 #include "DetailCustomizations/FlowNode_CustomOutputDetails.h"
 #include "DetailCustomizations/FlowNode_PlayLevelSequenceDetails.h"
+#include "DetailCustomizations/FlowOwnerFunctionRefCustomization.h"
 #include "DetailCustomizations/FlowNode_SubGraphDetails.h"
 
 #include "FlowAsset.h"
@@ -70,19 +71,7 @@ void FFlowEditorModule::StartupModule()
 	ISequencerModule& SequencerModule = FModuleManager::Get().LoadModuleChecked<ISequencerModule>("Sequencer");
 	FlowTrackCreateEditorHandle = SequencerModule.RegisterTrackEditor(FOnCreateTrackEditor::CreateStatic(&FFlowTrackEditor::CreateTrackEditor));
 
-	RegisterPropertyCustomizations();
-
-	// register detail customizations
-	RegisterCustomClassLayout(UFlowAsset::StaticClass(), FOnGetDetailCustomizationInstance::CreateStatic(&FFlowAssetDetails::MakeInstance));
-	RegisterCustomClassLayout(UFlowNode::StaticClass(), FOnGetDetailCustomizationInstance::CreateStatic(&FFlowNode_Details::MakeInstance));
-	RegisterCustomClassLayout(UFlowNode_ComponentObserver::StaticClass(), FOnGetDetailCustomizationInstance::CreateStatic(&FFlowNode_ComponentObserverDetails::MakeInstance));
-	RegisterCustomClassLayout(UFlowNode_CustomInput::StaticClass(), FOnGetDetailCustomizationInstance::CreateStatic(&FFlowNode_CustomInputDetails::MakeInstance));
-	RegisterCustomClassLayout(UFlowNode_CustomOutput::StaticClass(), FOnGetDetailCustomizationInstance::CreateStatic(&FFlowNode_CustomOutputDetails::MakeInstance));
-	RegisterCustomClassLayout(UFlowNode_PlayLevelSequence::StaticClass(), FOnGetDetailCustomizationInstance::CreateStatic(&FFlowNode_PlayLevelSequenceDetails::MakeInstance));
-	RegisterCustomClassLayout(UFlowNode_SubGraph::StaticClass(), FOnGetDetailCustomizationInstance::CreateStatic(&FFlowNode_SubGraphDetails::MakeInstance));
-
-	FPropertyEditorModule& PropertyModule = FModuleManager::GetModuleChecked<FPropertyEditorModule>("PropertyEditor");
-	PropertyModule.NotifyCustomizationModuleChanged();
+	RegisterDetailCustomizations();
 
 	// register asset indexers
 	if (FModuleManager::Get().IsModuleLoaded(AssetSearchModuleName))
@@ -96,25 +85,13 @@ void FFlowEditorModule::ShutdownModule()
 {
 	FFlowEditorStyle::Shutdown();
 
+	UnregisterDetailCustomizations();
+
 	UnregisterAssets();
 
 	// unregister track editors
 	ISequencerModule& SequencerModule = FModuleManager::Get().LoadModuleChecked<ISequencerModule>("Sequencer");
 	SequencerModule.UnRegisterTrackEditor(FlowTrackCreateEditorHandle);
-
-	// unregister details customizations
-	if (FModuleManager::Get().IsModuleLoaded("PropertyEditor"))
-	{
-		FPropertyEditorModule& PropertyModule = FModuleManager::GetModuleChecked<FPropertyEditorModule>("PropertyEditor");
-
-		for (auto It = CustomClassLayouts.CreateConstIterator(); It; ++It)
-		{
-			if (It->IsValid())
-			{
-				PropertyModule.UnregisterCustomClassLayout(*It);
-			}
-		}
-	}
 
 	FModuleManager::Get().OnModulesChanged().Remove(ModulesChangedHandle);
 }
@@ -171,22 +148,72 @@ void FFlowEditorModule::UnregisterAssets()
 	RegisteredAssetActions.Empty();
 }
 
-void FFlowEditorModule::RegisterPropertyCustomizations() const
-{
-	FPropertyEditorModule& PropertyModule = FModuleManager::LoadModuleChecked<FPropertyEditorModule>("PropertyEditor");
-
-	// notify on customization change
-	PropertyModule.NotifyCustomizationModuleChanged();
-}
-
 void FFlowEditorModule::RegisterCustomClassLayout(const TSubclassOf<UObject> Class, const FOnGetDetailCustomizationInstance DetailLayout)
 {
 	if (Class)
 	{
-		CustomClassLayouts.Add(Class->GetFName());
-
 		FPropertyEditorModule& PropertyModule = FModuleManager::GetModuleChecked<FPropertyEditorModule>("PropertyEditor");
 		PropertyModule.RegisterCustomClassLayout(Class->GetFName(), DetailLayout);
+
+		CustomClassLayouts.Add(Class->GetFName());
+	}
+}
+
+void FFlowEditorModule::RegisterCustomStructLayout(const UScriptStruct& Struct, const FOnGetPropertyTypeCustomizationInstance DetailLayout)
+{
+	if (FModuleManager::Get().IsModuleLoaded("PropertyEditor"))
+	{
+		FPropertyEditorModule& PropertyModule = FModuleManager::GetModuleChecked<FPropertyEditorModule>("PropertyEditor");
+		PropertyModule.RegisterCustomPropertyTypeLayout(Struct.GetFName(), DetailLayout);
+
+		CustomStructLayouts.Add(Struct.GetFName());
+	}
+}
+
+void FFlowEditorModule::RegisterDetailCustomizations()
+{
+	// register detail customizations
+	if (FModuleManager::Get().IsModuleLoaded("PropertyEditor"))
+	{
+		FPropertyEditorModule& PropertyModule = FModuleManager::GetModuleChecked<FPropertyEditorModule>("PropertyEditor");
+
+		RegisterCustomClassLayout(UFlowAsset::StaticClass(), FOnGetDetailCustomizationInstance::CreateStatic(&FFlowAssetDetails::MakeInstance));
+		RegisterCustomClassLayout(UFlowNode::StaticClass(), FOnGetDetailCustomizationInstance::CreateStatic(&FFlowNode_Details::MakeInstance));
+		RegisterCustomClassLayout(UFlowNode_ComponentObserver::StaticClass(), FOnGetDetailCustomizationInstance::CreateStatic(&FFlowNode_ComponentObserverDetails::MakeInstance));
+		RegisterCustomClassLayout(UFlowNode_CustomInput::StaticClass(), FOnGetDetailCustomizationInstance::CreateStatic(&FFlowNode_CustomInputDetails::MakeInstance));
+		RegisterCustomClassLayout(UFlowNode_CustomOutput::StaticClass(), FOnGetDetailCustomizationInstance::CreateStatic(&FFlowNode_CustomOutputDetails::MakeInstance));
+		RegisterCustomClassLayout(UFlowNode_PlayLevelSequence::StaticClass(), FOnGetDetailCustomizationInstance::CreateStatic(&FFlowNode_PlayLevelSequenceDetails::MakeInstance));
+    RegisterCustomClassLayout(UFlowNode_SubGraph::StaticClass(), FOnGetDetailCustomizationInstance::CreateStatic(&FFlowNode_SubGraphDetails::MakeInstance));
+		RegisterCustomStructLayout(*FFlowOwnerFunctionRef::StaticStruct(), FOnGetPropertyTypeCustomizationInstance::CreateStatic(&FFlowOwnerFunctionRefCustomization::MakeInstance));
+
+		PropertyModule.NotifyCustomizationModuleChanged();
+	}
+}
+
+void FFlowEditorModule::UnregisterDetailCustomizations()
+{
+	// unregister details customizations
+	if (FModuleManager::Get().IsModuleLoaded("PropertyEditor"))
+	{
+		FPropertyEditorModule& PropertyModule = FModuleManager::GetModuleChecked<FPropertyEditorModule>("PropertyEditor");
+
+		for (auto It = CustomClassLayouts.CreateConstIterator(); It; ++It)
+		{
+			if (It->IsValid())
+			{
+				PropertyModule.UnregisterCustomClassLayout(*It);
+			}
+		}
+
+		for (auto It = CustomStructLayouts.CreateConstIterator(); It; ++It)
+		{
+			if (It->IsValid())
+			{
+				PropertyModule.UnregisterCustomPropertyTypeLayout(*It);
+			}
+		}
+
+		PropertyModule.NotifyCustomizationModuleChanged();
 	}
 }
 
