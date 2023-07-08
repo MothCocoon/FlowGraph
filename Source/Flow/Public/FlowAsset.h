@@ -48,6 +48,7 @@ class FLOW_API UFlowAsset : public UObject
 	friend class UFlowSubsystem;
 
 	friend class FFlowAssetDetails;
+	friend class FFlowNode_SubGraphDetails;
 	friend class UFlowGraphSchema;
 
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Flow Asset")
@@ -104,6 +105,9 @@ protected:
 	TArray<TSubclassOf<UFlowNode>> AllowedNodeClasses;
 	TArray<TSubclassOf<UFlowNode>> DeniedNodeClasses;
 
+	TArray<TSubclassOf<UFlowNode>> AllowedInSubgraphNodeClasses;
+	TArray<TSubclassOf<UFlowNode>> DeniedInSubgraphNodeClasses;
+	
 	bool bStartNodePlacedAsGhostNode;
 
 private:
