@@ -4,6 +4,7 @@
 
 #include "DetailLayoutBuilder.h"
 #include "FlowAsset.h"
+#include "Launch/Resources/Version.h"
 #include "Nodes/Route/FlowNode_SubGraph.h"
 
 void FFlowNode_SubGraphDetails::CustomizeDetails(IDetailLayoutBuilder& DetailLayout)
@@ -51,13 +52,21 @@ void FFlowNode_SubGraphDetails::CustomizeDetails(IDetailLayoutBuilder& DetailLay
 		FString AllowedClassesString;
 		for (UClass* Class : AllowedClasses)
 		{
+#if ENGINE_MAJOR_VERSION == 5 && ENGINE_MINOR_VERSION < 1
+			AllowedClassesString.Append(FString::Printf(TEXT("%s,"), *Class->GetFName().ToString()));
+#else
 			AllowedClassesString.Append(FString::Printf(TEXT("%s,"), *Class->GetClassPathName().ToString()));
+#endif
 		}
 	
 		FString DisallowedClassesString;
 		for (UClass* Class : DisallowedClasses)
 		{
+#if ENGINE_MAJOR_VERSION == 5 && ENGINE_MINOR_VERSION < 1
+			DisallowedClassesString.Append(FString::Printf(TEXT("%s,"), *Class->GetFName().ToString()));
+#else
 			DisallowedClassesString.Append(FString::Printf(TEXT("%s,"), *Class->GetClassPathName().ToString()));
+#endif
 		}
 	
 		const auto AssetProperty = DetailLayout.GetProperty(FName("Asset"), UFlowNode_SubGraph::StaticClass());
