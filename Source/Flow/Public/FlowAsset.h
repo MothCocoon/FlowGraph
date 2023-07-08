@@ -71,6 +71,11 @@ class FLOW_API UFlowAsset : public UObject
 	// --
 
 	virtual EDataValidationResult ValidateAsset(FFlowMessageLog& MessageLog);
+
+	// Returns whether the node class is allowed in this flow asset
+	bool IsNodeClassAllowed(const UClass* FlowNodeClass) const;
+
+	static FString ValidationError_NodeClassNotAllowed;
 #endif
 
 	// IFlowGraphInterface

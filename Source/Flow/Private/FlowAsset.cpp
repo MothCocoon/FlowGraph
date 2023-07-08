@@ -16,6 +16,10 @@
 #include "Serialization/MemoryReader.h"
 #include "Serialization/MemoryWriter.h"
 
+#if WITH_EDITOR
+FString UFlowAsset::ValidationError_NodeClassNotAllowed = TEXT("Node class {0} is not allowed in this asset.");
+#endif
+
 UFlowAsset::UFlowAsset(const FObjectInitializer& ObjectInitializer)
 	: Super(ObjectInitializer)
 	, bWorldBound(true)
@@ -71,6 +75,12 @@ EDataValidationResult UFlowAsset::ValidateAsset(FFlowMessageLog& MessageLog)
 	{
 		if (Node.Value)
 		{
+			if (!IsNodeClassAllowed(Node.Value->GetClass()))
+			{
+				const FString ErrorMsg = FString::Format(*ValidationError_NodeClassNotAllowed, {*Node.Value->GetClass()->GetName()});
+				MessageLog.Error(*ErrorMsg, Node.Value);
+			}
+			
 			Node.Value->ValidationLog.Messages.Empty();
 			if (Node.Value->ValidateNode() == EDataValidationResult::Invalid)
 			{
@@ -80,6 +90,74 @@ EDataValidationResult UFlowAsset::ValidateAsset(FFlowMessageLog& MessageLog)
 	}
 
 	return MessageLog.Messages.Num() > 0 ? EDataValidationResult::Invalid : EDataValidationResult::Valid;
+}
+
+bool UFlowAsset::IsNodeClassAllowed(const UClass* FlowNodeClass) const
+{
+	if (FlowNodeClass == nullptr)
+	{
+		return false;
+	}
+
+	UFlowNode* NodeDefaults = FlowNodeClass->GetDefaultObject<UFlowNode>();
+
+	// UFlowNode class limits which UFlowAsset class can use it
+	{
+		for (const UClass* DeniedAssetClass : NodeDefaults->DeniedAssetClasses)
+		{
+			if (DeniedAssetClass && GetClass()->IsChildOf(DeniedAssetClass))
+			{
+				return false;
+			}
+		}
+
+		if (NodeDefaults->AllowedAssetClasses.Num() > 0)
+		{
+			bool bAllowedInAsset = false;
+			for (const UClass* AllowedAssetClass : NodeDefaults->AllowedAssetClasses)
+			{
+				if (AllowedAssetClass && GetClass()->IsChildOf(AllowedAssetClass))
+				{
+					bAllowedInAsset = true;
+					break;
+				}
+			}
+			if (!bAllowedInAsset)
+			{
+				return false;
+			}
+		}
+	}
+
+	// UFlowAsset class can limit which UFlowNode classes can be used
+	{
+		for (const UClass* DeniedNodeClass : DeniedNodeClasses)
+		{
+			if (DeniedNodeClass && FlowNodeClass->IsChildOf(DeniedNodeClass))
+			{
+				return false;
+			}
+		}
+
+		if (AllowedNodeClasses.Num() > 0)
+		{
+			bool bAllowedInAsset = false;
+			for (const UClass* AllowedNodeClass : AllowedNodeClasses)
+			{
+				if (AllowedNodeClass && FlowNodeClass->IsChildOf(AllowedNodeClass))
+				{
+					bAllowedInAsset = true;
+					break;
+				}
+			}
+			if (!bAllowedInAsset)
+			{
+				return false;
+			}
+		}
+	}
+
+	return true;
 }
 
 TSharedPtr<IFlowGraphInterface> UFlowAsset::FlowGraphInterface = nullptr;
