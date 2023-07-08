@@ -53,11 +53,8 @@ public:
 
 	static UClass* TryResolveOrLoadSoftClass(const FSoftClassPath& SoftClassPath);
 
-public:
-
 #if WITH_EDITORONLY_DATA
 	virtual FName GetCategoryName() const override { return FName("Flow Graph"); }
 	virtual FText GetSectionText() const override { return INVTEXT("Settings"); }
 #endif
-
 };
