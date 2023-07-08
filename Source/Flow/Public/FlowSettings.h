@@ -4,6 +4,7 @@
 
 #include "Engine/DeveloperSettings.h"
 #include "Templates/SubclassOf.h"
+#include "UObject/SoftObjectPath.h"
 #include "FlowSettings.generated.h"
 
 class UFlowNode;
@@ -43,11 +44,20 @@ class FLOW_API UFlowSettings : public UDeveloperSettings
 	UPROPERTY(EditAnywhere, config, Category = "Nodes")
 	bool bUseAdaptiveNodeTitles;
 
+	// Default class to use as a FlowAsset's "ExpectedOwnerClass" 
+	UPROPERTY(EditAnywhere, Config, meta = (MustImplement = "FlowOwnerInterface"))
+	FSoftClassPath DefaultExpectedOwnerClass;
+
+public:
+	UClass* GetDefaultExpectedOwnerClass() const;
+
+	static UClass* TryResolveOrLoadSoftClass(const FSoftClassPath& SoftClassPath);
+
 public:
 
 #if WITH_EDITORONLY_DATA
 	virtual FName GetCategoryName() const override { return FName("Flow Graph"); }
 	virtual FText GetSectionText() const override { return INVTEXT("Settings"); }
 #endif
-	
+
 };
