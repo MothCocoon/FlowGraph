@@ -36,7 +36,7 @@ protected:
 	 * This is useful if you want the ability to add new parts to your
 	 * graph after release.
 	 */
-	UPROPERTY(EditAnywhere)
+	UPROPERTY(EditAnywhere, Category = "Sequence")
 	bool bSavePinExecutionState = false;
 	
 	UPROPERTY(SaveGame)

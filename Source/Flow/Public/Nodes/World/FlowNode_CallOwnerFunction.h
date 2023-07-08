@@ -86,10 +86,10 @@ protected:
 protected:
 
 	// Function reference on the expected owner to call
-	UPROPERTY(EditAnywhere, meta = (DisplayName = "Function"))
+	UPROPERTY(EditAnywhere, Category = "Call Owner", meta = (DisplayName = "Function"))
 	FFlowOwnerFunctionRef FunctionRef;
 
 	// Parameter object to pass to the function when called
-	UPROPERTY(EditAnywhere, Instanced)
+	UPROPERTY(EditAnywhere, Category = "Call Owner", Instanced)
 	UFlowOwnerFunctionParams* Params;
 };
