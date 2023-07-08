@@ -9,6 +9,7 @@
 
 #include "Framework/MultiBox/MultiBoxBuilder.h"
 #include "ISequencerSection.h"
+#include "Launch/Resources/Version.h"
 #include "LevelSequence.h"
 #include "MovieSceneSequenceEditor.h"
 #include "Sections/MovieSceneEventSection.h"
@@ -163,7 +164,11 @@ void FFlowTrackEditor::HandleAddFlowTrackMenuEntryExecute(UClass* SectionType) c
 
 	TArray<UMovieSceneFlowTrack*> NewTracks;
 
+#if ENGINE_MAJOR_VERSION == 5 && ENGINE_MINOR_VERSION < 2
+	UMovieSceneFlowTrack* NewMasterTrack = FocusedMovieScene->AddMasterTrack<UMovieSceneFlowTrack>();
+#else
 	UMovieSceneFlowTrack* NewMasterTrack = FocusedMovieScene->AddTrack<UMovieSceneFlowTrack>();
+#endif
 	NewTracks.Add(NewMasterTrack);
 	if (GetSequencer().IsValid())
 	{

@@ -15,6 +15,7 @@
 
 class UFlowAsset;
 class UFlowSubsystem;
+class IFlowOwnerInterface;
 
 #if WITH_EDITOR
 DECLARE_DELEGATE(FFlowNodeEvent);
@@ -128,7 +129,15 @@ public:
 	// (if the immediate parent is an UActorComponent, it will get that Component's actor)
 	AActor* TryGetRootFlowActorOwner() const;
 
+	// Returns the IFlowOwnerInterface for the owner object (if implemented)
+	//  NOTE - will consider a UActorComponent owner's owning actor if appropriate
+	IFlowOwnerInterface* GetFlowOwnerInterface() const;
+
 protected:
+
+	// Helper functions for GetFlowOwnerInterface()
+	IFlowOwnerInterface* TryGetFlowOwnerInterfaceFromRootFlowOwner(UObject& RootFlowOwner, const UClass& ExpectedOwnerClass) const;
+	IFlowOwnerInterface* TryGetFlowOwnerInterfaceActor(UObject& RootFlowOwner, const UClass& ExpectedOwnerClass) const;
 
 	// Gets the Owning Object for this Node's RootFlow
 	UObject* TryGetRootFlowObjectOwner() const;

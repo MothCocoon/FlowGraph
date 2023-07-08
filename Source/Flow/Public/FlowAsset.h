@@ -350,8 +350,22 @@ public:
 	const TArray<UFlowNode*>& GetRecordedNodes() const { return RecordedNodes; }
 
 //////////////////////////////////////////////////////////////////////////
+// Expected Owner Class support (for use with CallOwnerFunction nodes)
+
+public:
+	UClass* GetExpectedOwnerClass() const { return ExpectedOwnerClass; }
+
+protected:
+	// Expects to be owned (at runtime) by an object with this class (or one of its subclasses)
+	// NOTE - If the class is an AActor, and the flow asset is owned by a component,
+	//        it will consider the component's owner for the AActor
+	UPROPERTY(EditAnywhere, meta = (MustImplement = "FlowOwnerInterface"))
+	TSubclassOf<UObject> ExpectedOwnerClass;
+
+//////////////////////////////////////////////////////////////////////////
 // SaveGame support
 
+public:
 	UFUNCTION(BlueprintCallable, Category = "SaveGame")
 	FFlowAssetSaveData SaveInstance(TArray<FFlowAssetSaveData>& SavedFlowInstances);
 

@@ -5,6 +5,7 @@
 #include "FlowAsset.h"
 #include "FlowModule.h"
 #include "FlowSubsystem.h"
+#include "Launch/Resources/Version.h"
 #include "LevelSequence/FlowLevelSequencePlayer.h"
 #include "MovieScene/MovieSceneFlowTrack.h"
 #include "MovieScene/MovieSceneFlowTriggerSection.h"
@@ -60,7 +61,11 @@ TArray<FFlowPin> UFlowNode_PlayLevelSequence::GetContextOutputs()
 	Sequence = Sequence.LoadSynchronous();
 	if (Sequence && Sequence->GetMovieScene())
 	{
+#if ENGINE_MAJOR_VERSION == 5 && ENGINE_MINOR_VERSION < 2
+		for (const UMovieSceneTrack* Track : Sequence->GetMovieScene()->GetMasterTracks())
+#else
 		for (const UMovieSceneTrack* Track : Sequence->GetMovieScene()->GetTracks())
+#endif
 		{
 			if (Track->GetClass() == UMovieSceneFlowTrack::StaticClass())
 			{
