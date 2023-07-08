@@ -55,7 +55,6 @@ class FLOWEDITOR_API UFlowGraphEditorSettings : public UDeveloperSettings
 	bool bHighlightOutputWiresOfSelectedNodes;
 
 public:
-
 	virtual FName GetCategoryName() const override { return FName("Flow Graph"); }
-	virtual FText GetSectionText() const override { return INVTEXT("Editor Settings"); }
+	virtual FText GetSectionText() const override { return INVTEXT("User Settings"); }
 };

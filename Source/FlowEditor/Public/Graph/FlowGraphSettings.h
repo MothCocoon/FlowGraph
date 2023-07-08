@@ -108,7 +108,6 @@ class FLOWEDITOR_API UFlowGraphSettings : public UDeveloperSettings
 	float SelectedWireThickness;
 
 public:
-	
 	virtual FName GetCategoryName() const override { return FName("Flow Graph"); }
 	virtual FText GetSectionText() const override { return INVTEXT("Graph Settings"); }
 };
