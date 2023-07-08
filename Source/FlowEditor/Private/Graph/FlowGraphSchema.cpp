@@ -353,64 +353,17 @@ void UFlowGraphSchema::ApplyNodeFilter(const UFlowAsset* AssetClassDefaults, con
 		return;
 	}
 
+	if (AssetClassDefaults == nullptr)
+	{
+		return;
+	}
+
+	if (!AssetClassDefaults->IsNodeClassAllowed(FlowNodeClass))
+	{
+		return;
+	}
+	
 	UFlowNode* NodeDefaults = FlowNodeClass->GetDefaultObject<UFlowNode>();
-
-	// UFlowNode class limits which UFlowAsset class can use it
-	{
-		for (const UClass* DeniedAssetClass : NodeDefaults->DeniedAssetClasses)
-		{
-			if (DeniedAssetClass && AssetClassDefaults->GetClass()->IsChildOf(DeniedAssetClass))
-			{
-				return;
-			}
-		}
-
-		if (NodeDefaults->AllowedAssetClasses.Num() > 0)
-		{
-			bool bAllowedInAsset = false;
-			for (const UClass* AllowedAssetClass : NodeDefaults->AllowedAssetClasses)
-			{
-				if (AllowedAssetClass && AssetClassDefaults->GetClass()->IsChildOf(AllowedAssetClass))
-				{
-					bAllowedInAsset = true;
-					break;
-				}
-			}
-			if (!bAllowedInAsset)
-			{
-				return;
-			}
-		}
-	}
-
-	// UFlowAsset class can limit which UFlowNode classes can be used
-	{
-		for (const UClass* DeniedNodeClass : AssetClassDefaults->DeniedNodeClasses)
-		{
-			if (DeniedNodeClass && FlowNodeClass->IsChildOf(DeniedNodeClass))
-			{
-				return;
-			}
-		}
-
-		if (AssetClassDefaults->AllowedNodeClasses.Num() > 0)
-		{
-			bool bAllowedInAsset = false;
-			for (const UClass* AllowedNodeClass : AssetClassDefaults->AllowedNodeClasses)
-			{
-				if (AllowedNodeClass && FlowNodeClass->IsChildOf(AllowedNodeClass))
-				{
-					bAllowedInAsset = true;
-					break;
-				}
-			}
-			if (!bAllowedInAsset)
-			{
-				return;
-			}
-		}
-	}
-
 	FilteredNodes.Emplace(NodeDefaults);
 }
 

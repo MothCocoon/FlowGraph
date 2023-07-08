@@ -48,6 +48,7 @@ class FLOW_API UFlowAsset : public UObject
 	friend class UFlowSubsystem;
 
 	friend class FFlowAssetDetails;
+	friend class FFlowNode_SubGraphDetails;
 	friend class UFlowGraphSchema;
 
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Flow Asset")
@@ -71,6 +72,11 @@ class FLOW_API UFlowAsset : public UObject
 	// --
 
 	virtual EDataValidationResult ValidateAsset(FFlowMessageLog& MessageLog);
+
+	// Returns whether the node class is allowed in this flow asset
+	bool IsNodeClassAllowed(const UClass* FlowNodeClass) const;
+
+	static FString ValidationError_NodeClassNotAllowed;
 #endif
 
 	// IFlowGraphInterface
@@ -99,6 +105,9 @@ protected:
 	TArray<TSubclassOf<UFlowNode>> AllowedNodeClasses;
 	TArray<TSubclassOf<UFlowNode>> DeniedNodeClasses;
 
+	TArray<TSubclassOf<UFlowNode>> AllowedInSubgraphNodeClasses;
+	TArray<TSubclassOf<UFlowNode>> DeniedInSubgraphNodeClasses;
+	
 	bool bStartNodePlacedAsGhostNode;
 
 private:

@@ -14,6 +14,7 @@ class FLOW_API UFlowNode_SubGraph : public UFlowNode
 	GENERATED_UCLASS_BODY()
 
 	friend class UFlowAsset;
+	friend class FFlowNode_SubGraphDetails;
 	friend class UFlowSubsystem;
 
 	static FFlowPin StartPin;
@@ -48,8 +49,20 @@ public:
 protected:
 	virtual void OnLoad_Implementation() override;
 
-public:
+
+#if WITH_EDITORONLY_DATA
+protected:
+	// All the classes allowed to be used as assets on this subgraph node
+	UPROPERTY()
+	TArray<TSubclassOf<UFlowAsset>> AllowedAssignedAssetClasses;
+
+	// All the classes disallowed to be used as assets on this subgraph node
+	UPROPERTY()
+	TArray<TSubclassOf<UFlowAsset>> DeniedAssignedAssetClasses;
+#endif
+
 #if WITH_EDITOR
+public:
 	virtual FString GetNodeDescription() const override;
 	virtual UObject* GetAssetToEdit() override;
 	virtual EDataValidationResult ValidateNode() override;
