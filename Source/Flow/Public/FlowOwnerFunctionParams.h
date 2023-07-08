@@ -23,7 +23,7 @@ public:
 	void PreExecute(UFlowNode_CallOwnerFunction& InSourceNode, const FName& InputPinName);
 	void PostExecute();
 
-	UFUNCTION(BlueprintNativeEvent, BlueprintPure)
+	UFUNCTION(BlueprintNativeEvent, BlueprintPure, Category = "FlowOwnerFunction")
 	bool ShouldFinishForOutputName(const FName& OutputName) const;
 
 #if WITH_EDITORONLY_DATA
@@ -41,43 +41,43 @@ protected:
 
 	// Called prior to the owner executing the function described by this object.
 	//  Can be overridden to prepare the stateful data before execution.
-	UFUNCTION(BlueprintImplementableEvent, DisplayName = "PreExecute")
+	UFUNCTION(BlueprintImplementableEvent, Category = "FlowOwnerFunction", DisplayName = "PreExecute")
 	void BP_PreExecute();
 
 	// Cleans up the stateful data in this Params struct.
 	//  Can be overridden to cleanup the stateful data after execution.
-	UFUNCTION(BlueprintImplementableEvent, DisplayName = "PostExecute")
+	UFUNCTION(BlueprintImplementableEvent, Category = "FlowOwnerFunction", DisplayName = "PostExecute")
 	void BP_PostExecute();
 
 	// Get the input pin names for the SourceNode
 	//  Valid only if called between PreExecute() and PostExecute(), inclusive
-	UFUNCTION(BlueprintCallable, BlueprintPure, DisplayName = "GetInputNames")
+	UFUNCTION(BlueprintCallable, BlueprintPure, Category = "FlowOwnerFunction", DisplayName = "GetInputNames")
 	TArray<FName> BP_GetInputNames() const;
 
 	// Get the output pin names for the SourceNode
 	//  Valid only if called between PreExecute() and PostExecute(), inclusive
-	UFUNCTION(BlueprintCallable, BlueprintPure, DisplayName = "GetOutputNames")
+	UFUNCTION(BlueprintCallable, BlueprintPure, Category = "FlowOwnerFunction", DisplayName = "GetOutputNames")
 	TArray<FName> BP_GetOutputNames() const;
 
 protected:
 
 	// CallOwnerObjectFunction node that is executing this set of function params.
 	//  Valid only if called between PreExecute() and PostExecute(), inclusive
-	UPROPERTY(Transient, BlueprintReadOnly)
+	UPROPERTY(Transient, BlueprintReadOnly, Category = "FlowOwnerFunction")
 	UFlowNode_CallOwnerFunction* SourceNode = nullptr;
 
 	// This is the Name from the Input Pin that caused this node to Execute.
 	//  Valid only if called between PreExecute() and PostExecute(), inclusive
-	UPROPERTY(Transient, BlueprintReadOnly)
+	UPROPERTY(Transient, BlueprintReadOnly, Category = "FlowOwnerFunction")
 	FName ExecutedInputPinName;
 
 #if WITH_EDITORONLY_DATA
 	// Input pin names for this function
-	UPROPERTY(EditDefaultsOnly)
+	UPROPERTY(EditDefaultsOnly, Category = "FlowOwnerFunction")
 	TArray<FName> InputNames;
 
 	// Output pin names for this function
-	UPROPERTY(EditDefaultsOnly)
+	UPROPERTY(EditDefaultsOnly, Category = "FlowOwnerFunction")
 	TArray<FName> OutputNames;
 #endif // WITH_EDITORONLY_DATA
 };

@@ -44,7 +44,7 @@ public:
 protected:
 
 	// The name of the function to call
-	UPROPERTY(VisibleAnywhere)
+	UPROPERTY(VisibleAnywhere, Category = "FlowOwnerFunction")
 	FName FunctionName = NAME_None;	
 
 	// The function to call
@@ -53,7 +53,7 @@ protected:
 	TObjectPtr<UFunction> Function = nullptr;
 
 #if WITH_EDITORONLY_DATA
-	UPROPERTY(VisibleAnywhere, meta = (DisplayName = "Function Parameters Class"))
+	UPROPERTY(VisibleAnywhere, Category = "FlowOwnerFunction", meta = (DisplayName = "Function Parameters Class"))
 	TSubclassOf<UFlowOwnerFunctionParams> ParamsClass;
 #endif // WITH_EDITORONLY_DATA
 };
