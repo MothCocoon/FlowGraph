@@ -2,7 +2,6 @@
 
 #pragma once
 
-#include "Engine/StreamableManager.h"
 #include "GameFramework/Actor.h"
 #include "GameplayTagContainer.h"
 #include "Subsystems/GameInstanceSubsystem.h"
@@ -49,8 +48,6 @@ private:
 	/* Assets instanced by Sub Graph nodes */
 	UPROPERTY()
 	TMap<UFlowNode_SubGraph*, UFlowAsset*> InstancedSubFlows;
-
-	FStreamableManager Streamable;
 
 #if WITH_EDITOR
 public:
