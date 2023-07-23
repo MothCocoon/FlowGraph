@@ -3,6 +3,7 @@
 #pragma once
 
 #include "EngineDefines.h"
+#include "Engine/StreamableManager.h"
 #include "LevelSequencePlayer.h"
 #include "MovieSceneSequencePlayer.h"
 
@@ -26,6 +27,7 @@ class FLOW_API UFlowNode_PlayLevelSequence : public UFlowNode
 	GENERATED_UCLASS_BODY()
 	friend struct FFlowTrackExecutionToken;
 
+public:	
 	static FFlowNodeLevelSequenceEvent OnPlaybackStarted;
 	static FFlowNodeLevelSequenceEvent OnPlaybackCompleted;
 
@@ -78,6 +80,8 @@ protected:
 
 	UPROPERTY(SaveGame)
 	float TimeDilation;
+
+	FStreamableManager StreamableManager;
 
 public:
 #if WITH_EDITOR
