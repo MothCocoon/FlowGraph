@@ -2,8 +2,10 @@
 
 #include "Nodes/FlowPin.h"
 
-#if !UE_BUILD_SHIPPING
+//////////////////////////////////////////////////////////////////////////
+// Pin Record
 
+#if !UE_BUILD_SHIPPING
 FString FPinRecord::NoActivations = TEXT("No activations");
 FString FPinRecord::PinActivations = TEXT("Pin activations");
 FString FPinRecord::ForcedActivation = TEXT(" (forced activation)");
@@ -31,5 +33,86 @@ FORCEINLINE FString FPinRecord::DoubleDigit(const int32 Number)
 {
 	return Number > 9 ? FString::FromInt(Number) : TEXT("0") + FString::FromInt(Number);
 }
-
 #endif
+
+//////////////////////////////////////////////////////////////////////////
+// Pin Trait
+
+void FFlowPinTrait::AllowTrait()
+{
+	if (!bTraitAllowed)
+	{
+		bTraitAllowed = true;
+		bEnabled = true;
+	}
+}
+
+void FFlowPinTrait::DisallowTrait()
+{
+	if (bTraitAllowed)
+	{
+		bTraitAllowed = false;
+		bEnabled = false;
+	}
+}
+
+bool FFlowPinTrait::IsAllowed() const
+{
+	return bTraitAllowed;
+}
+
+void FFlowPinTrait::EnableTrait()
+{
+	if (bTraitAllowed && !bEnabled)
+	{
+		bEnabled = true;
+	}
+}
+
+void FFlowPinTrait::DisableTrait()
+{
+	if (bTraitAllowed && bEnabled)
+	{
+		bEnabled = false;
+	}
+}
+
+void FFlowPinTrait::ToggleTrait()
+{
+	if (bTraitAllowed)
+	{
+		bTraitAllowed = false;
+		bEnabled = false;
+	}
+	else
+	{
+		bTraitAllowed = true;
+		bEnabled = true;
+	}
+}
+
+bool FFlowPinTrait::CanEnable() const
+{
+	return bTraitAllowed && !bEnabled;
+}
+
+bool FFlowPinTrait::IsEnabled() const
+{
+	return bTraitAllowed && bEnabled;
+}
+
+void FFlowPinTrait::MarkAsHit()
+{
+	bHit = true;
+}
+
+void FFlowPinTrait::ResetHit()
+{
+	bHit = false;
+}
+
+bool FFlowPinTrait::IsHit() const
+{
+	return bHit;
+}
+

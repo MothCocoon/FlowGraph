@@ -101,18 +101,18 @@ const FSlateBrush* SFlowGraphNode::GetShadowBrush(bool bSelected) const
 void SFlowGraphNode::GetOverlayBrushes(bool bSelected, const FVector2D WidgetSize, TArray<FOverlayBrushInfo>& Brushes) const
 {
 	// Node breakpoint
-	if (FlowGraphNode->NodeBreakpoint.bHasBreakpoint)
+	if (FlowGraphNode->NodeBreakpoint.IsAllowed())
 	{
 		FOverlayBrushInfo NodeBrush;
 
-		if (FlowGraphNode->NodeBreakpoint.bBreakpointHit)
+		if (FlowGraphNode->NodeBreakpoint.IsHit())
 		{
 			NodeBrush.Brush = FFlowEditorStyle::Get()->GetBrush(TEXT("FlowGraph.BreakpointHit"));
 			NodeBrush.OverlayOffset.X = WidgetSize.X - 12.0f;
 		}
 		else
 		{
-			NodeBrush.Brush = FFlowEditorStyle::Get()->GetBrush(FlowGraphNode->NodeBreakpoint.bBreakpointEnabled ? TEXT("FlowGraph.BreakpointEnabled") : TEXT("FlowGraph.BreakpointDisabled"));
+			NodeBrush.Brush = FFlowEditorStyle::Get()->GetBrush(FlowGraphNode->NodeBreakpoint.IsEnabled() ? TEXT("FlowGraph.BreakpointEnabled") : TEXT("FlowGraph.BreakpointDisabled"));
 			NodeBrush.OverlayOffset.X = WidgetSize.X;
 		}
 
@@ -122,7 +122,7 @@ void SFlowGraphNode::GetOverlayBrushes(bool bSelected, const FVector2D WidgetSiz
 	}
 
 	// Pin breakpoints
-	for (const TPair<FEdGraphPinReference, FFlowBreakpoint>& PinBreakpoint : FlowGraphNode->PinBreakpoints)
+	for (const TPair<FEdGraphPinReference, FFlowPinTrait>& PinBreakpoint : FlowGraphNode->PinBreakpoints)
 	{
 		if (PinBreakpoint.Key.Get()->Direction == EGPD_Input)
 		{
@@ -135,13 +135,13 @@ void SFlowGraphNode::GetOverlayBrushes(bool bSelected, const FVector2D WidgetSiz
 	}
 }
 
-void SFlowGraphNode::GetPinBrush(const bool bLeftSide, const float WidgetWidth, const int32 PinIndex, const FFlowBreakpoint& Breakpoint, TArray<FOverlayBrushInfo>& Brushes) const
+void SFlowGraphNode::GetPinBrush(const bool bLeftSide, const float WidgetWidth, const int32 PinIndex, const FFlowPinTrait& Breakpoint, TArray<FOverlayBrushInfo>& Brushes) const
 {
-	if (Breakpoint.bHasBreakpoint)
+	if (Breakpoint.IsAllowed())
 	{
 		FOverlayBrushInfo PinBrush;
 
-		if (Breakpoint.bBreakpointHit)
+		if (Breakpoint.IsHit())
 		{
 			PinBrush.Brush = FFlowEditorStyle::Get()->GetBrush(TEXT("FlowGraph.PinBreakpointHit"));
 			PinBrush.OverlayOffset.X = bLeftSide ? 0.0f : (WidgetWidth - 36.0f);
@@ -149,7 +149,7 @@ void SFlowGraphNode::GetPinBrush(const bool bLeftSide, const float WidgetWidth, 
 		}
 		else
 		{
-			PinBrush.Brush = FFlowEditorStyle::Get()->GetBrush(Breakpoint.bBreakpointEnabled ? TEXT("FlowGraph.BreakpointEnabled") : TEXT("FlowGraph.BreakpointDisabled"));
+			PinBrush.Brush = FFlowEditorStyle::Get()->GetBrush(Breakpoint.IsEnabled() ? TEXT("FlowGraph.BreakpointEnabled") : TEXT("FlowGraph.BreakpointDisabled"));
 			PinBrush.OverlayOffset.X = bLeftSide ? -24.0f : WidgetWidth;
 			PinBrush.OverlayOffset.Y = 16.0f + PinIndex * 28.0f;
 		}
