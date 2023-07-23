@@ -269,7 +269,32 @@ void UFlowAsset::HarvestNodeConnections()
 		}
 	}
 }
+#endif
 
+UFlowNode* UFlowAsset::GetDefaultEntryNode() const
+{
+	UFlowNode* FirstStartNode = nullptr;
+
+	for (const TPair<FGuid, UFlowNode*>& Node : Nodes)
+	{
+		if (UFlowNode_Start* StartNode = Cast<UFlowNode_Start>(Node.Value))
+		{
+			if (StartNode->GetConnectedNodes().Num() > 0)
+			{
+				return StartNode;
+			}
+			else if (FirstStartNode == nullptr)
+			{
+				FirstStartNode = StartNode;
+			}
+		}
+	}
+
+	// If none of the found start nodes have connections, fallback to the first start node we found
+	return FirstStartNode;
+}
+
+#if WITH_EDITOR
 void UFlowAsset::AddCustomInput(const FName& EventName)
 {
 	if (!CustomInputs.Contains(EventName))
@@ -301,7 +326,7 @@ void UFlowAsset::RemoveCustomOutput(const FName& EventName)
 		CustomOutputs.Remove(EventName);
 	}
 }
-#endif // WITH_EDITOR
+#endif
 
 UFlowNode_CustomInput* UFlowAsset::TryFindCustomInputNodeByEventName(const FName& EventName) const
 {
@@ -316,33 +341,10 @@ UFlowNode_CustomInput* UFlowAsset::TryFindCustomInputNodeByEventName(const FName
 	return nullptr;
 }
 
-UFlowNode* UFlowAsset::GetDefaultEntryNode() const
-{
-	UFlowNode* FirstStartNode = nullptr;
-
-	for (const TPair<FGuid, UFlowNode*>& Node : Nodes)
-	{
-		if (UFlowNode_Start* StartNode = Cast<UFlowNode_Start>(Node.Value))
-		{
-			if (StartNode->GetConnectedNodes().Num() > 0)
-			{
-				return StartNode;
-			}
-			else if (FirstStartNode == nullptr)
-			{
-				FirstStartNode = StartNode;
-			}
-		}
-	}
-
-	// If none of the found start nodes have connections, fallback to the first start node we found
-	return FirstStartNode;
-}
-
-TArray<UFlowNode*> UFlowAsset::GetNodesInExecutionOrder(const TSubclassOf<UFlowNode> FlowNodeClass)
+TArray<UFlowNode*> UFlowAsset::GetNodesInExecutionOrder(UFlowNode* FirstIteratedNode, const TSubclassOf<UFlowNode> FlowNodeClass)
 {
 	TArray<UFlowNode*> FoundNodes;
-	GetNodesInExecutionOrder<UFlowNode>(FoundNodes);
+	GetNodesInExecutionOrder<UFlowNode>(FirstIteratedNode, FoundNodes);
 
 	// filter out nodes by class
 	for (int32 i = FoundNodes.Num() - 1; i >= 0; i--)
@@ -477,37 +479,6 @@ void UFlowAsset::DeinitializeInstance()
 		if (ActiveInstancesLeft == 0 && GetFlowSubsystem())
 		{
 			GetFlowSubsystem()->RemoveInstancedTemplate(TemplateAsset);
-		}
-	}
-}
-
-void UFlowAsset::PreloadNodes()
-{
-	TArray<UFlowNode*> GraphEntryNodes = {GetDefaultEntryNode()};
-	for (UFlowNode_CustomInput* CustomInput : CustomInputNodes)
-	{
-		GraphEntryNodes.Emplace(CustomInput);
-	}
-
-	// NOTE: this is just the example algorithm of gathering nodes for pre-load
-	for (UFlowNode* EntryNode : GraphEntryNodes)
-	{
-		for (const TPair<TSubclassOf<UFlowNode>, int32>& Node : UFlowSettings::Get()->DefaultPreloadDepth)
-		{
-			if (Node.Value > 0)
-			{
-				TArray<UFlowNode*> FoundNodes;
-				UFlowNode::RecursiveFindNodesByClass(EntryNode, Node.Key, Node.Value, FoundNodes);
-
-				for (UFlowNode* FoundNode : FoundNodes)
-				{
-					if (!PreloadedNodes.Contains(FoundNode))
-					{
-						FoundNode->TriggerPreload();
-						PreloadedNodes.Emplace(FoundNode);
-					}
-				}
-			}
 		}
 	}
 }
@@ -699,7 +670,7 @@ FFlowAssetSaveData UFlowAsset::SaveInstance(TArray<FFlowAssetSaveData>& SavedFlo
 
 	// iterate nodes
 	TArray<UFlowNode*> NodesInExecutionOrder;
-	GetNodesInExecutionOrder<UFlowNode>(NodesInExecutionOrder);
+	GetNodesInExecutionOrder<UFlowNode>(GetDefaultEntryNode(), NodesInExecutionOrder);
 	for (UFlowNode* Node : NodesInExecutionOrder)
 	{
 		if (Node && Node->ActivationState == EFlowNodeState::Active)

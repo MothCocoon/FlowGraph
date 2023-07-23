@@ -159,18 +159,33 @@ public:
 
 	virtual UFlowNode* GetDefaultEntryNode() const;
 
+#if WITH_EDITOR
+protected:
+	void AddCustomInput(const FName& EventName);
+	void RemoveCustomInput(const FName& EventName);
+
+	void AddCustomOutput(const FName& EventName);
+	void RemoveCustomOutput(const FName& EventName);
+#endif
+
+public:
+	const TArray<FName>& GetCustomInputs() const { return CustomInputs; }
+	const TArray<FName>& GetCustomOutputs() const { return CustomOutputs; }
+
+	UFlowNode_CustomInput* TryFindCustomInputNodeByEventName(const FName& EventName) const;
+
 	UFUNCTION(BlueprintPure, Category = "FlowAsset", meta = (DeterminesOutputType = "FlowNodeClass"))
-	TArray<UFlowNode*> GetNodesInExecutionOrder(const TSubclassOf<UFlowNode> FlowNodeClass);
+	TArray<UFlowNode*> GetNodesInExecutionOrder(UFlowNode* FirstIteratedNode, const TSubclassOf<UFlowNode> FlowNodeClass);
 
 	template <class T>
-	void GetNodesInExecutionOrder(TArray<T*>& OutNodes)
+	void GetNodesInExecutionOrder(UFlowNode* FirstIteratedNode, TArray<T*>& OutNodes)
 	{
 		static_assert(TPointerIsConvertibleFromTo<T, const UFlowNode>::Value, "'T' template parameter to GetNodesInExecutionOrder must be derived from UFlowNode");
 
-		if (UFlowNode* FoundStartNode = GetDefaultEntryNode())
+		if (FirstIteratedNode)
 		{
 			TSet<TObjectKey<UFlowNode>> IteratedNodes;
-			GetNodesInExecutionOrder_Recursive(FoundStartNode, IteratedNodes, OutNodes);
+			GetNodesInExecutionOrder_Recursive(FirstIteratedNode, IteratedNodes, OutNodes);
 		}
 	}
 
@@ -194,21 +209,6 @@ protected:
 		}
 	}
 
-public:	
-	const TArray<FName>& GetCustomInputs() const { return CustomInputs; }
-	const TArray<FName>& GetCustomOutputs() const { return CustomOutputs; }
-
-	UFlowNode_CustomInput* TryFindCustomInputNodeByEventName(const FName& EventName) const;
-
-#if WITH_EDITOR
-protected:
-	void AddCustomInput(const FName& EventName);
-	void RemoveCustomInput(const FName& EventName);
-
-	void AddCustomOutput(const FName& EventName);
-	void RemoveCustomOutput(const FName& EventName);
-#endif // WITH_EDITOR
-	
 //////////////////////////////////////////////////////////////////////////
 // Instances of the template asset
 
@@ -308,7 +308,8 @@ public:
 	UFUNCTION(BlueprintPure, Category = "Flow")
 	AActor* TryFindActorOwner() const;
 
-	virtual void PreloadNodes();
+	// Opportunity to preload content of project-specific nodes
+	virtual void PreloadNodes() {}
 
 	virtual void PreStartFlow();
 	virtual void StartFlow();
