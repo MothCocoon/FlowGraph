@@ -2,7 +2,6 @@
 
 #include "FlowSettings.h"
 #include "FlowComponent.h"
-#include "FlowOwnerInterface.h"
 
 UFlowSettings::UFlowSettings(const FObjectInitializer& ObjectInitializer)
 	: Super(ObjectInitializer)
