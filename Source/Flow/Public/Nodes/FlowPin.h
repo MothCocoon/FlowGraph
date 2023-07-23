@@ -210,3 +210,47 @@ private:
 	FORCEINLINE static FString DoubleDigit(const int32 Number);
 };
 #endif
+
+// It can represent any trait added on the specific node instance, i.e. breakpoint
+USTRUCT()
+struct FLOW_API FFlowPinTrait
+{
+	GENERATED_USTRUCT_BODY()
+
+protected:	
+	UPROPERTY()
+	uint8 bTraitAllowed : 1;
+
+	uint8 bEnabled : 1;
+	uint8 bHit : 1;
+
+public:
+	FFlowPinTrait()
+		: bTraitAllowed(false)
+		, bEnabled(false)
+		, bHit(false)
+	{
+	};
+
+	explicit FFlowPinTrait(const bool bInitialState)
+		: bTraitAllowed(bInitialState)
+		, bEnabled(bInitialState)
+		, bHit(false)
+	{
+	};
+
+	void AllowTrait();
+	void DisallowTrait();
+	bool IsAllowed() const;
+
+	void EnableTrait();
+	void DisableTrait();
+	void ToggleTrait();
+
+	bool CanEnable() const;
+	bool IsEnabled() const;
+
+	void MarkAsHit();
+	void ResetHit();
+	bool IsHit() const;
+};
