@@ -29,75 +29,6 @@
 
 #define LOCTEXT_NAMESPACE "FlowGraphNode"
 
-//////////////////////////////////////////////////////////////////////////
-// Flow Breakpoint
-
-void FFlowBreakpoint::AddBreakpoint()
-{
-	if (!bHasBreakpoint)
-	{
-		bHasBreakpoint = true;
-		bBreakpointEnabled = true;
-	}
-}
-
-void FFlowBreakpoint::RemoveBreakpoint()
-{
-	if (bHasBreakpoint)
-	{
-		bHasBreakpoint = false;
-		bBreakpointEnabled = false;
-	}
-}
-
-bool FFlowBreakpoint::HasBreakpoint() const
-{
-	return bHasBreakpoint;
-}
-
-void FFlowBreakpoint::EnableBreakpoint()
-{
-	if (bHasBreakpoint && !bBreakpointEnabled)
-	{
-		bBreakpointEnabled = true;
-	}
-}
-
-bool FFlowBreakpoint::CanEnableBreakpoint() const
-{
-	return bHasBreakpoint && !bBreakpointEnabled;
-}
-
-void FFlowBreakpoint::DisableBreakpoint()
-{
-	if (bHasBreakpoint && bBreakpointEnabled)
-	{
-		bBreakpointEnabled = false;
-	}
-}
-
-bool FFlowBreakpoint::IsBreakpointEnabled() const
-{
-	return bHasBreakpoint && bBreakpointEnabled;
-}
-
-void FFlowBreakpoint::ToggleBreakpoint()
-{
-	if (bHasBreakpoint)
-	{
-		bHasBreakpoint = false;
-		bBreakpointEnabled = false;
-	}
-	else
-	{
-		bHasBreakpoint = true;
-		bBreakpointEnabled = true;
-	}
-}
-
-//////////////////////////////////////////////////////////////////////////
-// Flow Graph Node
-
 UFlowGraphNode::UFlowGraphNode(const FObjectInitializer& ObjectInitializer)
 	: Super(ObjectInitializer)
 	, FlowNode(nullptr)
@@ -450,7 +381,7 @@ void UFlowGraphNode::ReconstructSinglePin(UEdGraphPin* NewPin, UEdGraphPin* OldP
 	NewPin->MovePersistentDataFromOldPin(*OldPin);
 
 	// Update the in breakpoints as the old pin will be going the way of the dodo
-	for (TPair<FEdGraphPinReference, FFlowBreakpoint>& PinBreakpoint : PinBreakpoints)
+	for (TPair<FEdGraphPinReference, FFlowPinTrait>& PinBreakpoint : PinBreakpoints)
 	{
 		if (PinBreakpoint.Key.Get() == OldPin)
 		{
@@ -1003,7 +934,7 @@ void UFlowGraphNode::OnInputTriggered(const int32 Index)
 {
 	if (InputPins.IsValidIndex(Index) && PinBreakpoints.Contains(InputPins[Index]))
 	{
-		PinBreakpoints[InputPins[Index]].bBreakpointHit = true;
+		PinBreakpoints[InputPins[Index]].MarkAsHit();
 		TryPausingSession(true);
 	}
 
@@ -1014,7 +945,7 @@ void UFlowGraphNode::OnOutputTriggered(const int32 Index)
 {
 	if (OutputPins.IsValidIndex(Index) && PinBreakpoints.Contains(OutputPins[Index]))
 	{
-		PinBreakpoints[OutputPins[Index]].bBreakpointHit = true;
+		PinBreakpoints[OutputPins[Index]].MarkAsHit();
 		TryPausingSession(true);
 	}
 
@@ -1024,9 +955,9 @@ void UFlowGraphNode::OnOutputTriggered(const int32 Index)
 void UFlowGraphNode::TryPausingSession(bool bPauseSession)
 {
 	// Node breakpoints waits on any pin triggered
-	if (NodeBreakpoint.IsBreakpointEnabled())
+	if (NodeBreakpoint.IsEnabled())
 	{
-		NodeBreakpoint.bBreakpointHit = true;
+		NodeBreakpoint.MarkAsHit();
 		bPauseSession = true;
 	}
 
@@ -1054,10 +985,10 @@ void UFlowGraphNode::ResetBreakpoints()
 	FEditorDelegates::ResumePIE.RemoveAll(this);
 	FEditorDelegates::EndPIE.RemoveAll(this);
 
-	NodeBreakpoint.bBreakpointHit = false;
-	for (TPair<FEdGraphPinReference, FFlowBreakpoint>& PinBreakpoint : PinBreakpoints)
+	NodeBreakpoint.ResetHit();
+	for (TPair<FEdGraphPinReference, FFlowPinTrait>& PinBreakpoint : PinBreakpoints)
 	{
-		PinBreakpoint.Value.bBreakpointHit = false;
+		PinBreakpoint.Value.ResetHit();
 	}
 }
 
