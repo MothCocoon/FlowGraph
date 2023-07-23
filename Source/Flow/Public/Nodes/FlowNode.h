@@ -3,7 +3,6 @@
 #pragma once
 
 #include "EdGraph/EdGraphNode.h"
-#include "Engine/StreamableManager.h"
 #include "GameplayTagContainer.h"
 #include "Templates/SubclassOf.h"
 #include "VisualLogger/VisualLoggerDebugSnapshotInterface.h"
@@ -254,8 +253,6 @@ public:
 	bool bPreloaded;
 
 protected:
-	FStreamableManager StreamableManager;
-
 	UPROPERTY(SaveGame)
 	EFlowNodeState ActivationState;
 
