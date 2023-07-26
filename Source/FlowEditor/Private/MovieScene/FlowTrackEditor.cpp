@@ -9,7 +9,6 @@
 
 #include "Framework/MultiBox/MultiBoxBuilder.h"
 #include "ISequencerSection.h"
-#include "Launch/Resources/Version.h"
 #include "LevelSequence.h"
 #include "MovieSceneSequenceEditor.h"
 #include "Sections/MovieSceneEventSection.h"

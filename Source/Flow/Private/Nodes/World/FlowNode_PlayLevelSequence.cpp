@@ -5,7 +5,6 @@
 #include "FlowAsset.h"
 #include "FlowModule.h"
 #include "FlowSubsystem.h"
-#include "Launch/Resources/Version.h"
 #include "LevelSequence/FlowLevelSequencePlayer.h"
 #include "MovieScene/MovieSceneFlowTrack.h"
 #include "MovieScene/MovieSceneFlowTriggerSection.h"

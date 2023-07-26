@@ -4,7 +4,7 @@
 
 #include "DiffResults.h"
 #include "IAssetTypeActions.h"
-#include "Kismet/Private/DiffControl.h"
+#include "Editor/Kismet/Private/DiffControl.h"
 
 struct FDiffResultItem;
 class UEdGraph;

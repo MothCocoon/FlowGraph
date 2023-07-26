@@ -7,7 +7,6 @@
 
 #include "EdGraph/EdGraph.h"
 #include "GraphDiffControl.h"
-#include "Launch/Resources/Version.h"
 #include "SBlueprintDiff.h"
 
 #define LOCTEXT_NAMESPACE "SFlowDiffControl"
@@ -170,6 +169,7 @@ void FFlowGraphToDiff::BuildDiffSourceArray()
 	FoundDiffs->Empty();
 	FGraphDiffControl::DiffGraphs(GraphOld, GraphNew, *FoundDiffs);
 
+#if ENGINE_MAJOR_VERSION == 5 && ENGINE_MINOR_VERSION < 3
 	struct SortDiff
 	{
 		bool operator ()(const FDiffSingleResult& A, const FDiffSingleResult& B) const
@@ -179,6 +179,9 @@ void FFlowGraphToDiff::BuildDiffSourceArray()
 	};
 
 	Sort(FoundDiffs->GetData(), FoundDiffs->Num(), SortDiff());
+#else
+	Algo::SortBy(*FoundDiffs, &FDiffSingleResult::Diff);
+#endif	
 
 	DiffListSource.Empty();
 	for (const FDiffSingleResult& Diff : *FoundDiffs)
