@@ -64,7 +64,11 @@ void FFlowSectionBase::PaintEventName(FSequencerSectionPainter& Painter, int32 L
 	FSlateDrawElement::MakeBox(
 		Painter.DrawElements,
 		LayerId + 1,
+#if ENGINE_MAJOR_VERSION == 5 && ENGINE_MINOR_VERSION < 2
+		Painter.SectionGeometry.ToPaintGeometry(BoxOffset, BoxSize),
+#else
 		Painter.SectionGeometry.ToPaintGeometry(BoxSize, FSlateLayoutTransform(1.0f, TransformPoint(1.0f, UE::Slate::CastToVector2f(BoxOffset)))),
+#endif
 		FAppStyle::GetBrush("WhiteBrush"),
 		ESlateDrawEffect::None,
 		FLinearColor::Black.CopyWithNewOpacity(0.5f)
@@ -76,7 +80,11 @@ void FFlowSectionBase::PaintEventName(FSequencerSectionPainter& Painter, int32 L
 		FSlateDrawElement::MakeText(
 			Painter.DrawElements,
 			LayerId + 2,
+#if ENGINE_MAJOR_VERSION == 5 && ENGINE_MINOR_VERSION < 2
+			Painter.SectionGeometry.ToPaintGeometry(BoxOffset + IconOffset, IconSize),
+#else
 			Painter.SectionGeometry.ToPaintGeometry(IconSize, FSlateLayoutTransform(1.0f, TransformPoint(1.0f, UE::Slate::CastToVector2f(BoxOffset + IconOffset)))),
+#endif
 			WarningString,
 			FontAwesomeFont,
 			Painter.bParentEnabled ? ESlateDrawEffect::None : ESlateDrawEffect::DisabledEffect,
@@ -87,7 +95,11 @@ void FFlowSectionBase::PaintEventName(FSequencerSectionPainter& Painter, int32 L
 	FSlateDrawElement::MakeText(
 		Painter.DrawElements,
 		LayerId + 2,
+#if ENGINE_MAJOR_VERSION == 5 && ENGINE_MINOR_VERSION < 2
+		Painter.SectionGeometry.ToPaintGeometry(BoxOffset + TextOffset, TextSize),
+#else
 		Painter.SectionGeometry.ToPaintGeometry(TextSize, FSlateLayoutTransform(1.0f, TransformPoint(1.0f, UE::Slate::CastToVector2f(BoxOffset + TextOffset)))),
+#endif
 		InEventString,
 		SmallLayoutFont,
 		Painter.bParentEnabled ? ESlateDrawEffect::None : ESlateDrawEffect::DisabledEffect,

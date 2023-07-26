@@ -27,7 +27,11 @@ FFlowAssetDiffControl::FFlowAssetDiffControl(const UFlowAsset* InOldFlowAsset, c
 // TDetailsDiffControl::GenerateTreeEntries + "NoDifferences" entry + category label
 void FFlowAssetDiffControl::GenerateTreeEntries(TArray<TSharedPtr<FBlueprintDifferenceTreeEntry>>& OutTreeEntries, TArray<TSharedPtr<FBlueprintDifferenceTreeEntry>>& OutRealDifferences)
 {
+#if ENGINE_MAJOR_VERSION == 5 && ENGINE_MINOR_VERSION < 2
+	TDetailsDiffControl::GenerateTreeEntries(OutTreeEntries, OutRealDifferences);
+#else
 	FDetailsDiffControl::GenerateTreeEntries(OutTreeEntries, OutRealDifferences);
+#endif
 
 	const bool bHasDifferences = Children.Num() != 0;
 	if (!bHasDifferences)
