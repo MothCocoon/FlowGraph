@@ -360,7 +360,7 @@ protected:
 	// Expects to be owned (at runtime) by an object with this class (or one of its subclasses)
 	// NOTE - If the class is an AActor, and the flow asset is owned by a component,
 	//        it will consider the component's owner for the AActor
-	UPROPERTY(EditAnywhere, Category = "Flow", meta = (MustImplement = "FlowOwnerInterface"))
+	UPROPERTY(EditAnywhere, Category = "Flow", meta = (MustImplement = "/Script.Flow.FlowOwnerInterface"))
 	TSubclassOf<UObject> ExpectedOwnerClass;
 
 //////////////////////////////////////////////////////////////////////////
