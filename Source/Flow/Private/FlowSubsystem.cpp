@@ -94,14 +94,14 @@ void UFlowSubsystem::StartRootFlow(UObject* Owner, UFlowAsset* FlowAsset, const 
 
 UFlowAsset* UFlowSubsystem::CreateRootFlow(UObject* Owner, UFlowAsset* FlowAsset, const bool bAllowMultipleInstances)
 {
-	for (const TPair<UFlowAsset*, TWeakObjectPtr<UObject>>& RootInstance : RootInstances)
+	UFlowAsset* NewFlow = CreateFlowInstance(Owner, FlowAsset);
+	if (NewFlow)
 	{
-		if (Owner == RootInstance.Value.Get() && FlowAsset == RootInstance.Key->GetTemplateAsset())
-		{
-			UE_LOG(LogFlow, Warning, TEXT("Attempted to start Root Flow for the same Owner again. Owner: %s. Flow Asset: %s."), *Owner->GetName(), *FlowAsset->GetName());
-			return nullptr;
-		}
+		RootInstances.Add(NewFlow, Owner);
 	}
+
+	return NewFlow;
+}
 
 	if (!bAllowMultipleInstances && InstancedTemplates.Contains(FlowAsset))
 	{
