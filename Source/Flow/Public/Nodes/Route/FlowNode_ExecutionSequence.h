@@ -37,7 +37,7 @@ protected:
 	 * graph after release.
 	 */
 	UPROPERTY(EditAnywhere, Category = "Sequence")
-	bool bSavePinExecutionState = false;
+	bool bSavePinExecutionState;
 	
 	UPROPERTY(SaveGame)
 	TSet<FGuid> ExecutedConnections;
