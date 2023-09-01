@@ -4,6 +4,7 @@
 
 UFlowNode_ExecutionSequence::UFlowNode_ExecutionSequence(const FObjectInitializer& ObjectInitializer)
 	: Super(ObjectInitializer)
+	, bSavePinExecutionState(true)
 {
 #if WITH_EDITOR
 	Category = TEXT("Route");
@@ -16,12 +17,12 @@ UFlowNode_ExecutionSequence::UFlowNode_ExecutionSequence(const FObjectInitialize
 
 void UFlowNode_ExecutionSequence::ExecuteInput(const FName& PinName)
 {
-	if(bSavePinExecutionState)
+	if (bSavePinExecutionState)
 	{
 		ExecuteNewConnections();
 		return;
 	}
-	
+
 	for (const FFlowPin& Output : OutputPins)
 	{
 		TriggerOutput(Output.PinName, false);
@@ -33,11 +34,11 @@ void UFlowNode_ExecutionSequence::ExecuteInput(const FName& PinName)
 #if WITH_EDITOR
 FString UFlowNode_ExecutionSequence::GetNodeDescription() const
 {
-	if(bSavePinExecutionState)
+	if (bSavePinExecutionState)
 	{
 		return TEXT("Saves pin execution state");
 	}
-	
+
 	return Super::GetNodeDescription();
 }
 #endif
@@ -52,12 +53,12 @@ void UFlowNode_ExecutionSequence::ExecuteNewConnections()
 	for (const FFlowPin& Output : OutputPins)
 	{
 		const FConnectedPin& Connection = GetConnection(Output.PinName);
-		if(ExecutedConnections.Contains(Connection.NodeGuid))
+		if (!ExecutedConnections.Contains(Connection.NodeGuid))
 		{
-			continue;
+			ExecutedConnections.Emplace(Connection.NodeGuid);
+			TriggerOutput(Output.PinName, false);
 		}
-
-		TriggerOutput(Output.PinName, false);
-		ExecutedConnections.Emplace(Connection.NodeGuid);
 	}
+
+	Finish();
 }
