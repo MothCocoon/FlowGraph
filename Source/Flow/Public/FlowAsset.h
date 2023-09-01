@@ -157,6 +157,7 @@ public:
 		return nullptr;
 	}
 
+	UFUNCTION(BlueprintPure, Category = "FlowAsset")
 	virtual UFlowNode* GetDefaultEntryNode() const;
 
 #if WITH_EDITOR
