@@ -257,7 +257,7 @@ private:
 //////////////////////////////////////////////////////////////////////////
 // Executing asset instance
 
-private:
+protected:
 	UPROPERTY()
 	UFlowAsset* TemplateAsset;
 
@@ -374,10 +374,9 @@ public:
 	UFUNCTION(BlueprintCallable, Category = "SaveGame")
 	void LoadInstance(const FFlowAssetSaveData& AssetRecord);
 
-private:
-	void OnActivationStateLoaded(UFlowNode* Node);
-
 protected:
+	virtual void OnActivationStateLoaded(UFlowNode* Node);
+
 	UFUNCTION(BlueprintNativeEvent, Category = "SaveGame")
 	void OnSave();
 
