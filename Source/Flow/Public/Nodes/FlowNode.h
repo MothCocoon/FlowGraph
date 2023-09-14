@@ -141,6 +141,7 @@ protected:
 	// Gets the Owning Object for this Node's RootFlow
 	UObject* TryGetRootFlowObjectOwner() const;
 
+public:	
 	virtual bool CanFinishGraph() const { return false; }
 
 protected:
@@ -325,10 +326,12 @@ protected:
 	UFUNCTION(BlueprintCallable, Category = "FlowNode", meta = (HidePin = "ActivationType"))
 	void TriggerOutputPin(const FFlowOutputPinHandle Pin, const bool bFinish = false, const EFlowPinActivationType ActivationType = EFlowPinActivationType::Default);
 
+public:	
 	// Finish execution of node, it will call Cleanup
 	UFUNCTION(BlueprintCallable, Category = "FlowNode")
 	void Finish();
 
+protected:
 	void Deactivate();
 
 	// Method called after node finished the work
