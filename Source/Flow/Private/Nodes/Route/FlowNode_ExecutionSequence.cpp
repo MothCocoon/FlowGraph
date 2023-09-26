@@ -20,32 +20,26 @@ void UFlowNode_ExecutionSequence::ExecuteInput(const FName& PinName)
 	if (bSavePinExecutionState)
 	{
 		ExecuteNewConnections();
-		return;
 	}
-
-	for (const FFlowPin& Output : OutputPins)
+	else
 	{
-		TriggerOutput(Output.PinName, false);
+		for (const FFlowPin& Output : OutputPins)
+		{
+			TriggerOutput(Output.PinName, false);
+		}
+
+		Finish();
 	}
-
-	Finish();
 }
-
-#if WITH_EDITOR
-FString UFlowNode_ExecutionSequence::GetNodeDescription() const
-{
-	if (bSavePinExecutionState)
-	{
-		return TEXT("Saves pin execution state");
-	}
-
-	return Super::GetNodeDescription();
-}
-#endif
 
 void UFlowNode_ExecutionSequence::OnLoad_Implementation()
 {
 	ExecuteNewConnections();
+}
+
+void UFlowNode_ExecutionSequence::Cleanup()
+{
+	ExecutedConnections.Empty();
 }
 
 void UFlowNode_ExecutionSequence::ExecuteNewConnections()
@@ -62,3 +56,15 @@ void UFlowNode_ExecutionSequence::ExecuteNewConnections()
 
 	Finish();
 }
+
+#if WITH_EDITOR
+FString UFlowNode_ExecutionSequence::GetNodeDescription() const
+{
+	if (bSavePinExecutionState)
+	{
+		return TEXT("Saves pin execution state");
+	}
+
+	return Super::GetNodeDescription();
+}
+#endif
