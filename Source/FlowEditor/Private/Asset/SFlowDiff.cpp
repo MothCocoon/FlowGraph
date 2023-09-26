@@ -722,6 +722,7 @@ SFlowDiff::FDiffControl SFlowDiff::GenerateDetailsPanel()
 #endif	
 
 	SFlowDiff::FDiffControl Ret;
+	Ret.Widget = SNullWidget::NullWidget;
 	Ret.DiffControl = NewDiffControl;
 
 #if ENGINE_MAJOR_VERSION == 5 && ENGINE_MINOR_VERSION < 3
