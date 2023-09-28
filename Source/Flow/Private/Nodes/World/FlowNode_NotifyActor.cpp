@@ -20,7 +20,7 @@ void UFlowNode_NotifyActor::ExecuteInput(const FName& PinName)
 {
 	if (const UFlowSubsystem* FlowSubsystem = GetWorld()->GetGameInstance()->GetSubsystem<UFlowSubsystem>())
 	{
-		for (const TWeakObjectPtr<UFlowComponent>& Component : FlowSubsystem->GetComponents<UFlowComponent>(IdentityTags, EGameplayContainerMatchType::Any, bExactMatch))
+		for (const TWeakObjectPtr<UFlowComponent>& Component : FlowSubsystem->GetComponents<UFlowComponent>(IdentityTags, MatchType, bExactMatch))
 		{
 			Component->NotifyFromGraph(NotifyTags, NetMode);
 		}
