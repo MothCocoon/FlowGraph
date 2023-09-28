@@ -8,6 +8,7 @@
 
 UFlowNode_NotifyActor::UFlowNode_NotifyActor(const FObjectInitializer& ObjectInitializer)
 	: Super(ObjectInitializer)
+	, MatchType(EGameplayContainerMatchType::All)
 	, bExactMatch(true)
 	, NetMode(EFlowNetMode::Authority)
 {
