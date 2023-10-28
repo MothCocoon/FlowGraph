@@ -8,8 +8,9 @@
 UENUM()
 enum class EFlowNodeDoubleClickTarget : uint8
 {
-	NodeDefinition UMETA(Tooltip = "Open node class: either blueprint or C++ class"),
-	PrimaryAsset   UMETA(Tooltip = "Open asset defined as primary asset, i.e. Dialogue asset for PlayDialogue node")
+	NodeDefinition				 UMETA(Tooltip = "Open node class: either blueprint or C++ class"),
+	PrimaryAsset				 UMETA(Tooltip = "Open asset defined as primary asset, i.e. Dialogue asset for PlayDialogue node"),
+	PrimaryAssetOrNodeDefinition UMETA(Tooltip = "First try opening the asset then if there is none, open the node class") 
 };
 
 /**

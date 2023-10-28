@@ -626,6 +626,10 @@ void SFlowGraphEditor::OnNodeDoubleClicked(class UEdGraphNode* Node) const
 					}
 				}
 			}
+			else if (UFlowGraphEditorSettings::Get()->NodeDoubleClickTarget == EFlowNodeDoubleClickTarget::PrimaryAssetOrNodeDefinition)
+			{
+				Node->JumpToDefinition();
+			}
 		}
 	}
 }
