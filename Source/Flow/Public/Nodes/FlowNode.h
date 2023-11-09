@@ -3,7 +3,6 @@
 #pragma once
 
 #include "EdGraph/EdGraphNode.h"
-#include "Engine/StreamableManager.h"
 #include "GameplayTagContainer.h"
 #include "Templates/SubclassOf.h"
 #include "VisualLogger/VisualLoggerDebugSnapshotInterface.h"
@@ -15,6 +14,7 @@
 
 class UFlowAsset;
 class UFlowSubsystem;
+class IFlowOwnerInterface;
 
 #if WITH_EDITOR
 DECLARE_DELEGATE(FFlowNodeEvent);
@@ -128,11 +128,20 @@ public:
 	// (if the immediate parent is an UActorComponent, it will get that Component's actor)
 	AActor* TryGetRootFlowActorOwner() const;
 
+	// Returns the IFlowOwnerInterface for the owner object (if implemented)
+	//  NOTE - will consider a UActorComponent owner's owning actor if appropriate
+	IFlowOwnerInterface* GetFlowOwnerInterface() const;
+
 protected:
+
+	// Helper functions for GetFlowOwnerInterface()
+	IFlowOwnerInterface* TryGetFlowOwnerInterfaceFromRootFlowOwner(UObject& RootFlowOwner, const UClass& ExpectedOwnerClass) const;
+	IFlowOwnerInterface* TryGetFlowOwnerInterfaceActor(UObject& RootFlowOwner, const UClass& ExpectedOwnerClass) const;
 
 	// Gets the Owning Object for this Node's RootFlow
 	UObject* TryGetRootFlowObjectOwner() const;
 
+public:	
 	virtual bool CanFinishGraph() const { return false; }
 
 protected:
@@ -219,7 +228,9 @@ public:
 	void SetConnections(const TMap<FName, FConnectedPin>& InConnections) { Connections = InConnections; }
 	FConnectedPin GetConnection(const FName OutputName) const { return Connections.FindRef(OutputName); }
 
+	UFUNCTION(BlueprintPure, Category= "FlowNode")
 	TSet<UFlowNode*> GetConnectedNodes() const;
+	
 	FName GetPinConnectedToNode(const FGuid& OtherNodeGuid);
 
 	UFUNCTION(BlueprintPure, Category= "FlowNode")
@@ -227,8 +238,6 @@ public:
 
 	UFUNCTION(BlueprintPure, Category= "FlowNode")
 	bool IsOutputConnected(const FName& PinName) const;
-
-	static void RecursiveFindNodesByClass(UFlowNode* Node, const TSubclassOf<UFlowNode> Class, uint8 Depth, TArray<UFlowNode*>& OutNodes);
 
 //////////////////////////////////////////////////////////////////////////
 // Debugger
@@ -245,8 +254,6 @@ public:
 	bool bPreloaded;
 
 protected:
-	FStreamableManager StreamableManager;
-
 	UPROPERTY(SaveGame)
 	EFlowNodeState ActivationState;
 
@@ -319,10 +326,12 @@ protected:
 	UFUNCTION(BlueprintCallable, Category = "FlowNode", meta = (HidePin = "ActivationType"))
 	void TriggerOutputPin(const FFlowOutputPinHandle Pin, const bool bFinish = false, const EFlowPinActivationType ActivationType = EFlowPinActivationType::Default);
 
+public:
 	// Finish execution of node, it will call Cleanup
 	UFUNCTION(BlueprintCallable, Category = "FlowNode")
 	void Finish();
 
+protected:
 	void Deactivate();
 
 	// Method called after node finished the work

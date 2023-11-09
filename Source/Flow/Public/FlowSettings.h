@@ -4,6 +4,7 @@
 
 #include "Engine/DeveloperSettings.h"
 #include "Templates/SubclassOf.h"
+#include "UObject/SoftObjectPath.h"
 #include "FlowSettings.generated.h"
 
 class UFlowNode;
@@ -23,10 +24,6 @@ class FLOW_API UFlowSettings : public UDeveloperSettings
 	UPROPERTY(Config, EditAnywhere, Category = "Networking")
 	bool bCreateFlowSubsystemOnClients;
 
-	// How many nodes of given class should be preloaded with the Flow Asset instance?
-	UPROPERTY(Config, EditAnywhere, Category = "Preload")
-	TMap<TSubclassOf<UFlowNode>, int32> DefaultPreloadDepth;
-	
 	UPROPERTY(Config, EditAnywhere, Category = "SaveSystem")
 	bool bWarnAboutMissingIdentityTags;
 
@@ -42,4 +39,18 @@ class FLOW_API UFlowSettings : public UDeveloperSettings
 	// by incorporating data that would otherwise go in the Description
 	UPROPERTY(EditAnywhere, config, Category = "Nodes")
 	bool bUseAdaptiveNodeTitles;
+
+	// Default class to use as a FlowAsset's "ExpectedOwnerClass" 
+	UPROPERTY(EditAnywhere, Config, Category = "Nodes", meta = (MustImplement = "/Script.Flow.FlowOwnerInterface"))
+	FSoftClassPath DefaultExpectedOwnerClass;
+
+public:
+	UClass* GetDefaultExpectedOwnerClass() const;
+
+	static UClass* TryResolveOrLoadSoftClass(const FSoftClassPath& SoftClassPath);
+
+#if WITH_EDITORONLY_DATA
+	virtual FName GetCategoryName() const override { return FName("Flow Graph"); }
+	virtual FText GetSectionText() const override { return INVTEXT("Settings"); }
+#endif
 };

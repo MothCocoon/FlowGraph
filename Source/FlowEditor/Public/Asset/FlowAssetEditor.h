@@ -100,6 +100,7 @@ public:
 
 	// FAssetEditorToolkit
 	virtual void InitToolMenuContext(FToolMenuContext& MenuContext) override;
+	virtual void PostRegenerateMenusAndToolbars() override;
 	// --
 
 	bool IsTabFocused(const FTabId& TabId) const;

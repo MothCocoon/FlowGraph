@@ -4,7 +4,7 @@
 
 #include "DiffResults.h"
 #include "IAssetTypeActions.h"
-#include "Kismet/Private/DiffControl.h"
+#include "Editor/Kismet/Private/DiffControl.h"
 
 struct FDiffResultItem;
 class UEdGraph;
@@ -15,7 +15,11 @@ class SFlowDiff;
 
 /////////////////////////////////////////////////////////////////////////////
 /// FFlowAssetDiffControl
+#if ENGINE_MAJOR_VERSION == 5 && ENGINE_MINOR_VERSION < 2
+class FLOWEDITOR_API FFlowAssetDiffControl : public TDetailsDiffControl<false>
+#else
 class FLOWEDITOR_API FFlowAssetDiffControl : public FDetailsDiffControl
+#endif
 {
 public:
 	FFlowAssetDiffControl(const UFlowAsset* InOldFlowAsset, const UFlowAsset* InNewFlowAsset, FOnDiffEntryFocused InSelectionCallback);

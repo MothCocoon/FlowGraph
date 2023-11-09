@@ -24,6 +24,7 @@ public:
 private:
 	TArray<TSharedRef<IAssetTypeActions>> RegisteredAssetActions;
 	TSet<FName> CustomClassLayouts;
+	TSet<FName> CustomStructLayouts;
 
 public:
 	virtual void StartupModule() override;
@@ -33,8 +34,11 @@ private:
 	void RegisterAssets();
 	void UnregisterAssets();
 
-	void RegisterPropertyCustomizations() const;
+	void RegisterDetailCustomizations();
+	void UnregisterDetailCustomizations();
+
 	void RegisterCustomClassLayout(const TSubclassOf<UObject> Class, const FOnGetDetailCustomizationInstance DetailLayout);
+	void RegisterCustomStructLayout(const UScriptStruct& Struct, const FOnGetPropertyTypeCustomizationInstance DetailLayout);
 
 public:
 	FDelegateHandle FlowTrackCreateEditorHandle;
