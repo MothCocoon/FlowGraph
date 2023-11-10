@@ -3,6 +3,7 @@
 #include "Asset/FlowMessageLogListing.h"
 
 #include "MessageLogModule.h"
+#include "Modules/ModuleManager.h"
 
 #define LOCTEXT_NAMESPACE "FlowMessageLogListing"
 

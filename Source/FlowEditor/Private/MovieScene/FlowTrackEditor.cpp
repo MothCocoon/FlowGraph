@@ -7,6 +7,7 @@
 #include "MovieScene/MovieSceneFlowTrack.h"
 #include "MovieScene/MovieSceneFlowTriggerSection.h"
 
+#include "Components/HorizontalBox.h"
 #include "Framework/MultiBox/MultiBoxBuilder.h"
 #include "ISequencerSection.h"
 #include "Launch/Resources/Version.h"

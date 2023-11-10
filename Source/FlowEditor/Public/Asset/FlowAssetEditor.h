@@ -125,8 +125,6 @@ protected:
 	
 	virtual void RefreshAsset();
 
-	void EditAssetDefaults_Clicked();
-
 private:
 	void ValidateAsset_Internal();
 

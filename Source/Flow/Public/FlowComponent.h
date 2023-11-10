@@ -81,6 +81,10 @@ public:
 	UFUNCTION(BlueprintCallable, Category = "Flow")
 	void RemoveIdentityTags(FGameplayTagContainer Tags, const EFlowNetMode NetMode = EFlowNetMode::Authority);
 
+protected:
+	void RegisterWithFlowSubsystem();
+	void UnregisterWithFlowSubsystem();
+	
 private:
 	UFUNCTION()
 	void OnRep_AddedIdentityTags();
@@ -247,16 +251,3 @@ public:
 	UFlowSubsystem* GetFlowSubsystem() const;
 	bool IsFlowNetMode(const EFlowNetMode NetMode) const;
 };
-
-
-// Inline Implementations
-
-void UFlowComponent::OnTriggerRootFlowOutputEventDispatcher(UFlowAsset& RootFlowInstance, const FName& EventName)
-{
-	// Call the blueprint overrideable function
-	BP_OnTriggerRootFlowOutputEvent(&RootFlowInstance, EventName);
-
-	// Call the C++ overrideable function
-	OnTriggerRootFlowOutputEvent(RootFlowInstance, EventName);
-}
-

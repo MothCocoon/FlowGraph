@@ -1,7 +1,10 @@
 // Copyright https://github.com/MothCocoon/FlowGraph/graphs/contributors
 
 #include "Pins/SFlowOutputPinHandle.h"
+#include "EdGraphSchema_K2.h"
+#include "Engine/Blueprint.h"
 #include "Nodes/FlowNode.h"
+#include "Pins/SFlowPinHandle.h"
 
 void SFlowOutputPinHandle::RefreshNameList()
 {

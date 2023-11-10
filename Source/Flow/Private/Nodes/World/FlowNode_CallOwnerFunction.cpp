@@ -97,12 +97,31 @@ void UFlowNode_CallOwnerFunction::PostLoad()
 	FObjectPropertyBase* ParamsProperty = FindFProperty<FObjectPropertyBase>(GetClass(), GET_MEMBER_NAME_CHECKED(UFlowNode_CallOwnerFunction, Params));
 	check(ParamsProperty);
 
-	UClass* RequiredParamsClass = GetRequiredParamsClass();
-	if (IsValid(RequiredParamsClass))
+	// NOTE (gtaylor) This fixes corruption in FlowNodes that could have been caused with
+	//  a previous version of the code (which was inadvisedly calling SetPropertyClass)
+	//  to restore the correct PropertyClass for this node.  
+	//  (it could be removed in a future release, once all assets have been updated)
+	if (ParamsProperty->PropertyClass != UFlowOwnerFunctionParams::StaticClass())
 	{
-		// Update the property to filter for just this class (and its subclasses)
-		ParamsProperty->SetPropertyClass(RequiredParamsClass);
+		ParamsProperty->SetPropertyClass(UFlowOwnerFunctionParams::StaticClass());
 	}
+}
+
+bool UFlowNode_CallOwnerFunction::CanEditChange(const FProperty* InProperty) const
+{
+	if (!Super::CanEditChange(InProperty))
+	{
+		return false;
+	}
+
+	const FName PropertyName = InProperty->GetFName();
+
+	if (PropertyName == GET_MEMBER_NAME_CHECKED(UFlowNode_CallOwnerFunction, Params))
+	{
+		return false;
+	}
+
+	return true;
 }
 
 void UFlowNode_CallOwnerFunction::PostEditChangeProperty(struct FPropertyChangedEvent& PropertyChangedEvent)
@@ -368,27 +387,20 @@ UClass* UFlowNode_CallOwnerFunction::GetParamsClassForFunctionName(const UClass&
 
 bool UFlowNode_CallOwnerFunction::TryAllocateParamsInstance()
 {
-	FObjectPropertyBase* ParamsProperty = FindFProperty<FObjectPropertyBase>(GetClass(), GET_MEMBER_NAME_CHECKED(UFlowNode_CallOwnerFunction, Params));
-	check(ParamsProperty);
-
-	UClass* RequiredParamsClass = GetRequiredParamsClass();
-
-	if (ParamsProperty)
-	{
-		// Update the property to filter for just this class (and its subclasses)
-		ParamsProperty->SetPropertyClass(RequiredParamsClass);
-	}
-
 	if (FunctionRef.GetFunctionName().IsNone())
 	{
+		// Throw out the old params object (if any)
+		Params = nullptr;
+
 		return false;
 	}
 
 	const UClass* ExistingParamsClass = GetExistingParamsClass();
+	UClass* RequiredParamsClass = GetRequiredParamsClass();
 
 	const bool bNeedsAllocateParams = 
 		!IsValid(ExistingParamsClass) ||
-		!ExistingParamsClass->IsChildOf(RequiredParamsClass);
+		ExistingParamsClass != RequiredParamsClass;
 
 	if (!bNeedsAllocateParams)
 	{

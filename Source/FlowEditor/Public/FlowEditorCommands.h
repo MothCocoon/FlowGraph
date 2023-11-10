@@ -17,7 +17,6 @@ public:
 	TSharedPtr<FUICommandInfo> EditAssetDefaults;
 
 	TSharedPtr<FUICommandInfo> SearchInAsset;
-	TSharedPtr<FUICommandInfo> EditAssetDefaults;
 
 	TSharedPtr<FUICommandInfo> GoToParentInstance;
 

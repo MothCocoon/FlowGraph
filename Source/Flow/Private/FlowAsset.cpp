@@ -9,6 +9,7 @@
 
 #include "Nodes/FlowNode.h"
 #include "Nodes/Route/FlowNode_CustomInput.h"
+#include "Nodes/Route/FlowNode_CustomOutput.h"
 #include "Nodes/Route/FlowNode_Start.h"
 #include "Nodes/Route/FlowNode_SubGraph.h"
 
@@ -18,6 +19,7 @@
 
 #if WITH_EDITOR
 FString UFlowAsset::ValidationError_NodeClassNotAllowed = TEXT("Node class {0} is not allowed in this asset.");
+FString UFlowAsset::ValidationError_NullNodeInstance = TEXT("Node with GUID {0} is NULL");
 #endif
 
 UFlowAsset::UFlowAsset(const FObjectInitializer& ObjectInitializer)
@@ -71,12 +73,36 @@ void UFlowAsset::PostDuplicate(bool bDuplicateForPIE)
 	}
 }
 
+void UFlowAsset::PostLoad()
+{
+	Super::PostLoad();
+
+	// If we removed or moved a flow node blueprint (and there is no redirector) we might loose the reference to it resulting
+	// in null pointers in the Nodes FGUID->UFlowNode* Map. So here we iterate over all the Nodes and remove all pairs that
+	// are nulled out.
+	
+	TSet<FGuid> NodesToRemoveGUID;
+
+	for (auto& [Guid, Node] : GetNodes())
+	{
+		if (!IsValid(Node))
+		{
+			NodesToRemoveGUID.Emplace(Guid);
+		}
+	}
+
+	for (const FGuid& Guid : NodesToRemoveGUID)
+	{
+		UnregisterNode(Guid);
+	}
+}
+
 EDataValidationResult UFlowAsset::ValidateAsset(FFlowMessageLog& MessageLog)
 {
 	// validate nodes
 	for (const TPair<FGuid, UFlowNode*>& Node : Nodes)
 	{
-		if (Node.Value)
+		if (IsValid(Node.Value))
 		{
 			if (!IsNodeClassAllowed(Node.Value->GetClass()))
 			{
@@ -89,6 +115,11 @@ EDataValidationResult UFlowAsset::ValidateAsset(FFlowMessageLog& MessageLog)
 			{
 				MessageLog.Messages.Append(Node.Value->ValidationLog.Messages);
 			}
+		}
+		else
+		{
+			const FString ErrorMsg = FString::Format(*ValidationError_NullNodeInstance, {*Node.Key.ToString()});
+			MessageLog.Error(*ErrorMsg, this);
 		}
 	}
 
@@ -326,21 +357,7 @@ void UFlowAsset::RemoveCustomOutput(const FName& EventName)
 		CustomOutputs.Remove(EventName);
 	}
 }
-
-void UFlowAsset::AddCustomOutput(const FName& EventName)
-{
-	check(!CustomOutputs.Contains(EventName));
-
-	CustomOutputs.Add(EventName);
-}
-
-void UFlowAsset::RemoveCustomOutput(const FName& EventName)
-{
-	check(CustomOutputs.Contains(EventName));
-
-	CustomOutputs.Remove(EventName);
-}
-#endif
+#endif // WITH_EDITOR
 
 UFlowNode_CustomInput* UFlowAsset::TryFindCustomInputNodeByEventName(const FName& EventName) const
 {
@@ -353,6 +370,56 @@ UFlowNode_CustomInput* UFlowAsset::TryFindCustomInputNodeByEventName(const FName
 	}
 
 	return nullptr;
+}
+
+UFlowNode_CustomOutput* UFlowAsset::TryFindCustomOutputNodeByEventName(const FName& EventName) const
+{
+	for (const TPair<FGuid, UFlowNode*>& Node : Nodes)
+	{
+		if (UFlowNode_CustomOutput* CustomOutput = Cast<UFlowNode_CustomOutput>(Node.Value))
+		{
+			if (CustomOutput->GetEventName() == EventName)
+			{
+				return CustomOutput;
+			}
+		}
+	}
+
+	return nullptr;
+}
+
+TArray<FName> UFlowAsset::GatherCustomInputNodeEventNames() const
+{
+	// Runtime-safe gathering of the CustomInputs (which is editor-only data)
+	//  from the actual flow nodes
+	TArray<FName> Results;
+
+	for (const TPair<FGuid, UFlowNode*>& Node : Nodes)
+	{
+		if (UFlowNode_CustomInput* CustomInput = Cast<UFlowNode_CustomInput>(Node.Value))
+		{
+			Results.Add(CustomInput->GetEventName());
+		}
+	}
+
+	return Results;
+}
+
+TArray<FName> UFlowAsset::GatherCustomOutputNodeEventNames() const
+{
+	// Runtime-safe gathering of the CustomOutputs (which is editor-only data)
+	//  from the actual flow nodes
+	TArray<FName> Results;
+
+	for (const TPair<FGuid, UFlowNode*>& Node : Nodes)
+	{
+		if (UFlowNode_CustomOutput* CustomOutput = Cast<UFlowNode_CustomOutput>(Node.Value))
+		{
+			Results.Add(CustomOutput->GetEventName());
+		}
+	}
+
+	return Results;
 }
 
 TArray<UFlowNode*> UFlowAsset::GetNodesInExecutionOrder(UFlowNode* FirstIteratedNode, const TSubclassOf<UFlowNode> FlowNodeClass)
@@ -574,9 +641,7 @@ TWeakObjectPtr<UFlowAsset> UFlowAsset::GetFlowInstance(UFlowNode_SubGraph* SubGr
 
 void UFlowAsset::TriggerCustomInput_FromSubGraph(UFlowNode_SubGraph* Node, const FName& EventName) const
 {
-	check(HasStartedFlow());
-
-	const TWeakObjectPtr<UFlowAsset> FlowInstance = ActiveSubGraphs.FindRef(&Node);
+	const TWeakObjectPtr<UFlowAsset> FlowInstance = ActiveSubGraphs.FindRef(Node);
 	if (FlowInstance.IsValid())
 	{
 		FlowInstance->TriggerCustomInput(EventName);
@@ -585,8 +650,6 @@ void UFlowAsset::TriggerCustomInput_FromSubGraph(UFlowNode_SubGraph* Node, const
 
 void UFlowAsset::TriggerCustomInput(const FName& EventName)
 {
-	check(HasStartedFlow());
-
 	for (UFlowNode_CustomInput* CustomInput : CustomInputNodes)
 	{
 		if (CustomInput->EventName == EventName)
@@ -614,8 +677,6 @@ void UFlowAsset::TriggerCustomOutput(const FName& EventName)
 
 void UFlowAsset::TriggerInput(const FGuid& NodeGuid, const FName& PinName)
 {
-	check(HasStartedFlow());
-
 	if (UFlowNode* Node = Nodes.FindRef(NodeGuid))
 	{
 		if (!ActiveNodes.Contains(Node))

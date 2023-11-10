@@ -387,10 +387,6 @@ void FFlowAssetEditor::BindToolbarCommands()
 								FCanExecuteAction());
 #endif
 
-	ToolkitCommands->MapAction(ToolbarCommands.EditAssetDefaults,
-							FExecuteAction::CreateSP(this, &FFlowAssetEditor::EditAssetDefaults_Clicked),
-							FCanExecuteAction());
-
 	// Engine's Play commands
 	ToolkitCommands->Append(FPlayWorldCommands::GlobalPlayWorldActions.ToSharedRef());
 
@@ -426,11 +422,6 @@ void FFlowAssetEditor::ValidateAsset_Internal()
 void FFlowAssetEditor::ValidateAsset(FFlowMessageLog& MessageLog)
 {
 	FlowAsset->ValidateAsset(MessageLog);
-}
-
-void FFlowAssetEditor::EditAssetDefaults_Clicked()
-{
-	DetailsView->SetObject(FlowAsset);
 }
 
 #if ENABLE_SEARCH_IN_ASSET_EDITOR

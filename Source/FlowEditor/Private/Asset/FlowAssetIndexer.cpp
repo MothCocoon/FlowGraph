@@ -7,6 +7,7 @@
 
 #include "Graph/Nodes/FlowGraphNode_Reroute.h"
 
+#include "EdGraph/EdGraph.h"
 #include "EdGraph/EdGraphPin.h"
 #include "EdGraphNode_Comment.h"
 #include "Internationalization/Text.h"
