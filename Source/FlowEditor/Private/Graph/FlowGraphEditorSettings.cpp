@@ -4,7 +4,7 @@
 
 UFlowGraphEditorSettings::UFlowGraphEditorSettings(const FObjectInitializer& ObjectInitializer)
 	: Super(ObjectInitializer)
-	, NodeDoubleClickTarget(EFlowNodeDoubleClickTarget::PrimaryAsset)
+	, NodeDoubleClickTarget(EFlowNodeDoubleClickTarget::PrimaryAssetOrNodeDefinition)
 	, bShowNodeClass(false)
 	, bShowNodeDescriptionWhilePlaying(true)
 	, bEnforceFriendlyPinNames(false)
