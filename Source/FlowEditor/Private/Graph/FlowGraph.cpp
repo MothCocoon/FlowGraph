@@ -7,6 +7,7 @@
 
 #include "Nodes/FlowNode.h"
 
+#include "Editor.h"
 #include "Kismet2/BlueprintEditorUtils.h"
 
 void FFlowGraphInterface::OnInputTriggered(UEdGraphNode* GraphNode, const int32 Index) const

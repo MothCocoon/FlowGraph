@@ -5,6 +5,7 @@
 #include "DiffResults.h"
 #include "IAssetTypeActions.h"
 #include "Editor/Kismet/Private/DiffControl.h"
+#include "Runtime/Launch/Resources/Version.h"
 
 struct FDiffResultItem;
 class UEdGraph;

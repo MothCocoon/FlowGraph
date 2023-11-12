@@ -13,6 +13,7 @@
 #if WITH_EDITOR
 #include "Editor.h"
 #endif
+#include "Engine/Blueprint.h"
 #include "Engine/Engine.h"
 #include "Engine/ViewportStatsSubsystem.h"
 #include "Engine/World.h"

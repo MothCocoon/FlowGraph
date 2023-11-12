@@ -9,6 +9,7 @@
 #include "Toolkits/IToolkit.h"
 
 class FSlateStyleSet;
+class FToolBarBuilder;
 struct FGraphPanelPinConnectionFactory;
 
 class FFlowAssetEditor;
