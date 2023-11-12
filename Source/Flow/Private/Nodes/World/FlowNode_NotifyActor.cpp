@@ -3,6 +3,7 @@
 #include "Nodes/World/FlowNode_NotifyActor.h"
 #include "FlowComponent.h"
 #include "FlowSubsystem.h"
+#include "Engine/GameInstance.h"
 
 #include "Engine/World.h"
 
