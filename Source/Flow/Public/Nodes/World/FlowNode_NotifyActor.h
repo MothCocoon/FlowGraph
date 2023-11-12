@@ -18,6 +18,7 @@ class FLOW_API UFlowNode_NotifyActor : public UFlowNode
 protected:
 	UPROPERTY(EditAnywhere, Category = "Notify")
 	FGameplayTagContainer IdentityTags;
+	
 	UPROPERTY(EditAnywhere, Category = "Notify")
 	EGameplayContainerMatchType MatchType;
 	/**
