@@ -4,6 +4,9 @@
 
 #include "EdGraph/EdGraphSchema.h"
 #include "Templates/SubclassOf.h"
+#include "Framework/Commands/GenericCommands.h"
+#include "ToolMenu.h"
+#include "GraphEditorActions.h"
 #include "FlowGraphSchema.generated.h"
 
 class UFlowAsset;
@@ -44,6 +47,7 @@ public:
 	virtual int32 GetNodeSelectionCount(const UEdGraph* Graph) const override;
 	virtual TSharedPtr<FEdGraphSchemaAction> GetCreateCommentAction() const override;
 	virtual void OnPinConnectionDoubleCicked(UEdGraphPin* PinA, UEdGraphPin* PinB, const FVector2D& GraphPosition) const override;
+	virtual void GetContextMenuActions(class UToolMenu* Menu, class UGraphNodeContextMenuContext* Context) const override;
 	// --
 
 	static TArray<TSharedPtr<FString>> GetFlowNodeCategories();

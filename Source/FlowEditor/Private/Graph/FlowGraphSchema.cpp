@@ -97,6 +97,24 @@ void UFlowGraphSchema::CreateDefaultNodesForGraph(UEdGraph& Graph) const
 	CastChecked<UFlowGraph>(&Graph)->GetFlowAsset()->HarvestNodeConnections();
 }
 
+void UFlowGraphSchema::GetContextMenuActions(class UToolMenu* Menu, class UGraphNodeContextMenuContext* Context) const
+{
+	if (Context->Node)
+	{
+		FToolMenuSection& Section = Menu->AddSection("GraphSchemaOrganisation", FText::FromString("Organisation"));
+		{
+			Section.AddMenuEntry(FGraphEditorCommands::Get().AlignNodesTop);
+			Section.AddMenuEntry(FGraphEditorCommands::Get().AlignNodesMiddle);
+			Section.AddMenuEntry(FGraphEditorCommands::Get().AlignNodesBottom);
+			Section.AddMenuEntry(FGraphEditorCommands::Get().AlignNodesLeft);
+			Section.AddMenuEntry(FGraphEditorCommands::Get().AlignNodesCenter);
+			Section.AddMenuEntry(FGraphEditorCommands::Get().AlignNodesRight);
+			Section.AddMenuEntry(FGraphEditorCommands::Get().StraightenConnections);
+		}
+	}
+	Super::GetContextMenuActions(Menu, Context);
+}
+
 UFlowGraphNode* UFlowGraphSchema::CreateDefaultNode(UEdGraph& Graph, const UFlowAsset* AssetClassDefaults, const TSubclassOf<UFlowNode>& NodeClass, const FVector2D& Offset, const bool bPlacedAsGhostNode)
 {
 	UFlowGraphNode* NewGraphNode = FFlowGraphSchemaAction_NewNode::CreateNode(&Graph, nullptr, NodeClass, Offset);
