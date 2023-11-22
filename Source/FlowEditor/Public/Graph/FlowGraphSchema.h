@@ -4,7 +4,6 @@
 
 #include "EdGraph/EdGraphSchema.h"
 #include "Templates/SubclassOf.h"
-#include "ToolMenu.h"
 #include "FlowGraphSchema.generated.h"
 
 class UFlowAsset;
