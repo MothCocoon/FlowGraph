@@ -144,4 +144,13 @@ private:
 
 	void JumpToNodeDefinition() const;
 	bool CanJumpToNodeDefinition() const;
+
+	//Organisation
+	void OnAlignTop();
+	void OnAlignMiddle();
+	void OnAlignBottom();
+	void OnAlignLeft();
+	void OnAlignCenter();
+	void OnAlignRight();
+	void OnStraightenConnections();
 };

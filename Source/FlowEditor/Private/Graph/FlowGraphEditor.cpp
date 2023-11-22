@@ -223,6 +223,56 @@ void SFlowGraphEditor::BindGraphCommands()
 	CommandList->MapAction(FlowGraphCommands.JumpToNodeDefinition,
 	                               FExecuteAction::CreateSP(this, &SFlowGraphEditor::JumpToNodeDefinition),
 	                               FCanExecuteAction::CreateSP(this, &SFlowGraphEditor::CanJumpToNodeDefinition));
+
+	// Organisation Commands
+	CommandList->MapAction(GraphEditorCommands.AlignNodesTop, FExecuteAction::CreateSP(this, &SFlowGraphEditor::OnAlignTop));
+
+	CommandList->MapAction(GraphEditorCommands.AlignNodesMiddle, FExecuteAction::CreateSP(this, &SFlowGraphEditor::OnAlignMiddle));
+
+	CommandList->MapAction(GraphEditorCommands.AlignNodesBottom, FExecuteAction::CreateSP(this, &SFlowGraphEditor::OnAlignBottom));
+
+	CommandList->MapAction(GraphEditorCommands.AlignNodesLeft, FExecuteAction::CreateSP(this, &SFlowGraphEditor::OnAlignLeft));
+
+	CommandList->MapAction(GraphEditorCommands.AlignNodesCenter, FExecuteAction::CreateSP(this, &SFlowGraphEditor::OnAlignCenter));
+
+	CommandList->MapAction(GraphEditorCommands.AlignNodesRight, FExecuteAction::CreateSP(this, &SFlowGraphEditor::OnAlignRight));
+
+	CommandList->MapAction(GraphEditorCommands.StraightenConnections, FExecuteAction::CreateSP(this, &SFlowGraphEditor::OnStraightenConnections));
+}
+
+void SFlowGraphEditor::OnAlignTop()
+{
+	;
+}
+
+void SFlowGraphEditor::OnAlignMiddle()
+{
+	;
+}
+
+void SFlowGraphEditor::OnAlignBottom()
+{
+	;
+}
+
+void SFlowGraphEditor::OnAlignLeft()
+{
+	;
+}
+
+void SFlowGraphEditor::OnAlignCenter()
+{
+	;
+}
+
+void SFlowGraphEditor::OnAlignRight()
+{
+	;
+}
+
+void SFlowGraphEditor::OnStraightenConnections()
+{
+	;
 }
 
 FGraphAppearanceInfo SFlowGraphEditor::GetGraphAppearanceInfo() const
