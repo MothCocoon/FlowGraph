@@ -102,15 +102,17 @@ void UFlowGraphSchema::GetContextMenuActions(class UToolMenu* Menu, class UGraph
 	if (Context->Node)
 	{
 		FToolMenuSection& Section = Menu->AddSection("GraphSchemaOrganisation", FText::FromString("Organisation"));
+		Section.AddSubMenu("Alignment", LOCTEXT("AlignmentHeader", "Alignment"), FText(), FNewToolMenuDelegate::CreateLambda([](UToolMenu* SubMenu)
 		{
-			Section.AddMenuEntry(FGraphEditorCommands::Get().AlignNodesTop);
-			Section.AddMenuEntry(FGraphEditorCommands::Get().AlignNodesMiddle);
-			Section.AddMenuEntry(FGraphEditorCommands::Get().AlignNodesBottom);
-			Section.AddMenuEntry(FGraphEditorCommands::Get().AlignNodesLeft);
-			Section.AddMenuEntry(FGraphEditorCommands::Get().AlignNodesCenter);
-			Section.AddMenuEntry(FGraphEditorCommands::Get().AlignNodesRight);
-			Section.AddMenuEntry(FGraphEditorCommands::Get().StraightenConnections);
-		}
+			FToolMenuSection& SubMenuSection = SubMenu->AddSection("EdGraphSchemaAlignment", LOCTEXT("AlignHeader", "Align"));
+			SubMenuSection.AddMenuEntry(FGraphEditorCommands::Get().AlignNodesTop);
+			SubMenuSection.AddMenuEntry(FGraphEditorCommands::Get().AlignNodesMiddle);
+			SubMenuSection.AddMenuEntry(FGraphEditorCommands::Get().AlignNodesBottom);
+			SubMenuSection.AddMenuEntry(FGraphEditorCommands::Get().AlignNodesLeft);
+			SubMenuSection.AddMenuEntry(FGraphEditorCommands::Get().AlignNodesCenter);
+			SubMenuSection.AddMenuEntry(FGraphEditorCommands::Get().AlignNodesRight);
+			SubMenuSection.AddMenuEntry(FGraphEditorCommands::Get().StraightenConnections);
+		}));
 	}
 	Super::GetContextMenuActions(Menu, Context);
 }
