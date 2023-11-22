@@ -240,41 +240,6 @@ void SFlowGraphEditor::BindGraphCommands()
 	CommandList->MapAction(GraphEditorCommands.StraightenConnections, FExecuteAction::CreateSP(this, &SFlowGraphEditor::OnStraightenConnections));
 }
 
-void SFlowGraphEditor::OnAlignTop()
-{
-	;
-}
-
-void SFlowGraphEditor::OnAlignMiddle()
-{
-	;
-}
-
-void SFlowGraphEditor::OnAlignBottom()
-{
-	;
-}
-
-void SFlowGraphEditor::OnAlignLeft()
-{
-	;
-}
-
-void SFlowGraphEditor::OnAlignCenter()
-{
-	;
-}
-
-void SFlowGraphEditor::OnAlignRight()
-{
-	;
-}
-
-void SFlowGraphEditor::OnStraightenConnections()
-{
-	;
-}
-
 FGraphAppearanceInfo SFlowGraphEditor::GetGraphAppearanceInfo() const
 {
 	FGraphAppearanceInfo AppearanceInfo;
