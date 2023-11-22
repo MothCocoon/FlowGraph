@@ -97,26 +97,6 @@ void UFlowGraphSchema::CreateDefaultNodesForGraph(UEdGraph& Graph) const
 	CastChecked<UFlowGraph>(&Graph)->GetFlowAsset()->HarvestNodeConnections();
 }
 
-void UFlowGraphSchema::GetContextMenuActions(class UToolMenu* Menu, class UGraphNodeContextMenuContext* Context) const
-{
-	if (Context->Node)
-	{
-		FToolMenuSection& Section = Menu->AddSection("GraphSchemaOrganisation", FText::FromString("Organisation"));
-		Section.AddSubMenu("Alignment", LOCTEXT("AlignmentHeader", "Alignment"), FText(), FNewToolMenuDelegate::CreateLambda([](UToolMenu* SubMenu)
-		{
-			FToolMenuSection& SubMenuSection = SubMenu->AddSection("EdGraphSchemaAlignment", LOCTEXT("AlignHeader", "Align"));
-			SubMenuSection.AddMenuEntry(FGraphEditorCommands::Get().AlignNodesTop);
-			SubMenuSection.AddMenuEntry(FGraphEditorCommands::Get().AlignNodesMiddle);
-			SubMenuSection.AddMenuEntry(FGraphEditorCommands::Get().AlignNodesBottom);
-			SubMenuSection.AddMenuEntry(FGraphEditorCommands::Get().AlignNodesLeft);
-			SubMenuSection.AddMenuEntry(FGraphEditorCommands::Get().AlignNodesCenter);
-			SubMenuSection.AddMenuEntry(FGraphEditorCommands::Get().AlignNodesRight);
-			SubMenuSection.AddMenuEntry(FGraphEditorCommands::Get().StraightenConnections);
-		}));
-	}
-	Super::GetContextMenuActions(Menu, Context);
-}
-
 UFlowGraphNode* UFlowGraphSchema::CreateDefaultNode(UEdGraph& Graph, const UFlowAsset* AssetClassDefaults, const TSubclassOf<UFlowNode>& NodeClass, const FVector2D& Offset, const bool bPlacedAsGhostNode)
 {
 	UFlowGraphNode* NewGraphNode = FFlowGraphSchemaAction_NewNode::CreateNode(&Graph, nullptr, NodeClass, Offset);
