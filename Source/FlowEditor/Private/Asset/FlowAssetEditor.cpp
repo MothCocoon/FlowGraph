@@ -382,7 +382,7 @@ void FFlowAssetEditor::BindToolbarCommands()
 								FExecuteAction::CreateSP(this, &FFlowAssetEditor::SearchInAsset),
 								FCanExecuteAction());
 #endif
-	
+
 	ToolkitCommands->MapAction(ToolbarCommands.EditAssetDefaults,
 								FExecuteAction::CreateSP(this, &FFlowAssetEditor::EditAssetDefaults_Clicked),
 								FCanExecuteAction());
