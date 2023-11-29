@@ -12,6 +12,7 @@
 
 #include "LevelSequence.h"
 #include "LevelSequenceActor.h"
+#include "Runtime/Launch/Resources/Version.h"
 #include "VisualLogger/VisualLogger.h"
 
 FFlowNodeLevelSequenceEvent UFlowNode_PlayLevelSequence::OnPlaybackStarted;

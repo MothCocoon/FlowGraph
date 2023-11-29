@@ -6,6 +6,9 @@
 #include "Nodes/FlowNode.h"
 #include "Pins/SFlowPinHandle.h"
 
+#include "EdGraphSchema_K2.h"
+#include "Engine/Blueprint.h"
+
 void SFlowOutputPinHandle::RefreshNameList()
 {
 	PinNames.Empty();

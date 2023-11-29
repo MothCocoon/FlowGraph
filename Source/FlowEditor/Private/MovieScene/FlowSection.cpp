@@ -9,6 +9,7 @@
 #include "Framework/Application/SlateApplication.h"
 #include "MovieSceneTrack.h"
 #include "Rendering/DrawElements.h"
+#include "Runtime/Launch/Resources/Version.h"
 #include "Sections/MovieSceneEventSection.h"
 #include "SequencerSectionPainter.h"
 #include "SequencerTimeSliderController.h"

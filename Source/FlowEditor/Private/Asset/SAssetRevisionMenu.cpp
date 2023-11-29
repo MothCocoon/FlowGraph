@@ -2,6 +2,7 @@
 
 #include "Asset/SAssetRevisionMenu.h"
 
+#include "Framework/MultiBox/MultiBoxBuilder.h"
 #include "IAssetTypeActions.h"
 #include "ISourceControlModule.h"
 #include "ISourceControlRevision.h"

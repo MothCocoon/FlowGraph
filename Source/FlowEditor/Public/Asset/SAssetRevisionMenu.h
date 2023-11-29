@@ -2,6 +2,7 @@
 
 #pragma once
 
+#include "Components/VerticalBox.h"
 #include "ISourceControlProvider.h"
 #include "Widgets/SCompoundWidget.h"
 
