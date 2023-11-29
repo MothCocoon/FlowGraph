@@ -15,14 +15,14 @@
 	"Modules" :
 	[
 		{
-			"Name": "Flow",
-			"Type": "Runtime",
-			"LoadingPhase": "PreDefault"
+			"Name" : "Flow",
+			"Type" : "Runtime",
+			"LoadingPhase" : "PreDefault"
 		},
 		{
-			"Name": "FlowEditor",
-			"Type": "Editor",
-			"LoadingPhase": "Default"
+			"Name" : "FlowEditor",
+			"Type" : "Editor",
+			"LoadingPhase" : "Default"
 		}
 	],
 	"Plugins": [
