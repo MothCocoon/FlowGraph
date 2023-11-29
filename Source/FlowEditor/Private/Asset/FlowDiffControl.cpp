@@ -7,7 +7,6 @@
 
 #include "EdGraph/EdGraph.h"
 #include "GraphDiffControl.h"
-#include "Launch/Resources/Version.h"
 #include "SBlueprintDiff.h"
 
 #define LOCTEXT_NAMESPACE "SFlowDiffControl"

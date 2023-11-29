@@ -377,15 +377,15 @@ void FFlowAssetEditor::BindToolbarCommands()
 								FExecuteAction::CreateSP(this, &FFlowAssetEditor::ValidateAsset_Internal),
 								FCanExecuteAction());
 
-	ToolkitCommands->MapAction(ToolbarCommands.EditAssetDefaults,
-								FExecuteAction::CreateSP(this, &FFlowAssetEditor::EditAssetDefaults_Clicked),
-								FCanExecuteAction());
-
 #if ENABLE_SEARCH_IN_ASSET_EDITOR
 	ToolkitCommands->MapAction(ToolbarCommands.SearchInAsset,
 								FExecuteAction::CreateSP(this, &FFlowAssetEditor::SearchInAsset),
 								FCanExecuteAction());
 #endif
+	
+	ToolkitCommands->MapAction(ToolbarCommands.EditAssetDefaults,
+								FExecuteAction::CreateSP(this, &FFlowAssetEditor::EditAssetDefaults_Clicked),
+								FCanExecuteAction());
 
 	// Engine's Play commands
 	ToolkitCommands->Append(FPlayWorldCommands::GlobalPlayWorldActions.ToSharedRef());

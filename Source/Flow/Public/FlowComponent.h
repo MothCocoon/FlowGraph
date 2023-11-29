@@ -215,6 +215,7 @@ public:
 	// Called when a Root flow asset triggers a CustomOutput
 	UFUNCTION(BlueprintImplementableEvent, DisplayName = "OnTriggerRootFlowOutputEvent")
 	void BP_OnTriggerRootFlowOutputEvent(UFlowAsset* RootFlowInstance, const FName& EventName);
+
 	virtual void OnTriggerRootFlowOutputEvent(UFlowAsset* RootFlowInstance, const FName& EventName) {}
 
 	// UFlowAsset-only access
