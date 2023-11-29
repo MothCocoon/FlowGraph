@@ -183,10 +183,10 @@ TSharedRef<SWidget> SFlowPalette::OnCreateWidgetForAction(FCreateWidgetForAction
 void SFlowPalette::CollectAllActions(FGraphActionListBuilderBase& OutAllActions)
 {
 	ensureAlways(FlowAssetEditor.Pin() && FlowAssetEditor.Pin()->GetFlowAsset());
-	const UClass* AssetClass = FlowAssetEditor.Pin()->GetFlowAsset()->GetClass();
+	const UFlowAsset* EditedFlowAsset = FlowAssetEditor.Pin()->GetFlowAsset();
 	
 	FGraphActionMenuBuilder ActionMenuBuilder;
-	UFlowGraphSchema::GetPaletteActions(ActionMenuBuilder, AssetClass, GetFilterCategoryName());
+	UFlowGraphSchema::GetPaletteActions(ActionMenuBuilder, EditedFlowAsset, GetFilterCategoryName());
 	OutAllActions.Append(ActionMenuBuilder);
 }
 

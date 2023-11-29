@@ -18,6 +18,9 @@
 #include "Serialization/MemoryWriter.h"
 
 #if WITH_EDITOR
+#include "Editor.h"
+#include "Editor/EditorEngine.h"
+
 FString UFlowAsset::ValidationError_NodeClassNotAllowed = TEXT("Node class {0} is not allowed in this asset.");
 FString UFlowAsset::ValidationError_NullNodeInstance = TEXT("Node with GUID {0} is NULL");
 #endif
@@ -104,9 +107,14 @@ EDataValidationResult UFlowAsset::ValidateAsset(FFlowMessageLog& MessageLog)
 	{
 		if (IsValid(Node.Value))
 		{
-			if (!IsNodeClassAllowed(Node.Value->GetClass()))
+			FText FailureReason;
+			if (!IsNodeClassAllowed(Node.Value->GetClass(), &FailureReason))
 			{
-				const FString ErrorMsg = FString::Format(*ValidationError_NodeClassNotAllowed, {*Node.Value->GetClass()->GetName()});
+				const FString ErrorMsg = 
+					FailureReason.IsEmpty() ?
+						FString::Format(*ValidationError_NodeClassNotAllowed, {*Node.Value->GetClass()->GetName()}) :
+						FailureReason.ToString();
+
 				MessageLog.Error(*ErrorMsg, Node.Value);
 			}
 			
@@ -126,69 +134,114 @@ EDataValidationResult UFlowAsset::ValidateAsset(FFlowMessageLog& MessageLog)
 	return MessageLog.Messages.Num() > 0 ? EDataValidationResult::Invalid : EDataValidationResult::Valid;
 }
 
-bool UFlowAsset::IsNodeClassAllowed(const UClass* FlowNodeClass) const
+bool UFlowAsset::IsNodeClassAllowed(const UClass* FlowNodeClass, FText* OutOptionalFailureReason) const
 {
-	if (FlowNodeClass == nullptr)
+	if (!IsValid(FlowNodeClass))
 	{
 		return false;
 	}
 
-	UFlowNode* NodeDefaults = FlowNodeClass->GetDefaultObject<UFlowNode>();
+	if (!CanFlowNodeClassBeUsedByFlowAsset(*FlowNodeClass))
+	{
+		return false;
+	}
+
+	if (!CanFlowAssetUseFlowNodeClass(*FlowNodeClass))
+	{
+		return false;
+	}
+
+	// Confirm plugin reference restrictions are being respected
+	if (!CanFlowAssetReferenceFlowNode(*FlowNodeClass, OutOptionalFailureReason))
+	{
+		return false;
+	}
+
+	return true;
+}
+
+bool UFlowAsset::CanFlowNodeClassBeUsedByFlowAsset(const UClass& FlowNodeClass) const
+{
+	UFlowNode* NodeDefaults = FlowNodeClass.GetDefaultObject<UFlowNode>();
 
 	// UFlowNode class limits which UFlowAsset class can use it
+	for (const UClass* DeniedAssetClass : NodeDefaults->DeniedAssetClasses)
 	{
-		for (const UClass* DeniedAssetClass : NodeDefaults->DeniedAssetClasses)
+		if (DeniedAssetClass && GetClass()->IsChildOf(DeniedAssetClass))
 		{
-			if (DeniedAssetClass && GetClass()->IsChildOf(DeniedAssetClass))
-			{
-				return false;
-			}
-		}
-
-		if (NodeDefaults->AllowedAssetClasses.Num() > 0)
-		{
-			bool bAllowedInAsset = false;
-			for (const UClass* AllowedAssetClass : NodeDefaults->AllowedAssetClasses)
-			{
-				if (AllowedAssetClass && GetClass()->IsChildOf(AllowedAssetClass))
-				{
-					bAllowedInAsset = true;
-					break;
-				}
-			}
-			if (!bAllowedInAsset)
-			{
-				return false;
-			}
+			return false;
 		}
 	}
 
-	// UFlowAsset class can limit which UFlowNode classes can be used
+	if (NodeDefaults->AllowedAssetClasses.Num() > 0)
 	{
-		for (const UClass* DeniedNodeClass : DeniedNodeClasses)
+		bool bAllowedInAsset = false;
+		for (const UClass* AllowedAssetClass : NodeDefaults->AllowedAssetClasses)
 		{
-			if (DeniedNodeClass && FlowNodeClass->IsChildOf(DeniedNodeClass))
+			if (AllowedAssetClass && GetClass()->IsChildOf(AllowedAssetClass))
 			{
-				return false;
+				bAllowedInAsset = true;
+				break;
 			}
 		}
+		if (!bAllowedInAsset)
+		{
+			return false;
+		}
+	}
 
-		if (AllowedNodeClasses.Num() > 0)
+	return true;
+}
+
+bool UFlowAsset::CanFlowAssetUseFlowNodeClass(const UClass& FlowNodeClass) const
+{
+	// UFlowAsset class can limit which UFlowNode classes can be used
+	for (const UClass* DeniedNodeClass : DeniedNodeClasses)
+	{
+		if (DeniedNodeClass && FlowNodeClass.IsChildOf(DeniedNodeClass))
 		{
-			bool bAllowedInAsset = false;
-			for (const UClass* AllowedNodeClass : AllowedNodeClasses)
+			return false;
+		}
+	}
+
+	if (AllowedNodeClasses.Num() > 0)
+	{
+		bool bAllowedInAsset = false;
+		for (const UClass* AllowedNodeClass : AllowedNodeClasses)
+		{
+			if (AllowedNodeClass && FlowNodeClass.IsChildOf(AllowedNodeClass))
 			{
-				if (AllowedNodeClass && FlowNodeClass->IsChildOf(AllowedNodeClass))
-				{
-					bAllowedInAsset = true;
-					break;
-				}
-			}
-			if (!bAllowedInAsset)
-			{
-				return false;
+				bAllowedInAsset = true;
+				break;
 			}
 		}
+		if (!bAllowedInAsset)
+		{
+			return false;
+		}
+	}
+
+	return true;
+}
+
+bool UFlowAsset::CanFlowAssetReferenceFlowNode(const UClass& FlowNodeClass, FText* OutOptionalFailureReason) const
+{
+	if (!GEditor || !IsValid(&FlowNodeClass))
+	{
+		return false;
+	}
+
+	FAssetData FlowNodeAssetData(&FlowNodeClass);
+
+	FAssetReferenceFilterContext AssetReferenceFilterContext;
+	AssetReferenceFilterContext.ReferencingAssets.Add(FAssetData(this));
+
+	// Confirm plugin reference restrictions are being respected
+	TSharedPtr<IAssetReferenceFilter> FlowAssetReferenceFilter = GEditor->MakeAssetReferenceFilter(AssetReferenceFilterContext);
+	if (FlowAssetReferenceFilter.IsValid() &&
+		!FlowAssetReferenceFilter->PassesFilter(FlowNodeAssetData, OutOptionalFailureReason))
+	{
+		return false;
 	}
 
 	return true;

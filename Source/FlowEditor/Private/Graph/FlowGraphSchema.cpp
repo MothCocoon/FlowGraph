@@ -54,9 +54,9 @@ void UFlowGraphSchema::SubscribeToAssetChanges()
 	}
 }
 
-void UFlowGraphSchema::GetPaletteActions(FGraphActionMenuBuilder& ActionMenuBuilder, const UClass* AssetClass, const FString& CategoryName)
+void UFlowGraphSchema::GetPaletteActions(FGraphActionMenuBuilder& ActionMenuBuilder, const UFlowAsset* EditedFlowAsset, const FString& CategoryName)
 {
-	GetFlowNodeActions(ActionMenuBuilder, AssetClass->GetDefaultObject<UFlowAsset>(), CategoryName);
+	GetFlowNodeActions(ActionMenuBuilder, EditedFlowAsset, CategoryName);
 	GetCommentAction(ActionMenuBuilder);
 }
 
@@ -346,19 +346,19 @@ UClass* UFlowGraphSchema::GetAssignedGraphNodeClass(const UClass* FlowNodeClass)
 	return IsValid(ReturnClass) ? ReturnClass : UFlowGraphNode::StaticClass();
 }
 
-void UFlowGraphSchema::ApplyNodeFilter(const UFlowAsset* AssetClassDefaults, const UClass* FlowNodeClass, TArray<UFlowNode*>& FilteredNodes)
+void UFlowGraphSchema::ApplyNodeFilter(const UFlowAsset* EditedFlowAsset, const UClass* FlowNodeClass, TArray<UFlowNode*>& FilteredNodes)
 {
 	if (FlowNodeClass == nullptr)
 	{
 		return;
 	}
 
-	if (AssetClassDefaults == nullptr)
+	if (EditedFlowAsset == nullptr)
 	{
 		return;
 	}
 
-	if (!AssetClassDefaults->IsNodeClassAllowed(FlowNodeClass))
+	if (!EditedFlowAsset->IsNodeClassAllowed(FlowNodeClass))
 	{
 		return;
 	}
@@ -367,7 +367,7 @@ void UFlowGraphSchema::ApplyNodeFilter(const UFlowAsset* AssetClassDefaults, con
 	FilteredNodes.Emplace(NodeDefaults);
 }
 
-void UFlowGraphSchema::GetFlowNodeActions(FGraphActionMenuBuilder& ActionMenuBuilder, const UFlowAsset* AssetClassDefaults, const FString& CategoryName)
+void UFlowGraphSchema::GetFlowNodeActions(FGraphActionMenuBuilder& ActionMenuBuilder, const UFlowAsset* EditedFlowAsset, const FString& CategoryName)
 {
 	if (!bInitialGatherPerformed)
 	{
@@ -381,14 +381,14 @@ void UFlowGraphSchema::GetFlowNodeActions(FGraphActionMenuBuilder& ActionMenuBui
 
 		for (const UClass* FlowNodeClass : NativeFlowNodes)
 		{
-			ApplyNodeFilter(AssetClassDefaults, FlowNodeClass, FilteredNodes);
+			ApplyNodeFilter(EditedFlowAsset, FlowNodeClass, FilteredNodes);
 		}
 
 		for (const TPair<FName, FAssetData>& AssetData : BlueprintFlowNodes)
 		{
 			if (const UBlueprint* Blueprint = GetPlaceableNodeBlueprint(AssetData.Value))
 			{
-				ApplyNodeFilter(AssetClassDefaults, Blueprint->GeneratedClass, FilteredNodes);
+				ApplyNodeFilter(EditedFlowAsset, Blueprint->GeneratedClass, FilteredNodes);
 			}
 		}
 

@@ -118,8 +118,8 @@ protected:
 	FGuid NodeGuid;
 
 public:
-	void SetGuid(const FGuid NewGuid) { NodeGuid = NewGuid; }
-	FGuid GetGuid() const { return NodeGuid; }
+	void SetGuid(const FGuid& NewGuid) { NodeGuid = NewGuid; }
+	const FGuid& GetGuid() const { return NodeGuid; }
 
 	UFUNCTION(BlueprintPure, Category = "FlowNode")
 	UFlowAsset* GetFlowAsset() const;
