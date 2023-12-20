@@ -48,6 +48,4 @@ protected:
 	static TArray<FName> GetFlowOwnerFunctionRefs(const UFlowNode_CallOwnerFunction& FlowNodeOwner, const UClass& ExpectedOwnerClass);
 
 	static bool IsFunctionUsable(const UFunction& Function, const UFlowNode_CallOwnerFunction& FlowNodeOwner);
-	static bool DoesFunctionHaveExpectedParamType(const UFunction& Function, const UFlowNode_CallOwnerFunction& FlowNodeOwner);
-
 };

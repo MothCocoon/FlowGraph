@@ -118,8 +118,8 @@ protected:
 	FGuid NodeGuid;
 
 public:
-	void SetGuid(const FGuid NewGuid) { NodeGuid = NewGuid; }
-	FGuid GetGuid() const { return NodeGuid; }
+	void SetGuid(const FGuid& NewGuid) { NodeGuid = NewGuid; }
+	const FGuid& GetGuid() const { return NodeGuid; }
 
 	UFUNCTION(BlueprintPure, Category = "FlowNode")
 	UFlowAsset* GetFlowAsset() const;
@@ -238,6 +238,8 @@ public:
 
 	UFUNCTION(BlueprintPure, Category= "FlowNode")
 	bool IsOutputConnected(const FName& PinName) const;
+
+	static void RecursiveFindNodesByClass(UFlowNode* Node, const TSubclassOf<UFlowNode> Class, uint8 Depth, TArray<UFlowNode*>& OutNodes);
 
 //////////////////////////////////////////////////////////////////////////
 // Debugger

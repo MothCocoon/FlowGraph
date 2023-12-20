@@ -22,6 +22,7 @@ class FLOWEDITOR_API UFlowGraph : public UEdGraph
 	GENERATED_UCLASS_BODY()
 
 	static UEdGraph* CreateGraph(UFlowAsset* InFlowAsset);
+	static UEdGraph* CreateGraph(UFlowAsset* InFlowAsset, TSubclassOf<UFlowGraphSchema> FlowSchema);
 	void RefreshGraph();
 
 	// UEdGraph

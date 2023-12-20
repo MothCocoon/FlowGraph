@@ -44,6 +44,11 @@ void UFlowComponent::BeginPlay()
 {
 	Super::BeginPlay();
 
+	RegisterWithFlowSubsystem();
+}
+
+void UFlowComponent::RegisterWithFlowSubsystem()
+{
 	if (UFlowSubsystem* FlowSubsystem = GetFlowSubsystem())
 	{
 		bool bComponentLoadedFromSaveGame = false;
@@ -70,13 +75,18 @@ void UFlowComponent::BeginPlay()
 
 void UFlowComponent::EndPlay(const EEndPlayReason::Type EndPlayReason)
 {
+	UnregisterWithFlowSubsystem();
+
+	Super::EndPlay(EndPlayReason);
+}
+
+void UFlowComponent::UnregisterWithFlowSubsystem()
+{
 	if (UFlowSubsystem* FlowSubsystem = GetFlowSubsystem())
 	{
 		FlowSubsystem->FinishAllRootFlows(this, EFlowFinishPolicy::Keep);
 		FlowSubsystem->UnregisterComponent(this);
 	}
-
-	Super::EndPlay(EndPlayReason);
 }
 
 void UFlowComponent::AddIdentityTag(const FGameplayTag Tag, const EFlowNetMode NetMode /* = EFlowNetMode::Authority*/)

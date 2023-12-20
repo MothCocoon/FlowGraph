@@ -81,6 +81,10 @@ public:
 	UFUNCTION(BlueprintCallable, Category = "Flow")
 	void RemoveIdentityTags(FGameplayTagContainer Tags, const EFlowNetMode NetMode = EFlowNetMode::Authority);
 
+protected:
+	void RegisterWithFlowSubsystem();
+	void UnregisterWithFlowSubsystem();
+	
 private:
 	UFUNCTION()
 	void OnRep_AddedIdentityTags();

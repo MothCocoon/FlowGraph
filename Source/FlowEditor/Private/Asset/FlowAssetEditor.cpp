@@ -384,8 +384,8 @@ void FFlowAssetEditor::BindToolbarCommands()
 #endif
 
 	ToolkitCommands->MapAction(ToolbarCommands.EditAssetDefaults,
-							FExecuteAction::CreateSP(this, &FFlowAssetEditor::EditAssetDefaults_Clicked),
-							FCanExecuteAction());
+								FExecuteAction::CreateSP(this, &FFlowAssetEditor::EditAssetDefaults_Clicked),
+								FCanExecuteAction());
 
 	// Engine's Play commands
 	ToolkitCommands->Append(FPlayWorldCommands::GlobalPlayWorldActions.ToSharedRef());

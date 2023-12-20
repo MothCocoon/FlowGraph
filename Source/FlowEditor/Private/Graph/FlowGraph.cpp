@@ -31,7 +31,13 @@ UFlowGraph::UFlowGraph(const FObjectInitializer& ObjectInitializer)
 
 UEdGraph* UFlowGraph::CreateGraph(UFlowAsset* InFlowAsset)
 {
-	UEdGraph* NewGraph = CastChecked<UFlowGraph>(FBlueprintEditorUtils::CreateNewGraph(InFlowAsset, NAME_None, StaticClass(), UFlowGraphSchema::StaticClass()));
+	return CreateGraph(InFlowAsset, UFlowGraphSchema::StaticClass());
+}
+
+UEdGraph* UFlowGraph::CreateGraph(UFlowAsset* InFlowAsset, TSubclassOf<UFlowGraphSchema> FlowSchema)
+{
+	check(FlowSchema);
+	UEdGraph* NewGraph = CastChecked<UFlowGraph>(FBlueprintEditorUtils::CreateNewGraph(InFlowAsset, NAME_None, StaticClass(), FlowSchema));
 	NewGraph->bAllowDeletion = false;
 
 	InFlowAsset->FlowGraph = NewGraph;

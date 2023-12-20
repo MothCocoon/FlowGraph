@@ -37,6 +37,7 @@ public:
 #if WITH_EDITOR
 	//Begin UObject
 	virtual void PostLoad() override;
+	virtual bool CanEditChange(const FProperty* InProperty) const override;
 	virtual void PostEditChangeProperty(struct FPropertyChangedEvent& PropertyChangedEvent) override;
 	//End UObject
 

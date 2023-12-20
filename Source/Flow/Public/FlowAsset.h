@@ -10,6 +10,7 @@
 #include "UObject/ObjectKey.h"
 #include "FlowAsset.generated.h"
 
+class UFlowNode_CustomOutput;
 class UFlowNode_CustomInput;
 class UFlowNode_SubGraph;
 class UFlowSubsystem;
@@ -69,14 +70,21 @@ class FLOW_API UFlowAsset : public UObject
 	static void AddReferencedObjects(UObject* InThis, FReferenceCollector& Collector);
 	virtual void PostEditChangeProperty(FPropertyChangedEvent& PropertyChangedEvent) override;
 	virtual void PostDuplicate(bool bDuplicateForPIE) override;
+	virtual void PostLoad() override;
 	// --
 
 	virtual EDataValidationResult ValidateAsset(FFlowMessageLog& MessageLog);
 
 	// Returns whether the node class is allowed in this flow asset
-	bool IsNodeClassAllowed(const UClass* FlowNodeClass) const;
+	bool IsNodeClassAllowed(const UClass* FlowNodeClass, FText* OutOptionalFailureReason = nullptr) const;
 
 	static FString ValidationError_NodeClassNotAllowed;
+	static FString ValidationError_NullNodeInstance;
+
+protected:
+	bool CanFlowNodeClassBeUsedByFlowAsset(const UClass& FlowNodeClass) const;
+	bool CanFlowAssetUseFlowNodeClass(const UClass& FlowNodeClass) const;
+	bool CanFlowAssetReferenceFlowNode(const UClass& FlowNodeClass, FText* OutOptionalFailureReason = nullptr) const;
 #endif
 
 	// IFlowGraphInterface
@@ -114,6 +122,8 @@ private:
 	UPROPERTY()
 	TMap<FGuid, UFlowNode*> Nodes;
 
+#if WITH_EDITORONLY_DATA
+protected:
 	/**
 	 * Custom Inputs define custom entry points in graph, it's similar to blueprint Custom Events
 	 * Sub Graph node using this Flow Asset will generate context Input Pin for every valid Event name on this list
@@ -127,6 +137,7 @@ private:
 	 */
 	UPROPERTY(EditAnywhere, Category = "Sub Graph")
 	TArray<FName> CustomOutputs;
+#endif // WITH_EDITORONLY_DATA
 
 public:
 #if WITH_EDITOR
@@ -159,21 +170,6 @@ public:
 
 	UFUNCTION(BlueprintPure, Category = "FlowAsset")
 	virtual UFlowNode* GetDefaultEntryNode() const;
-
-#if WITH_EDITOR
-protected:
-	void AddCustomInput(const FName& EventName);
-	void RemoveCustomInput(const FName& EventName);
-
-	void AddCustomOutput(const FName& EventName);
-	void RemoveCustomOutput(const FName& EventName);
-#endif
-
-public:
-	const TArray<FName>& GetCustomInputs() const { return CustomInputs; }
-	const TArray<FName>& GetCustomOutputs() const { return CustomOutputs; }
-
-	UFlowNode_CustomInput* TryFindCustomInputNodeByEventName(const FName& EventName) const;
 
 	UFUNCTION(BlueprintPure, Category = "FlowAsset", meta = (DeterminesOutputType = "FlowNodeClass"))
 	TArray<UFlowNode*> GetNodesInExecutionOrder(UFlowNode* FirstIteratedNode, const TSubclassOf<UFlowNode> FlowNodeClass);
@@ -210,6 +206,25 @@ protected:
 		}
 	}
 
+public:	
+	UFlowNode_CustomInput* TryFindCustomInputNodeByEventName(const FName& EventName) const;
+	UFlowNode_CustomOutput* TryFindCustomOutputNodeByEventName(const FName& EventName) const;
+
+	TArray<FName> GatherCustomInputNodeEventNames() const;
+	TArray<FName> GatherCustomOutputNodeEventNames() const;
+
+#if WITH_EDITOR
+	const TArray<FName>& GetCustomInputs() const { return CustomInputs; }
+	const TArray<FName>& GetCustomOutputs() const { return CustomOutputs; }
+
+protected:
+	void AddCustomInput(const FName& EventName);
+	void RemoveCustomInput(const FName& EventName);
+
+	void AddCustomOutput(const FName& EventName);
+	void RemoveCustomOutput(const FName& EventName);
+#endif // WITH_EDITOR
+	
 //////////////////////////////////////////////////////////////////////////
 // Instances of the template asset
 
