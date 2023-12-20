@@ -492,6 +492,21 @@ void UFlowGraphNode::GetNodeContextMenuActions(class UToolMenu* Menu, class UGra
 				Section.AddMenuEntry(FlowGraphCommands.JumpToNodeDefinition);
 			}
 		}
+
+		{
+			FToolMenuSection& Section = Menu->AddSection("FlowGraphNodeOrganisation", LOCTEXT("NodeOrganisation", "Organisation"));
+			Section.AddSubMenu("Alignment", LOCTEXT("AlignmentHeader", "Alignment"), FText(), FNewToolMenuDelegate::CreateLambda([](UToolMenu* SubMenu)
+			{
+				FToolMenuSection& SubMenuSection = SubMenu->AddSection("EdGraphSchemaAlignment", LOCTEXT("AlignHeader", "Align"));
+				SubMenuSection.AddMenuEntry(FGraphEditorCommands::Get().AlignNodesTop);
+				SubMenuSection.AddMenuEntry(FGraphEditorCommands::Get().AlignNodesMiddle);
+				SubMenuSection.AddMenuEntry(FGraphEditorCommands::Get().AlignNodesBottom);
+				SubMenuSection.AddMenuEntry(FGraphEditorCommands::Get().AlignNodesLeft);
+				SubMenuSection.AddMenuEntry(FGraphEditorCommands::Get().AlignNodesCenter);
+				SubMenuSection.AddMenuEntry(FGraphEditorCommands::Get().AlignNodesRight);
+				SubMenuSection.AddMenuEntry(FGraphEditorCommands::Get().StraightenConnections);
+			}));
+		}
 	}
 }
 
