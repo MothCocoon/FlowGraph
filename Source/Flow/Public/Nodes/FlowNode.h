@@ -118,7 +118,10 @@ protected:
 	FGuid NodeGuid;
 
 public:
+	UFUNCTION(BlueprintCallable, Category = "FlowNode")
 	void SetGuid(const FGuid& NewGuid) { NodeGuid = NewGuid; }
+
+	UFUNCTION(BlueprintPure, Category = "FlowNode")
 	const FGuid& GetGuid() const { return NodeGuid; }
 
 	UFUNCTION(BlueprintPure, Category = "FlowNode")
