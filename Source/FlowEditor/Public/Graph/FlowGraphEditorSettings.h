@@ -48,6 +48,11 @@ class FLOWEDITOR_API UFlowGraphEditorSettings : public UDeveloperSettings
 	UPROPERTY(config, EditAnywhere, Category = "Nodes", meta = (EditCondition = "bShowSubGraphPreview"))
 	FVector2D SubGraphPreviewSize;
 
+	/** Enable hot reload for native flow nodes?
+	 * WARNING: hot reload can easily crash the editor and you can lose progress */
+	UPROPERTY(EditAnywhere, Config, Category = "Nodes", AdvancedDisplay)
+	bool bHotReloadNativeNodes;
+
 	UPROPERTY(EditAnywhere, config, Category = "Wires")
 	bool bHighlightInputWiresOfSelectedNodes;
 

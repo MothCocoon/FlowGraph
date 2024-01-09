@@ -458,11 +458,15 @@ void UFlowGraphSchema::OnHotReload(EReloadCompleteReason ReloadCompleteReason)
 
 void UFlowGraphSchema::GatherNativeNodes()
 {
+	const bool bHotReloadNativeNodes = UFlowGraphEditorSettings::Get()->bHotReloadNativeNodes;
 	// collect C++ nodes once per editor session
-	if (NativeFlowNodes.Num() > 0)
+	if (NativeFlowNodes.Num() > 0 && !bHotReloadNativeNodes)
 	{
 		return;
 	}
+
+	NativeFlowNodes.Reset();
+	GraphNodesByFlowNodes.Reset();
 
 	TArray<UClass*> FlowNodes;
 	GetDerivedClasses(UFlowNode::StaticClass(), FlowNodes);
