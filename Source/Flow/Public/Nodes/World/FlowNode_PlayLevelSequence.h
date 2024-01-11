@@ -62,6 +62,10 @@ public:
 	UPROPERTY(EditAnywhere, Category = "Sequence")
 	bool bApplyOwnerTimeDilation;
 	
+	// Allows Binding of Tagged Sequences to Actors via Registered FlowActors / GameTags.
+	UPROPERTY(EditAnywhere, Category = "Sequence|Bindings")
+	TMap<FGameplayTag, FName> BindActorsFromIdentityTagToSequenceTags;
+
 protected:
 	UPROPERTY()
 	ULevelSequence* LoadedSequence;

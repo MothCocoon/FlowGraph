@@ -153,6 +153,18 @@ void UFlowNode_PlayLevelSequence::CreatePlayer()
 		// Finally create the player
 		SequencePlayer = UFlowLevelSequencePlayer::CreateFlowLevelSequencePlayer(this, LoadedSequence, PlaybackSettings, CameraSettings, TransformOriginActor, bReplicates, bAlwaysRelevant, SequenceActor);
 
+		// Bind Actors with GameTags to Sequence-Tags
+		for (auto& [key_gp_tag, val_seq_tag] : BindActorsFromIdentityTagToSequenceTags)
+		{
+			auto actors = GetFlowSubsystem()->GetFlowActorsByTag(key_gp_tag, AActor::StaticClass());
+
+			for (const auto first : actors)
+			{
+				SequenceActor->AddBindingByTag(val_seq_tag, first);
+				break; // just taking first.
+			}
+		}
+
 		if (SequencePlayer)
 		{
 			SequencePlayer->SetFlowEventReceiver(this);
