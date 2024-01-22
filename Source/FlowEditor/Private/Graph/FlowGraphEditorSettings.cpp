@@ -12,7 +12,7 @@ UFlowGraphEditorSettings::UFlowGraphEditorSettings(const FObjectInitializer& Obj
 	, bShowSubGraphPath(true)
 	, SubGraphPreviewSize(FVector2D(640.f, 360.f))
 	, bHotReloadNativeNodes(false)
-	, bHighlightInputWiresOfSelectedNodes(true)
+	, bHighlightInputWiresOfSelectedNodes(false)
 	, bHighlightOutputWiresOfSelectedNodes(false)
 {
 }
