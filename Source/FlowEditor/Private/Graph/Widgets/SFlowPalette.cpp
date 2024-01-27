@@ -105,6 +105,17 @@ void SFlowPalette::Construct(const FArguments& InArgs, TWeakPtr<FFlowAssetEditor
 	UpdateCategoryNames();
 	UFlowGraphSchema::OnNodeListChanged.AddSP(this, &SFlowPalette::Refresh);
 
+	struct LocalUtils
+	{
+		static TSharedRef<SExpanderArrow> CreateCustomExpanderStatic(const FCustomExpanderData& ActionMenuData, bool bShowFavoriteToggle)
+		{
+			TSharedPtr<SExpanderArrow> CustomExpander;
+			// in SBlueprintSubPalette here would be a difference depending on bShowFavoriteToggle
+			SAssignNew(CustomExpander, SExpanderArrow, ActionMenuData.TableRow);
+			return CustomExpander.ToSharedRef();
+		}
+	};
+
 	this->ChildSlot
 	[
 		SNew(SBorder)
@@ -134,6 +145,7 @@ void SFlowPalette::Construct(const FArguments& InArgs, TWeakPtr<FFlowAssetEditor
 							.OnActionSelected(this, &SFlowPalette::OnActionSelected)
 							.OnCreateWidgetForAction(this, &SFlowPalette::OnCreateWidgetForAction)
 							.OnCollectAllActions(this, &SFlowPalette::CollectAllActions)
+							.OnCreateCustomRowExpander_Static(&LocalUtils::CreateCustomExpanderStatic, false)
 							.AutoExpandActionMenu(true)
 					]
 			]
