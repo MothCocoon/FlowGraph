@@ -3,7 +3,7 @@
 #include "Nodes/World/FlowNode_PlayLevelSequence.h"
 
 #include "FlowAsset.h"
-#include "FlowModule.h"
+#include "FlowLogChannels.h"
 #include "FlowSubsystem.h"
 #include "LevelSequence/FlowLevelSequencePlayer.h"
 

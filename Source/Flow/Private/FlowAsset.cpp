@@ -17,7 +17,7 @@
 
 #if WITH_EDITOR
 #include "FlowMessageLog.h"
-#include "FlowModule.h"
+#include "FlowLogChannels.h"
 
 #include "Editor.h"
 #include "Editor/EditorEngine.h"

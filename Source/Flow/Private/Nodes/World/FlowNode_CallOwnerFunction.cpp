@@ -1,8 +1,9 @@
 // Copyright https://github.com/MothCocoon/FlowGraph/graphs/contributors
 
 #include "Nodes/World/FlowNode_CallOwnerFunction.h"
+
 #include "FlowAsset.h"
-#include "FlowModule.h"
+#include "FlowLogChannels.h"
 #include "FlowOwnerInterface.h"
 #include "FlowOwnerFunctionParams.h"
 #include "FlowSettings.h"

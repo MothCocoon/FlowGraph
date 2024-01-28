@@ -3,7 +3,7 @@
 #include "Asset/FlowAssetEditor.h"
 
 #include "FlowEditorCommands.h"
-#include "FlowEditorModule.h"
+#include "FlowEditorLogChannels.h"
 #include "FlowMessageLog.h"
 
 #include "Asset/FlowAssetEditorContext.h"

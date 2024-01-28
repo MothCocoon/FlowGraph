@@ -4,7 +4,7 @@
 
 #include "FlowAsset.h"
 #include "FlowComponent.h"
-#include "FlowModule.h"
+#include "FlowLogChannels.h"
 #include "FlowSave.h"
 #include "FlowSettings.h"
 #include "Nodes/Route/FlowNode_SubGraph.h"

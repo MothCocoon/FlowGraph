@@ -3,7 +3,7 @@
 #include "FlowComponent.h"
 
 #include "FlowAsset.h"
-#include "FlowModule.h"
+#include "FlowLogChannels.h"
 #include "FlowSettings.h"
 #include "FlowSubsystem.h"
 

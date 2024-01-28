@@ -1,7 +1,7 @@
 // Copyright https://github.com/MothCocoon/FlowGraph/graphs/contributors
 
 #include "Nodes/Utils/FlowNode_Log.h"
-#include "FlowModule.h"
+#include "FlowLogChannels.h"
 
 #include "Engine/Engine.h"
 
