@@ -2,6 +2,8 @@
 
 #include "Nodes/Route/FlowNode_ExecutionMultiGate.h"
 
+#include UE_INLINE_GENERATED_CPP_BY_NAME(FlowNode_ExecutionMultiGate)
+
 UFlowNode_ExecutionMultiGate::UFlowNode_ExecutionMultiGate(const FObjectInitializer& ObjectInitializer)
 	: Super(ObjectInitializer)
 	, StartIndex(INDEX_NONE)

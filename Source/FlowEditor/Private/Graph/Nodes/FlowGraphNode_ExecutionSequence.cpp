@@ -6,6 +6,8 @@
 
 #include "Textures/SlateIcon.h"
 
+#include UE_INLINE_GENERATED_CPP_BY_NAME(FlowGraphNode_ExecutionSequence)
+
 UFlowGraphNode_ExecutionSequence::UFlowGraphNode_ExecutionSequence(const FObjectInitializer& ObjectInitializer)
 	: Super(ObjectInitializer)
 {

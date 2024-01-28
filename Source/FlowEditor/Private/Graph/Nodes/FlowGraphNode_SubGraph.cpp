@@ -5,6 +5,8 @@
 
 #include "Nodes/Route/FlowNode_SubGraph.h"
 
+#include UE_INLINE_GENERATED_CPP_BY_NAME(FlowGraphNode_SubGraph)
+
 UFlowGraphNode_SubGraph::UFlowGraphNode_SubGraph(const FObjectInitializer& ObjectInitializer)
 	: Super(ObjectInitializer)
 {

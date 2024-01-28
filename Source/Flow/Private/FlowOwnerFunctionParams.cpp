@@ -4,8 +4,7 @@
 #include "Nodes/FlowNode.h"
 #include "Nodes/World/FlowNode_CallOwnerFunction.h"
 
-
-// UFlowOwnerFunctionParams Implementation
+#include UE_INLINE_GENERATED_CPP_BY_NAME(FlowOwnerFunctionParams)
 
 UFlowOwnerFunctionParams::UFlowOwnerFunctionParams()
 	: Super()
@@ -13,7 +12,7 @@ UFlowOwnerFunctionParams::UFlowOwnerFunctionParams()
 #if WITH_EDITOR
 	InputNames.Add(UFlowNode::DefaultInputPin.PinName);
 	OutputNames.Add(UFlowNode::DefaultOutputPin.PinName);
-#endif //WITH_EDITOR
+#endif
 }
 
 void UFlowOwnerFunctionParams::PreExecute(UFlowNode_CallOwnerFunction& InSourceNode, const FName& InputPinName)

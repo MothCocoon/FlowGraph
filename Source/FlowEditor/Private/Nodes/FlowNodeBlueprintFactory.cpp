@@ -21,6 +21,8 @@
 #include "Widgets/SCompoundWidget.h"
 #include "Widgets/SWindow.h"
 
+#include UE_INLINE_GENERATED_CPP_BY_NAME(FlowNodeBlueprintFactory)
+
 #define LOCTEXT_NAMESPACE "FlowNodeBlueprintFactory"
 
 // ------------------------------------------------------------------------------

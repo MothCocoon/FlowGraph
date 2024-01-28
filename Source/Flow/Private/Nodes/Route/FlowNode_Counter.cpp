@@ -2,6 +2,8 @@
 
 #include "Nodes/Route/FlowNode_Counter.h"
 
+#include UE_INLINE_GENERATED_CPP_BY_NAME(FlowNode_Counter)
+
 UFlowNode_Counter::UFlowNode_Counter(const FObjectInitializer& ObjectInitializer)
 	: Super(ObjectInitializer)
 	, Goal(2)

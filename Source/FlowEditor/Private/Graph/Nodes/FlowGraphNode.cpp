@@ -27,6 +27,8 @@
 #include "Textures/SlateIcon.h"
 #include "ToolMenuSection.h"
 
+#include UE_INLINE_GENERATED_CPP_BY_NAME(FlowGraphNode)
+
 #define LOCTEXT_NAMESPACE "FlowGraphNode"
 
 UFlowGraphNode::UFlowGraphNode(const FObjectInitializer& ObjectInitializer)

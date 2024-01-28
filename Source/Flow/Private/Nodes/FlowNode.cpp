@@ -25,6 +25,8 @@
 #include "Serialization/MemoryWriter.h"
 #include "Engine/Blueprint.h"
 
+#include UE_INLINE_GENERATED_CPP_BY_NAME(FlowNode)
+
 FFlowPin UFlowNode::DefaultInputPin(TEXT("In"));
 FFlowPin UFlowNode::DefaultOutputPin(TEXT("Out"));
 

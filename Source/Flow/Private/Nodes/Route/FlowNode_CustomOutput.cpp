@@ -4,6 +4,8 @@
 #include "FlowAsset.h"
 #include "FlowSettings.h"
 
+#include UE_INLINE_GENERATED_CPP_BY_NAME(FlowNode_CustomOutput)
+
 #define LOCTEXT_NAMESPACE "FlowNode_CustomOutput"
 
 UFlowNode_CustomOutput::UFlowNode_CustomOutput(const FObjectInitializer& ObjectInitializer)

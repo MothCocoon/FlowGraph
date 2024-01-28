@@ -5,6 +5,8 @@
 
 #include "Engine/Engine.h"
 
+#include UE_INLINE_GENERATED_CPP_BY_NAME(FlowNode_Log)
+
 UFlowNode_Log::UFlowNode_Log(const FObjectInitializer& ObjectInitializer)
 	: Super(ObjectInitializer)
 	, Message(TEXT("Log!"))

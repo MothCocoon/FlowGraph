@@ -22,6 +22,8 @@
 #include "Editor.h"
 #include "ScopedTransaction.h"
 
+#include UE_INLINE_GENERATED_CPP_BY_NAME(FlowGraphSchema)
+
 #define LOCTEXT_NAMESPACE "FlowGraphSchema"
 
 bool UFlowGraphSchema::bInitialGatherPerformed = false;

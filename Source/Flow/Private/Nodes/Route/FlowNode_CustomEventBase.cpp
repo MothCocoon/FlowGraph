@@ -3,6 +3,8 @@
 #include "Nodes/Route/FlowNode_CustomEventBase.h"
 #include "FlowSettings.h"
 
+#include UE_INLINE_GENERATED_CPP_BY_NAME(FlowNode_CustomEventBase)
+
 UFlowNode_CustomEventBase::UFlowNode_CustomEventBase(const FObjectInitializer& ObjectInitializer)
 	: Super(ObjectInitializer)
 {

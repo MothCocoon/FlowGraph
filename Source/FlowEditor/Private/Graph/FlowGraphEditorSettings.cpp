@@ -2,6 +2,8 @@
 
 #include "Graph/FlowGraphEditorSettings.h"
 
+#include UE_INLINE_GENERATED_CPP_BY_NAME(FlowGraphEditorSettings)
+
 UFlowGraphEditorSettings::UFlowGraphEditorSettings(const FObjectInitializer& ObjectInitializer)
 	: Super(ObjectInitializer)
 	, NodeDoubleClickTarget(EFlowNodeDoubleClickTarget::PrimaryAssetOrNodeDefinition)

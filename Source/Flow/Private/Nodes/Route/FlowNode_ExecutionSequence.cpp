@@ -2,6 +2,8 @@
 
 #include "Nodes/Route/FlowNode_ExecutionSequence.h"
 
+#include UE_INLINE_GENERATED_CPP_BY_NAME(FlowNode_ExecutionSequence)
+
 UFlowNode_ExecutionSequence::UFlowNode_ExecutionSequence(const FObjectInitializer& ObjectInitializer)
 	: Super(ObjectInitializer)
 	, bSavePinExecutionState(true)

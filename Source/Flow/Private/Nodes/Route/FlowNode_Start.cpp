@@ -2,6 +2,8 @@
 
 #include "Nodes/Route/FlowNode_Start.h"
 
+#include UE_INLINE_GENERATED_CPP_BY_NAME(FlowNode_Start)
+
 UFlowNode_Start::UFlowNode_Start(const FObjectInitializer& ObjectInitializer)
 	: Super(ObjectInitializer)
 {

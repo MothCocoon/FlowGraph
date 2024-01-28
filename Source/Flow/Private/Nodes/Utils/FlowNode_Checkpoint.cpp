@@ -5,6 +5,8 @@
 
 #include "Kismet/GameplayStatics.h"
 
+#include UE_INLINE_GENERATED_CPP_BY_NAME(FlowNode_Checkpoint)
+
 UFlowNode_Checkpoint::UFlowNode_Checkpoint(const FObjectInitializer& ObjectInitializer)
 	: Super(ObjectInitializer)
 {

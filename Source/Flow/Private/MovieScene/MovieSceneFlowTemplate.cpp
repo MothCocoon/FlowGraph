@@ -7,6 +7,8 @@
 #include "Evaluation/MovieSceneEvaluation.h"
 #include "IMovieScenePlayer.h"
 
+#include UE_INLINE_GENERATED_CPP_BY_NAME(MovieSceneFlowTemplate)
+
 #define LOCTEXT_NAMESPACE "MovieSceneFlowTemplate"
 
 DECLARE_CYCLE_STAT(TEXT("Flow Track Token Execute"), MovieSceneEval_FlowTrack_TokenExecute, STATGROUP_MovieSceneEval);

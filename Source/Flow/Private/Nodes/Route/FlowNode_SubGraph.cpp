@@ -6,6 +6,8 @@
 #include "FlowMessageLog.h"
 #include "FlowSubsystem.h"
 
+#include UE_INLINE_GENERATED_CPP_BY_NAME(FlowNode_SubGraph)
+
 FFlowPin UFlowNode_SubGraph::StartPin(TEXT("Start"));
 FFlowPin UFlowNode_SubGraph::FinishPin(TEXT("Finish"));
 

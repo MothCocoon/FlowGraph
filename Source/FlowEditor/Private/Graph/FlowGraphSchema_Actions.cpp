@@ -16,6 +16,8 @@
 #include "Editor.h"
 #include "ScopedTransaction.h"
 
+#include UE_INLINE_GENERATED_CPP_BY_NAME(FlowGraphSchema_Actions)
+
 #define LOCTEXT_NAMESPACE "FlowGraphSchema_Actions"
 
 /////////////////////////////////////////////////////

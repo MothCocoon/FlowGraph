@@ -10,6 +10,8 @@
 #include "Editor.h"
 #include "Kismet2/BlueprintEditorUtils.h"
 
+#include UE_INLINE_GENERATED_CPP_BY_NAME(FlowGraph)
+
 void FFlowGraphInterface::OnInputTriggered(UEdGraphNode* GraphNode, const int32 Index) const
 {
 	CastChecked<UFlowGraphNode>(GraphNode)->OnInputTriggered(Index);

@@ -2,6 +2,8 @@
 
 #include "Nodes/World/FlowNode_OnActorRegistered.h"
 
+#include UE_INLINE_GENERATED_CPP_BY_NAME(FlowNode_OnActorRegistered)
+
 UFlowNode_OnActorRegistered::UFlowNode_OnActorRegistered(const FObjectInitializer& ObjectInitializer)
 	: Super(ObjectInitializer)
 {

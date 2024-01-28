@@ -3,6 +3,8 @@
 #include "FlowWorldSettings.h"
 #include "FlowComponent.h"
 
+#include UE_INLINE_GENERATED_CPP_BY_NAME(FlowWorldSettings)
+
 AFlowWorldSettings::AFlowWorldSettings(const FObjectInitializer& ObjectInitializer)
 	: Super(ObjectInitializer)
 {

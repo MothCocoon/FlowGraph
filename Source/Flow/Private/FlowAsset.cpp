@@ -21,6 +21,8 @@
 #include "Editor.h"
 #include "Editor/EditorEngine.h"
 
+#include UE_INLINE_GENERATED_CPP_BY_NAME(FlowAsset)
+
 FString UFlowAsset::ValidationError_NodeClassNotAllowed = TEXT("Node class {0} is not allowed in this asset.");
 FString UFlowAsset::ValidationError_NullNodeInstance = TEXT("Node with GUID {0} is NULL");
 #endif

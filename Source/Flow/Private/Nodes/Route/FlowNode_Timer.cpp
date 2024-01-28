@@ -5,6 +5,8 @@
 #include "Engine/World.h"
 #include "TimerManager.h"
 
+#include UE_INLINE_GENERATED_CPP_BY_NAME(FlowNode_Timer)
+
 UFlowNode_Timer::UFlowNode_Timer(const FObjectInitializer& ObjectInitializer)
 	: Super(ObjectInitializer)
 	, CompletionTime(1.0f)

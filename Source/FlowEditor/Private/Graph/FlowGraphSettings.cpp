@@ -4,6 +4,8 @@
 
 #include "FlowAsset.h"
 
+#include UE_INLINE_GENERATED_CPP_BY_NAME(FlowGraphSettings)
+
 #define LOCTEXT_NAMESPACE "FlowGraphSettings"
 
 UFlowGraphSettings::UFlowGraphSettings(const FObjectInitializer& ObjectInitializer)

@@ -26,6 +26,8 @@
 #include "K2Node_IfThenElse.h"
 #include "K2Node_Knot.h"
 
+#include UE_INLINE_GENERATED_CPP_BY_NAME(FlowImportUtils)
+
 #define LOCTEXT_NAMESPACE "FlowImportUtils"
 
 TMap<FName, TSubclassOf<UFlowNode>> UFlowImportUtils::FunctionsToFlowNodes = TMap<FName, TSubclassOf<UFlowNode>>();

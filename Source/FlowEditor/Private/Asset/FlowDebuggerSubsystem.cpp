@@ -13,6 +13,8 @@
 #include "UnrealEd.h"
 #include "Widgets/Notifications/SNotificationList.h"
 
+#include UE_INLINE_GENERATED_CPP_BY_NAME(FlowDebuggerSubsystem)
+
 #define LOCTEXT_NAMESPACE "FlowDebuggerSubsystem"
 
 UFlowDebuggerSubsystem::UFlowDebuggerSubsystem()
@@ -33,7 +35,7 @@ void UFlowDebuggerSubsystem::OnInstancedTemplateAdded(UFlowAsset* FlowAsset)
 	}
 }
 
-void UFlowDebuggerSubsystem::OnInstancedTemplateRemoved(UFlowAsset* FlowAsset)
+void UFlowDebuggerSubsystem::OnInstancedTemplateRemoved(UFlowAsset* FlowAsset) const
 {
 	FlowAsset->OnRuntimeMessageAdded().RemoveAll(this);
 }

@@ -3,6 +3,8 @@
 #include "FlowSettings.h"
 #include "FlowComponent.h"
 
+#include UE_INLINE_GENERATED_CPP_BY_NAME(FlowSettings)
+
 UFlowSettings::UFlowSettings(const FObjectInitializer& ObjectInitializer)
 	: Super(ObjectInitializer)
 	, bCreateFlowSubsystemOnClients(true)

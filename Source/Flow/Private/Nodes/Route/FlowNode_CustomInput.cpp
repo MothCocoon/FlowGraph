@@ -3,6 +3,8 @@
 #include "Nodes/Route/FlowNode_CustomInput.h"
 #include "FlowSettings.h"
 
+#include UE_INLINE_GENERATED_CPP_BY_NAME(FlowNode_CustomInput)
+
 #define LOCTEXT_NAMESPACE "FlowNode_CustomInput"
 
 UFlowNode_CustomInput::UFlowNode_CustomInput(const FObjectInitializer& ObjectInitializer)

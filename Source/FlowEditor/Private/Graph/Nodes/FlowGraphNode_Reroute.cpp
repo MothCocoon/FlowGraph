@@ -5,6 +5,8 @@
 
 #include "Nodes/Route/FlowNode_Reroute.h"
 
+#include UE_INLINE_GENERATED_CPP_BY_NAME(FlowGraphNode_Reroute)
+
 UFlowGraphNode_Reroute::UFlowGraphNode_Reroute(const FObjectInitializer& ObjectInitializer)
 	: Super(ObjectInitializer)
 {

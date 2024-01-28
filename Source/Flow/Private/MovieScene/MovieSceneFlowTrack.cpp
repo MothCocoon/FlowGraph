@@ -8,6 +8,8 @@
 #include "Evaluation/MovieSceneEvaluationTrack.h"
 #include "IMovieSceneTracksModule.h"
 
+#include UE_INLINE_GENERATED_CPP_BY_NAME(MovieSceneFlowTrack)
+
 #define LOCTEXT_NAMESPACE "MovieSceneFlowTrack"
 
 void UMovieSceneFlowTrack::AddSection(UMovieSceneSection& Section)

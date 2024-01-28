@@ -11,7 +11,6 @@
 #include "Widgets/Text/STextBlock.h"
 #include "Widgets/SWidget.h"
 
-
 void FFlowNode_CustomEventBaseDetails::CustomizeDetails(IDetailLayoutBuilder& DetailLayout)
 {
 	// Subclasses must override this function (and call CustomizeDetailsInternal with the localized text)

@@ -2,6 +2,8 @@
 
 #include "Nodes/Route/FlowNode_Reroute.h"
 
+#include UE_INLINE_GENERATED_CPP_BY_NAME(FlowNode_Reroute)
+
 UFlowNode_Reroute::UFlowNode_Reroute(const FObjectInitializer& ObjectInitializer)
 	: Super(ObjectInitializer)
 {
