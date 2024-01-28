@@ -21,9 +21,4 @@ private:
 
 public:
 	UFlowComponent* GetFlowComponent() const { return FlowComponent; }
-
-	virtual void PostInitializeComponents() override;
-
-private:
-	bool IsValidInstance() const;
 };
