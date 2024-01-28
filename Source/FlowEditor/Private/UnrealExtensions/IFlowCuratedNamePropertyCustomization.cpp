@@ -1,22 +1,17 @@
 // Copyright https://github.com/MothCocoon/FlowGraph/graphs/contributors
 
 // NOTE (gtaylor) This class is planned for submission to Epic to include in baseline UE.
-//  If/when that happens, we will want to remove this version and update to the latest one in the PropertyModule
+// If/when that happens, we will want to remove this version and update to the latest one in the PropertyModule
 
 #include "UnrealExtensions/IFlowCuratedNamePropertyCustomization.h"
 
 #include "DetailLayoutBuilder.h"
 #include "DetailWidgetRow.h"
-#include "EditorClassUtils.h"
 #include "IDetailPropertyRow.h"
-#include "IDetailChildrenBuilder.h"
 #include "Internationalization/Text.h"
 #include "PropertyHandle.h"
 #include "Widgets/Input/SComboBox.h"
 #include "Widgets/Text/STextBlock.h"
-
-
-// IFlowCuratedNamePropertyCustomization Implementation
 
 TSharedPtr<FText> IFlowCuratedNamePropertyCustomization::NoneAsText = nullptr;
 
@@ -46,7 +41,7 @@ void IFlowCuratedNamePropertyCustomization::Initialize()
 	check(CachedTextList.Num() == 1);
 }
 
-void IFlowCuratedNamePropertyCustomization::CreateHeaderRowWidget(FDetailWidgetRow& HeaderRow, IPropertyTypeCustomizationUtils & StructCustomizationUtils)
+void IFlowCuratedNamePropertyCustomization::CreateHeaderRowWidget(FDetailWidgetRow& HeaderRow, IPropertyTypeCustomizationUtils& StructCustomizationUtils)
 {
 	// Do one-time setup first
 	Initialize();
@@ -59,11 +54,11 @@ void IFlowCuratedNamePropertyCustomization::CreateHeaderRowWidget(FDetailWidgetR
 			.Text(BuildHeaderText())
 		]
 		.ValueContent()
-		.MaxDesiredWidth(250.0f)			
+		.MaxDesiredWidth(250.0f)
 		[
 			SAssignNew(TextListWidget, SComboBox<TSharedPtr<FText>>)
 			.OptionsSource(&CachedTextList)
-			.OnGenerateWidget(this, &IFlowCuratedNamePropertyCustomization::GenerateTextListWidget)
+			.OnGenerateWidget_Static(&IFlowCuratedNamePropertyCustomization::GenerateTextListWidget)
 			.OnComboBoxOpening(this, &IFlowCuratedNamePropertyCustomization::OnTextListComboBoxOpening)
 			.OnSelectionChanged(this, &IFlowCuratedNamePropertyCustomization::OnTextSelected)
 			[
@@ -71,21 +66,25 @@ void IFlowCuratedNamePropertyCustomization::CreateHeaderRowWidget(FDetailWidgetR
 				.Text(this, &IFlowCuratedNamePropertyCustomization::GetCachedText)
 				.Font(IDetailLayoutBuilder::GetDetailFont())
 				.ToolTipText(this, &IFlowCuratedNamePropertyCustomization::GetCachedText)
-			] 
+			]
 		];
 
 	// Hook-up the ResetToDefault overrides
-	FIsResetToDefaultVisible IsResetVisible =
-		FIsResetToDefaultVisible::CreateSP(
-			this,
-			&IFlowCuratedNamePropertyCustomization::CustomIsResetToDefaultVisible);
-	FResetToDefaultHandler ResetHandler = 
-		FResetToDefaultHandler::CreateSP(
-			this,
-			&IFlowCuratedNamePropertyCustomization::CustomResetToDefault);
-	FResetToDefaultOverride ResetOverride = FResetToDefaultOverride::Create(IsResetVisible, ResetHandler);
+	{
+		const FIsResetToDefaultVisible IsResetVisible =
+			FIsResetToDefaultVisible::CreateSP(
+				this,
+				&IFlowCuratedNamePropertyCustomization::CustomIsResetToDefaultVisible);
 
-	HeaderRow.OverrideResetToDefault(ResetOverride);
+		const FResetToDefaultHandler ResetHandler =
+			FResetToDefaultHandler::CreateSP(
+				this,
+				&IFlowCuratedNamePropertyCustomization::CustomResetToDefault);
+
+		const FResetToDefaultOverride ResetOverride = FResetToDefaultOverride::Create(IsResetVisible, ResetHandler);
+
+		HeaderRow.OverrideResetToDefault(ResetOverride);
+	}
 }
 
 bool IFlowCuratedNamePropertyCustomization::CustomIsResetToDefaultVisible(TSharedPtr<IPropertyHandle> Property) const
@@ -114,18 +113,17 @@ bool IFlowCuratedNamePropertyCustomization::TrySetCuratedNameWithSideEffects(con
 
 	// Ensure the FText representations are up to date
 
-	TSharedPtr<FText> NewText = FindCachedOrCreateText(NewName);
-
+	const TSharedPtr<FText> NewText = FindCachedOrCreateText(NewName);
 	const bool bIsChanged = (NewText != CachedTextSelected);
 
 	CachedTextSelected = NewText;
-	
+
 	InsertAtHeadOfCachedTextList(CachedTextSelected);
 
 	// Set the Name property to the new value
 	check(CachedNameHandle.IsValid());
 	CachedNameHandle->SetValue(NewName);
-	
+
 	return bIsChanged;
 }
 
@@ -136,7 +134,7 @@ FText IFlowCuratedNamePropertyCustomization::GetCachedText() const
 	return *CachedTextSelected.Get();
 }
 
-TSharedRef<SWidget> IFlowCuratedNamePropertyCustomization::GenerateTextListWidget(TSharedPtr<FText> InItem)
+TSharedRef<SWidget> IFlowCuratedNamePropertyCustomization::GenerateTextListWidget(const TSharedPtr<FText> InItem)
 {
 	return
 		SNew(STextBlock)
@@ -158,7 +156,7 @@ void IFlowCuratedNamePropertyCustomization::OnTextListComboBoxOpening()
 
 	for (TSharedPtr<FText>& Text : CachedTextList)
 	{
-		(void) MapNameToText.FindOrAdd(FName(Text.Get()->ToString()), Text);
+		(void)MapNameToText.FindOrAdd(FName(Text.Get()->ToString()), Text);
 	}
 
 	TArray<FName> CuratedNameOptions = GetCuratedNameOptions();
@@ -190,7 +188,7 @@ void IFlowCuratedNamePropertyCustomization::OnTextListComboBoxOpening()
 	}
 }
 
-void IFlowCuratedNamePropertyCustomization::OnTextSelected(TSharedPtr<FText> NewSelection, ESelectInfo::Type SelectInfo)
+void IFlowCuratedNamePropertyCustomization::OnTextSelected(const TSharedPtr<FText> NewSelection, ESelectInfo::Type SelectInfo)
 {
 	// Called when the combo box has selected a new element 
 
@@ -240,19 +238,19 @@ TSharedPtr<FText> IFlowCuratedNamePropertyCustomization::FindCachedOrCreateText(
 	return Result;
 }
 
-void IFlowCuratedNamePropertyCustomization::InsertAtHeadOfCachedTextList(TSharedPtr<FText> Text)
+void IFlowCuratedNamePropertyCustomization::InsertAtHeadOfCachedTextList(const TSharedPtr<FText> Text)
 {
 	CachedTextList.Remove(Text);
 
 	CachedTextList.Insert(Text, 0);
 }
 
-void IFlowCuratedNamePropertyCustomization::AddToCachedTextList(TSharedPtr<FText> Text)
+void IFlowCuratedNamePropertyCustomization::AddToCachedTextList(const TSharedPtr<FText> Text)
 {
 	CachedTextList.AddUnique(Text);
 }
 
-void IFlowCuratedNamePropertyCustomization::RepaintTextListWidget()
+void IFlowCuratedNamePropertyCustomization::RepaintTextListWidget() const
 {
 	if (TextListWidget.IsValid())
 	{
