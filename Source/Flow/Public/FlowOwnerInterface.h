@@ -2,12 +2,9 @@
 
 #pragma once
 
-#include "CoreMinimal.h"
-
 #include "UObject/Interface.h"
 
 #include "FlowOwnerInterface.generated.h"
-
 
 // (optional) interface to enable a Flow owner object to execute CallOwnerFunction nodes
 UINTERFACE(MinimalAPI, Blueprintable, BlueprintType)

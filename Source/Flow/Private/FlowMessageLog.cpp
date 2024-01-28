@@ -1,10 +1,10 @@
 // Copyright https://github.com/MothCocoon/FlowGraph/graphs/contributors
 
 #include "FlowMessageLog.h"
-#include "Nodes/FlowNode.h"
-#include "FlowAsset.h"
 
 #if WITH_EDITOR
+#include "Nodes/FlowNode.h"
+#include "FlowAsset.h"
 
 #define LOCTEXT_NAMESPACE "FlowMessageLog"
 
@@ -84,4 +84,5 @@ TSharedPtr<IMessageToken> FFlowGraphToken::Create(const UEdGraphPin* InPin, FTok
 }
 
 #undef LOCTEXT_NAMESPACE
+
 #endif // WITH_EDITOR

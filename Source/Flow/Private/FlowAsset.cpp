@@ -2,8 +2,6 @@
 
 #include "FlowAsset.h"
 
-#include "FlowMessageLog.h"
-#include "FlowModule.h"
 #include "FlowSettings.h"
 #include "FlowSubsystem.h"
 
@@ -18,11 +16,16 @@
 #include "Serialization/MemoryWriter.h"
 
 #if WITH_EDITOR
+#include "FlowMessageLog.h"
+#include "FlowModule.h"
+
 #include "Editor.h"
 #include "Editor/EditorEngine.h"
+#endif
 
 #include UE_INLINE_GENERATED_CPP_BY_NAME(FlowAsset)
 
+#if WITH_EDITOR
 FString UFlowAsset::ValidationError_NodeClassNotAllowed = TEXT("Node class {0} is not allowed in this asset.");
 FString UFlowAsset::ValidationError_NullNodeInstance = TEXT("Node with GUID {0} is NULL");
 #endif

@@ -2,7 +2,6 @@
 
 #pragma once
 
-#include "CoreMinimal.h"
 #include "Engine/Blueprint.h"
 #include "FlowNodeBlueprint.generated.h"
 
@@ -17,7 +16,6 @@ class FLOW_API UFlowNodeBlueprint : public UBlueprint
 #if WITH_EDITOR
 	// UBlueprint
 	virtual bool SupportedByDefaultBlueprintFactory() const override { return false; }
-
 	virtual bool SupportsDelegates() const override { return false; }
 	// --
 #endif

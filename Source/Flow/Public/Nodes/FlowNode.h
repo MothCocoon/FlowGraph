@@ -12,9 +12,10 @@
 #include "Nodes/FlowPin.h"
 #include "FlowNode.generated.h"
 
+class IFlowOwnerInterface;
 class UFlowAsset;
 class UFlowSubsystem;
-class IFlowOwnerInterface;
+struct FFlowNodeSaveData;
 
 #if WITH_EDITOR
 DECLARE_DELEGATE(FFlowNodeEvent);

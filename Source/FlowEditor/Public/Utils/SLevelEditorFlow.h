@@ -2,7 +2,6 @@
 
 #pragma once
 
-#include "CoreMinimal.h"
 #include "Widgets/DeclarativeSyntaxSupport.h"
 #include "Widgets/SCompoundWidget.h"
 
@@ -22,8 +21,8 @@ protected:
 
 	FString GetFlowAssetPath() const;
 	void OnFlowChanged(const FAssetData& NewAsset);
-	
-	class UFlowComponent* FindFlowComponent() const;
+
+	static class UFlowComponent* FindFlowComponent();
 	
 	FString FlowAssetPath;
 };

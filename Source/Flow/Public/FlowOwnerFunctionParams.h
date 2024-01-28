@@ -6,18 +6,14 @@
 
 #include "FlowOwnerFunctionParams.generated.h"
 
-
-// Forward Declarations
 class UFlowNode_CallOwnerFunction;
-
 
 UCLASS(BlueprintType, Blueprintable, EditInlineNew)
 class FLOW_API UFlowOwnerFunctionParams : public UObject
 {
 	GENERATED_BODY()
-	
-public:
 
+public:
 	UFlowOwnerFunctionParams();
 
 	void PreExecute(UFlowNode_CallOwnerFunction& InSourceNode, const FName& InputPinName);
@@ -38,7 +34,6 @@ public:
 	TArray<FName> GatherOutputNames() const { return BP_GetOutputNames(); }
 
 protected:
-
 	// Called prior to the owner executing the function described by this object.
 	//  Can be overridden to prepare the stateful data before execution.
 	UFUNCTION(BlueprintImplementableEvent, Category = "FlowOwnerFunction", DisplayName = "PreExecute")
@@ -60,7 +55,6 @@ protected:
 	TArray<FName> BP_GetOutputNames() const;
 
 protected:
-
 	// CallOwnerObjectFunction node that is executing this set of function params.
 	//  Valid only if called between PreExecute() and PostExecute(), inclusive
 	UPROPERTY(Transient, BlueprintReadOnly, Category = "FlowOwnerFunction")

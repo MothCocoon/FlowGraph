@@ -2,7 +2,6 @@
 
 #pragma once
 
-#include "Graph/FlowGraphConnectionDrawingPolicy.h"
 #include "IDetailsView.h"
 #include "DiffResults.h"
 #include "SDetailsDiff.h"

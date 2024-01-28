@@ -7,7 +7,6 @@
 #include UE_INLINE_GENERATED_CPP_BY_NAME(FlowOwnerFunctionParams)
 
 UFlowOwnerFunctionParams::UFlowOwnerFunctionParams()
-	: Super()
 {
 #if WITH_EDITOR
 	InputNames.Add(UFlowNode::DefaultInputPin.PinName);

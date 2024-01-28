@@ -2,10 +2,13 @@
 
 #pragma once
 
-#include "FlowMessageLog.h"
 #include "FlowSave.h"
 #include "FlowTypes.h"
 #include "Nodes/FlowNode.h"
+
+#if WITH_EDITOR
+#include "FlowMessageLog.h"
+#endif
 
 #include "UObject/ObjectKey.h"
 #include "FlowAsset.generated.h"

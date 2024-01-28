@@ -12,12 +12,15 @@
 
 #include "Nodes/Route/FlowNode_SubGraph.h"
 
+#include "EdGraphUtilities.h"
 #include "Framework/Commands/GenericCommands.h"
+#include "GraphEditorActions.h"
 #include "HAL/PlatformApplicationMisc.h"
 #include "IDetailsView.h"
 #include "LevelEditor.h"
 #include "Modules/ModuleManager.h"
 #include "ScopedTransaction.h"
+#include "SNodePanel.h"
 #include "Widgets/Docking/SDockTab.h"
 
 #define LOCTEXT_NAMESPACE "FlowGraphEditor"

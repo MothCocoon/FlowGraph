@@ -6,8 +6,11 @@
 #include "FlowModule.h"
 #include "FlowSubsystem.h"
 #include "LevelSequence/FlowLevelSequencePlayer.h"
+
+#if WITH_EDITOR
 #include "MovieScene/MovieSceneFlowTrack.h"
 #include "MovieScene/MovieSceneFlowTriggerSection.h"
+#endif
 
 #include "LevelSequence.h"
 #include "LevelSequenceActor.h"

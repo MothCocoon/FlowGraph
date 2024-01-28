@@ -5,8 +5,8 @@
 #include "FlowModule.h"
 #include "FlowOwnerInterface.h"
 
-#include "UObject/Class.h"
 #include "Logging/LogMacros.h"
+#include "UObject/Class.h"
 
 #include UE_INLINE_GENERATED_CPP_BY_NAME(FlowOwnerFunctionRef)
 

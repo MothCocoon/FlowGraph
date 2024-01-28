@@ -2,6 +2,7 @@
 
 #pragma once
 
+#if WITH_EDITOR
 #include "EdGraph/EdGraphNode.h"
 #include "EdGraph/EdGraphPin.h"
 #include "Logging/TokenizedMessage.h"
@@ -9,8 +10,6 @@
 
 class UFlowAsset;
 class UFlowNode;
-
-#if WITH_EDITOR
 
 /**
  * Message Log token that links to an element in Flow Graph

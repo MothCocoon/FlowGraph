@@ -10,10 +10,6 @@
 #include "FlowTypes.h"
 
 #include "Components/ActorComponent.h"
-#if WITH_EDITOR
-#include "Editor.h"
-#endif
-
 #include "Engine/Blueprint.h"
 #include "Engine/Engine.h"
 #include "Engine/ViewportStatsSubsystem.h"
@@ -23,7 +19,10 @@
 #include "Misc/Paths.h"
 #include "Serialization/MemoryReader.h"
 #include "Serialization/MemoryWriter.h"
-#include "Engine/Blueprint.h"
+
+#if WITH_EDITOR
+#include "Editor.h"
+#endif
 
 #include UE_INLINE_GENERATED_CPP_BY_NAME(FlowNode)
 
@@ -37,8 +36,8 @@ FString UFlowNode::NoActorsFound = TEXT("No actors found");
 
 UFlowNode::UFlowNode(const FObjectInitializer& ObjectInitializer)
 	: Super(ObjectInitializer)
-#if WITH_EDITOR
 	, GraphNode(nullptr)
+#if WITH_EDITOR
 	, bCanDelete(true)
 	, bCanDuplicate(true)
 	, bNodeDeprecated(false)

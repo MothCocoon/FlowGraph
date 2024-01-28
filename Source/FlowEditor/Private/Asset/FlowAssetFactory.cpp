@@ -13,7 +13,7 @@
 
 #define LOCTEXT_NAMESPACE "FlowAssetFactory"
 
-class FAssetClassParentFilter : public IClassViewerFilter
+class FAssetClassParentFilter final : public IClassViewerFilter
 {
 public:
 	FAssetClassParentFilter()

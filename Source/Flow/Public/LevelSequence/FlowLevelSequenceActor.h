@@ -5,6 +5,8 @@
 #include "LevelSequenceActor.h"
 #include "FlowLevelSequenceActor.generated.h"
 
+class ULevelSequence;
+
 /**
  * Custom ALevelSequenceActor is needed to override ULevelSequencePlayer class
  */

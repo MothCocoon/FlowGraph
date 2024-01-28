@@ -3,7 +3,6 @@
 #include "Utils/SLevelEditorFlow.h"
 #include "FlowAsset.h"
 #include "FlowComponent.h"
-#include "FlowWorldSettings.h"
 
 #include "Graph/FlowGraphSettings.h"
 
@@ -74,7 +73,7 @@ void SLevelEditorFlow::OnFlowChanged(const FAssetData& NewAsset)
 	}
 }
 
-UFlowComponent* SLevelEditorFlow::FindFlowComponent() const
+UFlowComponent* SLevelEditorFlow::FindFlowComponent()
 {
 	if (const UWorld* World = GEditor->GetEditorWorldContext().World())
 	{

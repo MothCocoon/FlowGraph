@@ -2,16 +2,10 @@
 
 #include "DetailCustomizations/FlowOwnerFunctionRefCustomization.h"
 
-#include "FlowAsset.h"
-#include "FlowOwnerInterface.h"
 #include "Nodes/FlowNode.h"
 #include "Nodes/World/FlowNode_CallOwnerFunction.h"
 
 #include "UObject/UnrealType.h"
-#include "FlowOwnerFunctionParams.h"
-
-
-// FFlowOwnerFunctionRefCustomization Implementation
 
 void FFlowOwnerFunctionRefCustomization::CustomizeChildren(TSharedRef<IPropertyHandle> InStructPropertyHandle, IDetailChildrenBuilder& StructBuilder, IPropertyTypeCustomizationUtils& StructCustomizationUtils)
 {
