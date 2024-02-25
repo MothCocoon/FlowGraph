@@ -46,6 +46,8 @@ UCLASS(BlueprintType, hideCategories = Object)
 class FLOW_API UFlowAsset : public UObject
 {
 	GENERATED_UCLASS_BODY()
+
+public:	
 	friend class UFlowNode;
 	friend class UFlowNode_CustomOutput;
 	friend class UFlowNode_SubGraph;
