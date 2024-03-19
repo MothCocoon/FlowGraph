@@ -133,15 +133,15 @@ void UFlowNode_CallOwnerFunction::PostEditChangeProperty(struct FPropertyChanged
 
 	if (MemberPropertyName == GET_MEMBER_NAME_CHECKED(UFlowNode_CallOwnerFunction, Params))
 	{
-		OnChangedParamsObject();
+		OnReconstructionRequested.ExecuteIfBound();
 	}
 
 	const FName PropertyName = PropertyChangedEvent.Property->GetFName();
 	if (PropertyName == GET_MEMBER_NAME_CHECKED(FFlowOwnerFunctionRef, FunctionName))
 	{
-		if (TryAllocateParamsInstance())
+		if (TryAllocateParamsInstance() || FunctionRef.GetFunctionName().IsNone())
 		{
-			OnChangedParamsObject();
+			OnReconstructionRequested.ExecuteIfBound();
 		}
 	}
 }
@@ -177,82 +177,6 @@ bool UFlowNode_CallOwnerFunction::TryAllocateParamsInstance()
 	return true;
 }
 
-void UFlowNode_CallOwnerFunction::OnChangedParamsObject()
-{
-	bool bChangedPins = false;
-
-	if (IsValid(Params))
-	{
-		bChangedPins = RebuildPinArray(Params->GetInputNames(), InputPins, DefaultInputPin) || bChangedPins;
-		bChangedPins = RebuildPinArray(Params->GetOutputNames(), OutputPins, DefaultOutputPin) || bChangedPins;
-	}
-	else
-	{
-		bChangedPins = RebuildPinArray(TArray<FName>(&DefaultInputPin.PinName, 1), InputPins, DefaultInputPin) || bChangedPins;
-		bChangedPins = RebuildPinArray(TArray<FName>(&DefaultOutputPin.PinName, 1), OutputPins, DefaultOutputPin) || bChangedPins;
-	}
-
-	if (bChangedPins)
-	{
-		OnReconstructionRequested.ExecuteIfBound();
-	}
-}
-
-bool UFlowNode_CallOwnerFunction::RebuildPinArray(const TArray<FName>& NewPinNames, TArray<FFlowPin>& InOutPins, const FFlowPin& DefaultPin)
-{
-	bool bIsChanged;
-
-	TArray<FFlowPin> NewPins;
-
-	if (NewPinNames.Num() == 0)
-	{
-		bIsChanged = true;
-
-		NewPins.Reserve(1);
-
-		NewPins.Add(DefaultPin);
-	}
-	else
-	{
-		const bool bIsSameNum = (NewPinNames.Num() == InOutPins.Num());
-
-		bIsChanged = !bIsSameNum;
-
-		NewPins.Reserve(NewPinNames.Num());
-
-		for (int32 NewPinIndex = 0; NewPinIndex < NewPinNames.Num(); ++NewPinIndex)
-		{
-			const FName& NewPinName = NewPinNames[NewPinIndex];
-			NewPins.Add(FFlowPin(NewPinName));
-
-			if (bIsSameNum)
-			{
-				bIsChanged = bIsChanged || (NewPinName != InOutPins[NewPinIndex].PinName);
-			}
-		}
-	}
-
-	if (bIsChanged)
-	{
-		InOutPins.Reset();
-
-		check(NewPins.Num() > 0);
-
-		if (&InOutPins == &InputPins)
-		{
-			AddInputPins(NewPins);
-		}
-		else
-		{
-			checkf(&InOutPins == &OutputPins, TEXT("Only expected to be called with one or the other of the pin arrays"));
-
-			AddOutputPins(NewPins);
-		}
-	}
-
-	return bIsChanged;
-}
-
 UClass* UFlowNode_CallOwnerFunction::GetRequiredParamsClass() const
 {
 	const UClass* ExpectedOwnerClass = TryGetExpectedOwnerClass();
@@ -267,7 +191,7 @@ UClass* UFlowNode_CallOwnerFunction::GetRequiredParamsClass() const
 	{
 		return UFlowOwnerFunctionParams::StaticClass();
 	}
-
+	
 	UClass* RequiredParamsClass = GetParamsClassForFunctionName(*ExpectedOwnerClass, FunctionNameAsName);
 	return RequiredParamsClass;
 }
@@ -308,6 +232,16 @@ FText UFlowNode_CallOwnerFunction::GetNodeTitle() const
 	{
 		return Super::GetNodeTitle();
 	}
+}
+
+FString UFlowNode_CallOwnerFunction::GetNodeDescription() const
+{
+	if (UFlowSettings::Get()->bUseAdaptiveNodeTitles)
+	{
+		return Super::GetNodeDescription();
+	}
+
+	return FunctionRef.FunctionName.ToString();
 }
 
 bool UFlowNode_CallOwnerFunction::IsAcceptableParamsPropertyClass(const UClass* ParamsClass) const
@@ -481,6 +415,50 @@ EDataValidationResult UFlowNode_CallOwnerFunction::ValidateNode()
 	}
 
 	return EDataValidationResult::Valid;
+}
+
+TArray<FFlowPin> UFlowNode_CallOwnerFunction::GetContextInputs()
+{
+	// refresh Params, just in case function argument type was changed
+	TryAllocateParamsInstance();
+	
+	TArray<FFlowPin> Pins = {};
+
+	if (Params)
+	{
+		for (const FName& Name : Params->GetInputNames())
+		{
+			if (InputPins.Contains(Name))
+			{
+				continue;
+			}
+			
+			Pins.Emplace(Name);
+		}
+	}
+	return Pins;
+}
+
+TArray<FFlowPin> UFlowNode_CallOwnerFunction::GetContextOutputs()
+{
+	// refresh Params, just in case function argument type was changed
+	TryAllocateParamsInstance();
+	
+	TArray<FFlowPin> Pins = {};
+
+	if (Params)
+	{
+		for (const FName& Name : Params->GetOutputNames())
+		{
+			if (OutputPins.Contains(Name))
+			{
+				continue;
+			}
+			
+			Pins.Emplace(Name);
+		}
+	}
+	return Pins;
 }
 
 #endif // WITH_EDITOR

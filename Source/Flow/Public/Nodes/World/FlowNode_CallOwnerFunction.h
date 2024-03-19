@@ -46,8 +46,13 @@ protected:
 public:
 	// UFlowNode
 	virtual FText GetNodeTitle() const override;
+	virtual FString GetNodeDescription() const override;
 	virtual FString GetStatusString() const override;
 	virtual EDataValidationResult ValidateNode() override;
+
+	virtual bool SupportsContextPins() const override { return true; };
+	virtual TArray<FFlowPin> GetContextInputs() override;
+	virtual TArray<FFlowPin> GetContextOutputs() override;
 	// ---
 
 	// UObject
@@ -58,10 +63,6 @@ public:
 
 protected:
 	bool TryAllocateParamsInstance();
-	void OnChangedParamsObject();
-
-	// returns true if the InOutPins array was rebuilt
-	bool RebuildPinArray(const TArray<FName>& NewPinNames, TArray<FFlowPin>& InOutPins, const FFlowPin& DefaultPin);
 
 	UClass* GetRequiredParamsClass() const;
 	UClass* GetExistingParamsClass() const;
