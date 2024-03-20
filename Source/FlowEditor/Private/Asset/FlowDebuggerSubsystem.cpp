@@ -6,11 +6,12 @@
 
 #include "FlowSubsystem.h"
 
+#include "Editor/UnrealEdEngine.h"
 #include "Engine/Engine.h"
 #include "Engine/World.h"
 #include "Framework/Notifications/NotificationManager.h"
 #include "Templates/Function.h"
-#include "UnrealEd.h"
+#include "UnrealEdGlobals.h"
 #include "Widgets/Notifications/SNotificationList.h"
 
 #include UE_INLINE_GENERATED_CPP_BY_NAME(FlowDebuggerSubsystem)
