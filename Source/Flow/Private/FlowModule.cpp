@@ -2,7 +2,7 @@
 
 #include "FlowModule.h"
 
-#define LOCTEXT_NAMESPACE "FlowModule"
+#include "Modules/ModuleManager.h"
 
 void FFlowModule::StartupModule()
 {
@@ -11,7 +11,5 @@ void FFlowModule::StartupModule()
 void FFlowModule::ShutdownModule()
 {
 }
-
-#undef LOCTEXT_NAMESPACE
 
 IMPLEMENT_MODULE(FFlowModule, Flow)
