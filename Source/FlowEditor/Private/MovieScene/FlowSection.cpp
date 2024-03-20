@@ -4,7 +4,6 @@
 #include "MovieScene/MovieSceneFlowRepeaterSection.h"
 #include "MovieScene/MovieSceneFlowTriggerSection.h"
 
-#include "CommonMovieSceneTools.h"
 #include "Fonts/FontMeasure.h"
 #include "Framework/Application/SlateApplication.h"
 #include "MovieSceneTrack.h"
@@ -13,6 +12,12 @@
 #include "Sections/MovieSceneEventSection.h"
 #include "SequencerSectionPainter.h"
 #include "SequencerTimeSliderController.h"
+
+#if ENGINE_MAJOR_VERSION == 5 && ENGINE_MINOR_VERSION < 4
+#include "CommonMovieSceneTools.h"
+#else
+#include "TimeToPixel.h"
+#endif
 
 #define LOCTEXT_NAMESPACE "FlowSection"
 

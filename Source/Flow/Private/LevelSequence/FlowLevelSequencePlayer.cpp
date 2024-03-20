@@ -5,6 +5,7 @@
 #include "Nodes/FlowNode.h"
 
 #include "DefaultLevelSequenceInstanceData.h"
+#include "Runtime/Launch/Resources/Version.h"
 
 #include UE_INLINE_GENERATED_CPP_BY_NAME(FlowLevelSequencePlayer)
 
@@ -41,7 +42,11 @@ UFlowLevelSequencePlayer* UFlowLevelSequencePlayer::CreateFlowLevelSequencePlaye
 	{
 		// apply Transform Origin
 		// https://docs.unrealengine.com/5.0/en-US/creating-level-sequences-with-dynamic-transforms-in-unreal-engine/
+#if ENGINE_MAJOR_VERSION == 5 && ENGINE_MINOR_VERSION > 3
+		if (TransformOriginActor->IsValidLowLevel())
+#else
 		if (IsValid(TransformOriginActor))
+#endif
 		{
 			// moving Level Sequence Actor might allow proper distance-based actor replication in networked games
 			SpawnTransform = TransformOriginActor->GetTransform();
@@ -57,7 +62,11 @@ UFlowLevelSequencePlayer* UFlowLevelSequencePlayer::CreateFlowLevelSequencePlaye
 	Actor->CameraSettings = CameraSettings;
 
 	// apply Transform Origin to spawned actor
+#if ENGINE_MAJOR_VERSION == 5 && ENGINE_MINOR_VERSION > 3
+	if (TransformOriginActor->IsValidLowLevel())
+#else
 	if (IsValid(TransformOriginActor))
+#endif
 	{
 		if (UDefaultLevelSequenceInstanceData* InstanceData = Cast<UDefaultLevelSequenceInstanceData>(Actor->DefaultInstanceData))
 		{
@@ -83,7 +92,7 @@ UFlowLevelSequencePlayer* UFlowLevelSequencePlayer::CreateFlowLevelSequencePlaye
 	OutActor = Actor;
 
 	// Sequence Player is created by Level Sequence Actor
-	return Cast<UFlowLevelSequencePlayer>(Actor->SequencePlayer);
+	return Cast<UFlowLevelSequencePlayer>(Actor->GetSequencePlayer());
 }
 
 TArray<UObject*> UFlowLevelSequencePlayer::GetEventContexts() const

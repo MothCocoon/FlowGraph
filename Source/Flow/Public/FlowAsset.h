@@ -97,7 +97,7 @@ protected:
 
 private:
 	UPROPERTY()
-	UEdGraph* FlowGraph;
+	TObjectPtr<UEdGraph> FlowGraph;
 
 	static TSharedPtr<IFlowGraphInterface> FlowGraphInterface;
 #endif
