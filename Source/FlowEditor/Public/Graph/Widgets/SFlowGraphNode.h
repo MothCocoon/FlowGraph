@@ -63,6 +63,9 @@ protected:
 	// Variant of SGraphNode::OnAddPin
 	virtual FReply OnAddFlowPin(const EEdGraphPinDirection Direction);
 
+private:
+	static int32 ValidPinsCount(const TArray<FFlowPin>& Pins);
+
 protected:
 	UFlowGraphNode* FlowGraphNode = nullptr;
 };
