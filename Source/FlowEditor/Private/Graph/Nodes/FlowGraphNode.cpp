@@ -171,6 +171,9 @@ void UFlowGraphNode::OnBlueprintCompiled()
 
 void UFlowGraphNode::OnExternalChange()
 {
+	// Do not create transaction here, since this function triggers from modifying UFlowNode's property, which itself already made inside of transaction.
+	Modify();
+	
 	bNeedsFullReconstruction = true;
 
 	ReconstructNode();
