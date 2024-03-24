@@ -527,14 +527,16 @@ void SFlowGraphNode::CreateStandardPinWidget(UEdGraphPin* Pin)
 	{
 		if (Pin->Direction == EGPD_Input)
 		{
-			if (FlowGraphNode->GetFlowNode()->GetInputPins().Num() == 1 && Pin->PinName == UFlowNode::DefaultInputPin.PinName)
+			// Pin array can have pins with name None, which will not be created. We need to check if array have only one valid pin
+			if (ValidPinsCount(FlowGraphNode->GetFlowNode()->GetInputPins()) == 1 && Pin->PinName == UFlowNode::DefaultInputPin.PinName)
 			{
 				NewPin->SetShowLabel(false);
 			}
 		}
 		else
 		{
-			if (FlowGraphNode->GetFlowNode()->GetOutputPins().Num() == 1 && Pin->PinName == UFlowNode::DefaultOutputPin.PinName)
+			// Pin array can have pins with name None, which will not be created. We need to check if array have only one valid pin
+			if (ValidPinsCount(FlowGraphNode->GetFlowNode()->GetOutputPins()) == 1 && Pin->PinName == UFlowNode::DefaultOutputPin.PinName)
 			{
 				NewPin->SetShowLabel(false);
 			}
@@ -659,6 +661,20 @@ FReply SFlowGraphNode::OnAddFlowPin(const EEdGraphPinDirection Direction)
 	}
 
 	return FReply::Handled();
+}
+
+int32 SFlowGraphNode::ValidPinsCount(const TArray<FFlowPin>& Pins)
+{
+	int32 Count = 0;
+	for (const FFlowPin& Pin : Pins)
+	{
+		if (Pin.IsValid())
+		{
+			Count += 1;
+		}
+	}
+
+	return Count;
 }
 
 #undef LOCTEXT_NAMESPACE
