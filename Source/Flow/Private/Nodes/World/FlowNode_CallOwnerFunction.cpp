@@ -159,6 +159,11 @@ bool UFlowNode_CallOwnerFunction::TryAllocateParamsInstance()
 	const UClass* ExistingParamsClass = GetExistingParamsClass();
 	const UClass* RequiredParamsClass = GetRequiredParamsClass();
 
+	if (!IsValid(RequiredParamsClass))
+	{
+		return false;
+	}
+
 	const bool bNeedsAllocateParams =
 		!IsValid(ExistingParamsClass) ||
 		ExistingParamsClass != RequiredParamsClass;
@@ -182,14 +187,14 @@ UClass* UFlowNode_CallOwnerFunction::GetRequiredParamsClass() const
 	const UClass* ExpectedOwnerClass = TryGetExpectedOwnerClass();
 	if (!IsValid(ExpectedOwnerClass))
 	{
-		return UFlowOwnerFunctionParams::StaticClass();
+		return nullptr;
 	}
 
 	const FName FunctionNameAsName = FunctionRef.GetFunctionName();
 
 	if (FunctionNameAsName.IsNone())
 	{
-		return UFlowOwnerFunctionParams::StaticClass();
+		return nullptr;
 	}
 	
 	UClass* RequiredParamsClass = GetParamsClassForFunctionName(*ExpectedOwnerClass, FunctionNameAsName);
