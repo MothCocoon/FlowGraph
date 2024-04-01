@@ -65,6 +65,7 @@ public:
 protected:
 	virtual bool CanSelectAllNodes() const { return true; }
 
+	void ReconnectExecPins(const UFlowGraphNode* Node);
 	virtual void DeleteSelectedNodes();
 	virtual void DeleteSelectedDuplicableNodes();
 	virtual bool CanDeleteNodes() const;
