@@ -150,30 +150,27 @@ void FFlowGraphConnectionDrawingPolicy::DetermineWiringStyle(UEdGraphPin* Output
 				Params.WireColor = SelectedColor;
 				Params.WireThickness = SelectedWireThickness;
 				Params.bDrawBubbles = false;
-				return;
 			}
-
 			// recent paths
-			if (RecentPaths.Contains(OutputPin) && RecentPaths[OutputPin] == InputPin)
+			else if (RecentPaths.Contains(OutputPin) && RecentPaths[OutputPin] == InputPin)
 			{
 				Params.WireColor = RecentColor;
 				Params.WireThickness = RecentWireThickness;
 				Params.bDrawBubbles = true;
-				return;
 			}
-
 			// all paths, showing graph history
-			if (RecordedPaths.Contains(OutputPin) && RecordedPaths[OutputPin] == InputPin)
+			else if (RecordedPaths.Contains(OutputPin) && RecordedPaths[OutputPin] == InputPin)
 			{
 				Params.WireColor = RecordedColor;
 				Params.WireThickness = RecordedWireThickness;
 				Params.bDrawBubbles = false;
-				return;
 			}
-
 			// It's not followed, fade it and keep it thin
-			Params.WireColor = InactiveColor;
-			Params.WireThickness = InactiveWireThickness;
+			else
+			{
+				Params.WireColor = InactiveColor;
+				Params.WireThickness = InactiveWireThickness;
+			}
 		}
 	}
 
