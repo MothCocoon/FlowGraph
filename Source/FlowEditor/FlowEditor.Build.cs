@@ -6,6 +6,11 @@ public class FlowEditor : ModuleRules
 {
 	public FlowEditor(ReadOnlyTargetRules target) : base(target)
 	{
+		if(CppStandard is null || CppStandard != CppStandardVersion.Cpp20)
+		{
+			CppStandard = CppStandardVersion.Cpp20;
+		}
+
 		PCHUsage = PCHUsageMode.UseExplicitOrSharedPCHs;
 
 		PublicDependencyModuleNames.AddRange(new[]
