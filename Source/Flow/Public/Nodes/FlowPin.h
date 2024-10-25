@@ -49,7 +49,7 @@ protected:
 	// Filter for limiting the compatible object types for this data pin.
 	// This property is editor-only, but it is automatically copied into PinSubCategoryObject if the PinType matches (for runtime use).
 	UPROPERTY(EditAnywhere, Category = "FlowPin", meta = (EditCondition = "PinType == EFlowPinType::Object", EditConditionHides))
-	TSubclassOf<UObject> SubCategoryObjectFilter;
+	TSubclassOf<UObject> SubCategoryObjectFilter = UObject::StaticClass();
 
 	// Configuration option for setting the EnumClass to a Blueprint Enum 
 	// (C++ enums must bind by name using SubCategoryEnumName, due to a limitation with UE's UEnum discovery).

@@ -133,16 +133,16 @@ void FFlowGraphConnectionDrawingPolicy::DetermineWiringStyle(UEdGraphPin* Output
 	{
 		Params.WireColor = FLinearColor::Red;
 	}
-	else if (Cast<UFlowGraphNode>(OutputPin->GetOwningNode())->GetSignalMode() == EFlowSignalMode::Disabled)
-	{
-		Params.WireColor *= 0.5f;
-		Params.WireThickness = 0.5f;
-	}
 	else
 	{
 		Params.WireColor = Schema->GetPinTypeColor(OutputPin->PinType);
 
-		if (InputPin && FFlowPin::IsExecPinCategory(InputPin->PinType.PinCategory))
+		if (Cast<UFlowGraphNode>(OutputPin->GetOwningNode())->GetSignalMode() == EFlowSignalMode::Disabled)
+		{
+			Params.WireColor *= 0.5f;
+			Params.WireThickness = 0.5f;
+		}
+		else if (InputPin && FFlowPin::IsExecPinCategory(InputPin->PinType.PinCategory))
 		{
 			// selected paths
 			if (SelectedPaths.Contains(OutputPin) || SelectedPaths.Contains(InputPin))
@@ -202,7 +202,6 @@ void FFlowGraphConnectionDrawingPolicy::DetermineWiringStyle(UEdGraphPin* Output
 	{
 		ApplyHoverDeemphasis(OutputPin, InputPin, /*inout*/ Params.WireThickness, /*inout*/ Params.WireColor);
 	}
-
 }
 
 void FFlowGraphConnectionDrawingPolicy::Draw(TMap<TSharedRef<SWidget>, FArrangedWidget>& InPinGeometries, FArrangedChildren& ArrangedNodes)
