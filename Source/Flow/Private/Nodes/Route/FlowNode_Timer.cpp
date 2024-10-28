@@ -107,7 +107,15 @@ void UFlowNode_Timer::Restart()
 float UFlowNode_Timer::ResolveCompletionTime() const
 {
 	// Get the CompletionTime from either the default (property) or the data pin (if connected)
-	const FFlowDataPinResult_Float CompletionTimeResult = TryResolveDataPinAsFloat(INPIN_CompletionTime);
+	FFlowDataPinResult_Float CompletionTimeResult = TryResolveDataPinAsFloat(INPIN_CompletionTime);
+
+	if (CompletionTimeResult.Result == EFlowDataPinResolveResult::FailedMissingPin)
+	{
+		// Handle lookup of a UFlowNode_Timer that predated DataPins
+		CompletionTimeResult.Result = EFlowDataPinResolveResult::Success;
+		CompletionTimeResult.Value = CompletionTime;
+	}
+
 	check(CompletionTimeResult.Result == EFlowDataPinResolveResult::Success);
 
 	return static_cast<float>(CompletionTimeResult.Value);

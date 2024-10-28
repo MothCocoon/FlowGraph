@@ -4,6 +4,7 @@
 #include "FlowLogChannels.h"
 
 #include "GameplayTagContainer.h"
+#include "InstancedStruct.h"
 #include "Misc/DateTime.h"
 #include "Misc/MessageDialog.h"
 

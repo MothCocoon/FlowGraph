@@ -258,6 +258,11 @@ TArray<FName> UFlowNode::GetOutputNames() const
 
 bool UFlowNode::SupportsContextPins() const
 {
+	if (Super::SupportsContextPins())
+	{
+		return true;
+	}
+
 	if (!GetAutoInputDataPins().IsEmpty() || !GetAutoOutputDataPins().IsEmpty())
 	{
 		return true;

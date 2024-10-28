@@ -82,6 +82,9 @@ enum class EFlowDataPinResolveResult : uint8
 	// The Flow Node or AddOn did not implement the necessary function to provide this value
 	FailedUnimplemented,
 
+	// Failed due to missing pin (may just need re-save for the asset)
+	FailedMissingPin,
+
 	// Failed with an error message (see the error log)
 	FailedWithError,
 

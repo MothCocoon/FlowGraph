@@ -842,9 +842,7 @@ EFlowDataPinResolveResult UFlowNodeBase::TryResolveDataPinPrerequisites(const FN
 	FlowPin = FindFlowPinByName(PinName, FlowNode->GetInputPins());
 	if (!FlowPin)
 	{
-		LogError(FString::Printf(TEXT("Unexpected to find pin named %s"), *PinName.ToString()), EFlowOnScreenMessageType::Temporary);
-
-		return EFlowDataPinResolveResult::FailedWithError;
+		return EFlowDataPinResolveResult::FailedMissingPin;
 	}
 
 	if (FlowPin->GetPinType() != PinType)

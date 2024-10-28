@@ -27,7 +27,15 @@ UFlowNode_Log::UFlowNode_Log(const FObjectInitializer& ObjectInitializer)
 void UFlowNode_Log::ExecuteInput(const FName& PinName)
 {
 	// Get the Message from either the default (Message property) or the data pin (if connected)
-	const FFlowDataPinResult_String MessageResult = TryResolveDataPinAsString(GET_MEMBER_NAME_CHECKED(UFlowNode_Log, Message));
+	FFlowDataPinResult_String MessageResult = TryResolveDataPinAsString(GET_MEMBER_NAME_CHECKED(UFlowNode_Log, Message));
+
+	if (MessageResult.Result == EFlowDataPinResolveResult::FailedMissingPin)
+	{
+		// Handle lookup of a FlowNode_Log that predated DataPins
+		MessageResult.Result = EFlowDataPinResolveResult::Success;
+		MessageResult.SetValue(Message);
+	}
+
 	check(MessageResult.Result == EFlowDataPinResolveResult::Success);
 
 	switch (Verbosity)

@@ -3,6 +3,9 @@
 #include "DetailCustomizations/FlowDataPinProperty_ClassCustomization.h"
 #include "DetailWidgetRow.h"
 #include "Types/FlowDataPinProperties.h"
+#include "EditorClassUtils.h"
+#include "PropertyCustomizationHelpers.h"
+#include "IDetailChildrenBuilder.h"
 
 void FFlowDataPinProperty_ClassCustomizationBase::CustomizeHeader(TSharedRef<IPropertyHandle> InStructPropertyHandle, FDetailWidgetRow& HeaderRow, IPropertyTypeCustomizationUtils& StructCustomizationUtils)
 {

@@ -3,6 +3,8 @@
 #include "DetailCustomizations/FlowDataPinProperty_ObjectCustomization.h"
 #include "DetailWidgetRow.h"
 #include "Types/FlowDataPinProperties.h"
+#include "EditorClassUtils.h"
+#include "IDetailChildrenBuilder.h"
 
 void FFlowDataPinProperty_ObjectCustomizationBase::CustomizeHeader(TSharedRef<IPropertyHandle> InStructPropertyHandle, FDetailWidgetRow& HeaderRow, IPropertyTypeCustomizationUtils& StructCustomizationUtils)
 {
