@@ -645,40 +645,17 @@ void SFlowGraphEditor::PasteNodesHere(const FVector2D& Location)
 
 	FlowGraph->LockUpdates();
 
-	UFlowGraphNode* SelectedParent = nullptr;
-	bool bHasMultipleNodesSelected = false;
+	const TArray<UFlowGraphNode*> PasteTargetNodes = DerivePasteTargetNodesFromSelectedNodes();
+	checkf(PasteTargetNodes.Num() <= 1, TEXT("This should be enforced in CanPasteNodes()"));
 
-	const FGraphPanelSelectionSet SelectedNodes = GetSelectedNodes();
-	for (FGraphPanelSelectionSet::TConstIterator SelectedIter(SelectedNodes); SelectedIter; ++SelectedIter)
-	{
-		UFlowGraphNode* Node = Cast<UFlowGraphNode>(*SelectedIter);
+	UFlowGraphNode* PasteTargetNode = !PasteTargetNodes.IsEmpty() ? PasteTargetNodes.Top() : nullptr;
 
-		if (Node)
-		{
-			if (SelectedParent == nullptr)
-			{
-				SelectedParent = Node;
-			}
-			else
-			{
-				bHasMultipleNodesSelected = true;
-
-				break;
-			}
-		}
-	}
+	FString TextToImport;
+	const TSet<UEdGraphNode*> NodesToPaste = ImportNodesToPasteFromClipboard(*FlowGraph, TextToImport);
 
 	// Clear the selection set (newly pasted stuff will be selected)
 	ClearSelectionSet();
 	FlowAssetEditor.Pin()->SetUISelectionState(NAME_None);
-
-	// Grab the text to paste from the clipboard.
-	FString TextToImport;
-	FPlatformApplicationMisc::ClipboardPaste(TextToImport);
-
-	// Import the nodes
-	TSet<UEdGraphNode*> PastedNodes;
-	FEdGraphUtilities::ImportNodesFromText(FlowGraph, TextToImport, /*out*/ PastedNodes);
 
 	//Average position of nodes so we can move them while still maintaining relative distances to each other
 	FVector2D AvgNodePosition(0.0f, 0.0f);
@@ -686,7 +663,7 @@ void SFlowGraphEditor::PasteNodesHere(const FVector2D& Location)
 	// Number of nodes used to calculate AvgNodePosition
 	int32 AvgCount = 0;
 
-	for (TSet<UEdGraphNode*>::TIterator It(PastedNodes); It; ++It)
+	for (TSet<UEdGraphNode*>::TConstIterator It(NodesToPaste); It; ++It)
 	{
 		UEdGraphNode* EdNode = *It;
 		UFlowGraphNode* FlowGraphNode = Cast<UFlowGraphNode>(EdNode);
@@ -708,7 +685,7 @@ void SFlowGraphEditor::PasteNodesHere(const FVector2D& Location)
 	bool bPastedParentNode = false;
 
 	TMap<int32, UFlowGraphNode*> EdNodeCopyIndexMap;
-	for (TSet<UEdGraphNode*>::TIterator It(PastedNodes); It; ++It)
+	for (TSet<UEdGraphNode*>::TConstIterator It(NodesToPaste); It; ++It)
 	{
 		UEdGraphNode* PasteNode = *It;
 		UFlowGraphNode* PasteFlowGraphNode = Cast<UFlowGraphNode>(PasteNode);
@@ -745,7 +722,7 @@ void SFlowGraphEditor::PasteNodesHere(const FVector2D& Location)
 		}
 	}
 
-	for (TSet<UEdGraphNode*>::TIterator It(PastedNodes); It; ++It)
+	for (TSet<UEdGraphNode*>::TConstIterator It(NodesToPaste); It; ++It)
 	{
 		UFlowGraphNode* PasteNode = Cast<UFlowGraphNode>(*It);
 		if (PasteNode && PasteNode->IsSubNode())
@@ -758,11 +735,11 @@ void SFlowGraphEditor::PasteNodesHere(const FVector2D& Location)
 
 			if (PasteNode->CopySubNodeParentIndex == INDEX_NONE)
 			{
-				// INDEX_NONE parent index indicates we should set the parent to the SelectedParent
+				// INDEX_NONE parent index indicates we should set the parent to the PasteTargetNode
 				
-				if (SelectedParent)
+				if (PasteTargetNode)
 				{
-					SelectedParent->AddSubNode(PasteNode, FlowGraph);
+					PasteTargetNode->AddSubNode(PasteNode, FlowGraph);
 				}
 			}
 			else if (UFlowGraphNode* PastedParentNode = EdNodeCopyIndexMap.FindRef(PasteNode->CopySubNodeParentIndex))
@@ -790,6 +767,35 @@ void SFlowGraphEditor::PasteNodesHere(const FVector2D& Location)
 	}
 }
 
+TSet<UEdGraphNode*> SFlowGraphEditor::ImportNodesToPasteFromClipboard(UFlowGraph& FlowGraph, FString& OutTextToImport) const
+{
+	// Grab the text to paste from the clipboard.
+	FPlatformApplicationMisc::ClipboardPaste(OutTextToImport);
+
+	// Import the nodes
+	TSet<UEdGraphNode*> NodesToPaste;
+	FEdGraphUtilities::ImportNodesFromText(&FlowGraph, OutTextToImport, /*out*/ NodesToPaste);
+
+	return NodesToPaste;
+}
+
+TArray<UFlowGraphNode*> SFlowGraphEditor::DerivePasteTargetNodesFromSelectedNodes() const
+{
+	TArray<UFlowGraphNode*> PasteTargetNodes;
+	const FGraphPanelSelectionSet SelectedNodes = GetSelectedNodes();
+	for (FGraphPanelSelectionSet::TConstIterator SelectedIter(SelectedNodes); SelectedIter; ++SelectedIter)
+	{
+		UFlowGraphNode* Node = Cast<UFlowGraphNode>(*SelectedIter);
+
+		if (IsValid(Node))
+		{
+			PasteTargetNodes.Add(Node);
+		}
+	}
+
+	return PasteTargetNodes;
+}
+
 bool SFlowGraphEditor::CanPasteNodes() const
 {
 	if (!CanEdit() || !IsTabFocused())
@@ -800,14 +806,120 @@ bool SFlowGraphEditor::CanPasteNodes() const
 	FString ClipboardContent;
 	FPlatformApplicationMisc::ClipboardPaste(ClipboardContent);
 
-	const bool bIsPastePossible = FEdGraphUtilities::CanImportNodesFromText(FlowAsset->GetGraph(), ClipboardContent);
+	UFlowGraph* FlowGraph = CastChecked<UFlowGraph>(FlowAsset->GetGraph());
+	if (!ensure(IsValid(FlowGraph)))
+	{
+		// We expect to have a legal FlowGraph pointer at this point
 
+		return false;
+	}
+
+	const bool bIsPastePossible = FEdGraphUtilities::CanImportNodesFromText(FlowGraph, ClipboardContent);
 	if (!bIsPastePossible)
 	{
 		return false;
 	}
 
-	// TODO (gtaylor) Need to confirm the nodes are allowed to be pasted on the selected node(s)
+	// Disallow paste when multiple target nodes are selected.
+	const TArray<UFlowGraphNode*> PasteTargetNodes = DerivePasteTargetNodesFromSelectedNodes();
+	if (PasteTargetNodes.Num() > 1)
+	{
+		// NOTE (gtaylor) It's possible we could support multi-paste, but we'd need to rework PasteNodesHere()
+		// to understand how to paste copies onto each target node.
+
+		return false;
+	}
+
+	FString TextToImport;
+	const TSet<UEdGraphNode*> NodesToPaste = ImportNodesToPasteFromClipboard(*FlowGraph, TextToImport);
+
+	if (NodesToPaste.IsEmpty())
+	{
+		// Must have at least one node to paste
+
+		return false;
+	}
+
+	ON_SCOPE_EXIT
+	{
+		// We need to clean-up the nodes we built to test the paste operation
+		for (TSet<UEdGraphNode*>::TConstIterator It(NodesToPaste); It; ++It)
+		{
+			UFlowGraphNode* NodeToPaste = Cast<UFlowGraphNode>(*It);
+			if (IsValid(NodeToPaste))
+			{
+				NodeToPaste->ClearFlags(RF_Public);
+				NodeToPaste->SetFlags(RF_Transient);
+
+				const FString NewNameStr = MakeUniqueObjectName(NodeToPaste->GetOuter(), NodeToPaste->GetClass()).ToString();
+
+				// This will remove the node from its graph
+				NodeToPaste->DestroyNode();
+
+				// Rename and garbage the node so that it can't be found by name if the same clipboard is re-pasted
+				NodeToPaste->Rename(*NewNameStr, nullptr, REN_NonTransactional | REN_DontCreateRedirectors | REN_ForceNoResetLoaders);
+				NodeToPaste->MarkAsGarbage();
+			}
+		}
+	};
+
+	// If pasting onto a selected node, confirm that the paste operation is legal
+	if (PasteTargetNodes.Num() >= 1)
+	{
+		checkf(PasteTargetNodes.Num() == 1, TEXT("This is enforced earlier in this function, just confirming the code stays that way here."));
+
+		UFlowGraphNode* PasteTargetNode = PasteTargetNodes.Top();
+
+		if (!CanPasteNodesAsSubNodes(NodesToPaste, *PasteTargetNode))
+		{
+			return false;
+		}
+	}
+
+	return true;
+}
+
+bool SFlowGraphEditor::CanPasteNodesAsSubNodes(const TSet<UEdGraphNode*>& NodesToPaste, const UFlowGraphNode& PasteTargetNode) const
+{
+	TSet<const UEdGraphNode*> AllRootSubNodesToPaste;
+	for (TSet<UEdGraphNode*>::TConstIterator It(NodesToPaste); It; ++It)
+	{
+		const UFlowGraphNode* NodeToPaste = Cast<UFlowGraphNode>(*It);
+		if (!ensure(IsValid(NodeToPaste)))
+		{
+			return false;
+		}
+
+		if (!NodeToPaste->IsSubNode())
+		{
+			// Only SubNodes can be pasted onto other nodes
+
+			return false;
+		}
+
+		// Only concerned with the 'root' subnodes
+		// (we assume the rest of the subnode tree is valid when put into the copy buffer)
+		if (NodeToPaste->CopySubNodeParentIndex != INDEX_NONE)
+		{
+			// a non-INDEX_NONE parent index indicates the subnode is is a non-root subnode in the NodesToPaste set
+
+			continue;
+		}
+
+		AllRootSubNodesToPaste.Add(NodeToPaste);
+	}
+
+	for (TSet<const UEdGraphNode*>::TConstIterator It(AllRootSubNodesToPaste); It; ++It)
+	{
+		const UFlowGraphNode* NodeToPaste = Cast<UFlowGraphNode>(*It);
+
+		if (!PasteTargetNode.CanAcceptSubNodeAsChild(*NodeToPaste, AllRootSubNodesToPaste))
+		{
+			// This node cannot accept the SubNode as a child
+
+			return false;
+		}
+	}
 
 	return true;
 }

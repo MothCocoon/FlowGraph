@@ -385,14 +385,18 @@ IFlowOwnerInterface* UFlowNodeBase::TryGetFlowOwnerInterfaceActor(UObject& RootF
 	return CastChecked<IFlowOwnerInterface>(ActorOwner);
 }
 
-EFlowAddOnAcceptResult UFlowNodeBase::AcceptFlowNodeAddOnChild_Implementation(const UFlowNodeAddOn* AddOnTemplate) const
+EFlowAddOnAcceptResult UFlowNodeBase::AcceptFlowNodeAddOnChild_Implementation(
+	const UFlowNodeAddOn* AddOnTemplate,
+	const TArray<UFlowNodeAddOn*>& AdditionalAddOnsToAssumeAreChildren) const
 {
 	// Subclasses may override this function to allow AddOn children classes
 	return EFlowAddOnAcceptResult::Undetermined;
 }
 
 #if WITH_EDITOR
-EFlowAddOnAcceptResult UFlowNodeBase::CheckAcceptFlowNodeAddOnChild(const UFlowNodeAddOn* AddOnTemplate) const
+EFlowAddOnAcceptResult UFlowNodeBase::CheckAcceptFlowNodeAddOnChild(
+	const UFlowNodeAddOn* AddOnTemplate,
+	const TArray<UFlowNodeAddOn*>& AdditionalAddOnsToAssumeAreChildren) const
 {
 	if (!IsValid(AddOnTemplate))
 	{
@@ -403,7 +407,8 @@ EFlowAddOnAcceptResult UFlowNodeBase::CheckAcceptFlowNodeAddOnChild(const UFlowN
 
 	EFlowAddOnAcceptResult CombinedResult = EFlowAddOnAcceptResult::Undetermined;
 
-	const EFlowAddOnAcceptResult AsChildResult = AcceptFlowNodeAddOnChild(AddOnTemplate); // Potential parents of AddOns are allowed to decide their eligible AddOn children
+	// Potential parents of AddOns are allowed to decide their eligible AddOn children
+	const EFlowAddOnAcceptResult AsChildResult = AcceptFlowNodeAddOnChild(AddOnTemplate, AdditionalAddOnsToAssumeAreChildren);
 	CombinedResult = CombineFlowAddOnAcceptResult(AsChildResult, CombinedResult);
 
 	if (CombinedResult == EFlowAddOnAcceptResult::Reject)

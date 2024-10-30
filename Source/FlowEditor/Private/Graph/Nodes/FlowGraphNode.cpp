@@ -1753,9 +1753,9 @@ bool UFlowGraphNode::IsAncestorNode(const UFlowGraphNode& OtherNode) const
 	return false;
 }
 
-bool UFlowGraphNode::CanAcceptSubNodeAsChild(const UFlowGraphNode& OtherSubNode, FString* OutReasonString) const
+bool UFlowGraphNode::CanAcceptSubNodeAsChild(const UFlowGraphNode& SubNodeToConsider, const TSet<const UEdGraphNode*>& AllRootSubNodesToPaste, FString* OutReasonString) const
 {
-	const UFlowNodeBase* OtherFlowNodeSubNode = OtherSubNode.NodeInstance;
+	const UFlowNodeBase* OtherFlowNodeSubNode = SubNodeToConsider.NodeInstance;
 
 	if (!OtherFlowNodeSubNode)
 	{
@@ -1767,7 +1767,7 @@ bool UFlowGraphNode::CanAcceptSubNodeAsChild(const UFlowGraphNode& OtherSubNode,
 		return false;
 	}
 
-	if (IsAncestorNode(OtherSubNode))
+	if (IsAncestorNode(SubNodeToConsider))
 	{
 		if (OutReasonString)
 		{
@@ -1778,10 +1778,24 @@ bool UFlowGraphNode::CanAcceptSubNodeAsChild(const UFlowGraphNode& OtherSubNode,
 	}
 
 	check(OtherFlowNodeSubNode);
-	const UFlowNodeAddOn* OtherAddOnTemplate = Cast<UFlowNodeAddOn>(OtherFlowNodeSubNode);
+	const UFlowNodeAddOn* AddOnToConsider = Cast<UFlowNodeAddOn>(OtherFlowNodeSubNode);
+
+	// Build the array of other root AddOns that will also be added as children as an atomic operation (eg, multi-paste)
+	TArray<UFlowNodeAddOn*> OtherAddOnsToPaste;
+
+	for (TSet<const UEdGraphNode*>::TConstIterator It(AllRootSubNodesToPaste); It; ++It)
+	{
+		const UFlowGraphNode* NodeToPaste = Cast<UFlowGraphNode>(*It);
+		UFlowNodeAddOn* AddOnToPaste = Cast<UFlowNodeAddOn>(NodeToPaste->NodeInstance);
+
+		if (IsValid(AddOnToPaste) && AddOnToPaste != AddOnToConsider)
+		{
+			OtherAddOnsToPaste.Add(AddOnToPaste);
+		}
+	}
 
 	const UFlowNodeBase* ThisFlowNodeBase = NodeInstance;
-	const EFlowAddOnAcceptResult AcceptResult = ThisFlowNodeBase->CheckAcceptFlowNodeAddOnChild(OtherAddOnTemplate);
+	const EFlowAddOnAcceptResult AcceptResult = ThisFlowNodeBase->CheckAcceptFlowNodeAddOnChild(AddOnToConsider, OtherAddOnsToPaste);
 
 	// Undetermined and Reject both count as Rejection, only TentativeAccept is an 'accept' result
 

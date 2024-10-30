@@ -79,6 +79,10 @@ protected:
 
 	virtual void PasteNodes();
 
+	bool CanPasteNodesAsSubNodes(const TSet<UEdGraphNode*>& NodesToPaste, const UFlowGraphNode& PasteTargetNode) const;
+	TSet<UEdGraphNode*> ImportNodesToPasteFromClipboard(UFlowGraph& FlowGraph, FString& OutTextToImport) const;
+	TArray<UFlowGraphNode*> DerivePasteTargetNodesFromSelectedNodes() const;
+
 public:
 	virtual void PasteNodesHere(const FVector2D& Location);
 	virtual bool CanPasteNodes() const;

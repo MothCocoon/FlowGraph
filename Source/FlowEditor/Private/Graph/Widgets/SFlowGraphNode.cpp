@@ -1146,17 +1146,23 @@ FReply SFlowGraphNode::OnDrop(const FGeometry& MyGeometry, const FDragDropEvent&
 
 bool SFlowGraphNode::ShouldDropDraggedNodesAsSubNodes(const TArray<TSharedRef<SGraphNode>>& DraggedNodes, UFlowGraphNode* DropTargetNode) const
 {
+	TSet<const UEdGraphNode*> DraggedFlowGraphNodes;
 	for (int32 Idx = 0; Idx < DraggedNodes.Num(); Idx++)
 	{
 		UFlowGraphNode* DraggedNode = Cast<UFlowGraphNode>(DraggedNodes[Idx]->GetNodeObj());
-		if (!DraggedNode)
+		if (IsValid(DraggedNode))
 		{
-			continue;
+			DraggedFlowGraphNodes.Add(DraggedNode);
 		}
+	}
+
+	for (TSet<const UEdGraphNode*>::TConstIterator It(DraggedFlowGraphNodes); It; ++It)
+	{
+		const UFlowGraphNode* DraggedNode = Cast<UFlowGraphNode>(*It);
 
 		// Check if all of the dragged nodes can be stopped as a subnode 
 		//  (if not ALL, then we cannot drop ANY of them)
-		const bool bCanDropDraggedNodeAsSubNode = DropTargetNode->CanAcceptSubNodeAsChild(*DraggedNode);
+		const bool bCanDropDraggedNodeAsSubNode = DropTargetNode->CanAcceptSubNodeAsChild(*DraggedNode, DraggedFlowGraphNodes);
 
 		if (!bCanDropDraggedNodeAsSubNode)
 		{

@@ -170,15 +170,20 @@ protected:
 
 protected:
 	// FlowNodes and AddOns may determine which AddOns are eligible to be their children
+	// - AddOnTemplate - the template of the FlowNodeAddOn that is being considered to be added as a child
+	// - AdditionalAddOnsToAssumeAreChildren - other AddOns to assume that are already child AddOns for the purposes of checking is AddOnTemplate is allowed.
+	//   This list will be populated with the 'other' AddOns in a multi-paste operation in the editor,
+	//   because some paste-targets can only accept a certain mix of addons, so we must know the rest of the set being pasted
+	//   to make the correct decision about whether to allow AddOnTemplate to be added.
 	UFUNCTION(BlueprintNativeEvent, BlueprintPure, Category = "FlowNode")
-	EFlowAddOnAcceptResult AcceptFlowNodeAddOnChild(const UFlowNodeAddOn* AddOnTemplate) const;
+	EFlowAddOnAcceptResult AcceptFlowNodeAddOnChild(const UFlowNodeAddOn* AddOnTemplate, const TArray<UFlowNodeAddOn*>& AdditionalAddOnsToAssumeAreChildren) const;
 
 public:
 	virtual const TArray<UFlowNodeAddOn*>& GetFlowNodeAddOnChildren() const { return AddOns; }
 
 #if WITH_EDITOR
 	virtual TArray<UFlowNodeAddOn*>& GetFlowNodeAddOnChildrenByEditor() { return AddOns; }
-	EFlowAddOnAcceptResult CheckAcceptFlowNodeAddOnChild(const UFlowNodeAddOn* AddOnTemplate) const;
+	EFlowAddOnAcceptResult CheckAcceptFlowNodeAddOnChild(const UFlowNodeAddOn* AddOnTemplate, const TArray<UFlowNodeAddOn*>& AdditionalAddOnsToAssumeAreChildren) const;
 #endif // WITH_EDITOR
 
 	// Call a function for all of this object's AddOns (recursively iterating AddOns inside AddOn)

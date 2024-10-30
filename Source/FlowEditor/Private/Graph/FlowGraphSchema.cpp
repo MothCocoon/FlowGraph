@@ -553,7 +553,8 @@ const FPinConnectionResponse UFlowGraphSchema::CanMergeNodes(const UEdGraphNode*
 	FString ReasonString;
 	if (FlowGraphNodeA && FlowGraphNodeB)
 	{
-		if (!FlowGraphNodeB->CanAcceptSubNodeAsChild(*FlowGraphNodeA, &ReasonString))
+		TSet<const UEdGraphNode*> OtherGraphNodes; 
+		if (!FlowGraphNodeB->CanAcceptSubNodeAsChild(*FlowGraphNodeA, OtherGraphNodes, &ReasonString))
 		{
 			return FPinConnectionResponse(CONNECT_RESPONSE_DISALLOW, ReasonString);
 		}
@@ -1114,6 +1115,9 @@ bool UFlowGraphSchema::IsAddOnAllowedForSelectedObjects(const TArray<UObject*>& 
 {
 	FLOW_ASSERT_ENUM_MAX(EFlowAddOnAcceptResult, 3);
 
+	// An empty array of other addons to consider to use with CheckAcceptFlowNodeAddOnChild() below
+	const TArray<UFlowNodeAddOn*> OtherAddOns;
+
 	EFlowAddOnAcceptResult CombinedResult = EFlowAddOnAcceptResult::Undetermined;
 
 	for (const UObject* SelectedObject : SelectedObjects)
@@ -1130,7 +1134,7 @@ bool UFlowGraphSchema::IsAddOnAllowedForSelectedObjects(const TArray<UObject*>& 
 			continue;
 		}
 
-		const EFlowAddOnAcceptResult SelectedObjectResult = FlowNodeOuter->CheckAcceptFlowNodeAddOnChild(AddOnTemplate);
+		const EFlowAddOnAcceptResult SelectedObjectResult = FlowNodeOuter->CheckAcceptFlowNodeAddOnChild(AddOnTemplate, OtherAddOns);
 
 		CombinedResult = CombineFlowAddOnAcceptResult(SelectedObjectResult, CombinedResult);
 		if (CombinedResult == EFlowAddOnAcceptResult::Reject)

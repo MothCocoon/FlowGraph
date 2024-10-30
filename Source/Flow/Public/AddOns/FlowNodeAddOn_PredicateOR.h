@@ -21,7 +21,7 @@ public:
 	UFlowNodeAddOn_PredicateOR();
 
 	// UFlowNodeBase
-	virtual EFlowAddOnAcceptResult AcceptFlowNodeAddOnChild_Implementation(const UFlowNodeAddOn* AddOnTemplate) const override;
+	virtual EFlowAddOnAcceptResult AcceptFlowNodeAddOnChild_Implementation(const UFlowNodeAddOn* AddOnTemplate, const TArray<UFlowNodeAddOn*>& AdditionalAddOnsToAssumeAreChildren) const override;
 	// --
 
 	// IFlowPredicateInterface

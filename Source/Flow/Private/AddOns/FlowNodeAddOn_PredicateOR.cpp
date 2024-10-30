@@ -13,7 +13,9 @@ UFlowNodeAddOn_PredicateOR::UFlowNodeAddOn_PredicateOR()
 #endif
 }
 
-EFlowAddOnAcceptResult UFlowNodeAddOn_PredicateOR::AcceptFlowNodeAddOnChild_Implementation(const UFlowNodeAddOn* AddOnTemplate) const
+EFlowAddOnAcceptResult UFlowNodeAddOn_PredicateOR::AcceptFlowNodeAddOnChild_Implementation(
+	const UFlowNodeAddOn* AddOnTemplate,
+	const TArray<UFlowNodeAddOn*>& AdditionalAddOnsToAssumeAreChildren) const
 {
 	if (IFlowPredicateInterface::ImplementsInterfaceSafe(AddOnTemplate))
 	{

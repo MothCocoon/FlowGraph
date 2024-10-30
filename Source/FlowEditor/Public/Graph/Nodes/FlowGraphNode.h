@@ -116,7 +116,7 @@ public:
 
 	void CreateAttachAddOnSubMenu(UToolMenu* Menu, UEdGraph* Graph) const;
 
-	bool CanAcceptSubNodeAsChild(const UFlowGraphNode& OtherSubNode, FString* OutReasonString = nullptr) const;
+	bool CanAcceptSubNodeAsChild(const UFlowGraphNode& OtherSubNode, const TSet<const UEdGraphNode*>& AllRootSubNodesToPaste, FString* OutReasonString = nullptr) const;
 
 	bool IsAncestorNode(const UFlowGraphNode& OtherNode) const;
 
