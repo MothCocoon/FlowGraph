@@ -59,9 +59,9 @@ public:
 
 #if WITH_EDITOR
 	// IFlowContextPinSupplierInterface
-	FLOW_API virtual bool SupportsContextPins() const override { return !InputPins.IsEmpty() || !OutputPins.IsEmpty(); }
-	FLOW_API virtual TArray<FFlowPin> GetContextInputs() const override { return InputPins; }
-	FLOW_API virtual TArray<FFlowPin> GetContextOutputs() const override { return OutputPins; }
+	FLOW_API virtual bool SupportsContextPins() const override { return Super::SupportsContextPins() || (!InputPins.IsEmpty() || !OutputPins.IsEmpty()); }
+	FLOW_API virtual TArray<FFlowPin> GetContextInputs() const override;
+	FLOW_API virtual TArray<FFlowPin> GetContextOutputs() const override;
 	// --
 #endif // WITH_EDITOR
 

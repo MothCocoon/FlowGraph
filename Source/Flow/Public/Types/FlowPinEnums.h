@@ -12,7 +12,7 @@ enum class EFlowPinType : uint8
 	// Execution pin
 	Exec,
 
-	// FFlowDataPinProperty_Bool, FBoolProperty
+	// FBoolProperty
 	Bool,
 
 	// FByteProperty FInt16Property FIntProperty FInt64Property FUInt16Property FUInt32Property FUInt64Property

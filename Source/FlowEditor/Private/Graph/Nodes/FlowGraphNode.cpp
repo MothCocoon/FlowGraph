@@ -80,8 +80,6 @@ void UFlowGraphNode::PostLoad()
 		NodeInstance->FixNode(this); // fix already created nodes
 		SubscribeToExternalChanges();
 	}
-
-// !!! doing this elsewhere	ReconstructNode();
 }
 
 void UFlowGraphNode::PostDuplicate(bool bDuplicateForPIE)
@@ -282,6 +280,17 @@ void UFlowGraphNode::InsertNewNode(UEdGraphPin* FromPin, UEdGraphPin* NewLinkPin
 
 void UFlowGraphNode::ReconstructNode()
 {
+	if (const UFlowGraph* FlowGraph = GetFlowGraph())
+	{
+		// If the graph is locked, we shouldn't reconstruct nodes 
+		// (all nodes will all be reconstructed when the graph is unlocked)
+
+		if (FlowGraph->IsLocked())
+		{
+			return;
+		}
+	}
+
 	if (bIsReconstructingNode)
 	{
 		return;

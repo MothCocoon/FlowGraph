@@ -94,3 +94,19 @@ void UFlowNodeAddOn::CacheFlowNode()
 
 	ensureAsRuntimeWarning(FlowNode);
 }
+
+#if WITH_EDITOR
+TArray<FFlowPin> UFlowNodeAddOn::GetContextInputs() const
+{
+	TArray<FFlowPin> ContextPins = Super::GetContextInputs();
+	ContextPins.Append(InputPins);
+	return ContextPins;
+}
+
+TArray<FFlowPin> UFlowNodeAddOn::GetContextOutputs() const
+{
+	TArray<FFlowPin> ContextPins = Super::GetContextOutputs();
+	ContextPins.Append(OutputPins);
+	return ContextPins;
+}
+#endif // WITH_EDITOR

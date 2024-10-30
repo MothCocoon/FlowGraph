@@ -123,7 +123,7 @@ public:
 #if WITH_EDITOR
 public:	
 	// IFlowContextPinSupplierInterface
-	virtual bool SupportsContextPins() const override { return false; }
+	virtual bool SupportsContextPins() const override { return IFlowContextPinSupplierInterface::SupportsContextPins(); }
 	virtual TArray<FFlowPin> GetContextInputs() const override;
 	virtual TArray<FFlowPin> GetContextOutputs() const override;
 	// --

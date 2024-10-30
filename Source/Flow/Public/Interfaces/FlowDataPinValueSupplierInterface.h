@@ -26,7 +26,7 @@ public:
 	// Implementers of this interface will need to use their own logic to answer this question.
 	UFUNCTION(BlueprintNativeEvent, Category = DataPins, DisplayName = "Can Supply DataPin Values")
 	bool CanSupplyDataPinValues() const;
-	virtual bool CanSupplyDataPinValues_Implementation() const { return false; }
+	virtual bool CanSupplyDataPinValues_Implementation() const { return true; }
 
 	// Must implement TrySupplyDataAs... for every EFlowPinType
 	FLOW_ASSERT_ENUM_MAX(EFlowPinType, 16);

@@ -29,7 +29,7 @@ public:
 
 #if WITH_EDITOR
 	// IFlowContextPinSupplierInterface
-	virtual bool SupportsContextPins() const override { return !OutputProperties.IsEmpty(); }
+	virtual bool SupportsContextPins() const override { return Super::SupportsContextPins() || !OutputProperties.IsEmpty(); }
 	// --
 
 	// UObject
