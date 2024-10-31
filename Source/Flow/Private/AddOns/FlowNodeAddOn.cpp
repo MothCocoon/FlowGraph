@@ -45,7 +45,9 @@ void UFlowNodeAddOn::Finish()
 	}
 }
 
-EFlowAddOnAcceptResult UFlowNodeAddOn::AcceptFlowNodeAddOnParent_Implementation(const UFlowNodeBase* ParentTemplate) const
+EFlowAddOnAcceptResult UFlowNodeAddOn::AcceptFlowNodeAddOnParent_Implementation(
+	const UFlowNodeBase* ParentTemplate,
+	const TArray<UFlowNodeAddOn*>& AdditionalAddOnsToAssumeAreChildren) const
 {
 	// Subclasses may override this function to opt in to parent classes
 	return EFlowAddOnAcceptResult::Undetermined;

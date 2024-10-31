@@ -36,8 +36,13 @@ public:
 	// UFlowNodeBase
 
 	// AddOns may opt in to be eligible for a given parent
+	// - ParentTemplate - the template of the FlowNode or FlowNodeAddOn that is being considered as a potential parent
+	// - AdditionalAddOnsToAssumeAreChildren - other AddOns to assume that are already child AddOns for the purposes of this test.
+	//   This list will be populated with the 'other' AddOns in a multi-paste operation in the editor,
+	//   because some paste-targets can only accept a certain mix of addons, so we must know the rest of the set being pasted
+	//   to make the correct decision about whether to allow AddOnTemplate to be added.
 	UFUNCTION(BlueprintNativeEvent, BlueprintPure, Category = "FlowNodeAddOn")
-	FLOW_API EFlowAddOnAcceptResult AcceptFlowNodeAddOnParent(const UFlowNodeBase* ParentTemplate) const;
+	FLOW_API EFlowAddOnAcceptResult AcceptFlowNodeAddOnParent(const UFlowNodeBase* ParentTemplate, const TArray<UFlowNodeAddOn*>& AdditionalAddOnsToAssumeAreChildren) const;
 
 	FLOW_API virtual UFlowNode* GetFlowNodeSelfOrOwner() override { return FlowNode; }
 	FLOW_API virtual bool IsSupportedInputPinName(const FName& PinName) const override;

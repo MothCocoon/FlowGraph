@@ -417,7 +417,7 @@ EFlowAddOnAcceptResult UFlowNodeBase::CheckAcceptFlowNodeAddOnChild(
 	}
 
 	// FlowNodeAddOns are allowed to opt in to their parent
-	const EFlowAddOnAcceptResult AsParentResult = AddOnTemplate->AcceptFlowNodeAddOnParent(this);
+	const EFlowAddOnAcceptResult AsParentResult = AddOnTemplate->AcceptFlowNodeAddOnParent(this, AdditionalAddOnsToAssumeAreChildren);
 
 	if (AsParentResult != EFlowAddOnAcceptResult::Reject &&
 		AddOnTemplate->IsA<UFlowNode>())
