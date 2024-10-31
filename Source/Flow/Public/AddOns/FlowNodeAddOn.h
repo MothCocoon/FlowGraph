@@ -41,7 +41,8 @@ public:
 	//   This list will be populated with the 'other' AddOns in a multi-paste operation in the editor,
 	//   because some paste-targets can only accept a certain mix of addons, so we must know the rest of the set being pasted
 	//   to make the correct decision about whether to allow AddOnTemplate to be added.
-	UFUNCTION(BlueprintNativeEvent, BlueprintPure, Category = "FlowNodeAddOn")
+	// https://forums.unrealengine.com/t/default-parameters-with-tarrays/330225 for details on AutoCreateRefTerm
+	UFUNCTION(BlueprintNativeEvent, BlueprintPure, Category = "FlowNodeAddOn", meta = (AutoCreateRefTerm = AdditionalAddOnsToAssumeAreChildren))
 	FLOW_API EFlowAddOnAcceptResult AcceptFlowNodeAddOnParent(const UFlowNodeBase* ParentTemplate, const TArray<UFlowNodeAddOn*>& AdditionalAddOnsToAssumeAreChildren) const;
 
 	FLOW_API virtual UFlowNode* GetFlowNodeSelfOrOwner() override { return FlowNode; }
