@@ -217,7 +217,10 @@ TArray<FFlowPin> UFlowNodeBase::GetContextInputs() const
 
 	for (const UFlowNodeAddOn* AddOn : AddOns)
 	{
-		AddOnInputs.Append(AddOn->GetContextInputs());
+		if (IsValid(AddOn))
+		{
+			AddOnInputs.Append(AddOn->GetContextInputs());
+		}
 	}
 
 	if (!AddOnInputs.IsEmpty())
@@ -238,7 +241,10 @@ TArray<FFlowPin> UFlowNodeBase::GetContextOutputs() const
 
 	for (const UFlowNodeAddOn* AddOn : AddOns)
 	{
-		AddOnOutputs.Append(AddOn->GetContextOutputs());
+		if (IsValid(AddOn))
+		{
+			AddOnOutputs.Append(AddOn->GetContextOutputs());
+		}
 	}
 
 	if (!AddOnOutputs.IsEmpty())
