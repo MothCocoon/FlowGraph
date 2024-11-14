@@ -8,7 +8,7 @@ UFlowNodeAddOn_PredicateOR::UFlowNodeAddOn_PredicateOR()
 	: Super()
 {
 #if WITH_EDITOR
-	NodeStyle = EFlowNodeStyle::Logic;
+	NodeDisplayStyle = TAG_Flow_NodeDisplayStyle_AddOn_Predicate_Composite;
 	Category = TEXT("Composite");
 #endif
 }

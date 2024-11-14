@@ -2,8 +2,8 @@
 
 #pragma once
 
+#include "Algo/Unique.h"
 #include "Containers/Array.h"
-
 #include "Math/RandomStream.h"
 
 namespace FlowArray
@@ -12,11 +12,11 @@ namespace FlowArray
 	//  (NOTE, UE's TArray will reallocate to heap ("secondary allocation")
 	//   if the fixed capacity is ever exceeded)
 
-	template <class T, int Capacity>
-	using TInlineArray = TArray<T, TInlineAllocator<Capacity>>;
+	template <class TInnerType, int Capacity>
+	using TInlineArray = TArray<TInnerType, TInlineAllocator<Capacity>>;
 
-	template <class T, typename InAllocatorType>
-	void ReverseArray(TArray<T>& InOutArray)
+	template <class TInnerType, typename InAllocatorType>
+	void ReverseArray(TArray<TInnerType>& InOutArray)
 	{
 		for (int32 FrontIndex = 0, BackIndex = InOutArray.Num() - 1; FrontIndex < BackIndex; ++FrontIndex, --BackIndex)
 		{
@@ -24,9 +24,8 @@ namespace FlowArray
 		}
 	}
 
-
-	template <typename T, typename InAllocatorType>
-	void ShuffleArray(TArray<T, InAllocatorType>& Array, FRandomStream& RandomStream)
+	template <typename TInnerType, typename InAllocatorType>
+	void ShuffleArray(TArray<TInnerType, InAllocatorType>& Array, FRandomStream& RandomStream)
 	{
 		// Trivial cases
 		if (Array.Num() <= 2)
@@ -52,5 +51,23 @@ namespace FlowArray
 
 			Array.Swap(FromIndex, OtherIndex);
 		}
+	}
+
+	template <typename TInnerType>
+	bool TrySortAndRemoveDuplicatesFromArrayInPlace(TArray<TInnerType>& InOutArray)
+	{
+		InOutArray.Sort(TGreater{});
+
+		const int32 SizeBefore = InOutArray.Num();
+		const int32 SizeAfter = Algo::Unique(InOutArray);
+
+		if (SizeBefore > SizeAfter)
+		{
+			InOutArray.SetNum(SizeAfter);
+
+			return true;
+		}
+
+		return false;
 	}
 }

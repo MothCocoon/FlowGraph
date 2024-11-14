@@ -7,8 +7,10 @@
 #include "Interfaces/FlowCoreExecutableInterface.h"
 #include "Interfaces/FlowContextPinSupplierInterface.h"
 #include "FlowMessageLog.h"
+#include "FlowTags.h"
 #include "FlowTypes.h"
 #include "Types/FlowDataPinResults.h"
+#include "NativeGameplayTags.h"
 
 #include "FlowNodeBase.generated.h"
 
@@ -294,6 +296,8 @@ protected:
 public:
 	UEdGraphNode* GetGraphNode() const { return GraphNode; }
 
+	virtual void PostLoad() override;
+
 #if WITH_EDITOR
 	void SetGraphNode(UEdGraphNode* NewGraphNode);
 
@@ -325,11 +329,15 @@ protected:
 	UPROPERTY()
 	FString Category;
 	
-	UPROPERTY(EditDefaultsOnly, Category = "FlowNode")
+	UPROPERTY(EditDefaultsOnly, Category = "FlowNode", meta = (Categories = "Flow.NodeDisplayStyle"))
+	FGameplayTag NodeDisplayStyle;
+
+	// Deprecated NodeStyle, replaced by NodeDisplayStyle
+	UPROPERTY(meta = (DeprecatedProperty, DeprecationMessage = "Use the NodeDisplayStyle instead."))
 	EFlowNodeStyle NodeStyle;
 
 	// Set Node Style to custom to use your own color for this node
-	UPROPERTY(EditDefaultsOnly, Category = "FlowNode", meta = (EditCondition = "NodeStyle == EFlowNodeStyle::Custom"))
+	UPROPERTY(EditDefaultsOnly, Category = "FlowNode", DisplayName = "Custom Node Color", meta = (EditCondition = "NodeDisplayStyle == TAG_Flow_NodeDisplayStyle_Custom"))
 	FLinearColor NodeColor;
 
 	// Optional developer-facing text to explain the configuration of this node when viewed in the editor
@@ -341,7 +349,8 @@ protected:
 #if WITH_EDITOR
 public:
 	virtual FString GetNodeCategory() const;
-	EFlowNodeStyle GetNodeStyle() const;
+
+	const FGameplayTag& GetNodeDisplayStyle() const { return NodeDisplayStyle; }
 
 	// This method allows to have different for every node instance, i.e. Red if node represents enemy, Green if node represents a friend
 	virtual bool GetDynamicTitleColor(FLinearColor& OutColor) const;
@@ -350,6 +359,9 @@ public:
 	virtual FText GetNodeToolTip() const;
 	virtual FText GetNodeConfigText() const;
 	FText GetGeneratedDisplayName() const;
+
+protected:
+	void EnsureNodeDisplayStyle();
 #endif
 
 protected:	

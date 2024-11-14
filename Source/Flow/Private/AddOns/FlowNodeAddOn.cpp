@@ -7,6 +7,13 @@
 
 #include UE_INLINE_GENERATED_CPP_BY_NAME(FlowNodeAddOn)
 
+UFlowNodeAddOn::UFlowNodeAddOn()
+{
+#if WITH_EDITOR
+	NodeDisplayStyle = TAG_Flow_NodeDisplayStyle_AddOn;
+#endif
+}
+
 void UFlowNodeAddOn::InitializeInstance()
 {
 	CacheFlowNode();

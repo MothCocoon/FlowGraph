@@ -2,6 +2,8 @@
 
 #pragma once
 
+#include "Containers/Array.h"
+
 class FString;
 class UClass;
 

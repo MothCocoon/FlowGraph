@@ -11,6 +11,7 @@
 #include "Graph/Nodes/FlowGraphNode.h"
 
 #include "FlowAsset.h"
+#include "FlowEditorLogChannels.h"
 #include "Graph/Nodes/FlowGraphNode_Reroute.h"
 #include "Nodes/FlowNode.h"
 
@@ -64,6 +65,13 @@ void FFlowGraphConnectionDrawingPolicy::BuildPaths()
 
 			for (const TPair<uint8, FPinRecord>& Record : Node->GetWireRecords())
 			{
+				if (!FlowGraphNode->OutputPins.IsValidIndex(Record.Key))
+				{
+					UE_LOG(LogFlowEditor, Error, TEXT("Flow node '%s' has an invalid pin connection.  This is probably an flow editor code bug."), *Node->GetName());
+
+					continue;
+				}
+
 				if (UEdGraphPin* OutputPin = FlowGraphNode->OutputPins[Record.Key])
 				{
 					// check if Output pin is connected to anything

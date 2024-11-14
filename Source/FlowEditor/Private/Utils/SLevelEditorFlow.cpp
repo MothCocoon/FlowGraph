@@ -3,6 +3,7 @@
 #include "Utils/SLevelEditorFlow.h"
 #include "FlowAsset.h"
 #include "FlowComponent.h"
+#include "Runtime/Launch/Resources/Version.h"
 
 #if ENGINE_MAJOR_VERSION == 5 && ENGINE_MINOR_VERSION < 3
 #include "FlowWorldSettings.h"
@@ -13,7 +14,6 @@
 #include "Editor.h"
 #include "GameFramework/WorldSettings.h"
 #include "PropertyCustomizationHelpers.h"
-#include "Runtime/Launch/Resources/Version.h"
 
 #define LOCTEXT_NAMESPACE "SLevelEditorFlow"
 

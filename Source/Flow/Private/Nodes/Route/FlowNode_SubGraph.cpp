@@ -20,7 +20,7 @@ UFlowNode_SubGraph::UFlowNode_SubGraph(const FObjectInitializer& ObjectInitializ
 {
 #if WITH_EDITOR
 	Category = TEXT("Route");
-	NodeStyle = EFlowNodeStyle::SubGraph;
+	NodeDisplayStyle = TAG_Flow_NodeDisplayStyle_Node_SubGraph;
 
 	AllowedAssignedAssetClasses = {UFlowAsset::StaticClass()};
 #endif

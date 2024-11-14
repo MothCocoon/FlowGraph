@@ -11,7 +11,7 @@ UFlowNode_Counter::UFlowNode_Counter(const FObjectInitializer& ObjectInitializer
 {
 #if WITH_EDITOR
 	Category = TEXT("Route");
-	NodeStyle = EFlowNodeStyle::Condition;
+	NodeDisplayStyle = TAG_Flow_NodeDisplayStyle_Node_Condition;
 #endif
 
 	InputPins.Empty();

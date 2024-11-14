@@ -38,6 +38,7 @@ public class FlowEditor : ModuleRules
 			"EditorStyle",
 			"Engine",
 			"GraphEditor",
+			"GameplayTags",
 			"InputCore",
 			"Json",
 			"JsonUtilities",

@@ -28,11 +28,16 @@ protected:
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "FlowNodeAddOn")
 	TArray<FFlowPin> InputPins;
 
+#if WITH_EDITORONLY_DATA
 	// Output pins to add to the owning flow node
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "FlowNodeAddOn")
 	TArray<FFlowPin> OutputPins;
+#endif
 	
 public:
+
+	FLOW_API UFlowNodeAddOn();
+
 	// UFlowNodeBase
 
 	// AddOns may opt in to be eligible for a given parent

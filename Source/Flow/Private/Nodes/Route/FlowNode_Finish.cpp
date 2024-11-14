@@ -9,7 +9,7 @@ UFlowNode_Finish::UFlowNode_Finish(const FObjectInitializer& ObjectInitializer)
 {
 #if WITH_EDITOR
 	Category = TEXT("Route");
-	NodeStyle = EFlowNodeStyle::InOut;
+	NodeDisplayStyle = TAG_Flow_NodeDisplayStyle_Node_InOut;
 #endif
 
 	OutputPins = {};

@@ -43,6 +43,7 @@
 
 #include "AssetToolsModule.h"
 #include "EdGraphUtilities.h"
+#include "FlowModule.h"
 #include "IAssetSearchModule.h"
 #include "Framework/MultiBox/MultiBoxBuilder.h"
 #include "ISequencerChannelInterface.h" // ignore Rider's false "unused include" warning
@@ -59,6 +60,8 @@ EAssetTypeCategories::Type FFlowEditorModule::FlowAssetCategory = static_cast<EA
 void FFlowEditorModule::StartupModule()
 {
 	FFlowEditorStyle::Initialize();
+
+	TrySetFlowNodeDisplayStyleDefaults();
 
 	RegisterAssets();
 
@@ -109,6 +112,29 @@ void FFlowEditorModule::ShutdownModule()
 	SequencerModule.UnRegisterTrackEditor(FlowTrackCreateEditorHandle);
 
 	FModuleManager::Get().OnModulesChanged().Remove(ModulesChangedHandle);
+}
+
+void FFlowEditorModule::TrySetFlowNodeDisplayStyleDefaults() const
+{
+	// Force the flow module to be loaded before we try to access the Settings
+	FModuleManager::LoadModuleChecked<FFlowModule>("Flow");
+
+	UFlowGraphSettings& Settings = *UFlowGraphSettings::Get();
+	(void) Settings.TryAddDefaultNodeDisplayStyle(FFlowNodeDisplayStyleConfig(TAG_Flow_NodeDisplayStyle, FLinearColor(0.0f, 0.581f, 1.0f, 1.0f)));
+
+	(void) Settings.TryAddDefaultNodeDisplayStyle(FFlowNodeDisplayStyleConfig(TAG_Flow_NodeDisplayStyle_Node_Condition, FLinearColor(1.0f, 0.62f, 0.016f, 1.0f)));
+	(void) Settings.TryAddDefaultNodeDisplayStyle(FFlowNodeDisplayStyleConfig(TAG_Flow_NodeDisplayStyle_Node_Deprecated, FLinearColor(1.0f, 1.0f, 0.0f, 1.0f)));
+	(void) Settings.TryAddDefaultNodeDisplayStyle(FFlowNodeDisplayStyleConfig(TAG_Flow_NodeDisplayStyle_Node_Developer, FLinearColor(0.7f, 0.2f, 1.0f, 1.0f)));
+	(void) Settings.TryAddDefaultNodeDisplayStyle(FFlowNodeDisplayStyleConfig(TAG_Flow_NodeDisplayStyle_Node_InOut, FLinearColor(1.0f, 0.0f, 0.008f, 1.0f)));
+	(void) Settings.TryAddDefaultNodeDisplayStyle(FFlowNodeDisplayStyleConfig(TAG_Flow_NodeDisplayStyle_Node_Latent, FLinearColor(0.0f, 0.770f, 0.375f, 1.0f)));
+	(void) Settings.TryAddDefaultNodeDisplayStyle(FFlowNodeDisplayStyleConfig(TAG_Flow_NodeDisplayStyle_Node_Logic, FLinearColor(1.0f, 1.0f, 1.0f, 1.0f)));
+	(void) Settings.TryAddDefaultNodeDisplayStyle(FFlowNodeDisplayStyleConfig(TAG_Flow_NodeDisplayStyle_Node_SubGraph, FLinearColor(1.0f, 0.128f, 0.0f, 1.0f)));
+	(void) Settings.TryAddDefaultNodeDisplayStyle(FFlowNodeDisplayStyleConfig(TAG_Flow_NodeDisplayStyle_Node_Terminal, FLinearColor(1.0f, 0.0f, 0.008f, 1.0f)));
+
+	(void) Settings.TryAddDefaultNodeDisplayStyle(FFlowNodeDisplayStyleConfig(TAG_Flow_NodeDisplayStyle_AddOn, FLinearColor(0.0f, 0.581f, 1.0f, 1.0f))); // !!! Update this
+	(void) Settings.TryAddDefaultNodeDisplayStyle(FFlowNodeDisplayStyleConfig(TAG_Flow_NodeDisplayStyle_AddOn_PerSpawnedActor, FLinearColor(0.3f, 0.3f, 1.0f, 1.0f)));
+	(void) Settings.TryAddDefaultNodeDisplayStyle(FFlowNodeDisplayStyleConfig(TAG_Flow_NodeDisplayStyle_AddOn_Predicate, FLinearColor(1.0f, 1.0f, 1.0f, 1.0f)));
+	(void) Settings.TryAddDefaultNodeDisplayStyle(FFlowNodeDisplayStyleConfig(TAG_Flow_NodeDisplayStyle_AddOn_Predicate_Composite, FLinearColor(1.0f, 1.0f, 1.0f, 1.0f))); // !!! Update this
 }
 
 void FFlowEditorModule::RegisterAssets()

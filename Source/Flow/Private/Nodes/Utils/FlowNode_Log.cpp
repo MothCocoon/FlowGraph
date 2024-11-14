@@ -20,7 +20,7 @@ UFlowNode_Log::UFlowNode_Log(const FObjectInitializer& ObjectInitializer)
 {
 #if WITH_EDITOR
 	Category = TEXT("Utils");
-	NodeStyle = EFlowNodeStyle::Default;
+	NodeDisplayStyle = TAG_Flow_NodeDisplayStyle_Node_Developer;
 #endif
 }
 

@@ -11,6 +11,7 @@
 #include "Graph/Nodes/FlowGraphNode.h"
 
 #include "FlowAsset.h"
+#include "FlowEditorLogChannels.h"
 #include "FlowSettings.h"
 #include "AddOns/FlowNodeAddOn.h"
 #include "Nodes/FlowNode.h"
@@ -94,7 +95,7 @@ namespace FlowGraphSchema::Private
 
 		if (PropertyClass && FKismetEditorUtilities::IsClassABlueprintSkeleton(PropertyClass))
 		{
-			UE_LOG(LogBlueprint, Warning, TEXT("'%s' is a skeleton class. SubCategoryObject will serialize to a null value."), *PropertyClass->GetFullName());
+			UE_LOG(LogFlowEditor, Warning, TEXT("'%s' is a skeleton class. SubCategoryObject will serialize to a null value."), *PropertyClass->GetFullName());
 		}
 
 		return PropertyClass;

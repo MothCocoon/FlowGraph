@@ -23,7 +23,7 @@ UFlowNode_Timer::UFlowNode_Timer(const FObjectInitializer& ObjectInitializer)
 {
 #if WITH_EDITOR
 	Category = TEXT("Route");
-	NodeStyle = EFlowNodeStyle::Latent;
+	NodeDisplayStyle = TAG_Flow_NodeDisplayStyle_Node_Latent;
 #endif
 
 	InputPins.Add(FFlowPin(TEXT("Skip")));

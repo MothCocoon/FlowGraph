@@ -11,14 +11,20 @@
 UENUM(BlueprintType)
 enum class EFlowNodeStyle : uint8
 {
+	// Deprecated EFlowNodeStyle enum (use NodeDisplayStyle tag instead)
 	Condition,
 	Default,
 	InOut UMETA(Hidden),
 	Latent,
 	Logic,
 	SubGraph UMETA(Hidden),
-	Custom
+	Custom,
+
+	Max UMETA(Hidden),
+	Invalid UMETA(Hidden),
+	Min = 0 UMETA(Hidden),
 };
+FLOW_ENUM_RANGE_VALUES(EFlowNodeStyle)
 #endif
 
 UENUM(BlueprintType)

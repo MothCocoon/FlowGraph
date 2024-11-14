@@ -36,7 +36,8 @@ UFlowNodeBase::UFlowNodeBase(const FObjectInitializer& ObjectInitializer)
 	, bCanDelete(true)
 	, bCanDuplicate(true)
 	, bNodeDeprecated(false)
-	, NodeStyle(EFlowNodeStyle::Default)
+	, NodeDisplayStyle(TAG_Flow_NodeDisplayStyle_Node)
+	, NodeStyle(EFlowNodeStyle::Invalid)
 	, NodeColor(FLinearColor::Black)
 #endif
 {
@@ -574,7 +575,17 @@ EFlowForEachAddOnFunctionReturnValue UFlowNodeBase::ForEachAddOnForClass(const U
 	return ReturnValue;
 }
 
+void UFlowNodeBase::PostLoad()
+{
+	Super::PostLoad();
+
 #if WITH_EDITOR
+	EnsureNodeDisplayStyle();
+#endif
+}
+
+#if WITH_EDITOR
+
 void UFlowNodeBase::SetGraphNode(UEdGraphNode* NewGraphNode)
 {
 	GraphNode = NewGraphNode;
@@ -630,11 +641,6 @@ FString UFlowNodeBase::GetNodeCategory() const
 	}
 
 	return Category;
-}
-
-EFlowNodeStyle UFlowNodeBase::GetNodeStyle() const
-{
-	return NodeStyle;
 }
 
 bool UFlowNodeBase::GetDynamicTitleColor(FLinearColor& OutColor) const
@@ -716,7 +722,74 @@ FText UFlowNodeBase::GetGeneratedDisplayName() const
 	
 	return GetClass()->GetMetaDataText(NAME_GeneratedDisplayName);
 }
-#endif // WITH_EDITOR
+
+void UFlowNodeBase::EnsureNodeDisplayStyle()
+{
+	// Backward compatibility update to convert NodeStyle to NodeDisplayStyle
+	FLOW_ASSERT_ENUM_MAX(EFlowNodeStyle, 7);
+
+	const FGameplayTag NodeDisplayStylePrev = NodeDisplayStyle;
+
+	switch (NodeStyle)
+	{
+	case EFlowNodeStyle::Condition:
+		{
+			NodeDisplayStyle = TAG_Flow_NodeDisplayStyle_Node_Condition;
+		}
+		break;
+
+	case EFlowNodeStyle::Default:
+		{
+			NodeDisplayStyle = TAG_Flow_NodeDisplayStyle_Node;
+		}
+		break;
+
+	case EFlowNodeStyle::InOut:
+		{
+			NodeDisplayStyle = TAG_Flow_NodeDisplayStyle_Node_InOut;
+		}
+		break;
+
+	case EFlowNodeStyle::Latent:
+		{
+			NodeDisplayStyle = TAG_Flow_NodeDisplayStyle_Node_Latent;
+		}
+		break;
+
+	case EFlowNodeStyle::Logic:
+		{
+			NodeDisplayStyle = TAG_Flow_NodeDisplayStyle_Node_Logic;
+		}
+		break;
+
+	case EFlowNodeStyle::SubGraph:
+		{
+			NodeDisplayStyle = TAG_Flow_NodeDisplayStyle_Node_SubGraph;
+		}
+		break;
+
+	case EFlowNodeStyle::Custom:
+		{
+			NodeDisplayStyle = TAG_Flow_NodeDisplayStyle_Custom;
+		}
+		break;
+
+	default: break;
+	}
+
+	if (GEditor != nullptr && NodeDisplayStyle != NodeDisplayStylePrev)
+	{
+		NodeStyle = EFlowNodeStyle::Invalid;
+
+		Modify();
+	}
+}
+
+FString UFlowNodeBase::GetNodeDescription() const
+{
+	return K2_GetNodeDescription();
+}
+#endif
 
 void UFlowNodeBase::SetNodeConfigText(const FText& NodeConfigText)
 {
@@ -733,13 +806,6 @@ void UFlowNodeBase::SetNodeConfigText(const FText& NodeConfigText)
 void UFlowNodeBase::UpdateNodeConfigText_Implementation()
 {
 }
-
-#if WITH_EDITOR
-FString UFlowNodeBase::GetNodeDescription() const
-{
-	return K2_GetNodeDescription();
-}
-#endif // WITH_EDITOR
 
 void UFlowNodeBase::LogError(FString Message, const EFlowOnScreenMessageType OnScreenMessageType) const
 {
@@ -821,7 +887,6 @@ void UFlowNodeBase::LogVerbose(FString Message) const
 	}
 #endif
 }
-
 
 #if !UE_BUILD_SHIPPING
 bool UFlowNodeBase::BuildMessage(FString& Message) const

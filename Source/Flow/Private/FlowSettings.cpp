@@ -23,7 +23,7 @@ void UFlowSettings::PostEditChangeProperty(FPropertyChangedEvent& PropertyChange
 	
 	if (PropertyChangedEvent.GetMemberPropertyName() == GET_MEMBER_NAME_CHECKED( UFlowSettings, bUseAdaptiveNodeTitles ))
 	{
-		(void)OnAdaptiveNodeTitlesChanged.ExecuteIfBound();
+		(void) OnAdaptiveNodeTitlesChanged.ExecuteIfBound();
 	}
 }
 #endif
