@@ -1,6 +1,7 @@
 // Copyright https://github.com/MothCocoon/FlowGraph/graphs/contributors
 
 #include "Types/FlowDataPinResults.h"
+#include "Types/FlowDataPinProperties.h"
 
 // FFlowDataPinResult_Object
 

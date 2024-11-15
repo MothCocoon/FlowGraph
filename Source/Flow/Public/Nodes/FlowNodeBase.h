@@ -336,8 +336,8 @@ protected:
 	UPROPERTY(meta = (DeprecatedProperty, DeprecationMessage = "Use the NodeDisplayStyle instead."))
 	EFlowNodeStyle NodeStyle;
 
-	// Set Node Style to custom to use your own color for this node
-	UPROPERTY(EditDefaultsOnly, Category = "FlowNode", DisplayName = "Custom Node Color", meta = (EditCondition = "NodeDisplayStyle == TAG_Flow_NodeDisplayStyle_Custom"))
+	// Set Node Style to custom to use your own color for this node (if using Flow.NodeDisplayStyle.Custom)
+	UPROPERTY(EditDefaultsOnly, Category = "FlowNode", DisplayName = "Custom Node Color")
 	FLinearColor NodeColor;
 
 	// Optional developer-facing text to explain the configuration of this node when viewed in the editor

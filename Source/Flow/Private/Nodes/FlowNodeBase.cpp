@@ -645,7 +645,9 @@ FString UFlowNodeBase::GetNodeCategory() const
 
 bool UFlowNodeBase::GetDynamicTitleColor(FLinearColor& OutColor) const
 {
-	if (NodeStyle == EFlowNodeStyle::Custom)
+	// Legacy asset support for NodeStyle == EFlowNodeStyle::Custom
+	if (NodeDisplayStyle == TAG_Flow_NodeDisplayStyle_Custom ||
+		NodeStyle == EFlowNodeStyle::Custom)
 	{
 		OutColor = NodeColor;
 		return true;
