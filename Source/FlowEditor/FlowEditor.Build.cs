@@ -15,6 +15,7 @@ public class FlowEditor : ModuleRules
 
 		PublicDependencyModuleNames.AddRange(new[]
 		{
+			"AssetSearch",
 			"EditorSubsystem",
 			"Flow",
 			"MessageLog",
@@ -25,7 +26,6 @@ public class FlowEditor : ModuleRules
 		{
 			"ApplicationCore",
 			"AssetDefinition",
-			"AssetSearch",
 			"AssetTools",
 			"BlueprintGraph",
 			"ClassViewer",

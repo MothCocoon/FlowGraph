@@ -3,7 +3,7 @@
 #pragma once
 
 #include "Types/FlowPinEnums.h"
-
+#include "Runtime/Launch/Resources/Version.h"
 #include "GameplayTagContainer.h"
 #include "Runtime/Launch/Resources/Version.h"
 
