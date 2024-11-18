@@ -8,7 +8,7 @@ UFlowNode_DefineProperties::UFlowNode_DefineProperties(const FObjectInitializer&
 	: Super(ObjectInitializer)
 {
 #if WITH_EDITOR
-	NodeDisplayStyle = TAG_Flow_NodeDisplayStyle_Node_InOut;
+	NodeDisplayStyle = FlowNodeStyle::InOut;
 	Category = TEXT("Data Pins");
 #endif
 

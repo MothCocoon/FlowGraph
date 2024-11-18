@@ -82,11 +82,9 @@ void UFlowSubsystem::StartRootFlow(UObject* Owner, UFlowAsset* FlowAsset, const 
 	{
 		if (UFlowAsset* NewFlow = CreateRootFlow(Owner, FlowAsset, bAllowMultipleInstances))
 		{
-			// TODO (gtaylor) In the future, we may want to provide a way to set a data pin value supplier
+			// todo: (gtaylor) In the future, we may want to provide a way to set a data pin value supplier
 			// for the root flow graph.
-			constexpr IFlowDataPinValueSupplierInterface* DataPinValueSupplier = nullptr;
-
-			NewFlow->StartFlow(DataPinValueSupplier);
+			NewFlow->StartFlow();
 		}
 	}
 #if WITH_EDITOR

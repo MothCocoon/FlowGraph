@@ -313,7 +313,7 @@ bool FFlowGraphConnectionDrawingPolicy::ShouldChangeTangentForReroute(UFlowGraph
 
 		FVector2D AverageLeftPin;
 		FVector2D AverageRightPin;
-		FVector2D CenterPin;
+		FVector2D CenterPin = FVector2D::ZeroVector;
 		const bool bCenterValid = Reroute->OutputPins.Num() == 0 ? false : FindPinCenter(Reroute->OutputPins[0], /*out*/ CenterPin);
 		const bool bLeftValid = GetAverageConnectedPosition(Reroute, EGPD_Input, /*out*/ AverageLeftPin);
 		const bool bRightValid = GetAverageConnectedPosition(Reroute, EGPD_Output, /*out*/ AverageRightPin);

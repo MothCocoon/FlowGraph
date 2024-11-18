@@ -7,7 +7,6 @@
 #include "Graph/FlowGraphSchema.h"
 #include "Types/FlowGameplayTagMapUtils.h"
 
-#include "Algo/Unique.h"
 #include "Framework/Notifications/NotificationManager.h"
 #include "Widgets/Notifications/SNotificationList.h"
 
@@ -112,7 +111,6 @@ const TMap<FGameplayTag, FFlowNodeDisplayStyleConfig>& UFlowGraphSettings::Ensur
 		for (const FFlowNodeDisplayStyleConfig& Config : NodeDisplayStyles)
 		{
 			UnexpandedMap.Add(Config.Tag, Config);
-
 			NodeDisplayStylesAuthoredTags.AddTag(Config.Tag);
 		}
 
@@ -160,7 +158,7 @@ const FLinearColor* UFlowGraphSettings::LookupNodeTitleColorForNode(const UFlowN
 	const FGameplayTag& StyleTag = FlowNodeBase.GetNodeDisplayStyle();
 	const TMap<FGameplayTag, FFlowNodeDisplayStyleConfig>& StyleMap = EnsureNodeDisplayStylesMap();
 
-	if (const FFlowNodeDisplayStyleConfig* Config = FlowMap::TryLookupGameplayTagKey(StyleTag, StyleMap, TAG_Flow_NodeDisplayStyle))
+	if (const FFlowNodeDisplayStyleConfig* Config = FlowMap::TryLookupGameplayTagKey(StyleTag, StyleMap, FlowNodeStyle::CategoryName))
 	{
 		return &Config->TitleColor;
 	}

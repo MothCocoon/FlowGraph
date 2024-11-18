@@ -329,14 +329,14 @@ protected:
 	UPROPERTY()
 	FString Category;
 	
-	UPROPERTY(EditDefaultsOnly, Category = "FlowNode", meta = (Categories = "Flow.NodeDisplayStyle"))
+	UPROPERTY(EditDefaultsOnly, Category = "FlowNode", meta = (Categories = "Flow.NodeStyle"))
 	FGameplayTag NodeDisplayStyle;
 
 	// Deprecated NodeStyle, replaced by NodeDisplayStyle
 	UPROPERTY(meta = (DeprecatedProperty, DeprecationMessage = "Use the NodeDisplayStyle instead."))
 	EFlowNodeStyle NodeStyle;
 
-	// Set Node Style to custom to use your own color for this node (if using Flow.NodeDisplayStyle.Custom)
+	// Set Node Style to custom to use your own color for this node (if using Flow.NodeStyle.Custom)
 	UPROPERTY(EditDefaultsOnly, Category = "FlowNode", DisplayName = "Custom Node Color")
 	FLinearColor NodeColor;
 

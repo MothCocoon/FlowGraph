@@ -9,7 +9,7 @@ UFlowNode_Start::UFlowNode_Start(const FObjectInitializer& ObjectInitializer)
 {
 #if WITH_EDITOR
 	Category = TEXT("Route");
-	NodeDisplayStyle = TAG_Flow_NodeDisplayStyle_Node_InOut;
+	NodeDisplayStyle = FlowNodeStyle::InOut;
 	bCanDelete = bCanDuplicate = false;
 #endif
 

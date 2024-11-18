@@ -4,9 +4,15 @@
 #include "FlowLogChannels.h"
 
 #include "GameplayTagContainer.h"
-#include "InstancedStruct.h"
 #include "Misc/DateTime.h"
 #include "Misc/MessageDialog.h"
+#include "Runtime/Launch/Resources/Version.h"
+
+#if ENGINE_MAJOR_VERSION == 5 && ENGINE_MINOR_VERSION < 5
+#include "InstancedStruct.h"
+#else
+#include "StructUtils/InstancedStruct.h"
+#endif
 
 #include UE_INLINE_GENERATED_CPP_BY_NAME(FlowPin)
 
@@ -338,7 +344,6 @@ void FFlowPin::PostEditChangedPinTypeOrSubCategorySource()
 
 	switch (PinType)
 	{
-
 	case EFlowPinType::Class:
 		{
 			PinSubCategoryObject = SubCategoryClassFilter;
@@ -385,7 +390,7 @@ FText FFlowPin::BuildHeaderText() const
 	}
 	else
 	{
-		return FText::Format(LOCTEXT("FlowPinNameAndType", "{0} ({1})"), { PinNameToUse, UEnum::GetDisplayValueAsText(PinType) });
+		return FText::Format(LOCTEXT("FlowPinNameAndType", "{0} ({1})"), {PinNameToUse, UEnum::GetDisplayValueAsText(PinType)});
 	}
 }
 
@@ -407,8 +412,8 @@ bool FFlowPin::ValidateEnum(const UEnum& EnumType)
 		if (Value < std::numeric_limits<FDataType>::min() || Value > std::numeric_limits<FDataType>::max())
 		{
 			UE_LOG(LogFlow, Error, TEXT("'%s' value %d is outside the range of supported key values for enum [%d, %d].")
-				, *EnumType.GenerateFullEnumName(*EnumType.GetDisplayNameTextByIndex(i).ToString())
-				, Value, std::numeric_limits<FDataType>::min(), std::numeric_limits<FDataType>::max());
+			       , *EnumType.GenerateFullEnumName(*EnumType.GetDisplayNameTextByIndex(i).ToString())
+			       , Value, std::numeric_limits<FDataType>::min(), std::numeric_limits<FDataType>::max());
 
 			bAllValid = false;
 		}
@@ -416,10 +421,8 @@ bool FFlowPin::ValidateEnum(const UEnum& EnumType)
 
 	if (!bAllValid)
 	{
-		FMessageDialog::Open(EAppMsgType::Ok,
-			NSLOCTEXT("FlowPin"
-				, "Unsupported enumeration"
-				, "Specified enumeration contains one or more values outside supported value range for enum keys and can not be used for Flow Data Pins. See log for details."));
+		FMessageDialog::Open(EAppMsgType::Ok, LOCTEXT("Unsupported enumeration"
+		                                              , "Specified enumeration contains one or more values outside supported value range for enum keys and can not be used for Flow Data Pins. See log for details."));
 	}
 
 	return bAllValid;

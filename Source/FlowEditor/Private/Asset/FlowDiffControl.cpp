@@ -18,7 +18,7 @@ namespace
 	{
 		if (Difference.Result.Pin1)
 		{
-			return Difference.Result.Pin1->PinId.ToString() + Difference.Result.Pin2->PinId.ToString(); 
+			return Difference.Result.Pin1->PinId.ToString() + Difference.Result.Pin2->PinId.ToString();
 		}
 
 		const UFlowGraphNode* FlowGraphNode = Cast<UFlowGraphNode>(Difference.Result.Node1);
@@ -29,7 +29,7 @@ namespace
 
 		if (IsValid(FlowGraphNode) && IsValid(FlowGraphNode->GetNodeTemplate()))
 		{
-			return FString::FromInt(FlowGraphNode->GetNodeTemplate()->GetUniqueID());//->GetName();
+			return FString::FromInt(FlowGraphNode->GetNodeTemplate()->GetUniqueID()); //->GetName();
 		}
 
 		if (IsValid(Difference.Result.Node1))
@@ -42,7 +42,7 @@ namespace
 			return FString::FromInt(Difference.Result.Node2->GetUniqueID());
 		}
 
-		return  TEXT("Invalid Diff!");
+		return TEXT("Invalid Diff!");
 	}
 
 	FString GetNodeNameFromDiffResult(const FDiffResultItem& Difference)
@@ -105,22 +105,14 @@ namespace
 /// FFlowAssetDiffControl
 
 FFlowAssetDiffControl::FFlowAssetDiffControl(const UFlowAsset* InOldFlowAsset, const UFlowAsset* InNewFlowAsset, FOnDiffEntryFocused InSelectionCallback)
-#if ENGINE_MAJOR_VERSION == 5 && ENGINE_MINOR_VERSION < 2
-	: TDetailsDiffControl(InOldFlowAsset, InNewFlowAsset, InSelectionCallback)
-#else
 	: FDetailsDiffControl(InOldFlowAsset, InNewFlowAsset, InSelectionCallback, false)
-#endif
 {
 }
 
 // TDetailsDiffControl::GenerateTreeEntries + "NoDifferences" entry + category label
 void FFlowAssetDiffControl::GenerateTreeEntries(TArray<TSharedPtr<FBlueprintDifferenceTreeEntry>>& OutTreeEntries, TArray<TSharedPtr<FBlueprintDifferenceTreeEntry>>& OutRealDifferences)
 {
-#if ENGINE_MAJOR_VERSION == 5 && ENGINE_MINOR_VERSION < 2
-	TDetailsDiffControl::GenerateTreeEntries(OutTreeEntries, OutRealDifferences);
-#else
 	FDetailsDiffControl::GenerateTreeEntries(OutTreeEntries, OutRealDifferences);
-#endif
 
 	const bool bHasDifferences = Children.Num() != 0;
 	if (!bHasDifferences)
@@ -279,8 +271,8 @@ void FFlowGraphToDiff::GenerateTreeEntries(TArray<TSharedPtr<FBlueprintDifferenc
 			TSharedPtr<FFlowObjectDiffArgs>& FlowObjectPropertyDiff = FlowNodeDiff->PropertyDiffArgList.Add_GetRef(MakeShared<FFlowObjectDiffArgs>(FlowNodeDiff, PropertyDiffEntry));
 
 			TSharedPtr<FBlueprintDifferenceTreeEntry> ChildEntry = MakeShared<FBlueprintDifferenceTreeEntry>(
-					FOnDiffEntryFocused::CreateSP(DiffWidget, &SFlowDiff::OnDiffListSelectionChanged, FlowObjectPropertyDiff),
-					FGenerateDiffEntryWidget::CreateStatic(&GenerateObjectDiffWidget, FlowObjectPropertyDiff->PropertyDiff, RightRevision));
+				FOnDiffEntryFocused::CreateSP(DiffWidget, &SFlowDiff::OnDiffListSelectionChanged, FlowObjectPropertyDiff),
+				FGenerateDiffEntryWidget::CreateStatic(&GenerateObjectDiffWidget, FlowObjectPropertyDiff->PropertyDiff, RightRevision));
 
 			Nodes.Value->DiffTreeEntry->Children.Push(ChildEntry);
 			OutRealDifferences.Push(ChildEntry);
@@ -306,8 +298,8 @@ void FFlowGraphToDiff::GenerateTreeEntries(TArray<TSharedPtr<FBlueprintDifferenc
 		for (const auto& Difference : Nodes.Value->LowPriorityChildDiffResult)
 		{
 			TSharedPtr<FBlueprintDifferenceTreeEntry> ChildEntry = MakeShared<FBlueprintDifferenceTreeEntry>(
-					FOnDiffEntryFocused::CreateRaw(DiffWidget, &SFlowDiff::OnDiffListSelectionChanged, FlowNodeDiff->DiffEntryFocusArg),
-					FGenerateDiffEntryWidget::CreateSP(Difference.ToSharedRef(), &FDiffResultItem::GenerateWidget));
+				FOnDiffEntryFocused::CreateRaw(DiffWidget, &SFlowDiff::OnDiffListSelectionChanged, FlowNodeDiff->DiffEntryFocusArg),
+				FGenerateDiffEntryWidget::CreateSP(Difference.ToSharedRef(), &FDiffResultItem::GenerateWidget));
 
 			FlowNodeDiff->DiffTreeEntry->Children.Push(ChildEntry);
 			OutRealDifferences.Push(ChildEntry);
@@ -428,9 +420,7 @@ TSharedRef<SWidget> FFlowGraphToDiff::GenerateCategoryWidget() const
 
 	FLinearColor Color = (GraphOld && GraphNew) ? DiffViewUtils::Identical() : FLinearColor(0.3f, 0.3f, 1.f);
 
-	const bool bHasDiffs = DiffListSource.Num() > 0;
-
-	if (bHasDiffs)
+	if (DiffListSource.Num() > 0)
 	{
 		Color = DiffViewUtils::Differs();
 	}
@@ -452,19 +442,7 @@ void FFlowGraphToDiff::BuildDiffSourceArray()
 	FoundDiffs->Empty();
 	FGraphDiffControl::DiffGraphs(GraphOld, GraphNew, *FoundDiffs);
 
-#if ENGINE_MAJOR_VERSION == 5 && ENGINE_MINOR_VERSION < 3
-	struct SortDiff
-	{
-		bool operator ()(const FDiffSingleResult& A, const FDiffSingleResult& B) const
-		{
-			return A.Diff < B.Diff;
-		}
-	};
-
-	Sort(FoundDiffs->GetData(), FoundDiffs->Num(), SortDiff());
-#else
 	Algo::SortBy(*FoundDiffs, &FDiffSingleResult::Diff);
-#endif	
 
 	DiffListSource.Empty();
 	for (const FDiffSingleResult& Diff : *FoundDiffs)

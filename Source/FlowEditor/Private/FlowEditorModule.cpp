@@ -3,7 +3,6 @@
 #include "FlowEditorModule.h"
 #include "FlowEditorStyle.h"
 
-#include "Asset/AssetTypeActions_FlowAsset.h"
 #include "Asset/FlowAssetEditor.h"
 #include "Asset/FlowAssetIndexer.h"
 #include "Graph/FlowGraphConnectionDrawingPolicy.h"
@@ -56,6 +55,7 @@ static FName AssetSearchModuleName = TEXT("AssetSearch");
 #define LOCTEXT_NAMESPACE "FlowEditorModule"
 
 EAssetTypeCategories::Type FFlowEditorModule::FlowAssetCategory = static_cast<EAssetTypeCategories::Type>(0);
+FAssetCategoryPath FFLowAssetCategoryPaths::Flow(LOCTEXT("Flow", "Flow"));
 
 void FFlowEditorModule::StartupModule()
 {
@@ -116,25 +116,24 @@ void FFlowEditorModule::ShutdownModule()
 
 void FFlowEditorModule::TrySetFlowNodeDisplayStyleDefaults() const
 {
-	// Force the flow module to be loaded before we try to access the Settings
+	// Force the Flow module to be loaded before we try to access the Settings
 	FModuleManager::LoadModuleChecked<FFlowModule>("Flow");
 
 	UFlowGraphSettings& Settings = *UFlowGraphSettings::Get();
-	(void) Settings.TryAddDefaultNodeDisplayStyle(FFlowNodeDisplayStyleConfig(TAG_Flow_NodeDisplayStyle, FLinearColor(0.0f, 0.581f, 1.0f, 1.0f)));
+	(void) Settings.TryAddDefaultNodeDisplayStyle(FFlowNodeDisplayStyleConfig(FlowNodeStyle::Node, FLinearColor(0.0f, 0.581f, 1.0f, 1.0f)));
+	(void) Settings.TryAddDefaultNodeDisplayStyle(FFlowNodeDisplayStyleConfig(FlowNodeStyle::Condition, FLinearColor(1.0f, 0.62f, 0.016f, 1.0f)));
+	(void) Settings.TryAddDefaultNodeDisplayStyle(FFlowNodeDisplayStyleConfig(FlowNodeStyle::Deprecated, FLinearColor(1.0f, 1.0f, 0.0f, 1.0f)));
+	(void) Settings.TryAddDefaultNodeDisplayStyle(FFlowNodeDisplayStyleConfig(FlowNodeStyle::Developer, FLinearColor(0.7f, 0.2f, 1.0f, 1.0f)));
+	(void) Settings.TryAddDefaultNodeDisplayStyle(FFlowNodeDisplayStyleConfig(FlowNodeStyle::InOut, FLinearColor(1.0f, 0.0f, 0.008f, 1.0f)));
+	(void) Settings.TryAddDefaultNodeDisplayStyle(FFlowNodeDisplayStyleConfig(FlowNodeStyle::Latent, FLinearColor(0.0f, 0.770f, 0.375f, 1.0f)));
+	(void) Settings.TryAddDefaultNodeDisplayStyle(FFlowNodeDisplayStyleConfig(FlowNodeStyle::Logic, FLinearColor(1.0f, 1.0f, 1.0f, 1.0f)));
+	(void) Settings.TryAddDefaultNodeDisplayStyle(FFlowNodeDisplayStyleConfig(FlowNodeStyle::SubGraph, FLinearColor(1.0f, 0.128f, 0.0f, 1.0f)));
+	(void) Settings.TryAddDefaultNodeDisplayStyle(FFlowNodeDisplayStyleConfig(FlowNodeStyle::Terminal, FLinearColor(1.0f, 0.0f, 0.008f, 1.0f)));
 
-	(void) Settings.TryAddDefaultNodeDisplayStyle(FFlowNodeDisplayStyleConfig(TAG_Flow_NodeDisplayStyle_Node_Condition, FLinearColor(1.0f, 0.62f, 0.016f, 1.0f)));
-	(void) Settings.TryAddDefaultNodeDisplayStyle(FFlowNodeDisplayStyleConfig(TAG_Flow_NodeDisplayStyle_Node_Deprecated, FLinearColor(1.0f, 1.0f, 0.0f, 1.0f)));
-	(void) Settings.TryAddDefaultNodeDisplayStyle(FFlowNodeDisplayStyleConfig(TAG_Flow_NodeDisplayStyle_Node_Developer, FLinearColor(0.7f, 0.2f, 1.0f, 1.0f)));
-	(void) Settings.TryAddDefaultNodeDisplayStyle(FFlowNodeDisplayStyleConfig(TAG_Flow_NodeDisplayStyle_Node_InOut, FLinearColor(1.0f, 0.0f, 0.008f, 1.0f)));
-	(void) Settings.TryAddDefaultNodeDisplayStyle(FFlowNodeDisplayStyleConfig(TAG_Flow_NodeDisplayStyle_Node_Latent, FLinearColor(0.0f, 0.770f, 0.375f, 1.0f)));
-	(void) Settings.TryAddDefaultNodeDisplayStyle(FFlowNodeDisplayStyleConfig(TAG_Flow_NodeDisplayStyle_Node_Logic, FLinearColor(1.0f, 1.0f, 1.0f, 1.0f)));
-	(void) Settings.TryAddDefaultNodeDisplayStyle(FFlowNodeDisplayStyleConfig(TAG_Flow_NodeDisplayStyle_Node_SubGraph, FLinearColor(1.0f, 0.128f, 0.0f, 1.0f)));
-	(void) Settings.TryAddDefaultNodeDisplayStyle(FFlowNodeDisplayStyleConfig(TAG_Flow_NodeDisplayStyle_Node_Terminal, FLinearColor(1.0f, 0.0f, 0.008f, 1.0f)));
-
-	(void) Settings.TryAddDefaultNodeDisplayStyle(FFlowNodeDisplayStyleConfig(TAG_Flow_NodeDisplayStyle_AddOn, FLinearColor(0.0f, 0.581f, 1.0f, 1.0f))); // !!! Update this
-	(void) Settings.TryAddDefaultNodeDisplayStyle(FFlowNodeDisplayStyleConfig(TAG_Flow_NodeDisplayStyle_AddOn_PerSpawnedActor, FLinearColor(0.3f, 0.3f, 1.0f, 1.0f)));
-	(void) Settings.TryAddDefaultNodeDisplayStyle(FFlowNodeDisplayStyleConfig(TAG_Flow_NodeDisplayStyle_AddOn_Predicate, FLinearColor(1.0f, 1.0f, 1.0f, 1.0f)));
-	(void) Settings.TryAddDefaultNodeDisplayStyle(FFlowNodeDisplayStyleConfig(TAG_Flow_NodeDisplayStyle_AddOn_Predicate_Composite, FLinearColor(1.0f, 1.0f, 1.0f, 1.0f))); // !!! Update this
+	(void) Settings.TryAddDefaultNodeDisplayStyle(FFlowNodeDisplayStyleConfig(FlowNodeStyle::AddOn, FLinearColor(0.0f, 0.581f, 1.0f, 1.0f)));
+	(void) Settings.TryAddDefaultNodeDisplayStyle(FFlowNodeDisplayStyleConfig(FlowNodeStyle::AddOn_PerSpawnedActor, FLinearColor(0.3f, 0.3f, 1.0f, 1.0f)));
+	(void) Settings.TryAddDefaultNodeDisplayStyle(FFlowNodeDisplayStyleConfig(FlowNodeStyle::AddOn_Predicate, FLinearColor(1.0f, 1.0f, 1.0f, 1.0f)));
+	(void) Settings.TryAddDefaultNodeDisplayStyle(FFlowNodeDisplayStyleConfig(FlowNodeStyle::AddOn_Predicate_Composite, FLinearColor(1.0f, 1.0f, 1.0f, 1.0f))); // !!! Update this
 }
 
 void FFlowEditorModule::RegisterAssets()
@@ -165,10 +164,6 @@ void FFlowEditorModule::RegisterAssets()
 			FlowAssetCategory = AssetTools.RegisterAdvancedAssetCategory(FName(TEXT("Flow")), AssetCategoryText);
 		}
 	}
-
-	const TSharedRef<IAssetTypeActions> FlowAssetActions = MakeShareable(new FAssetTypeActions_FlowAsset());
-	RegisteredAssetActions.Add(FlowAssetActions);
-	AssetTools.RegisterAssetTypeActions(FlowAssetActions);
 
 	const TSharedRef<IAssetTypeActions> FlowNodeActions = MakeShareable(new FAssetTypeActions_FlowNodeBlueprint());
 	RegisteredAssetActions.Add(FlowNodeActions);

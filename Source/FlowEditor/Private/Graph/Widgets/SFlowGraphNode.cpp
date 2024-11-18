@@ -1087,7 +1087,7 @@ FReply SFlowGraphNode::OnDrop(const FGeometry& MyGeometry, const FDragDropEvent&
 			return FReply::Unhandled();
 		}
 
-		const FScopedTransaction Transaction(NSLOCTEXT("UnrealEd", "GraphEd_DragDropNode", "Drag&Drop Node"));
+		const FScopedTransaction Transaction(LOCTEXT("GraphEd_DragDropNode", "Drag&Drop Node"));
 
 		UFlowGraphNode* DropTargetNode = DragNodeOp->GetDropTargetNode();
 		check(DropTargetNode);

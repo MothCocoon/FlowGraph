@@ -1,4 +1,4 @@
-// Copyright Riot Games, All Rights Reserved.
+// Copyright https://github.com/MothCocoon/FlowGraph/graphs/contributors
 
 #pragma once
 

@@ -36,7 +36,7 @@ UFlowNodeBase::UFlowNodeBase(const FObjectInitializer& ObjectInitializer)
 	, bCanDelete(true)
 	, bCanDuplicate(true)
 	, bNodeDeprecated(false)
-	, NodeDisplayStyle(TAG_Flow_NodeDisplayStyle_Node)
+	, NodeDisplayStyle(FlowNodeStyle::Base)
 	, NodeStyle(EFlowNodeStyle::Invalid)
 	, NodeColor(FLinearColor::Black)
 #endif
@@ -646,8 +646,7 @@ FString UFlowNodeBase::GetNodeCategory() const
 bool UFlowNodeBase::GetDynamicTitleColor(FLinearColor& OutColor) const
 {
 	// Legacy asset support for NodeStyle == EFlowNodeStyle::Custom
-	if (NodeDisplayStyle == TAG_Flow_NodeDisplayStyle_Custom ||
-		NodeStyle == EFlowNodeStyle::Custom)
+	if (NodeDisplayStyle == FlowNodeStyle::Custom || NodeStyle == EFlowNodeStyle::Custom)
 	{
 		OutColor = NodeColor;
 		return true;
@@ -727,6 +726,8 @@ FText UFlowNodeBase::GetGeneratedDisplayName() const
 
 void UFlowNodeBase::EnsureNodeDisplayStyle()
 {
+	// todo: remove in Flow 2.1
+	
 	// Backward compatibility update to convert NodeStyle to NodeDisplayStyle
 	FLOW_ASSERT_ENUM_MAX(EFlowNodeStyle, 7);
 
@@ -734,55 +735,47 @@ void UFlowNodeBase::EnsureNodeDisplayStyle()
 
 	switch (NodeStyle)
 	{
-	case EFlowNodeStyle::Condition:
-		{
-			NodeDisplayStyle = TAG_Flow_NodeDisplayStyle_Node_Condition;
-		}
-		break;
-
-	case EFlowNodeStyle::Default:
-		{
-			NodeDisplayStyle = TAG_Flow_NodeDisplayStyle_Node;
-		}
-		break;
-
-	case EFlowNodeStyle::InOut:
-		{
-			NodeDisplayStyle = TAG_Flow_NodeDisplayStyle_Node_InOut;
-		}
-		break;
-
-	case EFlowNodeStyle::Latent:
-		{
-			NodeDisplayStyle = TAG_Flow_NodeDisplayStyle_Node_Latent;
-		}
-		break;
-
-	case EFlowNodeStyle::Logic:
-		{
-			NodeDisplayStyle = TAG_Flow_NodeDisplayStyle_Node_Logic;
-		}
-		break;
-
-	case EFlowNodeStyle::SubGraph:
-		{
-			NodeDisplayStyle = TAG_Flow_NodeDisplayStyle_Node_SubGraph;
-		}
-		break;
-
-	case EFlowNodeStyle::Custom:
-		{
-			NodeDisplayStyle = TAG_Flow_NodeDisplayStyle_Custom;
-		}
-		break;
-
-	default: break;
+		case EFlowNodeStyle::Condition:
+			{
+				NodeDisplayStyle = FlowNodeStyle::Condition;
+			}
+			break;
+		case EFlowNodeStyle::Default:
+			{
+				NodeDisplayStyle = FlowNodeStyle::Default;
+			}
+			break;
+		case EFlowNodeStyle::InOut:
+			{
+				NodeDisplayStyle = FlowNodeStyle::InOut;
+			}
+			break;
+		case EFlowNodeStyle::Latent:
+			{
+				NodeDisplayStyle = FlowNodeStyle::Latent;
+			}
+			break;
+		case EFlowNodeStyle::Logic:
+			{
+				NodeDisplayStyle = FlowNodeStyle::Logic;
+			}
+			break;
+		case EFlowNodeStyle::SubGraph:
+			{
+				NodeDisplayStyle = FlowNodeStyle::SubGraph;
+			}
+			break;
+		case EFlowNodeStyle::Custom:
+			{
+				NodeDisplayStyle = FlowNodeStyle::Custom;
+			}
+			break;
+		default: break;
 	}
 
 	if (GEditor != nullptr && NodeDisplayStyle != NodeDisplayStylePrev)
 	{
 		NodeStyle = EFlowNodeStyle::Invalid;
-
 		Modify();
 	}
 }

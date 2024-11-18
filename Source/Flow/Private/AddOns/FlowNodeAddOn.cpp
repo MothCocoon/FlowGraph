@@ -10,7 +10,7 @@
 UFlowNodeAddOn::UFlowNodeAddOn()
 {
 #if WITH_EDITOR
-	NodeDisplayStyle = TAG_Flow_NodeDisplayStyle_AddOn;
+	NodeDisplayStyle = FlowNodeStyle::AddOn;
 #endif
 }
 

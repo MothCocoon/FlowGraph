@@ -4,6 +4,7 @@
 
 #include "EdGraph/EdGraphNode.h"
 #include "EdGraph/EdGraphPin.h"
+#include "SearchSerializer.h"
 #include "Templates/SubclassOf.h"
 
 #include "FlowTypes.h"
@@ -143,6 +144,9 @@ public:
 	bool IsContentPreloaded() const;
 
 	bool CanFocusViewport() const;
+
+	// Index properties that are not indexed by default
+	virtual void AdditionalNodeIndexing(FSearchSerializer& Serializer) const {}
 
 	// UEdGraphNode
 	virtual bool CanJumpToDefinition() const override;

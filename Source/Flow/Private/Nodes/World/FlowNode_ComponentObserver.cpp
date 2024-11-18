@@ -12,7 +12,7 @@ UFlowNode_ComponentObserver::UFlowNode_ComponentObserver(const FObjectInitialize
 	, SuccessCount(0)
 {
 #if WITH_EDITOR
-	NodeDisplayStyle = TAG_Flow_NodeDisplayStyle_Node_Condition;
+	NodeDisplayStyle = FlowNodeStyle::Condition;
 	Category = TEXT("World");
 #endif
 

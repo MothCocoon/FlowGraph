@@ -120,6 +120,7 @@ void FFlowAssetIndexer::IndexGraph(const UFlowAsset* InFlowAsset, FSearchSeriali
 				{
 					Serializer.IndexProperty(Property, Value);
 				});
+				FlowGraphNode->AdditionalNodeIndexing(Serializer);
 				Serializer.EndIndexingObject();
 			}
 		}

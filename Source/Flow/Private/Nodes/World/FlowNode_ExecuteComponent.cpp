@@ -20,7 +20,6 @@ UFlowNode_ExecuteComponent::UFlowNode_ExecuteComponent()
 	: Super()
 {
 #if WITH_EDITOR
-	NodeDisplayStyle = TAG_Flow_NodeDisplayStyle_Node;
 	Category = TEXT("World");
 #endif // WITH_EDITOR
 }

@@ -387,7 +387,7 @@ public:
 	virtual void PreloadNodes() {}
 
 	virtual void PreStartFlow();
-	virtual void StartFlow(IFlowDataPinValueSupplierInterface* DataPinValueSupplier);
+	virtual void StartFlow(IFlowDataPinValueSupplierInterface* DataPinValueSupplier = nullptr);
 
 	virtual void FinishFlow(const EFlowFinishPolicy InFinishPolicy, const bool bRemoveInstance = true);
 

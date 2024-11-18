@@ -248,24 +248,30 @@ bool UFlowAsset::CanFlowAssetUseFlowNodeClass(const UClass& FlowNodeClass) const
 	return true;
 }
 
-bool UFlowAsset::CanFlowAssetReferenceFlowNode(const UClass& FlowNodeOrAddOnClass, FText* OutOptionalFailureReason) const
+bool UFlowAsset::CanFlowAssetReferenceFlowNode(const UClass& FlowNodeClass, FText* OutOptionalFailureReason) const
 {
-	if (!GEditor || !IsValid(&FlowNodeOrAddOnClass))
+	if (!GEditor || !IsValid(&FlowNodeClass))
 	{
 		return false;
 	}
 
-	FAssetData FlowNodeAssetData(&FlowNodeOrAddOnClass);
-
 	FAssetReferenceFilterContext AssetReferenceFilterContext;
+
+#if ENGINE_MAJOR_VERSION == 5 && ENGINE_MINOR_VERSION < 5
 	AssetReferenceFilterContext.ReferencingAssets.Add(FAssetData(this));
+#else
+	AssetReferenceFilterContext.AddReferencingAsset(FAssetData(this));
+#endif
 
 	// Confirm plugin reference restrictions are being respected
-	TSharedPtr<IAssetReferenceFilter> FlowAssetReferenceFilter = GEditor->MakeAssetReferenceFilter(AssetReferenceFilterContext);
-	if (FlowAssetReferenceFilter.IsValid() &&
-		!FlowAssetReferenceFilter->PassesFilter(FlowNodeAssetData, OutOptionalFailureReason))
+	const TSharedPtr<IAssetReferenceFilter> FlowAssetReferenceFilter = GEditor->MakeAssetReferenceFilter(AssetReferenceFilterContext);
+	if (FlowAssetReferenceFilter.IsValid())
 	{
-		return false;
+		const FAssetData FlowNodeAssetData(&FlowNodeClass);
+		if (!FlowAssetReferenceFilter->PassesFilter(FlowNodeAssetData, OutOptionalFailureReason))
+		{
+			return false;
+		}
 	}
 
 	return true;
@@ -294,7 +300,7 @@ void UFlowAsset::RegisterNode(const FGuid& NewGuid, UFlowNode* NewNode)
 	Nodes.Emplace(NewGuid, NewNode);
 
 	HarvestNodeConnections();
-	(void) TryUpdateManagedFlowPinsForNode(*NewNode);
+	(void)TryUpdateManagedFlowPinsForNode(*NewNode);
 }
 
 void UFlowAsset::UnregisterNode(const FGuid& NodeGuid)
@@ -426,7 +432,7 @@ bool UFlowAsset::TryUpdateManagedFlowPinsForNode(UFlowNode& FlowNode)
 			WorkingData.PinNameToBoundPropertyNameMapNext,
 			WorkingData.AutoInputDataPinsNext,
 			WorkingData.AutoOutputDataPinsNext);
-	}		
+	}
 
 	// Try to harvest pins to auto-generate and/or bind to for each property in the flow node
 	for (TFieldIterator<FProperty> PropertyIt(FlowNodeClass); PropertyIt; ++PropertyIt)
@@ -494,8 +500,8 @@ void UFlowAsset::HarvestFlowPinMetadataForProperty(const FProperty* Property, FF
 	{
 		LogError(
 			FString::Printf(TEXT("Error.  A property cannot be both a %s and %s"),
-				*FFlowPin::MetadataKey_SourceForOutputFlowPin.ToString(),
-				*FFlowPin::MetadataKey_DefaultForInputFlowPin.ToString()),
+			                *FFlowPin::MetadataKey_SourceForOutputFlowPin.ToString(),
+			                *FFlowPin::MetadataKey_DefaultForInputFlowPin.ToString()),
 			InOutData.FlowNode);
 
 		return;
@@ -625,8 +631,8 @@ void UFlowAsset::AddDataPinPropertyBindingToMap(
 	InOutData.PinNameToBoundPropertyNameMapNext.Add(PinAuthoredName, PropertyAuthoredName);
 }
 
-template <typename TEnumProperty, typename TVectorProperty, typename TRotatorProperty, typename TTransformProperty, typename TGameplayTagProperty, typename TGameplayTagContainerProperty, 
-		  typename TInstancedStructProperty, typename TObjectProperty, typename TClassProperty>
+template <typename TEnumProperty, typename TVectorProperty, typename TRotatorProperty, typename TTransformProperty, typename TGameplayTagProperty, typename TGameplayTagContainerProperty,
+          typename TInstancedStructProperty, typename TObjectProperty, typename TClassProperty>
 void AddPinForPinType(EFlowPinType PinType, UFlowNode& FlowNode, const FProperty& Property, const FText& PinDisplayName, TArray<FFlowPin>* InOutDataPinsNext)
 {
 	const FName& PinAuthoredName = Property.GetFName();
@@ -743,7 +749,7 @@ void AddPinForPinType(EFlowPinType PinType, UFlowNode& FlowNode, const FProperty
 			{
 				// Get the Object property's base UClass from the property's MetaData
 				Class = WeakObjectProperty->PropertyClass;
-			}			
+			}
 			else if (const FLazyObjectProperty* LazyObjectProperty = CastField<FLazyObjectProperty>(&Property))
 			{
 				// Get the Object property's base UClass from the property's MetaData
@@ -763,7 +769,7 @@ void AddPinForPinType(EFlowPinType PinType, UFlowNode& FlowNode, const FProperty
 				static const UStruct* SoftClassPathStruct = TBaseStructure<FSoftClassPath>::Get();
 
 				if (StructProperty->Struct == ScriptStruct)
-				{					
+				{
 					TClassProperty ValueStruct;
 					StructProperty->GetValue_InContainer(&FlowNode, &ValueStruct);
 
@@ -772,7 +778,7 @@ void AddPinForPinType(EFlowPinType PinType, UFlowNode& FlowNode, const FProperty
 				}
 				else if (StructProperty->Struct == SoftClassPathStruct)
 				{
-				// Get the Class property's base UClass from the struct property's MetaData
+					// Get the Class property's base UClass from the struct property's MetaData
 					Class = FFlowDataPinOutputProperty_Class::TryGetMetaClassFromProperty(*StructProperty);
 				}
 			}
@@ -833,11 +839,11 @@ bool UFlowAsset::TryCreateFlowDataPinFromMetadataValue(
 					FFlowDataPinInputProperty_InstancedStruct,
 					FFlowDataPinInputProperty_Object,
 					FFlowDataPinInputProperty_Class>(
-						PinType,
-						FlowNode,
-						Property,
-						PinDisplayName,
-						InOutDataPinsNext);
+					PinType,
+					FlowNode,
+					Property,
+					PinDisplayName,
+					InOutDataPinsNext);
 			}
 			else
 			{
@@ -851,11 +857,11 @@ bool UFlowAsset::TryCreateFlowDataPinFromMetadataValue(
 					FFlowDataPinOutputProperty_InstancedStruct,
 					FFlowDataPinOutputProperty_Object,
 					FFlowDataPinOutputProperty_Class>(
-						PinType,
-						FlowNode,
-						Property,
-						PinDisplayName,
-						InOutDataPinsNext);
+					PinType,
+					FlowNode,
+					Property,
+					PinDisplayName,
+					InOutDataPinsNext);
 			}
 
 			return true;

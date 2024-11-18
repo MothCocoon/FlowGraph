@@ -10,7 +10,7 @@ UFlowNode_ExecutionMultiGate::UFlowNode_ExecutionMultiGate(const FObjectInitiali
 {
 #if WITH_EDITOR
 	Category = TEXT("Route");
-	NodeDisplayStyle = TAG_Flow_NodeDisplayStyle_Node_Logic;
+	NodeDisplayStyle = FlowNodeStyle::Logic;
 #endif
 
 	FString ResetPinTooltip = TEXT("Finish work of this node.");

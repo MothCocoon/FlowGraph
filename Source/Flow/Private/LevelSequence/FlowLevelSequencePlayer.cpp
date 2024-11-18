@@ -42,10 +42,10 @@ UFlowLevelSequencePlayer* UFlowLevelSequencePlayer::CreateFlowLevelSequencePlaye
 	{
 		// apply Transform Origin
 		// https://docs.unrealengine.com/5.0/en-US/creating-level-sequences-with-dynamic-transforms-in-unreal-engine/
-#if ENGINE_MAJOR_VERSION == 5 && ENGINE_MINOR_VERSION > 3
-		if (TransformOriginActor->IsValidLowLevel())
-#else
+#if ENGINE_MAJOR_VERSION == 5 && ENGINE_MINOR_VERSION < 4
 		if (IsValid(TransformOriginActor))
+#else
+		if (TransformOriginActor->IsValidLowLevel())
 #endif
 		{
 			// moving Level Sequence Actor might allow proper distance-based actor replication in networked games
@@ -62,10 +62,10 @@ UFlowLevelSequencePlayer* UFlowLevelSequencePlayer::CreateFlowLevelSequencePlaye
 	Actor->CameraSettings = CameraSettings;
 
 	// apply Transform Origin to spawned actor
-#if ENGINE_MAJOR_VERSION == 5 && ENGINE_MINOR_VERSION > 3
-	if (TransformOriginActor->IsValidLowLevel())
-#else
+#if ENGINE_MAJOR_VERSION == 5 && ENGINE_MINOR_VERSION < 4
 	if (IsValid(TransformOriginActor))
+#else
+	if (TransformOriginActor->IsValidLowLevel())
 #endif
 	{
 		if (UDefaultLevelSequenceInstanceData* InstanceData = Cast<UDefaultLevelSequenceInstanceData>(Actor->DefaultInstanceData))

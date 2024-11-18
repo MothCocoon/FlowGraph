@@ -14,7 +14,7 @@ UFlowNode_Branch::UFlowNode_Branch(const FObjectInitializer& ObjectInitializer)
 {
 #if WITH_EDITOR
 	Category = TEXT("Route");
-	NodeDisplayStyle = TAG_Flow_NodeDisplayStyle_Node_Logic;
+	NodeDisplayStyle = FlowNodeStyle::Logic;
 #endif
 	InputPins.Empty();
 	InputPins.Add(FFlowPin(INPIN_Evaluate));

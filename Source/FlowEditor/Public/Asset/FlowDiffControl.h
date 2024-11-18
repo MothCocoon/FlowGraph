@@ -4,9 +4,7 @@
 
 #include "Asset/FlowObjectDiff.h"
 #include "DiffResults.h"
-#include "IAssetTypeActions.h"
 #include "Editor/Kismet/Private/DiffControl.h"
-#include "Runtime/Launch/Resources/Version.h"
 
 class FBlueprintDifferenceTreeEntry;
 class SFlowDiff;
@@ -18,11 +16,7 @@ struct FEdGraphEditAction;
 
 /////////////////////////////////////////////////////////////////////////////
 /// FFlowAssetDiffControl
-#if ENGINE_MAJOR_VERSION == 5 && ENGINE_MINOR_VERSION < 2
-class FLOWEDITOR_API FFlowAssetDiffControl : public TDetailsDiffControl<false>
-#else
 class FLOWEDITOR_API FFlowAssetDiffControl : public FDetailsDiffControl
-#endif
 {
 public:
 	FFlowAssetDiffControl(const UFlowAsset* InOldFlowAsset, const UFlowAsset* InNewFlowAsset, FOnDiffEntryFocused InSelectionCallback);

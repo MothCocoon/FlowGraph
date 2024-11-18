@@ -409,10 +409,10 @@ void UFlowGraphNode::RewireOldPinsToNewPins(TArray<UEdGraphPin*>& InOldPins)
 			OldPin->bOrphanedPin = true;
 			OldPin->bNotConnectable = true;
 			OrphanedOldPins.Add(OldPin);
-#if ENGINE_MAJOR_VERSION == 5 && ENGINE_MINOR_VERSION >= 4
-			InOldPins.RemoveAt(OldPinIndex, 1, EAllowShrinking::No);
-#else
+#if ENGINE_MAJOR_VERSION == 5 && ENGINE_MINOR_VERSION < 4
 			InOldPins.RemoveAt(OldPinIndex, 1, false);
+#else
+			InOldPins.RemoveAt(OldPinIndex, 1, EAllowShrinking::No);
 #endif
 		}
 	}

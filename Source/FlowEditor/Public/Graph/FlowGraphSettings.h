@@ -17,17 +17,34 @@ struct FFlowNodeDisplayStyleConfig
 	GENERATED_BODY()
 
 public:
+	FFlowNodeDisplayStyleConfig()
+		: TitleColor()
+	{
+	}
 
-	FFlowNodeDisplayStyleConfig() {}
-	FFlowNodeDisplayStyleConfig(const FGameplayTag& InTag, const FLinearColor& InNodeColor) : Tag(InTag), TitleColor(InNodeColor) {}
+	FFlowNodeDisplayStyleConfig(const FGameplayTag& InTag, const FLinearColor& InNodeColor)
+		: Tag(InTag)
+		, TitleColor(InNodeColor)
+	{
+	}
 
-	FORCEINLINE bool operator ==(const FFlowNodeDisplayStyleConfig& Other) const { return Tag == Other.Tag; }
-	FORCEINLINE bool operator !=(const FFlowNodeDisplayStyleConfig& Other) const { return Tag != Other.Tag; }
-	FORCEINLINE bool operator <(const FFlowNodeDisplayStyleConfig& Other) const { return Tag < Other.Tag; }
+	FORCEINLINE bool operator ==(const FFlowNodeDisplayStyleConfig& Other) const
+	{
+		return Tag == Other.Tag;
+	}
+
+	FORCEINLINE bool operator !=(const FFlowNodeDisplayStyleConfig& Other) const
+	{
+		return Tag != Other.Tag;
+	}
+
+	FORCEINLINE bool operator <(const FFlowNodeDisplayStyleConfig& Other) const
+	{
+		return Tag < Other.Tag;
+	}
 
 public:
-
-	UPROPERTY(Config, EditAnywhere, Category = "Nodes", meta = (Categories = "Flow.NodeDisplayStyle"))
+	UPROPERTY(Config, EditAnywhere, Category = "Nodes", meta = (Categories = "Flow.NodeStyle"))
 	FGameplayTag Tag;
 
 	UPROPERTY(Config, EditAnywhere, Category = "Nodes")
@@ -49,7 +66,7 @@ class FLOWEDITOR_API UFlowGraphSettings : public UDeveloperSettings
 #if WITH_EDITOR
 	virtual void PostEditChangeProperty(FPropertyChangedEvent& PropertyChangedEvent) override;
 #endif
-	
+
 	/** Show Flow Asset in Flow category of "Create Asset" menu?
 	* Requires restart after making a change. */
 	UPROPERTY(EditAnywhere, config, Category = "Default UI", meta = (ConfigRestartRequired = true))
@@ -90,7 +107,7 @@ class FLOWEDITOR_API UFlowGraphSettings : public UDeveloperSettings
 	UPROPERTY(EditAnywhere, config, Category = "Nodes")
 	TArray<FString> NodePrefixesToRemove;
 
-	// Display Styles for nodes, keyed by gameplay tag
+	// Display Styles for nodes, keyed by Gameplay Tag
 	UPROPERTY(EditAnywhere, config, Category = "Nodes", meta = (TitleProperty = "{Tag}}"))
 	TArray<FFlowNodeDisplayStyleConfig> NodeDisplayStyles;
 
@@ -99,7 +116,7 @@ class FLOWEDITOR_API UFlowGraphSettings : public UDeveloperSettings
 	UPROPERTY(Transient)
 	FGameplayTagContainer NodeDisplayStylesAuthoredTags;
 
-	// Cached map of the data in NodeDisplayStyles for gameplaytag-keyed lookup
+	// Cached map of the data in NodeDisplayStyles for GameplayTag-keyed lookup
 	UPROPERTY(Transient)
 	TMap<FGameplayTag, FFlowNodeDisplayStyleConfig> NodeDisplayStylesMap;
 #endif
@@ -165,10 +182,7 @@ public:
 
 #if WITH_EDITOR
 	const TMap<FGameplayTag, FFlowNodeDisplayStyleConfig>& EnsureNodeDisplayStylesMap();
-
 	bool TryAddDefaultNodeDisplayStyle(const FFlowNodeDisplayStyleConfig& StyleConfig);
-
 	const FLinearColor* LookupNodeTitleColorForNode(const UFlowNodeBase& FlowNodeBase);
-
 #endif
 };
