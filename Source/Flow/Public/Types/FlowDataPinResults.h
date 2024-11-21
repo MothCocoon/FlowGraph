@@ -234,7 +234,7 @@ struct FFlowDataPinResult_Vector : public FFlowDataPinResult
 public:
 
 	UPROPERTY(Transient, BlueprintReadWrite, Category = DataPins)
-	FVector Value;
+	FVector Value = FVector::ZeroVector;
 
 public:
 
@@ -253,7 +253,7 @@ struct FFlowDataPinResult_Rotator : public FFlowDataPinResult
 public:
 
 	UPROPERTY(Transient, BlueprintReadWrite, Category = DataPins)
-	FRotator Value;
+	FRotator Value = FRotator::ZeroRotator;
 
 public:
 
