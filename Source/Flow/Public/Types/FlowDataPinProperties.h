@@ -263,7 +263,7 @@ struct FFlowDataPinOutputProperty_Vector : public FFlowDataPinProperty
 public:
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = DataPins)
-	FVector Value;
+	FVector Value = FVector::ZeroVector;
 
 public:
 
@@ -282,7 +282,7 @@ struct FFlowDataPinOutputProperty_Rotator : public FFlowDataPinProperty
 public:
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = DataPins)
-	FRotator Value;
+	FRotator Value = FRotator::ZeroRotator;
 
 public:
 

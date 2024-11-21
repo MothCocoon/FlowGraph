@@ -18,7 +18,7 @@ struct FFlowNodeDisplayStyleConfig
 
 public:
 	FFlowNodeDisplayStyleConfig()
-		: TitleColor()
+		: TitleColor(FLinearColor::White)
 	{
 	}
 
