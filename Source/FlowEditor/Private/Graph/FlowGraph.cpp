@@ -167,9 +167,11 @@ void UFlowGraph::RecursivelySetupAllFlowGraphNodesForEditing(UFlowGraphNode& Fro
 		// Setup all of the flow node (and subnode) instances for editing
 		FromNodeInstance->SetupForEditing(FromFlowGraphNode);
 	}
-
-	// Reconstruct the node when starting up editing
-	FromFlowGraphNode.ReconstructNode();
+	else
+	{
+		// Reconstruct the node if the NodeInstance is missing
+		FromFlowGraphNode.ReconstructNode();
+	}
 
 	for (UFlowGraphNode* SubNode : FromFlowGraphNode.SubNodes)
 	{
