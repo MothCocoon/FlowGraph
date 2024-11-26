@@ -34,7 +34,7 @@ UFlowAsset::UFlowAsset(const FObjectInitializer& ObjectInitializer)
 #if WITH_EDITOR
 	, FlowGraph(nullptr)
 #endif
-	, AllowedNodeClasses({UFlowNode::StaticClass()})
+	, AllowedNodeClasses({UFlowNodeBase::StaticClass()})
 	, AllowedInSubgraphNodeClasses({UFlowNode_SubGraph::StaticClass()})
 	, bStartNodePlacedAsGhostNode(false)
 	, TemplateAsset(nullptr)
@@ -208,37 +208,55 @@ bool UFlowAsset::CanFlowNodeClassBeUsedByFlowAsset(const UClass& FlowNodeClass) 
 
 bool UFlowAsset::CanFlowAssetUseFlowNodeClass(const UClass& FlowNodeClass) const
 {
-	const bool bIsFlowNode = FlowNodeClass.IsChildOf<UFlowNode>();
-	if (!bIsFlowNode)
+	// UFlowAsset class can limit which UFlowNodeBase classes can be used
+	if (IsFlowNodeClassInDeniedClasses(FlowNodeClass))
 	{
-		check(FlowNodeClass.IsChildOf<UFlowNodeAddOn>());
-
-		// AddOns don't have the AllowedAssetClasses/DeniedAssetClasses 
-		// (yet?  maybe we move it up to the base?)
-
-		return true;
+		return false;
 	}
 
-	// UFlowAsset class can limit which UFlowNode classes can be used
-	for (const UClass* DeniedNodeClass : DeniedNodeClasses)
+	if (!IsFlowNodeClassInAllowedClasses(FlowNodeClass))
+	{
+		return false;
+	}
+
+	return true;
+}
+
+bool UFlowAsset::IsFlowNodeClassInDeniedClasses(const UClass& FlowNodeClass) const
+{
+	for (const TSubclassOf<UFlowNodeBase> DeniedNodeClass : DeniedNodeClasses)
 	{
 		if (DeniedNodeClass && FlowNodeClass.IsChildOf(DeniedNodeClass))
 		{
-			return false;
+			// Subclasses of a DeniedNodeClass can opt back in to being allowed
+			if (!IsFlowNodeClassInAllowedClasses(FlowNodeClass, DeniedNodeClass))
+			{
+				return true;
+			}
 		}
 	}
 
-	if (bIsFlowNode && AllowedNodeClasses.Num() > 0)
+	return false;
+}
+
+bool UFlowAsset::IsFlowNodeClassInAllowedClasses(const UClass& FlowNodeClass, const TSubclassOf<UFlowNodeBase> RequiredAncestor) const
+{
+	if (AllowedNodeClasses.Num() > 0)
 	{
 		bool bAllowedInAsset = false;
-		for (const UClass* AllowedNodeClass : AllowedNodeClasses)
+		for (const TSubclassOf<UFlowNodeBase> AllowedNodeClass : AllowedNodeClasses)
 		{
-			if (AllowedNodeClass && FlowNodeClass.IsChildOf(AllowedNodeClass))
+			// If a RequiredAncestor is provided, the AllowedNodeClass must be a subclass of the RequiredAncestor
+			if (AllowedNodeClass && 
+				FlowNodeClass.IsChildOf(AllowedNodeClass) &&
+				(!RequiredAncestor || AllowedNodeClass->IsChildOf(RequiredAncestor)))
 			{
 				bAllowedInAsset = true;
+
 				break;
 			}
 		}
+
 		if (!bAllowedInAsset)
 		{
 			return false;

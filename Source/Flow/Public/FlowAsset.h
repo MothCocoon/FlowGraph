@@ -124,6 +124,9 @@ protected:
 	bool CanFlowNodeClassBeUsedByFlowAsset(const UClass& FlowNodeClass) const;
 	bool CanFlowAssetUseFlowNodeClass(const UClass& FlowNodeClass) const;
 	bool CanFlowAssetReferenceFlowNode(const UClass& FlowNodeClass, FText* OutOptionalFailureReason = nullptr) const;
+
+	bool IsFlowNodeClassInAllowedClasses(const UClass& FlowNodeClass, const TSubclassOf<UFlowNodeBase> RequiredAncestor = nullptr) const;
+	bool IsFlowNodeClassInDeniedClasses(const UClass& FlowNodeClass) const;
 #endif
 
 	// IFlowGraphInterface
@@ -149,11 +152,11 @@ public:
 // Nodes
 
 protected:
-	TArray<TSubclassOf<UFlowNode>> AllowedNodeClasses;
-	TArray<TSubclassOf<UFlowNode>> DeniedNodeClasses;
+	TArray<TSubclassOf<UFlowNodeBase>> AllowedNodeClasses;
+	TArray<TSubclassOf<UFlowNodeBase>> DeniedNodeClasses;
 
-	TArray<TSubclassOf<UFlowNode>> AllowedInSubgraphNodeClasses;
-	TArray<TSubclassOf<UFlowNode>> DeniedInSubgraphNodeClasses;
+	TArray<TSubclassOf<UFlowNodeBase>> AllowedInSubgraphNodeClasses;
+	TArray<TSubclassOf<UFlowNodeBase>> DeniedInSubgraphNodeClasses;
 	
 	bool bStartNodePlacedAsGhostNode;
 
