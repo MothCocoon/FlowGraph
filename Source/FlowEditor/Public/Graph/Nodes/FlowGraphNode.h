@@ -34,7 +34,7 @@ class FLOWEDITOR_API UFlowGraphNode : public UEdGraphNode
 private:
 	// The FlowNode or FlowNodeAddOn runtime instance that is being edited by this UFlowGraphNode
 	UPROPERTY(Instanced)
-	UFlowNodeBase* NodeInstance;
+	TObjectPtr<UFlowNodeBase> NodeInstance;
 
 	bool bBlueprintCompilationPending;
 	bool bIsReconstructingNode;

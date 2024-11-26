@@ -106,7 +106,7 @@ void UFlowAsset::PostLoad()
 EDataValidationResult UFlowAsset::ValidateAsset(FFlowMessageLog& MessageLog)
 {
 	// validate nodes
-	for (const TPair<FGuid, UFlowNode*>& Node : Nodes)
+	for (const TPair<FGuid, UFlowNode*>& Node : ObjectPtrDecay(Nodes))
 	{
 		if (IsValid(Node.Value))
 		{
@@ -347,7 +347,7 @@ void UFlowAsset::HarvestNodeConnections()
 		}
 	}
 
-	for (const TPair<FGuid, UFlowNode*>& Pair : Nodes)
+	for (const TPair<FGuid, UFlowNode*>& Pair : ObjectPtrDecay(Nodes))
 	{
 		UFlowNode* FlowNode = Pair.Value;
 		TMap<FName, FConnectedPin> FoundConnections;
@@ -896,7 +896,7 @@ UFlowNode* UFlowAsset::GetDefaultEntryNode() const
 {
 	UFlowNode* FirstStartNode = nullptr;
 
-	for (const TPair<FGuid, UFlowNode*>& Node : Nodes)
+	for (const TPair<FGuid, UFlowNode*>& Node : ObjectPtrDecay(Nodes))
 	{
 		if (UFlowNode_Start* StartNode = Cast<UFlowNode_Start>(Node.Value))
 		{
@@ -964,7 +964,7 @@ UFlowNode_CustomInput* UFlowAsset::TryFindCustomInputNodeByEventName(const FName
 
 UFlowNode_CustomOutput* UFlowAsset::TryFindCustomOutputNodeByEventName(const FName& EventName) const
 {
-	for (const TPair<FGuid, UFlowNode*>& Node : Nodes)
+	for (const TPair<FGuid, UFlowNode*>& Node : ObjectPtrDecay(Nodes))
 	{
 		if (UFlowNode_CustomOutput* CustomOutput = Cast<UFlowNode_CustomOutput>(Node.Value))
 		{
@@ -984,7 +984,7 @@ TArray<FName> UFlowAsset::GatherCustomInputNodeEventNames() const
 	//  from the actual flow nodes
 	TArray<FName> Results;
 
-	for (const TPair<FGuid, UFlowNode*>& Node : Nodes)
+	for (const TPair<FGuid, UFlowNode*>& Node : ObjectPtrDecay(Nodes))
 	{
 		if (UFlowNode_CustomInput* CustomInput = Cast<UFlowNode_CustomInput>(Node.Value))
 		{
@@ -1001,7 +1001,7 @@ TArray<FName> UFlowAsset::GatherCustomOutputNodeEventNames() const
 	//  from the actual flow nodes
 	TArray<FName> Results;
 
-	for (const TPair<FGuid, UFlowNode*>& Node : Nodes)
+	for (const TPair<FGuid, UFlowNode*>& Node : ObjectPtrDecay(Nodes))
 	{
 		if (UFlowNode_CustomOutput* CustomOutput = Cast<UFlowNode_CustomOutput>(Node.Value))
 		{
@@ -1117,7 +1117,7 @@ void UFlowAsset::InitializeInstance(const TWeakObjectPtr<UObject> InOwner, UFlow
 	Owner = InOwner;
 	TemplateAsset = InTemplateAsset;
 
-	for (TPair<FGuid, UFlowNode*>& Node : Nodes)
+	for (TPair<FGuid, TObjectPtr<UFlowNode>>& Node : Nodes)
 	{
 		UFlowNode* NewNodeInstance = NewObject<UFlowNode>(this, Node.Value->GetClass(), NAME_None, RF_Transient, Node.Value, false, nullptr);
 		Node.Value = NewNodeInstance;
@@ -1136,7 +1136,7 @@ void UFlowAsset::InitializeInstance(const TWeakObjectPtr<UObject> InOwner, UFlow
 
 void UFlowAsset::DeinitializeInstance()
 {
-	for (const TPair<FGuid, UFlowNode*>& Node : Nodes)
+	for (const TPair<FGuid, UFlowNode*>& Node : ObjectPtrDecay(Nodes))
 	{
 		if (IsValid(Node.Value))
 		{

@@ -55,7 +55,7 @@ protected:
 	// (C++ enums must bind by name using SubCategoryEnumName, due to a limitation with UE's UEnum discovery).
 	// This property is editor-only, but it is automatically copied into PinSubCategoryObject if the PinType matches (for runtime use).
 	UPROPERTY(EditAnywhere, Category = "FlowPin", meta = (EditCondition = "PinType == EFlowPinType::Enum", EditConditionHides))
-	UEnum* SubCategoryEnumClass = nullptr;
+	TObjectPtr<UEnum> SubCategoryEnumClass = nullptr;
 
 	// name of enum defined in c++ code, will take priority over asset from EnumType property
 	//  (this is a work-around because EnumClass cannot find C++ Enums, 

@@ -81,11 +81,11 @@ void FFlowActorOwnerComponentFilters::BuildClassFilters(const FProperty& Compone
 
 	// Account for the allowed classes specified in the property metadata
 	const FString& AllowedClassesFilterString = ComponentNameProperty.GetMetaData(NAME_AllowedClasses);
-	ParseClassFilters(AllowedClassesFilterString, AllowedComponentClassFilters);
+	ParseClassFilters(AllowedClassesFilterString, MutableView(AllowedComponentClassFilters));
 
 	// Account for disallowed classes specified in the property metadata
 	const FString& DisallowedClassesFilterString = ComponentNameProperty.GetMetaData(NAME_DisallowedClasses);
-	ParseClassFilters(DisallowedClassesFilterString, DisallowedComponentClassFilters);
+	ParseClassFilters(DisallowedClassesFilterString, MutableView(DisallowedComponentClassFilters));
 }
 
 void FFlowActorOwnerComponentFilters::BuildInterfaceFilters(const FProperty& ComponentNameProperty)
@@ -109,7 +109,7 @@ void FFlowActorOwnerComponentFilters::BuildInterfaceFilters(const FProperty& Com
 
 	// MustImplement interface(s)
 	const FString& MustImplementInterfacesFilterString = ComponentNameProperty.GetMetaData(NAME_MustImplement);
-	ParseInterfaceFilters(MustImplementInterfacesFilterString, RequiredInterfaceFilters);
+	ParseInterfaceFilters(MustImplementInterfacesFilterString, MutableView(RequiredInterfaceFilters));
 }
 
 bool FFlowActorOwnerComponentFilters::IsFilteredComponent(const UActorComponent& Component) const

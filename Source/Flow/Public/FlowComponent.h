@@ -177,7 +177,7 @@ private:
 public:
 	// Asset that might instantiated as "Root Flow" 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "RootFlow")
-	UFlowAsset* RootFlow;
+	TObjectPtr<UFlowAsset> RootFlow;
 
 	// If true, component will start Root Flow on Begin Play
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "RootFlow")

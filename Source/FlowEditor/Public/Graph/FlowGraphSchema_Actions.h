@@ -15,7 +15,7 @@ struct FLOWEDITOR_API FFlowGraphSchemaAction_NewNode : public FEdGraphSchemaActi
 	GENERATED_USTRUCT_BODY()
 
 	UPROPERTY()
-	class UClass* NodeClass;
+	TObjectPtr<class UClass> NodeClass;
 
 	static FName StaticGetTypeId()
 	{

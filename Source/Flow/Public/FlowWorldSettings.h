@@ -17,7 +17,7 @@ class FLOW_API AFlowWorldSettings : public AWorldSettings
 
 private:
 	UPROPERTY(BlueprintReadOnly, VisibleAnywhere, Category = "Flow", meta = (AllowPrivateAccess = "true"))
-	UFlowComponent* FlowComponent;
+	TObjectPtr<UFlowComponent> FlowComponent;
 
 public:
 	UFlowComponent* GetFlowComponent() const { return FlowComponent; }

@@ -411,7 +411,7 @@ bool FFlowPin::ValidateEnum(const UEnum& EnumType)
 		const int64 Value = EnumType.GetValueByIndex(i);
 		if (Value < std::numeric_limits<FDataType>::min() || Value > std::numeric_limits<FDataType>::max())
 		{
-			UE_LOG(LogFlow, Error, TEXT("'%s' value %d is outside the range of supported key values for enum [%d, %d].")
+			UE_LOG(LogFlow, Error, TEXT("'%s' value %lld is outside the range of supported key values for enum [%d, %d].")
 			       , *EnumType.GenerateFullEnumName(*EnumType.GetDisplayNameTextByIndex(i).ToString())
 			       , Value, std::numeric_limits<FDataType>::min(), std::numeric_limits<FDataType>::max());
 

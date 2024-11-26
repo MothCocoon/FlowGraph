@@ -18,7 +18,7 @@ class FLOW_API UFlowLevelSequencePlayer : public ULevelSequencePlayer
 private:
 	// most likely this is a UFlowNode_PlayLevelSequence or its child
 	UPROPERTY()
-	UFlowNode* FlowEventReceiver;
+	TObjectPtr<UFlowNode> FlowEventReceiver;
 
 public:
 	// variant of ULevelSequencePlayer::CreateLevelSequencePlayer

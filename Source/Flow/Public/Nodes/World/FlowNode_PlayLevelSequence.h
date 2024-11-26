@@ -64,10 +64,10 @@ public:
 	
 protected:
 	UPROPERTY()
-	ULevelSequence* LoadedSequence;
+	TObjectPtr<ULevelSequence> LoadedSequence;
 
 	UPROPERTY()
-	UFlowLevelSequencePlayer* SequencePlayer;
+	TObjectPtr<UFlowLevelSequencePlayer> SequencePlayer;
 
 	// Play Rate set by the user in PlaybackSettings
 	float CachedPlayRate;

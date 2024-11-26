@@ -35,15 +35,15 @@ protected:
 #if WITH_EDITORONLY_DATA
 	// Classes that can be used with this property
 	UPROPERTY(Transient)
-	TArray<const UClass*> AllowedComponentClassFilters;
+	TArray<TObjectPtr<const UClass>> AllowedComponentClassFilters;
 
 	// Classes that can NOT be used with this property
 	UPROPERTY(Transient)
-	TArray<const UClass*> DisallowedComponentClassFilters;
+	TArray<TObjectPtr<const UClass>> DisallowedComponentClassFilters;
 
 	// Must implement (all) interface(s)
 	UPROPERTY(Transient)
-	TArray<const UClass*> RequiredInterfaceFilters;
+	TArray<TObjectPtr<const UClass>> RequiredInterfaceFilters;
 
 	// Has BuildClassFiltersFromMetadata been called?
 	UPROPERTY(Transient)

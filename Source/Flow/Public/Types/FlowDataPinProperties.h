@@ -228,7 +228,7 @@ public:
 
 	// Class for this enum
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = DataPins)
-	UEnum* EnumClass = nullptr;
+	TObjectPtr<UEnum> EnumClass = nullptr;
 
 #if WITH_EDITORONLY_DATA
 	// name of enum defined in c++ code, will take priority over asset from EnumType property

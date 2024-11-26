@@ -177,7 +177,7 @@ public:
 
 	// Class for this enum
 	UPROPERTY(Transient, BlueprintReadWrite, Category = DataPins)
-	UEnum* EnumClass = nullptr;
+	TObjectPtr<UEnum> EnumClass = nullptr;
 
 public:
 

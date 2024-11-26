@@ -162,7 +162,7 @@ protected:
 
 private:
 	UPROPERTY()
-	TMap<FGuid, UFlowNode*> Nodes;
+	TMap<FGuid, TObjectPtr<UFlowNode>> Nodes;
 
 #if WITH_EDITORONLY_DATA
 protected:
@@ -214,7 +214,7 @@ protected:
 #endif
 
 public:
-	const TMap<FGuid, UFlowNode*>& GetNodes() const { return Nodes; }
+	const TMap<FGuid, UFlowNode*>& GetNodes() const { return ObjectPtrDecay(Nodes); }
 	UFlowNode* GetNode(const FGuid& Guid) const { return Nodes.FindRef(Guid); }
 
 	template <class T>
@@ -293,7 +293,7 @@ protected:
 private:
 	// Original object holds references to instances
 	UPROPERTY(Transient)
-	TArray<UFlowAsset*> ActiveInstances;
+	TArray<TObjectPtr<UFlowAsset>> ActiveInstances;
 
 #if WITH_EDITORONLY_DATA
 	TWeakObjectPtr<UFlowAsset> InspectedInstance;
@@ -336,7 +336,7 @@ private:
 
 protected:
 	UPROPERTY()
-	UFlowAsset* TemplateAsset;
+	TObjectPtr<UFlowAsset> TemplateAsset;
 
 	// Object that spawned Root Flow instance, i.e. World Settings or Player Controller
 	// This pointer is passed to child instances: Flow Asset instances created by the SubGraph nodes
@@ -350,18 +350,18 @@ protected:
 
 	// Optional entry points to the graph, similar to blueprint Custom Events
 	UPROPERTY()
-	TSet<UFlowNode_CustomInput*> CustomInputNodes;
+	TSet<TObjectPtr<UFlowNode_CustomInput>> CustomInputNodes;
 
 	UPROPERTY()
-	TSet<UFlowNode*> PreloadedNodes;
+	TSet<TObjectPtr<UFlowNode>> PreloadedNodes;
 
 	// Nodes that have any work left, not marked as Finished yet
 	UPROPERTY()
-	TArray<UFlowNode*> ActiveNodes;
+	TArray<TObjectPtr<UFlowNode>> ActiveNodes;
 
 	// All nodes active in the past, done their work
 	UPROPERTY()
-	TArray<UFlowNode*> RecordedNodes;
+	TArray<TObjectPtr<UFlowNode>> RecordedNodes;
 
 	EFlowFinishPolicy FinishPolicy;
 

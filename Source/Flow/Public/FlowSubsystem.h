@@ -39,15 +39,15 @@ public:
 private:
 	/* All asset templates with active instances */
 	UPROPERTY()
-	TArray<UFlowAsset*> InstancedTemplates;
+	TArray<TObjectPtr<UFlowAsset>> InstancedTemplates;
 
 	/* Assets instanced by object from another system, i.e. World Settings or Player Controller */
 	UPROPERTY()
-	TMap<UFlowAsset*, TWeakObjectPtr<UObject>> RootInstances;
+	TMap<TObjectPtr<UFlowAsset>, TWeakObjectPtr<UObject>> RootInstances;
 
 	/* Assets instanced by Sub Graph nodes */
 	UPROPERTY()
-	TMap<UFlowNode_SubGraph*, UFlowAsset*> InstancedSubFlows;
+	TMap<TObjectPtr<UFlowNode_SubGraph>, TObjectPtr<UFlowAsset>> InstancedSubFlows;
 
 #if WITH_EDITOR
 public:
@@ -60,7 +60,7 @@ public:
 	
 protected:
 	UPROPERTY()
-	UFlowSaveGame* LoadedSaveGame;
+	TObjectPtr<UFlowSaveGame> LoadedSaveGame;
 
 public:
 	virtual bool ShouldCreateSubsystem(UObject* Outer) const override;
@@ -112,7 +112,7 @@ public:
 
 	/* Returns assets instanced by Sub Graph nodes */
 	UFUNCTION(BlueprintPure, Category = "FlowSubsystem")
-	const TMap<UFlowNode_SubGraph*, UFlowAsset*>& GetInstancedSubFlows() const { return InstancedSubFlows; }
+	const TMap<UFlowNode_SubGraph*, UFlowAsset*>& GetInstancedSubFlows() const { return ObjectPtrDecay(InstancedSubFlows); }
 
 	virtual UWorld* GetWorld() const override;
 

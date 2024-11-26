@@ -15,7 +15,7 @@ struct FLOWEDITOR_API FImportedGraphNode
 	GENERATED_USTRUCT_BODY()
 
 	UPROPERTY()
-	UEdGraphNode* SourceGraphNode;
+	TObjectPtr<UEdGraphNode> SourceGraphNode;
 
 	TMultiMap<FName, FConnectedPin> Incoming;
 	TMultiMap<FName, FConnectedPin> Outgoing;

@@ -168,7 +168,7 @@ protected:
 protected:
 	// Flow Node AddOn attachments
 	UPROPERTY(BlueprintReadOnly, Instanced, Category = "FlowNode")
-	TArray<UFlowNodeAddOn*> AddOns;
+	TArray<TObjectPtr<UFlowNodeAddOn>> AddOns;
 
 protected:
 	// FlowNodes and AddOns may determine which AddOns are eligible to be their children
@@ -185,7 +185,7 @@ public:
 	virtual const TArray<UFlowNodeAddOn*>& GetFlowNodeAddOnChildren() const { return AddOns; }
 
 #if WITH_EDITOR
-	virtual TArray<UFlowNodeAddOn*>& GetFlowNodeAddOnChildrenByEditor() { return AddOns; }
+	virtual TArray<UFlowNodeAddOn*>& GetFlowNodeAddOnChildrenByEditor() { return MutableView(AddOns); }
 	EFlowAddOnAcceptResult CheckAcceptFlowNodeAddOnChild(const UFlowNodeAddOn* AddOnTemplate, const TArray<UFlowNodeAddOn*>& AdditionalAddOnsToAssumeAreChildren) const;
 #endif // WITH_EDITOR
 
@@ -272,7 +272,7 @@ public:
 // (some editor symbols exposed to enabled creation of non-editor tooling)
 
 	UPROPERTY()
-	UEdGraphNode* GraphNode;
+	TObjectPtr<UEdGraphNode> GraphNode;
 	
 #if WITH_EDITORONLY_DATA
 protected:
