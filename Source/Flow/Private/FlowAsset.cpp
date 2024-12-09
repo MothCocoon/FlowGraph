@@ -868,7 +868,7 @@ bool UFlowAsset::TryCreateFlowDataPinFromMetadataValue(
 				AddPinForPinType<
 					FFlowDataPinOutputProperty_Enum,
 					FFlowDataPinOutputProperty_Vector,
-					FFlowDataPinInputProperty_Rotator,
+					FFlowDataPinOutputProperty_Rotator,
 					FFlowDataPinOutputProperty_Transform,
 					FFlowDataPinOutputProperty_GameplayTag,
 					FFlowDataPinOutputProperty_GameplayTagContainer,
