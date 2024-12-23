@@ -163,6 +163,7 @@ public:
 // Pins
 
 public:
+	bool bFirstRun = true;
 	TArray<UEdGraphPin*> InputPins;
 	TArray<UEdGraphPin*> OutputPins;
 
@@ -191,9 +192,11 @@ public:
 	// Call node and graph updates manually, if using bBatchRemoval
 	void RemoveInstancePin(UEdGraphPin* Pin);
 
+protected:
 	// Create pins from the context asset, i.e. Sequencer events
-	void RefreshContextPins(const bool bReconstructNode);
+	bool RefreshContextPins();
 
+public:
 	// UEdGraphNode
 	virtual void GetPinHoverText(const UEdGraphPin& Pin, FString& HoverTextOut) const override;
 	// --
@@ -259,9 +262,9 @@ public:
 		FDiffResults& Results);
 
 	//~ Begin UObject Interface
-#if WITH_EDITOR
+
 	virtual void PostEditUndo() override;
-#endif
+
 	// End UObject
 
 	// @return the input pin for this state

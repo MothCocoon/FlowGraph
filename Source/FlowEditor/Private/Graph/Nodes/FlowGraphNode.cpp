@@ -17,8 +17,8 @@
 #include "BlueprintNodeHelpers.h"
 #include "Developer/ToolMenus/Public/ToolMenus.h"
 #include "DiffResults.h"
-#include "EdGraphSchema_K2.h"
 #include "Editor.h"
+#include "FlowLogChannels.h"
 #include "Framework/Commands/GenericCommands.h"
 #include "GraphDiffControl.h"
 #include "GraphEditorActions.h"
@@ -28,6 +28,7 @@
 #include "SourceCodeNavigation.h"
 #include "Textures/SlateIcon.h"
 #include "ToolMenuSection.h"
+#include "Editor/Transactor.h"
 
 #include UE_INLINE_GENERATED_CPP_BY_NAME(FlowGraphNode)
 
@@ -199,8 +200,8 @@ void UFlowGraphNode::OnExternalChange()
 
 void UFlowGraphNode::OnGraphRefresh()
 {
-	RefreshContextPins(true);
-}
+	ReconstructNode();
+    }
 
 bool UFlowGraphNode::CanCreateUnderSpecifiedSchema(const UEdGraphSchema* Schema) const
 {
@@ -290,7 +291,7 @@ void UFlowGraphNode::ReconstructNode()
 			return;
 		}
 	}
-
+	
 	if (bIsReconstructingNode)
 	{
 		return;
@@ -298,9 +299,44 @@ void UFlowGraphNode::ReconstructNode()
 
 	bIsReconstructingNode = true;
 
+	if (bFirstRun)
+	{
+		for (UEdGraphPin* Pin : Pins)
+		{
+			switch (Pin->Direction)
+			{
+				case EGPD_Input:
+				{
+					InputPins.Add(Pin);
+					break;
+				}
+				case EGPD_Output:
+				{
+					OutputPins.Add(Pin);
+					break;
+				}
+				default:
+				{
+					UE_LOG(LogFlow, Error, TEXT("Encountered Pin with invalid direction!"));
+				}
+			}
+		}
+		
+		bFirstRun = false;
+	}
+	
 	// Store old pins
 	TArray<UEdGraphPin*> OldPins(Pins);
 
+	bool bHavePinsChanged = HavePinsChanged();
+
+	if (!bHavePinsChanged)
+	{
+		bNeedsFullReconstruction = false;
+		bIsReconstructingNode = false;
+		return;
+	}
+	
 	// Reset pin arrays
 	Pins.Reset();
 	InputPins.Reset();
@@ -317,8 +353,8 @@ void UFlowGraphNode::ReconstructNode()
 
 	// Recreate pins
 	constexpr bool bReconstructNode = false;
-	RefreshContextPins(bReconstructNode);
 
+	RefreshContextPins();
 	AllocateDefaultPins();
 	RewireOldPinsToNewPins(OldPins);
 
@@ -329,7 +365,7 @@ void UFlowGraphNode::ReconstructNode()
 		OldPin->BreakAllPinLinks();
 		DestroyPin(OldPin);
 	}
-
+	
 	bNeedsFullReconstruction = false;
 	bIsReconstructingNode = false;
 }
@@ -1000,12 +1036,12 @@ void UFlowGraphNode::RemoveInstancePin(UEdGraphPin* Pin)
 	GetGraph()->NotifyGraphChanged();
 }
 
-void UFlowGraphNode::RefreshContextPins(const bool bReconstructNode)
+bool UFlowGraphNode::RefreshContextPins()
 {
 	UFlowNode* FlowNode = Cast<UFlowNode>(NodeInstance);
 	if (!IsValid(FlowNode))
 	{
-		return;
+		return false;
 	}
 
 	// Update the auto-generated pins before refreshing context pins
@@ -1028,7 +1064,7 @@ void UFlowGraphNode::RefreshContextPins(const bool bReconstructNode)
 
 	if (!bShouldRefreshContextPins)
 	{
-		return;
+		return false;
 	}
 
 	const TArray<FFlowPin> ContextInputs = FlowNode->GetContextInputs();
@@ -1043,10 +1079,11 @@ void UFlowGraphNode::RefreshContextPins(const bool bReconstructNode)
 	if (bMaintainedNoContextPins || !HavePinsChanged())
 	{
 		// We don't have contextual pins to account for; or the contextual pins have not changed. We can skip now. 
-		return;
+		return false;
 	}
 
 	const FScopedTransaction Transaction(LOCTEXT("RefreshContextPins", "Refresh Context Pins"));
+
 	Modify();
 
 	const UFlowNode* NodeDefaults = FlowNode->GetClass()->GetDefaultObject<UFlowNode>();
@@ -1058,12 +1095,8 @@ void UFlowGraphNode::RefreshContextPins(const bool bReconstructNode)
 	// recreate outputs
 	FlowNode->OutputPins = NodeDefaults->OutputPins;
 	FlowNode->AddOutputPins(ContextOutputs);
-
-	if (bReconstructNode)
-	{
-		ReconstructNode();
-		GetGraph()->NotifyGraphChanged();
-	}
+	
+	return true;
 }
 
 void UFlowGraphNode::GetPinHoverText(const UEdGraphPin& Pin, FString& HoverTextOut) const
@@ -1261,6 +1294,15 @@ void UFlowGraphNode::PostEditUndo()
 		RebuildRuntimeAddOnsFromEditorSubNodes();
 	}
 }
+
+enum class EPinResolveType : uint8
+{
+	OwningNode,
+	LinkedTo,
+	SubPins,
+	ParentPin,
+	ReferencePassThroughConnection
+};
 
 UFlowAsset* UFlowGraphNode::GetFlowAsset() const
 {
@@ -1477,8 +1519,10 @@ void UFlowGraphNode::RebuildRuntimeAddOnsFromEditorSubNodes()
 	// Reconstruct the context pins for all flow nodes after their AddOns have been processed
 	if (IsValid(NodeInstance) && NodeInstance->IsA<UFlowNode>())
 	{
-		constexpr bool bReconstructNode = true;
-		RefreshContextPins(bReconstructNode);
+		if (HavePinsChanged())
+		{
+			ReconstructNode();
+		}
 	}
 }
 

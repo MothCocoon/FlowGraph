@@ -989,7 +989,7 @@ void SFlowGraphEditor::RefreshContextPins() const
 {
 	for (UFlowGraphNode* SelectedNode : GetSelectedFlowNodes())
 	{
-		SelectedNode->RefreshContextPins(true);
+		SelectedNode->ReconstructNode();
 	}
 }
 
