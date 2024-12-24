@@ -77,10 +77,6 @@ void FFlowAssetEditor::HandleUndoTransaction()
 
 void FFlowAssetEditor::NotifyPostChange(const FPropertyChangedEvent& PropertyChangedEvent, FProperty* PropertyThatChanged)
 {
-	if (PropertyChangedEvent.ChangeType != EPropertyChangeType::Interactive)
-	{
-		GraphEditor->NotifyGraphChanged();
-	}
 }
 
 FName FFlowAssetEditor::GetToolkitFName() const

@@ -195,13 +195,14 @@ void UFlowGraphNode::OnExternalChange()
 	bNeedsFullReconstruction = true;
 
 	ReconstructNode();
-	GetGraph()->NotifyGraphChanged();
+	
+	GetGraph()->NotifyNodeChanged(this);
 }
 
 void UFlowGraphNode::OnGraphRefresh()
 {
 	ReconstructNode();
-    }
+}
 
 bool UFlowGraphNode::CanCreateUnderSpecifiedSchema(const UEdGraphSchema* Schema) const
 {
@@ -998,7 +999,7 @@ void UFlowGraphNode::AddInstancePin(const EEdGraphPinDirection Direction, const 
 		CreateOutputPin(PinName, FlowNode->InputPins.Num() + NumberedPinsAmount);
 	}
 
-	GetGraph()->NotifyGraphChanged();
+	GetGraph()->NotifyNodeChanged(this);
 }
 
 void UFlowGraphNode::RemoveInstancePin(UEdGraphPin* Pin)
@@ -1033,7 +1034,7 @@ void UFlowGraphNode::RemoveInstancePin(UEdGraphPin* Pin)
 	}
 
 	ReconstructNode();
-	GetGraph()->NotifyGraphChanged();
+	GetGraph()->NotifyNodeChanged(this);
 }
 
 bool UFlowGraphNode::RefreshContextPins()
@@ -1519,10 +1520,7 @@ void UFlowGraphNode::RebuildRuntimeAddOnsFromEditorSubNodes()
 	// Reconstruct the context pins for all flow nodes after their AddOns have been processed
 	if (IsValid(NodeInstance) && NodeInstance->IsA<UFlowNode>())
 	{
-		if (HavePinsChanged())
-		{
-			ReconstructNode();
-		}
+		ReconstructNode();
 	}
 }
 

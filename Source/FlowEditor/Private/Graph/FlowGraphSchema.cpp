@@ -574,7 +574,14 @@ bool UFlowGraphSchema::TryCreateConnection(UEdGraphPin* PinA, UEdGraphPin* PinB)
 
 	if (bModified)
 	{
-		PinA->GetOwningNode()->GetGraph()->NotifyGraphChanged();
+		UEdGraphNode* PinANode = PinA->GetOwningNode();
+		PinANode->ReconstructNode();
+
+		UEdGraphNode* PinBNode = PinB->GetOwningNode();
+		PinBNode->ReconstructNode();
+		
+		PinA->GetOwningNode()->GetGraph()->NotifyNodeChanged(PinANode);
+		PinA->GetOwningNode()->GetGraph()->NotifyNodeChanged(PinBNode);
 	}
 
 	return bModified;
@@ -751,12 +758,6 @@ bool UFlowGraphSchema::IsTitleBarPin(const UEdGraphPin& Pin) const
 void UFlowGraphSchema::BreakNodeLinks(UEdGraphNode& TargetNode) const
 {
 	Super::BreakNodeLinks(TargetNode);
-
-	UEdGraph* EdGraph = TargetNode.GetGraph();
-	if (IsValid(EdGraph))
-	{
-		EdGraph->NotifyGraphChanged();
-	}
 }
 
 void UFlowGraphSchema::BreakPinLinks(UEdGraphPin& TargetPin, bool bSendsNodeNotification) const
@@ -784,7 +785,7 @@ void UFlowGraphSchema::BreakPinLinks(UEdGraphPin& TargetPin, bool bSendsNodeNoti
 		UEdGraph* EdGraph = (OwningFlowGraphNode) ? OwningFlowGraphNode->GetGraph() : nullptr;
 		if (IsValid(EdGraph))
 		{
-			EdGraph->NotifyGraphChanged();
+			EdGraph->NotifyNodeChanged(OwningFlowGraphNode);
 		}
 	}
 }
