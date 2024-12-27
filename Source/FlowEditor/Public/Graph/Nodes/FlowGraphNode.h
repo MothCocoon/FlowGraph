@@ -162,6 +162,9 @@ public:
 
 	void ValidateGraphNode(FFlowMessageLog& MessageLog) const;
 
+protected:
+	bool ShouldReconstructNode() const;
+	
 //////////////////////////////////////////////////////////////////////////
 // Pins
 
@@ -308,7 +311,7 @@ protected:
 
 	void LogError(const FString& MessageToLog, const UFlowNodeBase* FlowNodeBase) const;
 
-	bool HavePinsChanged();
+	bool HavePinsChanged() const;
 
 public:
 	
@@ -346,6 +349,4 @@ private:
 	  * UFlowGraph::RecursivelySetParentNodeForAllSubNodes */
 	UPROPERTY(Transient)
 	TObjectPtr<UFlowGraphNode> ParentNode;
-
-	bool bFirstReconstruction = true;
 };

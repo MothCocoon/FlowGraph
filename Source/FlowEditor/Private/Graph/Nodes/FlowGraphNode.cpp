@@ -81,6 +81,8 @@ void UFlowGraphNode::PostLoad()
 		NodeInstance->FixNode(this); // fix already created nodes
 		SubscribeToExternalChanges();
 	}
+
+	RebuildPinArraysOnLoad();
 }
 
 void UFlowGraphNode::PostDuplicate(bool bDuplicateForPIE)
@@ -282,48 +284,15 @@ void UFlowGraphNode::InsertNewNode(UEdGraphPin* FromPin, UEdGraphPin* NewLinkPin
 
 void UFlowGraphNode::ReconstructNode()
 {
-	if (const UFlowGraph* FlowGraph = GetFlowGraph())
-	{
-		// If the graph is locked, we shouldn't reconstruct nodes 
-		// (all nodes will all be reconstructed when the graph is unlocked)
-
-		if (FlowGraph->IsLocked())
-		{
-			return;
-		}
-	}
-	
-	if (bIsReconstructingNode)
+	if (!ShouldReconstructNode())
 	{
 		return;
 	}
-
+	
 	bIsReconstructingNode = true;
-
-	if (bFirstReconstruction)
-	{
-		RebuildPinArraysOnLoad();
-
-		// If this node already has pins, it must have been loaded and this code is running during load.
-		// Otherwise, we should continue on to build the node for the first time.
-		if (Pins.Num() > 0)
-		{
-			bIsReconstructingNode = false;
-			return;
-		}
-	}
 	
-	// Store old pins
 	TArray<UEdGraphPin*> OldPins(Pins);
-
-	bool bHavePinsChanged = HavePinsChanged();
-
-	if (!bHavePinsChanged && !bNeedsFullReconstruction)
-	{
-		bIsReconstructingNode = false;
-		return;
-	}
-
+	
 	// Harvest the auto-generated pins before refreshing context pins
 	if (UFlowNode* FlowNode = Cast<UFlowNode>(NodeInstance))
 	{
@@ -338,7 +307,6 @@ void UFlowGraphNode::ReconstructNode()
 	OutputPins.Reset();
 	
 	RefreshContextPins();
-	
 	AllocateDefaultPins();
 	RewireOldPinsToNewPins(OldPins);
 
@@ -351,7 +319,6 @@ void UFlowGraphNode::ReconstructNode()
 	}
 	
 	bNeedsFullReconstruction = false;
-	
 	bIsReconstructingNode = false;
 
 	(void)OnReconstructNodeCompleted.ExecuteIfBound();
@@ -1319,7 +1286,7 @@ void UFlowGraphNode::LogError(const FString& MessageToLog, const UFlowNodeBase* 
 	}
 }
 
-bool UFlowGraphNode::HavePinsChanged()
+bool UFlowGraphNode::HavePinsChanged() const
 {
 	const UFlowNode* FlowNodeInstance = Cast<UFlowNode>(NodeInstance);
 	if (!IsValid(FlowNodeInstance))
@@ -1805,6 +1772,31 @@ void UFlowGraphNode::ValidateGraphNode(FFlowMessageLog& MessageLog) const
 	}
 }
 
+bool UFlowGraphNode::ShouldReconstructNode() const
+{
+	// If the graph is locked, we shouldn't reconstruct nodes 
+	// (all nodes will all be reconstructed when the graph is unlocked)
+	if (const UFlowGraph* FlowGraph = GetFlowGraph())
+	{
+		if (FlowGraph->IsLocked())
+		{
+			return false;
+		}
+	}
+
+	if (bIsReconstructingNode)
+	{
+		return false;
+	}
+
+	if (!bNeedsFullReconstruction && !HavePinsChanged())
+	{
+		return false;
+	}
+
+	return true;
+}
+
 bool UFlowGraphNode::IsAncestorNode(const UFlowGraphNode& OtherNode) const
 {
 	const UFlowGraphNode* CurParentNode = ParentNode;
@@ -1843,8 +1835,6 @@ void UFlowGraphNode::RebuildPinArraysOnLoad()
 			}
 		}
 	}
-		
-	bFirstReconstruction = false;
 }
 
 bool UFlowGraphNode::CanAcceptSubNodeAsChild(const UFlowGraphNode& SubNodeToConsider, const TSet<const UEdGraphNode*>& AllRootSubNodesToPaste, FString* OutReasonString) const
