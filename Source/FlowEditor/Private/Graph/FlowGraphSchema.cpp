@@ -570,18 +570,17 @@ const FPinConnectionResponse UFlowGraphSchema::CanMergeNodes(const UEdGraphNode*
 
 bool UFlowGraphSchema::TryCreateConnection(UEdGraphPin* PinA, UEdGraphPin* PinB) const
 {
-	const bool bModified = UEdGraphSchema::TryCreateConnection(PinA, PinB);
-
+	bool bModified = UEdGraphSchema::TryCreateConnection(PinA, PinB);
+	
 	if (bModified)
 	{
-		UEdGraphNode* PinANode = PinA->GetOwningNode();
-		PinANode->ReconstructNode();
+		UFlowGraphNode* GraphNodeA = Cast<UFlowGraphNode>(PinA->GetOwningNode());
+		UFlowGraphNode* GraphNodeB = Cast<UFlowGraphNode>(PinB->GetOwningNode());
 
-		UEdGraphNode* PinBNode = PinB->GetOwningNode();
-		PinBNode->ReconstructNode();
-		
-		PinA->GetOwningNode()->GetGraph()->NotifyNodeChanged(PinANode);
-		PinA->GetOwningNode()->GetGraph()->NotifyNodeChanged(PinBNode);
+		UEdGraph* Graph = GraphNodeA->GetGraph();
+
+		Graph->NotifyNodeChanged(GraphNodeA);
+		Graph->NotifyNodeChanged(GraphNodeB);
 	}
 
 	return bModified;
@@ -764,13 +763,12 @@ void UFlowGraphSchema::BreakPinLinks(UEdGraphPin& TargetPin, bool bSendsNodeNoti
 {
 	const FScopedTransaction Transaction(LOCTEXT("GraphEd_BreakPinLinks", "Break Pin Links"));
 
-	Super::BreakPinLinks(TargetPin, bSendsNodeNotification);
+	TArray<UEdGraphPin*> CachedLinkedTo = TargetPin.LinkedTo;
 
-	// Cache the owning node because calling Super::BreakPinLinks might release the pointer
-	// to the pin owning node as a side effect of notify graph changed events. 
 	UFlowGraphNode* OwningFlowGraphNode = Cast<UFlowGraphNode>(TargetPin.GetOwningNodeUnchecked());
+	UEdGraph* EdGraph = (OwningFlowGraphNode) ? OwningFlowGraphNode->GetGraph() : nullptr;
 
-	// NOTE (gtaylor) It is possible for OwningFlowGraphNode to be null if the TargetPin has been orphaned.
+	Super::BreakPinLinks(TargetPin, bSendsNodeNotification);
 
 	if (TargetPin.bOrphanedPin)
 	{
@@ -782,10 +780,23 @@ void UFlowGraphSchema::BreakPinLinks(UEdGraphPin& TargetPin, bool bSendsNodeNoti
 	}
 	else if (bSendsNodeNotification)
 	{
-		UEdGraph* EdGraph = (OwningFlowGraphNode) ? OwningFlowGraphNode->GetGraph() : nullptr;
 		if (IsValid(EdGraph))
 		{
 			EdGraph->NotifyNodeChanged(OwningFlowGraphNode);
+		}
+	}
+
+	for (UEdGraphPin* OtherPin : CachedLinkedTo)
+	{
+		UFlowGraphNode* OtherOwningFlowGraphNode = Cast<UFlowGraphNode>(OtherPin->GetOwningNodeUnchecked());
+		
+		if (OtherPin->bOrphanedPin)
+		{
+			 OtherOwningFlowGraphNode->RemoveOrphanedPin(OtherPin);
+		}
+		else if (bSendsNodeNotification)
+		{
+			EdGraph->NotifyNodeChanged(OtherOwningFlowGraphNode);
 		}
 	}
 }

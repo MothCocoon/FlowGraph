@@ -300,30 +300,17 @@ void UFlowGraphNode::ReconstructNode()
 
 	bIsReconstructingNode = true;
 
-	if (bFirstRun)
+	if (bFirstReconstruction)
 	{
-		for (UEdGraphPin* Pin : Pins)
+		RebuildPinArraysOnLoad();
+
+		// If this node already has pins, it must have been loaded and this code is running during load.
+		// Otherwise, we should continue on to build the node for the first time.
+		if (Pins.Num() > 0)
 		{
-			switch (Pin->Direction)
-			{
-				case EGPD_Input:
-				{
-					InputPins.Add(Pin);
-					break;
-				}
-				case EGPD_Output:
-				{
-					OutputPins.Add(Pin);
-					break;
-				}
-				default:
-				{
-					UE_LOG(LogFlow, Error, TEXT("Encountered Pin with invalid direction!"));
-				}
-			}
+			bIsReconstructingNode = false;
+			return;
 		}
-		
-		bFirstRun = false;
 	}
 	
 	// Store old pins
@@ -331,17 +318,11 @@ void UFlowGraphNode::ReconstructNode()
 
 	bool bHavePinsChanged = HavePinsChanged();
 
-	if (!bHavePinsChanged)
+	if (!bHavePinsChanged && !bNeedsFullReconstruction)
 	{
-		bNeedsFullReconstruction = false;
 		bIsReconstructingNode = false;
 		return;
 	}
-	
-	// Reset pin arrays
-	Pins.Reset();
-	InputPins.Reset();
-	OutputPins.Reset();
 
 	// Harvest the auto-generated pins before refreshing context pins
 	if (UFlowNode* FlowNode = Cast<UFlowNode>(NodeInstance))
@@ -351,11 +332,13 @@ void UFlowGraphNode::ReconstructNode()
 			FlowAsset->TryUpdateManagedFlowPinsForNode(*FlowNode);
 		}
 	}
-
-	// Recreate pins
-	constexpr bool bReconstructNode = false;
-
+	
+	Pins.Reset();
+	InputPins.Reset();
+	OutputPins.Reset();
+	
 	RefreshContextPins();
+	
 	AllocateDefaultPins();
 	RewireOldPinsToNewPins(OldPins);
 
@@ -368,7 +351,10 @@ void UFlowGraphNode::ReconstructNode()
 	}
 	
 	bNeedsFullReconstruction = false;
+	
 	bIsReconstructingNode = false;
+
+	(void)OnReconstructNodeCompleted.ExecuteIfBound();
 }
 
 void UFlowGraphNode::AllocateDefaultPins()
@@ -459,6 +445,20 @@ void UFlowGraphNode::RewireOldPinsToNewPins(TArray<UEdGraphPin*>& InOldPins)
 		if (OrphanedPin->ParentPin == nullptr)
 		{
 			Pins.Add(OrphanedPin);
+
+			switch (OrphanedPin->Direction)
+			{
+				case EGPD_Input:
+				{
+					InputPins.Add(OrphanedPin);
+					break;
+				}
+				case EGPD_Output:
+				{
+					OutputPins.Add(OrphanedPin);
+					break;
+				}
+			}
 		}
 	}
 }
@@ -543,7 +543,7 @@ void UFlowGraphNode::GetNodeContextMenuActions(class UToolMenu* Menu, class UGra
 
 			if (SupportsContextPins())
 			{
-				Section.AddMenuEntry(FlowGraphCommands.RefreshContextPins);
+				Section.AddMenuEntry(FlowGraphCommands.ReconstructNode);
 			}
 
 			if (CanUserAddInput())
@@ -920,7 +920,8 @@ void UFlowGraphNode::RemoveOrphanedPin(UEdGraphPin* Pin)
 	Pins.Remove(Pin);
 
 	ReconstructNode();
-	GetGraph()->NotifyGraphChanged();
+	
+	GetGraph()->NotifyNodeChanged(this);
 }
 
 bool UFlowGraphNode::SupportsContextPins() const
@@ -1037,12 +1038,17 @@ void UFlowGraphNode::RemoveInstancePin(UEdGraphPin* Pin)
 	GetGraph()->NotifyNodeChanged(this);
 }
 
-bool UFlowGraphNode::RefreshContextPins()
+void UFlowGraphNode::RefreshContextPins()
 {
+	if (GIsTransacting)
+	{
+		return;
+	}
+
 	UFlowNode* FlowNode = Cast<UFlowNode>(NodeInstance);
 	if (!IsValid(FlowNode))
 	{
-		return false;
+		return;
 	}
 
 	// Update the auto-generated pins before refreshing context pins
@@ -1065,7 +1071,7 @@ bool UFlowGraphNode::RefreshContextPins()
 
 	if (!bShouldRefreshContextPins)
 	{
-		return false;
+		return;
 	}
 
 	const TArray<FFlowPin> ContextInputs = FlowNode->GetContextInputs();
@@ -1077,10 +1083,10 @@ bool UFlowGraphNode::RefreshContextPins()
 	// Skip the rest if the node went from no ContextPins to no ContextPins
 	const bool bMaintainedNoContextPins = !bPrevHasContextPins && !bHasContextPins;
 
-	if (bMaintainedNoContextPins || !HavePinsChanged())
+	if (bMaintainedNoContextPins)
 	{
 		// We don't have contextual pins to account for; or the contextual pins have not changed. We can skip now. 
-		return false;
+		return;
 	}
 
 	const FScopedTransaction Transaction(LOCTEXT("RefreshContextPins", "Refresh Context Pins"));
@@ -1089,15 +1095,11 @@ bool UFlowGraphNode::RefreshContextPins()
 
 	const UFlowNode* NodeDefaults = FlowNode->GetClass()->GetDefaultObject<UFlowNode>();
 
-	// recreate inputs
 	FlowNode->InputPins = NodeDefaults->InputPins;
 	FlowNode->AddInputPins(ContextInputs);
 
-	// recreate outputs
 	FlowNode->OutputPins = NodeDefaults->OutputPins;
 	FlowNode->AddOutputPins(ContextOutputs);
-	
-	return true;
 }
 
 void UFlowGraphNode::GetPinHoverText(const UEdGraphPin& Pin, FString& HoverTextOut) const
@@ -1296,15 +1298,6 @@ void UFlowGraphNode::PostEditUndo()
 	}
 }
 
-enum class EPinResolveType : uint8
-{
-	OwningNode,
-	LinkedTo,
-	SubPins,
-	ParentPin,
-	ReferencePassThroughConnection
-};
-
 UFlowAsset* UFlowGraphNode::GetFlowAsset() const
 {
 	if (UFlowGraph* FlowGraph = GetFlowGraph())
@@ -1347,14 +1340,30 @@ bool UFlowGraphNode::HavePinsChanged()
 	AllFlowPins.Append(FlowNodeInstance->GetContextInputs());
 	AllFlowPins.Append(FlowNodeInstance->GetContextOutputs());
 
-	if (Pins.Num() != AllFlowPins.Num())
+	// Orphaned pins need to be stripped from the comparison.
+	TArray<UEdGraphPin*> NormalPins;
+	NormalPins.Reserve(Pins.Num());
+
+	for (int i = 0; i < Pins.Num(); ++i)
+	{
+		UEdGraphPin* Pin = Pins[i];
+
+		if (Pin->bOrphanedPin)
+		{
+			continue;
+		}
+
+		NormalPins.Add(Pin);
+	}
+	
+	if (NormalPins.Num() != AllFlowPins.Num())
 	{
 		// There is a different number of EdGraphPins and Flow Node pins; something changed.
 		return true;
 	}
 
 	TArray<FName> PinNames;
-	for (const UEdGraphPin* Pin : Pins)
+	for (const UEdGraphPin* Pin : NormalPins)
 	{
 		PinNames.Add(Pin->PinName);
 	}
@@ -1456,7 +1465,11 @@ void UFlowGraphNode::NodeConnectionListChanged()
 {
 	Super::NodeConnectionListChanged();
 
-	GetFlowGraph()->UpdateAsset();
+	UFlowGraph* Graph = Cast<UFlowGraph>(GetGraph());
+
+	Graph->GetFlowAsset()->HarvestNodeConnections(Cast<UFlowNode>(GetFlowNodeBase()));
+	
+	GetFlowGraph()->NotifyNodeChanged(this);
 }
 
 FString UFlowGraphNode::GetPropertyNameAndValueForDiff(const FProperty* Prop, const uint8* PropertyAddr) const
@@ -1806,6 +1819,32 @@ bool UFlowGraphNode::IsAncestorNode(const UFlowGraphNode& OtherNode) const
 	}
 
 	return false;
+}
+
+void UFlowGraphNode::RebuildPinArraysOnLoad()
+{
+	for (UEdGraphPin* Pin : Pins)
+	{
+		switch (Pin->Direction)
+		{
+			case EGPD_Input:
+			{
+				InputPins.Add(Pin);
+				break;
+			}
+			case EGPD_Output:
+			{
+				OutputPins.Add(Pin);
+				break;
+			}
+			default:
+			{
+				UE_LOG(LogFlow, Error, TEXT("Encountered Pin with invalid direction!"));
+			}
+		}
+	}
+		
+	bFirstReconstruction = false;
 }
 
 bool UFlowGraphNode::CanAcceptSubNodeAsChild(const UFlowGraphNode& SubNodeToConsider, const TSet<const UEdGraphNode*>& AllRootSubNodesToPaste, FString* OutReasonString) const

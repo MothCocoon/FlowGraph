@@ -30,7 +30,7 @@ public:
 	FFlowGraphCommands();
 
 	/** Context Pins */
-	TSharedPtr<FUICommandInfo> RefreshContextPins;
+	TSharedPtr<FUICommandInfo> ReconstructNode;
 
 	/** Pins */
 	TSharedPtr<FUICommandInfo> AddInput;

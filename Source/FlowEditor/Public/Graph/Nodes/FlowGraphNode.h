@@ -121,6 +121,9 @@ public:
 
 	bool IsAncestorNode(const UFlowGraphNode& OtherNode) const;
 
+protected:
+	void RebuildPinArraysOnLoad();
+
 //////////////////////////////////////////////////////////////////////////
 // Utils
 
@@ -163,7 +166,6 @@ public:
 // Pins
 
 public:
-	bool bFirstRun = true;
 	TArray<UEdGraphPin*> InputPins;
 	TArray<UEdGraphPin*> OutputPins;
 
@@ -194,8 +196,8 @@ public:
 
 protected:
 	// Create pins from the context asset, i.e. Sequencer events
-	bool RefreshContextPins();
-
+	void RefreshContextPins();
+	
 public:
 	// UEdGraphNode
 	virtual void GetPinHoverText(const UEdGraphPin& Pin, FString& HoverTextOut) const override;
@@ -228,6 +230,7 @@ private:
 
 public:
 	FFlowGraphNodeEvent OnSignalModeChanged;
+	FFlowGraphNodeEvent OnReconstructNodeCompleted;
 	
 	// Pin activation forced by user during PIE
 	virtual void ForcePinActivation(const FEdGraphPinReference PinReference) const;
@@ -343,4 +346,6 @@ private:
 	  * UFlowGraph::RecursivelySetParentNodeForAllSubNodes */
 	UPROPERTY(Transient)
 	TObjectPtr<UFlowGraphNode> ParentNode;
+
+	bool bFirstReconstruction = true;
 };
