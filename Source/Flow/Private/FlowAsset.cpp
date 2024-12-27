@@ -337,10 +337,12 @@ void UFlowAsset::HarvestNodeConnections(UFlowNode* TargetNode)
 
 	if (IsValid(TargetNode))
 	{
+		TargetNodes.Reserve(1);
 		TargetNodes.Add(TargetNode);
 	}
 	else
 	{
+		TargetNodes.Reserve(Nodes.Num());
 		for (const TPair<FGuid, UFlowNode*>& Pair : ObjectPtrDecay(Nodes))
 		{
 			TargetNodes.Add(Pair.Value);
@@ -367,13 +369,7 @@ void UFlowAsset::HarvestNodeConnections(UFlowNode* TargetNode)
 		const TArray<UEdGraphPin*>& GraphNodePins = FlowNode->GetGraphNode()->Pins;
 
 		for (const UEdGraphPin* ThisPin : GraphNodePins)
-		{
-			// Do not harvest orphaned pins
-			if (ThisPin->bOrphanedPin)
-			{
-			//	continue;
-			}
-			
+		{			
 			const bool bIsExecPin = FFlowPin::IsExecPinCategory(ThisPin->PinType.PinCategory);
 			const bool bIsDataPin = FFlowPin::IsDataPinCategory(ThisPin->PinType.PinCategory);
 			const bool bIsOutputPin = (ThisPin->Direction == EGPD_Output);
@@ -441,7 +437,7 @@ void UFlowAsset::HarvestNodeConnections(UFlowNode* TargetNode)
 		}
 	}
 
-	// NOTE (gtaylor) @mothdoctor, do we need to do anything with bGraphDirty here?  
+	// NOTE (gtaylor) @mothdoctor, do we need to do anything with bGraphDirty [renamed by @HomerJohnston to bAnyNodeDirty] here?  
 	// It's scope seems like we wanted to do something at this point.
 }
 

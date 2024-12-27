@@ -190,7 +190,7 @@ public:
 	void RegisterNode(const FGuid& NewGuid, UFlowNode* NewNode);
 	void UnregisterNode(const FGuid& NodeGuid);
 
-	// Processes all nodes and creates map of all pin connections
+	// Processes nodes and updates pin connections from the graph to the UFlowNode (processes all nodes in the graph if passed nullptr)
 	void HarvestNodeConnections(UFlowNode* TargetNode = nullptr);
 
 	// Updates the auto-generated pins and bindings for a given FlowNode,

@@ -574,13 +574,13 @@ bool UFlowGraphSchema::TryCreateConnection(UEdGraphPin* PinA, UEdGraphPin* PinB)
 	
 	if (bModified)
 	{
-		UFlowGraphNode* GraphNodeA = Cast<UFlowGraphNode>(PinA->GetOwningNode());
-		UFlowGraphNode* GraphNodeB = Cast<UFlowGraphNode>(PinB->GetOwningNode());
+		UFlowGraphNode* FlowGraphNodeA = Cast<UFlowGraphNode>(PinA->GetOwningNode());
+		UFlowGraphNode* FlowGraphNodeB = Cast<UFlowGraphNode>(PinB->GetOwningNode());
 
-		UEdGraph* Graph = GraphNodeA->GetGraph();
+		UEdGraph* EdGraph = FlowGraphNodeA->GetGraph();
 
-		Graph->NotifyNodeChanged(GraphNodeA);
-		Graph->NotifyNodeChanged(GraphNodeB);
+		EdGraph->NotifyNodeChanged(FlowGraphNodeA);
+		EdGraph->NotifyNodeChanged(FlowGraphNodeB);
 	}
 
 	return bModified;
