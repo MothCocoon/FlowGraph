@@ -774,7 +774,7 @@ void UFlowGraphSchema::BreakPinLinks(UEdGraphPin& TargetPin, bool bSendsNodeNoti
 	{
 		if (OwningFlowGraphNode)
 		{
-			// this calls NotifyGraphChanged()
+			// this calls NotifyNodeChanged()
 			OwningFlowGraphNode->RemoveOrphanedPin(&TargetPin);
 		}
 	}
@@ -792,6 +792,7 @@ void UFlowGraphSchema::BreakPinLinks(UEdGraphPin& TargetPin, bool bSendsNodeNoti
 		
 		if (OtherPin->bOrphanedPin)
 		{
+			// this calls NotifyNodeChanged()
 			 OtherOwningFlowGraphNode->RemoveOrphanedPin(OtherPin);
 		}
 		else if (bSendsNodeNotification)

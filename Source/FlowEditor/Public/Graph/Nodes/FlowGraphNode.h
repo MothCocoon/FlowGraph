@@ -268,9 +268,9 @@ public:
 		FDiffResults& Results);
 
 	//~ Begin UObject Interface
-
+#if WITH_EDITOR
 	virtual void PostEditUndo() override;
-
+#endif
 	// End UObject
 
 	// @return the input pin for this state
