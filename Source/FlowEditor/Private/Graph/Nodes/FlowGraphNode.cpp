@@ -1295,49 +1295,48 @@ bool UFlowGraphNode::HavePinsChanged() const
 		return true;
 	}
 
-	// Get the pins that are part of the node itself. We use the CDO because it inherently knows about the built-in
-	// pins for this node. 
+	// Get all pins of the FlowNode itself. We use the CDO because it inherently knows about the built-in pins for this node. 
 	const UFlowNode* FlowNodeCDO = FlowNodeInstance->GetClass()->GetDefaultObject<UFlowNode>();
 	check(IsValid(FlowNodeCDO));
 
-	TArray<FFlowPin> AllFlowPins = FlowNodeCDO->GetInputPins();
-	AllFlowPins.Append(FlowNodeCDO->GetOutputPins());
+	TArray<FFlowPin> AllFlowNodePins = FlowNodeCDO->GetInputPins();
+	AllFlowNodePins.Append(FlowNodeCDO->GetOutputPins());
 
-	// Get the contextual pins for the underlying flow node instance.  
-	AllFlowPins.Append(FlowNodeInstance->GetContextInputs());
-	AllFlowPins.Append(FlowNodeInstance->GetContextOutputs());
+	AllFlowNodePins.Append(FlowNodeInstance->GetContextInputs());
+	AllFlowNodePins.Append(FlowNodeInstance->GetContextOutputs());
 
-	// Orphaned pins need to be stripped from the comparison.
-	TArray<UEdGraphPin*> NormalPins;
-	NormalPins.Reserve(Pins.Num());
-
-	for (int i = 0; i < Pins.Num(); ++i)
+	// Invalid FlowNode pins need to be stripped from the comparison
+	for (int i = AllFlowNodePins.Num() - 1; i >= 0; --i)
 	{
-		UEdGraphPin* Pin = Pins[i];
-
-		if (Pin->bOrphanedPin)
+		if (!AllFlowNodePins[i].IsValid())
 		{
-			continue;
+			AllFlowNodePins.RemoveAtSwap(i, EAllowShrinking::No);
 		}
-
-		NormalPins.Add(Pin);
 	}
-	
-	if (NormalPins.Num() != AllFlowPins.Num())
+
+	// Get the current FlowGraphNode pins list - orphaned pins need to be stripped from the current pins.
+	TArray<UEdGraphPin*> AllGraphNodePins = Pins;
+	for (int i = AllGraphNodePins.Num() - 1; i >= 0; --i)
 	{
-		// There is a different number of EdGraphPins and Flow Node pins; something changed.
+		if (AllGraphNodePins[i]->bOrphanedPin)
+		{
+			AllGraphNodePins.RemoveAtSwap(i, EAllowShrinking::No);
+		}
+	}
+
+	// Compare valid pin counts
+	if (AllGraphNodePins.Num() != AllFlowNodePins.Num())
+	{
 		return true;
 	}
 
-	TArray<FName> PinNames;
-	for (const UEdGraphPin* Pin : NormalPins)
+	// Compare valid pin names
+	for (const FFlowPin& FlowNodePin : AllFlowNodePins)
 	{
-		PinNames.Add(Pin->PinName);
-	}
-
-	for (const FFlowPin& Pin : AllFlowPins)
-	{
-		if (!PinNames.Contains(Pin.PinName))
+		if (!AllGraphNodePins.ContainsByPredicate([&FlowNodePin](UEdGraphPin* GraphNodePin)
+		{
+			return GraphNodePin->PinName == FlowNodePin.PinName;
+		}))
 		{
 			// Could not match the pin from the flow node with any of the EdPins array.
 			// we have a mismatch between the ed graph pins and the flow node, something changed. 
