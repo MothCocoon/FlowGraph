@@ -94,8 +94,8 @@ protected:
 	virtual void OnNodeDoubleClicked(class UEdGraphNode* Node) const;
 	virtual void OnNodeTitleCommitted(const FText& NewText, ETextCommit::Type CommitInfo, UEdGraphNode* NodeBeingChanged);
 
-	virtual void RefreshContextPins() const;
-	virtual bool CanRefreshContextPins() const;
+	virtual void ReconstructNode() const;
+	virtual bool CanReconstructNode() const;
 
 private:
 	void AddInput() const;

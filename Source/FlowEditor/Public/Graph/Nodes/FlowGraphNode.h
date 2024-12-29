@@ -121,6 +121,9 @@ public:
 
 	bool IsAncestorNode(const UFlowGraphNode& OtherNode) const;
 
+protected:
+	void RebuildPinArraysOnLoad();
+
 //////////////////////////////////////////////////////////////////////////
 // Utils
 
@@ -159,6 +162,9 @@ public:
 
 	void ValidateGraphNode(FFlowMessageLog& MessageLog) const;
 
+protected:
+	bool ShouldReconstructNode() const;
+	
 //////////////////////////////////////////////////////////////////////////
 // Pins
 
@@ -191,9 +197,11 @@ public:
 	// Call node and graph updates manually, if using bBatchRemoval
 	void RemoveInstancePin(UEdGraphPin* Pin);
 
+protected:
 	// Create pins from the context asset, i.e. Sequencer events
-	void RefreshContextPins(const bool bReconstructNode);
-
+	void RefreshContextPins();
+	
+public:
 	// UEdGraphNode
 	virtual void GetPinHoverText(const UEdGraphPin& Pin, FString& HoverTextOut) const override;
 	// --
@@ -225,6 +233,7 @@ private:
 
 public:
 	FFlowGraphNodeEvent OnSignalModeChanged;
+	FFlowGraphNodeEvent OnReconstructNodeCompleted;
 	
 	// Pin activation forced by user during PIE
 	virtual void ForcePinActivation(const FEdGraphPinReference PinReference) const;
@@ -302,7 +311,7 @@ protected:
 
 	void LogError(const FString& MessageToLog, const UFlowNodeBase* FlowNodeBase) const;
 
-	bool HavePinsChanged();
+	bool HavePinsChanged() const;
 
 public:
 	
