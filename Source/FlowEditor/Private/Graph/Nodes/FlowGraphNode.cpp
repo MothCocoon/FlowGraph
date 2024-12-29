@@ -286,6 +286,8 @@ void UFlowGraphNode::ReconstructNode()
 {
 	if (!ShouldReconstructNode())
 	{
+		// This ensures the 'Refresh Graph' button still rebuilds all of the graph widgets even if the FlowGraphNode has nothing to update.
+		(void)OnReconstructNodeCompleted.ExecuteIfBound();
 		return;
 	}
 	
@@ -1773,6 +1775,11 @@ void UFlowGraphNode::ValidateGraphNode(FFlowMessageLog& MessageLog) const
 
 bool UFlowGraphNode::ShouldReconstructNode() const
 {
+	if (GIsTransacting)
+	{
+		return false;
+	}
+	
 	// If the graph is locked, we shouldn't reconstruct nodes 
 	// (all nodes will all be reconstructed when the graph is unlocked)
 	if (const UFlowGraph* FlowGraph = GetFlowGraph())
