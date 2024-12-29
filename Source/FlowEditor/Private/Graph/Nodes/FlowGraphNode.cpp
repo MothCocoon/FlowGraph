@@ -286,7 +286,7 @@ void UFlowGraphNode::ReconstructNode()
 {
 	if (!ShouldReconstructNode())
 	{
-		// This ensures the 'Refresh Graph' button still rebuilds all of the graph widgets even if the FlowGraphNode has nothing to update.
+		// This ensures the graph editor 'Refresh' button still rebuilds all of the graph widgets even if the FlowGraphNode has nothing to update.
 		(void)OnReconstructNodeCompleted.ExecuteIfBound();
 		return;
 	}
