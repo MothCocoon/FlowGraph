@@ -40,7 +40,12 @@ UFlowGraph::UFlowGraph(const FObjectInitializer& ObjectInitializer)
 
 void UFlowGraph::CreateGraph(UFlowAsset* InFlowAsset)
 {
-	UFlowGraph* NewGraph = CastChecked<UFlowGraph>(FBlueprintEditorUtils::CreateNewGraph(InFlowAsset, NAME_None, StaticClass(), UFlowGraphSchema::StaticClass()));
+	return CreateGraph(InFlowAsset, UFlowGraphSchema::StaticClass());
+}
+
+void UFlowGraph::CreateGraph(UFlowAsset* InFlowAsset, TSubclassOf<UFlowGraphSchema> FlowSchema)
+{
+	UFlowGraph* NewGraph = CastChecked<UFlowGraph>(FBlueprintEditorUtils::CreateNewGraph(InFlowAsset, NAME_None, StaticClass(), FlowSchema));
 	NewGraph->bAllowDeletion = false;
 
 	// Ensure we mapped relation between UFlowNode and UFlowGraphNode classes
@@ -116,8 +121,8 @@ void UFlowGraph::RecursivelyRefreshAddOns(UFlowGraphNode& FromFlowGraphNode)
 				TEXT("Missing AddOn detected for node %s (parent %s)"),
 				*FromFlowNodeBase->GetName(),
 				FromFlowGraphNode.GetParentNode() ?
-				*FromFlowGraphNode.GetParentNode()->GetName() :
-				TEXT("<null>"));
+					*FromFlowGraphNode.GetParentNode()->GetName() :
+					TEXT("<null>"));
 
 			continue;
 		}
@@ -480,7 +485,4 @@ void UFlowGraph::RecursivelySetupAllFlowGraphNodesForEditing(UFlowGraphNode& Fro
 		}
 	}
 }
-
-
-
 

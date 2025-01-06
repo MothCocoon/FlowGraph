@@ -40,6 +40,7 @@ protected:
 
 public:
 	static void CreateGraph(UFlowAsset* InFlowAsset);
+	static void CreateGraph(UFlowAsset* InFlowAsset, TSubclassOf<UFlowGraphSchema> FlowSchema);
 	void RefreshGraph();
 
 protected:

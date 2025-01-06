@@ -26,7 +26,7 @@ public:
 
 	void Construct(const FArguments& InArgs, UFlowGraphNode* InNode);
 
-	~SFlowGraphNode();
+	virtual ~SFlowGraphNode();
 	
 protected:
 	// SNodePanel::SNode
