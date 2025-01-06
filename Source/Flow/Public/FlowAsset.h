@@ -366,8 +366,12 @@ protected:
 	EFlowFinishPolicy FinishPolicy;
 
 public:
-	virtual void InitializeInstance(const TWeakObjectPtr<UObject> InOwner, UFlowAsset* InTemplateAsset);
+	UE_DEPRECATED(5.4, "Use version that takes a UFlowAssetReference instead.")
+	virtual void InitializeInstance(const TWeakObjectPtr<UObject> InOwner, UFlowAsset* InTemplateAsset) { InitializeInstance(InOwner, *InTemplateAsset); }
+
+	virtual void InitializeInstance(const TWeakObjectPtr<UObject> InOwner, UFlowAsset& InTemplateAsset);
 	virtual void DeinitializeInstance();
+	bool IsInstanceInitialized() const { return IsValid(TemplateAsset); }
 
 	UFlowAsset* GetTemplateAsset() const { return TemplateAsset; }
 
@@ -401,6 +405,7 @@ public:
 	TWeakObjectPtr<UFlowAsset> GetFlowInstance(UFlowNode_SubGraph* SubGraphNode) const;
 
 protected:
+
 	void TriggerCustomInput_FromSubGraph(UFlowNode_SubGraph* Node, const FName& EventName) const;
 	void TriggerCustomOutput(const FName& EventName);
 

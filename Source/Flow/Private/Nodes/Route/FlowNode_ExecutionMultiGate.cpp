@@ -9,7 +9,7 @@ UFlowNode_ExecutionMultiGate::UFlowNode_ExecutionMultiGate(const FObjectInitiali
 	, StartIndex(INDEX_NONE)
 {
 #if WITH_EDITOR
-	Category = TEXT("Route");
+	Category = TEXT("Flow|Routing");
 	NodeDisplayStyle = FlowNodeStyle::Logic;
 #endif
 

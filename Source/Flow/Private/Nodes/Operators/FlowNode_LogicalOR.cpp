@@ -11,7 +11,7 @@ UFlowNode_LogicalOR::UFlowNode_LogicalOR(const FObjectInitializer& ObjectInitial
 	, ExecutionCount(0)
 {
 #if WITH_EDITOR
-	Category = TEXT("Operators");
+	Category = TEXT("Flow|Routing|Logic");
 	NodeDisplayStyle = FlowNodeStyle::Logic;
 #endif
 

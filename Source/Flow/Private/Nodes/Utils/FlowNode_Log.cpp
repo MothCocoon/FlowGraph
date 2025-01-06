@@ -19,7 +19,7 @@ UFlowNode_Log::UFlowNode_Log(const FObjectInitializer& ObjectInitializer)
 	, TextColor(FColor::Yellow)
 {
 #if WITH_EDITOR
-	Category = TEXT("Utils");
+	Category = TEXT("Developer");
 	NodeDisplayStyle = FlowNodeStyle::Developer;
 #endif
 }

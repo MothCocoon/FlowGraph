@@ -19,7 +19,7 @@ UFlowNode_SubGraph::UFlowNode_SubGraph(const FObjectInitializer& ObjectInitializ
 	, bCanInstanceIdenticalAsset(false)
 {
 #if WITH_EDITOR
-	Category = TEXT("Route");
+	Category = TEXT("Flow|Graph");
 	NodeDisplayStyle = FlowNodeStyle::SubGraph;
 
 	AllowedAssignedAssetClasses = {UFlowAsset::StaticClass()};

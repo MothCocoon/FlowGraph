@@ -9,7 +9,7 @@ UFlowNode_DefineProperties::UFlowNode_DefineProperties(const FObjectInitializer&
 {
 #if WITH_EDITOR
 	NodeDisplayStyle = FlowNodeStyle::InOut;
-	Category = TEXT("Data Pins");
+	Category = TEXT("Flow|Graph");
 #endif
 
 	InputPins.Empty();

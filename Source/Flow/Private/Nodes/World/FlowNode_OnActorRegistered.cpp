@@ -7,6 +7,9 @@
 UFlowNode_OnActorRegistered::UFlowNode_OnActorRegistered(const FObjectInitializer& ObjectInitializer)
 	: Super(ObjectInitializer)
 {
+#if WITH_EDITOR
+	Category = TEXT("World|Actor");
+#endif
 }
 
 void UFlowNode_OnActorRegistered::ObserveActor(TWeakObjectPtr<AActor> Actor, TWeakObjectPtr<UFlowComponent> Component)

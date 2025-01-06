@@ -20,7 +20,7 @@ UFlowNode_ExecuteComponent::UFlowNode_ExecuteComponent()
 	: Super()
 {
 #if WITH_EDITOR
-	Category = TEXT("World");
+	Category = TEXT("Flow|Owner");
 #endif // WITH_EDITOR
 }
 

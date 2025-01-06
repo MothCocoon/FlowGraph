@@ -1112,10 +1112,12 @@ void UFlowAsset::BroadcastRuntimeMessageAdded(const TSharedRef<FTokenizedMessage
 }
 #endif // WITH_EDITOR
 
-void UFlowAsset::InitializeInstance(const TWeakObjectPtr<UObject> InOwner, UFlowAsset* InTemplateAsset)
+void UFlowAsset::InitializeInstance(const TWeakObjectPtr<UObject> InOwner, UFlowAsset& InTemplateAsset)
 {
+	check(!IsInstanceInitialized());
+
 	Owner = InOwner;
-	TemplateAsset = InTemplateAsset;
+	TemplateAsset = &InTemplateAsset;
 
 	for (TPair<FGuid, TObjectPtr<UFlowNode>>& Node : Nodes)
 	{
@@ -1136,21 +1138,23 @@ void UFlowAsset::InitializeInstance(const TWeakObjectPtr<UObject> InOwner, UFlow
 
 void UFlowAsset::DeinitializeInstance()
 {
-	for (const TPair<FGuid, UFlowNode*>& Node : ObjectPtrDecay(Nodes))
+	if (IsInstanceInitialized())
 	{
-		if (IsValid(Node.Value))
+		for (const TPair<FGuid, UFlowNode*>& Node : ObjectPtrDecay(Nodes))
 		{
-			Node.Value->DeinitializeInstance();
+			if (IsValid(Node.Value))
+			{
+				Node.Value->DeinitializeInstance();
+			}
 		}
-	}
 
-	if (TemplateAsset)
-	{
 		const int32 ActiveInstancesLeft = TemplateAsset->RemoveInstance(this);
 		if (ActiveInstancesLeft == 0 && GetFlowSubsystem())
 		{
 			GetFlowSubsystem()->RemoveInstancedTemplate(TemplateAsset);
 		}
+
+		TemplateAsset = nullptr;
 	}
 }
 
@@ -1159,6 +1163,8 @@ void UFlowAsset::PreStartFlow()
 	ResetNodes();
 
 #if WITH_EDITOR
+	check(IsInstanceInitialized());
+
 	if (TemplateAsset->ActiveInstances.Num() == 1)
 	{
 		// this instance is the only active one, set it directly as Inspected Instance
@@ -1324,6 +1330,7 @@ void UFlowAsset::FinishNode(UFlowNode* Node)
 				if (RootFlowInstances.Contains(this))
 				{
 					GetFlowSubsystem()->FinishRootFlow(Owner.Get(), TemplateAsset, EFlowFinishPolicy::Keep);
+
 					return;
 				}
 			}
@@ -1461,7 +1468,7 @@ void UFlowAsset::LogError(const FString& MessageToLog, const UFlowNodeBase* Node
 	// this is runtime log which is should be only called on runtime instances of asset
 	if (TemplateAsset == nullptr)
 	{
-		UE_LOG(LogFlow, Log, TEXT("Attempted to use Runtime Log on template asset %s"), *MessageToLog);
+		UE_LOG(LogFlow, Log, TEXT("Attempted to use Runtime Log on null template asset %s"), *MessageToLog);
 	}
 
 	if (RuntimeLog.Get())
@@ -1476,7 +1483,7 @@ void UFlowAsset::LogWarning(const FString& MessageToLog, const UFlowNodeBase* No
 	// this is runtime log which is should be only called on runtime instances of asset
 	if (TemplateAsset == nullptr)
 	{
-		UE_LOG(LogFlow, Log, TEXT("Attempted to use Runtime Log on template asset %s"), *MessageToLog);
+		UE_LOG(LogFlow, Log, TEXT("Attempted to use Runtime Log on null template asset %s"), *MessageToLog);
 	}
 
 	if (RuntimeLog.Get())
@@ -1491,7 +1498,7 @@ void UFlowAsset::LogNote(const FString& MessageToLog, const UFlowNodeBase* Node)
 	// this is runtime log which is should be only called on runtime instances of asset
 	if (TemplateAsset == nullptr)
 	{
-		UE_LOG(LogFlow, Log, TEXT("Attempted to use Runtime Log on template asset %s"), *MessageToLog);
+		UE_LOG(LogFlow, Log, TEXT("Attempted to use Runtime Log on null template asset %s"), *MessageToLog);
 	}
 
 	if (RuntimeLog.Get())

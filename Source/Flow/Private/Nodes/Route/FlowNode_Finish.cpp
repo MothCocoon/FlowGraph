@@ -8,7 +8,7 @@ UFlowNode_Finish::UFlowNode_Finish(const FObjectInitializer& ObjectInitializer)
 	: Super(ObjectInitializer)
 {
 #if WITH_EDITOR
-	Category = TEXT("Route");
+	Category = TEXT("Flow|Graph");
 	NodeDisplayStyle = FlowNodeStyle::InOut;
 #endif
 

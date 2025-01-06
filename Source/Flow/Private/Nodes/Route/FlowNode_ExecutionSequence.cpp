@@ -9,7 +9,7 @@ UFlowNode_ExecutionSequence::UFlowNode_ExecutionSequence(const FObjectInitialize
 	, bSavePinExecutionState(true)
 {
 #if WITH_EDITOR
-	Category = TEXT("Route");
+	Category = TEXT("Flow|Routing");
 	NodeDisplayStyle = FlowNodeStyle::Logic;
 #endif
 

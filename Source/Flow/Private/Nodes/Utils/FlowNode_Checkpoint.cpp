@@ -1,4 +1,4 @@
-﻿// Copyright https://github.com/MothCocoon/FlowGraph/graphs/contributors
+// Copyright https://github.com/MothCocoon/FlowGraph/graphs/contributors
 
 #include "Nodes/Utils/FlowNode_Checkpoint.h"
 #include "FlowSubsystem.h"
@@ -11,7 +11,7 @@ UFlowNode_Checkpoint::UFlowNode_Checkpoint(const FObjectInitializer& ObjectIniti
 	: Super(ObjectInitializer)
 {
 #if WITH_EDITOR
-	Category = TEXT("Utils");
+	Category = TEXT("Flow|Save");
 #endif
 }
 

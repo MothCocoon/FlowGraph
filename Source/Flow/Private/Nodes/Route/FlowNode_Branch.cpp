@@ -13,7 +13,7 @@ UFlowNode_Branch::UFlowNode_Branch(const FObjectInitializer& ObjectInitializer)
 	: Super(ObjectInitializer)
 {
 #if WITH_EDITOR
-	Category = TEXT("Route");
+	Category = TEXT("Flow|Routing");
 	NodeDisplayStyle = FlowNodeStyle::Logic;
 #endif
 	InputPins.Empty();

@@ -399,7 +399,7 @@ public:
 public:
 
 	FFlowDataPinOutputProperty_Object() {}
-	FLOW_API FFlowDataPinOutputProperty_Object(UObject* InValue, UClass* InClassFilter);
+	FLOW_API FFlowDataPinOutputProperty_Object(UObject* InValue, UClass* InClassFilter = nullptr);
 
 	virtual EFlowPinType GetFlowPinType() const override { return EFlowPinType::Object; }
 
@@ -435,7 +435,7 @@ public:
 public:
 
 	FFlowDataPinOutputProperty_Class() {}
-	FFlowDataPinOutputProperty_Class(const FSoftClassPath& InValue, UClass* InClassFilter)
+	FFlowDataPinOutputProperty_Class(const FSoftClassPath& InValue, UClass* InClassFilter = nullptr)
 		: Value(InValue)
 #if WITH_EDITOR
 		, ClassFilter(InClassFilter)

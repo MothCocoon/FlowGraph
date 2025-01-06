@@ -238,7 +238,7 @@ UFlowAsset* UFlowSubsystem::CreateFlowInstance(const TWeakObjectPtr<UObject> Own
 	}
 
 	UFlowAsset* NewInstance = NewObject<UFlowAsset>(this, LoadedFlowAsset->GetClass(), *NewInstanceName, RF_Transient, LoadedFlowAsset, false, nullptr);
-	NewInstance->InitializeInstance(Owner, LoadedFlowAsset);
+	NewInstance->InitializeInstance(Owner, *LoadedFlowAsset);
 
 	LoadedFlowAsset->AddInstance(NewInstance);
 

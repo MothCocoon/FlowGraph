@@ -8,7 +8,7 @@ UFlowNode_Start::UFlowNode_Start(const FObjectInitializer& ObjectInitializer)
 	: Super(ObjectInitializer)
 {
 #if WITH_EDITOR
-	Category = TEXT("Route");
+	Category = TEXT("Flow|Graph");
 	NodeDisplayStyle = FlowNodeStyle::InOut;
 	bCanDelete = bCanDuplicate = false;
 #endif

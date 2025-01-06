@@ -22,7 +22,7 @@ UFlowNode_Timer::UFlowNode_Timer(const FObjectInitializer& ObjectInitializer)
 	, RemainingStepTime(0.0f)
 {
 #if WITH_EDITOR
-	Category = TEXT("Route");
+	Category = TEXT("Flow|Routing");
 	NodeDisplayStyle = FlowNodeStyle::Latent;
 #endif
 

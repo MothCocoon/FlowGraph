@@ -31,10 +31,6 @@
 			"Enabled": true
 		},
 		{
-		  "Name": "EngineAssetDefinitions",
-		  "Enabled": true
-		},
-		{
 			"Name": "EditorScriptingUtilities",
 			"Enabled": true
 		},
