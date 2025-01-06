@@ -863,6 +863,13 @@ void UFlowNode::TriggerFirstOutput(const bool bFinish)
 
 void UFlowNode::TriggerOutput(const FName PinName, const bool bFinish /*= false*/, const EFlowPinActivationType ActivationType /*= Default*/)
 {
+	if (ActivationState == EFlowNodeState::Completed || ActivationState == EFlowNodeState::Aborted)
+	{
+		// do not trigger output if node is already finished or aborted
+		LogError(TEXT("Trying to TriggerOutput after finished or aborted"));
+		return;
+	}
+
 	// clean up node, if needed
 	if (bFinish)
 	{

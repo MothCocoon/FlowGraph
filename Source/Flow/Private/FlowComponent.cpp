@@ -469,10 +469,40 @@ UFlowAsset* UFlowComponent::GetRootFlowInstance() const
 	return nullptr;
 }
 
+void UFlowComponent::TriggerRootFlowCustomInput(const FName& EventName) const
+{
+	if (RootFlow && IsFlowNetMode(RootFlowMode))
+	{
+		if (const UFlowSubsystem* FlowSubsystem = GetFlowSubsystem())
+		{
+			UFlowAsset* RootFlowInstance = FlowSubsystem->GetRootFlow(this);
+			if (IsValid(RootFlowInstance))
+			{
+				RootFlowInstance->TriggerCustomInput(EventName);
+			}
+		}
+	}
+}
+
+void UFlowComponent::DispatchRootFlowCustomEvent(UFlowAsset* RootFlowInstance, const FName& EventName)
+{
+	BP_OnRootFlowCustomEvent(RootFlowInstance, EventName);
+	OnRootFlowCustomEvent(RootFlowInstance, EventName);
+}
+
+void UFlowComponent::BP_OnTriggerRootFlowOutputEvent(UFlowAsset* RootFlowInstance, const FName& EventName)
+{
+	BP_OnRootFlowCustomEvent(RootFlowInstance, EventName);
+}
+
+void UFlowComponent::OnTriggerRootFlowOutputEvent(UFlowAsset* RootFlowInstance, const FName& EventName)
+{
+	OnRootFlowCustomEvent(RootFlowInstance, EventName);
+}
+
 void UFlowComponent::OnTriggerRootFlowOutputEventDispatcher(UFlowAsset* RootFlowInstance, const FName& EventName)
 {
-	BP_OnTriggerRootFlowOutputEvent(RootFlowInstance, EventName);
-	OnTriggerRootFlowOutputEvent(RootFlowInstance, EventName);
+	DispatchRootFlowCustomEvent(RootFlowInstance, EventName);
 }
 
 void UFlowComponent::SaveRootFlow(TArray<FFlowAssetSaveData>& SavedFlowInstances)

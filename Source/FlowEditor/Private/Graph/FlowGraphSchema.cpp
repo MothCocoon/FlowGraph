@@ -29,7 +29,6 @@
 #include "Engine/UserDefinedStruct.h"
 #include "Kismet/BlueprintTypeConversions.h"
 #include "Kismet2/KismetEditorUtilities.h"
-#include "Misc/DefaultValueHelper.h"
 #include "ScopedTransaction.h"
 
 #include UE_INLINE_GENERATED_CPP_BY_NAME(FlowGraphSchema)
@@ -252,15 +251,15 @@ void UFlowGraphSchema::CreateDefaultNodesForGraph(UEdGraph& Graph) const
 	FVector2D NodeOffset = FVector2D::ZeroVector;
 
 	// Start node
-	CreateDefaultNode(Graph, AssetClassDefaults, UFlowNode_Start::StaticClass(), NodeOffset, AssetClassDefaults->bStartNodePlacedAsGhostNode);
+	CreateDefaultNode(Graph, UFlowNode_Start::StaticClass(), NodeOffset, AssetClassDefaults->bStartNodePlacedAsGhostNode);
 
-	// Add default nodes for all of the CustomInputs
+	// Add default nodes for all the CustomInputs
 	if (IsValid(AssetClassDefaults))
 	{
 		for (const FName& CustomInputName : AssetClassDefaults->CustomInputs)
 		{
 			NodeOffset += NodeOffsetIncrement;
-			const UFlowGraphNode* NewFlowGraphNode = CreateDefaultNode(Graph, AssetClassDefaults, UFlowNode_CustomInput::StaticClass(), NodeOffset, true);
+			const UFlowGraphNode* NewFlowGraphNode = CreateDefaultNode(Graph, UFlowNode_CustomInput::StaticClass(), NodeOffset, true);
 
 			UFlowNode_CustomInput* CustomInputNode = CastChecked<UFlowNode_CustomInput>(NewFlowGraphNode->GetFlowNodeBase());
 			CustomInputNode->SetEventName(CustomInputName);
@@ -268,11 +267,10 @@ void UFlowGraphSchema::CreateDefaultNodesForGraph(UEdGraph& Graph) const
 	}
 
 	UFlowAsset* FlowAsset = CastChecked<UFlowGraph>(&Graph)->GetFlowAsset();
-
 	FlowAsset->HarvestNodeConnections();
 }
 
-UFlowGraphNode* UFlowGraphSchema::CreateDefaultNode(UEdGraph& Graph, const UFlowAsset* AssetClassDefaults, const TSubclassOf<UFlowNode>& NodeClass, const FVector2D& Offset, const bool bPlacedAsGhostNode)
+UFlowGraphNode* UFlowGraphSchema::CreateDefaultNode(UEdGraph& Graph, const TSubclassOf<UFlowNode>& NodeClass, const FVector2D& Offset, const bool bPlacedAsGhostNode)
 {
 	UFlowGraphNode* NewGraphNode = FFlowGraphSchemaAction_NewNode::CreateNode(&Graph, nullptr, NodeClass, Offset);
 	SetNodeMetaData(NewGraphNode, FNodeMetadata::DefaultGraphNode);
@@ -572,11 +570,17 @@ const FPinConnectionResponse UFlowGraphSchema::CanMergeNodes(const UEdGraphNode*
 
 bool UFlowGraphSchema::TryCreateConnection(UEdGraphPin* PinA, UEdGraphPin* PinB) const
 {
-	const bool bModified = UEdGraphSchema::TryCreateConnection(PinA, PinB);
-
+	bool bModified = UEdGraphSchema::TryCreateConnection(PinA, PinB);
+	
 	if (bModified)
 	{
-		PinA->GetOwningNode()->GetGraph()->NotifyGraphChanged();
+		UFlowGraphNode* FlowGraphNodeA = Cast<UFlowGraphNode>(PinA->GetOwningNode());
+		UFlowGraphNode* FlowGraphNodeB = Cast<UFlowGraphNode>(PinB->GetOwningNode());
+
+		UEdGraph* EdGraph = FlowGraphNodeA->GetGraph();
+
+		EdGraph->NotifyNodeChanged(FlowGraphNodeA);
+		EdGraph->NotifyNodeChanged(FlowGraphNodeB);
 	}
 
 	return bModified;
@@ -707,45 +711,37 @@ void UFlowGraphSchema::ConstructBasicPinTooltip(const UEdGraphPin& Pin, const FT
 		return;
 	}
 
-	constexpr bool bGeneratingDocumentation = false;
-	if (bGeneratingDocumentation)
+	FFormatNamedArguments Args;
+	Args.Add(TEXT("PinType"), UEdGraphSchema_K2::TypeToText(Pin.PinType));
+
+	if (UEdGraphNode* PinNode = Pin.GetOwningNode())
 	{
-		TooltipOut = PinDescription.ToString();
+		UEdGraphSchema_K2 const* const K2Schema = Cast<const UEdGraphSchema_K2>(PinNode->GetSchema());
+		if (ensure(K2Schema != nullptr)) // ensure that this node belongs to this schema
+		{
+			Args.Add(TEXT("DisplayName"), GetPinDisplayName(&Pin));
+			Args.Add(TEXT("LineFeed1"), FText::FromString(TEXT("\n")));
+		}
 	}
 	else
 	{
-		FFormatNamedArguments Args;
-		Args.Add(TEXT("PinType"), UEdGraphSchema_K2::TypeToText(Pin.PinType));
-
-		if (UEdGraphNode* PinNode = Pin.GetOwningNode())
-		{
-			UEdGraphSchema_K2 const* const K2Schema = Cast<const UEdGraphSchema_K2>(PinNode->GetSchema());
-			if (ensure(K2Schema != nullptr)) // ensure that this node belongs to this schema
-			{
-				Args.Add(TEXT("DisplayName"), GetPinDisplayName(&Pin));
-				Args.Add(TEXT("LineFeed1"), FText::FromString(TEXT("\n")));
-			}
-		}
-		else
-		{
-			Args.Add(TEXT("DisplayName"), FText::GetEmpty());
-			Args.Add(TEXT("LineFeed1"), FText::GetEmpty());
-		}
-
-
-		if (!PinDescription.IsEmpty())
-		{
-			Args.Add(TEXT("Description"), PinDescription);
-			Args.Add(TEXT("LineFeed2"), FText::FromString(TEXT("\n\n")));
-		}
-		else
-		{
-			Args.Add(TEXT("Description"), FText::GetEmpty());
-			Args.Add(TEXT("LineFeed2"), FText::GetEmpty());
-		}
-	
-		TooltipOut = FText::Format(LOCTEXT("PinTooltip", "{DisplayName}{LineFeed1}{PinType}{LineFeed2}{Description}"), Args).ToString(); 
+		Args.Add(TEXT("DisplayName"), FText::GetEmpty());
+		Args.Add(TEXT("LineFeed1"), FText::GetEmpty());
 	}
+
+
+	if (!PinDescription.IsEmpty())
+	{
+		Args.Add(TEXT("Description"), PinDescription);
+		Args.Add(TEXT("LineFeed2"), FText::FromString(TEXT("\n\n")));
+	}
+	else
+	{
+		Args.Add(TEXT("Description"), FText::GetEmpty());
+		Args.Add(TEXT("LineFeed2"), FText::GetEmpty());
+	}
+
+	TooltipOut = FText::Format(LOCTEXT("PinTooltip", "{DisplayName}{LineFeed1}{PinType}{LineFeed2}{Description}"), Args).ToString(); 
 }
 
 bool UFlowGraphSchema::CanShowDataTooltipForPin(const UEdGraphPin& Pin) const
@@ -761,40 +757,47 @@ bool UFlowGraphSchema::IsTitleBarPin(const UEdGraphPin& Pin) const
 void UFlowGraphSchema::BreakNodeLinks(UEdGraphNode& TargetNode) const
 {
 	Super::BreakNodeLinks(TargetNode);
-
-	UEdGraph* EdGraph = TargetNode.GetGraph();
-	if (IsValid(EdGraph))
-	{
-		EdGraph->NotifyGraphChanged();
-	}
 }
 
 void UFlowGraphSchema::BreakPinLinks(UEdGraphPin& TargetPin, bool bSendsNodeNotification) const
 {
 	const FScopedTransaction Transaction(LOCTEXT("GraphEd_BreakPinLinks", "Break Pin Links"));
 
-	Super::BreakPinLinks(TargetPin, bSendsNodeNotification);
+	TArray<UEdGraphPin*> CachedLinkedTo = TargetPin.LinkedTo;
 
-	// Cache the owning node because calling Super::BreakPinLinks might release the pointer
-	// to the pin owning node as a side effect of notify graph changed events. 
 	UFlowGraphNode* OwningFlowGraphNode = Cast<UFlowGraphNode>(TargetPin.GetOwningNodeUnchecked());
+	UEdGraph* EdGraph = (OwningFlowGraphNode) ? OwningFlowGraphNode->GetGraph() : nullptr;
 
-	// NOTE (gtaylor) It is possible for OwningFlowGraphNode to be null if the TargetPin has been orphaned.
+	Super::BreakPinLinks(TargetPin, bSendsNodeNotification);
 
 	if (TargetPin.bOrphanedPin)
 	{
 		if (OwningFlowGraphNode)
 		{
-			// this calls NotifyGraphChanged()
+			// this calls NotifyNodeChanged()
 			OwningFlowGraphNode->RemoveOrphanedPin(&TargetPin);
 		}
 	}
 	else if (bSendsNodeNotification)
 	{
-		UEdGraph* EdGraph = (OwningFlowGraphNode) ? OwningFlowGraphNode->GetGraph() : nullptr;
 		if (IsValid(EdGraph))
 		{
-			EdGraph->NotifyGraphChanged();
+			EdGraph->NotifyNodeChanged(OwningFlowGraphNode);
+		}
+	}
+
+	for (UEdGraphPin* OtherPin : CachedLinkedTo)
+	{
+		UFlowGraphNode* OtherOwningFlowGraphNode = Cast<UFlowGraphNode>(OtherPin->GetOwningNodeUnchecked());
+		
+		if (OtherPin->bOrphanedPin)
+		{
+			// this calls NotifyNodeChanged()
+			 OtherOwningFlowGraphNode->RemoveOrphanedPin(OtherPin);
+		}
+		else if (bSendsNodeNotification)
+		{
+			EdGraph->NotifyNodeChanged(OtherOwningFlowGraphNode);
 		}
 	}
 }
@@ -1112,7 +1115,7 @@ void UFlowGraphSchema::GetGraphNodeContextActions(FGraphContextMenuBuilder& Cont
 	}
 }
 
-bool UFlowGraphSchema::IsAddOnAllowedForSelectedObjects(const TArray<UObject*>& SelectedObjects, const UFlowNodeAddOn* AddOnTemplate) const
+bool UFlowGraphSchema::IsAddOnAllowedForSelectedObjects(const TArray<UObject*>& SelectedObjects, const UFlowNodeAddOn* AddOnTemplate)
 {
 	FLOW_ASSERT_ENUM_MAX(EFlowAddOnAcceptResult, 3);
 
@@ -1248,7 +1251,7 @@ void UFlowGraphSchema::GatherNodes()
 	}
 
 	// prevent adding assets while compiling blueprints
-	//  (because adding assets can cause blueprint compiles to be queued as a side-effect (via GetPlaceableNodeOrAddOnBlueprint))
+	//  (because adding assets can cause blueprint compiles to be queued as a side effect (via GetPlaceableNodeOrAddOnBlueprint))
 	if (GCompilingBlueprint)
 	{
 		return;

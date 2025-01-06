@@ -26,6 +26,8 @@ public:
 
 	void Construct(const FArguments& InArgs, UFlowGraphNode* InNode);
 
+	~SFlowGraphNode();
+	
 protected:
 	// SNodePanel::SNode
 	virtual void GetNodeInfoPopups(FNodeInfoContext* Context, TArray<FGraphInformationPopupInfo>& Popups) const override;

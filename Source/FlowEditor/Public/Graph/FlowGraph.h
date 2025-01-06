@@ -25,74 +25,71 @@ class FLOWEDITOR_API UFlowGraph : public UEdGraph
 {
 	GENERATED_UCLASS_BODY()
 
+protected:
+	/** Graph version number */
+	UPROPERTY()
+	int32 GraphVersion;
+
+	/** if set, graph modifications won't cause updates in internal tree structure
+	 *  flag allows freezing update during heavy changes like pasting new nodes 
+	 */
+	uint32 bLockUpdates : 1;
+
+	// is currently loading the Flow Graph (used to suppress some work during load)
+	uint32 bIsLoadingGraph : 1;
+
 public:
-	static UEdGraph* CreateGraph(UFlowAsset* InFlowAsset);
-	static UEdGraph* CreateGraph(UFlowAsset* InFlowAsset, TSubclassOf<UFlowGraphSchema> FlowSchema);
+	static void CreateGraph(UFlowAsset* InFlowAsset);
 	void RefreshGraph();
 
+protected:
+	void RecursivelyRefreshAddOns(UFlowGraphNode& FromFlowGraphNode);
+	static void RecursivelySetupAllFlowGraphNodesForEditing(UFlowGraphNode& FromFlowGraphNode);
+
+public:	
 	// UEdGraph
 	virtual void NotifyGraphChanged() override;
 	// --
 
-	/** Returns the FlowAsset that contains this graph */
 	UFlowAsset* GetFlowAsset() const;
-
-	//~ Begin UObject Interface.
-	virtual void Serialize(FArchive& Ar) override;
-	//~ End UObject Interface.
-
-	virtual void CollectAllNodeInstances(TSet<UObject*>& NodeInstances);
-	virtual bool CanRemoveNestedObject(UObject* TestObject) const;
-	virtual void OnNodeInstanceRemoved(UObject* NodeInstance);
-
-	UEdGraphPin* FindGraphNodePin(UEdGraphNode* Node, EEdGraphPinDirection Dir);
-
 	void ValidateAsset(FFlowMessageLog& MessageLog);
 
+	// UObject
+	virtual void Serialize(FArchive& Ar) override;
+	// --
+	
 public:
-
 	virtual void OnCreated();
 	virtual void OnLoaded();
 	virtual void OnSave();
 
 	virtual void Initialize();
-
-	virtual void UpdateAsset(int32 UpdateFlags = 0);
 	virtual void UpdateVersion();
 	virtual void MarkVersion();
 
-	virtual void OnSubNodeDropped();
-	virtual void OnNodesPasted(const FString& ImportStr);
-
+	void UpdateClassData();
+	virtual void UpdateAsset(const int32 UpdateFlags = 0);
 	bool UpdateUnknownNodeClasses();
 	void UpdateDeprecatedClasses();
+
+protected:
+	static void UpdateFlowGraphNodeErrorMessage(UFlowGraphNode& Node);
+	static FString GetDeprecationMessage(const UClass* Class);
+
+public:	
+	virtual void OnSubNodeDropped();
+	virtual void OnNodesPasted(const FString& ImportStr) {}
+
 	void RemoveOrphanedNodes();
-	void UpdateClassData();
+	virtual void CollectAllNodeInstances(TSet<UObject*>& NodeInstances);
+	virtual bool CanRemoveNestedObject(UObject* TestObject) const;
+	virtual void OnNodeInstanceRemoved(UObject* NodeInstance) {}
+
+	static UEdGraphPin* FindGraphNodePin(UEdGraphNode* Node, const EEdGraphPinDirection Direction);
 
 	bool IsLocked() const;
 	void LockUpdates();
 	void UnlockUpdates();
 
 	bool IsLoadingGraph() const { return bIsLoadingGraph; }
-
-protected:
-	static void RecursivelySetupAllFlowGraphNodesForEditing(UFlowGraphNode& FromFlowGraphNode);
-	void RecursivelyRefreshAddOns(UFlowGraphNode& FromFlowGraphNode);
-
-	static FString GetDeprecationMessage(const UClass* Class);
-	static void UpdateFlowGraphNodeErrorMessage(UFlowGraphNode& Node);
-
-protected:
-
-	/** Graph version number */
-	UPROPERTY()
-	int32 GraphVersion;
-	
-	/** if set, graph modifications won't cause updates in internal tree structure
-	 *  flag allows freezing update during heavy changes like pasting new nodes 
-	 */
-	uint32 bLockUpdates : 1;
-
-	// is currently loading the flow graph (used to suppress some work during load)
-	uint32 bIsLoadingGraph : 1;
 };

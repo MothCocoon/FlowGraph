@@ -210,18 +210,31 @@ public:
 	UFlowAsset* GetRootFlowInstance() const;
 
 //////////////////////////////////////////////////////////////////////////
-// UFlowComponent overrideable events
+// Custom Input and Output events
 
 public:
-	// Called when a Root flow asset triggers a CustomOutput
-	UFUNCTION(BlueprintImplementableEvent, DisplayName = "OnTriggerRootFlowOutputEvent")
-	void BP_OnTriggerRootFlowOutputEvent(UFlowAsset* RootFlowInstance, const FName& EventName);
+	// This will trigger a specific CustomInput on this components root flow
+	UFUNCTION(BlueprintCallable, Category = "RootFlow")
+	void TriggerRootFlowCustomInput(const FName& EventName) const;
 
-	virtual void OnTriggerRootFlowOutputEvent(UFlowAsset* RootFlowInstance, const FName& EventName) {}
+	// Called when a Root flow asset triggers a CustomOutput
+	UFUNCTION(BlueprintImplementableEvent, DisplayName = "OnRootFlowCustomEvent")
+	void BP_OnRootFlowCustomEvent(UFlowAsset* RootFlowInstance, const FName& EventName);
+
+	virtual void OnRootFlowCustomEvent(UFlowAsset* RootFlowInstance, const FName& EventName) {}
 
 	// UFlowAsset-only access
-	void OnTriggerRootFlowOutputEventDispatcher(UFlowAsset* RootFlowInstance, const FName& EventName);
+	void DispatchRootFlowCustomEvent(UFlowAsset* RootFlowInstance, const FName& EventName);
 	// ---
+
+	UE_DEPRECATED(5.5, "Please use OnRootFlowCustomEvent instead.")
+	void BP_OnTriggerRootFlowOutputEvent(UFlowAsset* RootFlowInstance, const FName& EventName);
+	
+	UE_DEPRECATED(5.5, "Please use OnRootFlowCustomEvent instead.")
+	virtual void OnTriggerRootFlowOutputEvent(UFlowAsset* RootFlowInstance, const FName& EventName);
+	
+	UE_DEPRECATED(5.5, "Please use OnTriggerRootFlowCustomOutputDispatcher instead.")
+	void OnTriggerRootFlowOutputEventDispatcher(UFlowAsset* RootFlowInstance, const FName& EventName);
 
 //////////////////////////////////////////////////////////////////////////
 // SaveGame
