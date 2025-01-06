@@ -1,4 +1,4 @@
-﻿{
+{
 	"FileVersion" : 3,
 	"Version" : 2.1,
 	"FriendlyName" : "Flow",
@@ -32,6 +32,10 @@
 		},
 		{
 			"Name": "EditorScriptingUtilities",
+			"Enabled": true
+		},
+		{
+			"Name": "EngineAssetDefinitions",
 			"Enabled": true
 		},
 		{
