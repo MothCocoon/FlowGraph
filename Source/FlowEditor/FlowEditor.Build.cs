@@ -18,12 +18,12 @@ public class FlowEditor : ModuleRules
 			"AssetSearch",
 			"EditorSubsystem",
 			"Flow",
-			"MessageLog",
-			"AIModule", // For BlueprintNodeHelpers::DescribeProperty (could be copy/pasted out to remove editor-only dependency)
+			"MessageLog"
 		});
 
 		PrivateDependencyModuleNames.AddRange(new[]
 		{
+			"AIModule", // For BlueprintNodeHelpers::DescribeProperty (could be copy/pasted out to remove editor-only dependency)
 			"ApplicationCore",
 			"AssetDefinition",
 			"AssetTools",
@@ -38,6 +38,7 @@ public class FlowEditor : ModuleRules
 			"EditorScriptingUtilities",
 			"EditorStyle",
 			"Engine",
+			"EngineAssetDefinitions",
 			"GraphEditor",
 			"GameplayTags",
 			"InputCore",

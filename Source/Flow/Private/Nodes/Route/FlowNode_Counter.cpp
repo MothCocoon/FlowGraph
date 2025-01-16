@@ -10,7 +10,7 @@ UFlowNode_Counter::UFlowNode_Counter(const FObjectInitializer& ObjectInitializer
 	, CurrentSum(0)
 {
 #if WITH_EDITOR
-	Category = TEXT("Flow|Routing");
+	Category = TEXT("Route");
 	NodeDisplayStyle = FlowNodeStyle::Condition;
 #endif
 

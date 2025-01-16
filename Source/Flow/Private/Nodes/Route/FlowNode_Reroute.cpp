@@ -8,7 +8,7 @@ UFlowNode_Reroute::UFlowNode_Reroute(const FObjectInitializer& ObjectInitializer
 	: Super(ObjectInitializer)
 {
 #if WITH_EDITOR
-	Category = TEXT("Flow|Routing");
+	Category = TEXT("Route");
 #endif
 
 	AllowedSignalModes = {EFlowSignalMode::Enabled, EFlowSignalMode::Disabled};
