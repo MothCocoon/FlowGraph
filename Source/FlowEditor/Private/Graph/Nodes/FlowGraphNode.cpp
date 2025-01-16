@@ -284,6 +284,8 @@ void UFlowGraphNode::InsertNewNode(UEdGraphPin* FromPin, UEdGraphPin* NewLinkPin
 
 void UFlowGraphNode::ReconstructNode()
 {
+	RefreshContextPins();
+
 	if (!ShouldReconstructNode())
 	{
 		// This ensures the graph editor 'Refresh' button still rebuilds all of the graph widgets even if the FlowGraphNode has nothing to update.
@@ -309,7 +311,6 @@ void UFlowGraphNode::ReconstructNode()
 	InputPins.Reset();
 	OutputPins.Reset();
 	
-	RefreshContextPins();
 	AllocateDefaultPins();
 	RewireOldPinsToNewPins(OldPins);
 
