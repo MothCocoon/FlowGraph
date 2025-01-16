@@ -247,9 +247,7 @@ bool UFlowAsset::IsFlowNodeClassInAllowedClasses(const UClass& FlowNodeClass, co
 		for (const TSubclassOf<UFlowNodeBase> AllowedNodeClass : AllowedNodeClasses)
 		{
 			// If a RequiredAncestor is provided, the AllowedNodeClass must be a subclass of the RequiredAncestor
-			if (AllowedNodeClass && 
-				FlowNodeClass.IsChildOf(AllowedNodeClass) &&
-				(!RequiredAncestor || AllowedNodeClass->IsChildOf(RequiredAncestor)))
+			if (AllowedNodeClass && FlowNodeClass.IsChildOf(AllowedNodeClass) && (!RequiredAncestor || AllowedNodeClass->IsChildOf(RequiredAncestor)))
 			{
 				bAllowedInAsset = true;
 
@@ -348,7 +346,7 @@ void UFlowAsset::HarvestNodeConnections(UFlowNode* TargetNode)
 			TargetNodes.Add(Pair.Value);
 		}
 	}
-	
+
 	// Remove any invalid nodes
 	for (auto NodeIt = TargetNodes.CreateIterator(); NodeIt; ++NodeIt)
 	{
@@ -359,8 +357,6 @@ void UFlowAsset::HarvestNodeConnections(UFlowNode* TargetNode)
 		}
 	}
 
-	bool bAnyNodeDirty = false;
-	
 	for (UFlowNode* FlowNode : TargetNodes)
 	{
 		bool bNodeDirty = false;
@@ -369,7 +365,7 @@ void UFlowAsset::HarvestNodeConnections(UFlowNode* TargetNode)
 		const TArray<UEdGraphPin*>& GraphNodePins = FlowNode->GetGraphNode()->Pins;
 
 		for (const UEdGraphPin* ThisPin : GraphNodePins)
-		{			
+		{
 			const bool bIsExecPin = FFlowPin::IsExecPinCategory(ThisPin->PinType.PinCategory);
 			const bool bIsDataPin = FFlowPin::IsDataPinCategory(ThisPin->PinType.PinCategory);
 			const bool bIsOutputPin = (ThisPin->Direction == EGPD_Output);
@@ -397,11 +393,8 @@ void UFlowAsset::HarvestNodeConnections(UFlowNode* TargetNode)
 		}
 
 		// This check exists to ensure that we don't mark graph dirty, if none of connections changed
-		// Optimization: we need check it only until the first node would be marked dirty, as this already marks Flow Asset package dirty
-		if (bAnyNodeDirty == false)
 		{
 			const TMap<FName, FConnectedPin>& OldConnections = FlowNode->Connections;
-
 			if (FoundConnections.Num() != OldConnections.Num())
 			{
 				bNodeDirty = true;
@@ -427,7 +420,7 @@ void UFlowAsset::HarvestNodeConnections(UFlowNode* TargetNode)
 			}
 		}
 
-		if (bNodeDirty || bAnyNodeDirty)
+		if (bNodeDirty)
 		{
 			FlowNode->SetFlags(RF_Transactional);
 			FlowNode->Modify();
@@ -436,9 +429,6 @@ void UFlowAsset::HarvestNodeConnections(UFlowNode* TargetNode)
 			FlowNode->PostEditChange();
 		}
 	}
-
-	// NOTE (gtaylor) @mothdoctor, do we need to do anything with bGraphDirty [renamed by @HomerJohnston to bAnyNodeDirty] here?  
-	// It's scope seems like we wanted to do something at this point.
 }
 
 bool UFlowAsset::TryUpdateManagedFlowPinsForNode(UFlowNode& FlowNode)
@@ -1041,7 +1031,7 @@ TArray<UFlowNode*> UFlowAsset::GetNodesInExecutionOrder(UFlowNode* FirstIterated
 		}
 	}
 	FoundNodes.Shrink();
-	
+
 	return FoundNodes;
 }
 
