@@ -1,6 +1,6 @@
 // Copyright https://github.com/MothCocoon/FlowGraph/graphs/contributors
 
-#include "Nodes/World/FlowNode_OnActorUnregistered.h"
+#include "Nodes/Actor/FlowNode_OnActorUnregistered.h"
 
 #include UE_INLINE_GENERATED_CPP_BY_NAME(FlowNode_OnActorUnregistered)
 

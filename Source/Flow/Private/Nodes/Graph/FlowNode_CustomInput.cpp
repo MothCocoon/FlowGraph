@@ -1,6 +1,6 @@
 // Copyright https://github.com/MothCocoon/FlowGraph/graphs/contributors
 
-#include "Nodes/Route/FlowNode_CustomInput.h"
+#include "Nodes/Graph/FlowNode_CustomInput.h"
 #include "FlowSettings.h"
 
 #include UE_INLINE_GENERATED_CPP_BY_NAME(FlowNode_CustomInput)
@@ -16,6 +16,12 @@ UFlowNode_CustomInput::UFlowNode_CustomInput(const FObjectInitializer& ObjectIni
 void UFlowNode_CustomInput::ExecuteInput(const FName& PinName)
 {
 	TriggerFirstOutput(true);
+}
+
+void UFlowNode_CustomInput::PostEditImport()
+{
+	// Reset EventName after duplicating or copy/pasting
+	EventName = NAME_None;
 }
 
 #if WITH_EDITOR

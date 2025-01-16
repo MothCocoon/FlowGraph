@@ -10,7 +10,7 @@
 
 #include "FlowAsset.h"
 #include "Nodes/FlowPin.h"
-#include "Nodes/Route/FlowNode_Start.h"
+#include "Nodes/Graph/FlowNode_Start.h"
 
 #include "AssetRegistry/AssetRegistryModule.h"
 #include "AssetToolsModule.h"

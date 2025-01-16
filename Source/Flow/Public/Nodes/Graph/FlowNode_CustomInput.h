@@ -18,6 +18,9 @@ class FLOW_API UFlowNode_CustomInput : public UFlowNode_CustomEventBase
 protected:
 	virtual void ExecuteInput(const FName& PinName) override;
 
+public:
+	virtual void PostEditImport() override;
+
 #if WITH_EDITOR
 public:
 	virtual FText GetNodeTitle() const override;

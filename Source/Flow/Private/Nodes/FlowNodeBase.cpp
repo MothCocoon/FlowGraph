@@ -784,7 +784,8 @@ FString UFlowNodeBase::GetNodeDescription() const
 {
 	return K2_GetNodeDescription();
 }
-#endif
+
+#endif // WITH_EDITOR
 
 void UFlowNodeBase::SetNodeConfigText(const FText& NodeConfigText)
 {

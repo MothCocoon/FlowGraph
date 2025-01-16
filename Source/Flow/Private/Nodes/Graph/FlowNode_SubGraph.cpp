@@ -1,6 +1,6 @@
 // Copyright https://github.com/MothCocoon/FlowGraph/graphs/contributors
 
-#include "Nodes/Route/FlowNode_SubGraph.h"
+#include "Nodes/Graph/FlowNode_SubGraph.h"
 
 #include "FlowAsset.h"
 #include "FlowSettings.h"
@@ -19,7 +19,7 @@ UFlowNode_SubGraph::UFlowNode_SubGraph(const FObjectInitializer& ObjectInitializ
 	, bCanInstanceIdenticalAsset(false)
 {
 #if WITH_EDITOR
-	Category = TEXT("Flow|Graph");
+	Category = TEXT("Graph");
 	NodeDisplayStyle = FlowNodeStyle::SubGraph;
 
 	AllowedAssignedAssetClasses = {UFlowAsset::StaticClass()};

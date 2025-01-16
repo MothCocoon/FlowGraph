@@ -4,6 +4,7 @@
 
 #include "Graph/FlowGraph.h"
 #include "Graph/FlowGraphEditor.h"
+#include "Graph/FlowGraphSettings.h"
 #include "Graph/FlowGraphSchema.h"
 #include "Graph/FlowGraphUtils.h"
 #include "Graph/Nodes/FlowGraphNode.h"
@@ -198,6 +199,17 @@ UFlowGraphNode* FFlowGraphSchemaAction_NewNode::ImportNode(UEdGraph* ParentGraph
 	ParentGraph->NotifyGraphChanged();
 
 	return NewGraphNode;
+}
+
+FText FFlowGraphSchemaAction_NewNode::GetNodeCategory(const UFlowNodeBase* Node, const UFlowGraphSettings& GraphSettings)
+{
+	const FString* CategoryOverridenByUser = GraphSettings.OverridenNodeCategories.Find(Node->GetClass());
+	if (CategoryOverridenByUser && !CategoryOverridenByUser->IsEmpty())
+	{
+		return FText::FromString(*CategoryOverridenByUser);
+	}
+
+	return FText::FromString(Node->GetNodeCategory());
 }
 
 /////////////////////////////////////////////////////

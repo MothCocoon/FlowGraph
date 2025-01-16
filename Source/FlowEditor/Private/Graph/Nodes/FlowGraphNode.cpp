@@ -46,7 +46,9 @@ UFlowGraphNode::UFlowGraphNode(const FObjectInitializer& ObjectInitializer)
 
 void UFlowGraphNode::SetNodeTemplate(UFlowNodeBase* InFlowNode)
 {
+	ensure(InFlowNode);
 	NodeInstance = InFlowNode;
+	NodeInstanceClass = InFlowNode->GetClass();
 }
 
 const UFlowNodeBase* UFlowGraphNode::GetNodeTemplate() const
@@ -401,11 +403,7 @@ void UFlowGraphNode::RewireOldPinsToNewPins(TArray<UEdGraphPin*>& InOldPins)
 			OldPin->bOrphanedPin = true;
 			OldPin->bNotConnectable = true;
 			OrphanedOldPins.Add(OldPin);
-#if ENGINE_MAJOR_VERSION == 5 && ENGINE_MINOR_VERSION < 4
-			InOldPins.RemoveAt(OldPinIndex, 1, false);
-#else
 			InOldPins.RemoveAt(OldPinIndex, 1, EAllowShrinking::No);
-#endif
 		}
 	}
 
@@ -623,6 +621,17 @@ bool UFlowGraphNode::CanDuplicateNode() const
 	}
 
 	return true;
+}
+
+bool UFlowGraphNode::CanPasteHere( const UEdGraph* TargetGraph ) const
+{
+	const UFlowGraph* FlowGraph = Cast<UFlowGraph>(TargetGraph);
+	if (FlowGraph == nullptr)
+	{
+		return false;
+	}
+	
+	return Super::CanPasteHere(TargetGraph) && FlowGraph->GetFlowAsset()->IsNodeOrAddOnClassAllowed(NodeInstanceClass.Get());
 }
 
 TSharedPtr<SGraphNode> UFlowGraphNode::CreateVisualWidget()
@@ -1900,7 +1909,7 @@ bool UFlowGraphNode::CanAcceptSubNodeAsChild(const UFlowGraphNode& SubNodeToCons
 
 	if (OutReasonString)
 	{
-		*OutReasonString = FString::Printf(TEXT("%s cannot accept AddOn type %s"), *GetClass()->GetName(), *OtherFlowNodeSubNode->GetClass()->GetName());
+		*OutReasonString = FString::Printf(TEXT("%s cannot accept AddOn type %s"), *ThisFlowNodeBase->GetClass()->GetName(), *OtherFlowNodeSubNode->GetClass()->GetName());
 	}
 
 	return false;

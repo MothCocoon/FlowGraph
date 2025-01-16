@@ -3,7 +3,7 @@
 #include "Graph/Nodes/FlowGraphNode_Start.h"
 #include "Graph/Widgets/SFlowGraphNode_Start.h"
 
-#include "Nodes/Route/FlowNode_Start.h"
+#include "Nodes/Graph/FlowNode_Start.h"
 
 #include UE_INLINE_GENERATED_CPP_BY_NAME(FlowGraphNode_Start)
 

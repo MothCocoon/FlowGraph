@@ -1,6 +1,6 @@
 // Copyright https://github.com/MothCocoon/FlowGraph/graphs/contributors
 
-#include "Nodes/World/FlowNode_ExecuteComponent.h"
+#include "Nodes/Actor/FlowNode_ExecuteComponent.h"
 #include "Interfaces/FlowCoreExecutableInterface.h"
 #include "Interfaces/FlowExternalExecutableInterface.h"
 #include "Interfaces/FlowContextPinSupplierInterface.h"
@@ -20,8 +20,8 @@ UFlowNode_ExecuteComponent::UFlowNode_ExecuteComponent()
 	: Super()
 {
 #if WITH_EDITOR
-	Category = TEXT("Flow|Owner");
-#endif // WITH_EDITOR
+	Category = TEXT("Actor");
+#endif
 }
 
 void UFlowNode_ExecuteComponent::InitializeInstance()

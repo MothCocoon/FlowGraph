@@ -2,9 +2,8 @@
 
 #pragma once
 
-#include "Nodes/DataPins/FlowNode_DefineProperties.h"
+#include "Nodes/Graph/FlowNode_DefineProperties.h"
 #include "Interfaces/FlowNodeWithExternalDataPinSupplierInterface.h"
-
 #include "FlowNode_Start.generated.h"
 
 /**

@@ -1,6 +1,6 @@
 // Copyright https://github.com/MothCocoon/FlowGraph/graphs/contributors
 
-#include "Nodes/World/FlowNode_PlayLevelSequence.h"
+#include "Nodes/Actor/FlowNode_PlayLevelSequence.h"
 
 #include "FlowAsset.h"
 #include "FlowLogChannels.h"
@@ -36,7 +36,7 @@ UFlowNode_PlayLevelSequence::UFlowNode_PlayLevelSequence(const FObjectInitialize
 	, TimeDilation(1.0f)
 {
 #if WITH_EDITOR
-	Category = TEXT("World");
+	Category = TEXT("Actor");
 	NodeDisplayStyle = FlowNodeStyle::Latent;
 #endif
 

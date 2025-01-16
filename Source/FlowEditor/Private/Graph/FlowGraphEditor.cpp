@@ -8,10 +8,9 @@
 #include "Graph/FlowGraphEditorSettings.h"
 #include "Graph/FlowGraphSchema_Actions.h"
 #include "Graph/Nodes/FlowGraphNode.h"
-#include "Nodes/Route/FlowNode_SubGraph.h"
+#include "Nodes/Graph/FlowNode_SubGraph.h"
 
 #include "EdGraphUtilities.h"
-#include "GraphEditAction.h"
 #include "Framework/Application/SlateApplication.h"
 #include "Framework/Commands/GenericCommands.h"
 #include "GraphEditorActions.h"
@@ -532,14 +531,12 @@ bool SFlowGraphEditor::CanDeleteNodes() const
 		{
 			if (const UEdGraphNode* Node = Cast<UEdGraphNode>(*NodeIt))
 			{
-				if (!Node->CanUserDeleteNode())
+				if (Node->CanUserDeleteNode())
 				{
-					return false;
+					return true;
 				}
 			}
 		}
-
-		return SelectedNodes.Num() > 0;
 	}
 
 	return false;
@@ -593,13 +590,18 @@ void SFlowGraphEditor::CopySelectedNodes() const
 
 void SFlowGraphEditor::PrepareFlowGraphNodeForCopy(UFlowGraphNode& FlowGraphNode, const int32 ParentEdNodeIndex, FGraphPanelSelectionSet& NewSelectedNodes)
 {
-	FlowGraphNode.PrepareForCopying();
-
-	FlowGraphNode.CopySubNodeParentIndex = ParentEdNodeIndex;
-
 	const int32 ThisFlowGraphNodeIndex = NewSelectedNodes.Num();
+	bool bAlreadyInSet = false;
+	NewSelectedNodes.Add(&FlowGraphNode, &bAlreadyInSet);
+
+	if (bAlreadyInSet)
+	{
+		return;
+	}
+
+	FlowGraphNode.PrepareForCopying();
+	FlowGraphNode.CopySubNodeParentIndex = ParentEdNodeIndex;
 	FlowGraphNode.CopySubNodeIndex = ThisFlowGraphNodeIndex;
-	NewSelectedNodes.Add(&FlowGraphNode);
 
 	// append all subnodes for selection
 	for (UFlowGraphNode* SubNode : FlowGraphNode.SubNodes)

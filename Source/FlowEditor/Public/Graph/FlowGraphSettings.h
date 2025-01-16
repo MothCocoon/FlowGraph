@@ -95,8 +95,12 @@ class FLOWEDITOR_API UFlowGraphSettings : public UDeveloperSettings
 
 	/** Hide specific nodes from the Flow Palette without changing the source code.
 	* Requires restart after making a change. */
-	UPROPERTY(EditAnywhere, config, Category = "Nodes")
+	UPROPERTY(EditAnywhere, config, Category = "Nodes", meta = (ConfigRestartRequired = true))
 	TArray<TSubclassOf<class UFlowNode>> NodesHiddenFromPalette;
+
+	/** Allows anyone to override Flow Palette category for specific nodes without modifying source code.*/
+	UPROPERTY(EditAnywhere, config, Category = "Nodes")
+	TMap<TSubclassOf<class UFlowNode>, FString> OverridenNodeCategories;
 
 	/** Hide default pin names on simple nodes, reduces UI clutter */
 	UPROPERTY(EditAnywhere, config, Category = "Nodes")

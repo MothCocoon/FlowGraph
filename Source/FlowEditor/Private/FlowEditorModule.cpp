@@ -34,11 +34,11 @@
 
 #include "FlowAsset.h"
 #include "AddOns/FlowNodeAddOn.h"
-#include "Nodes/Route/FlowNode_CustomInput.h"
-#include "Nodes/Route/FlowNode_CustomOutput.h"
-#include "Nodes/Route/FlowNode_SubGraph.h"
-#include "Nodes/World/FlowNode_ComponentObserver.h"
-#include "Nodes/World/FlowNode_PlayLevelSequence.h"
+#include "Nodes/Actor/FlowNode_ComponentObserver.h"
+#include "Nodes/Actor/FlowNode_PlayLevelSequence.h"
+#include "Nodes/Graph/FlowNode_CustomInput.h"
+#include "Nodes/Graph/FlowNode_CustomOutput.h"
+#include "Nodes/Graph/FlowNode_SubGraph.h"
 
 #include "AssetToolsModule.h"
 #include "EdGraphUtilities.h"

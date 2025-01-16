@@ -2,7 +2,7 @@
 
 #pragma once
 
-#include "Nodes/World/FlowNode_ComponentObserver.h"
+#include "Nodes/Actor/FlowNode_ComponentObserver.h"
 #include "FlowNode_OnActorUnregistered.generated.h"
 
 /**

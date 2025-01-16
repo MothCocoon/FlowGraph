@@ -17,8 +17,8 @@
 #include "Nodes/FlowNode.h"
 #include "Nodes/FlowNodeAddOnBlueprint.h"
 #include "Nodes/FlowNodeBlueprint.h"
-#include "Nodes/Route/FlowNode_CustomInput.h"
-#include "Nodes/Route/FlowNode_Start.h"
+#include "Nodes/Graph/FlowNode_CustomInput.h"
+#include "Nodes/Graph/FlowNode_Start.h"
 #include "Nodes/Route/FlowNode_Reroute.h"
 
 #include "AssetRegistry/AssetRegistryModule.h"
@@ -26,7 +26,6 @@
 #include "EdGraphSchema_K2.h"
 #include "Editor.h"
 #include "Engine/MemberReference.h"
-#include "Engine/UserDefinedStruct.h"
 #include "Kismet/BlueprintTypeConversions.h"
 #include "Kismet2/KismetEditorUtilities.h"
 #include "ScopedTransaction.h"
@@ -1038,12 +1037,12 @@ void UFlowGraphSchema::GetFlowNodeActions(FGraphActionMenuBuilder& ActionMenuBui
 {
 	TArray<UFlowNodeBase*> FilteredNodes = GetFilteredPlaceableNodesOrAddOns(EditedFlowAsset, NativeFlowNodes, BlueprintFlowNodes);
 
-	for (const UFlowNodeBase* FlowNodeBase : FilteredNodes)
+	const UFlowGraphSettings& FlowGraphSettings = *UFlowGraphSettings::Get();
+	for (const UFlowNodeBase* FlowNode : FilteredNodes)
 	{
-		if ((CategoryName.IsEmpty() || CategoryName.Equals(FlowNodeBase->GetNodeCategory())) && !UFlowGraphSettings::Get()->NodesHiddenFromPalette.Contains(FlowNodeBase->GetClass()))
+		if ((CategoryName.IsEmpty() || CategoryName.Equals(FlowNode->GetNodeCategory())) && !FlowGraphSettings.NodesHiddenFromPalette.Contains(FlowNode->GetClass()))
 		{
-			const UFlowNode* FlowNode = CastChecked<UFlowNode>(FlowNodeBase);
-			TSharedPtr<FFlowGraphSchemaAction_NewNode> NewNodeAction(new FFlowGraphSchemaAction_NewNode(FlowNode));
+			TSharedPtr<FFlowGraphSchemaAction_NewNode> NewNodeAction(new FFlowGraphSchemaAction_NewNode(FlowNode, FlowGraphSettings));
 			ActionMenuBuilder.AddAction(NewNodeAction);
 		}
 	}

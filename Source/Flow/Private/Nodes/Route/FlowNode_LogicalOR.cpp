@@ -1,6 +1,6 @@
 // Copyright https://github.com/MothCocoon/FlowGraph/graphs/contributors
 
-#include "Nodes/Operators/FlowNode_LogicalOR.h"
+#include "Nodes/Route/FlowNode_LogicalOR.h"
 
 #include UE_INLINE_GENERATED_CPP_BY_NAME(FlowNode_LogicalOR)
 
@@ -11,7 +11,7 @@ UFlowNode_LogicalOR::UFlowNode_LogicalOR(const FObjectInitializer& ObjectInitial
 	, ExecutionCount(0)
 {
 #if WITH_EDITOR
-	Category = TEXT("Flow|Routing|Logic");
+	Category = TEXT("Route|Logic");
 	NodeDisplayStyle = FlowNodeStyle::Logic;
 #endif
 

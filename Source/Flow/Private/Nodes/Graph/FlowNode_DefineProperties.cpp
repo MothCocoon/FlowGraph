@@ -1,6 +1,6 @@
 // Copyright https://github.com/MothCocoon/FlowGraph/graphs/contributors
 
-#include "Nodes/DataPins/FlowNode_DefineProperties.h"
+#include "Nodes/Graph/FlowNode_DefineProperties.h"
 
 #include UE_INLINE_GENERATED_CPP_BY_NAME(FlowNode_DefineProperties)
 
@@ -9,7 +9,7 @@ UFlowNode_DefineProperties::UFlowNode_DefineProperties(const FObjectInitializer&
 {
 #if WITH_EDITOR
 	NodeDisplayStyle = FlowNodeStyle::InOut;
-	Category = TEXT("Flow|Graph");
+	Category = TEXT("Graph");
 #endif
 
 	InputPins.Empty();

@@ -1,6 +1,6 @@
 // Copyright https://github.com/MothCocoon/FlowGraph/graphs/contributors
 
-#include "Nodes/World/FlowNode_NotifyActor.h"
+#include "Nodes/Actor/FlowNode_NotifyActor.h"
 #include "FlowComponent.h"
 #include "FlowSubsystem.h"
 
@@ -16,7 +16,7 @@ UFlowNode_NotifyActor::UFlowNode_NotifyActor(const FObjectInitializer& ObjectIni
 	, NetMode(EFlowNetMode::Authority)
 {
 #if WITH_EDITOR
-	Category = TEXT("Notifies");
+	Category = TEXT("Actor");
 #endif
 }
 

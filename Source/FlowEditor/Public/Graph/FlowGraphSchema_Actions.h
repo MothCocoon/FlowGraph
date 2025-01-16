@@ -8,6 +8,8 @@
 #include "Nodes/FlowNode.h"
 #include "FlowGraphSchema_Actions.generated.h"
 
+class UFlowGraphSettings;
+
 /** Action to add a node to the graph */
 USTRUCT()
 struct FLOWEDITOR_API FFlowGraphSchemaAction_NewNode : public FEdGraphSchemaAction
@@ -26,19 +28,17 @@ struct FLOWEDITOR_API FFlowGraphSchemaAction_NewNode : public FEdGraphSchemaActi
 	virtual FName GetTypeId() const override { return StaticGetTypeId(); }
 
 	FFlowGraphSchemaAction_NewNode()
-		: FEdGraphSchemaAction()
-		, NodeClass(nullptr)
+		: NodeClass(nullptr)
 	{
 	}
 
-	FFlowGraphSchemaAction_NewNode(UClass* Node)
-		: FEdGraphSchemaAction()
-		, NodeClass(Node)
+	explicit FFlowGraphSchemaAction_NewNode(UClass* InNodeClass)
+		: NodeClass(InNodeClass)
 	{
 	}
 
-	FFlowGraphSchemaAction_NewNode(const UFlowNode* Node)
-		: FEdGraphSchemaAction(FText::FromString(Node->GetNodeCategory()), Node->GetNodeTitle(), Node->GetNodeToolTip(), 0, FText::FromString(Node->GetClass()->GetMetaData("Keywords")))
+	explicit FFlowGraphSchemaAction_NewNode(const UFlowNodeBase* Node, const UFlowGraphSettings& GraphSettings)
+		: FEdGraphSchemaAction(GetNodeCategory(Node, GraphSettings), Node->GetNodeTitle(), Node->GetNodeToolTip(), 0, FText::FromString(Node->GetClass()->GetMetaData("Keywords")))
 		, NodeClass(Node->GetClass())
 	{
 	}
@@ -50,6 +50,9 @@ struct FLOWEDITOR_API FFlowGraphSchemaAction_NewNode : public FEdGraphSchemaActi
 	static UFlowGraphNode* CreateNode(class UEdGraph* ParentGraph, UEdGraphPin* FromPin, const UClass* NodeClass, const FVector2D Location, const bool bSelectNewNode = true);
 	static UFlowGraphNode* RecreateNode(UEdGraph* ParentGraph, UEdGraphNode* OldInstance, UFlowNode* FlowNode);
 	static UFlowGraphNode* ImportNode(class UEdGraph* ParentGraph, UEdGraphPin* FromPin, const UClass* NodeClass, const FGuid& NodeGuid, const FVector2D Location);
+
+private:
+	static FText GetNodeCategory(const UFlowNodeBase* Node, const UFlowGraphSettings& GraphSettings);
 };
 
 /** Action to add a subnode to the selected node */

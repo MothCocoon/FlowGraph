@@ -1,6 +1,6 @@
 // Copyright https://github.com/MothCocoon/FlowGraph/graphs/contributors
 
-#include "Nodes/World/FlowNode_OnNotifyFromActor.h"
+#include "Nodes/Actor/FlowNode_OnNotifyFromActor.h"
 #include "FlowComponent.h"
 
 #include UE_INLINE_GENERATED_CPP_BY_NAME(FlowNode_OnNotifyFromActor)
@@ -10,7 +10,6 @@ UFlowNode_OnNotifyFromActor::UFlowNode_OnNotifyFromActor(const FObjectInitialize
 	, bRetroactive(false)
 {
 #if WITH_EDITOR
-	Category = TEXT("Notifies");
 	NodeDisplayStyle = FlowNodeStyle::Condition;
 #endif
 }
