@@ -204,12 +204,14 @@ void UFlowSubsystem::RemoveSubFlow(UFlowNode_SubGraph* SubGraphNode, const EFlow
 	if (InstancedSubFlows.Contains(SubGraphNode))
 	{
 		UFlowAsset* AssetInstance = InstancedSubFlows[SubGraphNode];
-		AssetInstance->NodeOwningThisAssetInstance = nullptr;
-
+		
 		SubGraphNode->GetFlowAsset()->ActiveSubGraphs.Remove(SubGraphNode);
 		InstancedSubFlows.Remove(SubGraphNode);
 
 		AssetInstance->FinishFlow(FinishPolicy);
+
+		// Make sure to set the NodeOwningThisAssetInstance after the FinishFlow call, as it may be needed in the FinishFlow method
+		AssetInstance->NodeOwningThisAssetInstance = nullptr;
 	}
 }
 
