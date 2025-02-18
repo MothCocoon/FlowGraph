@@ -155,6 +155,8 @@ void UFlowNode_Timer::Cleanup()
 	StepTimerHandle.Invalidate();
 
 	SumOfSteps = 0.0f;
+
+	Super::Cleanup();
 }
 
 void UFlowNode_Timer::OnSave_Implementation()

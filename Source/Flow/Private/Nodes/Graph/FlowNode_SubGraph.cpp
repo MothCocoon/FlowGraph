@@ -86,6 +86,8 @@ void UFlowNode_SubGraph::Cleanup()
 	{
 		GetFlowSubsystem()->RemoveSubFlow(this, EFlowFinishPolicy::Keep);
 	}
+
+	Super::Cleanup();
 }
 
 void UFlowNode_SubGraph::ForceFinishNode()

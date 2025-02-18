@@ -145,6 +145,8 @@ void UFlowNode_ComponentObserver::Cleanup()
 	RegisteredActors.Empty();
 
 	SuccessCount = 0;
+
+	Super::Cleanup();
 }
 
 #if WITH_EDITOR

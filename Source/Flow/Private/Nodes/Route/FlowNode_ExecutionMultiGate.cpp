@@ -96,6 +96,8 @@ void UFlowNode_ExecutionMultiGate::Cleanup()
 {
 	NextOutput = 0;
 	Completed.Reset();
+	
+	Super::Cleanup();
 }
 
 #if WITH_EDITOR
