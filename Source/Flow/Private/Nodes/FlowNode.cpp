@@ -919,6 +919,12 @@ void UFlowNode::Finish()
 
 void UFlowNode::Deactivate()
 {
+	if (SignalMode == EFlowSignalMode::PassThrough)
+	{
+		// there is nothing to deactivate, node was never active
+		return;
+	}
+	
 	if (GetFlowAsset()->FinishPolicy == EFlowFinishPolicy::Abort)
 	{
 		ActivationState = EFlowNodeState::Aborted;
