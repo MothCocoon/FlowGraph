@@ -711,6 +711,10 @@ FString UFlowGraphNode::GetNodeDescription() const
 {
 	if (NodeInstance && (GEditor->PlayWorld == nullptr || UFlowGraphEditorSettings::Get()->bShowNodeDescriptionWhilePlaying))
 	{
+		if (UFlowGraphEditorSettings::Get()->bShowAddonNodeDescriptions)
+		{
+			return NodeInstance->GetNodeDescriptionWithAddons();
+		}
 		return NodeInstance->GetNodeDescription();
 	}
 

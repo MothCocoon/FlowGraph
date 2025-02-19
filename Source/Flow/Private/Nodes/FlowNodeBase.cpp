@@ -784,6 +784,20 @@ FString UFlowNodeBase::GetNodeDescription() const
 {
 	return K2_GetNodeDescription();
 }
+
+FString UFlowNodeBase::GetNodeDescriptionWithAddons() const
+{
+	FString Description = GetNodeDescription();
+	FString AddonDescriptions = FString::JoinBy(AddOns,
+		LINE_TERMINATOR,
+		[](const UFlowNodeBase* Addon) { return Addon->GetNodeDescriptionWithAddons(); });
+	if (!AddonDescriptions.IsEmpty())
+	{
+		return Description.Append(LINE_TERMINATOR).Append(AddonDescriptions);
+	}
+
+	return Description;
+}
 #endif
 
 void UFlowNodeBase::SetNodeConfigText(const FText& NodeConfigText)

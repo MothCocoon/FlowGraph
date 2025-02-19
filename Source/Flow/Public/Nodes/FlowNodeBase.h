@@ -382,6 +382,9 @@ protected:
 public:
 	// Short summary of node's content - displayed over node as NodeInfoPopup
 	virtual FString GetNodeDescription() const;
+
+	// Complex summary of node's content including its addons
+	FString GetNodeDescriptionWithAddons() const;
 #endif
 
 protected:	

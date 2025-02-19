@@ -52,6 +52,10 @@ class FLOWEDITOR_API UFlowGraphEditorSettings : public UDeveloperSettings
 	
 	UPROPERTY(config, EditAnywhere, Category = "Nodes", meta = (EditCondition = "bShowSubGraphPreview"))
 	FVector2D SubGraphPreviewSize;
+	
+	// Display descriptions from attached addons in node descriptions
+	UPROPERTY(EditAnywhere, config, Category = "Nodes")
+	bool bShowAddonNodeDescriptions = true;
 
 	/** Enable hot reload for native flow nodes?
 	 * WARNING: hot reload can easily crash the editor and you can lose progress */
