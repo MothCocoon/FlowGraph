@@ -11,7 +11,8 @@ class UEdGraphNode;
 class UEdGraphPin;
 
 /**
-** Persistent subsystem supporting Flow Graph debugging
+ * Persistent subsystem supporting Flow Graph debugging.
+ * It might be utilized to use cook-specific graph debugger.
  */
 UCLASS()
 class FLOWDEBUGGER_API UFlowDebuggerSubsystem : public UEngineSubsystem
