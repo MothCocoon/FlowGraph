@@ -2,8 +2,10 @@
 
 #include "Graph/Nodes/FlowGraphNode.h"
 
+#include "FlowAsset.h"
 #include "AddOns/FlowNodeAddOn.h"
-#include "Asset/FlowDebuggerSubsystem.h"
+#include "Nodes/FlowNode.h"
+
 #include "FlowEditorCommands.h"
 #include "Graph/FlowGraph.h"
 #include "Graph/FlowGraphEditorSettings.h"
@@ -11,8 +13,8 @@
 #include "Graph/FlowGraphSettings.h"
 #include "Graph/Widgets/SFlowGraphNode.h"
 #include "Graph/Widgets/SGraphEditorActionMenuFlow.h"
-#include "FlowAsset.h"
-#include "Nodes/FlowNode.h"
+
+#include "Debugger/FlowDebuggerSubsystem.h"
 
 #include "BlueprintNodeHelpers.h"
 #include "Developer/ToolMenus/Public/ToolMenus.h"
@@ -60,7 +62,7 @@ UFlowNodeBase* UFlowGraphNode::GetFlowNodeBase() const
 {
 	if (NodeInstance)
 	{
-		if (UFlowNode* FlowNode = Cast<UFlowNode>(NodeInstance))
+		if (const UFlowNode* FlowNode = Cast<UFlowNode>(NodeInstance))
 		{
 			if (const UFlowAsset* InspectedInstance = FlowNode->GetFlowAsset()->GetInspectedInstance())
 			{
@@ -290,7 +292,7 @@ void UFlowGraphNode::ReconstructNode()
 
 	if (!ShouldReconstructNode())
 	{
-		// This ensures the graph editor 'Refresh' button still rebuilds all of the graph widgets even if the FlowGraphNode has nothing to update.
+		// This ensures the graph editor 'Refresh' button still rebuilds all the graph widgets even if the FlowGraphNode has nothing to update.
 		(void) OnReconstructNodeCompleted.ExecuteIfBound();
 
 		return;
@@ -325,7 +327,10 @@ void UFlowGraphNode::ReconstructNode()
 	}
 
 	// remove expired data from deleted nodes and pins
-	UFlowDebuggerSubsystem::CleanupTraits(this);
+	if (UFlowDebuggerSubsystem* DebuggerSubsystem = GEngine->GetEngineSubsystem<UFlowDebuggerSubsystem>())
+	{
+		DebuggerSubsystem->CleanupTraits(this);
+	}
 
 	bNeedsFullReconstruction = false;
 	bIsReconstructingNode = false;
@@ -430,6 +435,7 @@ void UFlowGraphNode::RewireOldPinsToNewPins(TArray<UEdGraphPin*>& InOldPins)
 					OutputPins.Add(OrphanedPin);
 					break;
 				}
+				default: ;
 			}
 		}
 	}
@@ -887,7 +893,10 @@ void UFlowGraphNode::RemoveOrphanedPin(UEdGraphPin* Pin)
 	const FScopedTransaction Transaction(LOCTEXT("RemoveOrphanedPin", "Remove Orphaned Pin"));
 	Modify();
 
-	UFlowDebuggerSubsystem::ClearPinTraits(Pin);
+	if (UFlowDebuggerSubsystem* DebuggerSubsystem = GEngine->GetEngineSubsystem<UFlowDebuggerSubsystem>())
+	{
+		DebuggerSubsystem->ClearPinTraits(Pin);
+	}
 
 	Pin->MarkAsGarbage();
 	Pins.Remove(Pin);
@@ -981,7 +990,10 @@ void UFlowGraphNode::RemoveInstancePin(UEdGraphPin* Pin)
 	const FScopedTransaction Transaction(LOCTEXT("RemoveInstancePin", "Remove Instance Pin"));
 	Modify();
 
-	UFlowDebuggerSubsystem::ClearPinTraits(Pin);
+	if (UFlowDebuggerSubsystem* DebuggerSubsystem = GEngine->GetEngineSubsystem<UFlowDebuggerSubsystem>())
+	{
+		DebuggerSubsystem->ClearPinTraits(Pin);
+	}
 
 	UFlowNode* FlowNode = Cast<UFlowNode>(NodeInstance);
 	if (Pin->Direction == EGPD_Input)
@@ -1130,11 +1142,15 @@ void UFlowGraphNode::OnInputTriggered(const int32 Index)
 {
 	if (InputPins.IsValidIndex(Index))
 	{
-		const TArray<EFlowTraitType> HitTraitTypes = UFlowDebuggerSubsystem::SetAllTraitsHit(InputPins[Index], true);
-		if (HitTraitTypes.Contains(EFlowTraitType::Breakpoint))
+		if (UFlowDebuggerSubsystem* DebuggerSubsystem = GEngine->GetEngineSubsystem<UFlowDebuggerSubsystem>())
 		{
-			TryPausingSession(true);
+			const TArray<EFlowTraitType> HitTraitTypes = DebuggerSubsystem->SetAllTraitsHit(InputPins[Index], true);
+			if (HitTraitTypes.Contains(EFlowTraitType::Breakpoint))
+			{
+				TryPausingSession(true);
+			}
 		}
+		
 	}
 
 	TryPausingSession(false);
@@ -1144,10 +1160,13 @@ void UFlowGraphNode::OnOutputTriggered(const int32 Index)
 {
 	if (OutputPins.IsValidIndex(Index))
 	{
-		const TArray<EFlowTraitType> HitTraitTypes = UFlowDebuggerSubsystem::SetAllTraitsHit(OutputPins[Index], true);
-		if (HitTraitTypes.Contains(EFlowTraitType::Breakpoint))
+		if (UFlowDebuggerSubsystem* DebuggerSubsystem = GEngine->GetEngineSubsystem<UFlowDebuggerSubsystem>())
 		{
-			TryPausingSession(true);
+			const TArray<EFlowTraitType> HitTraitTypes = DebuggerSubsystem->SetAllTraitsHit(OutputPins[Index], true);
+			if (HitTraitTypes.Contains(EFlowTraitType::Breakpoint))
+			{
+				TryPausingSession(true);
+			}
 		}
 	}
 
@@ -1157,10 +1176,14 @@ void UFlowGraphNode::OnOutputTriggered(const int32 Index)
 void UFlowGraphNode::TryPausingSession(bool bPauseSession)
 {
 	// Node breakpoints waits on any pin triggered
-	const TArray<EFlowTraitType> HitTraitTypes = UFlowDebuggerSubsystem::SetAllTraitsHit(this, true);
-	if (HitTraitTypes.Contains(EFlowTraitType::Breakpoint))
+	UFlowDebuggerSubsystem* DebuggerSubsystem = GEngine->GetEngineSubsystem<UFlowDebuggerSubsystem>();
+	if (DebuggerSubsystem)
 	{
-		bPauseSession = true;
+		const TArray<EFlowTraitType> HitTraitTypes = DebuggerSubsystem->SetAllTraitsHit(this, true);
+		if (HitTraitTypes.Contains(EFlowTraitType::Breakpoint))
+		{
+			bPauseSession = true;
+		}
 	}
 
 	if (bPauseSession)
@@ -1168,7 +1191,10 @@ void UFlowGraphNode::TryPausingSession(bool bPauseSession)
 		FEditorDelegates::ResumePIE.AddUObject(this, &UFlowGraphNode::OnResumePIE);
 		FEditorDelegates::EndPIE.AddUObject(this, &UFlowGraphNode::OnEndPIE);
 
-		UFlowDebuggerSubsystem::PausePlaySession();
+		if (DebuggerSubsystem)
+		{
+			DebuggerSubsystem->PausePlaySession();
+		}
 	}
 }
 
@@ -1187,10 +1213,13 @@ void UFlowGraphNode::ResetBreakpoints()
 	FEditorDelegates::ResumePIE.RemoveAll(this);
 	FEditorDelegates::EndPIE.RemoveAll(this);
 
-	UFlowDebuggerSubsystem::SetTraitHit(this, EFlowTraitType::Breakpoint, false);
-	for (UEdGraphPin* Pin : Pins)
+	if (UFlowDebuggerSubsystem* DebuggerSubsystem = GEngine->GetEngineSubsystem<UFlowDebuggerSubsystem>())
 	{
-		UFlowDebuggerSubsystem::SetTraitHit(Pin, EFlowTraitType::Breakpoint, false);
+		DebuggerSubsystem->SetTraitHit(this, EFlowTraitType::Breakpoint, false);
+		for (const UEdGraphPin* Pin : Pins)
+		{
+			DebuggerSubsystem->SetTraitHit(Pin, EFlowTraitType::Breakpoint, false);
+		}
 	}
 }
 
@@ -1345,7 +1374,7 @@ bool UFlowGraphNode::HavePinsChanged() const
 	// Compare valid pin names
 	for (const FFlowPin& FlowNodePin : AllFlowNodePins)
 	{
-		if (!AllGraphNodePins.ContainsByPredicate([&FlowNodePin](UEdGraphPin* GraphNodePin)
+		if (!AllGraphNodePins.ContainsByPredicate([&FlowNodePin](const UEdGraphPin* GraphNodePin)
 		{
 			return GraphNodePin->PinName == FlowNodePin.PinName;
 		}))

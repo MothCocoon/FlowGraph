@@ -97,7 +97,7 @@ public:
 
 	// variants of K2Node methods
 	void RewireOldPinsToNewPins(TArray<UEdGraphPin*>& InOldPins);
-	void ReconstructSinglePin(UEdGraphPin* NewPin, UEdGraphPin* OldPin);
+	static void ReconstructSinglePin(UEdGraphPin* NewPin, UEdGraphPin* OldPin);
 	// --
 
 	// UEdGraphNode

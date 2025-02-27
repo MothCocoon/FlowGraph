@@ -9,6 +9,7 @@
 
 class FFlowAssetEditor;
 class IDetailsView;
+class UFlowDebuggerSubsystem;
 
 /**
  *
@@ -29,8 +30,9 @@ protected:
 
 	TWeakPtr<FFlowAssetEditor> FlowAssetEditor;
 	TSharedPtr<IDetailsView> DetailsView;
-
 	TSharedPtr<FUICommandList> CommandList;
+
+	TWeakObjectPtr<UFlowDebuggerSubsystem> DebuggerSubsystem;
 
 public:
 	void Construct(const FArguments& InArgs, const TSharedPtr<FFlowAssetEditor> InAssetEditor);
@@ -122,7 +124,7 @@ private:
 	void OnEnableBreakpoint() const;
 	void OnEnablePinBreakpoint();
 
-	bool CanEnableBreakpoint();
+	bool CanEnableBreakpoint() const;
 	bool CanEnablePinBreakpoint();
 
 	void OnDisableBreakpoint() const;

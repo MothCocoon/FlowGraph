@@ -20,6 +20,11 @@
 			"LoadingPhase" : "PreDefault"
 		},
 		{
+			"Name" : "FlowDebugger",
+			"Type" : "DeveloperTool",
+			"LoadingPhase" : "PreDefault"
+		},
+		{
 			"Name" : "FlowEditor",
 			"Type" : "Editor",
 			"LoadingPhase" : "PreDefault"

@@ -2,7 +2,6 @@
 
 #pragma once
 
-#include "Asset/FlowDebuggerSubsystem.h"
 #include "Engine/DeveloperSettings.h"
 #include "FlowGraphEditorSettings.generated.h"
 
@@ -14,31 +13,16 @@ enum class EFlowNodeDoubleClickTarget : uint8
 	PrimaryAssetOrNodeDefinition UMETA(Tooltip = "First try opening the asset then if there is none, open the node class") 
 };
 
-USTRUCT()
-struct FLOWEDITOR_API FFlowTraitSettings
-{
-	GENERATED_BODY()
-	
-	UPROPERTY()
-	TArray<FFlowDebugTrait> NodeTraits;
-
-	UPROPERTY()
-	TArray<FFlowDebugTrait> PinTraits;
-
-	bool operator==(const FFlowTraitSettings& Other) const
-	{
-		return NodeTraits == Other.NodeTraits
-			&& PinTraits == Other.PinTraits;
-	}
-};
-
 /**
  *
  */
 UCLASS(Config = EditorPerProjectUserSettings, meta = (DisplayName = "Flow Graph"))
 class FLOWEDITOR_API UFlowGraphEditorSettings : public UDeveloperSettings
 {
-	GENERATED_UCLASS_BODY()
+	GENERATED_BODY()
+
+public:
+	UFlowGraphEditorSettings();
 
 	static UFlowGraphEditorSettings* Get() { return StaticClass()->GetDefaultObject<UFlowGraphEditorSettings>(); }
 
@@ -82,10 +66,6 @@ class FLOWEDITOR_API UFlowGraphEditorSettings : public UDeveloperSettings
 
 	UPROPERTY(EditAnywhere, config, Category = "Wires")
 	bool bHighlightOutputWiresOfSelectedNodes;
-
-	/** Maps Blueprint path to settings such as breakpoints */
-	UPROPERTY(config)
-	TMap<FGuid, FFlowTraitSettings> PerNodeTraits;
 
 public:
 	virtual FName GetCategoryName() const override { return FName("Flow Graph"); }
