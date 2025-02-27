@@ -300,6 +300,8 @@ void UFlowNode_PlayLevelSequence::Cleanup()
 #if ENABLE_VISUAL_LOG
 	UE_VLOG(this, LogFlow, Log, TEXT("Finished playback: %s"), *Sequence.ToString());
 #endif
+
+	Super::Cleanup();
 }
 
 FString UFlowNode_PlayLevelSequence::GetPlaybackProgress() const

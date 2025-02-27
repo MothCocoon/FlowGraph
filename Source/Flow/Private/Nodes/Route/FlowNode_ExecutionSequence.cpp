@@ -42,6 +42,8 @@ void UFlowNode_ExecutionSequence::OnLoad_Implementation()
 void UFlowNode_ExecutionSequence::Cleanup()
 {
 	ExecutedConnections.Empty();
+
+	Super::Cleanup();
 }
 
 void UFlowNode_ExecutionSequence::ExecuteNewConnections()
