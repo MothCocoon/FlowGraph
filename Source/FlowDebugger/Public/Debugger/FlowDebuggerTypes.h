@@ -4,20 +4,9 @@
 
 #include "FlowDebuggerTypes.generated.h"
 
-UENUM()
-enum class EFlowTraitType
-{
-	Breakpoint, // default trait type
-
-	// ^ Add new trait types above here ^
-	Max
-};
-
-ENUM_RANGE_BY_COUNT(EFlowTraitType, EFlowTraitType::Max)
-
 // It can represent any trait added on the specific node instance, i.e. breakpoint
 USTRUCT()
-struct FLOWDEBUGGER_API FFlowDebugTrait
+struct FLOWDEBUGGER_API FFlowBreakpoint
 {
 	GENERATED_USTRUCT_BODY()
 
@@ -27,59 +16,40 @@ protected:
 	FGuid PinId;
 
 	UPROPERTY()
-	EFlowTraitType Type;
-
-	UPROPERTY()
 	uint8 bEnabled : 1;
 	uint8 bHit : 1;
 
 public:
-	FFlowDebugTrait()
-		: Type(EFlowTraitType::Breakpoint) // default trait type
-		, bEnabled(false)
+	FFlowBreakpoint()
+		: bEnabled(false)
 		, bHit(false)
 	{
 	};
 
-	explicit FFlowDebugTrait(const EFlowTraitType InType, const bool bInitialState)
-		: Type(InType)
-		, bEnabled(bInitialState)
+	explicit FFlowBreakpoint(const bool bInitialState)
+		: bEnabled(bInitialState)
 		, bHit(false)
 	{
 	};
 
-	explicit FFlowDebugTrait(const EFlowTraitType InType, const FGuid InPinId, const bool bInitialState)
+	explicit FFlowBreakpoint(const FGuid& InPinId, const bool bInitialState)
 		: PinId(InPinId)
-		, Type(InType)
 		, bEnabled(bInitialState)
 		, bHit(false)
 	{
 	};
 
+	void SetEnabled(const bool bNowEnabled) { bEnabled = bNowEnabled; }
+	void MarkAsHit(const bool bNowHit) { bHit = bNowHit; }
+
+	FGuid GetPinId() const { return PinId; }
+	bool MatchesGuid(const FGuid& OtherGuid) const { return PinId == OtherGuid; }
+	
 	bool IsEnabled() const { return bEnabled; }
 	bool IsHit() const { return bHit; }
 
-	bool operator==(const FFlowDebugTrait& Other) const
+	bool operator==(const FFlowBreakpoint& Other) const
 	{
-		return Type == Other.Type && PinId == Other.PinId;
-	}
-
-	friend class UFlowDebuggerSubsystem;
-};
-
-USTRUCT()
-struct FLOWDEBUGGER_API FFlowTraitSettings
-{
-	GENERATED_BODY()
-
-	UPROPERTY()
-	TArray<FFlowDebugTrait> NodeTraits;
-
-	UPROPERTY()
-	TArray<FFlowDebugTrait> PinTraits;
-
-	bool operator==(const FFlowTraitSettings& Other) const
-	{
-		return NodeTraits == Other.NodeTraits && PinTraits == Other.PinTraits;
+		return PinId == Other.PinId;
 	}
 };

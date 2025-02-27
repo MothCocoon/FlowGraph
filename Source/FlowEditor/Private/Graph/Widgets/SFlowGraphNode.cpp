@@ -129,18 +129,18 @@ void SFlowGraphNode::GetOverlayBrushes(bool bSelected, const FVector2D WidgetSiz
 	check(DebuggerSubsystem.IsValid());
 	
 	// Node breakpoint
-	if (const FFlowDebugTrait* Trait = DebuggerSubsystem->FindTrait(FlowGraphNode, EFlowTraitType::Breakpoint))
+	if (const FFlowBreakpoint* NodeBreakpoint = DebuggerSubsystem->FindBreakpoint(FlowGraphNode))
 	{
 		FOverlayBrushInfo NodeBrush;
 
-		if (Trait->IsHit())
+		if (NodeBreakpoint->IsHit())
 		{
 			NodeBrush.Brush = FFlowEditorStyle::Get()->GetBrush(TEXT("FlowGraph.BreakpointHit"));
 			NodeBrush.OverlayOffset.X = WidgetSize.X - 12.0f;
 		}
 		else
 		{
-			NodeBrush.Brush = FFlowEditorStyle::Get()->GetBrush(Trait->IsEnabled() ? TEXT("FlowGraph.BreakpointEnabled") : TEXT("FlowGraph.BreakpointDisabled"));
+			NodeBrush.Brush = FFlowEditorStyle::Get()->GetBrush(NodeBreakpoint->IsEnabled() ? TEXT("FlowGraph.BreakpointEnabled") : TEXT("FlowGraph.BreakpointDisabled"));
 			NodeBrush.OverlayOffset.X = WidgetSize.X;
 		}
 
@@ -152,21 +152,21 @@ void SFlowGraphNode::GetOverlayBrushes(bool bSelected, const FVector2D WidgetSiz
 	// Pin breakpoints
 	for (UEdGraphPin* Pin : FlowGraphNode->Pins)
 	{
-		if (const FFlowDebugTrait* Breakpoint = DebuggerSubsystem->FindTrait(Pin, EFlowTraitType::Breakpoint))
+		if (const FFlowBreakpoint* PinBreakpoint = DebuggerSubsystem->FindBreakpoint(Pin))
 		{
 			if (Pin->Direction == EGPD_Input)
 			{
-				GetPinBrush(true, WidgetSize.X, FlowGraphNode->InputPins.IndexOfByKey(Pin), Breakpoint, Brushes);
+				GetPinBrush(true, WidgetSize.X, FlowGraphNode->InputPins.IndexOfByKey(Pin), PinBreakpoint, Brushes);
 			}
 			else
 			{
-				GetPinBrush(false, WidgetSize.X, FlowGraphNode->OutputPins.IndexOfByKey(Pin), Breakpoint, Brushes);
+				GetPinBrush(false, WidgetSize.X, FlowGraphNode->OutputPins.IndexOfByKey(Pin), PinBreakpoint, Brushes);
 			}	
 		}
 	}
 }
 
-void SFlowGraphNode::GetPinBrush(const bool bLeftSide, const float WidgetWidth, const int32 PinIndex, const FFlowDebugTrait* Breakpoint, TArray<FOverlayBrushInfo>& Brushes) const
+void SFlowGraphNode::GetPinBrush(const bool bLeftSide, const float WidgetWidth, const int32 PinIndex, const FFlowBreakpoint* Breakpoint, TArray<FOverlayBrushInfo>& Brushes) const
 {
 	FOverlayBrushInfo PinBrush;
 

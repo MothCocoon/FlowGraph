@@ -326,10 +326,10 @@ void UFlowGraphNode::ReconstructNode()
 		DestroyPin(OldPin);
 	}
 
-	// remove expired data from deleted nodes and pins
+	// clear breakpoints for destroyed pins 
 	if (UFlowDebuggerSubsystem* DebuggerSubsystem = GEngine->GetEngineSubsystem<UFlowDebuggerSubsystem>())
 	{
-		DebuggerSubsystem->CleanupTraits(this);
+		DebuggerSubsystem->RemoveObsoletePinBreakpoints(this);
 	}
 
 	bNeedsFullReconstruction = false;
@@ -895,7 +895,7 @@ void UFlowGraphNode::RemoveOrphanedPin(UEdGraphPin* Pin)
 
 	if (UFlowDebuggerSubsystem* DebuggerSubsystem = GEngine->GetEngineSubsystem<UFlowDebuggerSubsystem>())
 	{
-		DebuggerSubsystem->ClearPinTraits(Pin);
+		DebuggerSubsystem->RemovePinBreakpoint(Pin);
 	}
 
 	Pin->MarkAsGarbage();
@@ -992,7 +992,7 @@ void UFlowGraphNode::RemoveInstancePin(UEdGraphPin* Pin)
 
 	if (UFlowDebuggerSubsystem* DebuggerSubsystem = GEngine->GetEngineSubsystem<UFlowDebuggerSubsystem>())
 	{
-		DebuggerSubsystem->ClearPinTraits(Pin);
+		DebuggerSubsystem->RemovePinBreakpoint(Pin);
 	}
 
 	UFlowNode* FlowNode = Cast<UFlowNode>(NodeInstance);
@@ -1065,10 +1065,8 @@ void UFlowGraphNode::RefreshContextPins()
 	const bool bPrevHasContextPins = bHasContextPins;
 	bHasContextPins = !ContextInputs.IsEmpty() || !ContextOutputs.IsEmpty();
 
-	// Skip the rest if the node went from no ContextPins to no ContextPins
-	const bool bMaintainedNoContextPins = !bPrevHasContextPins && !bHasContextPins;
-
-	if (bMaintainedNoContextPins)
+	// Skip the rest if the node went from "no ContextPins" to "no ContextPins"
+	if (!bPrevHasContextPins && !bHasContextPins)
 	{
 		// We don't have contextual pins to account for; or the contextual pins have not changed. We can skip now. 
 		return;
@@ -1144,8 +1142,7 @@ void UFlowGraphNode::OnInputTriggered(const int32 Index)
 	{
 		if (UFlowDebuggerSubsystem* DebuggerSubsystem = GEngine->GetEngineSubsystem<UFlowDebuggerSubsystem>())
 		{
-			const TArray<EFlowTraitType> HitTraitTypes = DebuggerSubsystem->SetAllTraitsHit(InputPins[Index], true);
-			if (HitTraitTypes.Contains(EFlowTraitType::Breakpoint))
+			if (DebuggerSubsystem->MarkAsHit(InputPins[Index]))
 			{
 				TryPausingSession(true);
 			}
@@ -1162,8 +1159,7 @@ void UFlowGraphNode::OnOutputTriggered(const int32 Index)
 	{
 		if (UFlowDebuggerSubsystem* DebuggerSubsystem = GEngine->GetEngineSubsystem<UFlowDebuggerSubsystem>())
 		{
-			const TArray<EFlowTraitType> HitTraitTypes = DebuggerSubsystem->SetAllTraitsHit(OutputPins[Index], true);
-			if (HitTraitTypes.Contains(EFlowTraitType::Breakpoint))
+			if (DebuggerSubsystem->MarkAsHit(OutputPins[Index]))
 			{
 				TryPausingSession(true);
 			}
@@ -1179,8 +1175,7 @@ void UFlowGraphNode::TryPausingSession(bool bPauseSession)
 	UFlowDebuggerSubsystem* DebuggerSubsystem = GEngine->GetEngineSubsystem<UFlowDebuggerSubsystem>();
 	if (DebuggerSubsystem)
 	{
-		const TArray<EFlowTraitType> HitTraitTypes = DebuggerSubsystem->SetAllTraitsHit(this, true);
-		if (HitTraitTypes.Contains(EFlowTraitType::Breakpoint))
+		if (DebuggerSubsystem->MarkAsHit(this))
 		{
 			bPauseSession = true;
 		}
@@ -1215,10 +1210,10 @@ void UFlowGraphNode::ResetBreakpoints()
 
 	if (UFlowDebuggerSubsystem* DebuggerSubsystem = GEngine->GetEngineSubsystem<UFlowDebuggerSubsystem>())
 	{
-		DebuggerSubsystem->SetTraitHit(this, EFlowTraitType::Breakpoint, false);
+		DebuggerSubsystem->ResetHit(this);
 		for (const UEdGraphPin* Pin : Pins)
 		{
-			DebuggerSubsystem->SetTraitHit(Pin, EFlowTraitType::Breakpoint, false);
+			DebuggerSubsystem->ResetHit(Pin);
 		}
 	}
 }

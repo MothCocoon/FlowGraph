@@ -27,63 +27,38 @@ public:
 	virtual void PausePlaySession() {}
 	virtual bool IsPlaySessionPaused() { return false; }
 
-	/** Adds trait with provided Type to OwnerNode. Node cannot accept traits of the same type */
-	virtual void CreateTrait(const UEdGraphNode* OwnerNode, EFlowTraitType Type, bool bEnabled);
-	/** Adds trait with provided Type to OwnerPin. Pin cannot accept traits of the same type */
-	virtual void CreateTrait(const UEdGraphPin* OwnerPin, EFlowTraitType Type, bool bEnabled);
+	virtual void AddBreakpoint(const UEdGraphNode* Node);
+	virtual void AddBreakpoint(const UEdGraphPin* Pin);
 
-	virtual void RemoveTrait(const UEdGraphNode* OwnerNode, EFlowTraitType Type);
-	virtual void RemoveTrait(const UEdGraphPin* OwnerPin, EFlowTraitType Type);
+	virtual void RemoveAllBreakpoints(const UEdGraphNode* Node);
+	virtual void RemoveNodeBreakpoint(const UEdGraphNode* Node);
+	virtual void RemovePinBreakpoint(const UEdGraphPin* Pin);
 
-	virtual void RemoveNodeTraitByPredicate(const UEdGraphNode* OwnerNode, const TFunctionRef<bool(const FFlowDebugTrait&)> Predicate);
-	virtual void RemovePinTraitByPredicate(const UEdGraphNode* OwnerNode, const TFunctionRef<bool(const FFlowDebugTrait&)> Predicate);
-	virtual void RemovePinTraitByPredicate(const UEdGraphPin* OwnerPin, const TFunctionRef<bool(const FFlowDebugTrait&)> Predicate);
+	/** Removes obsolete pin breakpoints for provided. Pin list can be changed during node reconstruction. */
+	virtual void RemoveObsoletePinBreakpoints(const UEdGraphNode* Node);
 
-	virtual void ClearNodeTraits(const UEdGraphNode* OwnerNode);
-	virtual void ClearPinTraits(const UEdGraphNode* OwnerNode);
-	virtual void ClearPinTraits(const UEdGraphPin* OwnerPin);
-	/** Removes stale pin traits for provided OwnerNode. Pin list can be changed after node reconstructing and traits for removed pins can stay in PerNodeSettings.
-	 * There is no need to clean node's traits here, cause all node events can be processed right away and there will be no stale nodes in PerNodeSettings */
-	virtual void CleanupTraits(const UEdGraphNode* OwnerNode);
+	virtual void ToggleBreakpoint(const UEdGraphNode* Node);
+	virtual void ToggleBreakpoint(const UEdGraphPin* Pin);
+	
+	virtual FFlowBreakpoint* FindBreakpoint(const UEdGraphNode* Node);
+	virtual FFlowBreakpoint* FindBreakpoint(const UEdGraphPin* Pin);
 
-	/** Finds OwnerNode's trait with provided Type
-	 * returns null if there are no OwnerNode's trait with provided Type */
-	virtual FFlowDebugTrait* FindTrait(const UEdGraphNode* OwnerNode, EFlowTraitType Type);
-	/** Finds OwnerPin's trait with Type
-	 * returns null if there are no OwnerPin's trait with provided Type */
-	virtual FFlowDebugTrait* FindTrait(const UEdGraphPin* OwnerPin, EFlowTraitType Type);
+	virtual void SetBreakpointEnabled(const UEdGraphNode* Node, bool bEnabled);
+	virtual void SetBreakpointEnabled(const UEdGraphPin* Pin, bool bEnabled);
 
-	virtual void SetTraitEnabled(const UEdGraphNode* OwnerNode, EFlowTraitType Type, bool bIsEnabled);
-	virtual void SetTraitEnabled(const UEdGraphPin* OwnerPin, EFlowTraitType Type, bool bIsEnabled);
+	virtual bool IsBreakpointEnabled(const UEdGraphNode* Node);
+	virtual bool IsBreakpointEnabled(const UEdGraphPin* Pin);
 
-	virtual bool IsTraitEnabled(const UEdGraphNode* OwnerNode, EFlowTraitType Type);
-	virtual bool IsTraitEnabled(const UEdGraphPin* OwnerPin, EFlowTraitType Type);
+	virtual bool MarkAsHit(const UEdGraphNode* Node);
+	virtual bool MarkAsHit(const UEdGraphPin* Pin);
 
-	virtual void ToggleTrait(const UEdGraphNode* OwnerNode, EFlowTraitType Type);
-	virtual void ToggleTrait(const UEdGraphPin* OwnerPin, EFlowTraitType Type);
+	virtual void ResetHit(const UEdGraphNode* Node);
+	virtual void ResetHit(const UEdGraphPin* Pin);
 
-	virtual TArray<EFlowTraitType> SetAllTraitsHit(const UEdGraphNode* OwnerNode, bool bHit);
-	virtual TArray<EFlowTraitType> SetAllTraitsHit(const UEdGraphPin* OwnerPin, bool bHit);
+	virtual bool IsBreakpointHit(const UEdGraphNode* Node);
+	virtual bool IsBreakpointHit(const UEdGraphPin* Pin);
 
-	virtual bool SetTraitHit(const UEdGraphNode* OwnerNode, EFlowTraitType Type, bool bHit);
-	virtual bool SetTraitHit(const UEdGraphPin* OwnerPin, EFlowTraitType Type, bool bHit);
-
-	virtual bool IsTraitHit(const UEdGraphNode* OwnerNode, EFlowTraitType Type);
-	virtual bool IsTraitHit(const UEdGraphPin* OwnerPin, EFlowTraitType Type);
-
-	/**	Retrieves the user settings associated with a FlowGraphNode.
-	*	returns null if the FlowGraphNode has default settings (no nodes and pins traits) */
-	virtual FFlowTraitSettings* GetPerNodeSettings(const UEdGraphNode* OwnerNode);
-
-	/**	Retrieves the Array of node's traits associated with a FlowGraphNode.
-	*	returns null if there are no node's traits associated with this FlowGraphNode */
-	virtual TArray<FFlowDebugTrait>* GetNodeTraits(const UEdGraphNode* OwnerNode);
-
-	/**	Retrieves the Array of pins' traits associated with a FlowGraphNode.
-	*	returns null if there are no pins' traits associated with this FlowGraphNode */
-	virtual TArray<FFlowDebugTrait>* GetPinTraits(const UEdGraphNode* OwnerNode);
-
-protected:	
-	/** Saves any modifications made to traits */
+protected:
+	/** Saves any modifications made to breakpoints */
 	virtual void SaveSettings();
 };

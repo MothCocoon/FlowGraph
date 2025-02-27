@@ -26,359 +26,225 @@ bool UFlowDebuggerSubsystem::ShouldCreateSubsystem(UObject* Outer) const
 	return true;
 }
 
-void UFlowDebuggerSubsystem::CreateTrait(const UEdGraphNode* OwnerNode, EFlowTraitType Type, bool bEnabled)
+void UFlowDebuggerSubsystem::AddBreakpoint(const UEdGraphNode* Node)
 {
 	UFlowDebuggerSettings* Settings = GetMutableDefault<UFlowDebuggerSettings>();
-	check(Settings);
-	FFlowTraitSettings& TraitSettings = Settings->PerNodeTraits.FindOrAdd(OwnerNode->NodeGuid);
+	FFlowBreakpoint& NodeBreakpoint = Settings->NodeBreakpoints.FindOrAdd(Node->NodeGuid);
 
-	// ensure that this node doesn't already contain a trait with provided type
-	checkSlow(!TraitSettings.NodeTraits.ContainsByPredicate([Type](const FFlowDebugTrait& Trait)
-		{
-		return Trait.Type == Type;
-		}));
-
-	TraitSettings.NodeTraits.Emplace(Type, bEnabled);
+	NodeBreakpoint.SetEnabled(true);
 	SaveSettings();
 }
 
-void UFlowDebuggerSubsystem::CreateTrait(const UEdGraphPin* OwnerPin, EFlowTraitType Type, bool bEnabled)
+void UFlowDebuggerSubsystem::AddBreakpoint(const UEdGraphPin* Pin)
 {
 	UFlowDebuggerSettings* Settings = GetMutableDefault<UFlowDebuggerSettings>();
-	check(Settings);
-	FFlowTraitSettings& TraitSettings = Settings->PerNodeTraits.FindOrAdd(OwnerPin->GetOwningNode()->NodeGuid);
+	FFlowBreakpoint& PinBreakpoint = Settings->PinBreakpoints.FindOrAdd(Pin->PinId);
 
-	// ensure that this pin doesn't already contain a trait with provided type
-	checkSlow(!TraitSettings.PinTraits.ContainsByPredicate([OwnerPin, Type](const FFlowDebugTrait& Trait)
-		{
-		return Trait.PinId == OwnerPin->PinId && Trait.Type == Type;
-		}));
-
-	TraitSettings.PinTraits.Emplace(Type, OwnerPin->PinId, bEnabled);
+	PinBreakpoint.SetEnabled(true);
 	SaveSettings();
 }
 
-void UFlowDebuggerSubsystem::RemoveTrait(const UEdGraphNode* OwnerNode, EFlowTraitType Type)
+void UFlowDebuggerSubsystem::RemoveAllBreakpoints(const UEdGraphNode* Node)
 {
-	RemoveNodeTraitByPredicate(OwnerNode, [Type](const FFlowDebugTrait& Trait)
-	{
-		return Trait.Type == Type;
-	});
-}
+	UFlowDebuggerSettings* Settings = GetMutableDefault<UFlowDebuggerSettings>();
 
-void UFlowDebuggerSubsystem::RemoveTrait(const UEdGraphPin* OwnerPin, EFlowTraitType Type)
-{
-	RemovePinTraitByPredicate(OwnerPin, [OwnerPin, Type](const FFlowDebugTrait& Trait)
+	if (Settings->NodeBreakpoints.Contains(Node->NodeGuid))
 	{
-		return Trait.PinId == OwnerPin->PinId && Trait.Type == Type;
-	});
-}
+		Settings->NodeBreakpoints.Remove(Node->NodeGuid);
+		SaveSettings();
+	}
 
-void UFlowDebuggerSubsystem::RemoveNodeTraitByPredicate(const UEdGraphNode* OwnerNode, const TFunctionRef<bool(const FFlowDebugTrait&)> Predicate)
-{
-	if (TArray<FFlowDebugTrait>* Traits = GetNodeTraits(OwnerNode))
+	for (const UEdGraphPin* Pin : Node->Pins)
 	{
-		if (Traits->RemoveAllSwap(Predicate, EAllowShrinking::No))
+		if (Settings->PinBreakpoints.Contains(Pin->PinId))
 		{
-			if (Traits->IsEmpty())
-			{
-				ClearNodeTraits(OwnerNode);
-			}
+			Settings->PinBreakpoints.Remove(Pin->PinId);
 			SaveSettings();
 		}
 	}
 }
 
-void UFlowDebuggerSubsystem::RemovePinTraitByPredicate(const UEdGraphNode* OwnerNode, const TFunctionRef<bool(const FFlowDebugTrait&)> Predicate)
+void UFlowDebuggerSubsystem::RemoveNodeBreakpoint(const UEdGraphNode* Node)
 {
-	if (TArray<FFlowDebugTrait>* Traits = GetPinTraits(OwnerNode))
+	UFlowDebuggerSettings* Settings = GetMutableDefault<UFlowDebuggerSettings>();
+	if (Settings->NodeBreakpoints.Contains(Node->NodeGuid))
 	{
-		if (Traits->RemoveAllSwap(Predicate, EAllowShrinking::No))
-		{
-			if (Traits->IsEmpty())
-			{
-				ClearPinTraits(OwnerNode);
-			}
-			SaveSettings();
-		}
-	}
-}
-
-void UFlowDebuggerSubsystem::RemovePinTraitByPredicate(const UEdGraphPin* OwnerPin, const TFunctionRef<bool(const FFlowDebugTrait&)> Predicate)
-{
-	const UEdGraphNode* OwnerNode = Cast<UEdGraphNode>(OwnerPin->GetOwningNode());
-	check(OwnerNode);
-
-	if (TArray<FFlowDebugTrait>* Traits = GetPinTraits(OwnerNode))
-	{
-		if (Traits->RemoveAllSwap(Predicate, EAllowShrinking::No))
-		{
-			if (Traits->IsEmpty())
-			{
-				ClearPinTraits(OwnerPin);
-			}
-			SaveSettings();
-		}
-	}
-}
-
-void UFlowDebuggerSubsystem::ClearNodeTraits(const UEdGraphNode* OwnerNode)
-{
-	if (FFlowTraitSettings* TraitSettings = GetPerNodeSettings(OwnerNode))
-	{
-		TraitSettings->NodeTraits.Empty();
-
-		// if all settings data is default, we can remove it from the map
-		if (*TraitSettings == FFlowTraitSettings())
-		{
-			UFlowDebuggerSettings* Settings = GetMutableDefault<UFlowDebuggerSettings>();
-			Settings->PerNodeTraits.Remove(OwnerNode->NodeGuid);
-		}
-
+		Settings->NodeBreakpoints.Remove(Node->NodeGuid);
 		SaveSettings();
 	}
 }
 
-void UFlowDebuggerSubsystem::ClearPinTraits(const UEdGraphNode* OwnerNode)
+void UFlowDebuggerSubsystem::RemovePinBreakpoint(const UEdGraphPin* Pin)
 {
-	if (FFlowTraitSettings* TraitSettings = GetPerNodeSettings(OwnerNode))
+	UFlowDebuggerSettings* Settings = GetMutableDefault<UFlowDebuggerSettings>();
+	if (Settings->PinBreakpoints.Contains(Pin->PinId))
 	{
-		TraitSettings->PinTraits.Empty();
-
-		// if all settings data is default, we can remove it from the map
-		if (*TraitSettings == FFlowTraitSettings())
-		{
-			UFlowDebuggerSettings* Settings = GetMutableDefault<UFlowDebuggerSettings>();
-			Settings->PerNodeTraits.Remove(OwnerNode->NodeGuid);
-		}
-
+		Settings->PinBreakpoints.Remove(Pin->PinId);
 		SaveSettings();
 	}
 }
 
-void UFlowDebuggerSubsystem::ClearPinTraits(const UEdGraphPin* OwnerPin)
+void UFlowDebuggerSubsystem::RemoveObsoletePinBreakpoints(const UEdGraphNode* Node)
 {
-	UEdGraphNode* OwnerNode = Cast<UEdGraphNode>(OwnerPin->GetOwningNode());
-	check(OwnerNode);
+	// UFlowDebuggerSettings* Settings = GetMutableDefault<UFlowDebuggerSettings>();
+	// if (FFlowBreakpoint* NodeBreakpoint = Settings->NodeBreakpoints.Find(Node->NodeGuid))
+	// {
+	// 	TSet<FGuid> PinGuids;
+	// 	PinGuids.Reserve(Node->Pins.Num());
+	// 	for (const UEdGraphPin* Pin : Node->Pins)
+	// 	{
+	// 		PinGuids.Emplace(Pin->PinId);
+	// 	}
+	//
+	// 	Settings->PinBreakpoints.RemoveAllSwap([PinGuids](const FFlowBreakpoint& PinBreakpoint)
+	// 	{
+	// 		return !PinGuids.Contains(PinBreakpoint.GetPinId());
+	// 	});
+	//
+	// 	// if all settings data is default, we can remove it from the map
+	// 	if (*NodeBreakpoint == FFlowBreakpoint())
+	// 	{
+	// 		Settings->NodeBreakpoints.Remove(Node->NodeGuid);
+	// 	}
+	//
+	// 	SaveSettings();
+	// }
+}
 
-	if (FFlowTraitSettings* TraitSettings = GetPerNodeSettings(OwnerNode))
+void UFlowDebuggerSubsystem::ToggleBreakpoint(const UEdGraphNode* Node)
+{
+	if (FindBreakpoint(Node) == nullptr)
 	{
-		TraitSettings->PinTraits.RemoveAllSwap([OwnerPin](const FFlowDebugTrait& Trait)
-		{
-			return Trait.PinId == OwnerPin->PinId;
-		});
+		AddBreakpoint(Node);
+	}
+	else
+	{
+		RemoveNodeBreakpoint(Node);
+	}
+}
 
-		// if all settings data is default, we can remove it from the map
-		if (*TraitSettings == FFlowTraitSettings())
-		{
-			UFlowDebuggerSettings* Settings = GetMutableDefault<UFlowDebuggerSettings>();
-			Settings->PerNodeTraits.Remove(OwnerNode->NodeGuid);
-		}
+void UFlowDebuggerSubsystem::ToggleBreakpoint(const UEdGraphPin* Pin)
+{
+	if (FindBreakpoint(Pin) == nullptr)
+	{
+		AddBreakpoint(Pin);
+	}
+	else
+	{
+		RemovePinBreakpoint(Pin);
+	}
+}
 
+FFlowBreakpoint* UFlowDebuggerSubsystem::FindBreakpoint(const UEdGraphNode* Node)
+{
+	UFlowDebuggerSettings* Settings = GetMutableDefault<UFlowDebuggerSettings>();
+	return Settings->NodeBreakpoints.Find(Node->NodeGuid);
+}
+
+FFlowBreakpoint* UFlowDebuggerSubsystem::FindBreakpoint(const UEdGraphPin* Pin)
+{
+	UFlowDebuggerSettings* Settings = GetMutableDefault<UFlowDebuggerSettings>();
+	return Settings->PinBreakpoints.Find(Pin->PinId);
+}
+
+void UFlowDebuggerSubsystem::SetBreakpointEnabled(const UEdGraphNode* Node, const bool bEnabled)
+{
+	if (FFlowBreakpoint* NodeBreakpoint = FindBreakpoint(Node))
+	{
+		NodeBreakpoint->SetEnabled(bEnabled);
 		SaveSettings();
 	}
 }
 
-void UFlowDebuggerSubsystem::CleanupTraits(const UEdGraphNode* OwnerNode)
+void UFlowDebuggerSubsystem::SetBreakpointEnabled(const UEdGraphPin* Pin, const bool bEnabled)
 {
-	RemovePinTraitByPredicate(OwnerNode, [OwnerNode](const FFlowDebugTrait& Trait)
+	if (FFlowBreakpoint* PinBreakpoint = FindBreakpoint(Pin))
 	{
-		auto Predicate = [Trait](const UEdGraphPin* Pin)
-		{
-			return Pin->PinId == Trait.PinId;
-		};
-		return OwnerNode->Pins.ContainsByPredicate(Predicate) == false;
-	});
-}
-
-FFlowDebugTrait* UFlowDebuggerSubsystem::FindTrait(const UEdGraphNode* OwnerNode, EFlowTraitType Type)
-{
-	if (TArray<FFlowDebugTrait>* Traits = GetNodeTraits(OwnerNode))
-	{
-		for (FFlowDebugTrait& Trait : *Traits)
-		{
-			if (Trait.Type == Type)
-			{
-				return &Trait;
-			}
-		}
-	}
-
-	return nullptr;
-}
-
-FFlowDebugTrait* UFlowDebuggerSubsystem::FindTrait(const UEdGraphPin* OwnerPin, EFlowTraitType Type)
-{
-	const UEdGraphNode* OwnerNode = Cast<UEdGraphNode>(OwnerPin->GetOwningNode());
-	check(OwnerNode);
-
-	if (TArray<FFlowDebugTrait>* Traits = GetPinTraits(OwnerNode))
-	{
-		for (FFlowDebugTrait& Trait : *Traits)
-		{
-			if (Trait.PinId == OwnerPin->PinId && Trait.Type == Type)
-			{
-				return &Trait;
-			}
-		}
-	}
-
-	return nullptr;
-}
-
-void UFlowDebuggerSubsystem::SetTraitEnabled(const UEdGraphNode* OwnerNode, EFlowTraitType Type, bool bIsEnabled)
-{
-	if (FFlowDebugTrait* Trait = FindTrait(OwnerNode, Type))
-	{
-		Trait->bEnabled = bIsEnabled;
+		PinBreakpoint->SetEnabled(bEnabled);
 		SaveSettings();
 	}
 }
 
-void UFlowDebuggerSubsystem::SetTraitEnabled(const UEdGraphPin* OwnerPin, EFlowTraitType Type, bool bIsEnabled)
+bool UFlowDebuggerSubsystem::IsBreakpointEnabled(const UEdGraphNode* Node)
 {
-	if (FFlowDebugTrait* Trait = FindTrait(OwnerPin, Type))
+	if (const FFlowBreakpoint* PinBreakpoint = FindBreakpoint(Node))
 	{
-		Trait->bEnabled = bIsEnabled;
-		SaveSettings();
-	}
-}
-
-bool UFlowDebuggerSubsystem::IsTraitEnabled(const UEdGraphNode* OwnerNode, EFlowTraitType Type)
-{
-	if (const FFlowDebugTrait* Trait = FindTrait(OwnerNode, Type))
-	{
-		return Trait->IsEnabled();
+		return PinBreakpoint->IsEnabled();
 	}
 
 	return false;
 }
 
-bool UFlowDebuggerSubsystem::IsTraitEnabled(const UEdGraphPin* OwnerPin, EFlowTraitType Type)
+bool UFlowDebuggerSubsystem::IsBreakpointEnabled(const UEdGraphPin* Pin)
 {
-	if (const FFlowDebugTrait* Trait = FindTrait(OwnerPin, Type))
+	if (const FFlowBreakpoint* PinBreakpoint = FindBreakpoint(Pin))
 	{
-		return Trait->IsEnabled();
+		return PinBreakpoint->IsEnabled();
 	}
 
 	return false;
 }
 
-void UFlowDebuggerSubsystem::ToggleTrait(const UEdGraphNode* OwnerNode, EFlowTraitType Type)
+bool UFlowDebuggerSubsystem::MarkAsHit(const UEdGraphNode* Node)
 {
-	if (FindTrait(OwnerNode, Type))
+	if (FFlowBreakpoint* NodeBreakpoint = FindBreakpoint(Node))
 	{
-		RemoveTrait(OwnerNode, Type);
-	}
-	else
-	{
-		CreateTrait(OwnerNode, Type, true);
-	}
-}
-
-void UFlowDebuggerSubsystem::ToggleTrait(const UEdGraphPin* OwnerPin, EFlowTraitType Type)
-{
-	if (FindTrait(OwnerPin, Type))
-	{
-		RemoveTrait(OwnerPin, Type);
-	}
-	else
-	{
-		CreateTrait(OwnerPin, Type, true);
-	}
-}
-
-TArray<EFlowTraitType> UFlowDebuggerSubsystem::SetAllTraitsHit(const UEdGraphNode* OwnerNode, bool bHit)
-{
-	TArray<EFlowTraitType> HitTraitTypes;
-	for (EFlowTraitType Type : TEnumRange<EFlowTraitType>())
-	{
-		if (SetTraitHit(OwnerNode, Type, bHit))
-		{
-			HitTraitTypes.Add(Type);
-		}
-	}
-
-	return HitTraitTypes;
-}
-
-TArray<EFlowTraitType> UFlowDebuggerSubsystem::SetAllTraitsHit(const UEdGraphPin* OwnerPin, bool bHit)
-{
-	TArray<EFlowTraitType> HitTraitTypes;
-	for (EFlowTraitType Type : TEnumRange<EFlowTraitType>())
-	{
-		if (SetTraitHit(OwnerPin, Type, bHit))
-		{
-			HitTraitTypes.Add(Type);
-		}
-	}
-
-	return HitTraitTypes;
-}
-
-
-bool UFlowDebuggerSubsystem::SetTraitHit(const UEdGraphNode* OwnerNode, EFlowTraitType Type, bool bHit)
-{
-	if (FFlowDebugTrait* Trait = FindTrait(OwnerNode, Type))
-	{
-		Trait->bHit = bHit;
+		NodeBreakpoint->MarkAsHit(true);
+		SaveSettings();
 		return true;
 	}
 
 	return false;
 }
 
-bool UFlowDebuggerSubsystem::SetTraitHit(const UEdGraphPin* OwnerPin, EFlowTraitType Type, bool bHit)
+bool UFlowDebuggerSubsystem::MarkAsHit(const UEdGraphPin* Pin)
 {
-	if (FFlowDebugTrait* Trait = FindTrait(OwnerPin, Type))
+	if (FFlowBreakpoint* PinBreakpoint = FindBreakpoint(Pin))
 	{
-		Trait->bHit = bHit;
+		PinBreakpoint->MarkAsHit(true);
+		SaveSettings();
 		return true;
 	}
 
 	return false;
 }
 
-bool UFlowDebuggerSubsystem::IsTraitHit(const UEdGraphNode* OwnerNode, EFlowTraitType Type)
+void UFlowDebuggerSubsystem::ResetHit(const UEdGraphNode* Node)
 {
-	if (const FFlowDebugTrait* Trait = FindTrait(OwnerNode, Type))
+	if (FFlowBreakpoint* NodeBreakpoint = FindBreakpoint(Node))
 	{
-		return Trait->IsHit();
+		NodeBreakpoint->MarkAsHit(false);
+		SaveSettings();
+	}
+}
+
+void UFlowDebuggerSubsystem::ResetHit(const UEdGraphPin* Pin)
+{
+	if (FFlowBreakpoint* PinBreakpoint = FindBreakpoint(Pin))
+	{
+		PinBreakpoint->MarkAsHit(false);
+		SaveSettings();
+	}
+}
+
+bool UFlowDebuggerSubsystem::IsBreakpointHit(const UEdGraphNode* Node)
+{
+	if (const FFlowBreakpoint* NodeBreakpoint = FindBreakpoint(Node))
+	{
+		return NodeBreakpoint->IsHit();
 	}
 
 	return false;
 }
 
-bool UFlowDebuggerSubsystem::IsTraitHit(const UEdGraphPin* OwnerPin, EFlowTraitType Type)
+bool UFlowDebuggerSubsystem::IsBreakpointHit(const UEdGraphPin* Pin)
 {
-	if (const FFlowDebugTrait* Trait = FindTrait(OwnerPin, Type))
+	if (const FFlowBreakpoint* PinBreakpoint = FindBreakpoint(Pin))
 	{
-		return Trait->IsHit();
+		return PinBreakpoint->IsHit();
 	}
 
 	return false;
-}
-
-FFlowTraitSettings* UFlowDebuggerSubsystem::GetPerNodeSettings(const UEdGraphNode* OwnerNode)
-{
-	UFlowDebuggerSettings* Settings = GetMutableDefault<UFlowDebuggerSettings>();
-	return Settings->PerNodeTraits.Find(OwnerNode->NodeGuid);
-}
-
-TArray<FFlowDebugTrait>* UFlowDebuggerSubsystem::GetNodeTraits(const UEdGraphNode* OwnerNode)
-{
-	FFlowTraitSettings* Settings = GetPerNodeSettings(OwnerNode);
-
-	// return nullptr if there's no node traits associated w/ this flow node
-	return (!Settings || Settings->NodeTraits.IsEmpty()) ? nullptr : &Settings->NodeTraits;
-}
-
-TArray<FFlowDebugTrait>* UFlowDebuggerSubsystem::GetPinTraits(const UEdGraphNode* OwnerNode)
-{
-	FFlowTraitSettings* Settings = GetPerNodeSettings(OwnerNode);
-
-	// return nullptr if there's no pin traits associated w/ this flow node
-	return (!Settings || Settings->PinTraits.IsEmpty()) ? nullptr : &Settings->PinTraits;
 }
 
 void UFlowDebuggerSubsystem::SaveSettings()

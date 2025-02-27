@@ -466,8 +466,7 @@ void SFlowGraphEditor::DeleteSelectedNodes()
 			{
 				if (DebuggerSubsystem.IsValid())
 				{
-					DebuggerSubsystem->ClearNodeTraits(FlowGraphNode);
-					DebuggerSubsystem->ClearPinTraits(FlowGraphNode);
+					DebuggerSubsystem->RemoveAllBreakpoints(FlowGraphNode);
 				}
 
 				if (const UFlowNode* FlowNode = Cast<UFlowNode>(FlowGraphNode->GetFlowNodeBase()))
@@ -1098,11 +1097,7 @@ void SFlowGraphEditor::OnAddBreakpoint() const
 	check(DebuggerSubsystem.IsValid());
 	for (const UFlowGraphNode* SelectedNode : GetSelectedFlowNodes())
 	{
-		const FFlowDebugTrait* Trait = DebuggerSubsystem->FindTrait(SelectedNode, EFlowTraitType::Breakpoint);
-		if (Trait == nullptr)
-		{
-			DebuggerSubsystem->CreateTrait(SelectedNode, EFlowTraitType::Breakpoint, true);
-		}
+		DebuggerSubsystem->AddBreakpoint(SelectedNode);
 	}
 }
 
@@ -1111,11 +1106,7 @@ void SFlowGraphEditor::OnAddPinBreakpoint()
 	check(DebuggerSubsystem.IsValid());
 	if (const UEdGraphPin* Pin = GetGraphPinForMenu())
 	{
-		const FFlowDebugTrait* Trait = DebuggerSubsystem->FindTrait(Pin, EFlowTraitType::Breakpoint);
-		if (Trait == nullptr)
-		{
-			DebuggerSubsystem->CreateTrait(Pin, EFlowTraitType::Breakpoint, true);
-		}
+		DebuggerSubsystem->AddBreakpoint(Pin);
 	}
 }
 
@@ -1124,7 +1115,7 @@ bool SFlowGraphEditor::CanAddBreakpoint() const
 	check(DebuggerSubsystem.IsValid());
 	for (const UFlowGraphNode* SelectedNode : GetSelectedFlowNodes())
 	{
-		return DebuggerSubsystem->FindTrait(SelectedNode, EFlowTraitType::Breakpoint) == nullptr;
+		return DebuggerSubsystem->FindBreakpoint(SelectedNode) == nullptr;
 	}
 
 	return false;
@@ -1135,7 +1126,7 @@ bool SFlowGraphEditor::CanAddPinBreakpoint()
 	check(DebuggerSubsystem.IsValid());
 	if (const UEdGraphPin* Pin = GetGraphPinForMenu())
 	{
-		return DebuggerSubsystem->FindTrait(Pin, EFlowTraitType::Breakpoint) == nullptr;
+		return DebuggerSubsystem->FindBreakpoint(Pin) == nullptr;
 	}
 
 	return false;
@@ -1146,7 +1137,7 @@ void SFlowGraphEditor::OnRemoveBreakpoint() const
 	check(DebuggerSubsystem.IsValid());
 	for (const UFlowGraphNode* SelectedNode : GetSelectedFlowNodes())
 	{
-		DebuggerSubsystem->RemoveTrait(SelectedNode, EFlowTraitType::Breakpoint);
+		DebuggerSubsystem->RemoveNodeBreakpoint(SelectedNode);
 	}
 }
 
@@ -1155,7 +1146,7 @@ void SFlowGraphEditor::OnRemovePinBreakpoint()
 	check(DebuggerSubsystem.IsValid());
 	if (const UEdGraphPin* Pin = GetGraphPinForMenu())
 	{
-		DebuggerSubsystem->RemoveTrait(Pin, EFlowTraitType::Breakpoint);
+		DebuggerSubsystem->RemovePinBreakpoint(Pin);
 	}
 }
 
@@ -1164,7 +1155,7 @@ bool SFlowGraphEditor::CanRemoveBreakpoint() const
 	check(DebuggerSubsystem.IsValid());
 	for (const UFlowGraphNode* SelectedNode : GetSelectedFlowNodes())
 	{
-		return DebuggerSubsystem->FindTrait(SelectedNode, EFlowTraitType::Breakpoint) != nullptr;
+		return DebuggerSubsystem->FindBreakpoint(SelectedNode) != nullptr;
 	}
 
 	return false;
@@ -1175,7 +1166,7 @@ bool SFlowGraphEditor::CanRemovePinBreakpoint()
 	check(DebuggerSubsystem.IsValid());
 	if (const UEdGraphPin* Pin = GetGraphPinForMenu())
 	{
-		return DebuggerSubsystem->FindTrait(Pin, EFlowTraitType::Breakpoint) != nullptr;
+		return DebuggerSubsystem->FindBreakpoint(Pin) != nullptr;
 	}
 
 	return false;
@@ -1183,17 +1174,19 @@ bool SFlowGraphEditor::CanRemovePinBreakpoint()
 
 void SFlowGraphEditor::OnEnableBreakpoint() const
 {
+	check(DebuggerSubsystem.IsValid());
 	for (const UFlowGraphNode* SelectedNode : GetSelectedFlowNodes())
 	{
-		DebuggerSubsystem->SetTraitEnabled(SelectedNode, EFlowTraitType::Breakpoint, true);
+		DebuggerSubsystem->SetBreakpointEnabled(SelectedNode, true);
 	}
 }
 
 void SFlowGraphEditor::OnEnablePinBreakpoint()
 {
+	check(DebuggerSubsystem.IsValid());
 	if (const UEdGraphPin* Pin = GetGraphPinForMenu())
 	{
-		DebuggerSubsystem->SetTraitEnabled(Pin, EFlowTraitType::Breakpoint, true);
+		DebuggerSubsystem->SetBreakpointEnabled(Pin, true);
 	}
 }
 
@@ -1201,12 +1194,8 @@ bool SFlowGraphEditor::CanEnableBreakpoint() const
 {
 	for (const UFlowGraphNode* SelectedNode : GetSelectedFlowNodes())
 	{
-		if (const FFlowDebugTrait* Trait = DebuggerSubsystem->FindTrait(SelectedNode, EFlowTraitType::Breakpoint))
-		{
-			return Trait->IsEnabled() == false;
-		}
-		
-		return false;
+		const FFlowBreakpoint* Breakpoint = DebuggerSubsystem->FindBreakpoint(SelectedNode);
+		return Breakpoint && !Breakpoint->IsEnabled();
 	}
 
 	return false;
@@ -1216,12 +1205,8 @@ bool SFlowGraphEditor::CanEnablePinBreakpoint()
 {
 	if (const UEdGraphPin* Pin = GetGraphPinForMenu())
 	{
-		if (const FFlowDebugTrait* Trait = DebuggerSubsystem->FindTrait(Pin, EFlowTraitType::Breakpoint))
-		{
-			return Trait->IsEnabled() == false;
-		}
-		
-		return false;
+		const FFlowBreakpoint* Breakpoint = DebuggerSubsystem->FindBreakpoint(Pin);
+		return Breakpoint && !Breakpoint->IsEnabled();
 	}
 
 	return false;
@@ -1229,30 +1214,29 @@ bool SFlowGraphEditor::CanEnablePinBreakpoint()
 
 void SFlowGraphEditor::OnDisableBreakpoint() const
 {
+	check(DebuggerSubsystem.IsValid());
 	for (const UFlowGraphNode* SelectedNode : GetSelectedFlowNodes())
 	{
-		DebuggerSubsystem->SetTraitEnabled(SelectedNode, EFlowTraitType::Breakpoint, false);
+		DebuggerSubsystem->SetBreakpointEnabled(SelectedNode, false);
 	}
 }
 
 void SFlowGraphEditor::OnDisablePinBreakpoint()
 {
+	check(DebuggerSubsystem.IsValid());
 	if (const UEdGraphPin* Pin = GetGraphPinForMenu())
 	{
-		DebuggerSubsystem->SetTraitEnabled(Pin, EFlowTraitType::Breakpoint, false);
+		DebuggerSubsystem->SetBreakpointEnabled(Pin, false);
 	}
 }
 
 bool SFlowGraphEditor::CanDisableBreakpoint() const
 {
+	check(DebuggerSubsystem.IsValid());
 	for (const UFlowGraphNode* SelectedNode : GetSelectedFlowNodes())
 	{
-		if (const FFlowDebugTrait* Trait = DebuggerSubsystem->FindTrait(SelectedNode, EFlowTraitType::Breakpoint))
-		{
-			return Trait->IsEnabled();
-		}
-		
-		return false;
+		const FFlowBreakpoint* Breakpoint = DebuggerSubsystem->FindBreakpoint(SelectedNode);
+		return Breakpoint && Breakpoint->IsEnabled();
 	}
 
 	return false;
@@ -1260,14 +1244,11 @@ bool SFlowGraphEditor::CanDisableBreakpoint() const
 
 bool SFlowGraphEditor::CanDisablePinBreakpoint()
 {
+	check(DebuggerSubsystem.IsValid());
 	if (const UEdGraphPin* Pin = GetGraphPinForMenu())
 	{
-		if (const FFlowDebugTrait* Trait = DebuggerSubsystem->FindTrait(Pin, EFlowTraitType::Breakpoint))
-		{
-			return Trait->IsEnabled();
-		}
-		
-		return false;
+		const FFlowBreakpoint* Breakpoint = DebuggerSubsystem->FindBreakpoint(Pin);
+		return Breakpoint && Breakpoint->IsEnabled();
 	}
 
 	return false;
@@ -1275,17 +1256,19 @@ bool SFlowGraphEditor::CanDisablePinBreakpoint()
 
 void SFlowGraphEditor::OnToggleBreakpoint() const
 {
+	check(DebuggerSubsystem.IsValid());
 	for (const UFlowGraphNode* SelectedNode : GetSelectedFlowNodes())
 	{
-		DebuggerSubsystem->ToggleTrait(SelectedNode, EFlowTraitType::Breakpoint);
+		DebuggerSubsystem->ToggleBreakpoint(SelectedNode);
 	}
 }
 
 void SFlowGraphEditor::OnTogglePinBreakpoint()
 {
+	check(DebuggerSubsystem.IsValid());
 	if (const UEdGraphPin* Pin = GetGraphPinForMenu())
 	{
-		DebuggerSubsystem->ToggleTrait(Pin, EFlowTraitType::Breakpoint);
+		DebuggerSubsystem->ToggleBreakpoint(Pin);
 	}
 }
 

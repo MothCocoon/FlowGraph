@@ -18,8 +18,9 @@ class FLOWDEBUGGER_API UFlowDebuggerSettings : public UDeveloperSettings
 public:
 	UFlowDebuggerSettings();
 
-	static UFlowDebuggerSettings* Get() { return StaticClass()->GetDefaultObject<UFlowDebuggerSettings>(); }
+	UPROPERTY(config)
+	TMap<FGuid, FFlowBreakpoint> NodeBreakpoints;
 
 	UPROPERTY(config)
-	TMap<FGuid, FFlowTraitSettings> PerNodeTraits;
+	TMap<FGuid, FFlowBreakpoint> PinBreakpoints;
 };
