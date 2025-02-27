@@ -316,7 +316,11 @@ void UFlowAsset::RegisterNode(const FGuid& NewGuid, UFlowNode* NewNode)
 	Nodes.Emplace(NewGuid, NewNode);
 
 	HarvestNodeConnections();
-	(void)TryUpdateManagedFlowPinsForNode(*NewNode);
+
+	if (TryUpdateManagedFlowPinsForNode(*NewNode))
+	{
+		(void) NewNode->OnReconstructionRequested.ExecuteIfBound();
+	}
 }
 
 void UFlowAsset::UnregisterNode(const FGuid& NodeGuid)
@@ -491,11 +495,6 @@ bool UFlowAsset::TryUpdateManagedFlowPinsForNode(UFlowNode& FlowNode)
 			if (bAutoOutputDataPinsChanged)
 			{
 				FlowNode.SetAutoOutputDataPins(WorkingData.AutoOutputDataPinsNext);
-			}
-
-			if (FlowNode.GraphNode)
-			{
-				FlowNode.OnReconstructionRequested.ExecuteIfBound();
 			}
 		}
 

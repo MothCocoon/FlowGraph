@@ -38,6 +38,8 @@ protected:
 	// is currently loading the Flow Graph (used to suppress some work during load)
 	uint32 bIsLoadingGraph : 1;
 
+	bool bIsSavingGraph = false;
+	
 public:
 	static void CreateGraph(UFlowAsset* InFlowAsset);
 	static void CreateGraph(UFlowAsset* InFlowAsset, TSubclassOf<UFlowGraphSchema> FlowSchema);
@@ -93,4 +95,6 @@ public:
 	void UnlockUpdates();
 
 	bool IsLoadingGraph() const { return bIsLoadingGraph; }
+
+	bool IsSavingGraph() const { return bIsSavingGraph; }
 };

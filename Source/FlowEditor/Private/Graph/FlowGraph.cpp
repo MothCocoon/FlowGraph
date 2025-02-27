@@ -93,15 +93,8 @@ void UFlowGraph::RefreshGraph()
 			}
 		}
 
+		// This function will (eventually) result in all graph nodes being reconstructed
 		UnlockUpdates();
-	}
-
-	// refresh nodes
-	TArray<UFlowGraphNode*> FlowGraphNodes;
-	GetNodesOfClass<UFlowGraphNode>(FlowGraphNodes);
-	for (UFlowGraphNode* GraphNode : FlowGraphNodes)
-	{
-		GraphNode->OnGraphRefresh();
 	}
 }
 
@@ -222,7 +215,11 @@ void UFlowGraph::OnLoaded()
 
 void UFlowGraph::OnSave()
 {
+	bIsSavingGraph = true;
+	
 	UpdateAsset();
+
+	bIsSavingGraph = false;
 }
 
 void UFlowGraph::Initialize()
