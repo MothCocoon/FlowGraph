@@ -384,7 +384,10 @@ public:
 	virtual FString GetNodeDescription() const;
 #endif
 
-protected:	
+#if !UE_BUILD_SHIPPING
+	virtual void BeginDestroy() override;
+#endif
+protected:
 	// Short summary of node's content - displayed over node as NodeInfoPopup
 	UFUNCTION(BlueprintImplementableEvent, Category = "FlowNode", meta = (DisplayName = "Get Node Description"))
 	FString K2_GetNodeDescription() const;
@@ -404,5 +407,6 @@ protected:
 #if !UE_BUILD_SHIPPING
 protected:
 	bool BuildMessage(FString& Message) const;
+	mutable TArray<TPair<TWeakObjectPtr<class UViewportStatsSubsystem>, int32>> ErrorDisplayDelegatesIndices;
 #endif
 };

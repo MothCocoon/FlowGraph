@@ -786,6 +786,29 @@ FString UFlowNodeBase::GetNodeDescription() const
 }
 #endif
 
+#if !UE_BUILD_SHIPPING
+void UFlowNodeBase::BeginDestroy()
+{
+	// Remark: removing them in the reverse order they where added. It is using RemoveAtSwap()
+	// so removing the first one would change the index of the next one. Removing a delegate in the
+	// middle of the array will invalidate the indices above.
+	for (int32 Index = ErrorDisplayDelegatesIndices.Num() - 1; Index >= 0; --Index)
+	{
+		// Since flow nodes can survive world switches and UViewportStatsSubsystem is a world subsystem, don't attempt to remove any indices with a no-longer existing UViewportStatsSubsystem.
+		const auto& [WeakObjectPtr, DelegateIndex] = ErrorDisplayDelegatesIndices[Index];
+		UViewportStatsSubsystem* StatsSubsystem = WeakObjectPtr.Get();
+		if (StatsSubsystem)
+		{
+			StatsSubsystem->RemoveDisplayDelegate(DelegateIndex);
+		}
+	}
+
+	ErrorDisplayDelegatesIndices.Reset();
+
+	Super::BeginDestroy();
+}
+#endif
+
 void UFlowNodeBase::SetNodeConfigText(const FText& NodeConfigText)
 {
 #if WITH_EDITOR
@@ -810,17 +833,17 @@ void UFlowNodeBase::LogError(FString Message, const EFlowOnScreenMessageType OnS
 		// OnScreen Message
 		if (OnScreenMessageType == EFlowOnScreenMessageType::Permanent)
 		{
-			if (GetWorld())
+			if (UWorld* World = GetWorld())
 			{
-				if (UViewportStatsSubsystem* StatsSubsystem = GetWorld()->GetSubsystem<UViewportStatsSubsystem>())
+				if (UViewportStatsSubsystem* StatsSubsystem = World->GetSubsystem<UViewportStatsSubsystem>())
 				{
-					StatsSubsystem->AddDisplayDelegate([this, Message](FText& OutText, FLinearColor& OutColor)
+					ErrorDisplayDelegatesIndices.Add({StatsSubsystem, StatsSubsystem->AddDisplayDelegate([this, Message](FText& OutText, FLinearColor& OutColor)
 					{
 						OutText = FText::FromString(Message);
 						OutColor = FLinearColor::Red;
 
-						return IsValid(this) && GetFlowNodeSelfOrOwner()->GetActivationState() != EFlowNodeState::NeverActivated;
-					});
+						return GetFlowNodeSelfOrOwner()->GetActivationState() != EFlowNodeState::NeverActivated;
+					})});
 				}
 			}
 		}

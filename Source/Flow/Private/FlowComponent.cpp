@@ -100,6 +100,28 @@ void UFlowComponent::EndPlay(const EEndPlayReason::Type EndPlayReason)
 	Super::EndPlay(EndPlayReason);
 }
 
+void UFlowComponent::BeginDestroy()
+{
+	// Remark: removing them in the reverse order they where added. It is using RemoveAtSwap()
+	// so removing the first one would change the index of the next one. Removing a delegate in the
+	// middle of the array will invalidate the indices above.
+	if (UWorld* World = GetWorld())
+	{
+		for (int32 Index = ErrorDisplayDelegatesIndices.Num() - 1; Index >= 0; --Index)
+		{
+			if (UViewportStatsSubsystem* StatsSubsystem = World->GetSubsystem<UViewportStatsSubsystem>())
+			{
+				StatsSubsystem->RemoveDisplayDelegate(ErrorDisplayDelegatesIndices[Index]);
+			}
+		}
+	}
+
+	ErrorDisplayDelegatesIndices.Reset();
+
+	// Call it at the end, otherwise WorldPrivate is set to nullptr
+	Super::BeginDestroy();
+}
+
 void UFlowComponent::UnregisterWithFlowSubsystem()
 {
 	if (UFlowSubsystem* FlowSubsystem = GetFlowSubsystem())
@@ -269,16 +291,16 @@ void UFlowComponent::LogError(FString Message, const EFlowOnScreenMessageType On
 
 	if (OnScreenMessageType == EFlowOnScreenMessageType::Permanent)
 	{
-		if (GetWorld())
+		if (UWorld* World = GetWorld())
 		{
-			if (UViewportStatsSubsystem* StatsSubsystem = GetWorld()->GetSubsystem<UViewportStatsSubsystem>())
+			if (UViewportStatsSubsystem* StatsSubsystem = World->GetSubsystem<UViewportStatsSubsystem>())
 			{
-				StatsSubsystem->AddDisplayDelegate([this, Message](FText& OutText, FLinearColor& OutColor)
+				ErrorDisplayDelegatesIndices.Add(StatsSubsystem->AddDisplayDelegate([Message](FText& OutText, FLinearColor& OutColor)
 				{
 					OutText = FText::FromString(Message);
 					OutColor = FLinearColor::Red;
-					return IsValid(this);
-				});
+					return true;
+				}));
 			}
 		}
 	}

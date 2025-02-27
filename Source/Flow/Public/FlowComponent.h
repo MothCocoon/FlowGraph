@@ -69,6 +69,8 @@ public:
 	virtual void BeginPlay() override;
 	virtual void EndPlay(const EEndPlayReason::Type EndPlayReason) override;
 
+	virtual void BeginDestroy() override;
+
 	UFUNCTION(BlueprintCallable, Category = "Flow")
 	void AddIdentityTag(const FGameplayTag Tag, const EFlowNetMode NetMode = EFlowNetMode::Authority);
 
@@ -130,6 +132,8 @@ public:
 private:
 	UFUNCTION()
 	void OnRep_SentNotifyTags();
+
+	mutable TArray<int32> ErrorDisplayDelegatesIndices;
 
 public:
 	FFlowComponentNotify OnNotifyFromComponent;
