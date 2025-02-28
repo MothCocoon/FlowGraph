@@ -17,6 +17,7 @@ protected:
 
 	UPROPERTY()
 	uint8 bEnabled : 1;
+	
 	uint8 bHit : 1;
 
 public:

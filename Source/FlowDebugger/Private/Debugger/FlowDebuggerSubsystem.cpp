@@ -190,7 +190,6 @@ bool UFlowDebuggerSubsystem::MarkAsHit(const UEdGraphNode* Node)
 	if (FFlowBreakpoint* NodeBreakpoint = FindBreakpoint(Node))
 	{
 		NodeBreakpoint->MarkAsHit(true);
-		SaveSettings();
 		return true;
 	}
 
@@ -202,7 +201,6 @@ bool UFlowDebuggerSubsystem::MarkAsHit(const UEdGraphPin* Pin)
 	if (FFlowBreakpoint* PinBreakpoint = FindBreakpoint(Pin))
 	{
 		PinBreakpoint->MarkAsHit(true);
-		SaveSettings();
 		return true;
 	}
 
@@ -214,7 +212,6 @@ void UFlowDebuggerSubsystem::ResetHit(const UEdGraphNode* Node)
 	if (FFlowBreakpoint* NodeBreakpoint = FindBreakpoint(Node))
 	{
 		NodeBreakpoint->MarkAsHit(false);
-		SaveSettings();
 	}
 }
 
@@ -223,7 +220,6 @@ void UFlowDebuggerSubsystem::ResetHit(const UEdGraphPin* Pin)
 	if (FFlowBreakpoint* PinBreakpoint = FindBreakpoint(Pin))
 	{
 		PinBreakpoint->MarkAsHit(false);
-		SaveSettings();
 	}
 }
 
