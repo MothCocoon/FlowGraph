@@ -1708,6 +1708,22 @@ bool UFlowGraphNode::TryUpdateNodePins() const
 		return true;
 	}
 
+	bool bIsLoad = false;
+	if (const UFlowGraph* FlowGraph = GetFlowGraph())
+	{
+		bIsLoad = FlowGraph->IsLoadingGraph();
+	}
+
+	// Confirm that we should be refreshing context pins
+	const bool bIsAllowedToRefreshPins = !bIsLoad || NodeInstance->CanRefreshContextPinsOnLoad();
+	const bool bShouldConsiderRefreshingContextPins = bIsAllowedToRefreshPins && (SupportsContextPins());
+	const bool bShouldRefreshContextPins = bShouldConsiderRefreshingContextPins || bNeedsFullReconstruction;
+
+	if (!bShouldRefreshContextPins)
+	{
+		return false;
+	}
+
 	// ------------
 	// Get all pins of the FlowNode itself 
 	const UFlowNode* FlowNodeCDO = FlowNodeInstance->GetClass()->GetDefaultObject<UFlowNode>();
