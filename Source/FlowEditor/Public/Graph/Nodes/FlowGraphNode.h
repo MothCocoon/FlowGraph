@@ -62,6 +62,7 @@ public:
 	// UEdGraphNode
 	virtual void PostPlacedNewNode() override;
 	virtual void PrepareForCopying() override;
+	virtual void PostPasteNode() override;
     // --
 	
 	void PostCopyNode();

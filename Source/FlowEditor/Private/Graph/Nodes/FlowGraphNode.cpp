@@ -161,6 +161,13 @@ void UFlowGraphNode::PrepareForCopying()
 	}
 }
 
+void UFlowGraphNode::PostPasteNode()
+{
+	Super::PostPasteNode();
+	//prep reconstruct the node, necessary for copy-paste to handle the reconstruct.
+	bNeedsFullReconstruction = true;
+}
+
 void UFlowGraphNode::PostCopyNode()
 {
 	// Make sure this NodeInstance is owned by the FlowAsset it's being pasted into
