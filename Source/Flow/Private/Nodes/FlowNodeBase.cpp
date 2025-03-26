@@ -699,7 +699,6 @@ FText UFlowNodeBase::GetNodeToolTip() const
 		}
 	}
 
-
 	return GetClass()->GetToolTipText();
 }
 
