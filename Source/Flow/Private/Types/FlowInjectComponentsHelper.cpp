@@ -59,7 +59,7 @@ UActorComponent* FFlowInjectComponentsHelper::TryCreateComponentInstanceForActor
 	{
 		const EObjectFlags InstanceFlags = ComponentTemplate.GetFlags() | RF_Transient;
 
-		UActorComponent* ComponentInstance = NewObject<UActorComponent>(&Actor, ComponentTemplate.GetFName(), InstanceFlags, &ComponentTemplate);
+		UActorComponent* ComponentInstance = NewObject<UActorComponent>(&Actor, ComponentTemplate.GetClass(), ComponentTemplate.GetFName(), InstanceFlags, &ComponentTemplate);
 
 		return ComponentInstance;
 	}

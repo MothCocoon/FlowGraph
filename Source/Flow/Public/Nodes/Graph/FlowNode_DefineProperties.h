@@ -23,13 +23,13 @@ protected:
 	// Instance-defined properties.  
 	// These will auto-generate a matching pin that is bound to its property as its data source.
 	UPROPERTY(EditAnywhere, Category = "Configuration", DisplayName = Properties)
-	TArray<FFlowNamedDataPinOutputProperty> OutputProperties;
+	TArray<FFlowNamedDataPinProperty> NamedProperties;
 
 public:
 
 #if WITH_EDITOR
 	// IFlowContextPinSupplierInterface
-	virtual bool SupportsContextPins() const override { return Super::SupportsContextPins() || !OutputProperties.IsEmpty(); }
+	virtual bool SupportsContextPins() const override { return Super::SupportsContextPins() || !NamedProperties.IsEmpty(); }
 	// --
 
 	// UObject
@@ -43,6 +43,8 @@ public:
 		TArray<FFlowPin>& InOutOutputDataPins) const override;
 	// --
 #endif
+
+	bool TryFormatTextWithNamedPropertiesAsParameters(const FText& FormatText, FText& OutFormattedText) const;
 
 protected:
 

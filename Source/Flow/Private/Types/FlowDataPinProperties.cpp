@@ -79,7 +79,7 @@ void FFlowDataPinOutputProperty_Enum::OnEnumNameChanged()
 	}
 }
 
-FText FFlowNamedDataPinOutputProperty::BuildHeaderText() const
+FText FFlowNamedDataPinProperty::BuildHeaderText() const
 {
 	EFlowPinType PinType = EFlowPinType::Invalid;
 
@@ -88,7 +88,7 @@ FText FFlowNamedDataPinOutputProperty::BuildHeaderText() const
 		PinType = DataPinPropertyPtr->GetFlowPinType();
 	}
 
-	return FText::Format(LOCTEXT("FlowNamedDataPinOutputPropertyHeader", "{0} ({1})"), { FText::FromName(Name), UEnum::GetDisplayValueAsText(PinType) });
+	return FText::Format(LOCTEXT("FlowNamedDataPinPropertyHeader", "{0} ({1})"), { FText::FromName(Name), UEnum::GetDisplayValueAsText(PinType) });
 }
 
 UClass* FFlowDataPinOutputProperty_Class::DeriveMetaClass(const FProperty& MetaDataProperty) const
@@ -166,6 +166,26 @@ UClass* FFlowDataPinOutputProperty_Object::TryGetObjectClassFromProperty(const F
 	return nullptr;
 }
 #endif
+
+bool FFlowNamedDataPinProperty::IsInputProperty() const
+{
+	if (const FFlowDataPinProperty* DataPinPropertyPtr = DataPinProperty.GetPtr())
+	{
+		return DataPinPropertyPtr->IsInputProperty();
+	}
+
+	return false;
+}
+
+bool FFlowNamedDataPinProperty::IsOutputProperty() const
+{
+	if (const FFlowDataPinProperty* DataPinPropertyPtr = DataPinProperty.GetPtr())
+	{
+		return !DataPinPropertyPtr->IsInputProperty();
+	}
+
+	return false;
+}
 
 FFlowDataPinOutputProperty_Object::FFlowDataPinOutputProperty_Object(UObject* InValue, UClass* InClassFilter)
 	: Super()

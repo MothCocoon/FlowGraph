@@ -67,6 +67,7 @@ public:
 
 private:
 	void SubscribeToExternalChanges();
+	void ReportExternalChangeToRootFlowGraphNode();
 	void OnExternalChange();
 
 public:
