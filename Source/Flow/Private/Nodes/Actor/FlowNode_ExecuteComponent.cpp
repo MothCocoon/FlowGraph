@@ -384,12 +384,26 @@ void UFlowNode_ExecuteComponent::RefreshPins()
 	bool bChangedPins = false;
 
 	const UActorComponent* ExpectedComponent = TryGetExpectedComponent();
+	
 	if (const IFlowContextPinSupplierInterface* ContextPinSupplierInterface = Cast<IFlowContextPinSupplierInterface>(ExpectedComponent))
 	{
 		const TArray<FFlowPin> NewInputPins = ContextPinSupplierInterface->GetContextInputs();
 		bChangedPins = RebuildPinArray(NewInputPins, InputPins, DefaultInputPin) || bChangedPins;
 
 		const TArray<FFlowPin> NewOutputPins = ContextPinSupplierInterface->GetContextOutputs();
+		bChangedPins = RebuildPinArray(NewOutputPins, OutputPins, DefaultOutputPin) || bChangedPins;
+	}
+	else if (ExpectedComponent && ExpectedComponent->Implements<UFlowContextPinSupplierInterface>())
+	{
+		// NOTE: If the component is a blueprint component that implements the interface there, we
+		// invoke its methods via Execute.
+		// We cannot directly cast to the interface pointer (eg. Cast<IFlowComponentPinSupplierInterface>(ExpectedComponent))
+		// because that will not cast properly for non-native implementers of it.
+		
+		const TArray<FFlowPin> NewInputPins  = Execute_K2_GetContextInputs(ExpectedComponent);
+		bChangedPins = RebuildPinArray(NewInputPins, InputPins, DefaultInputPin) || bChangedPins;
+
+		const TArray<FFlowPin> NewOutputPins = Execute_K2_GetContextOutputs(ExpectedComponent);
 		bChangedPins = RebuildPinArray(NewOutputPins, OutputPins, DefaultOutputPin) || bChangedPins;
 	}
 	else
@@ -406,6 +420,11 @@ void UFlowNode_ExecuteComponent::RefreshPins()
 
 EDataValidationResult UFlowNode_ExecuteComponent::ValidateNode()
 {
+	if (IsValid(ComponentTemplate) || IsValid(ComponentClass))
+	{
+		return EDataValidationResult::Valid;
+	}
+	
 	const bool bHasComponent = ComponentRef.IsConfigured();
 	if (!bHasComponent)
 	{

@@ -699,7 +699,6 @@ FText UFlowNodeBase::GetNodeToolTip() const
 		}
 	}
 
-
 	return GetClass()->GetToolTipText();
 }
 
@@ -904,6 +903,212 @@ bool UFlowNodeBase::BuildMessage(FString& Message) const
 	return false;
 }
 #endif
+
+bool UFlowNodeBase::TryAddValueToFormatNamedArguments(const FFlowNamedDataPinProperty& NamedDataPinProperty, FFormatNamedArguments& InOutArguments) const
+{
+	const FFlowDataPinProperty* FlowDataPinProperty = NamedDataPinProperty.DataPinProperty.GetPtr();
+	if (!FlowDataPinProperty)
+	{
+		return false;
+	}
+
+	const EFlowPinType FlowPinType = FlowDataPinProperty->GetFlowPinType();
+
+	FLOW_ASSERT_ENUM_MAX(EFlowPinType, 16);
+	switch (FlowPinType)
+	{
+	case EFlowPinType::Exec:
+		{
+			LogError(TEXT("Cannot add Exec pin value to FFormatNamedArguments"));
+		}
+		break;
+
+	case EFlowPinType::InstancedStruct:
+		{
+			LogError(TEXT("Cannot add InstancedStruct pin value to FFormatNamedArguments"));
+		}
+		break;
+
+	case EFlowPinType::Bool:
+		{
+			const FFlowDataPinResult_Bool ResolvedResult = TryResolveDataPinAsBool(NamedDataPinProperty.Name);
+			if (ResolvedResult.Result == EFlowDataPinResolveResult::Success)
+			{
+				InOutArguments.Add(NamedDataPinProperty.Name.ToString(), FFormatArgumentValue(ResolvedResult.Value));
+
+				return true;
+			}
+		}
+		break;
+
+	case EFlowPinType::Int:
+		{
+			const FFlowDataPinResult_Int ResolvedResult = TryResolveDataPinAsInt(NamedDataPinProperty.Name);
+			if (ResolvedResult.Result == EFlowDataPinResolveResult::Success)
+			{
+				InOutArguments.Add(NamedDataPinProperty.Name.ToString(), FFormatArgumentValue(ResolvedResult.Value));
+
+				return true;
+			}
+		}
+		break;
+
+	case EFlowPinType::Float:
+		{
+			const FFlowDataPinResult_Float ResolvedResult = TryResolveDataPinAsFloat(NamedDataPinProperty.Name);
+			if (ResolvedResult.Result == EFlowDataPinResolveResult::Success)
+			{
+				InOutArguments.Add(NamedDataPinProperty.Name.ToString(), FFormatArgumentValue(ResolvedResult.Value));
+
+				return true;
+			}
+		}
+		break;
+
+	case EFlowPinType::Name:
+		{
+			const FFlowDataPinResult_Name ResolvedResult = TryResolveDataPinAsName(NamedDataPinProperty.Name);
+			if (ResolvedResult.Result == EFlowDataPinResolveResult::Success)
+			{
+				InOutArguments.Add(NamedDataPinProperty.Name.ToString(), FFormatArgumentValue(FText::FromString(ResolvedResult.Value.ToString())));
+
+				return true;
+			}
+		}
+		break;
+
+	case EFlowPinType::String:
+		{
+			const FFlowDataPinResult_String ResolvedResult = TryResolveDataPinAsString(NamedDataPinProperty.Name);
+			if (ResolvedResult.Result == EFlowDataPinResolveResult::Success)
+			{
+				InOutArguments.Add(NamedDataPinProperty.Name.ToString(), FFormatArgumentValue(FText::FromString(ResolvedResult.Value)));
+
+				return true;
+			}
+		}
+		break;
+
+	case EFlowPinType::Text:
+		{
+			const FFlowDataPinResult_Text ResolvedResult = TryResolveDataPinAsText(NamedDataPinProperty.Name);
+			if (ResolvedResult.Result == EFlowDataPinResolveResult::Success)
+			{
+				InOutArguments.Add(NamedDataPinProperty.Name.ToString(), FFormatArgumentValue(ResolvedResult.Value));
+
+				return true;
+			}
+		}
+		break;
+
+	case EFlowPinType::Enum:
+		{
+			const FFlowDataPinResult_Enum ResolvedResult = TryResolveDataPinAsEnum(NamedDataPinProperty.Name);
+			if (ResolvedResult.Result == EFlowDataPinResolveResult::Success)
+			{
+				InOutArguments.Add(NamedDataPinProperty.Name.ToString(), FFormatArgumentValue(FText::FromString(ResolvedResult.Value.ToString())));
+
+				return true;
+			}
+		}
+		break;
+
+	case EFlowPinType::Vector:
+		{
+			const FFlowDataPinResult_Vector ResolvedResult = TryResolveDataPinAsVector(NamedDataPinProperty.Name);
+			if (ResolvedResult.Result == EFlowDataPinResolveResult::Success)
+			{
+				InOutArguments.Add(NamedDataPinProperty.Name.ToString(), FFormatArgumentValue(FText::FromString(ResolvedResult.Value.ToString())));
+
+				return true;
+			}
+		}
+		break;
+
+	case EFlowPinType::Rotator:
+		{
+			const FFlowDataPinResult_Rotator ResolvedResult = TryResolveDataPinAsRotator(NamedDataPinProperty.Name);
+			if (ResolvedResult.Result == EFlowDataPinResolveResult::Success)
+			{
+				InOutArguments.Add(NamedDataPinProperty.Name.ToString(), FFormatArgumentValue(FText::FromString(ResolvedResult.Value.ToString())));
+
+				return true;
+			}
+		}
+		break;
+
+	case EFlowPinType::Transform:
+		{
+			const FFlowDataPinResult_Transform ResolvedResult = TryResolveDataPinAsTransform(NamedDataPinProperty.Name);
+			if (ResolvedResult.Result == EFlowDataPinResolveResult::Success)
+			{
+				InOutArguments.Add(NamedDataPinProperty.Name.ToString(), FFormatArgumentValue(FText::FromString(ResolvedResult.Value.ToString())));
+
+				return true;
+			}
+		}
+		break;
+
+	case EFlowPinType::GameplayTag:
+		{
+			const FFlowDataPinResult_GameplayTag ResolvedResult = TryResolveDataPinAsGameplayTag(NamedDataPinProperty.Name);
+			if (ResolvedResult.Result == EFlowDataPinResolveResult::Success)
+			{
+				InOutArguments.Add(NamedDataPinProperty.Name.ToString(), FFormatArgumentValue(FText::FromString(ResolvedResult.Value.ToString())));
+
+				return true;
+			}
+		}
+		break;
+
+	case EFlowPinType::GameplayTagContainer:
+		{
+			const FFlowDataPinResult_GameplayTagContainer ResolvedResult = TryResolveDataPinAsGameplayTagContainer(NamedDataPinProperty.Name);
+			if (ResolvedResult.Result == EFlowDataPinResolveResult::Success)
+			{
+				InOutArguments.Add(NamedDataPinProperty.Name.ToString(), FFormatArgumentValue(FText::FromString(ResolvedResult.Value.ToString())));
+
+				return true;
+			}
+		}
+		break;
+
+	case EFlowPinType::Object:
+		{
+			const FFlowDataPinResult_Object ResolvedResult = TryResolveDataPinAsObject(NamedDataPinProperty.Name);
+			if (ResolvedResult.Result == EFlowDataPinResolveResult::Success)
+			{
+				if (IsValid(ResolvedResult.Value))
+				{
+					InOutArguments.Add(NamedDataPinProperty.Name.ToString(), FFormatArgumentValue(FText::FromString(ResolvedResult.Value->GetName())));
+				}
+				else
+				{
+					InOutArguments.Add(NamedDataPinProperty.Name.ToString(), FFormatArgumentValue(FText::FromString(TEXT("null"))));
+				}
+
+				return true;
+			}
+		}
+		break;
+
+	case EFlowPinType::Class:
+		{
+			const FFlowDataPinResult_Class ResolvedResult = TryResolveDataPinAsClass(NamedDataPinProperty.Name);
+			if (ResolvedResult.Result == EFlowDataPinResolveResult::Success)
+			{
+				InOutArguments.Add(NamedDataPinProperty.Name.ToString(), FFormatArgumentValue(FText::FromString(ResolvedResult.GetAsSoftClass().ToString())));
+
+				return true;
+			}
+		}
+		break;
+
+	default: break;
+	}
+
+	return false;
+}
 
 EFlowDataPinResolveResult UFlowNodeBase::TryResolveDataPinPrerequisites(const FName& PinName, const UFlowNode*& FlowNode, const FFlowPin*& FlowPin, EFlowPinType PinType) const
 {

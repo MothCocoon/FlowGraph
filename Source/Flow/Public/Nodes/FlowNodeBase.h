@@ -21,6 +21,7 @@ class UEdGraphNode;
 class IFlowOwnerInterface;
 class IFlowDataPinValueSupplierInterface;
 struct FFlowPin;
+struct FFlowNamedDataPinProperty;
 
 #if WITH_EDITORONLY_DATA
 DECLARE_DELEGATE(FFlowNodeEvent);
@@ -112,6 +113,10 @@ public:
 	// Cause a specific output to be triggered (by PinHandle)
 	UFUNCTION(BlueprintCallable, Category = "FlowNode", meta = (HidePin = "ActivationType"))
 	virtual void TriggerOutputPin(const FFlowOutputPinHandle Pin, const bool bFinish = false, const EFlowPinActivationType ActivationType = EFlowPinActivationType::Default);
+
+	// Returns a random seed suitable for this flow node base
+	UFUNCTION(BlueprintPure, Category = "FlowNode")
+	virtual int32 GetRandomSeed() const PURE_VIRTUAL(GetRandomSeed, return 0;);
 
 //////////////////////////////////////////////////////////////////////////
 // Pins	
@@ -264,6 +269,10 @@ public:
 	// Public only for TResolveDataPinWorkingData's use
 	EFlowDataPinResolveResult TryResolveDataPinPrerequisites(const FName& PinName, const UFlowNode*& FlowNode, const FFlowPin*& FlowPin, EFlowPinType PinType) const;
 
+protected:
+
+	bool TryAddValueToFormatNamedArguments(const FFlowNamedDataPinProperty& NamedDataPinProperty, FFormatNamedArguments& InOutArguments) const;
+
 public:
 
 //////////////////////////////////////////////////////////////////////////
@@ -288,6 +297,7 @@ protected:
 	TSubclassOf<UFlowNode> ReplacedBy;
 
 	FFlowNodeEvent OnReconstructionRequested;
+	FFlowNodeEvent OnAddOnRequestedParentReconstruction;
 	FFlowMessageLog ValidationLog;
 #endif // WITH_EDITORONLY_DATA
 
@@ -314,7 +324,10 @@ public:
 	// Called by owning FlowNode to add to its Status String.
 	// (may be multi-line)
 	virtual FString GetStatusString() const;
-#endif // WITH_EDITOR
+
+	void RequestReconstruction() const { (void) OnReconstructionRequested.ExecuteIfBound(); };
+	
+#endif
 
 protected:
 	// Information displayed while node is working - displayed over node as NodeInfoPopup
