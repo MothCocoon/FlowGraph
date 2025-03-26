@@ -38,7 +38,7 @@ void SFlowGraphEditor::Construct(const FArguments& InArgs, const TSharedPtr<FFlo
 
 	SGraphEditor::FArguments Arguments;
 	Arguments._AdditionalCommands = CommandList;
-	Arguments._Appearance = GetGraphAppearanceInfo();
+	Arguments._Appearance = TAttribute<FGraphAppearanceInfo>::CreateSP(this, &SFlowGraphEditor::GetGraphAppearanceInfo);
 	Arguments._GraphToEdit = FlowAsset->GetGraph();
 	Arguments._GraphEvents = InArgs._GraphEvents;
 	Arguments._AutoExpandActionMenu = true;
@@ -261,11 +261,7 @@ FGraphAppearanceInfo SFlowGraphEditor::GetGraphAppearanceInfo() const
 {
 	FGraphAppearanceInfo AppearanceInfo;
 	AppearanceInfo.CornerText = GetCornerText();
-
-	if (IsPlaySessionPaused())
-	{
-		AppearanceInfo.PIENotifyText = LOCTEXT("PausedLabel", "PAUSED");
-	}
+	AppearanceInfo.PIENotifyText = GetPIEStatus();
 
 	return AppearanceInfo;
 }
@@ -273,6 +269,45 @@ FGraphAppearanceInfo SFlowGraphEditor::GetGraphAppearanceInfo() const
 FText SFlowGraphEditor::GetCornerText() const
 {
 	return LOCTEXT("AppearanceCornerText_FlowAsset", "FLOW");
+}
+
+FText SFlowGraphEditor::GetPIEStatus() const
+{
+	ENetMode NetMode = NM_Standalone;
+	const UWorld* World = nullptr;
+	if (FlowAsset.IsValid())
+	{
+		TWeakObjectPtr<const UWorld> DebugWorld = FlowAsset->GetWorldBeingDebugged();
+		if (DebugWorld.IsValid())
+		{
+			World = DebugWorld.Get();
+			NetMode = DebugWorld->GetNetMode();
+		}
+		else
+		{
+			TWeakObjectPtr<const UFlowAsset> InspectedInstance = FlowAsset->GetInspectedInstance();
+			if (InspectedInstance.IsValid())
+			{
+				World = InspectedInstance->GetWorld();
+				if (World) // not sure if it is okay if we don't have a valid world for InspectedInstance
+				{
+					NetMode = World->GetNetMode();
+				}
+			}
+		}
+	}
+
+	if (NetMode == NM_ListenServer || NetMode == NM_DedicatedServer)
+	{
+		return LOCTEXT("PIEStatusServerSimulating", "SERVER - SIMULATING");
+	}
+	else if (NetMode == NM_Client)
+	{
+		FWorldContext* PIEContext = GEngine->GetWorldContextFromWorld(World);
+		return FText::Format(LOCTEXT("PIEStatusClientSimulatingFormat", "CLIENT {0} - SIMULATING"), FText::AsNumber(PIEContext->PIEInstance));
+	}
+
+	return LOCTEXT("PIEStatusSimulating", "SIMULATING");
 }
 
 void SFlowGraphEditor::UndoGraphAction()
@@ -358,7 +393,7 @@ void SFlowGraphEditor::OnSelectedNodesChanged(const TSet<UObject*>& Nodes)
 		{
 			if (const UFlowGraphNode* GraphNode = Cast<UFlowGraphNode>(*SetIt))
 			{
-				SelectedObjects.Add(Cast<UObject>(GraphNode->GetFlowNodeBase()));
+				SelectedObjects.Add(GraphNode->GetFlowNodeBase());
 			}
 			else
 			{
@@ -988,7 +1023,7 @@ void SFlowGraphEditor::OnNodeDoubleClicked(class UEdGraphNode* Node) const
 						const TWeakObjectPtr<UFlowAsset> SubFlowInstance = SubGraphNode->GetFlowAsset()->GetFlowInstance(SubGraphNode);
 						if (SubFlowInstance.IsValid())
 						{
-							SubGraphNode->GetFlowAsset()->GetTemplateAsset()->SetInspectedInstance(SubFlowInstance->GetDisplayName());
+							SubFlowInstance->GetTemplateAsset()->SetInspectedInstance(SubFlowInstance);
 						}
 					}
 				}

@@ -2,12 +2,15 @@
 
 #include "Asset/FlowAssetToolbar.h"
 
+#include "Graph/FlowGraphUtils.h"
 #include "Asset/FlowAssetEditor.h"
 #include "Asset/FlowAssetEditorContext.h"
 #include "Asset/SAssetRevisionMenu.h"
 #include "FlowEditorCommands.h"
 
 #include "FlowAsset.h"
+#include "Nodes/Graph/FlowNode_SubGraph.h"
+#include "FlowUserSettings.h"
 
 #include "Kismet2/DebuggerCommands.h"
 #include "Misc/Attribute.h"
@@ -30,22 +33,30 @@
 // Flow Asset Instance List
 
 FText SFlowAssetInstanceList::NoInstanceSelectedText = LOCTEXT("NoInstanceSelected", "No instance selected");
+FText SFlowAssetInstanceList::AllWorldsText = LOCTEXT("AllWorlds", "All Worlds");
 
 void SFlowAssetInstanceList::Construct(const FArguments& InArgs, const TWeakObjectPtr<UFlowAsset> InTemplateAsset)
 {
 	TemplateAsset = InTemplateAsset;
-	if (TemplateAsset.IsValid())
-	{
-		TemplateAsset->OnDebuggerRefresh().AddSP(this, &SFlowAssetInstanceList::RefreshInstances);
-		RefreshInstances();
-	}
 
-	// create dropdown
-	SAssignNew(Dropdown, SComboBox<TSharedPtr<FName>>)
-		.OptionsSource(&InstanceNames)
-		.Visibility_Static(&SFlowAssetInstanceList::GetDebuggerVisibility)
-		.OnGenerateWidget(this, &SFlowAssetInstanceList::OnGenerateWidget)
-		.OnSelectionChanged(this, &SFlowAssetInstanceList::OnSelectionChanged)
+	DebugWorldsComboBox = SNew(SComboBox<TSharedPtr<FFlowDebugWorld>>)
+		.OptionsSource(&DebugWorlds)
+		.Visibility_Static(&SFlowAssetInstanceList::GetWorldComboVisibility)
+		.OnComboBoxOpening(this, &SFlowAssetInstanceList::GenerateDebugWorldNames)
+		.OnGenerateWidget(this, &SFlowAssetInstanceList::GenerateWorldItemWidget)
+		.OnSelectionChanged(this, &SFlowAssetInstanceList::DebugWorldSelectionChanged)
+		.ContentPadding(FMargin(0.f, 2.f))
+		[
+			SNew(STextBlock)
+			.Text(this, &SFlowAssetInstanceList::GetSelectedWorldName)
+		];
+
+	DebugInstancesComboBox = SNew(SComboBox<TSharedPtr<FFlowDebugInstance>>)
+		.OptionsSource(&DebugInstances)
+		.OnComboBoxOpening(this, &SFlowAssetInstanceList::GenerateDebugInstances)
+		.OnGenerateWidget(this, &SFlowAssetInstanceList::GenerateInstanceItemWidget)
+		.OnSelectionChanged(this, &SFlowAssetInstanceList::DebugInstanceSelectionChanged)
+		.ContentPadding(FMargin(0.f, 2.f))
 		[
 			SNew(STextBlock)
 			.Text(this, &SFlowAssetInstanceList::GetSelectedInstanceName)
@@ -53,8 +64,27 @@ void SFlowAssetInstanceList::Construct(const FArguments& InArgs, const TWeakObje
 
 	ChildSlot
 	[
-		Dropdown.ToSharedRef()
+		SNew(SHorizontalBox)
+			+ SHorizontalBox::Slot()
+			.AutoWidth()
+			[
+				DebugWorldsComboBox.ToSharedRef()
+			]
+			+ SHorizontalBox::Slot()
+			.Padding(8.0, 0.f, 4.f, 0.f)
+			.AutoWidth()
+			[
+				DebugInstancesComboBox.ToSharedRef()
+			]
 	];
+
+	if (TemplateAsset.IsValid())
+	{
+		TemplateAsset->OnDebuggerRefresh().AddSP(this, &SFlowAssetInstanceList::GenerateDebugWorldNames);
+		TemplateAsset->OnDebuggerRefresh().AddSP(this, &SFlowAssetInstanceList::GenerateDebugInstances);
+		GenerateDebugWorldNames();
+		GenerateDebugInstances();
+	}
 }
 
 SFlowAssetInstanceList::~SFlowAssetInstanceList()
@@ -65,59 +95,188 @@ SFlowAssetInstanceList::~SFlowAssetInstanceList()
 	}
 }
 
-void SFlowAssetInstanceList::RefreshInstances()
+EVisibility SFlowAssetInstanceList::GetWorldComboVisibility()
 {
-	// collect instance names of this Flow Asset
-	InstanceNames = {MakeShareable(new FName(*NoInstanceSelectedText.ToString()))};
-	TemplateAsset->GetInstanceDisplayNames(InstanceNames);
-
-	// select instance
-	if (const UFlowAsset* InspectedInstance = TemplateAsset->GetInspectedInstance())
+	if (GEditor->PlayWorld != nullptr)
 	{
-		const FName& InspectedInstanceName = InspectedInstance->GetDisplayName();
-		for (const TSharedPtr<FName>& Instance : InstanceNames)
+		auto GetNumLocalWorlds = []()
 		{
-			if (*Instance == InspectedInstanceName)
+			int32 LocalWorldCount = 0;
+			for (const FWorldContext& Context : GEngine->GetWorldContexts())
 			{
-				SelectedInstance = Instance;
-				break;
+				if (Context.WorldType == EWorldType::PIE && Context.World() != nullptr)
+				{
+					++LocalWorldCount;
+				}
+			}
+			return LocalWorldCount;
+		};
+		
+		if (GetNumLocalWorlds() > 1)
+		{
+			return EVisibility::Visible;
+		}
+	}
+
+	return EVisibility::Collapsed;
+}
+
+void SFlowAssetInstanceList::GenerateDebugWorldNames()
+{
+	DebugWorlds.Empty();
+	DebugWorlds.Add(MakeShareable(new FFlowDebugWorld(nullptr, AllWorldsText.ToString())));
+
+	for (const FWorldContext& PieContext : GEngine->GetWorldContexts())
+	{
+		UWorld* PlayWorld = PieContext.World();
+		if (PlayWorld && PlayWorld->IsGameWorld())
+		{
+			FString WorldName = GetDebugStringForWorld(PlayWorld);
+			DebugWorlds.Add(MakeShareable(new FFlowDebugWorld(PlayWorld, WorldName)));
+		}
+	}
+	
+	TSharedPtr<FFlowDebugWorld> LastSelection = GetDebugWorld();
+	DebugWorldsComboBox->SetSelectedItem(LastSelection);
+}
+
+TSharedRef<SWidget> SFlowAssetInstanceList::GenerateWorldItemWidget(TSharedPtr<FFlowDebugWorld> Item) const
+{
+	return SNew(STextBlock)
+		.Text(FText::FromString(Item->WorldLabel));
+}
+
+void SFlowAssetInstanceList::DebugWorldSelectionChanged(TSharedPtr<FFlowDebugWorld> SelectedItem, ESelectInfo::Type SelectionType)
+{
+	check(TemplateAsset.IsValid());
+	if (SelectionType != ESelectInfo::Direct)
+	{
+		check(SelectedItem.IsValid());
+		TemplateAsset->SetWorldBeingDebugged(SelectedItem->WorldPtr);
+		TemplateAsset->SetInspectedInstance(nullptr);
+	}
+}
+
+FText SFlowAssetInstanceList::GetSelectedWorldName() const
+{
+	return FText::FromString(DebugWorldsComboBox->GetSelectedItem()->WorldLabel);
+}
+
+TSharedPtr<FFlowDebugWorld> SFlowAssetInstanceList::GetDebugWorld() const
+{
+	check(TemplateAsset.IsValid());
+	TWeakObjectPtr<const UWorld> World = TemplateAsset->GetWorldBeingDebugged();
+	if (!World.IsExplicitlyNull())
+	{
+		for (const TSharedPtr<FFlowDebugWorld>& DebugWorld : DebugWorlds)
+		{
+			if (ensure(DebugWorld.IsValid()) && DebugWorld->WorldPtr == World)
+			{
+				return DebugWorld;
 			}
 		}
 	}
-	else
+
+	check(DebugWorlds.Num() > 0);
+	return DebugWorlds[0];
+}
+
+void SFlowAssetInstanceList::GenerateDebugInstances()
+{
+	check(TemplateAsset.IsValid());
+
+	TSharedPtr<FFlowDebugInstance> LastSelection;
+	if (UFlowUserSettings::Get()->bKeepLastInspectedInstance)
 	{
-		// default object is always available
-		SelectedInstance = InstanceNames[0];
+		LastSelection = GetDebugInstance();
+	}
+	
+	DebugInstances.Empty();
+	DebugInstances.Add(MakeShareable(new FFlowDebugInstance(nullptr, *NoInstanceSelectedText.ToString())));
+
+	TWeakObjectPtr<const UWorld> DebugWorld = DebugWorldsComboBox->GetSelectedItem()->WorldPtr;
+	
+	// collect active instances of this Flow Asset
+	for (const UFlowAsset* ActiveInstance: TemplateAsset->GetActiveInstances())
+	{
+		if (DebugWorld.IsValid() && DebugWorld.Get() != ActiveInstance->GetWorld())
+		{
+			continue;
+		}
+		
+		TSharedPtr<FFlowDebugInstance> NewInstance = MakeShareable(new FFlowDebugInstance(ActiveInstance, ActiveInstance->GetDebugName()));
+		DebugInstances.Add(NewInstance);
+	}
+	
+	TSharedPtr<FFlowDebugInstance> Selection = GetDebugInstance();
+	if (Selection.IsValid() && !Selection->IsEmptyObject())
+	{
+		// If our new selection matches the actual debug instance, set it
+		if (LastSelection.IsValid() && LastSelection->InstanceLabel == Selection->InstanceLabel)
+		{
+			// new selection is the same as our selected instance from previous PIE session, set it as inspected
+			TemplateAsset->SetInspectedInstance(Selection->InstancePtr);
+		}
+		DebugInstancesComboBox->SetSelectedItem(Selection);
+	}
+	else if (LastSelection.IsValid() && !LastSelection->IsEmptyObject())
+	{
+		// Re-add the desired runtime instance, even though it is currently null
+		DebugInstances.Add(LastSelection);
+		DebugInstancesComboBox->SetSelectedItem(LastSelection);
+	}
+	
+	// Finally ensure we have a valid selection, this will set to all objects as a backup
+	TSharedPtr<FFlowDebugInstance> CurrentSelection = DebugInstancesComboBox->GetSelectedItem();
+	if (DebugInstances.Find(CurrentSelection) == INDEX_NONE)
+	{
+		check(DebugInstances.Num() > 0);
+		DebugInstancesComboBox->SetSelectedItem(DebugInstances[0]);
 	}
 }
 
-EVisibility SFlowAssetInstanceList::GetDebuggerVisibility()
+TSharedRef<SWidget> SFlowAssetInstanceList::GenerateInstanceItemWidget(const TSharedPtr<FFlowDebugInstance> Item) const
 {
-	return GEditor->PlayWorld ? EVisibility::Visible : EVisibility::Collapsed;
+	return SNew(STextBlock)
+		.Text(FText::FromString(Item->InstanceLabel));
 }
 
-TSharedRef<SWidget> SFlowAssetInstanceList::OnGenerateWidget(const TSharedPtr<FName> Item) const
+void SFlowAssetInstanceList::DebugInstanceSelectionChanged(const TSharedPtr<FFlowDebugInstance> SelectedItem, const ESelectInfo::Type SelectionType)
 {
-	return SNew(STextBlock).Text(FText::FromName(*Item.Get()));
-}
-
-void SFlowAssetInstanceList::OnSelectionChanged(const TSharedPtr<FName> SelectedItem, const ESelectInfo::Type SelectionType)
-{
+	check(TemplateAsset.IsValid());
 	if (SelectionType != ESelectInfo::Direct)
 	{
-		SelectedInstance = SelectedItem;
-
-		if (TemplateAsset.IsValid())
-		{
-			const FName NewSelectedInstanceName = (SelectedInstance.IsValid() && *SelectedInstance != *InstanceNames[0]) ? *SelectedInstance : NAME_None;
-			TemplateAsset->SetInspectedInstance(NewSelectedInstanceName);
-		}
+		check(SelectedItem.IsValid());
+		TWeakObjectPtr<const UFlowAsset> Instance = SelectedItem->InstancePtr;
+		TemplateAsset->SetInspectedInstance(Instance);
 	}
 }
 
 FText SFlowAssetInstanceList::GetSelectedInstanceName() const
 {
-	return SelectedInstance.IsValid() ? FText::FromName(*SelectedInstance) : NoInstanceSelectedText;
+	return FText::FromString(DebugInstancesComboBox->GetSelectedItem()->InstanceLabel);
+}
+
+TSharedPtr<FFlowDebugInstance> SFlowAssetInstanceList::GetDebugInstance() const
+{
+	check(TemplateAsset.IsValid());
+	const FStringView DebugName = TemplateAsset->GetLastInspectedInstanceName();
+	if (!DebugName.IsEmpty())
+	{
+		for (int32 ObjectIndex = 0; ObjectIndex < DebugInstances.Num(); ++ObjectIndex)
+		{
+			if (ensure(DebugInstances[ObjectIndex].IsValid()) && DebugName.Equals(DebugInstances[ObjectIndex]->InstanceLabel))
+			{
+				return DebugInstances[ObjectIndex];
+			}
+		}
+	}
+	
+	if (DebugInstances.Num() > 0)
+	{
+		return DebugInstances[0];
+	}
+	return nullptr;
 }
 
 //////////////////////////////////////////////////////////////////////////
@@ -130,30 +289,43 @@ void SFlowAssetBreadcrumb::Construct(const FArguments& InArgs, const TWeakObject
 	// create breadcrumb
 	SAssignNew(BreadcrumbTrail, SBreadcrumbTrail<FFlowBreadcrumb>)
 		.OnCrumbClicked(this, &SFlowAssetBreadcrumb::OnCrumbClicked)
-		.Visibility_Static(&SFlowAssetInstanceList::GetDebuggerVisibility)
-		.ButtonStyle(FAppStyle::Get(), "FlatButton")
-		.DelimiterImage(FAppStyle::GetBrush("Sequencer.BreadcrumbIcon"))
-		.PersistentBreadcrumbs(true)
-		.TextStyle(FAppStyle::Get(), "Sequencer.BreadcrumbText");
+		.ButtonStyle(FAppStyle::Get(), "SimpleButton")
+		.TextStyle(FAppStyle::Get(), "NormalText")
+		.ButtonContentPadding( FMargin(2.f, 4.f) )
+		.DelimiterImage( FAppStyle::GetBrush("Icons.ChevronRight") )
+		.ShowLeadingDelimiter(true)
+		.PersistentBreadcrumbs(true);
 
 	ChildSlot
 	[
-		SNew(SVerticalBox)
-		+ SVerticalBox::Slot()
-		  .HAlign(HAlign_Right)
-		  .VAlign(VAlign_Center)
-		  .AutoHeight()
-		  .Padding(25.0f, 10.0f)
+		SNew(SBorder)
+		.Visibility(this, &SFlowAssetBreadcrumb::GetBreadcrumbVisibility)
+		.BorderImage(new FSlateRoundedBoxBrush(FStyleColors::Transparent, 4, FStyleColors::InputOutline, 1))
 		[
-			BreadcrumbTrail.ToSharedRef()
+			SNew(SBox)
+			.MaxDesiredWidth(500.f)
+			[
+				BreadcrumbTrail.ToSharedRef()
+			]
 		]
 	];
 
-	// fill breadcrumb
+	check(TemplateAsset.IsValid());
+	TemplateAsset->OnDebuggerRefresh().AddSP(this, &SFlowAssetBreadcrumb::FillBreadcrumb);
+	FillBreadcrumb();
+}
+
+EVisibility SFlowAssetBreadcrumb::GetBreadcrumbVisibility() const
+{
+	return GEditor->PlayWorld && TemplateAsset->GetInspectedInstance() ? EVisibility::Visible : EVisibility::Collapsed;
+}
+
+void SFlowAssetBreadcrumb::FillBreadcrumb()
+{
 	BreadcrumbTrail->ClearCrumbs();
-	if (UFlowAsset* InspectedInstance = TemplateAsset->GetInspectedInstance())
+	if (const UFlowAsset* InspectedInstance = TemplateAsset->GetInspectedInstance())
 	{
-		TArray<TWeakObjectPtr<UFlowAsset>> InstancesFromRoot = {InspectedInstance};
+		TArray<TWeakObjectPtr<const UFlowAsset>> InstancesFromRoot = {InspectedInstance};
 
 		const UFlowAsset* CheckedInstance = InspectedInstance;
 		while (UFlowAsset* ParentInstance = CheckedInstance->GetParentInstance())
@@ -162,13 +334,12 @@ void SFlowAssetBreadcrumb::Construct(const FArguments& InArgs, const TWeakObject
 			CheckedInstance = ParentInstance;
 		}
 
-		for (TWeakObjectPtr<UFlowAsset> Instance : InstancesFromRoot)
+		for (int32 Index = 0; Index < InstancesFromRoot.Num(); Index++)
 		{
-			if (Instance.IsValid())
-			{
-				const FFlowBreadcrumb NewBreadcrumb = FFlowBreadcrumb(Instance);
-				BreadcrumbTrail->PushCrumb(FText::FromName(NewBreadcrumb.InstanceName), FFlowBreadcrumb(Instance));
-			}
+			TWeakObjectPtr<const UFlowAsset> Instance = InstancesFromRoot[Index];
+			TWeakObjectPtr<const UFlowAsset> ChildInstance = Index < InstancesFromRoot.Num() - 1 ? InstancesFromRoot[Index + 1] : nullptr;
+				
+			BreadcrumbTrail->PushCrumb(FText::FromName(Instance->GetDisplayName()), FFlowBreadcrumb(Instance, ChildInstance));
 		}
 	}
 }
@@ -176,9 +347,19 @@ void SFlowAssetBreadcrumb::Construct(const FArguments& InArgs, const TWeakObject
 void SFlowAssetBreadcrumb::OnCrumbClicked(const FFlowBreadcrumb& Item) const
 {
 	const UFlowAsset* InspectedInstance = TemplateAsset->GetInspectedInstance();
-	if (InspectedInstance == nullptr || Item.InstanceName != InspectedInstance->GetDisplayName())
+	if (InspectedInstance == nullptr || Item.CurrentInstance != TemplateAsset)
 	{
-		GEditor->GetEditorSubsystem<UAssetEditorSubsystem>()->OpenEditorForAsset(Item.AssetPathName);
+		const TWeakObjectPtr<const UFlowAsset> ClickedInstance = Item.CurrentInstance;
+		UFlowAsset* ClickedTemplateAsset = ClickedInstance->GetTemplateAsset();
+		
+		if (GEditor->GetEditorSubsystem<UAssetEditorSubsystem>()->OpenEditorForAsset(ClickedTemplateAsset))
+		{
+			ClickedTemplateAsset->SetInspectedInstance(ClickedInstance);
+			if (const TSharedPtr<FFlowAssetEditor> FlowAssetEditor = FFlowGraphUtils::GetFlowAssetEditor(ClickedTemplateAsset))
+			{
+				FlowAssetEditor->JumpToNode(Item.ChildInstance->GetNodeOwningThisAssetInstance()->GetGraphNode());
+			}
+		}
 	}
 }
 
@@ -199,9 +380,9 @@ void FFlowAssetToolbar::BuildAssetToolbar(UToolMenu* ToolbarMenu) const
 		Section.InsertPosition = FToolMenuInsert("Asset", EToolMenuInsertType::After);
 
 		// add buttons
-		Section.AddEntry(FToolMenuEntry::InitToolBarButton(FFlowToolbarCommands::Get().RefreshAsset));
-		Section.AddEntry(FToolMenuEntry::InitToolBarButton(FFlowToolbarCommands::Get().ValidateAsset));
-		Section.AddEntry(FToolMenuEntry::InitToolBarButton(FFlowToolbarCommands::Get().EditAssetDefaults));
+		Section.AddEntry(FToolMenuEntry::InitToolBarButton(FFlowEditorCommands::Get().RefreshAsset));
+		Section.AddEntry(FToolMenuEntry::InitToolBarButton(FFlowEditorCommands::Get().ValidateAsset));
+		Section.AddEntry(FToolMenuEntry::InitToolBarButton(FFlowEditorCommands::Get().EditAssetDefaults));
 	}
 	
 	{
@@ -229,7 +410,7 @@ void FFlowAssetToolbar::BuildAssetToolbar(UToolMenu* ToolbarMenu) const
 		}));
 		
 		Section.AddEntry(FToolMenuEntry::InitToolBarButton(
-			FFlowToolbarCommands::Get().SearchInAsset,
+			FFlowEditorCommands::Get().SearchInAsset,
 			TAttribute<FText>(),
 			TAttribute<FText>(),
 			FSlateIcon(FAppStyle::GetAppStyleSetName(), "Kismet.Tabs.FindResults")
@@ -325,7 +506,8 @@ void FFlowAssetToolbar::BuildDebuggerToolbar(UToolMenu* ToolbarMenu) const
 
 			InSection.AddEntry(FToolMenuEntry::InitWidget("AssetInstances", SNew(SFlowAssetInstanceList, Context->GetFlowAsset()), FText(), true));
 
-			InSection.AddEntry(FToolMenuEntry::InitToolBarButton(FFlowToolbarCommands::Get().GoToParentInstance));
+			InSection.AddSeparator(NAME_None).StyleNameOverride = FName("Toolbar.BackplateRight");
+
 			InSection.AddEntry(FToolMenuEntry::InitWidget("AssetBreadcrumb", SNew(SFlowAssetBreadcrumb, Context->GetFlowAsset()), FText(), true));
 		}
 	}));

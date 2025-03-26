@@ -11,6 +11,7 @@
 #include "Graph/FlowGraphEditor.h"
 #include "Graph/FlowGraphSchema.h"
 #include "Graph/Widgets/SFlowPalette.h"
+#include "Debugger/FlowDebuggerSubsystem.h"
 
 #include "FlowAsset.h"
 
@@ -46,6 +47,7 @@ const FName FFlowAssetEditor::ValidationLogTab(TEXT("ValidationLog"));
 FFlowAssetEditor::FFlowAssetEditor()
 	: FlowAsset(nullptr)
 {
+	DebuggerSubsystem = GEngine->GetEngineSubsystem<UFlowDebuggerSubsystem>();
 }
 
 FFlowAssetEditor::~FFlowAssetEditor()
@@ -308,7 +310,8 @@ void FFlowAssetEditor::InitFlowAssetEditor(const EToolkitMode::Type Mode, const 
 	UFlowGraphSchema::SubscribeToAssetChanges();
 	FlowAsset->OnDetailsRefreshRequested.BindThreadSafeSP(this, &FFlowAssetEditor::RefreshDetails);
 
-	BindToolbarCommands();
+	BindEditorCommands();
+	RegisterMenus();
 	CreateToolbar();
 
 	CreateWidgets();
@@ -369,6 +372,31 @@ void FFlowAssetEditor::InitFlowAssetEditor(const EToolkitMode::Type Mode, const 
 	RegenerateMenusAndToolbars();
 }
 
+void FFlowAssetEditor::RegisterMenus()
+{
+	const FName MainMenuName = GetToolMenuName();
+
+	FToolMenuSection& Section = UToolMenus::Get()->ExtendMenu(MainMenuName)->FindOrAddSection(NAME_None);
+	
+	if (!Section.FindEntry("Debug"))
+	{
+		Section.AddSubMenu(
+			"Debug",
+			LOCTEXT("DebugMenu", "Debug"),
+			LOCTEXT("DebugMenu_ToolTip", "Open the debug menu"),
+			FNewToolMenuDelegate::CreateLambda([](UToolMenu* InMenu)
+			{
+				{
+					FToolMenuSection& Section = InMenu->AddSection("DebugBreakpoints", LOCTEXT("DebugMenu_BreakpointHeading", "Breakpoints"));
+					Section.AddMenuEntry( FFlowEditorCommands::Get().EnableAllBreakpoints );
+					Section.AddMenuEntry( FFlowEditorCommands::Get().DisableAllBreakpoints );
+					Section.AddMenuEntry( FFlowEditorCommands::Get().RemoveAllBreakpoints );
+				}
+			})
+		).InsertPosition = FToolMenuInsert("Edit", EToolMenuInsertType::After);
+	}
+}
+
 void FFlowAssetEditor::CreateToolbar()
 {
 	FName ParentToolbarName;
@@ -387,37 +415,55 @@ void FFlowAssetEditor::CreateToolbar()
 	}
 }
 
-void FFlowAssetEditor::BindToolbarCommands()
+void FFlowAssetEditor::BindEditorCommands()
 {
-	FFlowToolbarCommands::Register();
-	const FFlowToolbarCommands& ToolbarCommands = FFlowToolbarCommands::Get();
+	FFlowEditorCommands::Register();
+	const FFlowEditorCommands& ToolbarCommands = FFlowEditorCommands::Get();
 
-	// Editing
-	ToolkitCommands->MapAction(ToolbarCommands.RefreshAsset,
-								FExecuteAction::CreateSP(this, &FFlowAssetEditor::RefreshAsset),
-								FCanExecuteAction::CreateStatic(&FFlowAssetEditor::CanEdit));
+	// Toolbar
+	{
+		// Editing
+		ToolkitCommands->MapAction(ToolbarCommands.RefreshAsset,
+									FExecuteAction::CreateSP(this, &FFlowAssetEditor::RefreshAsset),
+									FCanExecuteAction::CreateStatic(&FFlowAssetEditor::CanEdit));
 
-	ToolkitCommands->MapAction(ToolbarCommands.ValidateAsset,
-								FExecuteAction::CreateSP(this, &FFlowAssetEditor::ValidateAsset_Internal),
-								FCanExecuteAction());
+		ToolkitCommands->MapAction(ToolbarCommands.ValidateAsset,
+									FExecuteAction::CreateSP(this, &FFlowAssetEditor::ValidateAsset_Internal),
+									FCanExecuteAction());
 	
-	ToolkitCommands->MapAction(ToolbarCommands.SearchInAsset,
-								FExecuteAction::CreateSP(this, &FFlowAssetEditor::SearchInAsset),
-								FCanExecuteAction());
+		ToolkitCommands->MapAction(ToolbarCommands.SearchInAsset,
+									FExecuteAction::CreateSP(this, &FFlowAssetEditor::SearchInAsset),
+									FCanExecuteAction());
 
-	ToolkitCommands->MapAction(ToolbarCommands.EditAssetDefaults,
-								FExecuteAction::CreateSP(this, &FFlowAssetEditor::EditAssetDefaults_Clicked),
-								FCanExecuteAction());
+		ToolkitCommands->MapAction(ToolbarCommands.EditAssetDefaults,
+									FExecuteAction::CreateSP(this, &FFlowAssetEditor::EditAssetDefaults_Clicked),
+									FCanExecuteAction());
 
-	// Engine's Play commands
-	ToolkitCommands->Append(FPlayWorldCommands::GlobalPlayWorldActions.ToSharedRef());
+		// Engine's Play commands
+		ToolkitCommands->Append(FPlayWorldCommands::GlobalPlayWorldActions.ToSharedRef());
 
-	// Debugging
-	ToolkitCommands->MapAction(ToolbarCommands.GoToParentInstance,
-								FExecuteAction::CreateSP(this, &FFlowAssetEditor::GoToParentInstance),
-								FCanExecuteAction::CreateSP(this, &FFlowAssetEditor::CanGoToParentInstance),
-								FIsActionChecked(),
-								FIsActionButtonVisible::CreateSP(this, &FFlowAssetEditor::CanGoToParentInstance));
+		// Debugging
+		ToolkitCommands->MapAction(ToolbarCommands.GoToParentInstance,
+									FExecuteAction::CreateSP(this, &FFlowAssetEditor::GoToParentInstance),
+									FCanExecuteAction::CreateSP(this, &FFlowAssetEditor::CanGoToParentInstance),
+									FIsActionChecked(),
+									FIsActionButtonVisible::CreateSP(this, &FFlowAssetEditor::CanGoToParentInstance));
+	}
+
+	// Debug menu
+	{
+		ToolkitCommands->MapAction(ToolbarCommands.DisableAllBreakpoints,
+									FExecuteAction::CreateSP(this, &FFlowAssetEditor::DisableAllBreakpoints),
+									FCanExecuteAction::CreateSP(this, &FFlowAssetEditor::HasAnyEnabledBreakpoints));
+		
+		ToolkitCommands->MapAction(ToolbarCommands.EnableAllBreakpoints,
+									FExecuteAction::CreateSP(this, &FFlowAssetEditor::EnableAllBreakpoints),
+									FCanExecuteAction::CreateSP(this, &FFlowAssetEditor::HasAnyDisabledBreakpoints));
+		
+		ToolkitCommands->MapAction(ToolbarCommands.RemoveAllBreakpoints,
+									FExecuteAction::CreateSP(this, &FFlowAssetEditor::ClearAllBreakpoints),
+									FCanExecuteAction::CreateSP(this, &FFlowAssetEditor::HasAnyBreakpoints));
+	}
 }
 
 void FFlowAssetEditor::RefreshAsset()
@@ -477,12 +523,48 @@ void FFlowAssetEditor::GoToParentInstance()
 	const UFlowAsset* AssetThatInstancedThisAsset = FlowAsset->GetInspectedInstance()->GetParentInstance();
 
 	GEditor->GetEditorSubsystem<UAssetEditorSubsystem>()->OpenEditorForAsset(AssetThatInstancedThisAsset->GetTemplateAsset());
-	AssetThatInstancedThisAsset->GetTemplateAsset()->SetInspectedInstance(AssetThatInstancedThisAsset->GetDisplayName());
+	AssetThatInstancedThisAsset->GetTemplateAsset()->SetInspectedInstance(AssetThatInstancedThisAsset);
 }
 
 bool FFlowAssetEditor::CanGoToParentInstance()
 {
 	return FlowAsset->GetInspectedInstance() && FlowAsset->GetInspectedInstance()->GetNodeOwningThisAssetInstance() != nullptr;
+}
+
+void FFlowAssetEditor::EnableAllBreakpoints()
+{
+	check(DebuggerSubsystem.IsValid());
+	DebuggerSubsystem->SetAllBreakpointsEnabled(FlowAsset, true);
+}
+
+bool FFlowAssetEditor::HasAnyDisabledBreakpoints()
+{
+	check(DebuggerSubsystem.IsValid());
+	return DebuggerSubsystem->HasAnyBreakpointsDisabled(FlowAsset);
+}
+
+void FFlowAssetEditor::DisableAllBreakpoints()
+{
+	check(DebuggerSubsystem.IsValid());
+	DebuggerSubsystem->SetAllBreakpointsEnabled(FlowAsset, false);
+}
+
+bool FFlowAssetEditor::HasAnyEnabledBreakpoints()
+{
+	check(DebuggerSubsystem.IsValid());
+	return DebuggerSubsystem->HasAnyBreakpointsEnabled(FlowAsset);
+}
+
+void FFlowAssetEditor::ClearAllBreakpoints()
+{
+	check(DebuggerSubsystem.IsValid());
+	DebuggerSubsystem->RemoveAllBreakpoints(FlowAsset);
+}
+
+bool FFlowAssetEditor::HasAnyBreakpoints()
+{
+	check(DebuggerSubsystem.IsValid());
+	return DebuggerSubsystem->HasAnyBreakpoints(FlowAsset);
 }
 
 void FFlowAssetEditor::CreateWidgets()

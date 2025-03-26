@@ -28,12 +28,13 @@ protected:
 	virtual void OnInstancedTemplateAdded(UFlowAsset* AssetTemplate);
 	virtual void OnInstancedTemplateRemoved(UFlowAsset* AssetTemplate) const;
 
-	virtual void OnPinTriggered(const FGuid& NodeGuid, const FName& PinName);
+	virtual void OnPinTriggered(const UFlowAsset* Instance, const FGuid& NodeGuid, const FName& PinName);
 
 public:
 	virtual void AddBreakpoint(const FGuid& NodeGuid);
 	virtual void AddBreakpoint(const FGuid& NodeGuid, const FName& PinName);
 
+	virtual void RemoveAllBreakpoints(const UFlowAsset* Asset);
 	virtual void RemoveAllBreakpoints(const FGuid& NodeGuid);
 	virtual void RemoveNodeBreakpoint(const FGuid& NodeGuid);
 	virtual void RemovePinBreakpoint(const FGuid& NodeGuid, const FName& PinName);
@@ -46,20 +47,24 @@ public:
 	virtual void ToggleBreakpoint(const FGuid& NodeGuid);
 	virtual void ToggleBreakpoint(const FGuid& NodeGuid, const FName& PinName);
 
+	bool HasAnyBreakpoints(const UFlowAsset* Asset) const;
 	virtual FFlowBreakpoint* FindBreakpoint(const FGuid& NodeGuid);
 	virtual FFlowBreakpoint* FindBreakpoint(const FGuid& NodeGuid, const FName& PinName);
 
+	virtual void SetAllBreakpointsEnabled(const UFlowAsset* Asset, bool bEnabled);
 	virtual void SetBreakpointEnabled(const FGuid& NodeGuid, bool bEnabled);
 	virtual void SetBreakpointEnabled(const FGuid& NodeGuid, const FName& PinName, bool bEnabled);
 
+	bool HasAnyBreakpointsDisabled(const UFlowAsset* Asset) const;
+	bool HasAnyBreakpointsEnabled(const UFlowAsset* Asset) const;
 	virtual bool IsBreakpointEnabled(const FGuid& NodeGuid);
 	virtual bool IsBreakpointEnabled(const FGuid& NodeGuid, const FName& PinName);
 
 protected:
-	virtual void MarkAsHit(const FGuid& NodeGuid);
-	virtual void MarkAsHit(const FGuid& NodeGuid, const FName& PinName);
+	virtual bool TryMarkAsHit(const FGuid& NodeGuid);
+	virtual bool TryMarkAsHit(const FGuid& NodeGuid, const FName& PinName);
 	
-	virtual void PauseSession();
+	virtual void PauseSession(const FGuid& FromNode);
 	virtual void ResumeSession();
 	void SetPause(const bool bPause);
 

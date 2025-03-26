@@ -41,6 +41,7 @@ public:
 
 	virtual FGraphAppearanceInfo GetGraphAppearanceInfo() const;
 	virtual FText GetCornerText() const;
+	virtual FText GetPIEStatus() const;
 
 private:
 	static void UndoGraphAction();

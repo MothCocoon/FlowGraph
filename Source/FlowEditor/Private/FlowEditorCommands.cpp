@@ -11,12 +11,12 @@
 
 #define LOCTEXT_NAMESPACE "FlowGraphCommands"
 
-FFlowToolbarCommands::FFlowToolbarCommands()
-	: TCommands<FFlowToolbarCommands>("FlowToolbar", LOCTEXT("FlowToolbar", "Flow Toobar"), NAME_None, FFlowEditorStyle::GetStyleSetName())
+FFlowEditorCommands::FFlowEditorCommands()
+	: TCommands<FFlowEditorCommands>("FlowEditor", LOCTEXT("FlowEditor", "Flow Editor"), NAME_None, FFlowEditorStyle::GetStyleSetName())
 {
 }
 
-void FFlowToolbarCommands::RegisterCommands()
+void FFlowEditorCommands::RegisterCommands()
 {
 	UI_COMMAND(RefreshAsset, "Refresh", "Refresh asset and all nodes", EUserInterfaceActionType::Button, FInputChord());
 	UI_COMMAND(ValidateAsset, "Validate", "Validate asset and all nodes", EUserInterfaceActionType::Button, FInputChord());
@@ -25,6 +25,11 @@ void FFlowToolbarCommands::RegisterCommands()
 	UI_COMMAND(EditAssetDefaults, "Asset Defaults", "Edit the FlowAsset default properties", EUserInterfaceActionType::Button, FInputChord());
 
 	UI_COMMAND(GoToParentInstance, "Go To Parent", "Open editor for the Flow Asset that created this Flow instance", EUserInterfaceActionType::Button, FInputChord());
+
+	UI_COMMAND(EnableAllBreakpoints,"Enable All Breakpoints", "Enable all breakpoints", EUserInterfaceActionType::Button, FInputChord());
+	UI_COMMAND(DisableAllBreakpoints, "Disable All Breakpoints", "Disable all breakpoints", EUserInterfaceActionType::Button, FInputChord());
+	UI_COMMAND(RemoveAllBreakpoints, "Delete All Breakpoints", "Delete all breakpoints", EUserInterfaceActionType::Button, FInputChord(EModifierKey::Control | EModifierKey::Shift, EKeys::F9));
+
 }
 
 FFlowGraphCommands::FFlowGraphCommands()

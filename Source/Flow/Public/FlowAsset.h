@@ -22,9 +22,11 @@ class UEdGraph;
 class UEdGraphNode;
 class UFlowAsset;
 
+class UWorld;
+
 #if !UE_BUILD_SHIPPING
 DECLARE_DELEGATE(FFlowGraphEvent);
-DECLARE_DELEGATE_TwoParams(FFlowSignalEvent, const FGuid& /*NodeGuid*/, const FName& /*PinName*/);
+DECLARE_DELEGATE_ThreeParams(FFlowSignalEvent, const UFlowAsset* /*Instance*/, const FGuid& /*NodeGuid*/, const FName& /*PinName*/);
 #endif
 
 // Working Data struct for the Harvest Data Pins operation
@@ -276,7 +278,12 @@ private:
 	TArray<TObjectPtr<UFlowAsset>> ActiveInstances;
 
 #if WITH_EDITORONLY_DATA
-	TWeakObjectPtr<UFlowAsset> InspectedInstance;
+	TWeakObjectPtr<const UFlowAsset> InspectedInstance;
+
+	FString LastInspectedInstanceName;
+
+	/** Current world being debugged for this asset */
+	TWeakObjectPtr<const UWorld> CurrentWorldBeingDebugged;
 
 	// Message log for storing runtime errors/notes/warnings that will only last until the next game run
 	// Log lives in the asset template, so it can be inspected after ending the PIE
@@ -286,15 +293,25 @@ private:
 public:
 	void AddInstance(UFlowAsset* Instance);
 	int32 RemoveInstance(UFlowAsset* Instance);
+	TConstArrayView<TObjectPtr<UFlowAsset>> GetActiveInstances() const { return ActiveInstances; }
 
 	void ClearInstances();
 	int32 GetInstancesNum() const { return ActiveInstances.Num(); }
 
 #if WITH_EDITOR
-	void GetInstanceDisplayNames(TArray<TSharedPtr<FName>>& OutDisplayNames) const;
+	FString GetDebugName() const;
 
-	void SetInspectedInstance(const FName& NewInspectedInstanceName);
-	UFlowAsset* GetInspectedInstance() const { return InspectedInstance.IsValid() ? InspectedInstance.Get() : nullptr; }
+	void SetInspectedInstance(TWeakObjectPtr<const UFlowAsset> NewInspectedInstance, bool bRefreshDebugger = true);
+	const UFlowAsset* GetInspectedInstance() const { return InspectedInstance.IsValid() ? InspectedInstance.Get() : nullptr; }
+
+	/** @return debug name of instance that should be debugged, may be from previous PIE session */
+	const FStringView GetLastInspectedInstanceName() const
+	{
+		return LastInspectedInstanceName;
+	}
+	
+	void SetWorldBeingDebugged(const TWeakObjectPtr<const UWorld> NewWorld);
+	const TWeakObjectPtr<const UWorld> GetWorldBeingDebugged() const { return CurrentWorldBeingDebugged; }
 
 	DECLARE_EVENT(UFlowAsset, FRefreshDebuggerEvent);
 

@@ -809,7 +809,7 @@ void UFlowNode::TriggerInput(const FName& PinName, const EFlowPinActivationType 
 
 		if (const UFlowAsset* FlowAssetTemplate = GetFlowAsset()->GetTemplateAsset())
 		{
-			(void)FlowAssetTemplate->OnPinTriggered.ExecuteIfBound(NodeGuid, PinName);
+			(void)FlowAssetTemplate->OnPinTriggered.ExecuteIfBound(GetFlowAsset(), NodeGuid, PinName);
 		}
 #endif
 	}
@@ -875,7 +875,7 @@ void UFlowNode::TriggerOutput(const FName PinName, const bool bFinish /*= false*
 
 		if (const UFlowAsset* FlowAssetTemplate = GetFlowAsset()->GetTemplateAsset())
 		{
-			FlowAssetTemplate->OnPinTriggered.ExecuteIfBound(NodeGuid, PinName);
+			FlowAssetTemplate->OnPinTriggered.ExecuteIfBound(GetFlowAsset(), NodeGuid, PinName);
 		}
 	}
 	else

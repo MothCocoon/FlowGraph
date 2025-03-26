@@ -5,6 +5,7 @@
 #include "FlowLogChannels.h"
 #include "FlowSettings.h"
 #include "FlowSubsystem.h"
+#include "FlowUserSettings.h"
 
 #include "AddOns/FlowNodeAddOn.h"
 #include "Interfaces/FlowDataPinGeneratorNodeInterface.h"
@@ -17,6 +18,7 @@
 #include "Engine/World.h"
 #include "Serialization/MemoryReader.h"
 #include "Serialization/MemoryWriter.h"
+#include "Algo/AnyOf.h"
 
 #if WITH_EDITOR
 #include "Editor.h"
@@ -1039,7 +1041,16 @@ int32 UFlowAsset::RemoveInstance(UFlowAsset* Instance)
 #if WITH_EDITOR
 	if (InspectedInstance.IsValid() && InspectedInstance.Get() == Instance)
 	{
-		SetInspectedInstance(NAME_None);
+		if (UFlowUserSettings::Get()->bKeepLastInspectedInstance)
+		{
+			FString LastPath = LastInspectedInstanceName;
+			SetInspectedInstance(nullptr, false);
+			LastInspectedInstanceName = LastPath;
+		}
+		else
+		{
+			SetInspectedInstance(nullptr);
+		}
 	}
 #endif
 
@@ -1052,7 +1063,16 @@ void UFlowAsset::ClearInstances()
 #if WITH_EDITOR
 	if (InspectedInstance.IsValid())
 	{
-		SetInspectedInstance(NAME_None);
+		if (UFlowUserSettings::Get()->bKeepLastInspectedInstance)
+		{
+			FString LastPath = LastInspectedInstanceName;
+			SetInspectedInstance(nullptr, false);
+			LastInspectedInstanceName = LastPath;
+		}
+		else
+		{
+			SetInspectedInstance(nullptr);
+		}
 	}
 #endif
 
@@ -1068,36 +1088,78 @@ void UFlowAsset::ClearInstances()
 }
 
 #if WITH_EDITOR
-void UFlowAsset::GetInstanceDisplayNames(TArray<TSharedPtr<FName>>& OutDisplayNames) const
+FString UFlowAsset::GetDebugName() const
 {
-	for (const UFlowAsset* Instance : ActiveInstances)
+	auto GetNumLocalWorlds = []()
 	{
-		OutDisplayNames.Emplace(MakeShareable(new FName(Instance->GetDisplayName())));
+		int32 LocalWorldCount = 0;
+		for (const FWorldContext& Context : GEngine->GetWorldContexts())
+		{
+			if (Context.WorldType == EWorldType::PIE && Context.World() != nullptr)
+			{
+				++LocalWorldCount;
+			}
+		}
+		return LocalWorldCount;
+	};
+	
+	FString Name = GetDisplayName().ToString();
+
+	if (GetNumLocalWorlds() > 1 || GetWorld()->GetNetMode() == NM_ListenServer)
+	{
+		FString Context = GetDebugStringForWorld(GetWorld());
+		if (!Context.IsEmpty())
+		{
+			Name = FString::Printf(TEXT("%s (%s)"), *Name, *Context);
+		}
+
+		return Name;
 	}
+
+	return Name;
 }
 
-void UFlowAsset::SetInspectedInstance(const FName& NewInspectedInstanceName)
+void UFlowAsset::SetInspectedInstance(TWeakObjectPtr<const UFlowAsset> NewInspectedInstance, bool bRefreshDebugger)
 {
-	if (NewInspectedInstanceName.IsNone())
+	if (NewInspectedInstance.IsValid())
 	{
-		InspectedInstance = nullptr;
+		if (InspectedInstance == NewInspectedInstance)
+		{
+			// Nothing changed
+			return;
+		}
+		
+		bool bIsNewInstancePresent = Algo::AnyOf(ActiveInstances, [NewInspectedInstance](const UFlowAsset* ActiveInstance)
+		{
+			return ActiveInstance && ActiveInstance == NewInspectedInstance;
+		});
+
+		if (!ensureMsgf(bIsNewInstancePresent, TEXT("Trying to set %s as InspectedInstance, but it is not one of the ActiveInstances"), *NewInspectedInstance->GetName()))
+		{
+			NewInspectedInstance = nullptr;
+		}
+	}
+	
+	InspectedInstance = NewInspectedInstance;
+
+	if (InspectedInstance.IsValid())
+	{
+		LastInspectedInstanceName = NewInspectedInstance->GetDebugName();
 	}
 	else
 	{
-		for (UFlowAsset* ActiveInstance : ActiveInstances)
-		{
-			if (ActiveInstance && ActiveInstance->GetDisplayName() == NewInspectedInstanceName)
-			{
-				if (!InspectedInstance.IsValid() || InspectedInstance != ActiveInstance)
-				{
-					InspectedInstance = ActiveInstance;
-				}
-				break;
-			}
-		}
+		LastInspectedInstanceName = FString();
 	}
 
-	BroadcastDebuggerRefresh();
+	if (bRefreshDebugger)
+	{
+		BroadcastDebuggerRefresh();
+	}
+}
+
+void UFlowAsset::SetWorldBeingDebugged(const TWeakObjectPtr<const UWorld> NewWorld)
+{
+	CurrentWorldBeingDebugged = NewWorld;
 }
 
 void UFlowAsset::BroadcastDebuggerRefresh() const
@@ -1164,16 +1226,16 @@ void UFlowAsset::PreStartFlow()
 #if WITH_EDITOR
 	check(IsInstanceInitialized());
 
-	if (TemplateAsset->ActiveInstances.Num() == 1)
+	bool bCanSetInstanceAsInspected = UFlowUserSettings::Get()->bSetFirstAssetInstanceAsInspected && TemplateAsset->ActiveInstances.Num() == 1;
+	bool bKeepLastInstance = UFlowUserSettings::Get()->bKeepLastInspectedInstance && TemplateAsset->GetLastInspectedInstanceName().IsEmpty();
+	if (bCanSetInstanceAsInspected && !bKeepLastInstance)
 	{
 		// this instance is the only active one, set it directly as Inspected Instance
-		TemplateAsset->SetInspectedInstance(GetDisplayName());
+		TemplateAsset->SetInspectedInstance(this, false);
 	}
-	else
-	{
-		// request to refresh list to show newly created instance
-		TemplateAsset->BroadcastDebuggerRefresh();
-	}
+	
+	// request to refresh list to show newly created instance
+	TemplateAsset->BroadcastDebuggerRefresh();
 #endif
 }
 

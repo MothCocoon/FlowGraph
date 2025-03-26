@@ -27,11 +27,18 @@ protected:
 	virtual void OnInstancedTemplateAdded(UFlowAsset* AssetTemplate) override;
 	virtual void OnInstancedTemplateRemoved(UFlowAsset* AssetTemplate) const override;
 
+	virtual void OnPinTriggered(const UFlowAsset* Instance, const FGuid& NodeGuid, const FName& PinName) override;
+
 	void OnRuntimeMessageAdded(const UFlowAsset* AssetTemplate, const TSharedRef<FTokenizedMessage>& Message) const;
 
 	virtual void OnBeginPIE(const bool bIsSimulating);
 	virtual void OnResumePIE(const bool bIsSimulating);
 	virtual void OnEndPIE(const bool bIsSimulating);
 
-	virtual void PauseSession() override;
+	virtual void PauseSession(const FGuid& FromNode) override;
+	void ClearPausedState();
+private:
+	bool bOverrideInspectedInstance;
+	bool bPausedAtFlowBreakpoint;
+	TWeakObjectPtr<const UFlowAsset> OverrideInstancePtr;
 };

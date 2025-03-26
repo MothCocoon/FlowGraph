@@ -69,5 +69,5 @@ public:
 
 public:
 	virtual FName GetCategoryName() const override { return FName("Flow Graph"); }
-	virtual FText GetSectionText() const override { return INVTEXT("User Settings"); }
+	virtual FText GetSectionText() const override { return INVTEXT("Graph User Settings"); }
 };

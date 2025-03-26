@@ -7,10 +7,10 @@
 #include "Framework/Commands/UICommandInfo.h"
 #include "Templates/SharedPointer.h"
 
-class FLOWEDITOR_API FFlowToolbarCommands : public TCommands<FFlowToolbarCommands>
+class FLOWEDITOR_API FFlowEditorCommands : public TCommands<FFlowEditorCommands>
 {
 public:
-	FFlowToolbarCommands();
+	FFlowEditorCommands();
 
 	TSharedPtr<FUICommandInfo> RefreshAsset;
 	TSharedPtr<FUICommandInfo> ValidateAsset;
@@ -19,6 +19,10 @@ public:
 	TSharedPtr<FUICommandInfo> EditAssetDefaults;
 
 	TSharedPtr<FUICommandInfo> GoToParentInstance;
+
+	TSharedPtr<FUICommandInfo> EnableAllBreakpoints;
+	TSharedPtr<FUICommandInfo> DisableAllBreakpoints;
+	TSharedPtr<FUICommandInfo> RemoveAllBreakpoints;
 
 	virtual void RegisterCommands() override;
 };
