@@ -7,6 +7,8 @@
 
 #include "Graph/Nodes/FlowGraphNode.h"
 
+class UFlowDebuggerSubsystem;
+
 class FLOWEDITOR_API SFlowGraphPinExec : public SGraphPinExec
 {
 public:
@@ -26,7 +28,7 @@ public:
 
 	void Construct(const FArguments& InArgs, UFlowGraphNode* InNode);
 
-	virtual ~SFlowGraphNode();
+	virtual ~SFlowGraphNode() override;
 	
 protected:
 	// SNodePanel::SNode
@@ -36,7 +38,7 @@ protected:
 	// --
 
 	// SGraphNode
-	virtual void GetPinBrush(const bool bLeftSide, const float WidgetWidth, const int32 PinIndex, const FFlowPinTrait& Breakpoint, TArray<FOverlayBrushInfo>& Brushes) const;
+	virtual void GetPinBrush(const bool bLeftSide, const float WidgetWidth, const int32 PinIndex, const struct FFlowBreakpoint* Breakpoint, TArray<FOverlayBrushInfo>& Brushes) const;
 
 	virtual FText GetTitle() const;
 	virtual FText GetDescription() const;
@@ -97,14 +99,14 @@ protected:
 
 protected:
 	/** adds a sub node widget inside current node */
-	void AddSubNodeWidget(TSharedPtr<SGraphNode> NewSubNodeWidget);
+	void AddSubNodeWidget(const TSharedPtr<SGraphNode>& NewSubNodeWidget);
 	
 	/** removes dragged subnodes from the current node, 
 	  * bInOutReorderOperation reports if this is a simple "reorder" internally within the node or 
 	  * if one or more of the removed SubNodes will be removed from the node completely */
-	void RemoveDraggedSubNodes(const TArray< TSharedRef<SGraphNode> >& DraggedNodes, bool& bInOutReorderOperation);
+	void RemoveDraggedSubNodes(const TArray< TSharedRef<SGraphNode> >& DraggedNodes, bool& bInOutReorderOperation) const;
 
-	bool ShouldDropDraggedNodesAsSubNodes(const TArray<TSharedRef<SGraphNode>>& DraggedNodes, UFlowGraphNode* DropTargetNode) const;
+	static bool ShouldDropDraggedNodesAsSubNodes(const TArray<TSharedRef<SGraphNode>>& DraggedNodes, const UFlowGraphNode* DropTargetNode);
 
 	/** gets decorator or service node if one is found under mouse cursor */
 	TSharedPtr<SGraphNode> GetSubNodeUnderCursor(const FGeometry& WidgetGeometry, const FPointerEvent& MouseEvent);
@@ -117,28 +119,24 @@ protected:
 
 	FMargin ComputeSubNodeChildIndentPaddingMargin() const;
 
-	void CreateConfigText(TSharedPtr<SVerticalBox> MainBox);
+	void CreateConfigText(const TSharedPtr<SVerticalBox>& MainBox);
 	FText GetNodeConfigText() const;
 	EVisibility GetNodeConfigTextVisibility() const;
 
-	void CreateOrRebuildSubNodeBox(TSharedPtr<SVerticalBox> MainBox);
+	void CreateOrRebuildSubNodeBox(const TSharedPtr<SVerticalBox>& MainBox);
 
 	bool IsFlowGraphNodeSelected(UFlowGraphNode* Node) const;
 
 protected:
-	// The FlowGraphNode this slate widget is representing
+	// The graph node this slate widget is representing
 	UFlowGraphNode* FlowGraphNode = nullptr;
 
-	// SubNodes that are embedded in this widget
-	TArray<TSharedPtr<SGraphNode>> SubNodes;
+	// Subsystem pointer cached to avoid retrieving it every frame
+	TWeakObjectPtr<UFlowDebuggerSubsystem> DebuggerSubsystem;
 
-	// Is the drag marker currently visible?
 	bool bDragMarkerVisible = false;
-
-	// Box to hold the SubNode widgets
+	TArray<TSharedPtr<SGraphNode>> SubNodes;
 	TSharedPtr<SVerticalBox> SubNodeBox;
-
-	// Config Text Block widget
 	TSharedPtr<STextBlock> ConfigTextBlock;
 
 public:

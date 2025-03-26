@@ -18,6 +18,7 @@ public class FlowEditor : ModuleRules
 			"AssetSearch",
 			"EditorSubsystem",
 			"Flow",
+			"FlowDebugger",
 			"MessageLog"
 		});
 

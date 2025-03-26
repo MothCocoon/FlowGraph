@@ -7,10 +7,9 @@
 #include "Interfaces/FlowCoreExecutableInterface.h"
 #include "Interfaces/FlowContextPinSupplierInterface.h"
 #include "FlowMessageLog.h"
-#include "FlowTags.h"
+#include "FlowTags.h" // used by subclasses
 #include "FlowTypes.h"
 #include "Types/FlowDataPinResults.h"
-#include "NativeGameplayTags.h"
 
 #include "FlowNodeBase.generated.h"
 
@@ -24,7 +23,7 @@ class IFlowDataPinValueSupplierInterface;
 struct FFlowPin;
 struct FFlowNamedDataPinProperty;
 
-#if WITH_EDITOR
+#if WITH_EDITORONLY_DATA
 DECLARE_DELEGATE(FFlowNodeEvent);
 #endif
 
@@ -267,7 +266,7 @@ public:
 	UFUNCTION(BlueprintCallable, Category = DataPins, DisplayName = "Try Resolve DataPin As Class")
 	FFlowDataPinResult_Class TryResolveDataPinAsClass(const FName& PinName) const;
 
-	// Public only for for TResolveDataPinWorkingData's use
+	// Public only for TResolveDataPinWorkingData's use
 	EFlowDataPinResolveResult TryResolveDataPinPrerequisites(const FName& PinName, const UFlowNode*& FlowNode, const FFlowPin*& FlowPin, EFlowPinType PinType) const;
 
 protected:
@@ -278,13 +277,12 @@ public:
 
 //////////////////////////////////////////////////////////////////////////
 // Editor
-// (some editor symbols exposed to enabled creation of non-editor tooling)
 
+#if WITH_EDITORONLY_DATA
+protected:
 	UPROPERTY()
 	TObjectPtr<UEdGraphNode> GraphNode;
 	
-#if WITH_EDITORONLY_DATA
-protected:
 	UPROPERTY(EditDefaultsOnly, Category = "FlowNode")
 	uint8 bDisplayNodeTitleWithoutPrefix : 1;
 	
@@ -303,13 +301,12 @@ protected:
 	FFlowMessageLog ValidationLog;
 #endif // WITH_EDITORONLY_DATA
 
-public:
-	UEdGraphNode* GetGraphNode() const { return GraphNode; }
-
-	virtual void PostLoad() override;
-
 #if WITH_EDITOR
+public:
+	virtual void PostLoad() override;
+	
 	void SetGraphNode(UEdGraphNode* NewGraphNode);
+	UEdGraphNode* GetGraphNode() const { return GraphNode; }
 
 	// Set up UFlowNodeBase when being opened for edit in the editor
 	virtual void SetupForEditing(UEdGraphNode& EdGraphNode);
@@ -375,7 +372,7 @@ public:
 
 protected:
 	void EnsureNodeDisplayStyle();
-#endif
+#endif // WITH_EDITOR
 
 protected:	
 	// Set the editor-only Config Text 

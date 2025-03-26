@@ -5,7 +5,10 @@
 #include "FlowEditorStyle.h"
 #include "Graph/FlowGraph.h"
 #include "Graph/FlowGraphSettings.h"
+
 #include "Nodes/FlowNode.h"
+
+#include "Debugger/FlowDebuggerSubsystem.h"
 
 #include "EdGraph/EdGraphPin.h"
 #include "Editor.h"
@@ -53,8 +56,9 @@ const FLinearColor SFlowGraphNode::ConfigBoxColor = FLinearColor(0.04f, 0.04f, 0
 void SFlowGraphNode::Construct(const FArguments& InArgs, UFlowGraphNode* InNode)
 {
 	GraphNode = InNode;
-
 	FlowGraphNode = InNode;
+
+	DebuggerSubsystem = GEngine->GetEngineSubsystem<UFlowDebuggerSubsystem>();
 
 	check(FlowGraphNode);
 	FlowGraphNode->OnSignalModeChanged.BindRaw(this, &SFlowGraphNode::UpdateGraphNode);
@@ -122,19 +126,21 @@ const FSlateBrush* SFlowGraphNode::GetShadowBrush(bool bSelected) const
 
 void SFlowGraphNode::GetOverlayBrushes(bool bSelected, const FVector2D WidgetSize, TArray<FOverlayBrushInfo>& Brushes) const
 {
+	check(DebuggerSubsystem.IsValid());
+	
 	// Node breakpoint
-	if (FlowGraphNode->NodeBreakpoint.IsAllowed())
+	if (const FFlowBreakpoint* NodeBreakpoint = DebuggerSubsystem->FindBreakpoint(FlowGraphNode->NodeGuid))
 	{
 		FOverlayBrushInfo NodeBrush;
 
-		if (FlowGraphNode->NodeBreakpoint.IsHit())
+		if (NodeBreakpoint->IsHit())
 		{
 			NodeBrush.Brush = FFlowEditorStyle::Get()->GetBrush(TEXT("FlowGraph.BreakpointHit"));
 			NodeBrush.OverlayOffset.X = WidgetSize.X - 12.0f;
 		}
 		else
 		{
-			NodeBrush.Brush = FFlowEditorStyle::Get()->GetBrush(FlowGraphNode->NodeBreakpoint.IsEnabled() ? TEXT("FlowGraph.BreakpointEnabled") : TEXT("FlowGraph.BreakpointDisabled"));
+			NodeBrush.Brush = FFlowEditorStyle::Get()->GetBrush(NodeBreakpoint->IsEnabled() ? TEXT("FlowGraph.BreakpointEnabled") : TEXT("FlowGraph.BreakpointDisabled"));
 			NodeBrush.OverlayOffset.X = WidgetSize.X;
 		}
 
@@ -144,41 +150,41 @@ void SFlowGraphNode::GetOverlayBrushes(bool bSelected, const FVector2D WidgetSiz
 	}
 
 	// Pin breakpoints
-	for (const TPair<FEdGraphPinReference, FFlowPinTrait>& PinBreakpoint : FlowGraphNode->PinBreakpoints)
+	for (UEdGraphPin* Pin : FlowGraphNode->Pins)
 	{
-		if (PinBreakpoint.Key.Get()->Direction == EGPD_Input)
+		if (const FFlowBreakpoint* PinBreakpoint = DebuggerSubsystem->FindBreakpoint(Pin->GetOwningNode()->NodeGuid, Pin->PinName))
 		{
-			GetPinBrush(true, WidgetSize.X, FlowGraphNode->InputPins.IndexOfByKey(PinBreakpoint.Key.Get()), PinBreakpoint.Value, Brushes);
-		}
-		else
-		{
-			GetPinBrush(false, WidgetSize.X, FlowGraphNode->OutputPins.IndexOfByKey(PinBreakpoint.Key.Get()), PinBreakpoint.Value, Brushes);
+			if (Pin->Direction == EGPD_Input)
+			{
+				GetPinBrush(true, WidgetSize.X, FlowGraphNode->InputPins.IndexOfByKey(Pin), PinBreakpoint, Brushes);
+			}
+			else
+			{
+				GetPinBrush(false, WidgetSize.X, FlowGraphNode->OutputPins.IndexOfByKey(Pin), PinBreakpoint, Brushes);
+			}	
 		}
 	}
 }
 
-void SFlowGraphNode::GetPinBrush(const bool bLeftSide, const float WidgetWidth, const int32 PinIndex, const FFlowPinTrait& Breakpoint, TArray<FOverlayBrushInfo>& Brushes) const
+void SFlowGraphNode::GetPinBrush(const bool bLeftSide, const float WidgetWidth, const int32 PinIndex, const FFlowBreakpoint* Breakpoint, TArray<FOverlayBrushInfo>& Brushes) const
 {
-	if (Breakpoint.IsAllowed())
+	FOverlayBrushInfo PinBrush;
+
+	if (Breakpoint->IsHit())
 	{
-		FOverlayBrushInfo PinBrush;
-
-		if (Breakpoint.IsHit())
-		{
-			PinBrush.Brush = FFlowEditorStyle::Get()->GetBrush(TEXT("FlowGraph.PinBreakpointHit"));
-			PinBrush.OverlayOffset.X = bLeftSide ? 0.0f : (WidgetWidth - 36.0f);
-			PinBrush.OverlayOffset.Y = 12.0f + PinIndex * 28.0f;
-		}
-		else
-		{
-			PinBrush.Brush = FFlowEditorStyle::Get()->GetBrush(Breakpoint.IsEnabled() ? TEXT("FlowGraph.BreakpointEnabled") : TEXT("FlowGraph.BreakpointDisabled"));
-			PinBrush.OverlayOffset.X = bLeftSide ? -24.0f : WidgetWidth;
-			PinBrush.OverlayOffset.Y = 16.0f + PinIndex * 28.0f;
-		}
-
-		PinBrush.AnimationEnvelope = FVector2D(0.f, 10.f);
-		Brushes.Add(PinBrush);
+		PinBrush.Brush = FFlowEditorStyle::Get()->GetBrush(TEXT("FlowGraph.PinBreakpointHit"));
+		PinBrush.OverlayOffset.X = bLeftSide ? 0.0f : (WidgetWidth - 36.0f);
+		PinBrush.OverlayOffset.Y = 12.0f + PinIndex * 28.0f;
 	}
+	else
+	{
+		PinBrush.Brush = FFlowEditorStyle::Get()->GetBrush(Breakpoint->IsEnabled() ? TEXT("FlowGraph.BreakpointEnabled") : TEXT("FlowGraph.BreakpointDisabled"));
+		PinBrush.OverlayOffset.X = bLeftSide ? -24.0f : WidgetWidth;
+		PinBrush.OverlayOffset.Y = 16.0f + PinIndex * 28.0f;
+	}
+
+	PinBrush.AnimationEnvelope = FVector2D(0.f, 10.f);
+	Brushes.Add(PinBrush);
 }
 
 BEGIN_SLATE_FUNCTION_BUILD_OPTIMIZATION
@@ -188,7 +194,7 @@ void SFlowGraphNode::UpdateGraphNode()
 	InputPins.Empty();
 	OutputPins.Empty();
 
-	// Reset variables that are going to be exposed, in case we are refreshing an already setup node.
+	// Reset variables that are going to be exposed, in case we are refreshing an already set node.
 	RightNodeBox.Reset();
 	LeftNodeBox.Reset();
 
@@ -278,7 +284,7 @@ void SFlowGraphNode::UpdateGraphNode()
 				DefaultTitleAreaWidget
 			];
 
-	// Setup a meta tag for this node
+	// Set up a meta tag for this node
 	FGraphNodeMetaData TagMeta(TEXT("FlowGraphNode"));
 	PopulateMetaTag(&TagMeta);
 
@@ -399,7 +405,7 @@ FSlateColor SFlowGraphNode::GetConfigBoxBackgroundColor() const
 	return NodeColor;
 }
 
-void SFlowGraphNode::CreateBelowPinControls(TSharedPtr<SVerticalBox> InnerVerticalBox)
+void SFlowGraphNode::CreateBelowPinControls(const TSharedPtr<SVerticalBox> InnerVerticalBox)
 {
 	static const FMargin ConfigBoxPadding = FMargin(2.0f, 0.0f, 1.0f, 0.0);
 
@@ -423,7 +429,7 @@ void SFlowGraphNode::CreateBelowPinControls(TSharedPtr<SVerticalBox> InnerVertic
 	CreateOrRebuildSubNodeBox(InnerVerticalBox);
 }
 
-void SFlowGraphNode::AddSubNodeWidget(TSharedPtr<SGraphNode> NewSubNodeWidget)
+void SFlowGraphNode::AddSubNodeWidget(const TSharedPtr<SGraphNode>& NewSubNodeWidget)
 {
 	if (OwnerGraphPanelPtr.IsValid())
 	{
@@ -457,8 +463,8 @@ FMargin SFlowGraphNode::ComputeSubNodeChildIndentPaddingMargin() const
 	constexpr float HorizontalDefaultPadding = 2.0f;
 	constexpr float IndentedHorizontalPadding = 6.0f;
 	constexpr float RightPadding = HorizontalDefaultPadding;
-	float LeftPadding = HorizontalDefaultPadding;
-
+	
+	float LeftPadding;
 	if (ParentDepth > 0)
 	{
 		// Increase the padding by the parent depth for this node
@@ -469,15 +475,10 @@ FMargin SFlowGraphNode::ComputeSubNodeChildIndentPaddingMargin() const
 		LeftPadding = 0.0f;
 	}
 
-	return
-		FMargin(
-			LeftPadding,
-			VerticalDefaultPadding,
-			RightPadding,
-			VerticalDefaultPadding);
+	return FMargin(LeftPadding,	VerticalDefaultPadding, RightPadding, VerticalDefaultPadding);
 }
 
-void SFlowGraphNode::CreateConfigText(TSharedPtr<SVerticalBox> InnerVerticalBox)
+void SFlowGraphNode::CreateConfigText(const TSharedPtr<SVerticalBox>& InnerVerticalBox)
 {
 	static const FMargin ConfigTextPadding = FMargin(2.0f, 0.0f, 0.0f, 3.0f);
 
@@ -494,12 +495,9 @@ void SFlowGraphNode::CreateConfigText(TSharedPtr<SVerticalBox> InnerVerticalBox)
 
 FText SFlowGraphNode::GetNodeConfigText() const
 {
-	if (const UFlowGraphNode* MyNode = CastChecked<UFlowGraphNode>(GraphNode))
+	if (const UFlowNodeBase* FlowNodeBase = FlowGraphNode->GetFlowNodeBase())
 	{
-		if (UFlowNodeBase* NodeInstance = MyNode->GetFlowNodeBase())
-		{
-			return NodeInstance->GetNodeConfigText();
-		}
+		return FlowNodeBase->GetNodeConfigText();
 	}
 
 	return FText::GetEmpty();
@@ -520,7 +518,7 @@ EVisibility SFlowGraphNode::GetNodeConfigTextVisibility() const
 	return EVisibility::Collapsed;
 }
 
-void SFlowGraphNode::CreateOrRebuildSubNodeBox(TSharedPtr<SVerticalBox> InnerVerticalBox)
+void SFlowGraphNode::CreateOrRebuildSubNodeBox(const TSharedPtr<SVerticalBox>& InnerVerticalBox)
 {
 	if (SubNodeBox.IsValid())
 	{
@@ -753,7 +751,7 @@ TSharedPtr<SToolTip> SFlowGraphNode::GetComplexTooltip()
 	return IDocumentation::Get()->CreateToolTip(TAttribute<FText>(this, &SGraphNode::GetNodeTooltip), nullptr, GraphNode->GetDocumentationLink(), GraphNode->GetDocumentationExcerptName());
 }
 
-void SFlowGraphNode::CreateInputSideAddButton(TSharedPtr<SVerticalBox> OutputBox)
+void SFlowGraphNode::CreateInputSideAddButton(const TSharedPtr<SVerticalBox> OutputBox)
 {
 	if (FlowGraphNode->CanUserAddInput())
 	{
@@ -780,7 +778,7 @@ void SFlowGraphNode::CreateInputSideAddButton(TSharedPtr<SVerticalBox> OutputBox
 	}
 }
 
-void SFlowGraphNode::CreateOutputSideAddButton(TSharedPtr<SVerticalBox> OutputBox)
+void SFlowGraphNode::CreateOutputSideAddButton(const TSharedPtr<SVerticalBox> OutputBox)
 {
 	if (FlowGraphNode->CanUserAddOutput())
 	{
@@ -864,7 +862,7 @@ FReply SFlowGraphNode::OnAddFlowPin(const EEdGraphPinDirection Direction)
 	return FReply::Handled();
 }
 
-void SFlowGraphNode::AddSubNode(TSharedPtr<SGraphNode> SubNodeWidget)
+void SFlowGraphNode::AddSubNode(const TSharedPtr<SGraphNode> SubNodeWidget)
 {
 	SubNodes.Add(SubNodeWidget);
 
@@ -881,15 +879,14 @@ FText SFlowGraphNode::GetTitle() const
 
 FText SFlowGraphNode::GetDescription() const
 {
-	UFlowGraphNode* MyNode = CastChecked<UFlowGraphNode>(GraphNode);
-	return MyNode ? MyNode->GetDescription() : FText::GetEmpty();
+	return FlowGraphNode ? FlowGraphNode->GetDescription() : FText::GetEmpty();
 }
 
 EVisibility SFlowGraphNode::GetDescriptionVisibility() const
 {
 	// LOD this out once things get too small
-	TSharedPtr<SGraphPanel> MyOwnerPanel = GetOwnerPanel();
-	return (!MyOwnerPanel.IsValid() || MyOwnerPanel->GetCurrentLOD() > EGraphRenderingLOD::LowDetail) ? EVisibility::Visible : EVisibility::Collapsed;
+	const TSharedPtr<SGraphPanel> OwnerPanel = GetOwnerPanel();
+	return (!OwnerPanel.IsValid() || OwnerPanel->GetCurrentLOD() > EGraphRenderingLOD::LowDetail) ? EVisibility::Visible : EVisibility::Collapsed;
 }
 
 void SFlowGraphNode::AddPin(const TSharedRef<SGraphPin>& PinToAdd)
@@ -897,8 +894,7 @@ void SFlowGraphNode::AddPin(const TSharedRef<SGraphPin>& PinToAdd)
 	PinToAdd->SetOwner(SharedThis(this));
 
 	const UEdGraphPin* PinObj = PinToAdd->GetPinObj();
-	const bool bAdvancedParameter = PinObj && PinObj->bAdvancedView;
-	if (bAdvancedParameter)
+	if (PinObj && PinObj->bAdvancedView)
 	{
 		PinToAdd->SetVisibility(TAttribute<EVisibility>(PinToAdd, &SGraphPin::IsPinVisibleAsAdvanced));
 	}
@@ -934,8 +930,7 @@ FReply SFlowGraphNode::OnMouseMove(const FGeometry& SenderGeometry, const FPoint
 	if (MouseEvent.IsMouseButtonDown(EKeys::LeftMouseButton) && !(GEditor->bIsSimulatingInEditor || GEditor->PlayWorld))
 	{
 		// if we are holding mouse over a subnode
-		UFlowGraphNode* TestNode = Cast<UFlowGraphNode>(GraphNode);
-		if (TestNode && TestNode->IsSubNode())
+		if (FlowGraphNode && FlowGraphNode->IsSubNode())
 		{
 			const TSharedRef<SGraphPanel>& Panel = GetOwnerPanel().ToSharedRef();
 			const TSharedRef<SGraphNode>& Node = SharedThis(this);
@@ -966,10 +961,9 @@ TSharedRef<SGraphNode> SFlowGraphNode::GetNodeUnderMouse(const FGeometry& MyGeom
 
 FReply SFlowGraphNode::OnMouseButtonDown(const FGeometry& SenderGeometry, const FPointerEvent& MouseEvent)
 {
-	UFlowGraphNode* TestNode = Cast<UFlowGraphNode>(GraphNode);
-	if (TestNode && TestNode->IsSubNode())
+	if (FlowGraphNode && FlowGraphNode->IsSubNode())
 	{
-		GetOwnerPanel()->SelectionManager.ClickedOnNode(GraphNode, MouseEvent);
+		GetOwnerPanel()->SelectionManager.ClickedOnNode(FlowGraphNode, MouseEvent);
 		return FReply::Handled();
 	}
 
@@ -1009,9 +1003,7 @@ TSharedPtr<SGraphNode> SFlowGraphNode::GetSubNodeUnderCursor(const FGeometry& Wi
 	// Recurse if the subnode has subnodes
 	SFlowGraphNode* ResultFlowGraphNode = static_cast<SFlowGraphNode*>(ResultNode.Get());
 	const FGeometry& ChildWidgetGeometry = ArrangedChildren[HoveredIndex].Geometry;
-	TSharedPtr<SGraphNode> ResultFlowGraphNodeSubNode = ResultFlowGraphNode->GetSubNodeUnderCursor(ChildWidgetGeometry, MouseEvent);
-
-	if (ResultFlowGraphNodeSubNode)
+	if (TSharedPtr<SGraphNode> ResultFlowGraphNodeSubNode = ResultFlowGraphNode->GetSubNodeUnderCursor(ChildWidgetGeometry, MouseEvent))
 	{
 		return ResultFlowGraphNodeSubNode;
 	}
@@ -1019,7 +1011,7 @@ TSharedPtr<SGraphNode> SFlowGraphNode::GetSubNodeUnderCursor(const FGeometry& Wi
 	return ResultNode;
 }
 
-void SFlowGraphNode::SetDragMarker(bool bEnabled)
+void SFlowGraphNode::SetDragMarker(const bool bEnabled)
 {
 	bDragMarkerVisible = bEnabled;
 }
@@ -1032,15 +1024,14 @@ EVisibility SFlowGraphNode::GetDragOverMarkerVisibility() const
 void SFlowGraphNode::OnDragEnter(const FGeometry& MyGeometry, const FDragDropEvent& DragDropEvent)
 {
 	// Is someone dragging a node?
-	TSharedPtr<FDragNode> DragConnectionOp = DragDropEvent.GetOperationAs<FDragNode>();
+	const TSharedPtr<FDragNode> DragConnectionOp = DragDropEvent.GetOperationAs<FDragNode>();
 	if (DragConnectionOp.IsValid())
 	{
 		// Inform the Drag and Drop operation that we are hovering over this node.
-		TSharedPtr<SGraphNode> SubNode = GetSubNodeUnderCursor(MyGeometry, DragDropEvent);
+		const TSharedPtr<SGraphNode> SubNode = GetSubNodeUnderCursor(MyGeometry, DragDropEvent);
 		DragConnectionOp->SetHoveredNode(SubNode.IsValid() ? SubNode : SharedThis(this));
 
-		UFlowGraphNode* TestNode = Cast<UFlowGraphNode>(GraphNode);
-		if (DragConnectionOp->IsValidOperation() && TestNode && TestNode->IsSubNode())
+		if (DragConnectionOp->IsValidOperation() && FlowGraphNode && FlowGraphNode->IsSubNode())
 		{
 			SetDragMarker(true);
 		}
@@ -1052,11 +1043,11 @@ void SFlowGraphNode::OnDragEnter(const FGeometry& MyGeometry, const FDragDropEve
 FReply SFlowGraphNode::OnDragOver(const FGeometry& MyGeometry, const FDragDropEvent& DragDropEvent)
 {
 	// Is someone dragging a node?
-	TSharedPtr<FDragNode> DragConnectionOp = DragDropEvent.GetOperationAs<FDragNode>();
+	const TSharedPtr<FDragNode> DragConnectionOp = DragDropEvent.GetOperationAs<FDragNode>();
 	if (DragConnectionOp.IsValid())
 	{
 		// Inform the Drag and Drop operation that we are hovering over this node.
-		TSharedPtr<SGraphNode> SubNode = GetSubNodeUnderCursor(MyGeometry, DragDropEvent);
+		const TSharedPtr<SGraphNode> SubNode = GetSubNodeUnderCursor(MyGeometry, DragDropEvent);
 		DragConnectionOp->SetHoveredNode(SubNode.IsValid() ? SubNode : SharedThis(this));
 	}
 	return SGraphNode::OnDragOver(MyGeometry, DragDropEvent);
@@ -1064,11 +1055,11 @@ FReply SFlowGraphNode::OnDragOver(const FGeometry& MyGeometry, const FDragDropEv
 
 void SFlowGraphNode::OnDragLeave(const FDragDropEvent& DragDropEvent)
 {
-	TSharedPtr<FDragNode> DragConnectionOp = DragDropEvent.GetOperationAs<FDragNode>();
+	const TSharedPtr<FDragNode> DragConnectionOp = DragDropEvent.GetOperationAs<FDragNode>();
 	if (DragConnectionOp.IsValid())
 	{
 		// Inform the Drag and Drop operation that we are not hovering any pins
-		DragConnectionOp->SetHoveredNode(TSharedPtr<SGraphNode>(NULL));
+		DragConnectionOp->SetHoveredNode(TSharedPtr<SGraphNode>(nullptr));
 	}
 
 	SetDragMarker(false);
@@ -1079,7 +1070,7 @@ FReply SFlowGraphNode::OnDrop(const FGeometry& MyGeometry, const FDragDropEvent&
 {
 	SetDragMarker(false);
 
-	TSharedPtr<FDragFlowGraphNode> DragNodeOp = DragDropEvent.GetOperationAs<FDragFlowGraphNode>();
+	const TSharedPtr<FDragFlowGraphNode> DragNodeOp = DragDropEvent.GetOperationAs<FDragFlowGraphNode>();
 	if (DragNodeOp.IsValid())
 	{
 		if (!DragNodeOp->IsValidOperation())
@@ -1087,14 +1078,13 @@ FReply SFlowGraphNode::OnDrop(const FGeometry& MyGeometry, const FDragDropEvent&
 			return FReply::Handled();
 		}
 
-		const float DragTime = float(FPlatformTime::Seconds() - DragNodeOp->StartTime);
+		const float DragTime = static_cast<float>(FPlatformTime::Seconds() - DragNodeOp->StartTime);
 		if (DragTime < 0.5f)
 		{
 			return FReply::Handled();
 		}
 
-		UFlowGraphNode* MyNode = Cast<UFlowGraphNode>(GraphNode);
-		if (MyNode == nullptr)
+		if (FlowGraphNode == nullptr)
 		{
 			return FReply::Unhandled();
 		}
@@ -1108,11 +1098,10 @@ FReply SFlowGraphNode::OnDrop(const FGeometry& MyGeometry, const FDragDropEvent&
 		const TArray< TSharedRef<SGraphNode> >& DraggedNodes = DragNodeOp->GetNodes();
 		RemoveDraggedSubNodes(DraggedNodes, bReorderOperation);
 
-		bool bShouldDropAsSubNodesOfDropTargetNode = bReorderOperation || ShouldDropDraggedNodesAsSubNodes(DraggedNodes, DropTargetNode);
+		const bool bShouldDropAsSubNodesOfDropTargetNode = bReorderOperation || ShouldDropDraggedNodesAsSubNodes(DraggedNodes, DropTargetNode);
 
-		// Setup the DropTarget pointers based on the type of drop we've decided to do:
-		UFlowGraphNode* DropTargetParentNode = MyNode;
-
+		// Set up the DropTarget pointers based on the type of drop we've decided to do:
+		UFlowGraphNode* DropTargetParentNode;
 		if (bShouldDropAsSubNodesOfDropTargetNode)
 		{
 			DropTargetParentNode = DropTargetNode;
@@ -1156,12 +1145,12 @@ FReply SFlowGraphNode::OnDrop(const FGeometry& MyGeometry, const FDragDropEvent&
 	return SGraphNode::OnDrop(MyGeometry, DragDropEvent);
 }
 
-bool SFlowGraphNode::ShouldDropDraggedNodesAsSubNodes(const TArray<TSharedRef<SGraphNode>>& DraggedNodes, UFlowGraphNode* DropTargetNode) const
+bool SFlowGraphNode::ShouldDropDraggedNodesAsSubNodes(const TArray<TSharedRef<SGraphNode>>& DraggedNodes, const UFlowGraphNode* DropTargetNode)
 {
 	TSet<const UEdGraphNode*> DraggedFlowGraphNodes;
 	for (int32 Idx = 0; Idx < DraggedNodes.Num(); Idx++)
 	{
-		UFlowGraphNode* DraggedNode = Cast<UFlowGraphNode>(DraggedNodes[Idx]->GetNodeObj());
+		const UFlowGraphNode* DraggedNode = Cast<UFlowGraphNode>(DraggedNodes[Idx]->GetNodeObj());
 		if (IsValid(DraggedNode))
 		{
 			DraggedFlowGraphNodes.Add(DraggedNode);
@@ -1172,7 +1161,7 @@ bool SFlowGraphNode::ShouldDropDraggedNodesAsSubNodes(const TArray<TSharedRef<SG
 	{
 		const UFlowGraphNode* DraggedNode = Cast<UFlowGraphNode>(*It);
 
-		// Check if all of the dragged nodes can be stopped as a subnode 
+		// Check if all the dragged nodes can be stopped as a subnode 
 		//  (if not ALL, then we cannot drop ANY of them)
 		const bool bCanDropDraggedNodeAsSubNode = DropTargetNode->CanAcceptSubNodeAsChild(*DraggedNode, DraggedFlowGraphNodes);
 
@@ -1185,7 +1174,7 @@ bool SFlowGraphNode::ShouldDropDraggedNodesAsSubNodes(const TArray<TSharedRef<SG
 	return true;
 }
 
-void SFlowGraphNode::RemoveDraggedSubNodes(const TArray< TSharedRef<SGraphNode> >& DraggedNodes, bool& bInOutReorderOperation)
+void SFlowGraphNode::RemoveDraggedSubNodes(const TArray< TSharedRef<SGraphNode> >& DraggedNodes, bool& bInOutReorderOperation) const
 {
 	for (int32 Idx = 0; Idx < DraggedNodes.Num(); Idx++)
 	{
