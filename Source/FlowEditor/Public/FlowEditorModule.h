@@ -20,7 +20,7 @@ struct FLOWEDITOR_API FFLowAssetCategoryPaths : EAssetCategoryPaths
 	static FAssetCategoryPath Flow;
 };
 
-class FLOWEDITOR_API FFlowEditorModule : public IModuleInterface
+class FLOWEDITOR_API FFlowEditorModule : public IModuleInterface, public IHasMenuExtensibility, public IHasToolBarExtensibility
 {
 public:
 	static EAssetTypeCategories::Type FlowAssetCategory;
@@ -30,9 +30,15 @@ private:
 	TSet<FName> CustomClassLayouts;
 	TSet<FName> CustomStructLayouts;
 
+	TSharedPtr<FExtensibilityManager> MenuExtensibilityManager;
+	TSharedPtr<FExtensibilityManager> ToolBarExtensibilityManager;
+
 public:
 	virtual void StartupModule() override;
 	virtual void ShutdownModule() override;
+
+	virtual TSharedPtr<FExtensibilityManager> GetMenuExtensibilityManager() override { return MenuExtensibilityManager; }
+	virtual TSharedPtr<FExtensibilityManager> GetToolBarExtensibilityManager() override { return ToolBarExtensibilityManager; }
 
 private:
 	void TrySetFlowNodeDisplayStyleDefaults() const;
