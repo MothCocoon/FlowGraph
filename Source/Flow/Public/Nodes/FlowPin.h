@@ -14,25 +14,25 @@ class UClass;
 class UObject;
 class IPropertyHandle;
 
-USTRUCT(BlueprintType)
+USTRUCT(BlueprintType, meta = (HasNativeMake = "/Script/Flow.FlowDataPinBlueprintLibrary.MakeStruct", HasNativeBreak = "/Script/Flow.FlowDataPinBlueprintLibrary.BreakStruct"))
 struct FLOW_API FFlowPin
 {
 	GENERATED_BODY()
 
 	// A logical name, used during execution of pin
-	UPROPERTY(EditDefaultsOnly, BlueprintReadWrite, Category = "FlowPin")
+	UPROPERTY(EditDefaultsOnly, Category = FlowPin)
 	FName PinName;
 
 	// An optional Display Name, you can use it to override PinName without the need to update graph connections
-	UPROPERTY(EditDefaultsOnly, BlueprintReadWrite, Category = "FlowPin")
+	UPROPERTY(EditDefaultsOnly, Category = FlowPin)
 	FText PinFriendlyName;
 
-	UPROPERTY(EditDefaultsOnly, BlueprintReadWrite, Category = "FlowPin")
+	UPROPERTY(EditDefaultsOnly, Category = FlowPin)
 	FString PinToolTip;
 
 protected:
 	// PinType (implies PinCategory)
-	UPROPERTY(EditAnywhere, Category = "FlowPin")
+	UPROPERTY(EditAnywhere, Category = FlowPin)
 	EFlowPinType PinType = EFlowPinType::Exec;
 
 	// Sub-category object
@@ -43,25 +43,25 @@ protected:
 #if WITH_EDITORONLY_DATA
 	// Filter for limiting the compatible classes for this data pin.
 	// This property is editor-only, but it is automatically copied into PinSubCategoryObject if the PinType matches (for runtime use).
-	UPROPERTY(EditAnywhere, Category = "FlowPin", meta = (EditCondition = "PinType == EFlowPinType::Class", EditConditionHides))
+	UPROPERTY(EditAnywhere, Category = FlowPin, meta = (EditCondition = "PinType == EFlowPinType::Class", EditConditionHides))
 	TSubclassOf<UClass> SubCategoryClassFilter = UClass::StaticClass();
 
 	// Filter for limiting the compatible object types for this data pin.
 	// This property is editor-only, but it is automatically copied into PinSubCategoryObject if the PinType matches (for runtime use).
-	UPROPERTY(EditAnywhere, Category = "FlowPin", meta = (EditCondition = "PinType == EFlowPinType::Object", EditConditionHides))
+	UPROPERTY(EditAnywhere, Category = FlowPin, meta = (EditCondition = "PinType == EFlowPinType::Object", EditConditionHides))
 	TSubclassOf<UObject> SubCategoryObjectFilter = UObject::StaticClass();
 
 	// Configuration option for setting the EnumClass to a Blueprint Enum 
 	// (C++ enums must bind by name using SubCategoryEnumName, due to a limitation with UE's UEnum discovery).
 	// This property is editor-only, but it is automatically copied into PinSubCategoryObject if the PinType matches (for runtime use).
-	UPROPERTY(EditAnywhere, Category = "FlowPin", meta = (EditCondition = "PinType == EFlowPinType::Enum", EditConditionHides))
+	UPROPERTY(EditAnywhere, Category = FlowPin, meta = (EditCondition = "PinType == EFlowPinType::Enum", EditConditionHides))
 	TObjectPtr<UEnum> SubCategoryEnumClass = nullptr;
 
 	// name of enum defined in c++ code, will take priority over asset from EnumType property
 	//  (this is a work-around because EnumClass cannot find C++ Enums, 
 	//   so you need to type the name of the enum in here, manually)
 	// See also: FFlowPin::PostEditChangedEnumName()
-	UPROPERTY(EditAnywhere, Category = "FlowPin", meta = (EditCondition = "PinType == EFlowPinType::Enum", EditConditionHides))
+	UPROPERTY(EditAnywhere, Category = FlowPin, meta = (EditCondition = "PinType == EFlowPinType::Enum", EditConditionHides))
 	FString SubCategoryEnumName;
 #endif // WITH_EDITORONLY_DATA
 
@@ -145,6 +145,13 @@ public:
 	{
 	}
 
+	FFlowPin(const FName& InPinName, const FText& InPinFriendlyName, const FString& InPinTooltip)
+		: PinName(InPinName)
+		, PinFriendlyName(InPinFriendlyName)
+		, PinToolTip(InPinTooltip)
+	{
+	}
+
 	FFlowPin(const FName& InPinName, const FText& InPinFriendlyName, EFlowPinType InFlowPinType, UObject* SubCategoryObject = nullptr)
 		: PinName(InPinName)
 		, PinFriendlyName(InPinFriendlyName)
@@ -199,7 +206,7 @@ public:
 	static bool ValidateEnum(const UEnum& EnumType);
 #endif // WITH_EDITOR
 
-	void SetPinType(EFlowPinType InFlowPinType, UObject* SubCategoryObject = nullptr);
+	void SetPinType(const EFlowPinType InFlowPinType, UObject* SubCategoryObject = nullptr);
 	EFlowPinType GetPinType() const { return PinType; }
 	static const FName& GetPinCategoryFromPinType(EFlowPinType FlowPinType);
 	static const TArray<FName>& GetFlowPinTypeEnumValuesWithoutSpaces();
@@ -395,47 +402,3 @@ private:
 	FORCEINLINE static FString DoubleDigit(const int32 Number);
 };
 #endif
-
-// It can represent any trait added on the specific node instance, i.e. breakpoint
-USTRUCT()
-struct FLOW_API FFlowPinTrait
-{
-	GENERATED_USTRUCT_BODY()
-
-protected:	
-	UPROPERTY()
-	uint8 bTraitAllowed : 1;
-
-	uint8 bEnabled : 1;
-	uint8 bHit : 1;
-
-public:
-	FFlowPinTrait()
-		: bTraitAllowed(false)
-		, bEnabled(false)
-		, bHit(false)
-	{
-	};
-
-	explicit FFlowPinTrait(const bool bInitialState)
-		: bTraitAllowed(bInitialState)
-		, bEnabled(bInitialState)
-		, bHit(false)
-	{
-	};
-
-	void AllowTrait();
-	void DisallowTrait();
-	bool IsAllowed() const;
-
-	void EnableTrait();
-	void DisableTrait();
-	void ToggleTrait();
-
-	bool CanEnable() const;
-	bool IsEnabled() const;
-
-	void MarkAsHit();
-	void ResetHit();
-	bool IsHit() const;
-};

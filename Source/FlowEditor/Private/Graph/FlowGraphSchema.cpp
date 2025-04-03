@@ -17,8 +17,8 @@
 #include "Nodes/FlowNode.h"
 #include "Nodes/FlowNodeAddOnBlueprint.h"
 #include "Nodes/FlowNodeBlueprint.h"
-#include "Nodes/Route/FlowNode_CustomInput.h"
-#include "Nodes/Route/FlowNode_Start.h"
+#include "Nodes/Graph/FlowNode_CustomInput.h"
+#include "Nodes/Graph/FlowNode_Start.h"
 #include "Nodes/Route/FlowNode_Reroute.h"
 
 #include "AssetRegistry/AssetRegistryModule.h"

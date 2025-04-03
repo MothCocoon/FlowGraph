@@ -3,7 +3,7 @@
 #include "Graph/Nodes/FlowGraphNode_SubGraph.h"
 #include "Graph/Widgets/SFlowGraphNode_SubGraph.h"
 
-#include "Nodes/Route/FlowNode_SubGraph.h"
+#include "Nodes/Graph/FlowNode_SubGraph.h"
 
 #include UE_INLINE_GENERATED_CPP_BY_NAME(FlowGraphNode_SubGraph)
 

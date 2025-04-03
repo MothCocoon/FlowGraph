@@ -446,7 +446,9 @@ void FFlowAssetEditor::ValidateAsset_Internal()
 		TabManager->TryInvokeTab(ValidationLogTab);
 		ValidationLogListing->AddMessages(LogResults.Messages);
 	}
+
 	ValidationLogListing->OnDataChanged().Broadcast();
+
 	FlowAsset->GetGraph()->NotifyGraphChanged();
 }
 

@@ -49,7 +49,7 @@ private:
 	UPROPERTY()
 	TMap<TObjectPtr<UFlowNode_SubGraph>, TObjectPtr<UFlowAsset>> InstancedSubFlows;
 
-#if WITH_EDITOR
+#if !UE_BUILD_SHIPPING
 public:
 	/* Called after creating the first instance of given Flow Asset */
 	static FNativeFlowAssetEvent OnInstancedTemplateAdded;
@@ -57,7 +57,7 @@ public:
 	/* Called just before removing the last instance of given Flow Asset */
 	static FNativeFlowAssetEvent OnInstancedTemplateRemoved;
 #endif
-	
+
 protected:
 	UPROPERTY()
 	TObjectPtr<UFlowSaveGame> LoadedSaveGame;
@@ -93,12 +93,14 @@ protected:
 	UFlowAsset* CreateSubFlow(UFlowNode_SubGraph* SubGraphNode, const FString& SavedInstanceName = FString(), const bool bPreloading = false);
 	void RemoveSubFlow(UFlowNode_SubGraph* SubGraphNode, const EFlowFinishPolicy FinishPolicy);
 
-	UFlowAsset* CreateFlowInstance(const TWeakObjectPtr<UObject> Owner, TSoftObjectPtr<UFlowAsset> FlowAsset, FString NewInstanceName = FString());
+public:
+	UFlowAsset* CreateFlowInstance(const TWeakObjectPtr<UObject> Owner, UFlowAsset* LoadedFlowAsset, FString NewInstanceName = FString());
 
-public:	
+protected:
 	virtual void AddInstancedTemplate(UFlowAsset* Template);
 	virtual void RemoveInstancedTemplate(UFlowAsset* Template);
 
+public:
 	/* Returns all assets instanced by object from another system like World Settings */
 	UFUNCTION(BlueprintPure, Category = "FlowSubsystem")
 	TMap<UObject*, UFlowAsset*> GetRootInstances() const;

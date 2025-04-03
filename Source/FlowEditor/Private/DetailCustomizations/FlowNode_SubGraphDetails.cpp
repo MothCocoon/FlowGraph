@@ -4,7 +4,7 @@
 
 #include "DetailLayoutBuilder.h"
 #include "FlowAsset.h"
-#include "Nodes/Route/FlowNode_SubGraph.h"
+#include "Nodes/Graph/FlowNode_SubGraph.h"
 
 void FFlowNode_SubGraphDetails::CustomizeDetails(IDetailLayoutBuilder& DetailLayout)
 {

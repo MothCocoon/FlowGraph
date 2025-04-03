@@ -81,7 +81,7 @@ public:
 
 protected:
 	template <typename T>
-	void AddMessage(FName MessageID, const TCHAR* Format, TSharedRef<FTokenizedMessage>& Message, T* Object)
+	void AddMessage(const FName MessageID, const TCHAR* Format, TSharedRef<FTokenizedMessage>& Message, T* Object)
 	{
 		Message->SetIdentifier(MessageID);
 

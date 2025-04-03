@@ -23,11 +23,7 @@ void AFlowLevelSequenceActor::GetLifetimeReplicatedProps(TArray<FLifetimePropert
 void AFlowLevelSequenceActor::SetPlaybackSettings(FMovieSceneSequencePlaybackSettings NewPlaybackSettings)
 {
 	PlaybackSettings = NewPlaybackSettings;
-#if ENGINE_MAJOR_VERSION == 5 && ENGINE_MINOR_VERSION < 4
-	SequencePlayer->SetPlaybackSettings(PlaybackSettings);
-#else
 	GetSequencePlayer()->SetPlaybackSettings(PlaybackSettings);
-#endif
 }
 
 void AFlowLevelSequenceActor::SetReplicatedLevelSequenceAsset(ULevelSequence* Asset)

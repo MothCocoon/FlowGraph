@@ -15,32 +15,22 @@
 
 #include UE_INLINE_GENERATED_CPP_BY_NAME(FlowGraph)
 
-void FFlowGraphInterface::OnInputTriggered(UEdGraphNode* GraphNode, const int32 Index) const
-{
-	CastChecked<UFlowGraphNode>(GraphNode)->OnInputTriggered(Index);
-}
-
-void FFlowGraphInterface::OnOutputTriggered(UEdGraphNode* GraphNode, const int32 Index) const
-{
-	CastChecked<UFlowGraphNode>(GraphNode)->OnOutputTriggered(Index);
-}
-
 UFlowGraph::UFlowGraph(const FObjectInitializer& ObjectInitializer)
 	: Super(ObjectInitializer)
 	, GraphVersion(0)
 {
 	bLockUpdates = false;
 	bIsLoadingGraph = false;
-
-	if (!UFlowAsset::GetFlowGraphInterface().IsValid())
-	{
-		UFlowAsset::SetFlowGraphInterface(MakeShared<FFlowGraphInterface>());
-	}
 }
 
 void UFlowGraph::CreateGraph(UFlowAsset* InFlowAsset)
 {
-	UFlowGraph* NewGraph = CastChecked<UFlowGraph>(FBlueprintEditorUtils::CreateNewGraph(InFlowAsset, NAME_None, StaticClass(), UFlowGraphSchema::StaticClass()));
+	return CreateGraph(InFlowAsset, UFlowGraphSchema::StaticClass());
+}
+
+void UFlowGraph::CreateGraph(UFlowAsset* InFlowAsset, TSubclassOf<UFlowGraphSchema> FlowSchema)
+{
+	UFlowGraph* NewGraph = CastChecked<UFlowGraph>(FBlueprintEditorUtils::CreateNewGraph(InFlowAsset, NAME_None, StaticClass(), FlowSchema));
 	NewGraph->bAllowDeletion = false;
 
 	// Ensure we mapped relation between UFlowNode and UFlowGraphNode classes
@@ -88,15 +78,8 @@ void UFlowGraph::RefreshGraph()
 			}
 		}
 
+		// This function will (eventually) result in all graph nodes being reconstructed
 		UnlockUpdates();
-	}
-
-	// refresh nodes
-	TArray<UFlowGraphNode*> FlowGraphNodes;
-	GetNodesOfClass<UFlowGraphNode>(FlowGraphNodes);
-	for (UFlowGraphNode* GraphNode : FlowGraphNodes)
-	{
-		GraphNode->OnGraphRefresh();
 	}
 }
 
@@ -116,8 +99,8 @@ void UFlowGraph::RecursivelyRefreshAddOns(UFlowGraphNode& FromFlowGraphNode)
 				TEXT("Missing AddOn detected for node %s (parent %s)"),
 				*FromFlowNodeBase->GetName(),
 				FromFlowGraphNode.GetParentNode() ?
-				*FromFlowGraphNode.GetParentNode()->GetName() :
-				TEXT("<null>"));
+					*FromFlowGraphNode.GetParentNode()->GetName() :
+					TEXT("<null>"));
 
 			continue;
 		}
@@ -217,7 +200,11 @@ void UFlowGraph::OnLoaded()
 
 void UFlowGraph::OnSave()
 {
+	bIsSavingGraph = true;
+	
 	UpdateAsset();
+
+	bIsSavingGraph = false;
 }
 
 void UFlowGraph::Initialize()
@@ -480,7 +467,4 @@ void UFlowGraph::RecursivelySetupAllFlowGraphNodesForEditing(UFlowGraphNode& Fro
 		}
 	}
 }
-
-
-
 

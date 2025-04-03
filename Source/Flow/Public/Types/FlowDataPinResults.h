@@ -32,7 +32,7 @@ public:
 
 public:
 	FLOW_API FFlowDataPinResult() { }
-	FLOW_API FFlowDataPinResult(EFlowDataPinResolveResult InResult) : Result(InResult) { }
+	FLOW_API explicit FFlowDataPinResult(EFlowDataPinResolveResult InResult) : Result(InResult) { }
 };
 
 // Recommend implementing FFlowDataPinResult... for every EFlowPinType
@@ -187,6 +187,19 @@ public:
 		, Value(InValue)
 		, EnumClass(InEnumClass)
 		{ }
+	FLOW_API explicit FFlowDataPinResult_Enum(EFlowDataPinResolveResult InResult) : Super(InResult) { }
+	FLOW_API explicit FFlowDataPinResult_Enum(uint8 InEnumAsIntValue, UEnum& InEnumClass)
+		: Super(EFlowDataPinResolveResult::Success)
+		, Value()
+		, EnumClass(&InEnumClass)
+		{
+			const int32 EnumValueAsIndex = EnumClass->GetIndexByValue(InEnumAsIntValue);
+			const FText DisplayValueText = EnumClass->GetDisplayNameTextByIndex(EnumValueAsIndex);
+			const FName EnumValue = FName(DisplayValueText.ToString());
+
+			Value = EnumValue;
+			Result = EFlowDataPinResolveResult::Success;
+		}
 
 	template <typename TUnrealNativeEnumType>
 	static FFlowDataPinResult_Enum BuildResultFromNativeEnumValue(TUnrealNativeEnumType EnumValue)

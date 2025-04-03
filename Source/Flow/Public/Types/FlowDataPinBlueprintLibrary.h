@@ -15,6 +15,30 @@ class UFlowDataPinBlueprintLibrary : public UBlueprintFunctionLibrary
 
 public:
 
+	UFUNCTION(BlueprintPure, Category = FlowPin, Meta = (BlueprintThreadSafe, DisplayName = "Make Flow Pin"))
+	static
+		UPARAM(DisplayName = "Flow Pin") FFlowPin
+		MakeStruct(
+			FName PinName,
+			FText PinFriendlyName,
+			FString PinToolTip)
+	{
+		return FFlowPin(PinName, PinFriendlyName, PinToolTip);
+	}
+
+	UFUNCTION(BlueprintPure, Category = FlowPin, Meta = (BlueprintThreadSafe, DisplayName = "Break Flow Pin"))
+	static void
+		BreakStruct(
+			UPARAM(DisplayName = "Flow Pin") FFlowPin Ref,
+			FName& OutPinName,
+			FText& OutPinFriendlyName,
+			FString& OutPinToolTip)
+	{
+		OutPinName = Ref.PinName;
+		OutPinFriendlyName = Ref.PinFriendlyName;
+		OutPinToolTip = Ref.PinToolTip;
+	}
+
 	// Recommend implementing AutoConvert_FlowDataPinProperty... for every EFlowPinType
 	FLOW_ASSERT_ENUM_MAX(EFlowPinType, 16);
 

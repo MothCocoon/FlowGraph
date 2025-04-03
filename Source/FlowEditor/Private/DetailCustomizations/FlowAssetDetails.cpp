@@ -2,22 +2,34 @@
 
 #include "DetailCustomizations/FlowAssetDetails.h"
 #include "FlowAsset.h"
-#include "Nodes/Route/FlowNode_SubGraph.h"
+#include "Nodes/Graph/FlowNode_SubGraph.h"
 
 #include "DetailLayoutBuilder.h"
 #include "IDetailChildrenBuilder.h"
 #include "PropertyCustomizationHelpers.h"
+
+#include "Graph/FlowGraphEditor.h"
+#include "Graph/FlowGraphUtils.h"
+
+#include "Nodes/Graph/FlowNode_CustomInput.h"
+#include "Nodes/Graph/FlowNode_CustomOutput.h"
+
 #include "Widgets/Input/SEditableTextBox.h"
+#include "Widgets/SBoxPanel.h"
 
 #define LOCTEXT_NAMESPACE "FlowAssetDetails"
 
 void FFlowAssetDetails::CustomizeDetails(IDetailLayoutBuilder& DetailBuilder)
 {
+	DetailBuilder.GetObjectsBeingCustomized(ObjectsBeingEdited);
+
 	IDetailCategoryBuilder& FlowAssetCategory = DetailBuilder.EditCategory("SubGraph", LOCTEXT("SubGraphCategory", "Sub Graph"));
 
 	TArray<TSharedPtr<IPropertyHandle>> ArrayPropertyHandles;
-	ArrayPropertyHandles.Add(DetailBuilder.GetProperty(GET_MEMBER_NAME_CHECKED(UFlowAsset, CustomInputs)));
-	ArrayPropertyHandles.Add(DetailBuilder.GetProperty(GET_MEMBER_NAME_CHECKED(UFlowAsset, CustomOutputs)));
+	CustomInputsHandle = DetailBuilder.GetProperty(GET_MEMBER_NAME_CHECKED(UFlowAsset, CustomInputs));
+	CustomOutputsHandle = DetailBuilder.GetProperty(GET_MEMBER_NAME_CHECKED(UFlowAsset, CustomOutputs));
+	ArrayPropertyHandles.Add(CustomInputsHandle);
+	ArrayPropertyHandles.Add(CustomOutputsHandle);
 	for (const TSharedPtr<IPropertyHandle>& PropertyHandle : ArrayPropertyHandles)
 	{
 		if (PropertyHandle.IsValid() && PropertyHandle->AsArray().IsValid())
@@ -39,10 +51,29 @@ void FFlowAssetDetails::GenerateCustomPinArray(TSharedRef<IPropertyHandle> Prope
 	PropertyRow.CustomWidget(false)
 		.ValueContent()
 		[
-			SNew(SEditableTextBox)
+			SNew(SHorizontalBox)
+
+			+ SHorizontalBox::Slot()
+			.FillWidth(1.f)
+			.Padding(2.f, 0.f)
+			.VAlign(VAlign_Center)
+			[
+				SNew(SEditableTextBox)
 				.Text(this, &FFlowAssetDetails::GetCustomPinText, PropertyHandle)
 				.OnTextCommitted_Static(&FFlowAssetDetails::OnCustomPinTextCommitted, PropertyHandle)
 				.OnVerifyTextChanged_Static(&FFlowAssetDetails::VerifyNewCustomPinText)
+			]
+
+			+ SHorizontalBox::Slot()
+			.AutoWidth()
+            .VAlign(VAlign_Center)
+			[
+				PropertyCustomizationHelpers::MakeBrowseButton(
+					FSimpleDelegate::CreateRaw(this, &FFlowAssetDetails::OnBrowseClicked, PropertyHandle),
+					LOCTEXT("SelectEventNode", "Select Event Node in Graph"),
+					TAttribute<bool>::CreateRaw(this, &FFlowAssetDetails::IsBrowseEnabled, PropertyHandle),
+					true) // intentionally true, to set "correct" icon
+			]
 		];
 }
 
@@ -71,6 +102,55 @@ bool FFlowAssetDetails::VerifyNewCustomPinText(const FText& InNewText, FText& Ou
 	}
 
 	return true;
+}
+
+void FFlowAssetDetails::OnBrowseClicked(TSharedRef<IPropertyHandle> PropertyHandle)
+{
+	ensure(ObjectsBeingEdited[0].IsValid());
+
+	UFlowAsset* Asset = Cast<UFlowAsset>(ObjectsBeingEdited[0]);
+	UFlowNode_CustomEventBase* EventNode = GetCustomEventNode(PropertyHandle);
+	
+	if (EventNode)
+	{
+		TSharedPtr<SFlowGraphEditor> Editor = FFlowGraphUtils::GetFlowGraphEditor(Asset->GetGraph());
+		Editor->ClearSelectionSet();
+		Editor->SelectSingleNode(EventNode->GetGraphNode());
+		Editor->ZoomToFit(true);
+	}
+}
+
+bool FFlowAssetDetails::IsBrowseEnabled(TSharedRef<IPropertyHandle> PropertyHandle) const
+{
+	return GetCustomEventNode(PropertyHandle) != nullptr;
+}
+
+UFlowNode_CustomEventBase* FFlowAssetDetails::GetCustomEventNode(TSharedRef<IPropertyHandle> PropertyHandle) const
+{
+	ensure(ObjectsBeingEdited[0].IsValid());
+
+	UFlowAsset* Asset = Cast<UFlowAsset>(ObjectsBeingEdited[0]);
+	FName Text = FName(GetCustomPinText( PropertyHandle ).ToString());
+	TSharedPtr<IPropertyHandle> ArrayHandle = PropertyHandle->GetParentHandle();
+
+	if (ArrayHandle->IsSamePropertyNode(CustomInputsHandle))
+	{
+		UFlowNode_CustomInput* Input = Asset->TryFindCustomInputNodeByEventName(Text);
+		if (Input)
+		{
+			return Input;
+		}
+	}
+	else if (ArrayHandle->IsSamePropertyNode(CustomOutputsHandle))
+	{
+		UFlowNode_CustomOutput* Output = Asset->TryFindCustomOutputNodeByEventName(Text);
+		if (Output)
+		{
+			return Output;
+		}
+	}
+
+	return nullptr;
 }
 
 #undef LOCTEXT_NAMESPACE

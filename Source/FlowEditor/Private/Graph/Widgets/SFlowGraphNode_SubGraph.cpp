@@ -4,7 +4,7 @@
 #include "Graph/FlowGraphEditorSettings.h"
 
 #include "FlowAsset.h"
-#include "Nodes/Route/FlowNode_SubGraph.h"
+#include "Nodes/Graph/FlowNode_SubGraph.h"
 
 #include "SGraphPreviewer.h"
 #include "Widgets/Layout/SBox.h"

@@ -164,7 +164,8 @@ const UClass* FFlowDataPinProperty_ClassCustomizationBase::OnGetClass() const
 
 UClass* FFlowDataPinProperty_ClassCustomizationBase::BuildMetaClass() const
 {
-	return CachedMetaClassPtr.Get();
+	UClass* MetaClass = CachedMetaClassPtr.Get();
+	return MetaClass ? MetaClass : UObject::StaticClass();
 }
 
 void FFlowDataPinProperty_ClassCustomizationBase::OnSetClass(const UClass* NewClass)

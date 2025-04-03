@@ -1,7 +1,7 @@
 // Copyright https://github.com/MothCocoon/FlowGraph/graphs/contributors
 
 #include "DetailCustomizations/FlowNode_ComponentObserverDetails.h"
-#include "Nodes/World/FlowNode_ComponentObserver.h"
+#include "Nodes/Actor/FlowNode_ComponentObserver.h"
 
 #include "DetailCategoryBuilder.h"
 #include "DetailLayoutBuilder.h"
