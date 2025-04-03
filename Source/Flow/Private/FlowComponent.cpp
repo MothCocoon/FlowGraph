@@ -273,10 +273,7 @@ void UFlowComponent::LogError(FString Message, const EFlowOnScreenMessageType On
 		{
 			if (UViewportStatsSubsystem* StatsSubsystem = GetWorld()->GetSubsystem<UViewportStatsSubsystem>())
 			{
-				// Create a weak pointer to this
-				TWeakObjectPtr WeakThis(this);
-
-				StatsSubsystem->AddDisplayDelegate([WeakThis, Message](FText& OutText, FLinearColor& OutColor)
+				StatsSubsystem->AddDisplayDelegate([WeakThis = TWeakObjectPtr(this), Message](FText& OutText, FLinearColor& OutColor)
 				{
 					OutText = FText::FromString(Message);
 					OutColor = FLinearColor::Red;
