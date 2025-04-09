@@ -23,6 +23,7 @@
 #include "ScopedTransaction.h"
 #include "UnrealEdGlobals.h"
 #include "Widgets/Docking/SDockTab.h"
+#include "Algo/AnyOf.h"
 
 #define LOCTEXT_NAMESPACE "FlowGraphEditor"
 
@@ -670,7 +671,10 @@ void SFlowGraphEditor::PasteNodesHere(const FVector2D& Location)
 	FlowGraph->LockUpdates();
 
 	const TArray<UFlowGraphNode*> PasteTargetNodes = DerivePasteTargetNodesFromSelectedNodes();
-	checkf(PasteTargetNodes.Num() <= 1, TEXT("This should be enforced in CanPasteNodes()"));
+	if (Algo::AnyOf(PasteTargetNodes, [](UFlowGraphNode* Node) { return Node && !Node->SubNodes.IsEmpty(); }))
+	{
+		checkf(PasteTargetNodes.Num() <= 1, TEXT("This should be enforced in CanPasteNodes()"));
+	}
 
 	UFlowGraphNode* PasteTargetNode = !PasteTargetNodes.IsEmpty() ? PasteTargetNodes.Top() : nullptr;
 
@@ -839,9 +843,11 @@ bool SFlowGraphEditor::CanPasteNodes() const
 		return false;
 	}
 
-	// Disallow paste when multiple target nodes are selected.
+	// Disallow paste when multiple target nodes are selected, and if there are subnodes involved.
 	const TArray<UFlowGraphNode*> PasteTargetNodes = DerivePasteTargetNodesFromSelectedNodes();
-	if (PasteTargetNodes.Num() > 1)
+	const bool bHasSubNodes = Algo::AnyOf(PasteTargetNodes, [](UFlowGraphNode* Node) { return Node && !Node->SubNodes.IsEmpty(); });
+
+	if (bHasSubNodes && PasteTargetNodes.Num() > 1)
 	{
 		// NOTE (gtaylor) It's possible we could support multi-paste, but we'd need to rework PasteNodesHere()
 		// to understand how to paste copies onto each target node.
@@ -881,7 +887,7 @@ bool SFlowGraphEditor::CanPasteNodes() const
 	};
 
 	// If pasting onto a selected node, confirm that the paste operation is legal
-	if (PasteTargetNodes.Num() >= 1)
+	if (bHasSubNodes && PasteTargetNodes.Num() >= 1)
 	{
 		checkf(PasteTargetNodes.Num() == 1, TEXT("This is enforced earlier in this function, just confirming the code stays that way here."));
 
