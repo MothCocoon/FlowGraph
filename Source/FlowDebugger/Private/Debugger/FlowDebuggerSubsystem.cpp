@@ -248,8 +248,11 @@ void UFlowDebuggerSubsystem::MarkAsHit(const FGuid& NodeGuid)
 {
 	if (FFlowBreakpoint* NodeBreakpoint = FindBreakpoint(NodeGuid))
 	{
-		NodeBreakpoint->MarkAsHit(true);
-		PauseSession();
+		if (NodeBreakpoint->IsEnabled())
+		{
+			NodeBreakpoint->MarkAsHit(true);
+			PauseSession();
+		}
 	}
 }
 
@@ -257,8 +260,11 @@ void UFlowDebuggerSubsystem::MarkAsHit(const FGuid& NodeGuid, const FName& PinNa
 {
 	if (FFlowBreakpoint* PinBreakpoint = FindBreakpoint(NodeGuid, PinName))
 	{
-		PinBreakpoint->MarkAsHit(true);
-		PauseSession();
+		if (PinBreakpoint->IsEnabled())
+		{
+			PinBreakpoint->MarkAsHit(true);
+			PauseSession();
+		}
 	}
 }
 

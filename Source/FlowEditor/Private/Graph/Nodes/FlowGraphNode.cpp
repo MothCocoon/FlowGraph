@@ -217,6 +217,11 @@ void UFlowGraphNode::OnGraphRefresh()
 	ReconstructNode();
 }
 
+bool UFlowGraphNode::CanPlaceBreakpoints() const
+{
+	return true;
+}
+
 bool UFlowGraphNode::CanCreateUnderSpecifiedSchema(const UEdGraphSchema* Schema) const
 {
 	return Schema->IsA(UFlowGraphSchema::StaticClass());
