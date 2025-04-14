@@ -1659,8 +1659,9 @@ bool CheckPinsMatch(const TArray<FFlowPin>& LeftPins, const TArray<FFlowPin>& Ri
 		auto PinsAreEqualPredicate = [&Left](const FFlowPin& Right)
 		{
 			const bool bNameMatch = Left.PinName == Right.PinName;
+			const bool bFriendlyNameMatch = Left.PinFriendlyName.EqualTo(Right.PinFriendlyName);
 			const bool bTypeMatch = Left.GetPinType() == Right.GetPinType();
-			return bNameMatch && bTypeMatch;
+			return bNameMatch && bFriendlyNameMatch && bTypeMatch;
 		};
 
 		// For each required pin, make sure the existing pins array contains a pin that matches by name and type 
