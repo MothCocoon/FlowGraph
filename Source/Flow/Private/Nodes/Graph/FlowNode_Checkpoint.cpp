@@ -22,7 +22,7 @@ void UFlowNode_Checkpoint::ExecuteInput(const FName& PinName)
 		UFlowSaveGame* NewSaveGame = Cast<UFlowSaveGame>(UGameplayStatics::CreateSaveGameObject(UFlowSaveGame::StaticClass()));
 		GetFlowSubsystem()->OnGameSaved(NewSaveGame);
 
-		UGameplayStatics::SaveGameToSlot(NewSaveGame, NewSaveGame->SaveSlotName, 0);
+		UGameplayStatics::AsyncSaveGameToSlot(NewSaveGame, NewSaveGame->SaveSlotName, 0);
 	}
 
 	TriggerFirstOutput(true);
