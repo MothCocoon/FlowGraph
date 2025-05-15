@@ -26,6 +26,7 @@
 #include "Misc/UObjectToken.h"
 #include "Modules/ModuleManager.h"
 #include "PropertyEditorModule.h"
+#include "FlowEditorModule.h"
 #include "ToolMenus.h"
 #include "Widgets/Docking/SDockTab.h"
 
@@ -369,6 +370,8 @@ void FFlowAssetEditor::InitFlowAssetEditor(const EToolkitMode::Type Mode, const 
 	constexpr bool bCreateDefaultToolbar = true;
 	InitAssetEditor(Mode, InitToolkitHost, TEXT("FlowEditorApp"), StandaloneDefaultLayout, bCreateDefaultStandaloneMenu, bCreateDefaultToolbar, ObjectToEdit, false);
 
+	InitalizeExtenders();
+	
 	RegenerateMenusAndToolbars();
 }
 
@@ -464,6 +467,13 @@ void FFlowAssetEditor::BindEditorCommands()
 									FExecuteAction::CreateSP(this, &FFlowAssetEditor::ClearAllBreakpoints),
 									FCanExecuteAction::CreateSP(this, &FFlowAssetEditor::HasAnyBreakpoints));
 	}
+}
+
+void FFlowAssetEditor::InitalizeExtenders()
+{
+	FFlowEditorModule* FlowEditorModule = &FModuleManager::LoadModuleChecked<FFlowEditorModule>("FlowEditor");
+	AddMenuExtender(FlowEditorModule->GetMenuExtensibilityManager()->GetAllExtenders(GetToolkitCommands(), GetEditingObjects()));
+	AddToolbarExtender(FlowEditorModule->GetToolBarExtensibilityManager()->GetAllExtenders(GetToolkitCommands(), GetEditingObjects()));
 }
 
 void FFlowAssetEditor::RefreshAsset()

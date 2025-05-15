@@ -62,6 +62,7 @@ public:
 	// UEdGraphNode
 	virtual void PostPlacedNewNode() override;
 	virtual void PrepareForCopying() override;
+	virtual void PostPasteNode() override;
     // --
 	
 	void PostCopyNode();
@@ -72,6 +73,7 @@ private:
 
 public:
 	virtual void OnGraphRefresh();
+	virtual bool CanPlaceBreakpoints() const;
 
 //////////////////////////////////////////////////////////////////////////
 // Graph node

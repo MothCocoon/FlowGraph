@@ -130,8 +130,8 @@ protected:
 	virtual void RegisterMenus();
 	
 	virtual void CreateToolbar();
-	
 	virtual void BindEditorCommands();
+	virtual void InitalizeExtenders();
 	
 	virtual void RefreshAsset();
 	virtual void RefreshDetails();

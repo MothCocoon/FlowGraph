@@ -128,7 +128,7 @@ void UFlowGraphNode::PostPlacedNewNode()
 
 	SubscribeToExternalChanges();
 
-	// NOTE - NodeInstance can be already spawned by paste operation, don't override it
+	// note: NodeInstance can be already spawned by paste operation, don't override it
 	if (NodeInstanceClass.IsPending())
 	{
 		NodeInstanceClass.LoadSynchronous();
@@ -159,6 +159,13 @@ void UFlowGraphNode::PrepareForCopying()
 		// Temporarily take ownership of the node instance, so that it is not deleted when cutting
 		NodeInstance->Rename(nullptr, this, REN_DontCreateRedirectors | REN_DoNotDirty);
 	}
+}
+
+void UFlowGraphNode::PostPasteNode()
+{
+	Super::PostPasteNode();
+	//prep reconstruct the node, necessary for copy-paste to handle the reconstruct.
+	bNeedsFullReconstruction = true;
 }
 
 void UFlowGraphNode::PostCopyNode()
@@ -208,6 +215,11 @@ void UFlowGraphNode::OnExternalChange()
 void UFlowGraphNode::OnGraphRefresh()
 {
 	ReconstructNode();
+}
+
+bool UFlowGraphNode::CanPlaceBreakpoints() const
+{
+	return true;
 }
 
 bool UFlowGraphNode::CanCreateUnderSpecifiedSchema(const UEdGraphSchema* Schema) const

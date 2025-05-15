@@ -53,17 +53,8 @@ class FLOW_API UFlowComponent : public UActorComponent, public IFlowOwnerInterfa
 //////////////////////////////////////////////////////////////////////////
 // Identity Tags
 
-	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Flow")
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, ReplicatedUsing = OnRep_IdentityTags, Category = "Flow")
 	FGameplayTagContainer IdentityTags;
-
-private:
-	// Used to replicate tags added during gameplay
-	UPROPERTY(ReplicatedUsing = OnRep_AddedIdentityTags)
-	FGameplayTagContainer AddedIdentityTags;
-
-	// Used to replicate tags removed during gameplay
-	UPROPERTY(ReplicatedUsing = OnRep_RemovedIdentityTags)
-	FGameplayTagContainer RemovedIdentityTags;
 
 public:
 	virtual void BeginPlay() override;
@@ -88,10 +79,7 @@ protected:
 
 private:
 	UFUNCTION()
-	void OnRep_AddedIdentityTags();
-
-	UFUNCTION()
-	void OnRep_RemovedIdentityTags();
+	void OnRep_IdentityTags(const FGameplayTagContainer& PreviousTags);
 
 public:
 	UPROPERTY(BlueprintAssignable, Category = "Flow")
