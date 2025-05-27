@@ -11,6 +11,7 @@
 #include "Graph/FlowGraphEditor.h"
 #include "Graph/FlowGraphSchema.h"
 #include "Graph/Widgets/SFlowPalette.h"
+#include "SQuestFactBaseEditor.h" // @tiramisoo
 
 #include "FlowAsset.h"
 
@@ -40,6 +41,7 @@
 const FName FFlowAssetEditor::DetailsTab(TEXT("Details"));
 const FName FFlowAssetEditor::GraphTab(TEXT("Graph"));
 const FName FFlowAssetEditor::PaletteTab(TEXT("Palette"));
+const FName FFlowAssetEditor::QuestFactBaseEditorTab(TEXT("QuestFactBase")); //@tiramisoo
 const FName FFlowAssetEditor::RuntimeLogTab(TEXT("RuntimeLog"));
 const FName FFlowAssetEditor::SearchTab(TEXT("Search"));
 const FName FFlowAssetEditor::ValidationLogTab(TEXT("ValidationLog"));
@@ -121,6 +123,12 @@ void FFlowAssetEditor::RegisterTabSpawners(const TSharedRef<class FTabManager>& 
 				.SetDisplayName(LOCTEXT("PaletteTab", "Palette"))
 				.SetGroup(WorkspaceMenuCategoryRef)
 				.SetIcon(FSlateIcon(FAppStyle::GetAppStyleSetName(), "Kismet.Tabs.Palette"));
+
+	//@tiramisoo
+	InTabManager->RegisterTabSpawner(QuestFactBaseEditorTab, FOnSpawnTab::CreateSP(this, &FFlowAssetEditor::SpawnTab_QuestFactBaseEditor))
+		.SetDisplayName(LOCTEXT("QuestFactBaseEditorTab", "QuestFactBase"))
+		.SetGroup(WorkspaceMenuCategoryRef)
+		.SetIcon(FSlateIcon(FAppStyle::GetAppStyleSetName(), "LevelEditor.Tabs.ContentBrowser"));
 
 	InTabManager->RegisterTabSpawner(RuntimeLogTab, FOnSpawnTab::CreateSP(this, &FFlowAssetEditor::SpawnTab_RuntimeLog))
 				.SetDisplayName(LOCTEXT("RuntimeLog", "Runtime Log"))
@@ -251,6 +259,18 @@ TSharedRef<SDockTab> FFlowAssetEditor::SpawnTab_Palette(const FSpawnTabArgs& Arg
 		.Label(LOCTEXT("FlowPaletteTitle", "Palette"))
 		[
 			Palette.ToSharedRef()
+		];
+}
+
+// @tiramisoo
+TSharedRef<SDockTab> FFlowAssetEditor::SpawnTab_QuestFactBaseEditor(const FSpawnTabArgs& Args) const
+{
+	check(Args.GetTabId() == QuestFactBaseEditorTab);
+
+	return SNew(SDockTab)
+		.Label(LOCTEXT("QuestFactBaseEditorTitle", "QuestFactBase"))
+		[
+			QuestFactBaseEditor.ToSharedRef()
 		];
 }
 
@@ -517,6 +537,9 @@ void FFlowAssetEditor::CreateWidgets()
 
 	// Palette
 	Palette = SNew(SFlowPalette, SharedThis(this));
+	
+	// @tiramisoo - QuestFactBaseEditor
+	QuestFactBaseEditor = SNew(SQuestFactBaseEditor);
 
 	// Search
 #if ENABLE_SEARCH_IN_ASSET_EDITOR
@@ -572,6 +595,15 @@ void FFlowAssetEditor::ClearSelectionStateFor(const FName SelectionOwner)
 			Palette->ClearGraphActionMenuSelection();
 		}
 	}
+	// @tiramisoo - QuestFactBaseEditor
+	else if (SelectionOwner == QuestFactBaseEditorTab)
+	{
+		if (QuestFactBaseEditor.IsValid())
+		{
+			QuestFactBaseEditor->ClearCurrentSelection();
+		}
+	}
+	// @tiramisoo
 }
 
 FName FFlowAssetEditor::GetUISelectionState() const

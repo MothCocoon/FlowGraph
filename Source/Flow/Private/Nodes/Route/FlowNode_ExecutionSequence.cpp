@@ -45,16 +45,19 @@ void UFlowNode_ExecutionSequence::Cleanup()
 
 	Super::Cleanup();
 }
-
+// @tiramisoo - Multiple output connections handling
 void UFlowNode_ExecutionSequence::ExecuteNewConnections()
 {
 	for (const FFlowPin& Output : OutputPins)
 	{
-		const FConnectedPin& Connection = GetConnection(Output.PinName);
-		if (!ExecutedConnections.Contains(Connection.NodeGuid))
+		const FConnectionArray Connection = GetConnections(Output.PinName);
+		for (FConnectedPin ConnectedPin : Connection)
 		{
-			ExecutedConnections.Emplace(Connection.NodeGuid);
-			TriggerOutput(Output.PinName, false);
+			if (!ExecutedConnections.Contains(ConnectedPin.NodeGuid))
+			{
+				ExecutedConnections.Emplace(ConnectedPin.NodeGuid);
+				TriggerOutput(Output.PinName, false);
+			}
 		}
 	}
 

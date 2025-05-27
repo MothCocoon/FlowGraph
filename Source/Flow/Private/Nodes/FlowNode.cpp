@@ -498,21 +498,26 @@ bool UFlowNode::TryFindPropertyByRemappedPinName(
 TSet<UFlowNode*> UFlowNode::GatherConnectedNodes() const
 {
 	TSet<UFlowNode*> Result;
-	for (const TPair<FName, FConnectedPin>& Connection : Connections)
+	for (const TPair<FName, FConnectionArray> ConnectionArray : Connections)
 	{
-		Result.Emplace(GetFlowAsset()->GetNode(Connection.Value.NodeGuid));
+		for (const FConnectedPin ConnectedPin : ConnectionArray.Value)
+		{
+			Result.Emplace(GetFlowAsset()->GetNode(ConnectedPin.NodeGuid));
+		}
 	}
-
 	return Result;
 }
 
 FName UFlowNode::GetPinConnectedToNode(const FGuid& OtherNodeGuid)
 {
-	for (const TPair<FName, FConnectedPin>& Connection : Connections)
+	for (const TPair<FName, FConnectionArray> ConnectionArray : Connections)
 	{
-		if (Connection.Value.NodeGuid == OtherNodeGuid)
+		for (const FConnectedPin ConnectedPin : ConnectionArray.Value)
 		{
-			return Connection.Key;
+			if (ConnectedPin.NodeGuid == OtherNodeGuid)
+			{
+				return ConnectionArray.Key;
+			}
 		}
 	}
 
@@ -590,16 +595,17 @@ bool UFlowNode::IsInputConnected(const FFlowPin& FlowPin) const
 
 bool UFlowNode::IsOutputConnected(const FFlowPin& FlowPin) const
 {
-	if (!OutputPins.Contains(FlowPin.PinName))
+	if (!(OutputPins.Contains(FlowPin.PinName) && Connections.Contains(FlowPin.PinName)))
 	{
 		return false;
 	}
 
-	if (FlowPin.IsExecPin())
-	{
-		return FindConnectedNodeForPinFast(FlowPin.PinName);
-	}
-	else
+	//@tiramisoo - can I get a Fast way with Connection Arrays?
+	//if (FlowPin.IsExecPin())
+	//{
+	//	return FindConnectedNodeForPinFast(FlowPin.PinName);
+	//}
+	//else
 	{
 		// We don't cache the input data pins for fast lookup in Connections, so use the slow path for them:
 
@@ -609,7 +615,7 @@ bool UFlowNode::IsOutputConnected(const FFlowPin& FlowPin) const
 
 bool UFlowNode::FindConnectedNodeForPinFast(const FName& PinName, FGuid* OutGuid, FName* OutConnectedPinName) const
 {
-	const FConnectedPin* FoundConnectedPin = Connections.Find(PinName);
+	/*const FConnectedPin* FoundConnectedPin = Connections.Find(PinName);
 	if (FoundConnectedPin)
 	{
 		if (OutGuid)
@@ -623,7 +629,9 @@ bool UFlowNode::FindConnectedNodeForPinFast(const FName& PinName, FGuid* OutGuid
 		}
 	}
 
-	return FoundConnectedPin != nullptr;
+	return FoundConnectedPin != nullptr;*/
+
+	return false;
 }
 
 bool UFlowNode::FindConnectedNodeForPinSlow(const FName& PinName, FGuid* OutGuid, FName* OutConnectedPinName) const
@@ -645,24 +653,16 @@ bool UFlowNode::FindConnectedNodeForPinSlow(const FName& PinName, FGuid* OutGuid
 			continue;
 		}
 
-		for (const TPair<FName, FConnectedPin>& Connection : Pair.Value->Connections)
+		for (const TPair<FName, FConnectionArray>& Connection : Pair.Value->Connections)
 		{
-			const FConnectedPin& ConnectedPinStruct = Connection.Value;
-
-			if (ConnectedPinStruct.NodeGuid == NodeGuid && ConnectedPinStruct.PinName == PinName)
+			for (const FConnectedPin ConnectedPin : Connection.Value)
 			{
-				if (OutGuid)
+				if (ConnectedPin.NodeGuid == NodeGuid && ConnectedPin.PinName == PinName)
 				{
-					*OutGuid = ConnectedFromGuid;
+					return true;
 				}
-
-				if (OutConnectedPinName)
-				{
-					*OutConnectedPinName = Connection.Key;
-				}
-
-				return true;
 			}
+
 		}
 	}
 
@@ -884,10 +884,13 @@ void UFlowNode::TriggerOutput(const FName PinName, const bool bFinish /*= false*
 	}
 #endif
 
+	// @tiramisoo - Multiple output connections handling
 	// call the next node
-	if (OutputPins.Contains(PinName) && Connections.Contains(PinName))
+	if (Connections.IsEmpty() || !Connections.Contains(PinName)) { return; }
+
+	const FConnectionArray ConnectionArray = *(Connections.Find(PinName));
+	for (const FConnectedPin FlowPin : ConnectionArray)
 	{
-		const FConnectedPin FlowPin = GetConnection(PinName);
 		GetFlowAsset()->TriggerInput(FlowPin.NodeGuid, FlowPin.PinName);
 	}
 }

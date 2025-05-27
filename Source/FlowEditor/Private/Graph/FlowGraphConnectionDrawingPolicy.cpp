@@ -168,14 +168,14 @@ void FFlowGraphConnectionDrawingPolicy::DetermineWiringStyle(UEdGraphPin* Output
 				Params.bDrawBubbles = false;
 			}
 			// recent paths
-			else if (RecentPaths.Contains(OutputPin) && RecentPaths[OutputPin] == InputPin)
+			else if (RecentPaths.Contains(OutputPin))// && RecentPaths[OutputPin] == InputPin) // @tiramisoo - Multiple output connections handling
 			{
 				Params.WireColor = RecentColor;
 				Params.WireThickness = RecentWireThickness;
 				Params.bDrawBubbles = true;
 			}
 			// all paths, showing graph history
-			else if (RecordedPaths.Contains(OutputPin) && RecordedPaths[OutputPin] == InputPin)
+			else if (RecordedPaths.Contains(OutputPin))// && RecentPaths[OutputPin] == InputPin) // @tiramisoo - Multiple output connections handling
 			{
 				Params.WireColor = RecordedColor;
 				Params.WireThickness = RecordedWireThickness;

@@ -401,4 +401,29 @@ struct FLOW_API FPinRecord
 private:
 	FORCEINLINE static FString DoubleDigit(const int32 Number);
 };
+
 #endif
+
+// @tiramisoo - Multiple output connections handling
+USTRUCT()
+struct FLOW_API FConnectionArray
+{
+	GENERATED_USTRUCT_BODY()
+
+	using RangedForConstIteratorType = TArray<FConnectedPin>::RangedForConstIteratorType;
+
+	void Add(const FConnectedPin& Pin) { Connections.Add(Pin); }
+	bool Contains(const FConnectedPin& Pin) { return Connections.Contains(Pin); }
+	bool IsEmpty() const { return Connections.IsEmpty(); }
+
+	RangedForConstIteratorType begin() const { return Connections.begin(); }
+	RangedForConstIteratorType end() const { return Connections.end(); }
+
+	UPROPERTY()
+	TArray<FConnectedPin> Connections;
+
+public:
+	TArray<FConnectedPin>& GetConnectionArray() { return Connections; }
+};
+
+// @tiramisoo

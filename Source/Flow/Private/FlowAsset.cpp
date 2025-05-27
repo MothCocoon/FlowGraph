@@ -325,8 +325,90 @@ void UFlowAsset::UnregisterNode(const FGuid& NodeGuid)
 	MarkPackageDirty();
 }
 
+// @tiramisoo - Multiple output connections handling
 void UFlowAsset::HarvestNodeConnections(UFlowNode* TargetNode)
 {
+	TMap<FName, FConnectionArray> Connections;
+	bool bGraphDirty = false;
+
+	// last moment to remove invalid nodes
+	for (auto NodeIt = Nodes.CreateIterator(); NodeIt; ++NodeIt)
+	{
+		const TPair<FGuid, UFlowNode*>& Pair = *NodeIt;
+		if (Pair.Value == nullptr)
+		{
+			NodeIt.RemoveCurrent();
+			bGraphDirty = true;
+		}
+	}
+
+	for (const TPair<FGuid, UFlowNode*>& Pair : Nodes)
+	{
+		UFlowNode* Node = Pair.Value;
+		TMap<FName, FConnectionArray> FoundConnections;
+
+		for (const UEdGraphPin* ThisPin : Node->GetGraphNode()->Pins)
+		{
+			if (ThisPin->Direction != EGPD_Output)
+			{
+				continue;
+			}
+			
+			for (const UEdGraphPin* LinkedPin : ThisPin->LinkedTo)
+			{
+				const UEdGraphNode* LinkedNode = LinkedPin->GetOwningNode();
+				FoundConnections.FindOrAdd(ThisPin->PinName).Add(FConnectedPin(LinkedNode->NodeGuid, LinkedPin->PinName));
+			}			
+		}
+
+		// This check exists to ensure that we don't mark graph dirty, if none of connections changed
+		// Optimization: we need check it only until the first node would be marked dirty, as this already marks Flow Asset package dirty
+		if (bGraphDirty == false)
+		{
+			if (FoundConnections.Num() != Node->Connections.Num())
+			{
+				bGraphDirty = true;
+			}
+			else
+			{
+				for (const TPair<FName, FConnectionArray>& FoundConnection : FoundConnections)
+				{
+					const FConnectionArray OldConnectionArray = *(Node->Connections.Find(FoundConnection.Key));
+
+					if (!OldConnectionArray.IsEmpty())
+					{
+						for (const FConnectedPin OldConnection : OldConnectionArray)
+						{
+							for (const FConnectedPin NewConnection : FoundConnection.Value)
+							{
+								if (NewConnection != OldConnection)
+								{
+									bGraphDirty = true;
+									break;
+								}
+							}
+						}
+					}
+					else
+					{
+						bGraphDirty = true;
+						break;
+					}
+				}
+			}
+		}
+
+		if (bGraphDirty)
+		{
+			Node->SetFlags(RF_Transactional);
+			Node->Modify();
+
+			Node->SetConnections(FoundConnections);
+			Node->PostEditChange();
+		}
+	}
+	
+	/*
 	TArray<UFlowNode*> TargetNodes;
 
 	if (IsValid(TargetNode))
@@ -424,7 +506,7 @@ void UFlowAsset::HarvestNodeConnections(UFlowNode* TargetNode)
 			FlowNode->SetConnections(FoundConnections);
 			FlowNode->PostEditChange();
 		}
-	}
+	}*/
 }
 
 bool UFlowAsset::TryUpdateManagedFlowPinsForNode(UFlowNode& FlowNode)

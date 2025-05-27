@@ -63,7 +63,8 @@ public class FlowEditor : ModuleRules
 			"SourceControl",
 			"StructUtils",
 			"ToolMenus",
-			"UnrealEd"
+			"UnrealEd",
+			"QuestFactBase"
 		});
 	}
 }

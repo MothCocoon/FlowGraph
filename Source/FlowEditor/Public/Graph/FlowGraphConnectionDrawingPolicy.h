@@ -39,6 +39,7 @@ class FLOWEDITOR_API FFlowGraphConnectionDrawingPolicy : public FConnectionDrawi
 	float RecordedWireThickness;
 	float SelectedWireThickness;
 
+	// @tiramisoo @TODO: Change to TMap<UEdGraphPin*, TArray<UEdGraphPin*>> ?
 	// runtime values
 	UEdGraph* GraphObj;
 	TMap<UEdGraphPin*, UEdGraphPin*> RecentPaths;

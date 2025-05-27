@@ -159,14 +159,14 @@ protected:
 // Connections to other nodes
 
 protected:
-	// Map input/outputs to the connected node and input pin
+	// Map outputs to the connected node and input pin
 	UPROPERTY()
-	TMap<FName, FConnectedPin> Connections;
+	TMap<FName, FConnectionArray> Connections;
 
 public:
-	void SetConnections(const TMap<FName, FConnectedPin>& InConnections) { Connections = InConnections; }
-	FConnectedPin GetConnection(const FName OutputName) const { return Connections.FindRef(OutputName); }
-
+	void SetConnections(const TMap<FName, FConnectionArray>& InConnections) { Connections = InConnections; }
+	FConnectionArray GetConnections(const FName OutputName) const { return Connections.FindRef(OutputName); }
+	// @tiramisoo
 	UE_DEPRECATED(5.5, "Please use GatherConnectedNodes instead.")
 	TSet<UFlowNode*> GetConnectedNodes() const { return GatherConnectedNodes(); }
 

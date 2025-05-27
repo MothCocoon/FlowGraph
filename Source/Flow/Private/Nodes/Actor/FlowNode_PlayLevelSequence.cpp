@@ -10,6 +10,8 @@
 #if WITH_EDITOR
 #include "MovieScene/MovieSceneFlowTrack.h"
 #include "MovieScene/MovieSceneFlowTriggerSection.h"
+// @tiramisoo - Advanced level sequence handling
+#include "UObject/ObjectSaveContext.h"
 #endif
 
 #include "LevelSequence.h"
@@ -89,16 +91,85 @@ TArray<FFlowPin> UFlowNode_PlayLevelSequence::GetContextOutputs() const
 	return Pins;
 }
 
+// @tiramisoo - Advanced level sequence handling
 void UFlowNode_PlayLevelSequence::PostEditChangeProperty(FPropertyChangedEvent& PropertyChangedEvent)
 {
-	if (PropertyChangedEvent.Property && PropertyChangedEvent.GetPropertyName() == GET_MEMBER_NAME_CHECKED(UFlowNode_PlayLevelSequence, Sequence))
+	if (PropertyChangedEvent.Property)
 	{
-		OnReconstructionRequested.ExecuteIfBound();
+		if (PropertyChangedEvent.GetPropertyName() == GET_MEMBER_NAME_CHECKED(UFlowNode_PlayLevelSequence, SequenceToUse))
+		{
+			if (SequenceToUse == ELevelSequenceType::Asset)
+			{
+				Sequence = SequenceAsset;
+			}
+			else if (SequenceToUse == ELevelSequenceType::LocalSequence)
+			{
+				if (!LocalSequence)
+				{
+					LocalSequence = CreateLevelSequence(this, TEXT("LocalSequence"));
+					LocalSequence->Initialize();
+				}
+
+				Sequence = LocalSequence;
+			}
+
+			OnReconstructionRequested.ExecuteIfBound();
+		}
+		if (PropertyChangedEvent.GetPropertyName() == GET_MEMBER_NAME_CHECKED(UFlowNode_PlayLevelSequence, SequenceAsset))
+		{
+			Sequence = SequenceAsset;
+		}
 	}
 
 	Super::PostEditChangeProperty(PropertyChangedEvent);
 }
+
+void UFlowNode_PlayLevelSequence::PostLoad()
+{
+	if (!LocalSequence && SequenceToUse == ELevelSequenceType::LocalSequence)
+	{
+		LocalSequence = CreateLevelSequence(this, TEXT("LocalSequence"));
+		LocalSequence->Initialize();
+
+		OnReconstructionRequested.ExecuteIfBound();
+	}
+
+	Super::PostLoad();
+}
+
+void UFlowNode_PlayLevelSequence::FixNode(UEdGraphNode* NewGraphNode)
+{
+	Super::FixNode(NewGraphNode);
+
+	if (SequenceToUse == ELevelSequenceType::Asset)
+	{
+		Sequence = SequenceAsset;
+	}
+	else if (SequenceToUse == ELevelSequenceType::LocalSequence)
+	{
+		if (!LocalSequence)
+		{
+			LocalSequence = CreateLevelSequence(this, TEXT("LocalSequence"));
+			LocalSequence->Initialize();
+		}
+
+		Sequence = LocalSequence;
+	}
+}
 #endif
+
+ULevelSequence* UFlowNode_PlayLevelSequence::CreateLevelSequence(UObject* Parent, const FName& Name)
+{
+	//const FString& LevelSequenceClassName = "ULevelSequence";//GetDefault<UFlowLevelSequenceConfig>()->LevelSequenceClassName;
+	//FTopLevelAssetPath LevelSequenceAssetPath(LevelSequenceClassName);
+	UClass* LevelSequenceClass = FindObject<UClass>(ULevelSequence::StaticClass()->GetClassPathName());//LevelSequenceAssetPath);
+	/*checkf(LevelSequenceClass, TEXT(
+		"Failed to find level sequence class to be instantiated (LevelSequenceClassName='%s').\n"
+		"Make sure to set up 'LevelSequenceClassName' within `UFlowLevelSequenceConfig` properly via Editor config file."),
+		*LevelSequenceClassName);*/
+	return NewObject<ULevelSequence>(Parent, LevelSequenceClass, Name);
+}
+// @tiramisoo
 
 void UFlowNode_PlayLevelSequence::PreloadContent()
 {
@@ -314,10 +385,21 @@ FString UFlowNode_PlayLevelSequence::GetPlaybackProgress() const
 	return FString();
 }
 
+// @tiramisoo - Advanced level sequence handling
 #if WITH_EDITOR
 FString UFlowNode_PlayLevelSequence::GetNodeDescription() const
 {
-	return Sequence.IsNull() ? TEXT("[No sequence]") : Sequence.GetAssetName();
+	if (Sequence.IsNull())
+	{
+		return TEXT("[No sequence]");
+	}
+
+	if (SequenceToUse == ELevelSequenceType::Asset)
+	{
+		return Sequence.GetAssetName();
+	}
+
+	return TEXT("Local Sequence");
 }
 
 EDataValidationResult UFlowNode_PlayLevelSequence::ValidateNode()
