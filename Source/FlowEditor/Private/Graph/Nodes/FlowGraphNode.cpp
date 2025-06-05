@@ -87,7 +87,7 @@ void UFlowGraphNode::PostLoad()
 		SubscribeToExternalChanges();
 	}
 
-	RebuildPinArraysOnLoad();
+	RebuildPinArrays();
 }
 
 void UFlowGraphNode::PostDuplicate(bool bDuplicateForPIE)
@@ -913,6 +913,11 @@ bool UFlowGraphNode::SupportsContextPins() const
 	return NodeInstance && NodeInstance->SupportsContextPins();
 }
 
+bool UFlowGraphNode::IsNumberedPin(const UEdGraphPin* Pin)
+{
+	return Pin && Pin->PinName.ToString().IsNumeric();
+}
+
 bool UFlowGraphNode::CanUserAddInput() const
 {
 	const UFlowNode* FlowNode = Cast<UFlowNode>(NodeInstance);
@@ -928,13 +933,13 @@ bool UFlowGraphNode::CanUserAddOutput() const
 bool UFlowGraphNode::CanUserRemoveInput(const UEdGraphPin* Pin) const
 {
 	const UFlowNode* FlowNode = Cast<UFlowNode>(NodeInstance);
-	return FlowNode && !FlowNode->GetClass()->GetDefaultObject<UFlowNode>()->InputPins.Contains(Pin->PinName);
+	return FlowNode && IsNumberedPin(Pin) && FlowNode->CountNumberedInputs() > 2;
 }
 
 bool UFlowGraphNode::CanUserRemoveOutput(const UEdGraphPin* Pin) const
 {
 	const UFlowNode* FlowNode = Cast<UFlowNode>(NodeInstance);
-	return FlowNode && !FlowNode->GetClass()->GetDefaultObject<UFlowNode>()->OutputPins.Contains(Pin->PinName);
+	return FlowNode && IsNumberedPin(Pin) && FlowNode->CountNumberedOutputs() > 2;
 }
 
 void UFlowGraphNode::AddUserInput()
@@ -957,6 +962,8 @@ void UFlowGraphNode::AddInstancePin(const EEdGraphPinDirection Direction, const 
 	const FFlowPin PinName = FFlowPin(FString::FromInt(NumberedPinsAmount));
 
 	UFlowNode* FlowNode = Cast<UFlowNode>(NodeInstance);
+	FlowNode->Modify();
+	
 	if (Direction == EGPD_Input)
 	{
 		if (FlowNode->InputPins.IsValidIndex(NumberedPinsAmount))
@@ -1007,6 +1014,18 @@ void UFlowGraphNode::RemoveInstancePin(UEdGraphPin* Pin)
 
 			Pin->MarkAsGarbage();
 			Pins.Remove(Pin);
+
+			// Renumber the pins so the numbering is compact
+			int32 Index = 0;
+			for (int32 i = 0; i < Pins.Num(); ++i)
+			{
+				UEdGraphPin* PotentialPin = Pins[i];
+				if (PotentialPin->Direction == EGPD_Input && PotentialPin->PinName.ToString().IsNumeric())
+				{
+					PotentialPin->PinName = *FString::FromInt(Index);
+					++Index;
+				}
+			}
 		}
 	}
 	else
@@ -1018,6 +1037,18 @@ void UFlowGraphNode::RemoveInstancePin(UEdGraphPin* Pin)
 
 			Pin->MarkAsGarbage();
 			Pins.Remove(Pin);
+
+			// Renumber the pins so the numbering is compact
+			int32 Index = 0;
+			for (int32 i = 0; i < Pins.Num(); ++i)
+			{
+				UEdGraphPin* PotentialPin = Pins[i];
+				if (PotentialPin->Direction == EGPD_Output && PotentialPin->PinName.ToString().IsNumeric())
+				{
+					PotentialPin->PinName = *FString::FromInt(Index);
+					++Index;
+				}
+			}
 		}
 	}
 
@@ -1157,6 +1188,8 @@ void UFlowGraphNode::PostEditUndo()
 	{
 		RebuildRuntimeAddOnsFromEditorSubNodes();
 	}
+
+	RebuildPinArrays();
 }
 
 UFlowAsset* UFlowGraphNode::GetFlowAsset() const
@@ -1841,8 +1874,11 @@ bool UFlowGraphNode::IsAncestorNode(const UFlowGraphNode& OtherNode) const
 	return false;
 }
 
-void UFlowGraphNode::RebuildPinArraysOnLoad()
+void UFlowGraphNode::RebuildPinArrays()
 {
+	InputPins.Reset();
+	OutputPins.Reset();
+	
 	for (UEdGraphPin* Pin : Pins)
 	{
 		switch (Pin->Direction)

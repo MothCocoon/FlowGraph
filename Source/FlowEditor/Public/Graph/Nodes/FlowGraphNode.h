@@ -121,7 +121,7 @@ public:
 	bool IsAncestorNode(const UFlowGraphNode& OtherNode) const;
 
 protected:
-	void RebuildPinArraysOnLoad();
+	void RebuildPinArrays();
 
 //////////////////////////////////////////////////////////////////////////
 // Utils
@@ -181,6 +181,8 @@ public:
 	void RemoveOrphanedPin(UEdGraphPin* Pin);
 
 	bool SupportsContextPins() const;
+
+	static bool IsNumberedPin(const UEdGraphPin* Pin);
 
 	bool CanUserAddInput() const;
 	bool CanUserAddOutput() const;
