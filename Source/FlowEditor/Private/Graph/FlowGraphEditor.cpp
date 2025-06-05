@@ -1422,7 +1422,6 @@ void SFlowGraphEditor::SetSignalMode(const EFlowSignalMode Mode) const
 		SelectedNode->SetSignalMode(Mode);
 	}
 
-	FlowAsset->Modify();
 }
 
 bool SFlowGraphEditor::CanSetSignalMode(const EFlowSignalMode Mode) const
