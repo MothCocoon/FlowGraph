@@ -1103,6 +1103,7 @@ void UFlowGraphNode::SetSignalMode(const EFlowSignalMode Mode)
 {
 	if (UFlowNode* FlowNode = Cast<UFlowNode>(NodeInstance))
 	{
+		FlowNode->Modify();
 		FlowNode->SignalMode = Mode;
 		OnSignalModeChanged.ExecuteIfBound();
 	}

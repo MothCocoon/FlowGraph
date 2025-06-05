@@ -1415,6 +1415,8 @@ bool SFlowGraphEditor::CanTogglePinBreakpoint()
 
 void SFlowGraphEditor::SetSignalMode(const EFlowSignalMode Mode) const
 {
+	const FScopedTransaction Transaction(LOCTEXT("SetSignalMode", "Set Signal Mode"));
+
 	for (UFlowGraphNode* SelectedNode : GetSelectedFlowNodes())
 	{
 		SelectedNode->SetSignalMode(Mode);
