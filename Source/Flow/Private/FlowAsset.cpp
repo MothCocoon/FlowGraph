@@ -224,7 +224,7 @@ bool UFlowAsset::CanFlowAssetUseFlowNodeClass(const UClass& FlowNodeClass) const
 
 bool UFlowAsset::IsFlowNodeClassInDeniedClasses(const UClass& FlowNodeClass) const
 {
-	for (const TSubclassOf<UFlowNodeBase> DeniedNodeClass : DeniedNodeClasses)
+	for (const TSubclassOf<UFlowNodeBase>& DeniedNodeClass : DeniedNodeClasses)
 	{
 		if (DeniedNodeClass && FlowNodeClass.IsChildOf(DeniedNodeClass))
 		{
@@ -239,12 +239,13 @@ bool UFlowAsset::IsFlowNodeClassInDeniedClasses(const UClass& FlowNodeClass) con
 	return false;
 }
 
-bool UFlowAsset::IsFlowNodeClassInAllowedClasses(const UClass& FlowNodeClass, const TSubclassOf<UFlowNodeBase> RequiredAncestor) const
+bool UFlowAsset::IsFlowNodeClassInAllowedClasses(const UClass& FlowNodeClass,
+                                                 const TSubclassOf<UFlowNodeBase>& RequiredAncestor) const
 {
 	if (AllowedNodeClasses.Num() > 0)
 	{
 		bool bAllowedInAsset = false;
-		for (const TSubclassOf<UFlowNodeBase> AllowedNodeClass : AllowedNodeClasses)
+		for (const TSubclassOf<UFlowNodeBase>& AllowedNodeClass : AllowedNodeClasses)
 		{
 			// If a RequiredAncestor is provided, the AllowedNodeClass must be a subclass of the RequiredAncestor
 			if (AllowedNodeClass && FlowNodeClass.IsChildOf(AllowedNodeClass) && (!RequiredAncestor || AllowedNodeClass->IsChildOf(RequiredAncestor)))

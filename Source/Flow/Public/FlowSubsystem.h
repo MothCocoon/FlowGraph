@@ -131,7 +131,7 @@ public:
 	virtual void OnGameLoaded(UFlowSaveGame* SaveGame);
 
 	UFUNCTION(BlueprintCallable, Category = "FlowSubsystem")
-	virtual void LoadRootFlow(UObject* Owner, UFlowAsset* FlowAsset, const FString& SavedAssetInstanceName);
+	virtual void LoadRootFlow(UObject* Owner, UFlowAsset* FlowAsset, const FString& SavedAssetInstanceName, const bool bAllowMultipleInstances);
 
 	UFUNCTION(BlueprintCallable, Category = "FlowSubsystem")
 	virtual void LoadSubFlow(UFlowNode_SubGraph* SubGraphNode, const FString& SavedAssetInstanceName);
