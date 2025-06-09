@@ -20,10 +20,22 @@ UFlowNode_LogicalOR::UFlowNode_LogicalOR(const FObjectInitializer& ObjectInitial
 	InputPins.Add(FFlowPin(TEXT("Disable"), TEXT("Disabling resets Execution Count")));
 }
 
+#if WITH_EDITOR
+bool UFlowNode_LogicalOR::CanUserInsertInput(const FName& TargetPinName) const
+{
+	return TargetPinName != TEXT("Enable") && TargetPinName != TEXT("Disable");
+}
+
 bool UFlowNode_LogicalOR::CanUserRemoveInput(const FName& PinName) const
 {
-	return InputPins.Num() > 2;
+	if (PinName == TEXT("Enable") || PinName == TEXT("Disable"))
+	{
+		return false;
+	}
+
+	return CountNumberedInputs() > 2;
 }
+#endif
 
 void UFlowNode_LogicalOR::ExecuteInput(const FName& PinName)
 {

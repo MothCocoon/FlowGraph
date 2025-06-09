@@ -308,6 +308,16 @@ bool UFlowNode::CanUserAddOutput() const
 	return K2_CanUserAddOutput();
 }
 
+bool UFlowNode::CanUserInsertInput(const FName& TargetPinName) const
+{
+	return K2_CanUserInsertInput(TargetPinName);
+}
+
+bool UFlowNode::CanUserInsertOutput(const FName& TargetPinName) const
+{
+	return K2_CanUserInsertOutput(TargetPinName);
+}
+
 void UFlowNode::AddUserInput(const FName& PinName, uint8 PinIndex)
 {
 	if (InputPins.IsValidIndex(PinIndex))

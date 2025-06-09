@@ -1126,11 +1126,11 @@ bool SFlowGraphEditor::CanInsertPin()
 			{
 				if (Pin->Direction == EGPD_Input)
 				{
-					return GraphNode->CanUserAddInput();
+					return GraphNode->CanUserInsertInput(Pin);
 				}
 				else
 				{
-					return GraphNode->CanUserAddOutput();
+					return GraphNode->CanUserInsertOutput(Pin);
 				}
 			}
 		}

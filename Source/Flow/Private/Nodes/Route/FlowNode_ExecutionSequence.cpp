@@ -17,10 +17,12 @@ UFlowNode_ExecutionSequence::UFlowNode_ExecutionSequence(const FObjectInitialize
 	AllowedSignalModes = {EFlowSignalMode::Enabled, EFlowSignalMode::Disabled};
 }
 
+#if WITH_EDITOR
 bool UFlowNode_ExecutionSequence::CanUserRemoveOutput(const FName& PinName) const
 {
 	return OutputPins.Num() > 2;
 }
+#endif
 
 void UFlowNode_ExecutionSequence::ExecuteInput(const FName& PinName)
 {

@@ -15,10 +15,12 @@ UFlowNode_LogicalAND::UFlowNode_LogicalAND(const FObjectInitializer& ObjectIniti
 	SetNumberedInputPins(0, 1);
 }
 
+#if WITH_EDITOR
 bool UFlowNode_LogicalAND::CanUserRemoveInput(const FName& PinName) const
 {
 	return InputPins.Num() > 2;
 }
+#endif
 
 void UFlowNode_LogicalAND::ExecuteInput(const FName& PinName)
 {

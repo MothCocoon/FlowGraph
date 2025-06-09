@@ -472,12 +472,12 @@ void UFlowGraphNode::GetNodeContextMenuActions(class UToolMenu* Menu, class UGra
 				Section.AddMenuEntry(GraphCommands.BreakPinLinks);
 			}
 
-			if (Context->Pin->Direction == EGPD_Input && CanUserAddInput())
+			if (Context->Pin->Direction == EGPD_Input && CanUserInsertInput(Context->Pin))
 			{
 				Section.AddMenuEntry(FlowGraphCommands.InsertPinBefore);
 				Section.AddMenuEntry(FlowGraphCommands.InsertPinAfter);
 			}
-			else if (Context->Pin->Direction == EGPD_Output && CanUserAddOutput())
+			else if (Context->Pin->Direction == EGPD_Output && CanUserInsertOutput(Context->Pin))
 			{
 				Section.AddMenuEntry(FlowGraphCommands.InsertPinBefore);
 				Section.AddMenuEntry(FlowGraphCommands.InsertPinAfter);
@@ -955,6 +955,18 @@ bool UFlowGraphNode::CanUserAddOutput() const
 {
 	const UFlowNode* FlowNode = Cast<UFlowNode>(NodeInstance);
 	return FlowNode && FlowNode->CanUserAddOutput() && OutputPins.Num() < 256;
+}
+
+bool UFlowGraphNode::CanUserInsertInput(const UEdGraphPin* Pin) const
+{
+	const UFlowNode* FlowNode = Cast<UFlowNode>(NodeInstance);
+	return FlowNode && CanUserAddInput() && FlowNode->CanUserInsertInput(Pin->PinName);
+}
+
+bool UFlowGraphNode::CanUserInsertOutput(const UEdGraphPin* Pin) const
+{
+	const UFlowNode* FlowNode = Cast<UFlowNode>(NodeInstance);
+	return FlowNode && CanUserAddOutput() && FlowNode->CanUserInsertOutput(Pin->PinName);
 }
 
 bool UFlowGraphNode::CanUserRemoveInput(const UEdGraphPin* Pin) const

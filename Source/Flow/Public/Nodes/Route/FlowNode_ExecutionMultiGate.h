@@ -34,6 +34,7 @@ private:
 public:
 #if WITH_EDITOR
 	virtual bool CanUserAddOutput() const override { return true; }
+	virtual bool CanUserInsertOutput(const FName& TargetPinName) const override { return true; }
 	virtual bool CanUserRemoveOutput(const FName& PinName) const override;
 #endif
 

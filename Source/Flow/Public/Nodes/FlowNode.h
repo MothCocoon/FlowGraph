@@ -139,6 +139,10 @@ public:
 	virtual bool CanUserAddInput() const;
 	virtual bool CanUserAddOutput() const;
 
+	// Check if user can insert new pin before or after TargetPinName
+	virtual bool CanUserInsertInput(const FName& TargetPinName) const;
+	virtual bool CanUserInsertOutput(const FName& TargetPinName) const;
+
 	void AddUserInput(const FName& PinName, uint8 PinIndex);
 	void AddUserOutput(const FName& PinName, uint8 PinIndex);
 
@@ -163,6 +167,12 @@ protected:
 
 	UFUNCTION(BlueprintImplementableEvent, Category = "FlowNode", meta = (DisplayName = "Can User Add Output"))
 	bool K2_CanUserAddOutput() const;
+
+	UFUNCTION(BlueprintImplementableEvent, Category = "FlowNode", meta = (DisplayName = "Can User Insert Input", ToolTip = "Check if user can insert new pin before or after TargetPinName"))
+	bool K2_CanUserInsertInput(const FName& TargetPinName) const;
+
+	UFUNCTION(BlueprintImplementableEvent, Category = "FlowNode", meta = (DisplayName = "Can User Insert Output", ToolTip = "Check if user can insert new pin before or after TargetPinName"))
+	bool K2_CanUserInsertOutput(const FName& TargetPinName) const;
 
 	UFUNCTION(BlueprintImplementableEvent, Category = "FlowNode", meta = (DisplayName = "Can User Remove Input"))
 	bool K2_CanUserRemoveInput(const FName& PinName) const;

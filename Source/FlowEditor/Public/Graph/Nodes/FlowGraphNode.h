@@ -184,6 +184,9 @@ public:
 
 	bool CanUserAddInput() const;
 	bool CanUserAddOutput() const;
+	
+	bool CanUserInsertInput(const UEdGraphPin* Pin) const;
+	bool CanUserInsertOutput(const UEdGraphPin* Pin) const;
 
 	bool CanUserRemoveInput(const UEdGraphPin* Pin) const;
 	bool CanUserRemoveOutput(const UEdGraphPin* Pin) const;

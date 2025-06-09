@@ -21,6 +21,7 @@ private:
 #if WITH_EDITOR
 public:
 	virtual bool CanUserAddInput() const override { return true; }
+	virtual bool CanUserInsertInput(const FName& TargetPinName) const override { return true; }
 	virtual bool CanUserRemoveInput(const FName& PinName) const override;
 #endif
 
