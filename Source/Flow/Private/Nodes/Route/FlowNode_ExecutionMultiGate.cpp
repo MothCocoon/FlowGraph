@@ -22,6 +22,11 @@ UFlowNode_ExecutionMultiGate::UFlowNode_ExecutionMultiGate(const FObjectInitiali
 	AllowedSignalModes = {EFlowSignalMode::Enabled, EFlowSignalMode::Disabled};
 }
 
+bool UFlowNode_ExecutionMultiGate::CanUserRemoveOutput(const FName& PinName) const
+{
+	return OutputPins.Num() > 2;
+}
+
 void UFlowNode_ExecutionMultiGate::ExecuteInput(const FName& PinName)
 {
 	if (PinName == DefaultInputPin.PinName)

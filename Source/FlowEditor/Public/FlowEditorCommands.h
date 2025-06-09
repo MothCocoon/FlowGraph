@@ -35,6 +35,8 @@ public:
 	/** Pins */
 	TSharedPtr<FUICommandInfo> AddInput;
 	TSharedPtr<FUICommandInfo> AddOutput;
+	TSharedPtr<FUICommandInfo> InsertPinBefore;
+	TSharedPtr<FUICommandInfo> InsertPinAfter;
 	TSharedPtr<FUICommandInfo> RemovePin;
 
 	/** Breakpoints */

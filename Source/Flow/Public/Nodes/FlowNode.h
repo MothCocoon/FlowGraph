@@ -139,6 +139,12 @@ public:
 	virtual bool CanUserAddInput() const;
 	virtual bool CanUserAddOutput() const;
 
+	void AddUserInput(const FName& PinName, uint8 PinIndex);
+	void AddUserOutput(const FName& PinName, uint8 PinIndex);
+
+	virtual bool CanUserRemoveInput(const FName& PinName) const;
+	virtual bool CanUserRemoveOutput(const FName& PinName) const;
+
 	void RemoveUserInput(const FName& PinName);
 	void RemoveUserOutput(const FName& PinName);
 
@@ -146,6 +152,9 @@ public:
 	// TODO (gtaylor) The data pins feature is under construction
 	bool DoesInputWildcardPinAcceptArray(const UEdGraphPin* Pin) const { return true; }
 	bool DoesOutputWildcardPinAcceptContainer(const UEdGraphPin* Pin) const { return true; }
+
+private:
+	void RenumberUserPins(TArray<FFlowPin>& PinArray, int32 StartPinIndex);
 #endif
 
 protected:
@@ -155,6 +164,12 @@ protected:
 	UFUNCTION(BlueprintImplementableEvent, Category = "FlowNode", meta = (DisplayName = "Can User Add Output"))
 	bool K2_CanUserAddOutput() const;
 
+	UFUNCTION(BlueprintImplementableEvent, Category = "FlowNode", meta = (DisplayName = "Can User Remove Input"))
+	bool K2_CanUserRemoveInput(const FName& PinName) const;
+
+	UFUNCTION(BlueprintImplementableEvent, Category = "FlowNode", meta = (DisplayName = "Can User Remove Output"))
+	bool K2_CanUserRemoveOutput(const FName& PinName) const;
+	
 //////////////////////////////////////////////////////////////////////////
 // Connections to other nodes
 

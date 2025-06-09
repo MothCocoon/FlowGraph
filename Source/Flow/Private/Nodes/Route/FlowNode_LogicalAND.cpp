@@ -15,6 +15,11 @@ UFlowNode_LogicalAND::UFlowNode_LogicalAND(const FObjectInitializer& ObjectIniti
 	SetNumberedInputPins(0, 1);
 }
 
+bool UFlowNode_LogicalAND::CanUserRemoveInput(const FName& PinName) const
+{
+	return InputPins.Num() > 2;
+}
+
 void UFlowNode_LogicalAND::ExecuteInput(const FName& PinName)
 {
 	ExecutedInputNames.Add(PinName);

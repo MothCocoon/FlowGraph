@@ -113,6 +113,9 @@ private:
 	void AddOutput() const;
 	bool CanAddOutput() const;
 
+	void InsertPin(EPinInsertPosition Position);
+	bool CanInsertPin();
+
 	void RemovePin();
 	bool CanRemovePin();
 

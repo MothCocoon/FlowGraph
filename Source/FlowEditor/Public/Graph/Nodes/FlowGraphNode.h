@@ -182,8 +182,6 @@ public:
 
 	bool SupportsContextPins() const;
 
-	static bool IsNumberedPin(const UEdGraphPin* Pin);
-
 	bool CanUserAddInput() const;
 	bool CanUserAddOutput() const;
 
@@ -193,11 +191,15 @@ public:
 	void AddUserInput();
 	void AddUserOutput();
 
-	// Add pin only on this instance of node, under default pins
+	// Add pin only on this instance of node, before default pins
 	void AddInstancePin(const EEdGraphPinDirection Direction, const uint8 NumberedPinsAmount);
+	void InsertInstancePin(UEdGraphPin* TargetPin, const EEdGraphPinDirection Direction, EPinInsertPosition Position);
 
 	// Call node and graph updates manually, if using bBatchRemoval
 	void RemoveInstancePin(UEdGraphPin* Pin);
+
+private:
+	void RenumberUserPins(const TArray<UEdGraphPin*>& PinArray);
 
 public:
 	// UEdGraphNode

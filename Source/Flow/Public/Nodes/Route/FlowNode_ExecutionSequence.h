@@ -32,6 +32,7 @@ protected:
 public:
 #if WITH_EDITOR
 	virtual bool CanUserAddOutput() const override { return true; }
+	virtual bool CanUserRemoveOutput(const FName& PinName) const override;
 #endif
 
 protected:

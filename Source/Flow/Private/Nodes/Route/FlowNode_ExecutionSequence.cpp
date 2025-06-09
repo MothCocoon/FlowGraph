@@ -17,6 +17,11 @@ UFlowNode_ExecutionSequence::UFlowNode_ExecutionSequence(const FObjectInitialize
 	AllowedSignalModes = {EFlowSignalMode::Enabled, EFlowSignalMode::Disabled};
 }
 
+bool UFlowNode_ExecutionSequence::CanUserRemoveOutput(const FName& PinName) const
+{
+	return OutputPins.Num() > 2;
+}
+
 void UFlowNode_ExecutionSequence::ExecuteInput(const FName& PinName)
 {
 	if (bSavePinExecutionState)

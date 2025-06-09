@@ -308,6 +308,46 @@ bool UFlowNode::CanUserAddOutput() const
 	return K2_CanUserAddOutput();
 }
 
+void UFlowNode::AddUserInput(const FName& PinName, uint8 PinIndex)
+{
+	if (InputPins.IsValidIndex(PinIndex))
+	{
+		InputPins.Insert(PinName, PinIndex);
+	}
+	else
+	{
+		InputPins.Add(PinName);
+	}
+
+	// update remaining pins
+	RenumberUserPins(InputPins, PinIndex);
+}
+
+void UFlowNode::AddUserOutput(const FName& PinName, uint8 PinIndex)
+{
+	if (OutputPins.IsValidIndex(PinIndex))
+	{
+		OutputPins.Insert(PinName, PinIndex);
+	}
+	else
+	{
+		OutputPins.Add(PinName);
+	}
+
+	// update remaining pins
+	RenumberUserPins(OutputPins, PinIndex);
+}
+
+bool UFlowNode::CanUserRemoveInput(const FName& PinName) const
+{
+	return K2_CanUserRemoveInput(PinName);
+}
+
+bool UFlowNode::CanUserRemoveOutput(const FName& PinName) const
+{
+	return K2_CanUserRemoveOutput(PinName);
+}
+
 void UFlowNode::RemoveUserInput(const FName& PinName)
 {
 	Modify();
@@ -324,16 +364,7 @@ void UFlowNode::RemoveUserInput(const FName& PinName)
 	}
 
 	// update remaining pins
-	if (RemovedPinIndex > INDEX_NONE)
-	{
-		for (int32 i = RemovedPinIndex; i < InputPins.Num(); ++i)
-		{
-			if (InputPins[i].PinName.ToString().IsNumeric())
-			{
-				InputPins[i].PinName = *FString::FromInt(i);
-			}
-		}
-	}
+	RenumberUserPins(InputPins, RemovedPinIndex);
 }
 
 void UFlowNode::RemoveUserOutput(const FName& PinName)
@@ -352,13 +383,18 @@ void UFlowNode::RemoveUserOutput(const FName& PinName)
 	}
 
 	// update remaining pins
-	if (RemovedPinIndex > INDEX_NONE)
+	RenumberUserPins(OutputPins, RemovedPinIndex);
+}
+
+void UFlowNode::RenumberUserPins(TArray<FFlowPin>& PinArray, int32 StartPinIndex)
+{
+	if (StartPinIndex > INDEX_NONE)
 	{
-		for (int32 i = RemovedPinIndex; i < OutputPins.Num(); ++i)
+		for (int32 i = StartPinIndex; i < PinArray.Num(); ++i)
 		{
-			if (OutputPins[i].PinName.ToString().IsNumeric())
+			if (PinArray[i].PinName.ToString().IsNumeric())
 			{
-				OutputPins[i].PinName = *FString::FromInt(i);
+				PinArray[i].PinName = *FString::FromInt(i);
 			}
 		}
 	}

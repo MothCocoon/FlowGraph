@@ -38,6 +38,8 @@ void FFlowGraphCommands::RegisterCommands()
 
 	UI_COMMAND(AddInput, "Add Input", "Adds an input to the node", EUserInterfaceActionType::Button, FInputChord());
 	UI_COMMAND(AddOutput, "Add Output", "Adds an output to the node", EUserInterfaceActionType::Button, FInputChord());
+	UI_COMMAND(InsertPinBefore, "Insert Pin Before", "Inserts a pin before selected pin", EUserInterfaceActionType::Button, FInputChord());
+	UI_COMMAND(InsertPinAfter, "Insert Pin After", "Inserts a pin after selected pin", EUserInterfaceActionType::Button, FInputChord());
 	UI_COMMAND(RemovePin, "Remove Pin", "Removes a pin from the node", EUserInterfaceActionType::Button, FInputChord());
 
 	UI_COMMAND(AddPinBreakpoint, "Add Pin Breakpoint", "Adds a breakpoint to the pin", EUserInterfaceActionType::Button, FInputChord());

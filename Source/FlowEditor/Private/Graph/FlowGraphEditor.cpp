@@ -125,6 +125,14 @@ void SFlowGraphEditor::BindGraphCommands()
 	                               FExecuteAction::CreateSP(this, &SFlowGraphEditor::AddOutput),
 	                               FCanExecuteAction::CreateSP(this, &SFlowGraphEditor::CanAddOutput));
 
+	CommandList->MapAction(FlowGraphCommands.InsertPinBefore,
+							   FExecuteAction::CreateSP(this, &SFlowGraphEditor::InsertPin, EPinInsertPosition::Before),
+							   FCanExecuteAction::CreateSP(this, &SFlowGraphEditor::CanInsertPin));
+	
+	CommandList->MapAction(FlowGraphCommands.InsertPinAfter,
+							   FExecuteAction::CreateSP(this, &SFlowGraphEditor::InsertPin, EPinInsertPosition::After),
+							   FCanExecuteAction::CreateSP(this, &SFlowGraphEditor::CanInsertPin));
+
 	CommandList->MapAction(FlowGraphCommands.RemovePin,
 	                               FExecuteAction::CreateSP(this, &SFlowGraphEditor::RemovePin),
 	                               FCanExecuteAction::CreateSP(this, &SFlowGraphEditor::CanRemovePin));
@@ -1091,6 +1099,40 @@ bool SFlowGraphEditor::CanAddOutput() const
 		for (const UFlowGraphNode* SelectedNode : GetSelectedFlowNodes())
 		{
 			return SelectedNode->CanUserAddOutput();
+		}
+	}
+
+	return false;
+}
+
+void SFlowGraphEditor::InsertPin(EPinInsertPosition Position)
+{
+	if (UEdGraphPin* SelectedPin = GetGraphPinForMenu())
+	{
+		if (UFlowGraphNode* SelectedNode = Cast<UFlowGraphNode>(SelectedPin->GetOwningNode()))
+		{
+			SelectedNode->InsertInstancePin(SelectedPin, SelectedPin->Direction, Position);
+		}
+	}
+}
+
+bool SFlowGraphEditor::CanInsertPin()
+{
+	if (CanEdit() && GetSelectedFlowNodes().Num() == 1)
+	{
+		if (const UEdGraphPin* Pin = GetGraphPinForMenu())
+		{
+			if (const UFlowGraphNode* GraphNode = Cast<UFlowGraphNode>(Pin->GetOwningNode()))
+			{
+				if (Pin->Direction == EGPD_Input)
+				{
+					return GraphNode->CanUserAddInput();
+				}
+				else
+				{
+					return GraphNode->CanUserAddOutput();
+				}
+			}
 		}
 	}
 
