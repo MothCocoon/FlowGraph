@@ -467,11 +467,6 @@ void UFlowGraphNode::GetNodeContextMenuActions(class UToolMenu* Menu, class UGra
 	{
 		{
 			FToolMenuSection& Section = Menu->AddSection("FlowGraphPinActions", LOCTEXT("PinActionsMenuHeader", "Pin Actions"));
-			if (Context->Pin->LinkedTo.Num() > 0)
-			{
-				Section.AddMenuEntry(GraphCommands.BreakPinLinks);
-			}
-
 			if (Context->Pin->Direction == EGPD_Input && CanUserInsertInput(Context->Pin))
 			{
 				Section.AddMenuEntry(FlowGraphCommands.InsertPinBefore);
