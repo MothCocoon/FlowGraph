@@ -72,7 +72,38 @@ void UFlowNode::PostLoad()
 	FixNode(nullptr);
 }
 
+EDataValidationResult UFlowNode::ValidateNode()
+{
+	if (GetClass()->IsFunctionImplementedInScript(GET_FUNCTION_NAME_CHECKED(UFlowNode, K2_ValidateNode)))
+	{
+		return K2_ValidateNode();
+	}
+
+	return EDataValidationResult::NotValidated;
+}
+
 #endif
+
+void UFlowNode::LogValidationError(const FString& Message)
+{
+#if WITH_EDITOR
+	ValidationLog.Error<UFlowNode>(*Message, this);
+#endif
+}
+
+void UFlowNode::LogValidationWarning(const FString& Message)
+{
+#if WITH_EDITOR
+	ValidationLog.Warning<UFlowNode>(*Message, this);
+#endif
+}
+
+void UFlowNode::LogValidationNote(const FString& Message)
+{
+#if WITH_EDITOR
+	ValidationLog.Note<UFlowNode>(*Message, this);
+#endif
+}
 
 bool UFlowNode::IsSupportedInputPinName(const FName& PinName) const
 {

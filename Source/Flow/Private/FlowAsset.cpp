@@ -122,10 +122,8 @@ EDataValidationResult UFlowAsset::ValidateAsset(FFlowMessageLog& MessageLog)
 			}
 
 			Node.Value->ValidationLog.Messages.Empty();
-			if (Node.Value->ValidateNode() == EDataValidationResult::Invalid)
-			{
-				MessageLog.Messages.Append(Node.Value->ValidationLog.Messages);
-			}
+			Node.Value->ValidateNode();
+			MessageLog.Messages.Append(Node.Value->ValidationLog.Messages);
 		}
 		else
 		{
@@ -134,7 +132,17 @@ EDataValidationResult UFlowAsset::ValidateAsset(FFlowMessageLog& MessageLog)
 		}
 	}
 
-	return MessageLog.Messages.Num() > 0 ? EDataValidationResult::Invalid : EDataValidationResult::Valid;
+	// if at least one error has been has been logged : mark the asset as invalid
+	for (const TSharedRef<FTokenizedMessage>& Msg : MessageLog.Messages)
+	{
+		if (Msg->GetSeverity() == EMessageSeverity::Error)
+		{
+			return EDataValidationResult::Invalid;
+		}
+	}
+
+	// otherwise, the asset is considered valid (even with warnings or notes)
+	return EDataValidationResult::Valid;
 }
 
 bool UFlowAsset::IsNodeOrAddOnClassAllowed(const UClass* FlowNodeOrAddOnClass, FText* OutOptionalFailureReason) const
