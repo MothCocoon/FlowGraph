@@ -263,7 +263,39 @@ FString UFlowNodeBase::GetStatusString() const
 {
 	return K2_GetStatusString();
 }
+
+EDataValidationResult UFlowNodeBase::ValidateNode()
+{
+	if (GetClass()->IsFunctionImplementedInScript(GET_FUNCTION_NAME_CHECKED(UFlowNodeBase, K2_ValidateNode)))
+	{
+		return K2_ValidateNode();
+	}
+
+	return EDataValidationResult::NotValidated;
+}
+
 #endif // WITH_EDITOR
+
+void UFlowNodeBase::LogValidationError(const FString& Message)
+{
+#if WITH_EDITOR
+	ValidationLog.Error<UFlowNodeBase>(*Message, this);
+#endif
+}
+
+void UFlowNodeBase::LogValidationWarning(const FString& Message)
+{
+#if WITH_EDITOR
+	ValidationLog.Warning<UFlowNodeBase>(*Message, this);
+#endif
+}
+
+void UFlowNodeBase::LogValidationNote(const FString& Message)
+{
+#if WITH_EDITOR
+	ValidationLog.Note<UFlowNodeBase>(*Message, this);
+#endif
+}
 
 UFlowAsset* UFlowNodeBase::GetFlowAsset() const
 {

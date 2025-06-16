@@ -314,12 +314,33 @@ public:
 	// Called by owning FlowNode to add to its Status String.
 	// (may be multi-line)
 	virtual FString GetStatusString() const;
+
+	virtual EDataValidationResult ValidateNode();
 #endif // WITH_EDITOR
 
 protected:
 	// Information displayed while node is working - displayed over node as NodeInfoPopup
 	UFUNCTION(BlueprintImplementableEvent, Category = "FlowNode", meta = (DisplayName = "Get Status String"))
 	FString K2_GetStatusString() const;
+
+	// Flow Node Validation : blueprint compatibility
+
+	// Optional validation override for Blueprints
+	UFUNCTION(BlueprintImplementableEvent, Category = "FlowNode|Validation", meta = (DisplayName = "Validate Node", DevelopmentOnly))
+	EDataValidationResult K2_ValidateNode();
+
+	// Log validation error (editor-only)
+	UFUNCTION(BlueprintCallable, Category = "FlowNode|Validation", meta = (DevelopmentOnly))
+	void LogValidationError(const FString& Message);
+
+	// Log validation warning (editor-only)
+	UFUNCTION(BlueprintCallable, Category = "FlowNode|Validation", meta = (DevelopmentOnly))
+	void LogValidationWarning(const FString& Message);
+
+	// Log validation note (editor-only)
+	UFUNCTION(BlueprintCallable, Category = "FlowNode|Validation", meta = (DevelopmentOnly))
+	void LogValidationNote(const FString& Message);
+	// --
 
 #if WITH_EDITORONLY_DATA
 protected:

@@ -58,28 +58,7 @@ public:
 	virtual void PostEditChangeProperty(FPropertyChangedEvent& PropertyChangedEvent) override;
 	virtual void PostLoad() override;
 	// --
-
-	virtual EDataValidationResult ValidateNode();
 #endif
-
-	// Flow Node Validation : blueprint compatibility
-
-	// Optional validation override for Blueprints
-	UFUNCTION(BlueprintImplementableEvent, Category = "FlowNode|Validation", meta = (DisplayName = "Validate Node"))
-	EDataValidationResult K2_ValidateNode();
-
-	// Log validation error (editor-only)
-	UFUNCTION(BlueprintCallable, Category = "FlowNode|Validation")
-	void LogValidationError(const FString& Message);
-
-	// Log validation warning (editor-only)
-	UFUNCTION(BlueprintCallable, Category = "FlowNode|Validation")
-	void LogValidationWarning(const FString& Message);
-
-	// Log validation note (editor-only)
-	UFUNCTION(BlueprintCallable, Category = "FlowNode|Validation")
-	void LogValidationNote(const FString& Message);
-	// --
 
 	// Inherits Guid after graph node
 	UPROPERTY()
