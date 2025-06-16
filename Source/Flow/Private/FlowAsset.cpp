@@ -23,7 +23,9 @@
 #include "Editor/EditorEngine.h"
 
 FString UFlowAsset::ValidationError_NodeClassNotAllowed = TEXT("Node class {0} is not allowed in this asset.");
+FString UFlowAsset::ValidationError_AddOnNodeClassNotAllowed = TEXT("AddOn Node class {0} is not allowed in this asset.");
 FString UFlowAsset::ValidationError_NullNodeInstance = TEXT("Node with GUID {0} is NULL");
+FString UFlowAsset::ValidationError_NullAddOnNodeInstance = TEXT("Node with GUID {0} has NULL AddOn(s)");
 #endif
 
 #include UE_INLINE_GENERATED_CPP_BY_NAME(FlowAsset)
@@ -124,6 +126,20 @@ EDataValidationResult UFlowAsset::ValidateAsset(FFlowMessageLog& MessageLog)
 			Node.Value->ValidationLog.Messages.Empty();
 			Node.Value->ValidateNode();
 			MessageLog.Messages.Append(Node.Value->ValidationLog.Messages);
+
+			// Validate AddOns
+			for (UFlowNodeAddOn* AddOn : Node.Value->GetFlowNodeAddOnChildren())
+			{
+				if (IsValid(AddOn))
+				{
+					ValidateAddOnTree(*AddOn, MessageLog);
+				}
+				else
+				{
+					const FString ErrorMsg = FString::Format(*ValidationError_NullAddOnNodeInstance, { *Node.Key.ToString() });
+					MessageLog.Error(*ErrorMsg, this);
+				}
+			}
 		}
 		else
 		{
@@ -245,6 +261,35 @@ bool UFlowAsset::IsFlowNodeClassInDeniedClasses(const UClass& FlowNodeClass) con
 	}
 
 	return false;
+}
+
+void UFlowAsset::ValidateAddOnTree(UFlowNodeAddOn& AddOn, FFlowMessageLog& MessageLog)
+{
+	// Filter unauthorized addon nodes
+	FText FailureReason;
+	if (!IsNodeOrAddOnClassAllowed(AddOn.GetClass(), &FailureReason))
+	{
+		const FString ErrorMsg =
+			FailureReason.IsEmpty()
+			? FString::Format(*ValidationError_AddOnNodeClassNotAllowed, { *AddOn.GetClass()->GetName() })
+			: FailureReason.ToString();
+
+		MessageLog.Error(*ErrorMsg, AddOn.GetFlowNodeSelfOrOwner());
+	}
+
+	// Validate AddOn
+	AddOn.ValidationLog.Messages.Empty();
+	AddOn.ValidateNode();
+	MessageLog.Messages.Append(AddOn.ValidationLog.Messages);
+
+	// Validate Children
+	for (UFlowNodeAddOn* Child : AddOn.GetFlowNodeAddOnChildren())
+	{
+		if (IsValid(Child))
+		{
+			ValidateAddOnTree(*Child, MessageLog);
+		}
+	}
 }
 
 bool UFlowAsset::IsFlowNodeClassInAllowedClasses(const UClass& FlowNodeClass,
