@@ -806,6 +806,12 @@ void UFlowGraphSchema::BreakPinLinks(UEdGraphPin& TargetPin, bool bSendsNodeNoti
 	}
 }
 
+void UFlowGraphSchema::BreakSinglePinLink(UEdGraphPin* SourcePin, UEdGraphPin* TargetPin) const
+{
+	Super::BreakSinglePinLink(SourcePin, TargetPin);
+	TargetPin->GetOwningNode()->GetGraph()->NotifyGraphChanged();
+}
+
 int32 UFlowGraphSchema::GetNodeSelectionCount(const UEdGraph* Graph) const
 {
 	return FFlowGraphUtils::GetFlowGraphEditor(Graph)->GetNumberOfSelectedNodes();
