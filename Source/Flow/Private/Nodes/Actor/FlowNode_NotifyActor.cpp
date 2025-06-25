@@ -6,6 +6,9 @@
 
 #include "Engine/GameInstance.h"
 #include "Engine/World.h"
+#if WITH_EDITOR
+#include "Misc/DataValidation.h"
+#endif
 
 #include UE_INLINE_GENERATED_CPP_BY_NAME(FlowNode_NotifyActor)
 
@@ -39,14 +42,19 @@ FString UFlowNode_NotifyActor::GetNodeDescription() const
 	return GetIdentityTagsDescription(IdentityTags) + LINE_TERMINATOR + GetNotifyTagsDescription(NotifyTags);
 }
 
-EDataValidationResult UFlowNode_NotifyActor::ValidateNode()
+EDataValidationResult UFlowNode_NotifyActor::ValidateNode(FDataValidationContext& Context) const
 {
+	const EDataValidationResult SuperResult = Super::ValidateNode(Context);
+
+	EDataValidationResult FinalResult = CombineDataValidationResults(SuperResult, EDataValidationResult::Valid);
+
 	if (IdentityTags.IsEmpty())
 	{
-		ValidationLog.Error<UFlowNode>(*UFlowNode::MissingIdentityTag, this);
-		return EDataValidationResult::Invalid;
+		Context.AddError(FText::FromString(UFlowNode::MissingIdentityTag));
+
+		FinalResult = CombineDataValidationResults(FinalResult, EDataValidationResult::Invalid);
 	}
 
-	return EDataValidationResult::Valid;
+	return FinalResult;
 }
 #endif

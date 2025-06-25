@@ -6,6 +6,9 @@
 #include "FlowSettings.h"
 #include "FlowSubsystem.h"
 #include "Interfaces/FlowNodeWithExternalDataPinSupplierInterface.h"
+#if WITH_EDITOR
+#include "Misc/DataValidation.h"
+#endif // WITH_EDITOR
 
 #include UE_INLINE_GENERATED_CPP_BY_NAME(FlowNode_SubGraph)
 
@@ -131,15 +134,20 @@ UObject* UFlowNode_SubGraph::GetAssetToEdit()
 	return Asset.IsNull() ? nullptr : Asset.LoadSynchronous();
 }
 
-EDataValidationResult UFlowNode_SubGraph::ValidateNode()
+EDataValidationResult UFlowNode_SubGraph::ValidateNode(FDataValidationContext& Context) const
 {
+	const EDataValidationResult SuperResult = Super::ValidateNode(Context);
+
+	EDataValidationResult FinalResult = CombineDataValidationResults(SuperResult, EDataValidationResult::Valid);
+
 	if (Asset.IsNull())
 	{
-		ValidationLog.Error<UFlowNode>(TEXT("Flow Asset not assigned or invalid!"), this);
-		return EDataValidationResult::Invalid;
+		Context.AddError(FText::FromString(TEXT("Flow Asset not assigned or invalid!")));
+
+		FinalResult = CombineDataValidationResults(FinalResult, EDataValidationResult::Invalid);
 	}
 
-	return EDataValidationResult::Valid;
+	return FinalResult;
 }
 
 TArray<FFlowPin> UFlowNode_SubGraph::GetContextInputs() const

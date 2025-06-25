@@ -28,6 +28,7 @@
 #include "Engine/MemberReference.h"
 #include "Kismet2/KismetEditorUtilities.h"
 #include "ScopedTransaction.h"
+#include "Runtime/Launch/Resources/Version.h"
 
 #if ENGINE_MAJOR_VERSION == 5 && ENGINE_MINOR_VERSION < 6
 #include "Kismet/BlueprintTypeConversions.h"

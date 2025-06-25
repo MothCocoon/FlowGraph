@@ -11,6 +11,9 @@
 #include "Types/FlowInjectComponentsManager.h"
 #include "GameFramework/Actor.h"
 #include "Components/ActorComponent.h"
+#if WITH_EDITOR
+#include "Misc/DataValidation.h"
+#endif
 
 #define LOCTEXT_NAMESPACE "FlowNode"
 
@@ -22,6 +25,9 @@ UFlowNode_ExecuteComponent::UFlowNode_ExecuteComponent()
 #if WITH_EDITOR
 	Category = TEXT("Actor");
 #endif
+
+	InputPins.Reset();
+	OutputPins.Reset();
 }
 
 void UFlowNode_ExecuteComponent::InitializeInstance()
@@ -193,6 +199,345 @@ void UFlowNode_ExecuteComponent::ExecuteInput(const FName& PinName)
 	{
 		LogError(FString::Printf(TEXT("Could not ExecuteInput %s, because the component was missing or could not be resolved."), *PinName.ToString()));
 	}
+
+	// Trigger the default output (if the output pins weren't replaced,
+	// and the node hasn't already Finished)
+	if (OutputPins.Contains(UFlowNode::DefaultOutputPin.PinName) && !HasFinished())
+	{
+		constexpr bool bFinish = false;
+		TriggerOutput(UFlowNode::DefaultOutputPin.PinName, bFinish);
+	}
+}
+
+#if WITH_EDITOR
+TArray<FFlowPin> UFlowNode_ExecuteComponent::GetContextInputs() const
+{
+	TArray<FFlowPin> ContextInputs;
+	if (UActorComponent* ResolvedComp = GetResolvedComponent())
+	{
+		if (const IFlowContextPinSupplierInterface* PinSupplierInterface = Cast<IFlowContextPinSupplierInterface>(ResolvedComp))
+		{
+			ContextInputs = PinSupplierInterface->GetContextInputs();
+		}
+	}
+	else if (const UActorComponent* ExpectedComponent = TryGetExpectedComponent())
+	{
+		if (const IFlowContextPinSupplierInterface* PinSupplierInterface = Cast<IFlowContextPinSupplierInterface>(ExpectedComponent))
+		{
+			ContextInputs = PinSupplierInterface->GetContextInputs();
+		}
+	}
+
+	if (ContextInputs.IsEmpty())
+	{
+		// Add the default input if none are desired by the component
+		ContextInputs.Add(UFlowNode::DefaultInputPin);
+	}
+
+	ContextInputs.Append(Super::GetContextInputs());
+
+	return ContextInputs;
+}
+
+TArray<FFlowPin> UFlowNode_ExecuteComponent::GetContextOutputs() const
+{
+	TArray<FFlowPin> ContextOutputs;
+	if (UActorComponent* ResolvedComp = GetResolvedComponent())
+	{
+		if (const IFlowContextPinSupplierInterface* PinSupplierInterface = Cast<IFlowContextPinSupplierInterface>(ResolvedComp))
+		{
+			ContextOutputs = PinSupplierInterface->GetContextOutputs();
+		}
+	}
+	else if (const UActorComponent* ExpectedComponent = TryGetExpectedComponent())
+	{
+		if (const IFlowContextPinSupplierInterface* PinSupplierInterface = Cast<IFlowContextPinSupplierInterface>(ExpectedComponent))
+		{
+			ContextOutputs = PinSupplierInterface->GetContextOutputs();
+		}
+	}
+
+	if (ContextOutputs.IsEmpty())
+	{
+		// Add the default output if none are desired by the component
+		ContextOutputs.Add(UFlowNode::DefaultOutputPin);
+	}
+
+	ContextOutputs.Append(Super::GetContextOutputs());
+
+	return ContextOutputs;
+}
+#endif // WITH_EDITOR
+
+bool UFlowNode_ExecuteComponent::CanSupplyDataPinValues_Implementation() const
+{
+	if (UActorComponent* ResolvedComp = GetResolvedComponent())
+	{
+		if (IFlowDataPinValueSupplierInterface* PinSupplierInterface = Cast<IFlowDataPinValueSupplierInterface>(ResolvedComp))
+		{
+			if (IFlowDataPinValueSupplierInterface::Execute_CanSupplyDataPinValues(ResolvedComp))
+			{
+				return true;
+			}
+		}
+	}
+
+	return Super::CanSupplyDataPinValues_Implementation();
+}
+
+FFlowDataPinResult_Bool UFlowNode_ExecuteComponent::TrySupplyDataPinAsBool_Implementation(const FName& PinName) const
+{
+	if (UActorComponent* ResolvedComp = GetResolvedComponent())
+	{
+		if (IFlowDataPinValueSupplierInterface* PinSupplierInterface = Cast<IFlowDataPinValueSupplierInterface>(ResolvedComp))
+		{
+			const FFlowDataPinResult_Bool PinResult = IFlowDataPinValueSupplierInterface::Execute_TrySupplyDataPinAsBool(ResolvedComp, PinName);
+			if (PinResult.Result == EFlowDataPinResolveResult::Success)
+			{
+				return PinResult;
+			}
+		}
+	}
+
+	return Super::TrySupplyDataPinAsBool_Implementation(PinName);
+}
+
+FFlowDataPinResult_Int UFlowNode_ExecuteComponent::TrySupplyDataPinAsInt_Implementation(const FName& PinName) const
+{
+	if (UActorComponent* ResolvedComp = GetResolvedComponent())
+	{
+		if (IFlowDataPinValueSupplierInterface* PinSupplierInterface = Cast<IFlowDataPinValueSupplierInterface>(ResolvedComp))
+		{
+			const FFlowDataPinResult_Int PinResult = IFlowDataPinValueSupplierInterface::Execute_TrySupplyDataPinAsInt(ResolvedComp, PinName);
+			if (PinResult.Result == EFlowDataPinResolveResult::Success)
+			{
+				return PinResult;
+			}
+		}
+	}
+
+	return Super::TrySupplyDataPinAsInt_Implementation(PinName);
+}
+
+FFlowDataPinResult_Float UFlowNode_ExecuteComponent::TrySupplyDataPinAsFloat_Implementation(const FName& PinName) const
+{
+	if (UActorComponent* ResolvedComp = GetResolvedComponent())
+	{
+		if (IFlowDataPinValueSupplierInterface* PinSupplierInterface = Cast<IFlowDataPinValueSupplierInterface>(ResolvedComp))
+		{
+			const FFlowDataPinResult_Float PinResult = IFlowDataPinValueSupplierInterface::Execute_TrySupplyDataPinAsFloat(ResolvedComp, PinName);
+			if (PinResult.Result == EFlowDataPinResolveResult::Success)
+			{
+				return PinResult;
+			}
+		}
+	}
+
+	return Super::TrySupplyDataPinAsFloat_Implementation(PinName);
+}
+
+FFlowDataPinResult_Name UFlowNode_ExecuteComponent::TrySupplyDataPinAsName_Implementation(const FName& PinName) const
+{
+	if (UActorComponent* ResolvedComp = GetResolvedComponent())
+	{
+		if (IFlowDataPinValueSupplierInterface* PinSupplierInterface = Cast<IFlowDataPinValueSupplierInterface>(ResolvedComp))
+		{
+			const FFlowDataPinResult_Name PinResult = IFlowDataPinValueSupplierInterface::Execute_TrySupplyDataPinAsName(ResolvedComp, PinName);
+			if (PinResult.Result == EFlowDataPinResolveResult::Success)
+			{
+				return PinResult;
+			}
+		}
+	}
+
+	return Super::TrySupplyDataPinAsName_Implementation(PinName);
+}
+
+FFlowDataPinResult_String UFlowNode_ExecuteComponent::TrySupplyDataPinAsString_Implementation(const FName& PinName) const
+{
+	if (UActorComponent* ResolvedComp = GetResolvedComponent())
+	{
+		if (IFlowDataPinValueSupplierInterface* PinSupplierInterface = Cast<IFlowDataPinValueSupplierInterface>(ResolvedComp))
+		{
+			const FFlowDataPinResult_String PinResult = IFlowDataPinValueSupplierInterface::Execute_TrySupplyDataPinAsString(ResolvedComp, PinName);
+			if (PinResult.Result == EFlowDataPinResolveResult::Success)
+			{
+				return PinResult;
+			}
+		}
+	}
+
+	return Super::TrySupplyDataPinAsString_Implementation(PinName);
+}
+
+FFlowDataPinResult_Text UFlowNode_ExecuteComponent::TrySupplyDataPinAsText_Implementation(const FName& PinName) const
+{
+	if (UActorComponent* ResolvedComp = GetResolvedComponent())
+	{
+		if (IFlowDataPinValueSupplierInterface* PinSupplierInterface = Cast<IFlowDataPinValueSupplierInterface>(ResolvedComp))
+		{
+			const FFlowDataPinResult_Text PinResult = IFlowDataPinValueSupplierInterface::Execute_TrySupplyDataPinAsText(ResolvedComp, PinName);
+			if (PinResult.Result == EFlowDataPinResolveResult::Success)
+			{
+				return PinResult;
+			}
+		}
+	}
+
+	return Super::TrySupplyDataPinAsText_Implementation(PinName);
+}
+
+FFlowDataPinResult_Enum UFlowNode_ExecuteComponent::TrySupplyDataPinAsEnum_Implementation(const FName& PinName) const
+{
+	if (UActorComponent* ResolvedComp = GetResolvedComponent())
+	{
+		if (IFlowDataPinValueSupplierInterface* PinSupplierInterface = Cast<IFlowDataPinValueSupplierInterface>(ResolvedComp))
+		{
+			const FFlowDataPinResult_Enum PinResult = IFlowDataPinValueSupplierInterface::Execute_TrySupplyDataPinAsEnum(ResolvedComp, PinName);
+			if (PinResult.Result == EFlowDataPinResolveResult::Success)
+			{
+				return PinResult;
+			}
+		}
+	}
+
+	return Super::TrySupplyDataPinAsEnum_Implementation(PinName);
+}
+
+FFlowDataPinResult_Vector UFlowNode_ExecuteComponent::TrySupplyDataPinAsVector_Implementation(const FName& PinName) const
+{
+	if (UActorComponent* ResolvedComp = GetResolvedComponent())
+	{
+		if (IFlowDataPinValueSupplierInterface* PinSupplierInterface = Cast<IFlowDataPinValueSupplierInterface>(ResolvedComp))
+		{
+			const FFlowDataPinResult_Vector PinResult = IFlowDataPinValueSupplierInterface::Execute_TrySupplyDataPinAsVector(ResolvedComp, PinName);
+			if (PinResult.Result == EFlowDataPinResolveResult::Success)
+			{
+				return PinResult;
+			}
+		}
+	}
+
+	return Super::TrySupplyDataPinAsVector_Implementation(PinName);
+}
+
+FFlowDataPinResult_Rotator UFlowNode_ExecuteComponent::TrySupplyDataPinAsRotator_Implementation(const FName& PinName) const
+{
+	if (UActorComponent* ResolvedComp = GetResolvedComponent())
+	{
+		if (IFlowDataPinValueSupplierInterface* PinSupplierInterface = Cast<IFlowDataPinValueSupplierInterface>(ResolvedComp))
+		{
+			const FFlowDataPinResult_Rotator PinResult = IFlowDataPinValueSupplierInterface::Execute_TrySupplyDataPinAsRotator(ResolvedComp, PinName);
+			if (PinResult.Result == EFlowDataPinResolveResult::Success)
+			{
+				return PinResult;
+			}
+		}
+	}
+
+	return Super::TrySupplyDataPinAsRotator_Implementation(PinName);
+}
+
+FFlowDataPinResult_Transform UFlowNode_ExecuteComponent::TrySupplyDataPinAsTransform_Implementation(const FName& PinName) const
+{
+	if (UActorComponent* ResolvedComp = GetResolvedComponent())
+	{
+		if (IFlowDataPinValueSupplierInterface* PinSupplierInterface = Cast<IFlowDataPinValueSupplierInterface>(ResolvedComp))
+		{
+			const FFlowDataPinResult_Transform PinResult = IFlowDataPinValueSupplierInterface::Execute_TrySupplyDataPinAsTransform(ResolvedComp, PinName);
+			if (PinResult.Result == EFlowDataPinResolveResult::Success)
+			{
+				return PinResult;
+			}
+		}
+	}
+
+	return Super::TrySupplyDataPinAsTransform_Implementation(PinName);
+}
+
+FFlowDataPinResult_GameplayTag UFlowNode_ExecuteComponent::TrySupplyDataPinAsGameplayTag_Implementation(const FName& PinName) const
+{
+	if (UActorComponent* ResolvedComp = GetResolvedComponent())
+	{
+		if (IFlowDataPinValueSupplierInterface* PinSupplierInterface = Cast<IFlowDataPinValueSupplierInterface>(ResolvedComp))
+		{
+			const FFlowDataPinResult_GameplayTag PinResult = IFlowDataPinValueSupplierInterface::Execute_TrySupplyDataPinAsGameplayTag(ResolvedComp, PinName);
+			if (PinResult.Result == EFlowDataPinResolveResult::Success)
+			{
+				return PinResult;
+			}
+		}
+	}
+
+	return Super::TrySupplyDataPinAsGameplayTag_Implementation(PinName);
+}
+
+FFlowDataPinResult_GameplayTagContainer UFlowNode_ExecuteComponent::TrySupplyDataPinAsGameplayTagContainer_Implementation(const FName& PinName) const
+{
+	if (UActorComponent* ResolvedComp = GetResolvedComponent())
+	{
+		if (IFlowDataPinValueSupplierInterface* PinSupplierInterface = Cast<IFlowDataPinValueSupplierInterface>(ResolvedComp))
+		{
+			const FFlowDataPinResult_GameplayTagContainer PinResult = IFlowDataPinValueSupplierInterface::Execute_TrySupplyDataPinAsGameplayTagContainer(ResolvedComp, PinName);
+			if (PinResult.Result == EFlowDataPinResolveResult::Success)
+			{
+				return PinResult;
+			}
+		}
+	}
+
+	return Super::TrySupplyDataPinAsGameplayTagContainer_Implementation(PinName);
+}
+
+FFlowDataPinResult_InstancedStruct UFlowNode_ExecuteComponent::TrySupplyDataPinAsInstancedStruct_Implementation(const FName& PinName) const
+{
+	if (UActorComponent* ResolvedComp = GetResolvedComponent())
+	{
+		if (IFlowDataPinValueSupplierInterface* PinSupplierInterface = Cast<IFlowDataPinValueSupplierInterface>(ResolvedComp))
+		{
+			const FFlowDataPinResult_InstancedStruct PinResult = IFlowDataPinValueSupplierInterface::Execute_TrySupplyDataPinAsInstancedStruct(ResolvedComp, PinName);
+			if (PinResult.Result == EFlowDataPinResolveResult::Success)
+			{
+				return PinResult;
+			}
+		}
+	}
+
+	return Super::TrySupplyDataPinAsInstancedStruct_Implementation(PinName);
+}
+
+FFlowDataPinResult_Object UFlowNode_ExecuteComponent::TrySupplyDataPinAsObject_Implementation(const FName& PinName) const
+{
+	if (UActorComponent* ResolvedComp = GetResolvedComponent())
+	{
+		if (IFlowDataPinValueSupplierInterface* PinSupplierInterface = Cast<IFlowDataPinValueSupplierInterface>(ResolvedComp))
+		{
+			const FFlowDataPinResult_Object PinResult = IFlowDataPinValueSupplierInterface::Execute_TrySupplyDataPinAsObject(ResolvedComp, PinName);
+			if (PinResult.Result == EFlowDataPinResolveResult::Success)
+			{
+				return PinResult;
+			}
+		}
+	}
+
+	return Super::TrySupplyDataPinAsObject_Implementation(PinName);
+}
+
+FFlowDataPinResult_Class UFlowNode_ExecuteComponent::TrySupplyDataPinAsClass_Implementation(const FName& PinName) const
+{
+	if (UActorComponent* ResolvedComp = GetResolvedComponent())
+	{
+		if (IFlowDataPinValueSupplierInterface* PinSupplierInterface = Cast<IFlowDataPinValueSupplierInterface>(ResolvedComp))
+		{
+			const FFlowDataPinResult_Class PinResult = IFlowDataPinValueSupplierInterface::Execute_TrySupplyDataPinAsClass(ResolvedComp, PinName);
+			if (PinResult.Result == EFlowDataPinResolveResult::Success)
+			{
+				return PinResult;
+			}
+		}
+	}
+
+	return Super::TrySupplyDataPinAsClass_Implementation(PinName);
 }
 
 bool UFlowNode_ExecuteComponent::TryInjectComponent()
@@ -306,6 +651,19 @@ UActorComponent* UFlowNode_ExecuteComponent::TryResolveComponent()
 	return ResolvedComp;
 }
 
+UActorComponent* UFlowNode_ExecuteComponent::GetResolvedComponent() const
+{
+	// This version of the function assumes the component has already been resolved previously.
+	// (using TryResolveComponent)
+	UActorComponent* ResolvedComp = ComponentRef.GetResolvedComponent();
+	if (IsValid(ResolvedComp))
+	{
+		return ResolvedComp;
+	}
+
+	return nullptr;
+}
+
 #if WITH_EDITOR
 const UActorComponent* UFlowNode_ExecuteComponent::TryGetExpectedComponent() const
 {
@@ -381,45 +739,34 @@ void UFlowNode_ExecuteComponent::RefreshComponentSource()
 
 void UFlowNode_ExecuteComponent::RefreshPins()
 {
-	bool bChangedPins = false;
-
-	const UActorComponent* ExpectedComponent = TryGetExpectedComponent();
-	if (const IFlowContextPinSupplierInterface* ContextPinSupplierInterface = Cast<IFlowContextPinSupplierInterface>(ExpectedComponent))
-	{
-		const TArray<FFlowPin> NewInputPins = ContextPinSupplierInterface->GetContextInputs();
-		bChangedPins = RebuildPinArray(NewInputPins, InputPins, DefaultInputPin) || bChangedPins;
-
-		const TArray<FFlowPin> NewOutputPins = ContextPinSupplierInterface->GetContextOutputs();
-		bChangedPins = RebuildPinArray(NewOutputPins, OutputPins, DefaultOutputPin) || bChangedPins;
-	}
-	else
-	{
-		bChangedPins = RebuildPinArray(TArray<FName>(&DefaultInputPin.PinName, 1), InputPins, DefaultInputPin) || bChangedPins;
-		bChangedPins = RebuildPinArray(TArray<FName>(&DefaultOutputPin.PinName, 1), OutputPins, DefaultOutputPin) || bChangedPins;
-	}
-
-	if (bChangedPins)
-	{
-		OnReconstructionRequested.ExecuteIfBound();
-	}
+	OnReconstructionRequested.ExecuteIfBound();
 }
 
-EDataValidationResult UFlowNode_ExecuteComponent::ValidateNode()
+EDataValidationResult UFlowNode_ExecuteComponent::ValidateNode(FDataValidationContext& Context) const
 {
+	const EDataValidationResult SuperResult = Super::ValidateNode(Context);
+
+	EDataValidationResult FinalResult = CombineDataValidationResults(SuperResult, EDataValidationResult::Valid);
+			
+	if (IsValid(ComponentTemplate) || IsValid(ComponentClass))
+	{
+		return FinalResult;
+	}
+	
 	const bool bHasComponent = ComponentRef.IsConfigured();
 	if (!bHasComponent)
 	{
-		ValidationLog.Error<UFlowNode>(TEXT("ExectuteComponent requires a valid Compoennt reference"), this);
+		Context.AddError(FText::FromString(TEXT("ExectuteComponent requires a valid Compoennt reference")));
 
-		return EDataValidationResult::Invalid;
+		return CombineDataValidationResults(FinalResult, EDataValidationResult::Invalid);
 	}
 
 	const TSubclassOf<AActor> ExpectedActorOwnerClass = TryGetExpectedActorOwnerClass();
 	if (!IsValid(ExpectedActorOwnerClass))
 	{
-		ValidationLog.Error<UFlowNode>(TEXT("Invalid or null Expected Actor Owner Class for this Flow Asset"), this);
+		Context.AddError(FText::FromString(TEXT("Invalid or null Expected Actor Owner Class for this Flow Asset")));
 
-		return EDataValidationResult::Invalid;
+		return CombineDataValidationResults(FinalResult, EDataValidationResult::Invalid);
 	}
 
 	{
@@ -427,28 +774,29 @@ EDataValidationResult UFlowNode_ExecuteComponent::ValidateNode()
 		const UActorComponent* ExpectedComponent = TryGetExpectedComponent();
 		if (!IsValid(ExpectedComponent))
 		{
-			ValidationLog.Error<UFlowNode>(TEXT("Could not resolve component for flow actor owner"), this);
+			Context.AddError(FText::FromString(TEXT("Could not resolve component for flow actor owner")));
 
-			return EDataValidationResult::Invalid;
+			return CombineDataValidationResults(FinalResult, EDataValidationResult::Invalid);
 		}
 
 		// Check that the component implements the expected interfaces
 		if (!Cast<IFlowExternalExecutableInterface>(ExpectedComponent))
 		{
-			ValidationLog.Error<UFlowNode>(TEXT("Expected component to implement IFlowExternalExecutableInterface"), this);
+			Context.AddError(FText::FromString(TEXT("Expected component to implement IFlowExternalExecutableInterface")));
 
-			return EDataValidationResult::Invalid;
+			return CombineDataValidationResults(FinalResult, EDataValidationResult::Invalid);
 		}
 
 		if (!Cast<IFlowCoreExecutableInterface>(ExpectedComponent))
 		{
-			ValidationLog.Error<UFlowNode>(TEXT("Expected component to implement IFlowCoreExecutableInterface"), this);
+			Context.AddError(FText::FromString(TEXT("Expected component to implement IFlowCoreExecutableInterface")));
 
-			return EDataValidationResult::Invalid;
+			return CombineDataValidationResults(FinalResult, EDataValidationResult::Invalid);
 		}
 	}
 
-	return EDataValidationResult::Valid;
+		
+	return FinalResult;
 }
 
 FString UFlowNode_ExecuteComponent::GetStatusString() const

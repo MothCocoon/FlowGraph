@@ -2,10 +2,12 @@
 
 #pragma once
 
-#if ENGINE_MAJOR_VERSION == 5 && ENGINE_MINOR_VERSION < 5
-#include "InstancedStruct.h"
-#else
+#include "Runtime/Launch/Resources/Version.h"
+
+#if ENGINE_MAJOR_VERSION == 5 && ENGINE_MINOR_VERSION < 4
 #include "StructUtils/InstancedStruct.h"
+#else
+#include "InstancedStruct.h"
 #endif
 
 #include "UObject/Interface.h"

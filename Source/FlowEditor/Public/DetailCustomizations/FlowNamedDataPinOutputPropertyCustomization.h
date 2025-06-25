@@ -7,12 +7,12 @@
 #include "Types/FlowDataPinProperties.h"
 
 // Details customization for FFlowPin
-class FFlowNamedDataPinOutputPropertyCustomization : public IFlowExtendedPropertyTypeCustomization
+class FFlowNamedDataPinPropertyCustomization : public IFlowExtendedPropertyTypeCustomization
 {
 	typedef IFlowExtendedPropertyTypeCustomization Super;
 
 public:
-	static TSharedRef<IPropertyTypeCustomization> MakeInstance() { return MakeShareable(new FFlowNamedDataPinOutputPropertyCustomization()); }
+	static TSharedRef<IPropertyTypeCustomization> MakeInstance() { return MakeShareable(new FFlowNamedDataPinPropertyCustomization()); }
 
 protected:
 
