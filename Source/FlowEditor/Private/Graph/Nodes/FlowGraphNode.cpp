@@ -129,9 +129,10 @@ void UFlowGraphNode::PostPlacedNewNode()
 	SubscribeToExternalChanges();
 
 	// note: NodeInstance can be already spawned by paste operation, don't override it
+
 	if (NodeInstanceClass.IsPending())
 	{
-		NodeInstanceClass.LoadSynchronous();
+		(void) NodeInstanceClass.LoadSynchronous();
 	}
 
 	if (NodeInstance == nullptr)
@@ -459,7 +460,8 @@ void UFlowGraphNode::RewireOldPinsToNewPins(TArray<UEdGraphPin*>& InOldPins)
 				case EGPD_Output:
 					OutputPins.Add(OrphanedPin);
 					break;
-				default: ;
+				default:
+					break;
 			}
 		}
 	}
@@ -1120,7 +1122,7 @@ void UFlowGraphNode::SetSignalMode(const EFlowSignalMode Mode)
 	if (UFlowNode* FlowNode = Cast<UFlowNode>(NodeInstance))
 	{
 		FlowNode->SignalMode = Mode;
-		OnSignalModeChanged.ExecuteIfBound();
+		(void) OnSignalModeChanged.ExecuteIfBound();
 	}
 }
 
@@ -1553,7 +1555,7 @@ bool UFlowGraphNode::RefreshNodeClass()
 	{
 		if (NodeInstanceClass.IsPending())
 		{
-			NodeInstanceClass.LoadSynchronous();
+			(void) NodeInstanceClass.LoadSynchronous();
 		}
 
 		if (NodeInstanceClass.IsValid())

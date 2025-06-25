@@ -15,7 +15,6 @@
 #else
 #include "InstancedStruct.h"
 #endif
-
 #include "FlowDataPinProperties.generated.h"
 
 class FStructProperty;
