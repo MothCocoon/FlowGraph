@@ -5,6 +5,7 @@
 #include "Asset/FlowDiffControl.h"
 #include "Nodes/FlowNodeBase.h"
 #include "EdGraph/EdGraph.h"
+#include "Runtime/Launch/Resources/Version.h"
 
 #include "Graph/Nodes/FlowGraphNode.h"
 #include "SBlueprintDiff.h"

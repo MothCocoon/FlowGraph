@@ -4,6 +4,7 @@
 
 #include "GraphEditor.h"
 #include "Widgets/DeclarativeSyntaxSupport.h"
+#include "Runtime/Launch/Resources/Version.h"
 
 #include "FlowGraph.h"
 

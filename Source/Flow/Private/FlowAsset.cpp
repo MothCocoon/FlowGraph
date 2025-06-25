@@ -21,6 +21,7 @@
 #if WITH_EDITOR
 #include "Editor.h"
 #include "Editor/EditorEngine.h"
+#include "Misc/DataValidation.h"
 
 FString UFlowAsset::ValidationError_NodeClassNotAllowed = TEXT("Node class {0} is not allowed in this asset.");
 FString UFlowAsset::ValidationError_NullNodeInstance = TEXT("Node with GUID {0} is NULL");
@@ -105,6 +106,9 @@ void UFlowAsset::PostLoad()
 
 EDataValidationResult UFlowAsset::ValidateAsset(FFlowMessageLog& MessageLog)
 {
+	// TODO (gtaylor) We should further refactor the Flow validation to use FDataValidationContext throughout
+	FDataValidationContext Context;
+
 	// validate nodes
 	for (const TPair<FGuid, UFlowNode*>& Node : ObjectPtrDecay(Nodes))
 	{
@@ -122,9 +126,43 @@ EDataValidationResult UFlowAsset::ValidateAsset(FFlowMessageLog& MessageLog)
 			}
 
 			Node.Value->ValidationLog.Messages.Empty();
-			if (Node.Value->ValidateNode() == EDataValidationResult::Invalid)
+
+			if (Node.Value->ValidateNodeAndAddOns(Context) == EDataValidationResult::Invalid)
 			{
-				MessageLog.Messages.Append(Node.Value->ValidationLog.Messages);
+				// Convert the issues from UE format into Flow's expected format
+				for (const FDataValidationContext::FIssue& Issue : Context.GetIssues())
+				{
+					switch (Issue.Severity)
+					{
+					case EMessageSeverity::Error:
+						{
+							MessageLog.Error(*Issue.Message.ToString(), Node.Value);
+						}
+						break;
+
+					case EMessageSeverity::PerformanceWarning:
+					case EMessageSeverity::Warning:
+						{
+							MessageLog.Warning(*Issue.Message.ToString(), Node.Value);
+						}
+						break;
+
+					case EMessageSeverity::Info:
+						{
+							MessageLog.Note(*Issue.Message.ToString(), Node.Value);
+						}
+						break;
+
+					default:
+						{
+							const FString UnhandledSeverityString = FString::Printf(TEXT("Unhandled EMessageSeverity value %d!  The code needs to be updated."), Issue.Severity);
+							MessageLog.Error(*UnhandledSeverityString, Node.Value);
+
+							MessageLog.Error(*Issue.Message.ToString(), Node.Value);
+						}
+						break;
+					}
+				}
 			}
 		}
 		else
@@ -224,7 +262,7 @@ bool UFlowAsset::CanFlowAssetUseFlowNodeClass(const UClass& FlowNodeClass) const
 
 bool UFlowAsset::IsFlowNodeClassInDeniedClasses(const UClass& FlowNodeClass) const
 {
-	for (const TSubclassOf<UFlowNodeBase>& DeniedNodeClass : DeniedNodeClasses)
+	for (const TSubclassOf<UFlowNodeBase> DeniedNodeClass : DeniedNodeClasses)
 	{
 		if (DeniedNodeClass && FlowNodeClass.IsChildOf(DeniedNodeClass))
 		{
@@ -239,13 +277,12 @@ bool UFlowAsset::IsFlowNodeClassInDeniedClasses(const UClass& FlowNodeClass) con
 	return false;
 }
 
-bool UFlowAsset::IsFlowNodeClassInAllowedClasses(const UClass& FlowNodeClass,
-                                                 const TSubclassOf<UFlowNodeBase>& RequiredAncestor) const
+bool UFlowAsset::IsFlowNodeClassInAllowedClasses(const UClass& FlowNodeClass, const TSubclassOf<UFlowNodeBase> RequiredAncestor) const
 {
 	if (AllowedNodeClasses.Num() > 0)
 	{
 		bool bAllowedInAsset = false;
-		for (const TSubclassOf<UFlowNodeBase>& AllowedNodeClass : AllowedNodeClasses)
+		for (const TSubclassOf<UFlowNodeBase> AllowedNodeClass : AllowedNodeClasses)
 		{
 			// If a RequiredAncestor is provided, the AllowedNodeClass must be a subclass of the RequiredAncestor
 			if (AllowedNodeClass && FlowNodeClass.IsChildOf(AllowedNodeClass) && (!RequiredAncestor || AllowedNodeClass->IsChildOf(RequiredAncestor)))
@@ -1028,6 +1065,27 @@ TArray<UFlowNode*> UFlowAsset::GetNodesInExecutionOrder(UFlowNode* FirstIterated
 	FoundNodes.Shrink();
 
 	return FoundNodes;
+}
+
+TArray<UFlowNode*> UFlowAsset::GatherNodesConnectedToAllInputs() const
+{
+	TSet<TObjectKey<UFlowNode>> IteratedNodes;
+	TArray<UFlowNode*> ConnectedNodes;
+
+	// Nodes connected to the Start node
+	UFlowNode* DefaultEntryNode = GetDefaultEntryNode();
+	GetNodesInExecutionOrder_Recursive(DefaultEntryNode, IteratedNodes, ConnectedNodes);
+
+	// Nodes connected to Custom Input node(s)
+	for (const TPair<FGuid, UFlowNode*>& Node : ObjectPtrDecay(Nodes))
+	{
+		if (UFlowNode_CustomInput* CustomInput = Cast<UFlowNode_CustomInput>(Node.Value))
+		{
+			GetNodesInExecutionOrder_Recursive(CustomInput, IteratedNodes, ConnectedNodes);
+		}
+	}
+
+	return ConnectedNodes;
 }
 
 void UFlowAsset::AddInstance(UFlowAsset* Instance)

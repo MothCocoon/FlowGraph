@@ -2,6 +2,9 @@
 
 #include "Nodes/Graph/FlowNode_CustomEventBase.h"
 #include "FlowSettings.h"
+#if WITH_EDITOR
+#include "Misc/DataValidation.h"
+#endif
 
 #include UE_INLINE_GENERATED_CPP_BY_NAME(FlowNode_CustomEventBase)
 
@@ -25,7 +28,7 @@ void UFlowNode_CustomEventBase::SetEventName(const FName& InEventName)
 #if WITH_EDITOR
 		// Must reconstruct the visual representation if anything that is included in AdaptiveNodeTitles changes
 		OnReconstructionRequested.ExecuteIfBound();
-#endif // WITH_EDITOR
+#endif
 	}
 }
 
@@ -41,14 +44,19 @@ FString UFlowNode_CustomEventBase::GetNodeDescription() const
 	return EventName.ToString();
 }
 
-EDataValidationResult UFlowNode_CustomEventBase::ValidateNode()
+EDataValidationResult UFlowNode_CustomEventBase::ValidateNode(FDataValidationContext& Context) const
 {
+	const EDataValidationResult SuperResult = Super::ValidateNode(Context);
+
+	EDataValidationResult FinalResult = CombineDataValidationResults(SuperResult, EDataValidationResult::Valid);
+
 	if (EventName.IsNone())
 	{
-		ValidationLog.Error<UFlowNode>(TEXT("Event Name is empty!"), this);
-		return EDataValidationResult::Invalid;
+		Context.AddError(FText::FromString(TEXT("Event Name is empty!")));
+
+		FinalResult = CombineDataValidationResults(FinalResult, EDataValidationResult::Invalid);
 	}
 
-	return EDataValidationResult::Valid;
+	return FinalResult;
 }
 #endif

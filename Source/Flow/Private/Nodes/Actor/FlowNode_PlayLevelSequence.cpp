@@ -8,6 +8,7 @@
 #include "LevelSequence/FlowLevelSequencePlayer.h"
 
 #if WITH_EDITOR
+#include "Misc/DataValidation.h"
 #include "MovieScene/MovieSceneFlowTrack.h"
 #include "MovieScene/MovieSceneFlowTriggerSection.h"
 #endif
@@ -320,15 +321,20 @@ FString UFlowNode_PlayLevelSequence::GetNodeDescription() const
 	return Sequence.IsNull() ? TEXT("[No sequence]") : Sequence.GetAssetName();
 }
 
-EDataValidationResult UFlowNode_PlayLevelSequence::ValidateNode()
+EDataValidationResult UFlowNode_PlayLevelSequence::ValidateNode(FDataValidationContext& Context) const
 {
+	const EDataValidationResult SuperResult = Super::ValidateNode(Context);
+
+	EDataValidationResult FinalResult = CombineDataValidationResults(SuperResult, EDataValidationResult::Valid);
+
 	if (Sequence.IsNull())
 	{
-		ValidationLog.Error<UFlowNode>(TEXT("Level Sequence asset not assigned or invalid!"), this);
-		return EDataValidationResult::Invalid;
+		Context.AddError(FText::FromString(FString::Printf(TEXT("Level Sequence asset not assigned or invalid!"), this)));
+		
+		FinalResult = CombineDataValidationResults(FinalResult, EDataValidationResult::Invalid);
 	}
 
-	return EDataValidationResult::Valid;
+	return FinalResult;
 }
 
 FString UFlowNode_PlayLevelSequence::GetStatusString() const
