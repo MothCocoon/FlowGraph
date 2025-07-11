@@ -46,6 +46,9 @@
 		{
 			"Name": "StructUtils",
 			"Enabled": true
+		},		{
+			"Name": "QuestFactBase",
+			"Enabled": true
 		}
 	]
 }
