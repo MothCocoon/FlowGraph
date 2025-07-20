@@ -4,6 +4,7 @@
 
 #include "IDetailsView.h"
 #include "DiffResults.h"
+#include "GraphEditor.h"
 #include "SDetailsDiff.h"
 #include "Textures/SlateIcon.h"
 
