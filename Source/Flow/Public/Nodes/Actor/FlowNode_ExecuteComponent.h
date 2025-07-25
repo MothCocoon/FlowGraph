@@ -97,7 +97,7 @@ public:
 
 	// UFlowNode
 	virtual FText GetNodeTitle() const override;
-	virtual EDataValidationResult ValidateNode(FDataValidationContext& Context) const override;
+	virtual EDataValidationResult ValidateNode() override;
 
 	virtual FString GetStatusString() const override;
 	// --

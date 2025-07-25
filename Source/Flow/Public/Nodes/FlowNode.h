@@ -59,8 +59,8 @@ public:
 	virtual void PostLoad() override;
 	// --
 
-	// DEPRECATED - use UFlowNodeBase::ValidateNode(FDataValidationContext& Context) instead
-	virtual EDataValidationResult DEPRECATED_ValidateNode() { return EDataValidationResult::NotValidated; }
+	virtual EDataValidationResult ValidateNode() { return EDataValidationResult::NotValidated; }
+
 #endif
 
 	// Inherits Guid after graph node

@@ -2,9 +2,6 @@
 
 #include "Nodes/Actor/FlowNode_ComponentObserver.h"
 #include "FlowSubsystem.h"
-#if WITH_EDITOR
-#include "Misc/DataValidation.h"
-#endif
 
 #include UE_INLINE_GENERATED_CPP_BY_NAME(FlowNode_ComponentObserver)
 
@@ -158,20 +155,15 @@ FString UFlowNode_ComponentObserver::GetNodeDescription() const
 	return GetIdentityTagsDescription(IdentityTags);
 }
 
-EDataValidationResult UFlowNode_ComponentObserver::ValidateNode(FDataValidationContext& Context) const
+EDataValidationResult UFlowNode_ComponentObserver::ValidateNode()
 {
-	const EDataValidationResult SuperResult = Super::ValidateNode(Context);
-
-	EDataValidationResult FinalResult = CombineDataValidationResults(SuperResult, EDataValidationResult::Valid);
-
 	if (IdentityTags.IsEmpty())
 	{
-		Context.AddError(FText::FromString(UFlowNode::MissingIdentityTag));
-
-		FinalResult = CombineDataValidationResults(FinalResult, EDataValidationResult::Invalid);
+		ValidationLog.Error<UFlowNode>(*UFlowNode::MissingIdentityTag, this);
+		return EDataValidationResult::Invalid;
 	}
 
-	return FinalResult;
+	return EDataValidationResult::Valid;
 }
 
 FString UFlowNode_ComponentObserver::GetStatusString() const

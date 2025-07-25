@@ -13,7 +13,6 @@
 
 #include "FlowNodeBase.generated.h"
 
-class FDataValidationContext;
 class UFlowAsset;
 class UFlowNode;
 class UFlowNodeAddOn;
@@ -340,9 +339,6 @@ public:
 	// Called by owning FlowNode to add to its Status String.
 	// (may be multi-line)
 	virtual FString GetStatusString() const;
-
-	EDataValidationResult ValidateNodeAndAddOns(FDataValidationContext& Context) const;
-	virtual EDataValidationResult ValidateNode(FDataValidationContext& Context) const { return EDataValidationResult::NotValidated; }
 
 	void RequestReconstruction() const { (void) OnReconstructionRequested.ExecuteIfBound(); };
 	

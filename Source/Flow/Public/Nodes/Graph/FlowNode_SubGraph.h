@@ -75,7 +75,7 @@ public:
 	virtual FText GetNodeTitle() const override;
 	virtual FString GetNodeDescription() const override;
 	virtual UObject* GetAssetToEdit() override;
-	virtual EDataValidationResult ValidateNode(FDataValidationContext& Context) const override;
+	virtual EDataValidationResult ValidateNode() override;
 
 	// UObject
 	virtual void PostLoad() override;

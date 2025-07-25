@@ -11,11 +11,8 @@
 #include "Types/FlowArray.h"
 
 #include "Components/ActorComponent.h"
-
 #if WITH_EDITOR
 #include "Editor.h"
-#include "Logging/TokenizedMessage.h"
-#include "Misc/DataValidation.h"
 #endif
 
 #include "Engine/Blueprint.h"
@@ -267,62 +264,6 @@ FString UFlowNodeBase::GetStatusString() const
 {
 	return K2_GetStatusString();
 }
-
-EDataValidationResult UFlowNodeBase::ValidateNodeAndAddOns(FDataValidationContext& Context) const
-{
-	const EDataValidationResult ThisNodeResult = ValidateNode(Context);
-
-	EDataValidationResult FinalResult = ThisNodeResult;
-
-	for (const UFlowNodeAddOn* AddOn : AddOns)
-	{
-		if (IsValid(AddOn))
-		{
-			const EDataValidationResult AddOnResult = AddOn->ValidateNodeAndAddOns(Context);
-
-			FinalResult = CombineDataValidationResults(FinalResult, AddOnResult);
-		}
-	}
-
-	// Deprecated results
-	if (const UFlowNode* ThisAsConstFlowNode = Cast<UFlowNode>(this))
-	{
-		UFlowNode* ThisAsMutableFlowNode = const_cast<UFlowNode*>(ThisAsConstFlowNode);
-
-		const EDataValidationResult DeprecatedResult = ThisAsMutableFlowNode->DEPRECATED_ValidateNode();
-
-		FinalResult = CombineDataValidationResults(FinalResult, DeprecatedResult);
-
-		if (DeprecatedResult == EDataValidationResult::Invalid)
-		{
-			// Add all of the ValidationLog entries to the Context
-			for (const TSharedRef<FTokenizedMessage>& Message : ThisAsMutableFlowNode->ValidationLog.Messages)
-			{
-				switch (Message->GetSeverity())
-				{
-				case EMessageSeverity::Type::Error:
-				case EMessageSeverity::Type::Warning:
-				case EMessageSeverity::Type::PerformanceWarning:
-				case EMessageSeverity::Type::Info:
-					break;
-
-				default:
-					{
-						Context.AddError(
-							FText::FromString(
-								FString::Printf(TEXT("Unhandled EMessageSeverity value %d!  The code needs to be updated."), Message->GetSeverity())));
-					}
-					break;
-				}
-
-				Context.AddMessage(Message);
-			}
-		}
-	}
-
-	return FinalResult;
-}
-
 #endif // WITH_EDITOR
 
 UFlowAsset* UFlowNodeBase::GetFlowAsset() const
@@ -910,16 +851,21 @@ void UFlowNodeBase::LogError(FString Message, const EFlowOnScreenMessageType OnS
 		// OnScreen Message
 		if (OnScreenMessageType == EFlowOnScreenMessageType::Permanent)
 		{
-			if (GetWorld())
+			if (UWorld* World = GetWorld())
 			{
-				if (UViewportStatsSubsystem* StatsSubsystem = GetWorld()->GetSubsystem<UViewportStatsSubsystem>())
+				if (UViewportStatsSubsystem* StatsSubsystem = World->GetSubsystem<UViewportStatsSubsystem>())
 				{
-					StatsSubsystem->AddDisplayDelegate([this, Message](FText& OutText, FLinearColor& OutColor)
+					StatsSubsystem->AddDisplayDelegate([WeakThis = TWeakObjectPtr<const UFlowNodeBase>(this), Message](FText& OutText, FLinearColor& OutColor)
 					{
-						OutText = FText::FromString(Message);
-						OutColor = FLinearColor::Red;
+						const UFlowNodeBase* ThisPtr = WeakThis.Get();
+						if (ThisPtr && ThisPtr->GetFlowNodeSelfOrOwner()->GetActivationState() != EFlowNodeState::NeverActivated)
+						{
+							OutText = FText::FromString(Message);
+							OutColor = FLinearColor::Red;
+							return true;
+						}
 
-						return IsValid(this) && GetFlowNodeSelfOrOwner()->GetActivationState() != EFlowNodeState::NeverActivated;
+						return false;
 					});
 				}
 			}

@@ -8,7 +8,6 @@
 #include "Kismet/BlueprintFunctionLibrary.h"
 #include "Runtime/Launch/Resources/Version.h"
 #include "UObject/Class.h"
-#include "Internationalization/Text.h"
 
 #if ENGINE_MAJOR_VERSION == 5 && ENGINE_MINOR_VERSION < 4
 #include "StructUtils/InstancedStruct.h"
@@ -19,7 +18,6 @@
 
 class FStructProperty;
 class UScriptStruct;
-class UFlowNodeBase;
 
 USTRUCT(BlueprintType, DisplayName = "Base - Flow DataPin Property")
 struct FFlowDataPinProperty

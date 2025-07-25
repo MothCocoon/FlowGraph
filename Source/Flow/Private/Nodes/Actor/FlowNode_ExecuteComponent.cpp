@@ -11,9 +11,6 @@
 #include "Types/FlowInjectComponentsManager.h"
 #include "GameFramework/Actor.h"
 #include "Components/ActorComponent.h"
-#if WITH_EDITOR
-#include "Misc/DataValidation.h"
-#endif
 
 #define LOCTEXT_NAMESPACE "FlowNode"
 
@@ -742,31 +739,22 @@ void UFlowNode_ExecuteComponent::RefreshPins()
 	OnReconstructionRequested.ExecuteIfBound();
 }
 
-EDataValidationResult UFlowNode_ExecuteComponent::ValidateNode(FDataValidationContext& Context) const
+EDataValidationResult UFlowNode_ExecuteComponent::ValidateNode()
 {
-	const EDataValidationResult SuperResult = Super::ValidateNode(Context);
-
-	EDataValidationResult FinalResult = CombineDataValidationResults(SuperResult, EDataValidationResult::Valid);
-			
-	if (IsValid(ComponentTemplate) || IsValid(ComponentClass))
-	{
-		return FinalResult;
-	}
-	
 	const bool bHasComponent = ComponentRef.IsConfigured();
 	if (!bHasComponent)
 	{
-		Context.AddError(FText::FromString(TEXT("ExectuteComponent requires a valid Compoennt reference")));
+		ValidationLog.Error<UFlowNode>(TEXT("ExectuteComponent requires a valid Compoennt reference"), this);
 
-		return CombineDataValidationResults(FinalResult, EDataValidationResult::Invalid);
+		return EDataValidationResult::Invalid;
 	}
 
 	const TSubclassOf<AActor> ExpectedActorOwnerClass = TryGetExpectedActorOwnerClass();
 	if (!IsValid(ExpectedActorOwnerClass))
 	{
-		Context.AddError(FText::FromString(TEXT("Invalid or null Expected Actor Owner Class for this Flow Asset")));
+		ValidationLog.Error<UFlowNode>(TEXT("Invalid or null Expected Actor Owner Class for this Flow Asset"), this);
 
-		return CombineDataValidationResults(FinalResult, EDataValidationResult::Invalid);
+		return EDataValidationResult::Invalid;
 	}
 
 	{
@@ -774,29 +762,28 @@ EDataValidationResult UFlowNode_ExecuteComponent::ValidateNode(FDataValidationCo
 		const UActorComponent* ExpectedComponent = TryGetExpectedComponent();
 		if (!IsValid(ExpectedComponent))
 		{
-			Context.AddError(FText::FromString(TEXT("Could not resolve component for flow actor owner")));
+			ValidationLog.Error<UFlowNode>(TEXT("Could not resolve component for flow actor owner"), this);
 
-			return CombineDataValidationResults(FinalResult, EDataValidationResult::Invalid);
+			return EDataValidationResult::Invalid;
 		}
 
 		// Check that the component implements the expected interfaces
 		if (!Cast<IFlowExternalExecutableInterface>(ExpectedComponent))
 		{
-			Context.AddError(FText::FromString(TEXT("Expected component to implement IFlowExternalExecutableInterface")));
+			ValidationLog.Error<UFlowNode>(TEXT("Expected component to implement IFlowExternalExecutableInterface"), this);
 
-			return CombineDataValidationResults(FinalResult, EDataValidationResult::Invalid);
+			return EDataValidationResult::Invalid;
 		}
 
 		if (!Cast<IFlowCoreExecutableInterface>(ExpectedComponent))
 		{
-			Context.AddError(FText::FromString(TEXT("Expected component to implement IFlowCoreExecutableInterface")));
+			ValidationLog.Error<UFlowNode>(TEXT("Expected component to implement IFlowCoreExecutableInterface"), this);
 
-			return CombineDataValidationResults(FinalResult, EDataValidationResult::Invalid);
+			return EDataValidationResult::Invalid;
 		}
 	}
 
-		
-	return FinalResult;
+	return EDataValidationResult::Valid;
 }
 
 FString UFlowNode_ExecuteComponent::GetStatusString() const

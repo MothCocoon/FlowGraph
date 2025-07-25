@@ -1,8 +1,6 @@
 // Copyright https://github.com/MothCocoon/FlowGraph/graphs/contributors
 
 #include "Graph/Widgets/SGraphEditorActionMenuFlow.h"
-
-#include "Graph/Nodes/FlowGraphNode.h"
 #include "Graph/FlowGraphSchema.h"
 
 #include "EdGraph/EdGraph.h"

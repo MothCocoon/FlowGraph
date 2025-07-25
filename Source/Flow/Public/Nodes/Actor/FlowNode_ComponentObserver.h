@@ -70,7 +70,7 @@ protected:
 #if WITH_EDITOR
 public:
 	virtual FString GetNodeDescription() const override;
-	virtual EDataValidationResult ValidateNode(FDataValidationContext& Context) const override;
+	virtual EDataValidationResult ValidateNode() override;
 
 	virtual FString GetStatusString() const override;
 #endif

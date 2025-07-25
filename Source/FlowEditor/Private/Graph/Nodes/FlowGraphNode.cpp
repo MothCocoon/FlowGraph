@@ -129,10 +129,9 @@ void UFlowGraphNode::PostPlacedNewNode()
 	SubscribeToExternalChanges();
 
 	// note: NodeInstance can be already spawned by paste operation, don't override it
-
 	if (NodeInstanceClass.IsPending())
 	{
-		(void) NodeInstanceClass.LoadSynchronous();
+		NodeInstanceClass.LoadSynchronous();
 	}
 
 	if (NodeInstance == nullptr)
@@ -149,9 +148,6 @@ void UFlowGraphNode::PostPlacedNewNode()
 			}
 		}
 	}
-
-	// We subscribe to external changes to the Node Instance after we have tried to ensure that the node instance exists. 
-	SubscribeToExternalChanges();
 }
 
 void UFlowGraphNode::PrepareForCopying()
@@ -197,19 +193,6 @@ void UFlowGraphNode::SubscribeToExternalChanges()
 	if (NodeInstance)
 	{
 		NodeInstance->OnReconstructionRequested.BindUObject(this, &UFlowGraphNode::OnExternalChange);
-		NodeInstance->OnAddOnRequestedParentReconstruction.BindUObject(this, &UFlowGraphNode::ReportExternalChangeToRootFlowGraphNode);
-	}
-}
-
-void UFlowGraphNode::ReportExternalChangeToRootFlowGraphNode()
-{
-	if (bIsSubNode)
-	{
-		GetParentNode()->ReportExternalChangeToRootFlowGraphNode();
-	}
-	else
-	{
-		OnExternalChange();
 	}
 }
 
@@ -460,8 +443,7 @@ void UFlowGraphNode::RewireOldPinsToNewPins(TArray<UEdGraphPin*>& InOldPins)
 				case EGPD_Output:
 					OutputPins.Add(OrphanedPin);
 					break;
-				default:
-					break;
+				default: ;
 			}
 		}
 	}
@@ -1122,7 +1104,7 @@ void UFlowGraphNode::SetSignalMode(const EFlowSignalMode Mode)
 	if (UFlowNode* FlowNode = Cast<UFlowNode>(NodeInstance))
 	{
 		FlowNode->SignalMode = Mode;
-		(void) OnSignalModeChanged.ExecuteIfBound();
+		OnSignalModeChanged.ExecuteIfBound();
 	}
 }
 
@@ -1555,7 +1537,7 @@ bool UFlowGraphNode::RefreshNodeClass()
 	{
 		if (NodeInstanceClass.IsPending())
 		{
-			(void) NodeInstanceClass.LoadSynchronous();
+			NodeInstanceClass.LoadSynchronous();
 		}
 
 		if (NodeInstanceClass.IsValid())
@@ -1689,8 +1671,9 @@ bool CheckPinsMatch(const TArray<FFlowPin>& LeftPins, const TArray<FFlowPin>& Ri
 		auto PinsAreEqualPredicate = [&Left](const FFlowPin& Right)
 		{
 			const bool bNameMatch = Left.PinName == Right.PinName;
+			const bool bFriendlyNameMatch = Left.PinFriendlyName.EqualTo(Right.PinFriendlyName);
 			const bool bTypeMatch = Left.GetPinType() == Right.GetPinType();
-			return bNameMatch && bTypeMatch;
+			return bNameMatch && bFriendlyNameMatch && bTypeMatch;
 		};
 
 		// For each required pin, make sure the existing pins array contains a pin that matches by name and type 
@@ -1717,7 +1700,7 @@ bool CheckPinsMatch(const TArray<UEdGraphPin*>& GraphPins, const TArray<FFlowPin
 	{
 		if (!GraphPins.ContainsByPredicate([&FlowNodePin](const UEdGraphPin* GraphNodePin)
 		{
-			return GraphNodePin->PinName == FlowNodePin.PinName;
+			return GraphNodePin->PinName == FlowNodePin.PinName && GraphNodePin->PinFriendlyName.EqualTo(FlowNodePin.PinFriendlyName);
 		}))
 		{
 			// Could not match the pin from the flow node with any of the EdPins array.

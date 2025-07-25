@@ -3,7 +3,6 @@
 #include "AddOns/FlowNodeAddOn.h"
 
 #include "FlowLogChannels.h"
-#include "Engine/World.h"
 
 #include "Nodes/FlowNode.h"
 
