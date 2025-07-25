@@ -741,7 +741,7 @@ void UFlowNode_ExecuteComponent::RefreshPins()
 
 EDataValidationResult UFlowNode_ExecuteComponent::ValidateNode()
 {
-	const EDataValidationResult SuperResult = Super::ValidateNode(Context);
+	const EDataValidationResult SuperResult = Super::ValidateNode();
 
 	EDataValidationResult FinalResult = CombineDataValidationResults(SuperResult, EDataValidationResult::Valid);
 			
