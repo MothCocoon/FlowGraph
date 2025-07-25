@@ -322,18 +322,13 @@ FString UFlowNode_PlayLevelSequence::GetNodeDescription() const
 
 EDataValidationResult UFlowNode_PlayLevelSequence::ValidateNode()
 {
-	const EDataValidationResult SuperResult = Super::ValidateNode();
-
-	EDataValidationResult FinalResult = CombineDataValidationResults(SuperResult, EDataValidationResult::Valid);
-
 	if (Sequence.IsNull())
 	{
 		ValidationLog.Error<UFlowNode>(TEXT("Level Sequence asset not assigned or invalid!"), this);
-		
-		FinalResult = CombineDataValidationResults(FinalResult, EDataValidationResult::Invalid);
+		return EDataValidationResult::Invalid;
 	}
 
-	return FinalResult;
+	return EDataValidationResult::Valid;
 }
 
 FString UFlowNode_PlayLevelSequence::GetStatusString() const
