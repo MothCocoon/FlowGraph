@@ -741,6 +741,15 @@ void UFlowNode_ExecuteComponent::RefreshPins()
 
 EDataValidationResult UFlowNode_ExecuteComponent::ValidateNode()
 {
+	const EDataValidationResult SuperResult = Super::ValidateNode(Context);
+
+	EDataValidationResult FinalResult = CombineDataValidationResults(SuperResult, EDataValidationResult::Valid);
+			
+	if (IsValid(ComponentTemplate) || IsValid(ComponentClass))
+	{
+		return FinalResult;
+	}
+	
 	const bool bHasComponent = ComponentRef.IsConfigured();
 	if (!bHasComponent)
 	{
@@ -782,8 +791,8 @@ EDataValidationResult UFlowNode_ExecuteComponent::ValidateNode()
 			return EDataValidationResult::Invalid;
 		}
 	}
-
-	return EDataValidationResult::Valid;
+		
+	return FinalResult;
 }
 
 FString UFlowNode_ExecuteComponent::GetStatusString() const
