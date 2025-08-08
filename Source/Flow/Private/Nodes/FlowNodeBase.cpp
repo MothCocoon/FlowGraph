@@ -949,12 +949,11 @@ bool TResolveDataPinWorkingData<TFlowDataPinResultType, PinType>::TrySetupWorkin
 
 	if (!FlowNode->TryGetFlowDataPinSupplierDatasForPinName(FlowPin->PinName, PinValueSupplierDatas))
 	{
+		// If we could not build the PinValueDataSuppliers array, 
+		// then the pin must be disconnected and have no default value available.
+		DataPinResult.Result = EFlowDataPinResolveResult::FailedUnconnected;
 		return false;
 	}
-
-	// If we could not build the PinValueDataSuppliers array, 
-	// then the pin must be disconnected and have no default value available.
-	DataPinResult.Result = EFlowDataPinResolveResult::FailedUnconnected;
 
 	return true;
 }
