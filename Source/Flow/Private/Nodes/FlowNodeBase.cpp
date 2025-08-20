@@ -260,11 +260,6 @@ TArray<FFlowPin> UFlowNodeBase::GetContextOutputs() const
 	return ContextOutputs;
 }
 
-FString UFlowNodeBase::GetStatusString() const
-{
-	return K2_GetStatusString();
-}
-
 EDataValidationResult UFlowNodeBase::ValidateNode()
 {
 	if (GetClass()->IsFunctionImplementedInScript(GET_FUNCTION_NAME_CHECKED(UFlowNodeBase, K2_ValidateNode)))
@@ -273,6 +268,11 @@ EDataValidationResult UFlowNodeBase::ValidateNode()
 	}
 
 	return EDataValidationResult::NotValidated;
+}
+
+FString UFlowNodeBase::GetStatusString() const
+{
+	return K2_GetStatusString();
 }
 
 #endif // WITH_EDITOR
