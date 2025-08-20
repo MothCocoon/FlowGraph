@@ -74,6 +74,11 @@ public:
 	UFUNCTION(BlueprintPure, Category = "FlowNode")
 	const FGuid& GetGuid() const { return NodeGuid; }
 
+	// Returns a random seed suitable for this flow node,
+	// by default based on the node Guid, 
+	// but may be overridden in subclasses to supply some other value.
+	virtual int32 GetRandomSeed() const override { return GetTypeHash(NodeGuid); }
+
 public:	
 	virtual bool CanFinishGraph() const { return false; }
 
@@ -315,6 +320,7 @@ protected:
 
 public:
 	EFlowNodeState GetActivationState() const { return ActivationState; }
+	bool HasFinished() const { return EFlowNodeState_Classifiers::IsFinishedState(ActivationState); }
 
 #if !UE_BUILD_SHIPPING
 
@@ -335,9 +341,9 @@ protected:
 protected:
 	void Deactivate();
 
+public:
 	virtual void TriggerFirstOutput(const bool bFinish) override;
 	virtual void TriggerOutput(FName PinName, const bool bFinish = false, const EFlowPinActivationType ActivationType = EFlowPinActivationType::Default) override;
-public:
 	virtual void Finish() override;
 
 private:

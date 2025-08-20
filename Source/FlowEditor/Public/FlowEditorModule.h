@@ -6,6 +6,7 @@
 #include "IAssetTypeActions.h"
 #include "Modules/ModuleInterface.h"
 #include "PropertyEditorDelegates.h"
+#include "Toolkits/AssetEditorToolkit.h"
 #include "Toolkits/IToolkit.h"
 
 class FSlateStyleSet;

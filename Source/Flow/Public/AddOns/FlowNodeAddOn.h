@@ -64,9 +64,19 @@ public:
 	// --
 
 	// UFlowNodeAddOn
+
+	// The FlowNode that contains this AddOn
+	// (accessible only when initialized, runtime only)
 	UFUNCTION(BlueprintCallable, BlueprintPure, Category = "FlowNodeAddon", DisplayName = "Get Flow Node")
 	FLOW_API UFlowNode* GetFlowNode() const;
+
+	// Will crawl the hierarchy until it finds a flow node (addons can be attached to other add-ons). 
+	FLOW_API UFlowNode* FindOwningFlowNode() const;
 	// --
+
+	// Returns a random seed suitable for this flow node addon
+	// by default, uses the seed for the Flow Node that this addon is attached to.
+	FLOW_API virtual int32 GetRandomSeed() const override;
 
 #if WITH_EDITOR
 	// IFlowContextPinSupplierInterface
@@ -74,6 +84,8 @@ public:
 	FLOW_API virtual TArray<FFlowPin> GetContextInputs() const override;
 	FLOW_API virtual TArray<FFlowPin> GetContextOutputs() const override;
 	// --
+
+	FLOW_API void RequestReconstructionOnOwningFlowNode() const;
 #endif // WITH_EDITOR
 
 protected:

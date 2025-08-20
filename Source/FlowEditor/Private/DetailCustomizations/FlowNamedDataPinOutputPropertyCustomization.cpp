@@ -2,11 +2,11 @@
 
 #include "DetailCustomizations/FlowNamedDataPinOutputPropertyCustomization.h"
 
-FText FFlowNamedDataPinOutputPropertyCustomization::BuildHeaderText() const
+FText FFlowNamedDataPinPropertyCustomization::BuildHeaderText() const
 {
-	if (const FFlowNamedDataPinOutputProperty* FlowNamedDataPinOutputProperty = IFlowExtendedPropertyTypeCustomization::TryGetTypedStructValue<FFlowNamedDataPinOutputProperty>(StructPropertyHandle))
+	if (const FFlowNamedDataPinProperty* FlowNamedDataPinProperty = IFlowExtendedPropertyTypeCustomization::TryGetTypedStructValue<FFlowNamedDataPinProperty>(StructPropertyHandle))
 	{
-		return FlowNamedDataPinOutputProperty->BuildHeaderText();
+		return FlowNamedDataPinProperty->BuildHeaderText();
 	}
 
 	return Super::BuildHeaderText();

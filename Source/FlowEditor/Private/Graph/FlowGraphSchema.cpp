@@ -26,9 +26,14 @@
 #include "EdGraphSchema_K2.h"
 #include "Editor.h"
 #include "Engine/MemberReference.h"
-#include "Kismet/BlueprintTypeConversions.h"
 #include "Kismet2/KismetEditorUtilities.h"
 #include "ScopedTransaction.h"
+
+#if ENGINE_MAJOR_VERSION == 5 && ENGINE_MINOR_VERSION < 6
+#include "Kismet/BlueprintTypeConversions.h"
+#else
+#include "Runtime/Engine/Internal/Kismet/BlueprintTypeConversions.h"
+#endif
 
 #include UE_INLINE_GENERATED_CPP_BY_NAME(FlowGraphSchema)
 
@@ -811,6 +816,8 @@ TSharedPtr<FEdGraphSchemaAction> UFlowGraphSchema::GetCreateCommentAction() cons
 	return TSharedPtr<FEdGraphSchemaAction>(static_cast<FEdGraphSchemaAction*>(new FFlowGraphSchemaAction_NewComment));
 }
 
+
+PRAGMA_DISABLE_DEPRECATION_WARNINGS
 void UFlowGraphSchema::OnPinConnectionDoubleCicked(UEdGraphPin* PinA, UEdGraphPin* PinB, const FVector2D& GraphPosition) const
 {
 	if (!FFlowPin::IsExecPinCategory(PinA->PinType.PinCategory) || !FFlowPin::IsExecPinCategory(PinB->PinType.PinCategory))
@@ -832,6 +839,16 @@ void UFlowGraphSchema::OnPinConnectionDoubleCicked(UEdGraphPin* PinA, UEdGraphPi
 	PinA->MakeLinkTo((PinA->Direction == EGPD_Output) ? NewReroute->InputPins[0] : NewReroute->OutputPins[0]);
 	PinB->MakeLinkTo((PinB->Direction == EGPD_Output) ? NewReroute->InputPins[0] : NewReroute->OutputPins[0]);
 }
+PRAGMA_ENABLE_DEPRECATION_WARNINGS
+
+#if ENGINE_MAJOR_VERSION == 5 && ENGINE_MINOR_VERSION >= 6
+void UFlowGraphSchema::OnPinConnectionDoubleCicked(UEdGraphPin* PinA, UEdGraphPin* PinB, const FVector2f& GraphPosition) const
+{
+	PRAGMA_DISABLE_DEPRECATION_WARNINGS
+		return OnPinConnectionDoubleCicked(PinA, PinB, FVector2D(GraphPosition));
+	PRAGMA_ENABLE_DEPRECATION_WARNINGS
+}
+#endif
 
 bool UFlowGraphSchema::IsCacheVisualizationOutOfDate(int32 InVisualizationCacheID) const
 {

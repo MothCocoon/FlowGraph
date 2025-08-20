@@ -4,6 +4,7 @@
 
 #include "ConnectionDrawingPolicy.h"
 #include "EdGraphUtilities.h"
+#include "Runtime/Launch/Resources/Version.h"
 
 UENUM()
 enum class EFlowConnectionDrawType : uint8
@@ -54,15 +55,19 @@ public:
 	void BuildPaths();
 
 	// FConnectionDrawingPolicy interface
+#if ENGINE_MAJOR_VERSION == 5 && ENGINE_MINOR_VERSION < 6
 	virtual void DrawConnection(int32 LayerId, const FVector2D& Start, const FVector2D& End, const FConnectionParams& Params) override;
+#else
+	virtual void DrawConnection(int32 LayerId, const FVector2f& Start, const FVector2f& End, const FConnectionParams& Params);
+#endif
 	virtual void DetermineWiringStyle(UEdGraphPin* OutputPin, UEdGraphPin* InputPin, FConnectionParams& Params) override;
 	virtual void Draw(TMap<TSharedRef<SWidget>, FArrangedWidget>& PinGeometries, FArrangedChildren& ArrangedNodes) override;
 	// End of FConnectionDrawingPolicy interface
 
 protected:
-	void DrawCircuitSpline(const int32& LayerId, const FVector2D& Start, const FVector2D& End, const FConnectionParams& Params) const;
-	void DrawCircuitConnection(const int32& LayerId, const FVector2D& Start, const FVector2D& StartDirection, const FVector2D& End, const FVector2D& EndDirection, const FConnectionParams& Params) const;
-	static FVector2D GetControlPoint(const FVector2D& Source, const FVector2D& Target);
+	void DrawCircuitSpline(const int32& LayerId, const FVector2f& Start, const FVector2f& End, const FConnectionParams& Params) const;
+	void DrawCircuitConnection(const int32& LayerId, const FVector2f& Start, const FVector2f& StartDirection, const FVector2f& End, const FVector2f& EndDirection, const FConnectionParams& Params) const;
+	static FVector2f GetControlPoint(const FVector2f& Source, const FVector2f& Target);
 
 	bool ShouldChangeTangentForReroute(class UFlowGraphNode_Reroute* Reroute);
 	bool FindPinCenter(const UEdGraphPin* Pin, FVector2D& OutCenter) const;

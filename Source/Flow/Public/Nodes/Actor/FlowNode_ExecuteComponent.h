@@ -64,7 +64,32 @@ public:
 	virtual void UpdateNodeConfigText_Implementation() override;
 	// --
 
+	// IFlowDataPinValueSupplierInterface
+	virtual bool CanSupplyDataPinValues_Implementation() const override;
+	virtual FFlowDataPinResult_Bool TrySupplyDataPinAsBool_Implementation(const FName& PinName) const override;
+	virtual FFlowDataPinResult_Int TrySupplyDataPinAsInt_Implementation(const FName& PinName) const override;
+	virtual FFlowDataPinResult_Float TrySupplyDataPinAsFloat_Implementation(const FName& PinName) const override;
+	virtual FFlowDataPinResult_Name TrySupplyDataPinAsName_Implementation(const FName& PinName) const override;
+	virtual FFlowDataPinResult_String TrySupplyDataPinAsString_Implementation(const FName& PinName) const override;
+	virtual FFlowDataPinResult_Text TrySupplyDataPinAsText_Implementation(const FName& PinName) const override;
+	virtual FFlowDataPinResult_Enum TrySupplyDataPinAsEnum_Implementation(const FName& PinName) const override;
+	virtual FFlowDataPinResult_Vector TrySupplyDataPinAsVector_Implementation(const FName& PinName) const override;
+	virtual FFlowDataPinResult_Rotator TrySupplyDataPinAsRotator_Implementation(const FName& PinName) const override;
+	virtual FFlowDataPinResult_Transform TrySupplyDataPinAsTransform_Implementation(const FName& PinName) const override;
+	virtual FFlowDataPinResult_GameplayTag TrySupplyDataPinAsGameplayTag_Implementation(const FName& PinName) const override;
+	virtual FFlowDataPinResult_GameplayTagContainer TrySupplyDataPinAsGameplayTagContainer_Implementation(const FName& PinName) const override;
+	virtual FFlowDataPinResult_InstancedStruct TrySupplyDataPinAsInstancedStruct_Implementation(const FName& PinName) const override;
+	virtual FFlowDataPinResult_Object TrySupplyDataPinAsObject_Implementation(const FName& PinName) const override;
+	virtual FFlowDataPinResult_Class TrySupplyDataPinAsClass_Implementation(const FName& PinName) const override;
+	// --
+
 #if WITH_EDITOR
+	// IFlowContextPinSupplierInterface	
+	virtual bool SupportsContextPins() const override { return true; }
+	virtual TArray<FFlowPin> GetContextInputs() const override;
+	virtual TArray<FFlowPin> GetContextOutputs() const override;
+	// --
+
 	// UObject
 	virtual void PostLoad() override;
 	virtual void PostEditChangeProperty(struct FPropertyChangedEvent& PropertyChangedEvent) override;
@@ -90,6 +115,7 @@ protected:
 	bool TryInjectComponent();
 
 	UActorComponent* TryResolveComponent();
+	UActorComponent* GetResolvedComponent() const;
 	TSubclassOf<AActor> TryGetExpectedActorOwnerClass() const;
 
 protected:

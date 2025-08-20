@@ -836,6 +836,46 @@ bool UFlowGraphNode::SupportsCommentBubble() const
 	return Super::SupportsCommentBubble();
 }
 
+void UFlowGraphNode::OnNodeDoubleClicked() const
+{
+	UFlowNodeBase* FlowNodeBase = GetFlowNodeBase();
+	if (IsValid(FlowNodeBase))
+	{
+		if (UFlowGraphEditorSettings::Get()->NodeDoubleClickTarget == EFlowNodeDoubleClickTarget::NodeDefinition)
+		{
+			JumpToDefinition();
+		}
+		else
+		{
+			FString AssetPath;
+			UObject* AssetToEdit = nullptr;
+			if (UFlowNode* FlowNode = Cast<UFlowNode>(FlowNodeBase))
+			{
+				AssetPath = FlowNode->GetAssetPath();
+				AssetToEdit = FlowNode->GetAssetToEdit();
+			}
+
+			if (!AssetPath.IsEmpty())
+			{
+				GEditor->GetEditorSubsystem<UAssetEditorSubsystem>()->OpenEditorForAsset(AssetPath);
+			}
+			else if (AssetToEdit)
+			{
+				GEditor->GetEditorSubsystem<UAssetEditorSubsystem>()->OpenEditorForAsset(AssetToEdit);
+
+				if (GEditor->PlayWorld != nullptr)
+				{
+					OnNodeDoubleClickedInPIE();
+				}
+			}
+			else if (UFlowGraphEditorSettings::Get()->NodeDoubleClickTarget == EFlowNodeDoubleClickTarget::PrimaryAssetOrNodeDefinition)
+			{
+				JumpToDefinition();
+			}
+		}
+	}
+}
+
 void UFlowGraphNode::CreateInputPin(const FFlowPin& FlowPin, const int32 Index /*= INDEX_NONE*/)
 {
 	if (FlowPin.PinName.IsNone())
@@ -1671,8 +1711,9 @@ bool CheckPinsMatch(const TArray<FFlowPin>& LeftPins, const TArray<FFlowPin>& Ri
 		auto PinsAreEqualPredicate = [&Left](const FFlowPin& Right)
 		{
 			const bool bNameMatch = Left.PinName == Right.PinName;
+			const bool bFriendlyNameMatch = Left.PinFriendlyName.EqualTo(Right.PinFriendlyName);
 			const bool bTypeMatch = Left.GetPinType() == Right.GetPinType();
-			return bNameMatch && bTypeMatch;
+			return bNameMatch && bFriendlyNameMatch && bTypeMatch;
 		};
 
 		// For each required pin, make sure the existing pins array contains a pin that matches by name and type 
@@ -1699,7 +1740,7 @@ bool CheckPinsMatch(const TArray<UEdGraphPin*>& GraphPins, const TArray<FFlowPin
 	{
 		if (!GraphPins.ContainsByPredicate([&FlowNodePin](const UEdGraphPin* GraphNodePin)
 		{
-			return GraphNodePin->PinName == FlowNodePin.PinName;
+			return GraphNodePin->PinName == FlowNodePin.PinName && GraphNodePin->PinFriendlyName.EqualTo(FlowNodePin.PinFriendlyName);
 		}))
 		{
 			// Could not match the pin from the flow node with any of the EdPins array.

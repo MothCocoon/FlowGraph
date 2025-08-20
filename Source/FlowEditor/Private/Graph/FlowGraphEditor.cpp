@@ -4,10 +4,8 @@
 
 #include "Asset/FlowAssetEditor.h"
 #include "FlowEditorCommands.h"
-#include "Graph/FlowGraphEditorSettings.h"
 #include "Graph/FlowGraphSchema_Actions.h"
 #include "Graph/Nodes/FlowGraphNode.h"
-#include "Nodes/Graph/FlowNode_SubGraph.h"
 
 #include "Debugger/FlowDebuggerSubsystem.h"
 
@@ -46,7 +44,11 @@ void SFlowGraphEditor::Construct(const FArguments& InArgs, const TSharedPtr<FFlo
 	Arguments._GraphEvents.OnSelectionChanged = FOnSelectionChanged::CreateSP(this, &SFlowGraphEditor::OnSelectedNodesChanged);
 	Arguments._GraphEvents.OnNodeDoubleClicked = FSingleNodeEvent::CreateSP(this, &SFlowGraphEditor::OnNodeDoubleClicked);
 	Arguments._GraphEvents.OnTextCommitted = FOnNodeTextCommitted::CreateSP(this, &SFlowGraphEditor::OnNodeTitleCommitted);
+#if ENGINE_MAJOR_VERSION == 5 && ENGINE_MINOR_VERSION < 6
 	Arguments._GraphEvents.OnSpawnNodeByShortcut = FOnSpawnNodeByShortcut::CreateStatic(&SFlowGraphEditor::OnSpawnGraphNodeByShortcut, static_cast<UEdGraph*>(FlowAsset->GetGraph()));
+#else
+	Arguments._GraphEvents.OnSpawnNodeByShortcutAtLocation = FOnSpawnNodeByShortcutAtLocation::CreateStatic(&SFlowGraphEditor::OnSpawnGraphNodeByShortcut, static_cast<UEdGraph*>(FlowAsset->GetGraph()));
+#endif
 
 	SGraphEditor::Construct(Arguments);
 }
@@ -321,7 +323,11 @@ void SFlowGraphEditor::RedoGraphAction()
 	GEditor->RedoTransaction();
 }
 
+#if ENGINE_MAJOR_VERSION == 5 && ENGINE_MINOR_VERSION < 6
 FReply SFlowGraphEditor::OnSpawnGraphNodeByShortcut(FInputChord InChord, const FVector2D& InPosition, UEdGraph* InGraph)
+#else
+FReply SFlowGraphEditor::OnSpawnGraphNodeByShortcut(FInputChord InChord, const FVector2f& InPosition, UEdGraph* InGraph)
+#endif
 {
 	UEdGraph* Graph = InGraph;
 
@@ -331,6 +337,7 @@ FReply SFlowGraphEditor::OnSpawnGraphNodeByShortcut(FInputChord InChord, const F
 		if (Action.IsValid())
 		{
 			TArray<UEdGraphPin*> DummyPins;
+
 			Action->PerformAction(Graph, DummyPins, InPosition);
 			return FReply::Handled();
 		}
@@ -342,7 +349,11 @@ FReply SFlowGraphEditor::OnSpawnGraphNodeByShortcut(FInputChord InChord, const F
 void SFlowGraphEditor::OnCreateComment() const
 {
 	FFlowGraphSchemaAction_NewComment CommentAction;
+#if ENGINE_MAJOR_VERSION == 5 && ENGINE_MINOR_VERSION < 6
 	CommentAction.PerformAction(FlowAsset->GetGraph(), nullptr, GetPasteLocation());
+#else
+	CommentAction.PerformAction(FlowAsset->GetGraph(), nullptr, GetPasteLocation2f());
+#endif
 }
 
 bool SFlowGraphEditor::IsTabFocused() const
@@ -692,7 +703,11 @@ bool SFlowGraphEditor::CanCopyNodes() const
 
 void SFlowGraphEditor::PasteNodes()
 {
+#if ENGINE_MAJOR_VERSION == 5 && ENGINE_MINOR_VERSION < 6
 	PasteNodesHere(GetPasteLocation());
+#else
+	PasteNodesHere(GetPasteLocation2f());
+#endif
 }
 
 void SFlowGraphEditor::PasteNodesHere(const FVector2D& Location)
@@ -706,7 +721,7 @@ void SFlowGraphEditor::PasteNodesHere(const FVector2D& Location)
 	FlowGraph->LockUpdates();
 
 	const TArray<UFlowGraphNode*> PasteTargetNodes = DerivePasteTargetNodesFromSelectedNodes();
-	if (Algo::AnyOf(PasteTargetNodes, [](UFlowGraphNode* Node) { return Node && !Node->SubNodes.IsEmpty(); }))
+	if (Algo::AnyOf(PasteTargetNodes, [](const UFlowGraphNode* Node) { return Node && !Node->SubNodes.IsEmpty(); }))
 	{
 		checkf(PasteTargetNodes.Num() <= 1, TEXT("This should be enforced in CanPasteNodes()"));
 	}
@@ -880,7 +895,7 @@ bool SFlowGraphEditor::CanPasteNodes() const
 
 	// Disallow paste when multiple target nodes are selected, and if there are subnodes involved.
 	const TArray<UFlowGraphNode*> PasteTargetNodes = DerivePasteTargetNodesFromSelectedNodes();
-	const bool bHasSubNodes = Algo::AnyOf(PasteTargetNodes, [](UFlowGraphNode* Node) { return Node && !Node->SubNodes.IsEmpty(); });
+	const bool bHasSubNodes = Algo::AnyOf(PasteTargetNodes, [](const UFlowGraphNode* Node) { return Node && !Node->SubNodes.IsEmpty(); });
 
 	if (bHasSubNodes && PasteTargetNodes.Num() > 1)
 	{
@@ -994,51 +1009,9 @@ bool SFlowGraphEditor::CanDuplicateNodes() const
 
 void SFlowGraphEditor::OnNodeDoubleClicked(class UEdGraphNode* Node) const
 {
-	UFlowNodeBase* FlowNodeBase = Cast<UFlowGraphNode>(Node)->GetFlowNodeBase();
-	UFlowNode* FlowNode = Cast<UFlowNode>(FlowNodeBase);
-
-	if (IsValid(FlowNodeBase))
+	if (const UFlowGraphNode* FlowGraphNode = Cast<UFlowGraphNode>(Node))
 	{
-		if (UFlowGraphEditorSettings::Get()->NodeDoubleClickTarget == EFlowNodeDoubleClickTarget::NodeDefinition)
-		{
-			Node->JumpToDefinition();
-		}
-		else
-		{
-			FString AssetPath;
-			UObject* AssetToEdit = nullptr;
-			
-			if (FlowNode)
-			{
-				AssetPath = FlowNode->GetAssetPath();
-				AssetToEdit = FlowNode->GetAssetToEdit();
-			}
-			
-			if (!AssetPath.IsEmpty())
-			{
-				GEditor->GetEditorSubsystem<UAssetEditorSubsystem>()->OpenEditorForAsset(AssetPath);
-			}
-			else if (AssetToEdit)
-			{
-				GEditor->GetEditorSubsystem<UAssetEditorSubsystem>()->OpenEditorForAsset(AssetToEdit);
-
-				if (IsPIE())
-				{
-					if (UFlowNode_SubGraph* SubGraphNode = Cast<UFlowNode_SubGraph>(FlowNode))
-					{
-						const TWeakObjectPtr<UFlowAsset> SubFlowInstance = SubGraphNode->GetFlowAsset()->GetFlowInstance(SubGraphNode);
-						if (SubFlowInstance.IsValid())
-						{
-							SubFlowInstance->GetTemplateAsset()->SetInspectedInstance(SubFlowInstance);
-						}
-					}
-				}
-			}
-			else if (UFlowGraphEditorSettings::Get()->NodeDoubleClickTarget == EFlowNodeDoubleClickTarget::PrimaryAssetOrNodeDefinition)
-			{
-				Node->JumpToDefinition();
-			}
-		}
+		FlowGraphNode->OnNodeDoubleClicked();
 	}
 }
 

@@ -156,6 +156,9 @@ public:
 	virtual bool SupportsCommentBubble() const override;
 	// --
 
+	virtual void OnNodeDoubleClicked() const;
+	virtual void OnNodeDoubleClickedInPIE() const {};
+
 	/** check if node has any errors, used for assigning colors on graph */
 	virtual bool HasErrors() const;
 
