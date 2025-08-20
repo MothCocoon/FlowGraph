@@ -2,7 +2,6 @@
 
 #include "Nodes/Developer/FlowNode_Log.h"
 #include "FlowLogChannels.h"
-#include "FlowSettings.h"
 
 #include "Engine/Engine.h"
 
@@ -22,6 +21,9 @@ UFlowNode_Log::UFlowNode_Log(const FObjectInitializer& ObjectInitializer)
 	Category = TEXT("Developer");
 	NodeDisplayStyle = FlowNodeStyle::Developer;
 #endif
+
+	InputPins = { UFlowNode::DefaultInputPin };
+	OutputPins = { UFlowNode::DefaultOutputPin };
 }
 
 void UFlowNode_Log::ExecuteInput(const FName& PinName)
@@ -36,6 +38,14 @@ void UFlowNode_Log::ExecuteInput(const FName& PinName)
 		MessageResult.SetValue(Message);
 	}
 
+	// Format Message with named properties
+	FText FormattedText;
+	if (TryFormatTextWithNamedPropertiesAsParameters(FText::FromString(MessageResult.Value), FormattedText))
+	{
+		MessageResult.Value = FormattedText.ToString();
+	}
+
+	// Display the message
 	check(MessageResult.Result == EFlowDataPinResolveResult::Success);
 
 	switch (Verbosity)

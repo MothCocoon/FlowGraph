@@ -38,8 +38,17 @@ enum class EFlowNodeState : uint8
 	Max UMETA(Hidden),
 	Invalid UMETA(Hidden),
 	Min = 0 UMETA(Hidden),
+
+	// State subrange for states that count as "Finished"
+	FinishedFirst = Completed UMETA(Hidden),
+	FinishedLast = Aborted UMETA(Hidden),
 };
 FLOW_ENUM_RANGE_VALUES(EFlowNodeState)
+
+namespace EFlowNodeState_Classifiers
+{
+	FORCEINLINE bool IsFinishedState(EFlowNodeState State) { return FLOW_IS_ENUM_IN_SUBRANGE(State, EFlowNodeState::Finished); }
+}
 
 // Finish Policy value is read by Flow Node
 // Nodes have opportunity to terminate themselves differently if Flow Graph has been aborted
@@ -160,3 +169,18 @@ namespace EFlowForEachAddOnFunctionReturnValue_Classifiers
 {
 	FORCEINLINE bool ShouldContinueForEach(EFlowForEachAddOnFunctionReturnValue Result) { return FLOW_IS_ENUM_IN_SUBRANGE(Result, EFlowForEachAddOnFunctionReturnValue::ContinueForEach); }
 }
+
+UENUM()
+enum class EFlowForEachAddOnChildRule : int8
+{
+	// Apply the Function to all child addons (and children of addons, etc.)
+	AllChildren,
+
+	// Apply the Function to immediate child addons only (do not apply to their children)
+	ImmediateChildrenOnly,
+
+	Max UMETA(Hidden),
+	Invalid = -1 UMETA(Hidden),
+	Min = 0 UMETA(Hidden),
+};
+FLOW_ENUM_RANGE_VALUES(EFlowForEachAddOnChildRule);

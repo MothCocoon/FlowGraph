@@ -1083,6 +1083,27 @@ TArray<UFlowNode*> UFlowAsset::GetNodesInExecutionOrder(UFlowNode* FirstIterated
 	return FoundNodes;
 }
 
+TArray<UFlowNode*> UFlowAsset::GatherNodesConnectedToAllInputs() const
+{
+	TSet<TObjectKey<UFlowNode>> IteratedNodes;
+	TArray<UFlowNode*> ConnectedNodes;
+
+	// Nodes connected to the Start node
+	UFlowNode* DefaultEntryNode = GetDefaultEntryNode();
+	GetNodesInExecutionOrder_Recursive(DefaultEntryNode, IteratedNodes, ConnectedNodes);
+
+	// Nodes connected to Custom Input node(s)
+	for (const TPair<FGuid, UFlowNode*>& Node : ObjectPtrDecay(Nodes))
+	{
+		if (UFlowNode_CustomInput* CustomInput = Cast<UFlowNode_CustomInput>(Node.Value))
+		{
+			GetNodesInExecutionOrder_Recursive(CustomInput, IteratedNodes, ConnectedNodes);
+		}
+	}
+
+	return ConnectedNodes;
+}
+
 void UFlowAsset::AddInstance(UFlowAsset* Instance)
 {
 	ActiveInstances.Add(Instance);

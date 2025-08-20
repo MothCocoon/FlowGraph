@@ -28,5 +28,5 @@ public:
 	virtual bool EvaluatePredicate_Implementation() const override;
 	// --
 
-	static bool EvaluatePredicateOR(const TArray<UFlowNodeAddOn*>& AddOns);
+	FLOW_API static bool EvaluatePredicateOR(const TArray<UFlowNodeAddOn*>& AddOns);
 };

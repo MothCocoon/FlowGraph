@@ -2,13 +2,14 @@
 
 #pragma once
 
-#if ENGINE_MAJOR_VERSION == 5 && ENGINE_MINOR_VERSION < 5
-#include "InstancedStruct.h"
-#else
-#include "StructUtils/InstancedStruct.h"
-#endif
-
+#include "Runtime/Launch/Resources/Version.h"
 #include "UObject/Interface.h"
+
+#if ENGINE_MAJOR_VERSION == 5 && ENGINE_MINOR_VERSION < 4
+#include "StructUtils/InstancedStruct.h"
+#else
+#include "InstancedStruct.h"
+#endif
 
 #include "FlowDataPinPropertyProviderInterface.generated.h"
 

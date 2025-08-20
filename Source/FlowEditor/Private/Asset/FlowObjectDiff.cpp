@@ -3,13 +3,13 @@
 #include "Asset/FlowObjectDiff.h"
 
 #include "Asset/FlowDiffControl.h"
-#include "Nodes/FlowNodeBase.h"
-#include "EdGraph/EdGraph.h"
-
 #include "Graph/Nodes/FlowGraphNode.h"
-#include "SBlueprintDiff.h"
+#include "Nodes/FlowNodeBase.h"
 
 #include "DiffResults.h"
+#include "EdGraph/EdGraph.h"
+#include "Runtime/Launch/Resources/Version.h"
+#include "SBlueprintDiff.h"
 
 /////////////////////////////////////////////////////////////////////////////
 /// FFlowNodePropertyDiff

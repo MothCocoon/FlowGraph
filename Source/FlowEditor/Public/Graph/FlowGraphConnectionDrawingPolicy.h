@@ -4,6 +4,7 @@
 
 #include "ConnectionDrawingPolicy.h"
 #include "EdGraphUtilities.h"
+#include "Runtime/Launch/Resources/Version.h"
 
 UENUM()
 enum class EFlowConnectionDrawType : uint8
