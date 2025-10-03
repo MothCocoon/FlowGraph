@@ -3,8 +3,8 @@
 #include "Asset/FlowObjectDiff.h"
 
 #include "Asset/FlowDiffControl.h"
-#include "Graph/Nodes/FlowGraphNode.h"
 #include "Nodes/FlowNodeBase.h"
+#include "Graph/Nodes/FlowGraphNode.h"
 
 #include "DiffResults.h"
 #include "EdGraph/EdGraph.h"

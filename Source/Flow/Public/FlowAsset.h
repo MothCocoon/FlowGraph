@@ -4,6 +4,7 @@
 
 #include "FlowSave.h"
 #include "FlowTypes.h"
+#include "Asset/FlowAssetParamsTypes.h"
 #include "Nodes/FlowNode.h"
 
 #if WITH_EDITOR
@@ -21,6 +22,7 @@ class UFlowSubsystem;
 class UEdGraph;
 class UEdGraphNode;
 class UFlowAsset;
+class UFlowAssetParams;
 
 #if !UE_BUILD_SHIPPING
 DECLARE_DELEGATE(FFlowGraphEvent);
@@ -456,6 +458,28 @@ protected:
 public:
 	UFUNCTION(BlueprintNativeEvent, Category = "SaveGame")
 	bool IsBoundToWorld();
+
+//////////////////////////////////////////////////////////////////////////
+// FlowAssetParams support (Start node params for a flow graph)
+
+	// Default parameters asset for this Flow Asset (optional)
+	UPROPERTY(EditAnywhere, Category = FlowAssetParams, meta = (ShowCreateNew, HideChildParams))
+	FFlowAssetParamsPtr BaseAssetParams;
+
+#if WITH_EDITOR
+	// Called before saving the asset.
+	virtual void PreSaveRoot(FObjectPreSaveRootContext ObjectSaveContext) override;
+
+	// Generates a new params asset from the Start node.
+	UFlowAssetParams* GenerateParamsFromStartNode();
+
+	// Generates the FlowAssetParams name for the 'base' (root) asset, used when creating the params asset
+	virtual FString GenerateParamsAssetName() const;
+
+protected:
+
+	void ReconcileBaseAssetParams(const FDateTime& AssetLastSavedTimestamp);		
+#endif
 
 //////////////////////////////////////////////////////////////////////////
 // Utils

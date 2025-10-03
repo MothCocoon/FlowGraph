@@ -18,7 +18,6 @@ class UFlowNode;
 class UFlowNodeAddOn;
 class UFlowSubsystem;
 class UEdGraphNode;
-class IFlowOwnerInterface;
 class IFlowDataPinValueSupplierInterface;
 struct FFlowPin;
 struct FFlowNamedDataPinProperty;
@@ -157,16 +156,7 @@ public:
 	UFUNCTION(BlueprintCallable, Category = "FlowNode")
 	UObject* TryGetRootFlowObjectOwner() const;
 
-	// Returns the IFlowOwnerInterface for the owner object (if implemented)
-	//  NOTE - will consider a UActorComponent owner's owning actor if appropriate
-	IFlowOwnerInterface* GetFlowOwnerInterface() const;
-
 	static TArray<UFlowNodeBase*> BuildFlowNodeBaseAncestorChain(UFlowNodeBase& FromFlowNodeBase, bool bIncludeFromFlowNodeBase);
-
-protected:
-	// Helper functions for GetFlowOwnerInterface()
-	static IFlowOwnerInterface* TryGetFlowOwnerInterfaceFromRootFlowOwner(UObject& RootFlowOwner, const UClass& ExpectedOwnerClass);
-	static IFlowOwnerInterface* TryGetFlowOwnerInterfaceActor(UObject& RootFlowOwner, const UClass& ExpectedOwnerClass);
 
 //////////////////////////////////////////////////////////////////////////
 // AddOn support

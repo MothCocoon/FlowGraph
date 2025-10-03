@@ -5,8 +5,9 @@
 #include "FlowLogChannels.h"
 #include "FlowSettings.h"
 #include "FlowSubsystem.h"
-
 #include "AddOns/FlowNodeAddOn.h"
+#include "Asset/FlowAssetParams.h"
+#include "Asset/FlowAssetParamsUtils.h"
 #include "Interfaces/FlowDataPinGeneratorNodeInterface.h"
 #include "Nodes/FlowNodeBase.h"
 #include "Nodes/Graph/FlowNode_CustomInput.h"
@@ -19,8 +20,18 @@
 #include "Serialization/MemoryWriter.h"
 
 #if WITH_EDITOR
+#include "AssetRegistry/AssetRegistryModule.h"
+#include "AssetToolsModule.h"
+#include "ContentBrowserModule.h"
+#include "IContentBrowserSingleton.h"
 #include "Editor.h"
 #include "Editor/EditorEngine.h"
+#include "Modules/ModuleManager.h"
+#include "ObjectTools.h"
+#include "SourceControlHelpers.h"
+#include "UObject/ObjectSaveContext.h"
+#include "UObject/Package.h"
+#include "UObject/SavePackage.h"
 
 FString UFlowAsset::ValidationError_NodeClassNotAllowed = TEXT("Node class {0} is not allowed in this asset.");
 FString UFlowAsset::ValidationError_NullNodeInstance = TEXT("Node with GUID {0} is NULL");
@@ -100,6 +111,127 @@ void UFlowAsset::PostLoad()
 	for (const FGuid& Guid : NodesToRemoveGUID)
 	{
 		UnregisterNode(Guid);
+	}
+
+	ReconcileBaseAssetParams(FFlowAssetParamsUtils::GetLastSavedTimestampForObject(this));
+}
+
+void UFlowAsset::PreSaveRoot(FObjectPreSaveRootContext ObjectSaveContext)
+{
+	ReconcileBaseAssetParams(FDateTime::Now());
+}
+
+void UFlowAsset::ReconcileBaseAssetParams(const FDateTime& AssetLastSavedTimestamp)
+{
+	if (BaseAssetParams.AssetPtr.IsNull())
+	{
+		return;
+	}
+
+	UFlowAssetParams* BaseAssetParamsPtr = BaseAssetParams.AssetPtr.LoadSynchronous();
+	if (!IsValid(BaseAssetParamsPtr))
+	{
+		UE_LOG(LogFlow, Error, TEXT("Failed to load BaseAssetParams: %s"), *BaseAssetParams.AssetPtr.ToString());
+		return;
+	}
+
+	IFlowNamedPropertiesSupplierInterface* NamedPropertiesSupplier = Cast<IFlowNamedPropertiesSupplierInterface>(GetDefaultEntryNode());
+	if (!NamedPropertiesSupplier)
+	{
+		UE_LOG(LogFlow, Error, TEXT("No NamedPropertiesSupplier (e.g., Start node) found in FlowAsset: %s"), *GetPathName());
+		return;
+	}
+
+	TArray<FFlowNamedDataPinProperty>& MutableStartNodeProperties = NamedPropertiesSupplier->GetMutableNamedProperties();
+	const EFlowReconcilePropertiesResult ReconcileResult =
+		BaseAssetParamsPtr->ReconcilePropertiesWithStartNode(AssetLastSavedTimestamp, this, MutableStartNodeProperties);
+
+	if (EFlowReconcilePropertiesResult_Classifiers::IsErrorResult(ReconcileResult))
+	{
+		UE_LOG(LogFlow, Error, TEXT("Failed to reconcile BaseAssetParams for %s: %s"),
+			*BaseAssetParamsPtr->GetPathName(), *UEnum::GetDisplayValueAsText(ReconcileResult).ToString());
+	}
+}
+
+UFlowAssetParams* UFlowAsset::GenerateParamsFromStartNode()
+{
+	if (BaseAssetParams.AssetPtr.IsValid())
+	{
+		UE_LOG(LogFlow, Warning, TEXT("BaseAssetParams already exists for %s: %s"), *GetPathName(), *BaseAssetParams.AssetPtr.ToString());
+		return BaseAssetParams.AssetPtr.LoadSynchronous();
+	}
+
+	// Get the Start node
+	IFlowNamedPropertiesSupplierInterface* NamedPropertiesSupplier = Cast<IFlowNamedPropertiesSupplierInterface>(GetDefaultEntryNode());
+	if (!NamedPropertiesSupplier)
+	{
+		UE_LOG(LogFlow, Error, TEXT("No valid Start node found for generating params in %s"), *GetPathName());
+		return nullptr;
+	}
+
+	// Determine the params asset name
+	const FString ParamsAssetName = GenerateParamsAssetName();
+	if (ParamsAssetName.IsEmpty())
+	{
+		UE_LOG(LogFlow, Error, TEXT("Generated empty params asset name for %s"), *GetPathName());
+		return nullptr;
+	}
+
+	// Create the params asset
+	FAssetToolsModule& AssetToolsModule = FModuleManager::LoadModuleChecked<FAssetToolsModule>("AssetTools");
+	const FString PackagePath = FPackageName::GetLongPackagePath(GetPackage()->GetPathName());
+	FString UniquePackageName, UniqueAssetName;
+	AssetToolsModule.Get().CreateUniqueAssetName(PackagePath + TEXT("/") + ParamsAssetName, TEXT(""), UniquePackageName, UniqueAssetName);
+
+	UFlowAssetParams* NewParams = Cast<UFlowAssetParams>(
+		AssetToolsModule.Get().CreateAsset(UniqueAssetName, PackagePath, UFlowAssetParams::StaticClass(), nullptr));
+	if (!IsValid(NewParams))
+	{
+		UE_LOG(LogFlow, Error, TEXT("Failed to create Flow Asset Params: %s"), *UniqueAssetName);
+		return nullptr;
+	}
+
+	// Reconfigure with the new properties
+	NewParams->ConfigureFlowAssetParams(this, nullptr, NamedPropertiesSupplier->GetMutableNamedProperties());
+
+	// Source control integration
+	if (USourceControlHelpers::IsAvailable())
+	{
+		const FString FileName = USourceControlHelpers::PackageFilename(NewParams->GetPathName());
+		if (!USourceControlHelpers::CheckOutOrAddFile(FileName))
+		{
+			UE_LOG(LogFlow, Warning, TEXT("Failed to check out/add %s; saved in-memory only"), *NewParams->GetPathName());
+		}
+	}
+
+	// Assign to BaseAssetParams and sync Content Browser
+	BaseAssetParams.AssetPtr = NewParams;
+
+	FAssetRegistryModule& AssetRegistryModule = FModuleManager::LoadModuleChecked<FAssetRegistryModule>("AssetRegistry");
+	AssetRegistryModule.Get().AssetCreated(NewParams);
+	
+	FContentBrowserModule& ContentBrowserModule = FModuleManager::LoadModuleChecked<FContentBrowserModule>("ContentBrowser");
+	TArray<UObject*> AssetsToSync = { NewParams };
+	ContentBrowserModule.Get().SyncBrowserToAssets(AssetsToSync, true);
+
+	return NewParams;
+}
+
+FString UFlowAsset::GenerateParamsAssetName() const
+{
+	const FString FlowAssetName = GetName();
+
+	const int32 UnderscoreIndex = FlowAssetName.Find(TEXT("_"), ESearchCase::CaseSensitive);
+
+	if (UnderscoreIndex != INDEX_NONE)
+	{
+		const FString Prefix = FlowAssetName.Left(UnderscoreIndex);
+		const FString Suffix = FlowAssetName.Mid(UnderscoreIndex + 1);
+		return FString::Printf(TEXT("%sParams_%s"), *Prefix, *Suffix);
+	}
+	else
+	{
+		return FlowAssetName + TEXT("Params");
 	}
 }
 

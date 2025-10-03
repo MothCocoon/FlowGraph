@@ -11,7 +11,6 @@
 #include "FlowNode_ExecuteComponent.generated.h"
 
 // Forward Declarations
-class IFlowOwnerInterface;
 class UFlowInjectComponentsManager;
 
 UENUM()

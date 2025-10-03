@@ -32,9 +32,11 @@
 #include "DetailCustomizations/FlowDataPinProperty_ObjectCustomization.h"
 #include "DetailCustomizations/FlowPinCustomization.h"
 #include "DetailCustomizations/FlowNamedDataPinOutputPropertyCustomization.h"
+#include "DetailCustomizations/FlowAssetParamsPtrCustomization.h"
 
 #include "FlowAsset.h"
 #include "AddOns/FlowNodeAddOn.h"
+#include "Asset/FlowAssetParamsTypes.h"
 #include "Nodes/Actor/FlowNode_ComponentObserver.h"
 #include "Nodes/Actor/FlowNode_PlayLevelSequence.h"
 #include "Nodes/Graph/FlowNode_CustomInput.h"
@@ -55,7 +57,7 @@ static FName AssetSearchModuleName = TEXT("AssetSearch");
 #define LOCTEXT_NAMESPACE "FlowEditorModule"
 
 EAssetTypeCategories::Type FFlowEditorModule::FlowAssetCategory = static_cast<EAssetTypeCategories::Type>(0);
-FAssetCategoryPath FFLowAssetCategoryPaths::Flow(LOCTEXT("Flow", "Flow"));
+FAssetCategoryPath FFlowAssetCategoryPaths::Flow(LOCTEXT("Flow", "Flow"));
 
 void FFlowEditorModule::StartupModule()
 {
@@ -258,6 +260,8 @@ void FFlowEditorModule::RegisterDetailCustomizations()
 		RegisterCustomStructLayout(*FFlowDataPinInputProperty_Enum::StaticStruct(), FOnGetPropertyTypeCustomizationInstance::CreateStatic(&FFlowDataPinInputProperty_EnumCustomization::MakeInstance));
 		RegisterCustomStructLayout(*FFlowDataPinInputProperty_Class::StaticStruct(), FOnGetPropertyTypeCustomizationInstance::CreateStatic(&FFlowDataPinInputProperty_ClassCustomization::MakeInstance));
 		RegisterCustomStructLayout(*FFlowDataPinInputProperty_Object::StaticStruct(), FOnGetPropertyTypeCustomizationInstance::CreateStatic(&FFlowDataPinInputProperty_ObjectCustomization::MakeInstance));
+
+		RegisterCustomStructLayout(*FFlowAssetParamsPtr::StaticStruct(), FOnGetPropertyTypeCustomizationInstance::CreateStatic(&FFlowAssetParamsPtrCustomization::MakeInstance));
 
 		// Consider implementing details customizations... for every EFlowPinType
 		FLOW_ASSERT_ENUM_MAX(EFlowPinType, 16);

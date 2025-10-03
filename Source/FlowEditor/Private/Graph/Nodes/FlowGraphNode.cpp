@@ -28,6 +28,7 @@
 #include "Kismet2/KismetEditorUtilities.h"
 #include "ScopedTransaction.h"
 #include "SourceCodeNavigation.h"
+#include "Subsystems/AssetEditorSubsystem.h"
 #include "Textures/SlateIcon.h"
 #include "ToolMenuSection.h"
 #include "Editor/Transactor.h"

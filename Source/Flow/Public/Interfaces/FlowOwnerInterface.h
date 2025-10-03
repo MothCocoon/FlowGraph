@@ -6,8 +6,8 @@
 
 #include "FlowOwnerInterface.generated.h"
 
-// (optional) interface to enable a Flow owner object to execute CallOwnerFunction nodes
-UINTERFACE(MinimalAPI, Blueprintable, BlueprintType)
+// (deprecated) interface to enable a Flow owner object to execute CallOwnerFunction nodes
+UINTERFACE(MinimalAPI)
 class UFlowOwnerInterface : public UInterface
 {
 	GENERATED_BODY()

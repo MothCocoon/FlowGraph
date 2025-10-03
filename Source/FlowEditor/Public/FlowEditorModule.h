@@ -16,7 +16,7 @@ struct FGraphPanelPinConnectionFactory;
 class FFlowAssetEditor;
 class UFlowAsset;
 
-struct FLOWEDITOR_API FFLowAssetCategoryPaths : EAssetCategoryPaths
+struct FLOWEDITOR_API FFlowAssetCategoryPaths : EAssetCategoryPaths
 {
 	static FAssetCategoryPath Flow;
 };

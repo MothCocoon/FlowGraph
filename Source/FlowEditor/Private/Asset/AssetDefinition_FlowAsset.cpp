@@ -30,7 +30,7 @@ TConstArrayView<FAssetCategoryPath> UAssetDefinition_FlowAsset::GetAssetCategori
 {
 	if (UFlowGraphSettings::Get()->bExposeFlowAssetCreation)
 	{
-		static const auto Categories = {FFLowAssetCategoryPaths::Flow};
+		static const auto Categories = {FFlowAssetCategoryPaths::Flow};
 		return Categories;
 	}
 

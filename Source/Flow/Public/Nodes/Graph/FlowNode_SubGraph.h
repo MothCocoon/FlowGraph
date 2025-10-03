@@ -15,7 +15,7 @@ class FLOW_API UFlowNode_SubGraph : public UFlowNode, public IFlowDataPinGenerat
 {
 	GENERATED_UCLASS_BODY()
 
-public:	
+public:
 	friend class UFlowAsset;
 	friend class FFlowNode_SubGraphDetails;
 	friend class UFlowSubsystem;
@@ -26,6 +26,8 @@ public:
 private:
 	UPROPERTY(EditAnywhere, Category = "Graph")
 	TSoftObjectPtr<UFlowAsset> Asset;
+
+	// TODO (gtaylor) Create FlowAssetParams option for the Subgraph & reconcile with connected input pins' values
 
 	/*
 	 * Allow to create instance of the same Flow Asset as the asset containing this node

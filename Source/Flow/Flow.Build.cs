@@ -32,7 +32,8 @@ public class Flow : ModuleRules
 			PublicDependencyModuleNames.AddRange(new[]
 			{
 				"MessageLog",
-				"UnrealEd"
+				"UnrealEd",
+				"SourceControl",
 			});
 		}
 	}

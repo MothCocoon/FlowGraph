@@ -319,39 +319,6 @@ UObject* UFlowNodeBase::TryGetRootFlowObjectOwner() const
 	return nullptr;
 }
 
-IFlowOwnerInterface* UFlowNodeBase::GetFlowOwnerInterface() const
-{
-	const UFlowAsset* FlowAsset = GetFlowAsset();
-	if (!IsValid(FlowAsset))
-	{
-		return nullptr;
-	}
-
-	const UClass* ExpectedOwnerClass = FlowAsset->GetExpectedOwnerClass();
-	if (!IsValid(ExpectedOwnerClass))
-	{
-		return nullptr;
-	}
-
-	UObject* RootFlowOwner = FlowAsset->GetOwner();
-	if (!IsValid(RootFlowOwner))
-	{
-		return nullptr;
-	}
-
-	if (IFlowOwnerInterface* FlowOwnerInterface = TryGetFlowOwnerInterfaceFromRootFlowOwner(*RootFlowOwner, *ExpectedOwnerClass))
-	{
-		return FlowOwnerInterface;
-	}
-
-	if (IFlowOwnerInterface* FlowOwnerInterface = TryGetFlowOwnerInterfaceActor(*RootFlowOwner, *ExpectedOwnerClass))
-	{
-		return FlowOwnerInterface;
-	}
-
-	return nullptr;
-}
-
 TArray<UFlowNodeBase*> UFlowNodeBase::BuildFlowNodeBaseAncestorChain(UFlowNodeBase& FromFlowNodeBase, bool bIncludeFromFlowNodeBase)
 {
 	TArray<UFlowNodeBase*> AncestorChain;
@@ -372,47 +339,6 @@ TArray<UFlowNodeBase*> UFlowNodeBase::BuildFlowNodeBaseAncestorChain(UFlowNodeBa
 	}
 
 	return AncestorChain;
-}
-
-IFlowOwnerInterface* UFlowNodeBase::TryGetFlowOwnerInterfaceFromRootFlowOwner(UObject& RootFlowOwner, const UClass& ExpectedOwnerClass)
-{
-	const UClass* RootFlowOwnerClass = RootFlowOwner.GetClass();
-	if (!IsValid(RootFlowOwnerClass))
-	{
-		return nullptr;
-	}
-
-	if (!RootFlowOwnerClass->IsChildOf(&ExpectedOwnerClass))
-	{
-		return nullptr;
-	}
-
-	// If the immediate owner is the expected class type, return its FlowOwnerInterface
-	return CastChecked<IFlowOwnerInterface>(&RootFlowOwner);
-}
-
-IFlowOwnerInterface* UFlowNodeBase::TryGetFlowOwnerInterfaceActor(UObject& RootFlowOwner, const UClass& ExpectedOwnerClass)
-{
-	// Special case if the immediate owner is a component, also consider the component's owning actor
-	const UActorComponent* FlowComponent = Cast<UActorComponent>(&RootFlowOwner);
-	if (!IsValid(FlowComponent))
-	{
-		return nullptr;
-	}
-
-	AActor* ActorOwner = FlowComponent->GetOwner();
-	if (!IsValid(ActorOwner))
-	{
-		return nullptr;
-	}
-
-	const UClass* ActorOwnerClass = ActorOwner->GetClass();
-	if (!ActorOwnerClass->IsChildOf(&ExpectedOwnerClass))
-	{
-		return nullptr;
-	}
-
-	return CastChecked<IFlowOwnerInterface>(ActorOwner);
 }
 
 EFlowAddOnAcceptResult UFlowNodeBase::AcceptFlowNodeAddOnChild_Implementation(

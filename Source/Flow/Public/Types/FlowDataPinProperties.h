@@ -3,6 +3,7 @@
 #pragma once
 
 #include "GameplayTagContainer.h"
+#include "Kismet/BlueprintFunctionLibrary.h"
 #include "StructUtils/InstancedStruct.h"
 #include "UObject/Class.h"
 
@@ -17,7 +18,7 @@ struct FFlowDataPinProperty
 {
 	GENERATED_BODY()
 
-	FFlowDataPinProperty() { }
+	FFlowDataPinProperty() = default;
 
 	virtual ~FFlowDataPinProperty() { }
 
@@ -44,11 +45,86 @@ struct FFlowDataPinProperty
 
 			return UnrealType;
 		}
-		else
+
+		return StructProperty->Struct;
+	}
+#endif
+};
+
+// Wrapper for FFlowDataPinProperty that is used for flow nodes that add 
+// dynamic properties, with associated data pins, on the flow node instance
+// (as opposed to C++ or blueprint compile-time).
+USTRUCT(BlueprintType, DisplayName = "Flow Named DataPin Property")
+struct FFlowNamedDataPinProperty
+{
+	GENERATED_BODY()
+
+public:
+	// Name of this instanced property
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = DataPins, meta = (EditCondition = "bMayChangeNameAndType", HideEditConditionToggle))
+	FName Name = NAME_None;
+
+	// DataPinProperty payload
+	UPROPERTY(EditAnywhere, Category = DataPins, meta = (ExcludeBaseStruct, NoClear))
+	TInstancedStruct<FFlowDataPinProperty> DataPinProperty;
+
+#if WITH_EDITORONLY_DATA
+	// Unique identifier for property tracking
+	UPROPERTY()
+	FGuid Guid = FGuid::NewGuid();
+
+	// Tracks if this property overrides its super (auto-clears if matches super)
+	UPROPERTY()
+	bool bIsOverride = false;
+
+	// TODO (gtaylor) Does not currently police the type, 
+	// because that prevents the instanced struct contents being edited as well, 
+	// which is not what we want from this feature.  
+	// Will try to fix next pass on the details customization.
+	UPROPERTY()
+	bool bMayChangeNameAndType = true;
+#endif
+
+public:
+	FFlowNamedDataPinProperty() = default;
+
+	bool IsValid() const { return Name != NAME_None && DataPinProperty.GetPtr() != nullptr; }
+
+	bool IsInputProperty() const;
+	bool IsOutputProperty() const;
+
+#if WITH_EDITOR
+	FFlowPin CreateFlowPin() const { return FFlowDataPinProperty::CreateFlowPin(Name, DataPinProperty); }
+
+	FLOW_API FText BuildHeaderText() const;
+
+	void ConfigureForFlowAssetParams() 
+	{
+		bIsOverride = false;
+		bMayChangeNameAndType = false;
+	}
+
+	void ConfigureForFlowAssetStartNode()
+	{
+		bIsOverride = false;
+		bMayChangeNameAndType = true;
+	}
+
+	static void ConfigurePropertiesForFlowAssetParams(TArray<FFlowNamedDataPinProperty>& MutableProperties)
+	{
+		for (FFlowNamedDataPinProperty& Property : MutableProperties)
 		{
-			return StructProperty->Struct;
+			Property.ConfigureForFlowAssetParams();
 		}
 	}
+	static void ConfigurePropertiesForFlowAssetStartNode(TArray<FFlowNamedDataPinProperty>& MutableProperties)
+	{
+		for (FFlowNamedDataPinProperty& Property : MutableProperties)
+		{
+			Property.ConfigureForFlowAssetStartNode();
+		}
+	}
+
 #endif
 };
 
@@ -444,40 +520,6 @@ public:
 
 	const FSoftClassPath& GetAsSoftClass() const { return Value; }
 	UClass* GetResolvedClass() const { return Value.ResolveClass(); }
-};
-
-// Wrapper for FFlowDataPinProperty that is used for flow nodes that add 
-// dynamic properties, with associated data pins, on the flow node instance
-// (as opposed to C++ or blueprint compile-time).
-USTRUCT(BlueprintType, DisplayName = "Flow Named DataPin Property")
-struct FFlowNamedDataPinProperty
-{
-	GENERATED_BODY()
-
-public:
-
-	// Name of this instanced property
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = DataPins)
-	FName Name;
-
-	// DataPinProperty payload
-	UPROPERTY(EditAnywhere, Category = DataPins, meta = (ExcludeBaseStruct, NoClear))
-	TInstancedStruct<FFlowDataPinProperty> DataPinProperty;
-
-public:
-
-	FFlowNamedDataPinProperty() { }
-
-	bool IsValid() const { return Name != NAME_None && DataPinProperty.GetPtr() != nullptr; }
-
-	bool IsInputProperty() const;
-	bool IsOutputProperty() const;
-
-#if WITH_EDITOR
-	FFlowPin CreateFlowPin() const { return FFlowDataPinProperty::CreateFlowPin(Name, DataPinProperty); }
-
-	FLOW_API FText BuildHeaderText() const;
-#endif // WITH_EDITOR
 };
 
 // Wrapper-structs for a blueprint defaulted input pin types
