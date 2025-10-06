@@ -118,6 +118,9 @@ public:
 	UFUNCTION(BlueprintPure, Category = "FlowNode")
 	virtual int32 GetRandomSeed() const PURE_VIRTUAL(GetRandomSeed, return 0;);
 
+	// Returns the owning top-level Flow node.
+	virtual const UFlowNode* GetParentNode() const PURE_VIRTUAL(GetParentNode, return nullptr;);
+
 //////////////////////////////////////////////////////////////////////////
 // Pins	
 

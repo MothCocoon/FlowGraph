@@ -1320,6 +1320,27 @@ void UFlowGraphNode::SetParentNodeForSubNode(UFlowGraphNode* InParentNode)
 	{
 		// Once a SubNode, always a SubNode
 		bIsSubNode = true;
+		
+#if WITH_EDITOR
+		// Attempt to set the parent node if the instance is an AddOn
+		if (UFlowNodeAddOn* SelfAsAddOn = Cast<UFlowNodeAddOn>(NodeInstance))
+		{
+			const UFlowNode* TopLevelOwner = nullptr;
+		
+			if (const UFlowNode* ParentFlowNode = Cast<UFlowNode>(InParentNode->NodeInstance))
+			{
+				// Parent is the top-level flow node
+				TopLevelOwner = ParentFlowNode;
+			}
+			else if (const UFlowNodeAddOn* ParentAddOn = Cast<UFlowNodeAddOn>(InParentNode->NodeInstance))
+			{
+				// Bubble up to the top-level flow node
+				TopLevelOwner = ParentAddOn->GetParentNode();
+			}
+
+			SelfAsAddOn->SetParentNode(const_cast<UFlowNode*>(TopLevelOwner));
+		}
+#endif
 	}
 
 	ParentNode = InParentNode;
@@ -1479,10 +1500,12 @@ void UFlowGraphNode::AddSubNode(UFlowGraphNode* SubNode, class UEdGraph* ParentG
 
 	// set outer to be the graph so it doesn't go away
 	SubNode->Rename(nullptr, ParentGraph, REN_NonTransactional);
-	SubNode->SetParentNodeForSubNode(this);
 
 	SubNode->CreateNewGuid();
 	SubNode->PostPlacedNewNode();
+	
+	SubNode->SetParentNodeForSubNode(this);
+	
 	SubNode->AllocateDefaultPins();
 	SubNode->AutowireNewNode(nullptr);
 

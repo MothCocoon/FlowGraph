@@ -16,7 +16,11 @@ FFlowGraphToken::FFlowGraphToken(const UFlowAsset* InFlowAsset)
 }
 
 FFlowGraphToken::FFlowGraphToken(const UFlowNodeBase* InFlowNodeBase)
-	: GraphNode(InFlowNodeBase->GetGraphNode())
+	: GraphNode(
+		InFlowNodeBase->GetParentNode()
+		? InFlowNodeBase->GetParentNode()->GetGraphNode()
+		: nullptr
+	)
 {
 	CachedText = InFlowNodeBase->GetNodeTitle();
 }
