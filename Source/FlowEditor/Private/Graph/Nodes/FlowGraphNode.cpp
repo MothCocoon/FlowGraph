@@ -65,9 +65,12 @@ UFlowNodeBase* UFlowGraphNode::GetFlowNodeBase() const
 	{
 		if (const UFlowNode* FlowNode = Cast<UFlowNode>(NodeInstance))
 		{
-			if (const UFlowAsset* InspectedInstance = FlowNode->GetFlowAsset()->GetInspectedInstance())
+			if (const UFlowAsset* FlowAsset = FlowNode->GetFlowAsset())
 			{
-				return InspectedInstance->GetNode(FlowNode->GetGuid());
+				if (const UFlowAsset* InspectedInstance = FlowAsset->GetInspectedInstance())
+				{
+					return InspectedInstance->GetNode(FlowNode->GetGuid());
+				}
 			}
 		}
 
