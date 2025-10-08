@@ -93,3 +93,17 @@ enum class EFlowDataPinResolveResult : uint8
 	Min = 0 UMETA(Hidden),
 };
 FLOW_ENUM_RANGE_VALUES(EFlowDataPinResolveResult)
+
+UENUM(BlueprintType)
+enum class EFlowDataMultiType : uint8
+{
+	Single,
+	Array,
+
+	// TODO (gtaylor) Consider future types like Set, Map
+
+	Max UMETA(Hidden),
+	Invalid UMETA(Hidden),
+	Min = 0 UMETA(Hidden),
+};
+FLOW_ENUM_RANGE_VALUES(EFlowDataMultiType)

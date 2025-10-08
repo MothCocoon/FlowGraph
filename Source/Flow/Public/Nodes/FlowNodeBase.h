@@ -6,6 +6,7 @@
 
 #include "Interfaces/FlowCoreExecutableInterface.h"
 #include "Interfaces/FlowContextPinSupplierInterface.h"
+#include "Interfaces/FlowDataPinValueOwnerInterface.h"
 #include "FlowMessageLog.h"
 #include "FlowTags.h" // used by subclasses
 #include "FlowTypes.h"
@@ -59,6 +60,7 @@ class FLOW_API UFlowNodeBase
 	: public UObject
 	, public IFlowCoreExecutableInterface
 	, public IFlowContextPinSupplierInterface
+	, public IFlowDataPinValueOwnerInterface
 {
 	GENERATED_UCLASS_BODY()
 
@@ -404,6 +406,7 @@ protected:
 	UFUNCTION(BlueprintImplementableEvent, Category = "FlowNode", meta = (DisplayName = "Get Node Description"))
 	FString K2_GetNodeDescription() const;
 
+public:
 	UFUNCTION(BlueprintCallable, Category = "FlowNode", meta = (DevelopmentOnly))
 	void LogError(FString Message, const EFlowOnScreenMessageType OnScreenMessageType = EFlowOnScreenMessageType::Permanent) const;
 
