@@ -5,6 +5,7 @@
 #include "Algo/Unique.h"
 #include "Containers/Array.h"
 #include "Math/RandomStream.h"
+#include "Templates/Greater.h"
 
 namespace FlowArray
 {
