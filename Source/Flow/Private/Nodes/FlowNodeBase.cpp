@@ -980,7 +980,7 @@ FFlowDataPinResult UFlowNodeBase::TryResolveDataPin(FName PinName) const
 
 		DataPinResult = IFlowDataPinValueSupplierInterface::Execute_TrySupplyDataPin(CastChecked<UObject>(SupplierData.PinValueSupplier), SupplierData.SupplierPinName);
 
-		if (DataPinResult.Result == EFlowDataPinResolveResult::Success)
+		if (FlowPinType::IsSuccess(DataPinResult.Result))
 		{
 			return DataPinResult;
 		}
