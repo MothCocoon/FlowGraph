@@ -11,6 +11,7 @@
 #include "FlowTags.h" // used by subclasses
 #include "FlowTypes.h"
 #include "Types/FlowDataPinResults.h"
+#include "Types/FlowPinTypeTemplates.h"
 
 #include "FlowNodeBase.generated.h"
 
@@ -22,6 +23,7 @@ class UEdGraphNode;
 class IFlowDataPinValueSupplierInterface;
 struct FFlowPin;
 struct FFlowNamedDataPinProperty;
+struct FFlowPinType;
 
 #if WITH_EDITORONLY_DATA
 DECLARE_DELEGATE(FFlowNodeEvent);
@@ -35,21 +37,6 @@ struct FFlowPinValueSupplierData
 {
 	FName SupplierPinName;
 	const IFlowDataPinValueSupplierInterface* PinValueSupplier = nullptr;
-};
-
-// Helper template to reduce (some) of the boilerplate in TryResolveDataPinAs...() functions
-template <typename TFlowDataPinResultType, EFlowPinType PinType>
-struct TResolveDataPinWorkingData
-{
-	bool TrySetupWorkingData(const FName& PinName, const UFlowNodeBase& FlowNodeBase);
-
-	TFlowDataPinResultType DataPinResult;
-	const UFlowNode* FlowNode = nullptr;
-	const FFlowPin* FlowPin = nullptr;
-	
-	TArray<FFlowPinValueSupplierData> PinValueSupplierDatas;
-
-	static constexpr bool bCheckDefaultProperties = true;
 };
 
 /**
@@ -225,56 +212,110 @@ public:
 //////////////////////////////////////////////////////////////////////////
 // Data Pins
 
-	// Must implement TryResolveDataAs... for every EFlowPinType
-	FLOW_ASSERT_ENUM_MAX(EFlowPinType, 16);
+	// IFlowDataPinValueOwnerInterface
+#if WITH_EDITOR
+public:
+	virtual bool CanModifyFlowDataPinType() const override;
+	virtual bool ShowFlowDataPinValueInputPinCheckbox() const override;
+	virtual bool ShowFlowDataPinValueClassFilter(const FFlowDataPinValue* Value) const override;
+	virtual bool CanEditFlowDataPinValueClassFilter(const FFlowDataPinValue* Value) const override;
+	virtual void SetFlowDataPinValuesRebuildDelegate(FSimpleDelegate InDelegate) override
+	{
+		FlowDataPinValuesRebuildDelegate = InDelegate;
+	}
+	virtual void RequestFlowDataPinValuesDetailsRebuild() override
+	{
+		if (FlowDataPinValuesRebuildDelegate.IsBound())
+		{
+			FlowDataPinValuesRebuildDelegate.Execute();
+		}
+	}
+private:
+	FSimpleDelegate FlowDataPinValuesRebuildDelegate;
+protected:
+	// Helpers for IFlowDataPinValueOwnerInterface
+	bool IsPlacedInFlowAsset() const;
+	bool IsFlowNamedPropertiesSupplier() const;
+#endif
+	// --
 
-	UFUNCTION(BlueprintCallable, Category = DataPins, DisplayName = "Try Resolve DataPin As Bool")
+private:
+	UFUNCTION(BlueprintPure, Category = DataPins, DisplayName = "Resolve DataPin By Name")
+	FFlowDataPinResult TryResolveDataPin(FName PinName) const;
+	
+public:
+	// Generic single-value resolve & extractor
+	template <typename TFlowPinType>
+	EFlowDataPinResolveResult TryResolveDataPinValue(const FName& PinName, typename TFlowPinType::ValueType& OutValue, EFlowSingleFromArray SingleFromArray = EFlowSingleFromArray::LastValue) const;
+
+	// Generic array-value resolve & extractor
+	template <typename TFlowPinType>
+	EFlowDataPinResolveResult TryResolveDataPinValues(const FName& PinName, TArray<typename TFlowPinType::ValueType>& OutValues) const;
+
+	// Special-case single-value resolve & extractor for native enums
+	template <typename TEnumType> requires std::is_enum_v<TEnumType>
+	EFlowDataPinResolveResult TryResolveDataPinValue(const FName& PinName, TEnumType& OutValue, EFlowSingleFromArray SingleFromArray = EFlowSingleFromArray::LastValue) const;
+
+	// Special-case array-value resolve & extractor for native enums 
+	template <typename TEnumType> requires std::is_enum_v<TEnumType>
+	EFlowDataPinResolveResult TryResolveDataPinValues(const FName& PinName, TArray<TEnumType>& OutValues) const;
+
+	// Special-case single-value resolve & extractor for enums (as FName values)
+	template <typename TFlowPinType = FFlowPinType_Enum>
+	EFlowDataPinResolveResult TryResolveDataPinValue(const FName& PinName, FName& OutEnumValue, UEnum*& OutEnumClass, EFlowSingleFromArray SingleFromArray = EFlowSingleFromArray::LastValue) const;
+
+	// Special-case array-value resolve & extractor for enums (as FName values)
+	template <typename TFlowPinType = FFlowPinType_Enum>
+	EFlowDataPinResolveResult TryResolveDataPinValues(const FName& PinName, TArray<FName>& OutEnumValues, UEnum*& OutEnumClass) const;
+
+public:
+
+	// #FlowDataPinLegacy
+	UFUNCTION(BlueprintCallable, Category = DataPins, DisplayName = "Try Resolve DataPin As Bool", meta = (DeprecatedFunction, DeprecationMessage = "Use TryResolveDataPin (in blueprint) or TryResolveDataPinValue(s) (in code) instead"))
 	FFlowDataPinResult_Bool TryResolveDataPinAsBool(const FName& PinName) const;
 
-	UFUNCTION(BlueprintCallable, Category = DataPins, DisplayName = "Try Resolve DataPin As Int")
+	UFUNCTION(BlueprintCallable, Category = DataPins, DisplayName = "Try Resolve DataPin As Int", meta = (DeprecatedFunction, DeprecationMessage = "Use TryResolveDataPin (in blueprint) or TryResolveDataPinValue(s) (in code) instead"))
 	FFlowDataPinResult_Int TryResolveDataPinAsInt(const FName& PinName) const;
 
-	UFUNCTION(BlueprintCallable, Category = DataPins, DisplayName = "Try Resolve DataPin As Float")
+	UFUNCTION(BlueprintCallable, Category = DataPins, DisplayName = "Try Resolve DataPin As Float", meta = (DeprecatedFunction, DeprecationMessage = "Use TryResolveDataPin (in blueprint) or TryResolveDataPinValue(s) (in code) instead"))
 	FFlowDataPinResult_Float TryResolveDataPinAsFloat(const FName& PinName) const;
 
-	UFUNCTION(BlueprintCallable, Category = DataPins, DisplayName = "Try Resolve DataPin As Name")
+	UFUNCTION(BlueprintCallable, Category = DataPins, DisplayName = "Try Resolve DataPin As Name", meta = (DeprecatedFunction, DeprecationMessage = "Use TryResolveDataPin (in blueprint) or TryResolveDataPinValue(s) (in code) instead"))
 	FFlowDataPinResult_Name TryResolveDataPinAsName(const FName& PinName) const;
 
-	UFUNCTION(BlueprintCallable, Category = DataPins, DisplayName = "Try Resolve DataPin As String")
+	UFUNCTION(BlueprintCallable, Category = DataPins, DisplayName = "Try Resolve DataPin As String", meta = (DeprecatedFunction, DeprecationMessage = "Use TryResolveDataPin (in blueprint) or TryResolveDataPinValue(s) (in code) instead"))
 	FFlowDataPinResult_String TryResolveDataPinAsString(const FName& PinName) const;
 
-	UFUNCTION(BlueprintCallable, Category = DataPins, DisplayName = "Try Resolve DataPin As Text")
+	UFUNCTION(BlueprintCallable, Category = DataPins, DisplayName = "Try Resolve DataPin As Text", meta = (DeprecatedFunction, DeprecationMessage = "Use TryResolveDataPin (in blueprint) or TryResolveDataPinValue(s) (in code) instead"))
 	FFlowDataPinResult_Text TryResolveDataPinAsText(const FName& PinName) const;
 
-	UFUNCTION(BlueprintCallable, Category = DataPins, DisplayName = "Try Resolve DataPin As Enum")
+	UFUNCTION(BlueprintCallable, Category = DataPins, DisplayName = "Try Resolve DataPin As Enum", meta = (DeprecatedFunction, DeprecationMessage = "Use TryResolveDataPin (in blueprint) or TryResolveDataPinValue(s) (in code) instead"))
 	FFlowDataPinResult_Enum TryResolveDataPinAsEnum(const FName& PinName) const;
 
-	UFUNCTION(BlueprintCallable, Category = DataPins, DisplayName = "Try Resolve DataPin As Vector")
+	UFUNCTION(BlueprintCallable, Category = DataPins, DisplayName = "Try Resolve DataPin As Vector", meta = (DeprecatedFunction, DeprecationMessage = "Use TryResolveDataPin (in blueprint) or TryResolveDataPinValue(s) (in code) instead"))
 	FFlowDataPinResult_Vector TryResolveDataPinAsVector(const FName& PinName) const;
 
-	UFUNCTION(BlueprintCallable, Category = DataPins, DisplayName = "Try Resolve DataPin As Rotator")
+	UFUNCTION(BlueprintCallable, Category = DataPins, DisplayName = "Try Resolve DataPin As Rotator", meta = (DeprecatedFunction, DeprecationMessage = "Use TryResolveDataPin (in blueprint) or TryResolveDataPinValue(s) (in code) instead"))
 	FFlowDataPinResult_Rotator TryResolveDataPinAsRotator(const FName& PinName) const;
 
-	UFUNCTION(BlueprintCallable, Category = DataPins, DisplayName = "Try Resolve DataPin As Transform")
+	UFUNCTION(BlueprintCallable, Category = DataPins, DisplayName = "Try Resolve DataPin As Transform", meta = (DeprecatedFunction, DeprecationMessage = "Use TryResolveDataPin (in blueprint) or TryResolveDataPinValue(s) (in code) instead"))
 	FFlowDataPinResult_Transform TryResolveDataPinAsTransform(const FName& PinName) const;
 
-	UFUNCTION(BlueprintCallable, Category = DataPins, DisplayName = "Try Resolve DataPin As GameplayTag")
+	UFUNCTION(BlueprintCallable, Category = DataPins, DisplayName = "Try Resolve DataPin As GameplayTag", meta = (DeprecatedFunction, DeprecationMessage = "Use TryResolveDataPin (in blueprint) or TryResolveDataPinValue(s) (in code) instead"))
 	FFlowDataPinResult_GameplayTag TryResolveDataPinAsGameplayTag(const FName& PinName) const;
 
-	UFUNCTION(BlueprintCallable, Category = DataPins, DisplayName = "Try Resolve DataPin As GameplayTagContainer")
+	UFUNCTION(BlueprintCallable, Category = DataPins, DisplayName = "Try Resolve DataPin As GameplayTagContainer", meta = (DeprecatedFunction, DeprecationMessage = "Use TryResolveDataPin (in blueprint) or TryResolveDataPinValue(s) (in code) instead"))
 	FFlowDataPinResult_GameplayTagContainer TryResolveDataPinAsGameplayTagContainer(const FName& PinName) const;
 
-	UFUNCTION(BlueprintCallable, Category = DataPins, DisplayName = "Try Resolve DataPin As InstancedStruct")
+	UFUNCTION(BlueprintCallable, Category = DataPins, DisplayName = "Try Resolve DataPin As InstancedStruct", meta = (DeprecatedFunction, DeprecationMessage = "Use TryResolveDataPin (in blueprint) or TryResolveDataPinValue(s) (in code) instead"))
 	FFlowDataPinResult_InstancedStruct TryResolveDataPinAsInstancedStruct(const FName& PinName) const;
 
-	UFUNCTION(BlueprintCallable, Category = DataPins, DisplayName = "Try Resolve DataPin As Object")
+	UFUNCTION(BlueprintCallable, Category = DataPins, DisplayName = "Try Resolve DataPin As Object", meta = (DeprecatedFunction, DeprecationMessage = "Use TryResolveDataPin (in blueprint) or TryResolveDataPinValue(s) (in code) instead"))
 	FFlowDataPinResult_Object TryResolveDataPinAsObject(const FName& PinName) const;
 
-	UFUNCTION(BlueprintCallable, Category = DataPins, DisplayName = "Try Resolve DataPin As Class")
+	UFUNCTION(BlueprintCallable, Category = DataPins, DisplayName = "Try Resolve DataPin As Class", meta = (DeprecatedFunction, DeprecationMessage = "Use TryResolveDataPin (in blueprint) or TryResolveDataPinValue(s) (in code) instead"))
 	FFlowDataPinResult_Class TryResolveDataPinAsClass(const FName& PinName) const;
-
-	// Public only for TResolveDataPinWorkingData's use
-	EFlowDataPinResolveResult TryResolveDataPinPrerequisites(const FName& PinName, const UFlowNode*& FlowNode, const FFlowPin*& FlowPin, EFlowPinType PinType) const;
+	// --
 
 protected:
 
@@ -334,6 +375,8 @@ public:
 
 	void RequestReconstruction() const { (void) OnReconstructionRequested.ExecuteIfBound(); };
 	
+	void SetCanDelete(bool CanDelete) { bCanDelete = CanDelete;}
+	
 #endif
 
 protected:
@@ -365,21 +408,33 @@ protected:
 
 #if WITH_EDITOR
 public:
+	// WARNING! Call UFlowGraphSettings::GetNodeCategoryForNode() instead!
 	virtual FString GetNodeCategory() const;
 
 	const FGameplayTag& GetNodeDisplayStyle() const { return NodeDisplayStyle; }
 
 	// This method allows to have different for every node instance, i.e. Red if node represents enemy, Green if node represents a friend
 	virtual bool GetDynamicTitleColor(FLinearColor& OutColor) const;
-	
-	virtual FText GetNodeTitle() const;
-	virtual FText GetNodeToolTip() const;
-	virtual FText GetNodeConfigText() const;
+
+	virtual FText GetNodeTitle() const { return K2_GetNodeTitle(); }
+
+	virtual FText GetNodeToolTip() const { return K2_GetNodeToolTip(); }
+
 	FText GetGeneratedDisplayName() const;
 
 protected:
 	void EnsureNodeDisplayStyle();
 #endif // WITH_EDITOR
+
+public:
+	UFUNCTION(BlueprintNativeEvent, Category = "FlowNode")
+	FText K2_GetNodeTitle() const;
+	
+	UFUNCTION(BlueprintNativeEvent, Category = "FlowNode")
+	FText K2_GetNodeToolTip() const;
+
+	UFUNCTION(BlueprintPure, Category = "FlowNode")
+	virtual FText GetNodeConfigText() const;
 
 protected:	
 	// Set the editor-only Config Text 
@@ -424,3 +479,57 @@ protected:
 	bool BuildMessage(FString& Message) const;
 #endif
 };
+
+// Templates & inline implementations:
+
+template <typename TFlowPinType>
+EFlowDataPinResolveResult UFlowNodeBase::TryResolveDataPinValue(const FName& PinName, typename TFlowPinType::ValueType& OutValue, EFlowSingleFromArray SingleFromArray /*= EFlowSingleFromArray::LastValue*/) const
+{
+	const FFlowDataPinResult DataPinResult = TryResolveDataPin(PinName);
+	return FlowPinType::TryExtractValue<TFlowPinType>(DataPinResult, OutValue, SingleFromArray);
+}
+
+template <typename TFlowPinType>
+EFlowDataPinResolveResult UFlowNodeBase::TryResolveDataPinValues(const FName& PinName, TArray<typename TFlowPinType::ValueType>& OutValues) const
+{
+	const FFlowDataPinResult DataPinResult = TryResolveDataPin(PinName);
+	return FlowPinType::TryExtractValues<TFlowPinType>(DataPinResult, OutValues);
+}
+
+template <typename TFlowPinType>
+EFlowDataPinResolveResult UFlowNodeBase::TryResolveDataPinValue(const FName& PinName, FName& OutEnumValue, UEnum*& OutEnumClass, EFlowSingleFromArray SingleFromArray /*= EFlowSingleFromArray::LastValue*/) const
+{
+	const FFlowDataPinResult DataPinResult = TryResolveDataPin(PinName);
+	if (!FlowPinType::IsSuccess(DataPinResult.Result))
+	{
+		return DataPinResult.Result;
+	}
+
+	return FlowPinType::TryExtractValue<TFlowPinType>(DataPinResult, OutEnumValue, OutEnumClass, SingleFromArray);
+}
+
+template <typename TFlowPinType>
+EFlowDataPinResolveResult UFlowNodeBase::TryResolveDataPinValues(const FName& PinName, TArray<FName>& OutEnumValues, UEnum*& OutEnumClass) const
+{
+	const FFlowDataPinResult DataPinResult = TryResolveDataPin(PinName);
+	if (!FlowPinType::IsSuccess(DataPinResult.Result))
+	{
+		return DataPinResult.Result;
+	}
+
+	return FlowPinType::TryExtractValues<TFlowPinType>(DataPinResult, OutEnumValues, OutEnumClass);
+}
+
+template <typename TEnumType> requires std::is_enum_v<TEnumType>
+EFlowDataPinResolveResult UFlowNodeBase::TryResolveDataPinValue(const FName& PinName, TEnumType& OutValue, EFlowSingleFromArray SingleFromArray /*= EFlowSingleFromArray::LastValue*/) const
+{
+	const FFlowDataPinResult DataPinResult = TryResolveDataPin(PinName);
+	return FlowPinType::TryExtractValue<TEnumType>(DataPinResult, OutValue, SingleFromArray);
+}
+
+template <typename TEnumType> requires std::is_enum_v<TEnumType>
+EFlowDataPinResolveResult UFlowNodeBase::TryResolveDataPinValues(const FName& PinName, TArray<TEnumType>& OutValues) const
+{
+	const FFlowDataPinResult DataPinResult = TryResolveDataPin(PinName);
+	return FlowPinType::TryExtractValues<TEnumType>(DataPinResult, OutValues);
+}

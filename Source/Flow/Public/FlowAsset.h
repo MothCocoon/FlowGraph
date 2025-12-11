@@ -29,36 +29,6 @@ DECLARE_DELEGATE(FFlowGraphEvent);
 DECLARE_DELEGATE_TwoParams(FFlowSignalEvent, const FGuid& /*NodeGuid*/, const FName& /*PinName*/);
 #endif
 
-// Working Data struct for the Harvest Data Pins operation
-// (passed between functions involved in the harvesting operation to simplify the function signatures)
-struct FFlowHarvestDataPinsWorkingData
-{
-	FFlowHarvestDataPinsWorkingData(UFlowNode& InFlowNode, const TMap<FName, FName>& PinNameMapPrev, const TArray<FFlowPin>& InputPinsPrev, const TArray<FFlowPin>& OutputPinsPrev)
-		: FlowNode(&InFlowNode)
-		, PinNameToBoundPropertyNameMapPrev(PinNameMapPrev)
-		, AutoInputDataPinsPrev(InputPinsPrev)
-		, AutoOutputDataPinsPrev(OutputPinsPrev)
-		{ }
-
-#if WITH_EDITOR
-	bool DidPinNameToBoundPropertyNameMapChange() const;
-	bool DidAutoInputDataPinsChange() const;
-	bool DidAutoOutputDataPinsChange() const;
-#endif
-
-	UFlowNode* FlowNode = nullptr;
-
-	const TMap<FName, FName>& PinNameToBoundPropertyNameMapPrev;
-	const TArray<FFlowPin>& AutoInputDataPinsPrev;
-	const TArray<FFlowPin>& AutoOutputDataPinsPrev;
-	
-	TMap<FName, FName> PinNameToBoundPropertyNameMapNext;
-	TArray<FFlowPin> AutoInputDataPinsNext;
-	TArray<FFlowPin> AutoOutputDataPinsNext;
-
-	bool bPinNameMapChanged = false;
-};
-
 /**
  * Single asset containing flow nodes.
  */
@@ -175,24 +145,11 @@ public:
 	// Processes nodes and updates pin connections from the graph to the UFlowNode (processes all nodes in the graph if passed nullptr)
 	void HarvestNodeConnections(UFlowNode* TargetNode = nullptr);
 
+	static bool TryGetDefaultForInputPinName(const FStructProperty& StructProperty, const void* Container, FString& OutString);
+
 	// Updates the auto-generated pins and bindings for a given FlowNode,
 	// returns true if any changes were made.
 	bool TryUpdateManagedFlowPinsForNode(UFlowNode& FlowNode);
-
-protected:
-	void AddDataPinPropertyBindingToMap(
-		const FName& PinAuthoredName,
-		const FName& PropertyAuthoredName,
-		FFlowHarvestDataPinsWorkingData& InOutData);
-	virtual bool TryCreateFlowDataPinFromMetadataValue(
-		const FString& MetadataValue,
-		UFlowNode& FlowNode,
-		const FProperty& Property,
-		const FText& PinDisplayName,
-		const bool bIsInputPin,
-		TArray<FFlowPin>* InOutDataPinsNext) const;
-
-	void HarvestFlowPinMetadataForProperty(const FProperty* Property, FFlowHarvestDataPinsWorkingData& InOutData);
 #endif
 
 public:
@@ -211,12 +168,17 @@ public:
 
 		return nullptr;
 	}
+	
+	TArray<UFlowNode*> GetAllNodes() const;
 
 	UFUNCTION(BlueprintPure, Category = "FlowAsset")
 	virtual UFlowNode* GetDefaultEntryNode() const;
 
 	// Gathers all of the nodes that are connected to the Start & Custom Inputs of the flow graph
 	TArray<UFlowNode*> GatherNodesConnectedToAllInputs() const;
+
+	// Return all other Pins connected to the passed Pin.
+	TArray<FConnectedPin> GatherPinsConnectedToPin(const FConnectedPin& Pin) const;
 
 	UFUNCTION(BlueprintPure, Category = "FlowAsset", meta = (DeterminesOutputType = "FlowNodeClass"))
 	TArray<UFlowNode*> GetNodesInExecutionOrder(UFlowNode* FirstIteratedNode, const TSubclassOf<UFlowNode> FlowNodeClass);
@@ -394,9 +356,10 @@ protected:
 	void TriggerCustomInput_FromSubGraph(UFlowNode_SubGraph* Node, const FName& EventName) const;
 	void TriggerCustomOutput(const FName& EventName);
 
-	void TriggerInput(const FGuid& NodeGuid, const FName& PinName);
+	// TODO: Extend FromPin through to Node level Trigger functions
+	virtual void TriggerInput(const FGuid& NodeGuid, const FName& PinName, const FConnectedPin& FromPin);
 
-	void FinishNode(UFlowNode* Node);
+	virtual void FinishNode(UFlowNode* Node);
 	void ResetNodes();
 
 #if !UE_BUILD_SHIPPING
@@ -433,7 +396,7 @@ protected:
 	// Expects to be owned (at runtime) by an object with this class (or one of its subclasses)
 	// NOTE - If the class is an AActor, and the flow asset is owned by a component,
 	//        it will consider the component's owner for the AActor
-	UPROPERTY(EditAnywhere, Category = "Flow", meta = (MustImplement = "/Script/Flow.FlowOwnerInterface"))
+	UPROPERTY(EditAnywhere, Category = "Flow")
 	TSubclassOf<UObject> ExpectedOwnerClass;
 
 //////////////////////////////////////////////////////////////////////////

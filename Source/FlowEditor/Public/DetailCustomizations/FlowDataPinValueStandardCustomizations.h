@@ -9,7 +9,6 @@
 #include "DetailCustomizations/FlowDataPinValueCustomization_Enum.h"
 #include "DetailCustomizations/FlowDataPinValueCustomization_Class.h"
 #include "DetailCustomizations/FlowDataPinValueCustomization_Object.h"
-#include "DetailCustomizations/FlowDataPinValueCustomization_InstancedObject.h"
 
 // Scalar / simple using aliases
 using FFlowDataPinValueCustomization_Bool = TFlowDataPinValueCustomization<FFlowDataPinValue_Bool>;

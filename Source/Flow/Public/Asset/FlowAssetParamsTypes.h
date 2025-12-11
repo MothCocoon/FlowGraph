@@ -52,7 +52,7 @@ namespace EFlowReconcilePropertiesResult_Classifiers
 // - ShowCreateNew - Should we show the "Create New" button?
 // - HideChildParams - When showing a chooser, should we hide "Child" params or not? (Child params have a non-null ParentParams)
 USTRUCT(BlueprintType)
-struct FFlowAssetParamsPtr
+struct FLOW_API FFlowAssetParamsPtr
 {
 	GENERATED_BODY()
 

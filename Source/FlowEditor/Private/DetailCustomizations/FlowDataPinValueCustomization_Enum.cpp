@@ -4,17 +4,33 @@
 
 #include "Types/FlowDataPinValuesStandard.h"
 #include "DetailLayoutBuilder.h"
+#include "DetailWidgetRow.h"
 #include "IDetailChildrenBuilder.h"
 #include "IPropertyUtilities.h"
 #include "PropertyHandle.h"
 #include "ScopedTransaction.h"
 #include "Interfaces/FlowDataPinValueOwnerInterface.h"
-#include "DetailCustomizations/FlowValueSourcePolicy.h"
+#include "UnrealExtensions/VisibilityArrayBuilder.h"
 
 #include "Widgets/Input/SComboBox.h"
 #include "Widgets/Text/STextBlock.h"
 
 #define LOCTEXT_NAMESPACE "FlowDataPinValueCustomization_Enum"
+
+FFlowDataPinValue_Enum* FFlowDataPinValueCustomization_Enum::GetEnumValueStruct() const
+{
+	return IFlowExtendedPropertyTypeCustomization::TryGetTypedStructValue<FFlowDataPinValue_Enum>(StructPropertyHandle);
+}
+
+bool FFlowDataPinValueCustomization_Enum::ShouldShowSourceRow() const
+{
+	return OwnerInterface ? OwnerInterface->ShowFlowDataPinValueClassFilter(GetEnumValueStruct()) : true;
+}
+
+bool FFlowDataPinValueCustomization_Enum::IsSourceEditable() const
+{
+	return OwnerInterface ? OwnerInterface->CanEditFlowDataPinValueClassFilter(GetEnumValueStruct()) : true;
+}
 
 void FFlowDataPinValueCustomization_Enum::BuildValueRows(
 	TSharedRef<IPropertyHandle> InStructPropertyHandle,
@@ -22,6 +38,7 @@ void FFlowDataPinValueCustomization_Enum::BuildValueRows(
 	IPropertyTypeCustomizationUtils& StructCustomizationUtils)
 {
 	CacheHandles(InStructPropertyHandle, StructCustomizationUtils);
+	CacheArraySupported(); // base
 	CacheEnumHandles(InStructPropertyHandle);
 
 	if (!bMultiTypeDelegateBound && MultiTypeHandle.IsValid())
@@ -31,80 +48,40 @@ void FFlowDataPinValueCustomization_Enum::BuildValueRows(
 		bMultiTypeDelegateBound = true;
 	}
 
-	LockEnumHandle = InStructPropertyHandle->GetChildHandle(GET_MEMBER_NAME_CHECKED(FFlowDataPinValue_Enum, bLockEnumClass));
-	ComputePolicy();
+	const bool bShowSource = ShouldShowSourceRow();
+	const bool bSourceEditable = IsSourceEditable();
 
-	// SOURCE rows: only if visible & not locked
-	if (SourcePolicy.bShowSourceRow && !SourcePolicy.bLocked && EnumClassHandle.IsValid())
+	if (bShowSource && EnumClassHandle.IsValid())
 	{
-		IDetailPropertyRow& Row = StructBuilder.AddProperty(EnumClassHandle.ToSharedRef());
-		Row.IsEnabled(SourcePolicy.bFinalEditableSource);
-		Row.ToolTip(GetEnumSourceTooltip());
-
+		IDetailPropertyRow& RowEnumClass = StructBuilder.AddProperty(EnumClassHandle.ToSharedRef());
+		RowEnumClass.IsEnabled(bSourceEditable);
+		RowEnumClass.ToolTip(GetEnumSourceTooltip());
 		EnumClassHandle->SetOnPropertyValueChanged(
 			FSimpleDelegate::CreateSP(this, &FFlowDataPinValueCustomization_Enum::OnEnumSourceChanged));
 	}
 
-#if WITH_EDITORONLY_DATA
-	if (SourcePolicy.bShowSourceRow && !SourcePolicy.bLocked && EnumNameHandle.IsValid())
+	if (bShowSource && EnumNameHandle.IsValid())
 	{
-		IDetailPropertyRow& Row = StructBuilder.AddProperty(EnumNameHandle.ToSharedRef());
-		Row.IsEnabled(SourcePolicy.bFinalEditableSource);
-		Row.ToolTip(LOCTEXT("EnumNameTooltip", "Name of native C++ enum type (overrides asset if provided)."));
-
+		IDetailPropertyRow& RowEnumClassName = StructBuilder.AddProperty(EnumNameHandle.ToSharedRef());
+		RowEnumClassName.IsEnabled(bSourceEditable);
+		RowEnumClassName.ToolTip(LOCTEXT("EnumNameTooltip", "Name of native C++ enum type to derive EnumClass."));
 		EnumNameHandle->SetOnPropertyValueChanged(
 			FSimpleDelegate::CreateSP(this, &FFlowDataPinValueCustomization_Enum::OnEnumSourceChanged));
 	}
-#endif
 
 	RebuildEnumData();
 	EnsureSingleElementExists();
 	BuildSingle(StructBuilder);
-	BuildArray(StructBuilder);
-}
-
-void FFlowDataPinValueCustomization_Enum::OnSourceLockToggled()
-{
-	ComputePolicy();
-
-	if (CustomizationUtils)
+	if (bArraySupported)
 	{
-		if (auto Utils = CustomizationUtils->GetPropertyUtilities())
-		{
-			Utils->RequestRefresh();
-		}
+		BuildArray(StructBuilder);
 	}
-}
-
-void FFlowDataPinValueCustomization_Enum::ComputePolicy()
-{
-	FFlowDataPinValue_Enum* EnumStruct = GetEnumValueStruct();
-
-	bool bPerValueLock = false;
-
-#if WITH_EDITORONLY_DATA
-	if (EnumStruct)
-	{
-		bPerValueLock = EnumStruct->bLockEnumClass;
-	}
-#endif
-
-	// Enum has no MetaClass forcing, pass false
-	SourcePolicy = ComputeFlowValueSourcePolicy(
-		OwnerInterface,
-		reinterpret_cast<const FFlowDataPinValue*>(EnumStruct),
-		false,
-		bPerValueLock,
-		true);
 }
 
 void FFlowDataPinValueCustomization_Enum::CacheEnumHandles(const TSharedRef<IPropertyHandle>& StructHandle)
 {
 	EnumClassHandle = StructHandle->GetChildHandle(GET_MEMBER_NAME_CHECKED(FFlowDataPinValue_Enum, EnumClass));
-
-#if WITH_EDITORONLY_DATA
 	EnumNameHandle = StructHandle->GetChildHandle(GET_MEMBER_NAME_CHECKED(FFlowDataPinValue_Enum, EnumName));
-#endif
 }
 
 void FFlowDataPinValueCustomization_Enum::OnEnumSourceChanged()
@@ -127,9 +104,7 @@ void FFlowDataPinValueCustomization_Enum::RebuildEnumData()
 
 	if (FFlowDataPinValue_Enum* EnumStruct = GetEnumValueStruct())
 	{
-#if WITH_EDITOR
 		EnumStruct->OnEnumNameChanged();
-#endif
 	}
 
 	if (UEnum* EnumObj = ResolveEnum())
@@ -144,7 +119,6 @@ void FFlowDataPinValueCustomization_Enum::RebuildEnumData()
 UEnum* FFlowDataPinValueCustomization_Enum::ResolveEnum() const
 {
 	const FFlowDataPinValue_Enum* Data = GetEnumValueStruct();
-
 	return Data ? Data->EnumClass.LoadSynchronous() : nullptr;
 }
 
@@ -159,7 +133,6 @@ void FFlowDataPinValueCustomization_Enum::CollectEnumerators(UEnum& EnumObj)
 		{
 			continue;
 		}
-
 		if (EnumObj.HasMetaData(HiddenKey, Index))
 		{
 			continue;
@@ -178,8 +151,6 @@ void FFlowDataPinValueCustomization_Enum::ValidateStoredValues()
 	}
 
 	TArray<FName> ValidNames;
-	ValidNames.Reserve(EnumeratorOptions.Num());
-
 	for (auto& Opt : EnumeratorOptions)
 	{
 		if (Opt.IsValid())
@@ -193,7 +164,7 @@ void FFlowDataPinValueCustomization_Enum::ValidateStoredValues()
 		uint32 Count = 0;
 		AsArray->GetNumElements(Count);
 
-		if (GetSingleVisibility() == EVisibility::Visible && Count == 0)
+		if (GetSingleModeVisibility() == EVisibility::Visible && Count == 0)
 		{
 			AsArray->AddItem();
 			AsArray->GetNumElements(Count);
@@ -202,14 +173,12 @@ void FFlowDataPinValueCustomization_Enum::ValidateStoredValues()
 		for (uint32 i = 0; i < Count; ++i)
 		{
 			auto Elem = ValuesHandle->GetChildHandle(i);
-
 			if (!Elem.IsValid())
 			{
 				continue;
 			}
 
 			FName Current;
-
 			if (Elem->GetValue(Current) == FPropertyAccess::Success)
 			{
 				if (!IsValueValid(Current))
@@ -227,7 +196,6 @@ bool FFlowDataPinValueCustomization_Enum::IsValueValid(const FName& Candidate) c
 	{
 		return EnumeratorOptions.Num() == 0;
 	}
-
 	for (auto& Opt : EnumeratorOptions)
 	{
 		if (Opt.IsValid() && *Opt == Candidate)
@@ -235,7 +203,6 @@ bool FFlowDataPinValueCustomization_Enum::IsValueValid(const FName& Candidate) c
 			return true;
 		}
 	}
-
 	return false;
 }
 
@@ -248,40 +215,7 @@ TSharedPtr<FName> FFlowDataPinValueCustomization_Enum::FindEnumeratorMatch(const
 			return Opt;
 		}
 	}
-
 	return nullptr;
-}
-
-EVisibility FFlowDataPinValueCustomization_Enum::GetSingleVisibility() const
-{
-	FLOW_ASSERT_ENUM_MAX(EFlowDataMultiType, 2);
-
-	uint8 Mode = 0;
-
-	if (MultiTypeHandle.IsValid() &&
-		MultiTypeHandle->GetValue(Mode) == FPropertyAccess::Success &&
-		(EFlowDataMultiType)Mode == EFlowDataMultiType::Single)
-	{
-		return EVisibility::Visible;
-	}
-
-	return EVisibility::Collapsed;
-}
-
-EVisibility FFlowDataPinValueCustomization_Enum::GetArrayVisibility() const
-{
-	FLOW_ASSERT_ENUM_MAX(EFlowDataMultiType, 2);
-
-	uint8 Mode = 0;
-
-	if (MultiTypeHandle.IsValid() &&
-		MultiTypeHandle->GetValue(Mode) == FPropertyAccess::Success &&
-		(EFlowDataMultiType)Mode == EFlowDataMultiType::Array)
-	{
-		return EVisibility::Visible;
-	}
-
-	return EVisibility::Collapsed;
 }
 
 void FFlowDataPinValueCustomization_Enum::BuildSingle(IDetailChildrenBuilder& StructBuilder)
@@ -292,7 +226,6 @@ void FFlowDataPinValueCustomization_Enum::BuildSingle(IDetailChildrenBuilder& St
 	}
 
 	auto First = ValuesHandle->GetChildHandle(0);
-
 	if (!First.IsValid())
 	{
 		if (auto AsArray = ValuesHandle->AsArray())
@@ -308,8 +241,7 @@ void FFlowDataPinValueCustomization_Enum::BuildSingle(IDetailChildrenBuilder& St
 	}
 
 	StructBuilder.AddCustomRow(LOCTEXT("EnumSingleSearch", "Value"))
-		.Visibility(TAttribute<EVisibility>::Create(
-			TAttribute<EVisibility>::FGetter::CreateSP(this, &FFlowDataPinValueCustomization_Enum::GetSingleVisibility)))
+		.Visibility(TAttribute<EVisibility>::CreateSP(this, &FFlowDataPinValueCustomization_Enum::GetSingleModeVisibility))
 		.NameContent()
 		[
 			SNew(STextBlock)
@@ -327,12 +259,10 @@ void FFlowDataPinValueCustomization_Enum::BuildSingle(IDetailChildrenBuilder& St
 				.InitiallySelectedItem([this, First]()
 					{
 						FName Current;
-
 						if (First->GetValue(Current) == FPropertyAccess::Success)
 						{
 							return FindEnumeratorMatch(Current);
 						}
-
 						return EnumeratorOptions.Num() > 0 ? EnumeratorOptions[0] : nullptr;
 					}())
 				.Content()
@@ -341,12 +271,10 @@ void FFlowDataPinValueCustomization_Enum::BuildSingle(IDetailChildrenBuilder& St
 						.Text_Lambda([this, First]()
 							{
 								FName Current;
-
 								if (First->GetValue(Current) == FPropertyAccess::Success && !Current.IsNone())
 								{
 									return GetEnumeratorDisplayText(Current);
 								}
-
 								return LOCTEXT("EnumNonePlaceholder", "<None>");
 							})
 						.Font(IDetailLayoutBuilder::GetDetailFont())
@@ -357,88 +285,62 @@ void FFlowDataPinValueCustomization_Enum::BuildSingle(IDetailChildrenBuilder& St
 
 void FFlowDataPinValueCustomization_Enum::BuildArray(IDetailChildrenBuilder& StructBuilder)
 {
-	if (!ValuesHandle.IsValid())
-	{
-		return;
-	}
-
-	TSharedRef<FVisibilityArrayBuilder> ArrayBuilder =
-		MakeShareable(new FVisibilityArrayBuilder(ValuesHandle.ToSharedRef(), true, true, true));
-
-	ArrayBuilder->SetVisibilityGetter([this]()
+	BuildVisibilityAwareArray(StructBuilder,
+		ValuesHandle,
+		[this](TSharedRef<IPropertyHandle> ElementHandle, int32 Index, IDetailChildrenBuilder& ChildBuilder, const TAttribute<EVisibility>& RowVis)
 		{
-			return GetArrayVisibility();
-		});
+			IDetailPropertyRow& Row = ChildBuilder.AddProperty(ElementHandle);
+			Row.Visibility(RowVis);
 
-	ArrayBuilder->OnGenerateArrayElementWidget(
-		FOnGenerateArrayElementWidgetVisible::CreateSP(
-			this,
-			&FFlowDataPinValueCustomization_Enum::GenerateArrayElementVisible));
-
-	StructBuilder.AddCustomBuilder(ArrayBuilder);
-}
-
-void FFlowDataPinValueCustomization_Enum::GenerateArrayElementVisible(
-	TSharedRef<IPropertyHandle> ElementHandle,
-	int32 Index,
-	IDetailChildrenBuilder& ChildBuilder,
-	const TAttribute<EVisibility>& RowVisibility)
-{
-	IDetailPropertyRow& Row = ChildBuilder.AddProperty(ElementHandle);
-	Row.Visibility(RowVisibility);
-
-	Row.CustomWidget()
-		.NameContent()
-		[
-			SNew(STextBlock)
-				.Text(FText::AsNumber(Index))
-				.Font(IDetailLayoutBuilder::GetDetailFont())
-		]
-		.ValueContent()
-		.MinDesiredWidth(200.f)
-		[
-			SNew(SComboBox<TSharedPtr<FName>>)
-				.OptionsSource(&EnumeratorOptions)
-				.OnGenerateWidget(this, &FFlowDataPinValueCustomization_Enum::GenerateEnumeratorWidget)
-				.OnSelectionChanged(this,
-					&FFlowDataPinValueCustomization_Enum::OnArrayElementChanged,
-					TSharedPtr<IPropertyHandle>(ElementHandle))
-				.IsEnabled(this, &FFlowDataPinValueCustomization_Enum::IsValueEditingEnabled)
-				.InitiallySelectedItem([this, ElementHandle]()
-					{
-						FName Current;
-
-						if (ElementHandle->GetValue(Current) == FPropertyAccess::Success)
-						{
-							return FindEnumeratorMatch(Current);
-						}
-
-						return EnumeratorOptions.Num() > 0 ? EnumeratorOptions[0] : nullptr;
-					}())
-				.Content()
+			Row.CustomWidget()
+				.NameContent()
 				[
 					SNew(STextBlock)
-						.Text_Lambda([this, ElementHandle]()
+						.Text(FText::AsNumber(Index))
+						.Font(IDetailLayoutBuilder::GetDetailFont())
+				]
+				.ValueContent()
+				.MinDesiredWidth(200.f)
+				[
+					SNew(SComboBox<TSharedPtr<FName>>)
+						.OptionsSource(&EnumeratorOptions)
+						.OnGenerateWidget(this, &FFlowDataPinValueCustomization_Enum::GenerateEnumeratorWidget)
+						.OnSelectionChanged(this,
+							&FFlowDataPinValueCustomization_Enum::OnArrayElementChanged,
+							TSharedPtr<IPropertyHandle>(ElementHandle))
+						.IsEnabled(this, &FFlowDataPinValueCustomization_Enum::IsValueEditingEnabled)
+						.InitiallySelectedItem([this, ElementHandle]()
 							{
 								FName Current;
-
-								if (ElementHandle->GetValue(Current) == FPropertyAccess::Success && !Current.IsNone())
+								if (ElementHandle->GetValue(Current) == FPropertyAccess::Success)
 								{
-									return GetEnumeratorDisplayText(Current);
+									return FindEnumeratorMatch(Current);
 								}
-
-								return LOCTEXT("EnumNonePlaceholder", "<None>");
-							})
-						.Font(IDetailLayoutBuilder::GetDetailFont())
-						.ToolTipText(GetEnumSourceTooltip())
-				]
-		];
+								return EnumeratorOptions.Num() > 0 ? EnumeratorOptions[0] : nullptr;
+							}())
+						.Content()
+						[
+							SNew(STextBlock)
+								.Text_Lambda([this, ElementHandle]()
+									{
+										FName Current;
+										if (ElementHandle->GetValue(Current) == FPropertyAccess::Success && !Current.IsNone())
+										{
+											return GetEnumeratorDisplayText(Current);
+										}
+										return LOCTEXT("EnumNonePlaceholder", "<None>");
+									})
+								.Font(IDetailLayoutBuilder::GetDetailFont())
+								.ToolTipText(GetEnumSourceTooltip())
+						]
+				];
+		},
+		TAttribute<EVisibility>::CreateSP(this, &FFlowDataPinValueCustomization_Enum::GetArrayModeVisibility));
 }
 
 TSharedRef<SWidget> FFlowDataPinValueCustomization_Enum::GenerateEnumeratorWidget(TSharedPtr<FName> Item) const
 {
 	const FName Name = Item.IsValid() ? *Item : NAME_None;
-
 	return SNew(STextBlock)
 		.Text(GetEnumeratorDisplayText(Name))
 		.Font(IDetailLayoutBuilder::GetDetailFont());
@@ -452,31 +354,24 @@ FText FFlowDataPinValueCustomization_Enum::GetEnumeratorDisplayText(const FName&
 FText FFlowDataPinValueCustomization_Enum::GetEnumSourceTooltip() const
 {
 	const FFlowDataPinValue_Enum* Data = GetEnumValueStruct();
-
 	if (!Data)
 	{
 		return LOCTEXT("EnumTooltipMissing", "Enum value struct not available.");
 	}
 
 	FString Source;
-
-#if WITH_EDITORONLY_DATA
 	if (!Data->EnumName.IsEmpty())
 	{
 		Source = FString::Printf(TEXT("Native Enum: %s"), *Data->EnumName);
 	}
-#endif
-
 	if (Source.IsEmpty() && Data->EnumClass.IsValid())
 	{
 		Source = FString::Printf(TEXT("Enum Asset: %s"), *Data->EnumClass.ToString());
 	}
-
 	if (Source.IsEmpty())
 	{
 		Source = TEXT("No enum source selected");
 	}
-
 	return FText::FromString(Source);
 }
 
@@ -486,6 +381,13 @@ void FFlowDataPinValueCustomization_Enum::OnSingleValueChanged(
 	TSharedPtr<IPropertyHandle> ElementHandle)
 {
 	if (!ElementHandle.IsValid() || !NewSelection.IsValid())
+	{
+		return;
+	}
+
+	FName Current;
+	ElementHandle->GetValue(Current);
+	if (Current == *NewSelection)
 	{
 		return;
 	}
@@ -504,13 +406,26 @@ void FFlowDataPinValueCustomization_Enum::OnArrayElementChanged(
 		return;
 	}
 
+	FName Current;
+	ElementHandle->GetValue(Current);
+	if (Current == *NewSelection)
+	{
+		return;
+	}
+
 	FScopedTransaction Tx(LOCTEXT("SetEnumArrayElement", "Set Enum Array Element"));
 	ElementHandle->SetValue(*NewSelection);
 }
 
 void FFlowDataPinValueCustomization_Enum::OnMultiTypeChanged()
 {
-	if (GetArrayVisibility() == EVisibility::Collapsed)
+	// If array not supported, ignore switching
+	if (!bArraySupported)
+	{
+		return;
+	}
+
+	if (GetArrayModeVisibility() == EVisibility::Collapsed)
 	{
 		EnsureSingleElementExists();
 	}
@@ -522,11 +437,6 @@ void FFlowDataPinValueCustomization_Enum::OnMultiTypeChanged()
 			Utils->RequestRefresh();
 		}
 	}
-}
-
-FFlowDataPinValue_Enum* FFlowDataPinValueCustomization_Enum::GetEnumValueStruct() const
-{
-	return IFlowExtendedPropertyTypeCustomization::TryGetTypedStructValue<FFlowDataPinValue_Enum>(StructPropertyHandle);
 }
 
 #undef LOCTEXT_NAMESPACE

@@ -3,47 +3,34 @@
 #pragma once
 
 #include "DetailCustomizations/FlowDataPinValueCustomization.h"
-#include "DetailCustomizations/FlowValueSourcePolicy.h"
 
 class SClassPropertyEntryBox;
 
 /*
-* Class value customization using FFlowValueSourcePolicy:
-*  - Lock hides/disables only ClassFilter (source) — NOT the class value pickers.
-*  - Class value rows remain editable (subject to base owner policy & metadata), even when filter locked.
+* Class value customization:
+*  - Conditionally shows ClassFilter (OwnerInterface->ShowFlowDataPinValueClassFilter).
+*  - If MetaClass metadata present: show row but disabled.
+*  - Enabled state otherwise: OwnerInterface->CanEditFlowDataPinValueClassFilter.
+*  - Validates stored FSoftClassPath values against effective filter.
 */
 class FLOWEDITOR_API FFlowDataPinValueCustomization_Class : public FFlowDataPinValueCustomization
 {
 	using Super = FFlowDataPinValueCustomization;
 
 public:
-	FFlowDataPinValueCustomization_Class() = default;
-
 	static TSharedRef<IPropertyTypeCustomization> MakeInstance()
 	{
 		return MakeShareable(new FFlowDataPinValueCustomization_Class());
 	}
-
-	// Non-copyable / non-movable
-	FFlowDataPinValueCustomization_Class(const FFlowDataPinValueCustomization_Class&) = delete;
-	FFlowDataPinValueCustomization_Class& operator=(const FFlowDataPinValueCustomization_Class&) = delete;
-	FFlowDataPinValueCustomization_Class(FFlowDataPinValueCustomization_Class&&) = delete;
-	FFlowDataPinValueCustomization_Class& operator=(FFlowDataPinValueCustomization_Class&&) = delete;
 
 protected:
 	virtual void BuildValueRows(TSharedRef<IPropertyHandle> InStructPropertyHandle,
 		IDetailChildrenBuilder& StructBuilder,
 		IPropertyTypeCustomizationUtils& StructCustomizationUtils) override;
 
-	virtual void OnSourceLockToggled() override;
-	virtual const FFlowValueSourcePolicy* GetSourcePolicy() const override { return &SourcePolicy; }
-
 private:
 	// Property handles
 	TSharedPtr<IPropertyHandle> ClassFilterHandle;
-
-	// Policy
-	FFlowValueSourcePolicy SourcePolicy;
 
 	// Metadata-derived flags
 	const UClass* RequiredInterface = nullptr;
@@ -53,34 +40,45 @@ private:
 	bool bShowTreeView = false;
 	bool bHideViewOptions = false;
 	bool bShowDisplayNames = false;
-	bool bMetaClassForced = false;
+	bool bHasMetaClass = false;
 
-	// Cached effective filter
+	// Effective filter
 	TWeakObjectPtr<UClass> CachedEffectiveFilter;
 
 	// Helpers
 	void ExtractMetadata();
-	void ComputePolicy();
-	void BuildClassFilterRow(IDetailChildrenBuilder& StructBuilder);
+	void TrySetClassFilterFromMetaData();
+	UClass* DeriveBestClassFilter() const;
+	void RefreshEffectiveFilter();
+
+	// UI
+	void BuildClassFilterRow(IDetailChildrenBuilder& StructBuilder, bool bSourceEditable);
 	void BuildSingleBranch(IDetailChildrenBuilder& StructBuilder);
 	void BuildArrayBranch(IDetailChildrenBuilder& StructBuilder);
 	void GenerateArrayElementRow(TSharedRef<IPropertyHandle> ElementHandle, int32 Index,
 		IDetailChildrenBuilder& ChildBuilder, const TAttribute<EVisibility>& RowVisibility);
 
-	void BindValidationDelegates();
+	// Delegates / validation
+	void BindDelegates();
 	void OnClassFilterChanged();
 	void OnValuesChanged();
 
-	void TrySetClassFilterFromMetaData();
-	UClass* DeriveBestClassFilter() const;
-	void RefreshEffectiveFilter();
-
 	void ValidateAllElements();
-	void ValidateElement(const TSharedPtr<IPropertyHandle>& ElementHandle, UClass* FilterClass);
+	bool IsElementValid(TSharedPtr<IPropertyHandle> ElementHandle) const;
+	void InvalidateElement(TSharedPtr<IPropertyHandle> ElementHandle);
 
+	// Access / modification
 	const UClass* GetSelectedClassForHandle(TSharedPtr<IPropertyHandle> ElementHandle) const;
 	void OnSetClassForHandle(const UClass* NewClass, TSharedPtr<IPropertyHandle> ElementHandle);
 
 	bool GetElementPathString(const TSharedPtr<IPropertyHandle>& ElementHandle, FString& OutPath) const;
-	bool IsNoneString(const FString& Str) const;
+	static bool IsNoneString(const FString& Str);
+
+	// Permissions (inline owner queries)
+	bool ShouldShowSourceRow() const;
+	bool IsSourceEditable() const;
+	bool AreValuesEditable() const { return true; }
+
+	// Value struct access
+	struct FFlowDataPinValue_Class* GetValueStruct() const;
 };

@@ -203,13 +203,8 @@ UFlowGraphNode* FFlowGraphSchemaAction_NewNode::ImportNode(UEdGraph* ParentGraph
 
 FText FFlowGraphSchemaAction_NewNode::GetNodeCategory(const UFlowNodeBase* Node, const UFlowGraphSettings& GraphSettings)
 {
-	const FString* CategoryOverridenByUser = GraphSettings.OverridenNodeCategories.Find(Node->GetClass());
-	if (CategoryOverridenByUser && !CategoryOverridenByUser->IsEmpty())
-	{
-		return FText::FromString(*CategoryOverridenByUser);
-	}
-
-	return FText::FromString(Node->GetNodeCategory());
+	const FString NodeCategoryString = UFlowGraphSettings::GetNodeCategoryForNode(*Node);
+	return FText::FromString(NodeCategoryString);
 }
 
 /////////////////////////////////////////////////////

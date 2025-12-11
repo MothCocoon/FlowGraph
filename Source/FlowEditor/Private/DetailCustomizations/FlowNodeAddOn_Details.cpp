@@ -2,6 +2,7 @@
 
 #include "DetailCustomizations/FlowNodeAddOn_Details.h"
 #include "DetailLayoutBuilder.h"
+#include "AddOns/FlowNodeAddOn.h"
 
 void FFlowNodeAddOn_Details::CustomizeDetails(IDetailLayoutBuilder& DetailLayout)
 {
@@ -11,4 +12,7 @@ void FFlowNodeAddOn_Details::CustomizeDetails(IDetailLayoutBuilder& DetailLayout
 		DetailLayout.HideCategory(TEXT("FlowNode"));
 		DetailLayout.HideCategory(TEXT("FlowNodeAddOn"));
 	}
+
+	// Call base template to set up rebuild delegate wiring
+	TFlowDataPinValueOwnerCustomization<UFlowNodeAddOn>::CustomizeDetails(DetailLayout);
 }

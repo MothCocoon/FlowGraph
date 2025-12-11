@@ -3,6 +3,7 @@
 #pragma once
 
 #include "UObject/Interface.h"
+#include "Delegates/Delegate.h"
 
 #include "FlowDataPinValueOwnerInterface.generated.h"
 
@@ -20,37 +21,23 @@ class FLOW_API IFlowDataPinValueOwnerInterface
 
 public:
 #if WITH_EDITOR
-	
+
 	// Determines if the pin's type properties (bIsInputPin, MultiType) can be modified
-	virtual bool CanModifyFlowDataPinValueType() const { return true; }
+	virtual bool CanModifyFlowDataPinType() const { return true; }
 
 	// Determines if the bIsInputPin checkbox should be visible in the Details panel
 	virtual bool ShowFlowDataPinValueInputPinCheckbox() const { return true; }
 
-	// --------------------------------------------------------------------
-	// Class / Enum source visibility & edit policies
-	//
-	// These are value-level UI policy hooks (mirroring ShowFlowDataPinValueInputPinCheckbox / CanModifyFlowDataPinValueType)
-	// to allow higher-level owners (e.g., nodes, assets) to centrally control:
-	//  * Whether the ClassFilter (or Enum source) row is shown at all
-	//  * Whether the "Lock" toggle is shown
-	//  * Whether the ClassFilter / Enum source itself is editable
-	//
-	// NOTE:
-	//  - 'Value' may be nullptr if not derivable in a specific context; implementers should null-guard if they inspect it.
-	//  - The per-value struct's own bLockClassFilter (editor-only) is applied AFTER these policies
-	//    and AFTER metadata-based forcing (e.g., MetaClass), to produce final editability.
-	//  - These methods intentionally share naming so the same logic can gate both ClassFilter and Enum source (EnumClass / EnumName).
-	// --------------------------------------------------------------------
-
-	// Should the ClassFilter (or analogous Enum source) row be visible?
+	// Should the ClassFilter or EnumClass row be visible?
 	virtual bool ShowFlowDataPinValueClassFilter(const FFlowDataPinValue* Value) const { return true; }
 
-	// Should the "Lock Class Filter" toggle (bLockClassFilter) be visible?
-	// (If false, the checkbox is hidden; its stored value may still disable editing if already true.)
-	virtual bool ShowFlowDataPinValueClassFilterLockToggle(const FFlowDataPinValue* Value) const { return true; }
-
-	// Base policy for whether the ClassFilter / Enum source can be edited (before per-value lock flag).
+	// Base policy for whether the ClassFilter / Enum source can be edited
 	virtual bool CanEditFlowDataPinValueClassFilter(const FFlowDataPinValue* Value) const { return true; }
+
+	// Set the delegate that forces a layout rebuild (provided by owner detail customization).
+	virtual void SetFlowDataPinValuesRebuildDelegate(FSimpleDelegate InDelegate) {}
+
+	// Request a details rebuild (executes delegate if bound).
+	virtual void RequestFlowDataPinValuesDetailsRebuild() {}
 #endif
 };

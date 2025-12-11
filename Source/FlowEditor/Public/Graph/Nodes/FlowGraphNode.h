@@ -93,6 +93,8 @@ public:
 	 */
 	void InsertNewNode(UEdGraphPin* FromPin, UEdGraphPin* NewLinkPin, TSet<UEdGraphNode*>& OutNodeList);
 
+	void MarkNeedsFullReconstruction() { bNeedsFullReconstruction = true; }
+
 	// UEdGraphNode
 	virtual void ReconstructNode() override;
 	virtual void AllocateDefaultPins() override;
@@ -207,11 +209,6 @@ public:
 
 	// @return true, if pins cannot be connected due to node's inner logic, put message for user in OutReason
 	virtual bool IsConnectionDisallowed(const UEdGraphPin* MyPin, const UEdGraphPin* OtherPin, FString& OutReason) const { return false; }
-
-protected:
-	// Gets the PinCategory from the FlowPin
-	// (accounting for FFlowPin structs that predate the PinCategory field)
-	static const FName& GetPinCategoryFromFlowPin(const FFlowPin& FlowPin);
 
 //////////////////////////////////////////////////////////////////////////
 // Execution Override

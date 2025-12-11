@@ -3,65 +3,45 @@
 #pragma once
 
 #include "DetailCustomizations/FlowDataPinValueCustomization.h"
-#include "DetailCustomizations/FlowValueSourcePolicy.h"
-#include "UnrealExtensions/VisibilityArrayBuilder.h"
 
 class UEnum;
-struct FFlowDataPinValue_Enum;
 
 /*
 * Enum customization:
-*  - Lock affects only EnumClass / EnumName (source).
-*  - Enumerator value selection remains editable (independent of lock).
-*  - Uses policy field bFinalEditableSource for source rows.
+*  - Conditionally shows EnumClass / EnumName (OwnerInterface->ShowFlowDataPinValueClassFilter).
+*  - Enabled if OwnerInterface->CanEditFlowDataPinValueClassFilter (MetaClass concept not applied here).
+*  - Enumerator selection via combo boxes (single / array).
+*  - Validates stored names.
+*  - Uses base single/array visibility helpers.
 */
 class FLOWEDITOR_API FFlowDataPinValueCustomization_Enum : public FFlowDataPinValueCustomization
 {
 	using Super = FFlowDataPinValueCustomization;
 
 public:
-	FFlowDataPinValueCustomization_Enum() = default;
-
 	static TSharedRef<IPropertyTypeCustomization> MakeInstance()
 	{
 		return MakeShareable(new FFlowDataPinValueCustomization_Enum());
 	}
-
-	// Non-copyable / non-movable
-	FFlowDataPinValueCustomization_Enum(const FFlowDataPinValueCustomization_Enum&) = delete;
-	FFlowDataPinValueCustomization_Enum& operator=(const FFlowDataPinValueCustomization_Enum&) = delete;
-	FFlowDataPinValueCustomization_Enum(FFlowDataPinValueCustomization_Enum&&) = delete;
-	FFlowDataPinValueCustomization_Enum& operator=(FFlowDataPinValueCustomization_Enum&&) = delete;
 
 protected:
 	virtual void BuildValueRows(TSharedRef<IPropertyHandle> InStructPropertyHandle,
 		IDetailChildrenBuilder& StructBuilder,
 		IPropertyTypeCustomizationUtils& StructCustomizationUtils) override;
 
-	virtual void OnSourceLockToggled() override;
-	virtual const FFlowValueSourcePolicy* GetSourcePolicy() const override { return &SourcePolicy; }
-
 private:
 	// Source handles
 	TSharedPtr<IPropertyHandle> EnumClassHandle;
 	TSharedPtr<IPropertyHandle> EnumNameHandle;
 
-	// Policy
-	FFlowValueSourcePolicy SourcePolicy;
-
-	// Lock / value state
-	TSharedPtr<IPropertyHandle> LockEnumHandle;
+	// Enumerator state
 	TArray<TSharedPtr<FName>> EnumeratorOptions;
 	bool bEnumResolved = false;
 	bool bMultiTypeDelegateBound = false;
 
-	// Builders
+	// Build helpers
 	void BuildSingle(IDetailChildrenBuilder& StructBuilder);
 	void BuildArray(IDetailChildrenBuilder& StructBuilder);
-
-	// Visibility helpers
-	EVisibility GetSingleVisibility() const;
-	EVisibility GetArrayVisibility() const;
 
 	// Enum resolution
 	void CacheEnumHandles(const TSharedRef<IPropertyHandle>& StructHandle);
@@ -97,11 +77,13 @@ private:
 		ESelectInfo::Type SelectInfo,
 		TSharedPtr<IPropertyHandle> ElementHandle);
 
-	// Policy compute
-	void ComputePolicy();
-
 	// Convenience
-	FFlowDataPinValue_Enum* GetEnumValueStruct() const;
+	struct FFlowDataPinValue_Enum* GetEnumValueStruct() const;
 	bool HasEnumeratorOptions() const { return bEnumResolved && EnumeratorOptions.Num() > 0; }
 	bool IsValueEditingEnabled() const { return HasEnumeratorOptions(); }
+
+	// Permissions (inline owner queries)
+	bool ShouldShowSourceRow() const;
+	bool IsSourceEditable() const;
+	bool AreValuesEditable() const { return true; }
 };

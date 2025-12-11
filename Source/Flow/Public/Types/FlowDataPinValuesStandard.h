@@ -3,7 +3,8 @@
 #pragma once
 
 #include "Types/FlowDataPinValue.h"
-#include "Types/FlowDataPinTypeNamesStandard.h"
+#include "Types/FlowPinTypesStandard.h"
+#include "Types/FlowArray.h"
 
 #include "StructUtils/InstancedStruct.h"
 #include "GameplayTagContainer.h"
@@ -16,109 +17,201 @@
 
 #include "FlowDataPinValuesStandard.generated.h"
 
+//======================================================================
 // Bool
-USTRUCT(BlueprintType, DisplayName = "Bool - Flow DataPin Value", meta = (FlowPinType = "Bool"))
+//======================================================================
+USTRUCT(MinimalApi, BlueprintType, DisplayName = "Bool - Flow DataPin Value", meta = (FlowPinType = "Bool", HasNativeMake = "/Script/Flow.FlowDataPinBlueprintLibrary.MakeStructBool"))
 struct FFlowDataPinValue_Bool : public FFlowDataPinValue
 {
 	GENERATED_BODY()
 
 public:
-	typedef bool FValueType;
+	using PinType = FFlowPinType_Bool;
+	using ValueType = PinType::ValueType;
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = DataPins)
 	TArray<bool> Values{ false };
 
-	FFlowDataPinValue_Bool() {}
-	FFlowDataPinValue_Bool(bool InValue) : Values({ InValue }) {}
-	FFlowDataPinValue_Bool(const TArray<bool>& InValues) : Values(InValues) {}
+	FLOW_API FFlowDataPinValue_Bool() = default;
+	FLOW_API FFlowDataPinValue_Bool(ValueType InValue);
+	FLOW_API FFlowDataPinValue_Bool(const TArray<ValueType>& InValues);
 
-	virtual const FFlowPinTypeName& GetPinTypeName() const override { return FFlowDataPinTypeNamesStandard::ValueTypeNameBool; }
+	virtual const FFlowPinTypeName& GetPinTypeName() const override { return PinType::GetPinTypeNameStatic(); }
+	virtual bool TryConvertValuesToString(FString& OutString) const override;
 };
 
+//======================================================================
 // Int (int32)
-USTRUCT(BlueprintType, DisplayName = "Int - Flow DataPin Value", meta = (FlowPinType = "Int"))
+//======================================================================
+USTRUCT(MinimalApi, BlueprintType, DisplayName = "Int - Flow DataPin Value", meta = (FlowPinType = "Int", HasNativeMake = "/Script/Flow.FlowDataPinBlueprintLibrary.MakeStructInt"))
 struct FFlowDataPinValue_Int : public FFlowDataPinValue
 {
 	GENERATED_BODY()
 
 public:
-	typedef int32 FValueType;
+	using PinType = FFlowPinType_Int;
+	using ValueType = PinType::ValueType;
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = DataPins)
 	TArray<int32> Values{ 0 };
 
-	FFlowDataPinValue_Int() {}
-	FFlowDataPinValue_Int(FValueType InValue) : Values({ InValue }) {}
-	FFlowDataPinValue_Int(const TArray<FValueType>& InValues) : Values(InValues) {}
+	FLOW_API FFlowDataPinValue_Int() = default;
+	FLOW_API FFlowDataPinValue_Int(ValueType InValue);
+	FLOW_API FFlowDataPinValue_Int(const TArray<ValueType>& InValues);
 
-	virtual const FFlowPinTypeName& GetPinTypeName() const override { return FFlowDataPinTypeNamesStandard::ValueTypeNameInt; }
+	virtual const FFlowPinTypeName& GetPinTypeName() const override { return PinType::GetPinTypeNameStatic(); }
+	virtual bool TryConvertValuesToString(FString& OutString) const override;
 };
 
+//======================================================================
 // Int64
-USTRUCT(BlueprintType, DisplayName = "Int64 - Flow DataPin Value", meta = (FlowPinType = "Int64"))
+//======================================================================
+USTRUCT(MinimalApi, BlueprintType, DisplayName = "Int64 - Flow DataPin Value", meta = (FlowPinType = "Int64", HasNativeMake = "/Script/Flow.FlowDataPinBlueprintLibrary.MakeStructInt64"))
 struct FFlowDataPinValue_Int64 : public FFlowDataPinValue
 {
 	GENERATED_BODY()
 
 public:
-	typedef int64 FValueType;
+	using PinType = FFlowPinType_Int64;
+	using ValueType = PinType::ValueType;
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = DataPins)
 	TArray<int64> Values{ 0 };
 
-	FFlowDataPinValue_Int64() {}
-	FFlowDataPinValue_Int64(int64 InValue) : Values({ InValue }) {}
-	FFlowDataPinValue_Int64(const TArray<int64>& InValues) : Values(InValues) {}
+	FLOW_API FFlowDataPinValue_Int64() = default;
+	FLOW_API FFlowDataPinValue_Int64(ValueType InValue);
+	FLOW_API FFlowDataPinValue_Int64(const TArray<ValueType>& InValues);
 
-	virtual const FFlowPinTypeName& GetPinTypeName() const override { return FFlowDataPinTypeNamesStandard::ValueTypeNameInt64; }
+	virtual const FFlowPinTypeName& GetPinTypeName() const override { return PinType::GetPinTypeNameStatic(); }
+	virtual bool TryConvertValuesToString(FString& OutString) const override;
 };
 
+//======================================================================
 // Float
-USTRUCT(BlueprintType, DisplayName = "Float - Flow DataPin Value", meta = (FlowPinType = "Float"))
+//======================================================================
+USTRUCT(MinimalApi, BlueprintType, DisplayName = "Float - Flow DataPin Value", meta = (FlowPinType = "Float", HasNativeMake = "/Script/Flow.FlowDataPinBlueprintLibrary.MakeStructFloat"))
 struct FFlowDataPinValue_Float : public FFlowDataPinValue
 {
 	GENERATED_BODY()
 
 public:
-	typedef float FValueType;
+	using PinType = FFlowPinType_Float;
+	using ValueType = PinType::ValueType;
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = DataPins)
-	TArray<float> Values{ 0.f };
+	TArray<float> Values{ 0.0f };
 
-	FFlowDataPinValue_Float() {}
-	FFlowDataPinValue_Float(float InValue) : Values({ InValue }) {}
-	FFlowDataPinValue_Float(const TArray<float>& InValues) : Values(InValues) {}
+	FLOW_API FFlowDataPinValue_Float() = default;
+	FLOW_API FFlowDataPinValue_Float(ValueType InValue);
+	FLOW_API FFlowDataPinValue_Float(const TArray<ValueType>& InValues);
 
-	virtual const FFlowPinTypeName& GetPinTypeName() const override { return FFlowDataPinTypeNamesStandard::ValueTypeNameFloat; }
+	virtual const FFlowPinTypeName& GetPinTypeName() const override { return PinType::GetPinTypeNameStatic(); }
+	virtual bool TryConvertValuesToString(FString& OutString) const override;
 };
 
+//======================================================================
 // Double
-USTRUCT(BlueprintType, DisplayName = "Double - Flow DataPin Value", meta = (FlowPinType = "Double"))
+//======================================================================
+USTRUCT(MinimalApi, BlueprintType, DisplayName = "Double - Flow DataPin Value", meta = (FlowPinType = "Double", HasNativeMake = "/Script/Flow.FlowDataPinBlueprintLibrary.MakeStructDouble"))
 struct FFlowDataPinValue_Double : public FFlowDataPinValue
 {
 	GENERATED_BODY()
 
 public:
-	typedef double FValueType;
+	using PinType = FFlowPinType_Double;
+	using ValueType = PinType::ValueType;
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = DataPins)
 	TArray<double> Values{ 0.0 };
 
-	FFlowDataPinValue_Double() {}
-	FFlowDataPinValue_Double(double InValue) : Values({ InValue }) {}
-	FFlowDataPinValue_Double(const TArray<double>& InValues) : Values(InValues) {}
+	FLOW_API FFlowDataPinValue_Double() = default;
+	FLOW_API FFlowDataPinValue_Double(ValueType InValue);
+	FLOW_API FFlowDataPinValue_Double(const TArray<ValueType>& InValues);
 
-	virtual const FFlowPinTypeName& GetPinTypeName() const override { return FFlowDataPinTypeNamesStandard::ValueTypeNameDouble; }
+	virtual const FFlowPinTypeName& GetPinTypeName() const override { return PinType::GetPinTypeNameStatic(); }
+	virtual bool TryConvertValuesToString(FString& OutString) const override;
 };
 
+//======================================================================
+// Name
+//======================================================================
+USTRUCT(MinimalApi, BlueprintType, DisplayName = "Name - Flow DataPin Value", meta = (FlowPinType = "Name", HasNativeMake = "/Script/Flow.FlowDataPinBlueprintLibrary.MakeStructName"))
+struct FFlowDataPinValue_Name : public FFlowDataPinValue
+{
+	GENERATED_BODY()
+
+public:
+	using PinType = FFlowPinType_Name;
+	using ValueType = PinType::ValueType;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = DataPins)
+	TArray<FName> Values{ NAME_None };
+
+	FLOW_API FFlowDataPinValue_Name() = default;
+	FLOW_API FFlowDataPinValue_Name(const ValueType& InValue);
+	FLOW_API FFlowDataPinValue_Name(const TArray<ValueType>& InValues);
+
+	virtual const FFlowPinTypeName& GetPinTypeName() const override { return PinType::GetPinTypeNameStatic(); }
+	virtual bool TryConvertValuesToString(FString& OutString) const override;
+};
+
+//======================================================================
+// String
+//======================================================================
+USTRUCT(MinimalApi, BlueprintType, DisplayName = "String - Flow DataPin Value", meta = (FlowPinType = "String", HasNativeMake = "/Script/Flow.FlowDataPinBlueprintLibrary.MakeStructString"))
+struct FFlowDataPinValue_String : public FFlowDataPinValue
+{
+	GENERATED_BODY()
+
+public:
+	using PinType = FFlowPinType_String;
+	using ValueType = PinType::ValueType;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = DataPins)
+	TArray<FString> Values;
+
+	FLOW_API FFlowDataPinValue_String() = default;
+	FLOW_API FFlowDataPinValue_String(const ValueType& InValue);
+	FLOW_API FFlowDataPinValue_String(const TArray<ValueType>& InValues);
+
+	virtual const FFlowPinTypeName& GetPinTypeName() const override { return PinType::GetPinTypeNameStatic(); }
+	virtual bool TryConvertValuesToString(FString& OutString) const override;
+};
+
+//======================================================================
+// Text
+//======================================================================
+USTRUCT(MinimalApi, BlueprintType, DisplayName = "Text - Flow DataPin Value", meta = (FlowPinType = "Text", HasNativeMake = "/Script/Flow.FlowDataPinBlueprintLibrary.MakeStructText"))
+struct FFlowDataPinValue_Text : public FFlowDataPinValue
+{
+	GENERATED_BODY()
+
+public:
+	using PinType = FFlowPinType_Text;
+	using ValueType = PinType::ValueType;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = DataPins)
+	TArray<FText> Values;
+
+	FLOW_API FFlowDataPinValue_Text() = default;
+	FLOW_API FFlowDataPinValue_Text(const ValueType& InValue);
+	FLOW_API FFlowDataPinValue_Text(const TArray<ValueType>& InValues);
+
+	virtual const FFlowPinTypeName& GetPinTypeName() const override { return PinType::GetPinTypeNameStatic(); }
+	virtual bool TryConvertValuesToString(FString& OutString) const override;
+};
+
+//======================================================================
 // Enum
-USTRUCT(BlueprintType, DisplayName = "Enum - Flow DataPin Value", meta = (FlowPinType = "Enum"))
+//======================================================================
+USTRUCT(MinimalApi, BlueprintType, DisplayName = "Enum - Flow DataPin Value", meta = (FlowPinType = "Enum", HasNativeMake = "/Script/Flow.FlowDataPinBlueprintLibrary.MakeStructEnum"))
 struct FFlowDataPinValue_Enum : public FFlowDataPinValue
 {
 	GENERATED_BODY()
 
 public:
-	typedef FName FValueType;
+	using PinType = FFlowPinType_Enum;
+	using ValueType = PinType::ValueType;
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = DataPins)
 	TArray<FName> Values;
@@ -131,317 +224,259 @@ public:
 	// Native C++ enum name (advanced)
 	UPROPERTY(EditAnywhere, Category = DataPins, meta = (AdvancedDisplay))
 	FString EnumName;
-
-	// Lock source (asset/name). Does NOT lock enumerator selection.
-	UPROPERTY(EditAnywhere, Category = DataPins, meta = (DisplayName = "Lock Enum Class"))
-	bool bLockEnumClass = false;
 #endif
 
-	FFlowDataPinValue_Enum() {}
-	FFlowDataPinValue_Enum(const TSoftObjectPtr<UEnum>& InEnumClass, FName InValue)
-		: Values({ InValue }), EnumClass(InEnumClass) {
-	}
-	FFlowDataPinValue_Enum(const TSoftObjectPtr<UEnum>& InEnumClass, const TArray<FName>& InValues)
-		: Values(InValues), EnumClass(InEnumClass) {
-	}
+	FLOW_API FFlowDataPinValue_Enum() = default;
+	FLOW_API FFlowDataPinValue_Enum(const TSoftObjectPtr<UEnum>& InEnumClass, const ValueType& InValue);
+	FLOW_API FFlowDataPinValue_Enum(const TSoftObjectPtr<UEnum>& InEnumClass, const TArray<ValueType>& InValues);
 
-	virtual const FFlowPinTypeName& GetPinTypeName() const override { return FFlowDataPinTypeNamesStandard::ValueTypeNameEnum; }
 #if WITH_EDITOR
-	virtual UObject* GetSubCategoryObject() const override { return EnumClass.Get(); }
-
 	FLOW_API void OnEnumNameChanged();
 #endif
+
+	virtual const FFlowPinTypeName& GetPinTypeName() const override { return PinType::GetPinTypeNameStatic(); }
+	virtual UField* GetFieldType() const override;
+	virtual bool TryConvertValuesToString(FString& OutString) const override;
+
+	// Helper templates
+	template <typename TUnrealNativeEnumType>
+	static bool TryGetEnumValueByName(const UEnum* EnumClass, const FName& EnumValueName, TUnrealNativeEnumType& OutValue, EGetByNameFlags GetByNameFlags = EGetByNameFlags::ErrorIfNotFound)
+	{
+		if (!IsValid(EnumClass))
+		{
+			return false;
+		}
+
+		const int32 EnumIndex = EnumClass->GetIndexByName(EnumValueName, GetByNameFlags);
+		if (EnumIndex != INDEX_NONE)
+		{
+			OutValue = static_cast<TUnrealNativeEnumType>(EnumClass->GetValueByIndex(EnumIndex));
+			return true;
+		}
+		return false;
+	}
+
+	template <typename TUnrealNativeEnumType>
+	EFlowDataPinResolveResult TryGetSingleEnumValue(TUnrealNativeEnumType& OutEnumValue, EFlowSingleFromArray SingleFromArray, EGetByNameFlags GetByNameFlags = EGetByNameFlags::ErrorIfNotFound) const
+	{
+		const int32 Index = EFlowSingleFromArray_Classifiers::ConvertToIndex(SingleFromArray, Values.Num());
+		if (!Values.IsValidIndex(Index))
+		{
+			return EFlowDataPinResolveResult::FailedInsufficientValues;
+		}
+
+		UEnum* EnumClassPtr = EnumClass.LoadSynchronous();
+		if (!TryGetEnumValueByName(EnumClassPtr, Values[Index], OutEnumValue, GetByNameFlags))
+		{
+			return EFlowDataPinResolveResult::FailedUnknownEnumValue;
+		}
+		return EFlowDataPinResolveResult::Success;
+	}
+
+	template <typename TUnrealNativeEnumType>
+	EFlowDataPinResolveResult TryGetAllNativeEnumValues(TArray<TUnrealNativeEnumType>& OutEnumValues, EGetByNameFlags GetByNameFlags = EGetByNameFlags::ErrorIfNotFound) const
+	{
+		if (Values.IsEmpty())
+		{
+			return EFlowDataPinResolveResult::FailedInsufficientValues;
+		}
+
+		UEnum* EnumClassPtr = EnumClass.LoadSynchronous();
+		OutEnumValues.Reserve(Values.Num());
+
+		for (const ValueType& ValueName : Values)
+		{
+			TUnrealNativeEnumType EnumValue;
+			if (!TryGetEnumValueByName(EnumClassPtr, ValueName, EnumValue, GetByNameFlags))
+			{
+				return EFlowDataPinResolveResult::FailedUnknownEnumValue;
+			}
+			OutEnumValues.Add(EnumValue);
+		}
+		return EFlowDataPinResolveResult::Success;
+	}
 };
 
-// Name
-USTRUCT(BlueprintType, DisplayName = "Name - Flow DataPin Value", meta = (FlowPinType = "Name"))
-struct FFlowDataPinValue_Name : public FFlowDataPinValue
-{
-	GENERATED_BODY()
-
-public:
-	typedef FName FValueType;
-
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = DataPins)
-	TArray<FName> Values;
-
-	FFlowDataPinValue_Name() {}
-	FFlowDataPinValue_Name(const FName& InValue) : Values({ InValue }) {}
-	FFlowDataPinValue_Name(const TArray<FName>& InValues) : Values(InValues) {}
-
-	virtual const FFlowPinTypeName& GetPinTypeName() const override { return FFlowDataPinTypeNamesStandard::ValueTypeNameName; }
-};
-
-// String
-USTRUCT(BlueprintType, DisplayName = "String - Flow DataPin Value", meta = (FlowPinType = "String"))
-struct FFlowDataPinValue_String : public FFlowDataPinValue
-{
-	GENERATED_BODY()
-
-public:
-	typedef FString FValueType;
-
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = DataPins)
-	TArray<FString> Values;
-
-	FFlowDataPinValue_String() {}
-	FFlowDataPinValue_String(const FString& InValue) : Values({ InValue }) {}
-	FFlowDataPinValue_String(const TArray<FString>& InValues) : Values(InValues) {}
-
-	virtual const FFlowPinTypeName& GetPinTypeName() const override { return FFlowDataPinTypeNamesStandard::ValueTypeNameString; }
-};
-
-// Text
-USTRUCT(BlueprintType, DisplayName = "Text - Flow DataPin Value", meta = (FlowPinType = "Text"))
-struct FFlowDataPinValue_Text : public FFlowDataPinValue
-{
-	GENERATED_BODY()
-
-public:
-	typedef FText FValueType;
-
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = DataPins)
-	TArray<FText> Values;
-
-	FFlowDataPinValue_Text() {}
-	FFlowDataPinValue_Text(const FText& InValue) : Values({ InValue }) {}
-	FFlowDataPinValue_Text(const TArray<FText>& InValues) : Values(InValues) {}
-
-	virtual const FFlowPinTypeName& GetPinTypeName() const override { return FFlowDataPinTypeNamesStandard::ValueTypeNameText; }
-};
-
+//======================================================================
 // Vector
-USTRUCT(BlueprintType, DisplayName = "Vector - Flow DataPin Value", meta = (FlowPinType = "Vector"))
+//======================================================================
+USTRUCT(MinimalApi, BlueprintType, DisplayName = "Vector - Flow DataPin Value", meta = (FlowPinType = "Vector", HasNativeMake = "/Script/Flow.FlowDataPinBlueprintLibrary.MakeStructVector"))
 struct FFlowDataPinValue_Vector : public FFlowDataPinValue
 {
 	GENERATED_BODY()
 
 public:
-	typedef FVector FValueType;
+	using PinType = FFlowPinType_Vector;
+	using ValueType = PinType::ValueType;
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = DataPins)
-	TArray<FVector> Values;
+	TArray<FVector> Values{ FVector::ZeroVector };
 
-	FFlowDataPinValue_Vector() {}
-	FFlowDataPinValue_Vector(const FVector& InValue) : Values({ InValue }) {}
-	FFlowDataPinValue_Vector(const TArray<FVector>& InValues) : Values(InValues) {}
+	FLOW_API FFlowDataPinValue_Vector() = default;
+	FLOW_API FFlowDataPinValue_Vector(const ValueType& InValue);
+	FLOW_API FFlowDataPinValue_Vector(const TArray<ValueType>& InValues);
 
-	virtual const FFlowPinTypeName& GetPinTypeName() const override { return FFlowDataPinTypeNamesStandard::ValueTypeNameVector; }
-#if WITH_EDITOR
-	virtual UObject* GetSubCategoryObject() const override { return TBaseStructure<FVector>::Get(); }
-#endif
+	virtual const FFlowPinTypeName& GetPinTypeName() const override { return PinType::GetPinTypeNameStatic(); }
+	virtual bool TryConvertValuesToString(FString& OutString) const override;
 };
 
+//======================================================================
 // Rotator
-USTRUCT(BlueprintType, DisplayName = "Rotator - Flow DataPin Value", meta = (FlowPinType = "Rotator"))
+//======================================================================
+USTRUCT(MinimalApi, BlueprintType, DisplayName = "Rotator - Flow DataPin Value", meta = (FlowPinType = "Rotator", HasNativeMake = "/Script/Flow.FlowDataPinBlueprintLibrary.MakeStructRotator"))
 struct FFlowDataPinValue_Rotator : public FFlowDataPinValue
 {
 	GENERATED_BODY()
 
 public:
-	typedef FRotator FValueType;
+	using PinType = FFlowPinType_Rotator;
+	using ValueType = PinType::ValueType;
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = DataPins)
-	TArray<FRotator> Values;
+	TArray<FRotator> Values{ FRotator::ZeroRotator };
 
-	FFlowDataPinValue_Rotator() {}
-	FFlowDataPinValue_Rotator(const FRotator& InValue) : Values({ InValue }) {}
-	FFlowDataPinValue_Rotator(const TArray<FRotator>& InValues) : Values(InValues) {}
+	FLOW_API FFlowDataPinValue_Rotator() = default;
+	FLOW_API FFlowDataPinValue_Rotator(const ValueType& InValue);
+	FLOW_API FFlowDataPinValue_Rotator(const TArray<ValueType>& InValues);
 
-	virtual const FFlowPinTypeName& GetPinTypeName() const override { return FFlowDataPinTypeNamesStandard::ValueTypeNameRotator; }
-#if WITH_EDITOR
-	virtual UObject* GetSubCategoryObject() const override { return TBaseStructure<FRotator>::Get(); }
-#endif
+	virtual const FFlowPinTypeName& GetPinTypeName() const override { return PinType::GetPinTypeNameStatic(); }
+	virtual bool TryConvertValuesToString(FString& OutString) const override;
 };
 
+//======================================================================
 // Transform
-USTRUCT(BlueprintType, DisplayName = "Transform - Flow DataPin Value", meta = (FlowPinType = "Transform"))
+//======================================================================
+USTRUCT(MinimalApi, BlueprintType, DisplayName = "Transform - Flow DataPin Value", meta = (FlowPinType = "Transform", HasNativeMake = "/Script/Flow.FlowDataPinBlueprintLibrary.MakeStructTransform"))
 struct FFlowDataPinValue_Transform : public FFlowDataPinValue
 {
 	GENERATED_BODY()
 
 public:
-	typedef FTransform FValueType;
+	using PinType = FFlowPinType_Transform;
+	using ValueType = PinType::ValueType;
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = DataPins)
-	TArray<FTransform> Values;
+	TArray<FTransform> Values{ FTransform::Identity };
 
-	FFlowDataPinValue_Transform() {}
-	FFlowDataPinValue_Transform(const FTransform& InValue) : Values({ InValue }) {}
-	FFlowDataPinValue_Transform(const TArray<FTransform>& InValues) : Values(InValues) {}
+	FLOW_API FFlowDataPinValue_Transform() = default;
+	FLOW_API FFlowDataPinValue_Transform(const ValueType& InValue);
+	FLOW_API FFlowDataPinValue_Transform(const TArray<ValueType>& InValues);
 
-	virtual const FFlowPinTypeName& GetPinTypeName() const override { return FFlowDataPinTypeNamesStandard::ValueTypeNameTransform; }
-#if WITH_EDITOR
-	virtual UObject* GetSubCategoryObject() const override { return TBaseStructure<FTransform>::Get(); }
-#endif
+	virtual const FFlowPinTypeName& GetPinTypeName() const override { return PinType::GetPinTypeNameStatic(); }
+	virtual bool TryConvertValuesToString(FString& OutString) const override;
 };
 
+//======================================================================
 // GameplayTag
-USTRUCT(BlueprintType, DisplayName = "GameplayTag - Flow DataPin Value", meta = (FlowPinType = "GameplayTag"))
+//======================================================================
+USTRUCT(MinimalApi, BlueprintType, DisplayName = "GameplayTag - Flow DataPin Value", meta = (FlowPinType = "GameplayTag", HasNativeMake = "/Script/Flow.FlowDataPinBlueprintLibrary.MakeStructGameplayTag"))
 struct FFlowDataPinValue_GameplayTag : public FFlowDataPinValue
 {
 	GENERATED_BODY()
 
 public:
-	typedef FGameplayTag FValueType;
+	using PinType = FFlowPinType_GameplayTag;
+	using ValueType = PinType::ValueType;
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = DataPins)
 	TArray<FGameplayTag> Values;
 
-	FFlowDataPinValue_GameplayTag() {}
-	FFlowDataPinValue_GameplayTag(const FGameplayTag& InValue) : Values({ InValue }) {}
-	FFlowDataPinValue_GameplayTag(const TArray<FGameplayTag>& InValues) : Values(InValues) {}
+	FLOW_API FFlowDataPinValue_GameplayTag() = default;
+	FLOW_API FFlowDataPinValue_GameplayTag(const ValueType& InValue);
+	FLOW_API FFlowDataPinValue_GameplayTag(const TArray<ValueType>& InValues);
 
-	virtual const FFlowPinTypeName& GetPinTypeName() const override { return FFlowDataPinTypeNamesStandard::ValueTypeNameGameplayTag; }
-#if WITH_EDITOR
-	virtual UObject* GetSubCategoryObject() const override { return TBaseStructure<FGameplayTag>::Get(); }
-#endif
+	virtual const FFlowPinTypeName& GetPinTypeName() const override { return PinType::GetPinTypeNameStatic(); }
+	virtual bool TryConvertValuesToString(FString& OutString) const override;
 };
 
+//======================================================================
 // GameplayTagContainer
-USTRUCT(BlueprintType, DisplayName = "GameplayTagContainer - Flow DataPin Value", meta = (FlowPinType = "GameplayTagContainer"))
+//======================================================================
+USTRUCT(MinimalApi, BlueprintType, DisplayName = "GameplayTagContainer - Flow DataPin Value", meta = (FlowPinType = "GameplayTagContainer", HasNativeMake = "/Script/Flow.FlowDataPinBlueprintLibrary.MakeStructGameplayTagContainer"))
 struct FFlowDataPinValue_GameplayTagContainer : public FFlowDataPinValue
 {
 	GENERATED_BODY()
 
 public:
-	typedef FGameplayTagContainer FValueType;
+	using PinType = FFlowPinType_GameplayTagContainer;
+	using ValueType = PinType::ValueType;
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = DataPins)
-	TArray<FGameplayTagContainer> Values;
+	FGameplayTagContainer Values;
 
-	FFlowDataPinValue_GameplayTagContainer() {}
-	FFlowDataPinValue_GameplayTagContainer(const FGameplayTagContainer& InValue) : Values({ InValue }) {}
-	FFlowDataPinValue_GameplayTagContainer(const TArray<FGameplayTagContainer>& InValues) : Values(InValues) {}
+	FLOW_API FFlowDataPinValue_GameplayTagContainer() = default;
+	FLOW_API FFlowDataPinValue_GameplayTagContainer(const FGameplayTag& InValue);
+	FLOW_API FFlowDataPinValue_GameplayTagContainer(const FGameplayTagContainer& InValues);
+	FLOW_API FFlowDataPinValue_GameplayTagContainer(const TArray<FGameplayTag>& InValues);
+	FLOW_API FFlowDataPinValue_GameplayTagContainer(const TArray<FGameplayTagContainer>& InValues);
 
-	virtual const FFlowPinTypeName& GetPinTypeName() const override { return FFlowDataPinTypeNamesStandard::ValueTypeNameGameplayTagContainer; }
-#if WITH_EDITOR
-	virtual UObject* GetSubCategoryObject() const override { return TBaseStructure<FGameplayTagContainer>::Get(); }
-#endif
+	virtual const FFlowPinTypeName& GetPinTypeName() const override { return PinType::GetPinTypeNameStatic(); }
+	virtual bool TryConvertValuesToString(FString& OutString) const override;
 };
 
+//======================================================================
 // InstancedStruct
-USTRUCT(BlueprintType, DisplayName = "InstancedStruct - Flow DataPin Value", meta = (FlowPinType = "InstancedStruct"))
+//======================================================================
+USTRUCT(MinimalApi, BlueprintType, DisplayName = "InstancedStruct - Flow DataPin Value", meta = (FlowPinType = "InstancedStruct", HasNativeMake = "/Script/Flow.FlowDataPinBlueprintLibrary.MakeStructInstancedStruct"))
 struct FFlowDataPinValue_InstancedStruct : public FFlowDataPinValue
 {
 	GENERATED_BODY()
 
 public:
-	typedef FInstancedStruct FValueType;
+	using PinType = FFlowPinType_InstancedStruct;
+	using ValueType = PinType::ValueType;
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = DataPins)
 	TArray<FInstancedStruct> Values;
 
-	FFlowDataPinValue_InstancedStruct() {}
-	FFlowDataPinValue_InstancedStruct(const FInstancedStruct& InValue) : Values({ InValue }) {}
-	FFlowDataPinValue_InstancedStruct(const TArray<FInstancedStruct>& InValues) : Values(InValues) {}
+	FLOW_API FFlowDataPinValue_InstancedStruct() = default;
+	FLOW_API FFlowDataPinValue_InstancedStruct(const ValueType& InValue);
+	FLOW_API FFlowDataPinValue_InstancedStruct(const TArray<ValueType>& InValues);
 
-	virtual const FFlowPinTypeName& GetPinTypeName() const override { return FFlowDataPinTypeNamesStandard::ValueTypeNameInstancedStruct; }
-#if WITH_EDITOR
-	virtual UObject* GetSubCategoryObject() const override { return TBaseStructure<FInstancedStruct>::Get(); }
-#endif
+	virtual const FFlowPinTypeName& GetPinTypeName() const override { return PinType::GetPinTypeNameStatic(); }
 };
 
-// Object (reference)
-USTRUCT(BlueprintType, DisplayName = "Object - Flow DataPin Value", meta = (FlowPinType = "Object"))
+//======================================================================
+// Object
+//======================================================================
+USTRUCT(MinimalApi, BlueprintType, DisplayName = "Object - Flow DataPin Value", meta = (FlowPinType = "Object", HasNativeMake = "/Script/Flow.FlowDataPinBlueprintLibrary.MakeStructObject"))
 struct FFlowDataPinValue_Object : public FFlowDataPinValue
 {
 	GENERATED_BODY()
 
 public:
-	typedef UObject* FValueType;
+	using PinType = FFlowPinType_Object;
+	using ValueType = PinType::ValueType;
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = DataPins)
 	TArray<TObjectPtr<UObject>> Values;
 
 #if WITH_EDITORONLY_DATA
-	// Class filter (advanced)
 	UPROPERTY(EditAnywhere, Category = DataPins, meta = (AllowAbstract, AdvancedDisplay))
 	TObjectPtr<UClass> ClassFilter = UObject::StaticClass();
-
-	UPROPERTY(EditAnywhere, Category = DataPins, meta = (DisplayName = "Lock Class Filter"))
-	bool bLockClassFilter = false;
 #endif
 
-	FFlowDataPinValue_Object() {}
-	FFlowDataPinValue_Object(UObject* InObject)
-	{
-		if (InObject)
-		{
-			Values.Add(InObject);
-		}
-	}
-	FFlowDataPinValue_Object(const TArray<UObject*>& InObjects)
-	{
-		for (UObject* Obj : InObjects)
-		{
-			if (Obj)
-			{
-				Values.Add(Obj);
-			}
-		}
-	}
+	FLOW_API FFlowDataPinValue_Object() = default;
+	FLOW_API FFlowDataPinValue_Object(TObjectPtr<UObject> InObject, UClass* InClassFilter = UObject::StaticClass());
+	FLOW_API FFlowDataPinValue_Object(const TArray<TObjectPtr<UObject>>& InObjects, UClass* InClassFilter = UObject::StaticClass());
+	FLOW_API FFlowDataPinValue_Object(AActor* InActor, UClass* InClassFilter = nullptr /* nullptr here defaults to AActor::StaticClass() */ );
+	FLOW_API FFlowDataPinValue_Object(const TArray<AActor*>& InActors, UClass* InClassFilter = nullptr /* nullptr here defaults to AActor::StaticClass() */);
 
-	virtual const FFlowPinTypeName& GetPinTypeName() const override { return FFlowDataPinTypeNamesStandard::ValueTypeNameObject; }
-
-#if WITH_EDITOR
-	virtual UObject* GetSubCategoryObject() const override { return ClassFilter; }
-#endif
+	virtual const FFlowPinTypeName& GetPinTypeName() const override { return PinType::GetPinTypeNameStatic(); }
+	virtual bool TryConvertValuesToString(FString& OutString) const override;
 };
 
-// InstancedObject (inline / instanced editing)
-USTRUCT(BlueprintType, DisplayName = "InstancedObject - Flow DataPin Value", meta = (FlowPinType = "InstancedObject"))
-struct FFlowDataPinValue_InstancedObject : public FFlowDataPinValue
-{
-	GENERATED_BODY()
-
-public:
-	typedef UObject* FValueType;
-
-	UPROPERTY(EditAnywhere, Instanced, BlueprintReadWrite, Category = DataPins)
-	TArray<TObjectPtr<UObject>> Values;
-
-#if WITH_EDITORONLY_DATA
-	UPROPERTY(EditAnywhere, Category = DataPins, meta = (AllowAbstract, AdvancedDisplay))
-	TObjectPtr<UClass> ClassFilter = UObject::StaticClass();
-
-	UPROPERTY(EditAnywhere, Category = DataPins, meta = (DisplayName = "Lock Class Filter"))
-	bool bLockClassFilter = false;
-#endif
-
-	FFlowDataPinValue_InstancedObject() {}
-	FFlowDataPinValue_InstancedObject(UObject* InObject)
-	{
-		if (InObject)
-		{
-			Values.Add(InObject);
-		}
-	}
-	FFlowDataPinValue_InstancedObject(const TArray<UObject*>& InObjects)
-	{
-		for (UObject* Obj : InObjects)
-		{
-			if (Obj)
-			{
-				Values.Add(Obj);
-			}
-		}
-	}
-
-	virtual const FFlowPinTypeName& GetPinTypeName() const override { return FFlowDataPinTypeNamesStandard::ValueTypeNameInstancedObject; }
-#if WITH_EDITOR
-	virtual UObject* GetSubCategoryObject() const override { return ClassFilter; }
-#endif
-};
-
-// Class (soft class paths)
-USTRUCT(BlueprintType, DisplayName = "Class - Flow DataPin Value", meta = (FlowPinType = "Class"))
+//======================================================================
+// Class
+//======================================================================
+USTRUCT(MinimalApi, BlueprintType, DisplayName = "Class - Flow DataPin Value", meta = (FlowPinType = "Class", HasNativeMake = "/Script/Flow.FlowDataPinBlueprintLibrary.MakeStructClass"))
 struct FFlowDataPinValue_Class : public FFlowDataPinValue
 {
 	GENERATED_BODY()
 
 public:
-	typedef UClass* FValueType;
+	using PinType = FFlowPinType_Class;
+	using ValueType = PinType::ValueType;
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = DataPins)
 	TArray<FSoftClassPath> Values;
@@ -449,17 +484,14 @@ public:
 #if WITH_EDITORONLY_DATA
 	UPROPERTY(EditAnywhere, Category = DataPins, meta = (AllowAbstract, AdvancedDisplay))
 	TObjectPtr<UClass> ClassFilter = UObject::StaticClass();
-
-	UPROPERTY(EditAnywhere, Category = DataPins, meta = (DisplayName = "Lock Class Filter"))
-	bool bLockClassFilter = false;
 #endif
 
-	FFlowDataPinValue_Class() {}
-	FFlowDataPinValue_Class(const FSoftClassPath& InPath) : Values({ InPath }) {}
-	FFlowDataPinValue_Class(const TArray<FSoftClassPath>& InValues) : Values(InValues) {}
+	FLOW_API FFlowDataPinValue_Class() = default;
+	FLOW_API FFlowDataPinValue_Class(const FSoftClassPath& InPath, UClass* InClassFilter = UObject::StaticClass());
+	FLOW_API FFlowDataPinValue_Class(const TArray<FSoftClassPath>& InPaths, UClass* InClassFilter = UObject::StaticClass());
+	FLOW_API FFlowDataPinValue_Class(const UClass* InClass, UClass* InClassFilter = UObject::StaticClass());
+	FLOW_API FFlowDataPinValue_Class(const TArray<UClass*>& InClasses, UClass* InClassFilter = UObject::StaticClass());
 
-	virtual const FFlowPinTypeName& GetPinTypeName() const override { return FFlowDataPinTypeNamesStandard::ValueTypeNameClass; }
-#if WITH_EDITOR
-	virtual UObject* GetSubCategoryObject() const override { return ClassFilter; }
-#endif
+	virtual const FFlowPinTypeName& GetPinTypeName() const override { return PinType::GetPinTypeNameStatic(); }
+	virtual bool TryConvertValuesToString(FString& OutString) const override;
 };

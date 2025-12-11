@@ -4,6 +4,9 @@
 #include "FlowAsset.h"
 #include "FlowLogChannels.h"
 #include "Asset/FlowAssetParamsUtils.h"
+#include "Types/FlowDataPinValuesStandard.h"
+#include "UObject/ObjectSaveContext.h"
+
 #if WITH_EDITOR
 #include "SourceControlHelpers.h"
 #include "Misc/DataValidation.h"
@@ -11,19 +14,47 @@
 
 #include UE_INLINE_GENERATED_CPP_BY_NAME(FlowAssetParams)
 
+#if WITH_EDITOR
 void UFlowAssetParams::PostLoad()
 {
 	Super::PostLoad();
 
-#if WITH_EDITOR
+	if (!HasAnyFlags(RF_ArchetypeObject | RF_ClassDefaultObject))
+	{
+		// Migrate the named properties over to the new structs
+
+		bool bMadeAnyChanges = false;
+		for (FFlowNamedDataPinProperty& NamedProperty : Properties)
+		{
+			bMadeAnyChanges |= NamedProperty.FixupDataPinProperty();
+		}
+		
+		if (bMadeAnyChanges)
+		{
+			ModifyAndRebuildPropertiesMap();
+		}
+	}
+
 	const EFlowReconcilePropertiesResult ReconcileResult = ReconcilePropertiesWithParentParams();
 	if (EFlowReconcilePropertiesResult_Classifiers::IsErrorResult(ReconcileResult))
 	{
-		UE_LOG(LogFlow, Error, TEXT("Failed to reconcile ParentParams for %s: %s"),
+		UE_LOG(LogFlow, Error, TEXT("Failed to reconcile ParentParams during PostLoad() for %s: %s"),
 			*GetPathName(), *UEnum::GetDisplayValueAsText(ReconcileResult).ToString());
 	}
-#endif
 }
+
+void UFlowAssetParams::PreSaveRoot(FObjectPreSaveRootContext ObjectSaveContext)
+{
+	Super::PreSaveRoot(ObjectSaveContext);
+
+	const EFlowReconcilePropertiesResult ReconcileResult = ReconcilePropertiesWithParentParams();
+	if (EFlowReconcilePropertiesResult_Classifiers::IsErrorResult(ReconcileResult))
+	{
+		UE_LOG(LogFlow, Error, TEXT("Failed to reconcile ParentParams during PreSaveRoot() for %s: %s"),
+			*GetPathName(), *UEnum::GetDisplayValueAsText(ReconcileResult).ToString());
+	}
+}
+#endif
 
 void UFlowAssetParams::Serialize(FArchive& Ar)
 {
@@ -37,8 +68,8 @@ void UFlowAssetParams::Serialize(FArchive& Ar)
 				*GetPathName(), *UEnum::GetDisplayValueAsText(ReconcileResult).ToString());
 		}
 	}
-#endif
 
+#endif
 	Super::Serialize(Ar);
 }
 
@@ -86,9 +117,9 @@ EDataValidationResult UFlowAssetParams::IsDataValid(FDataValidationContext& Cont
 			Result = CombineDataValidationResults(Result, EDataValidationResult::Invalid);
 		}
 
-		if (!Property.DataPinProperty.IsValid())
+		if (!Property.DataPinValue.IsValid())
 		{
-			Context.AddError(FText::FromString(FString::Printf(TEXT("Property at index %d has invalid DataPinProperty"), Index)));
+			Context.AddError(FText::FromString(FString::Printf(TEXT("Property at index %d has invalid DataPinValue"), Index)));
 			Result = CombineDataValidationResults(Result, EDataValidationResult::Invalid);
 		}
 
@@ -180,31 +211,57 @@ EFlowReconcilePropertiesResult UFlowAssetParams::ReconcilePropertiesWithParentPa
 	for (const FFlowNamedDataPinProperty& ParentProp : ParentProps)
 	{
 		FFlowNamedDataPinProperty* LocalProp = FFlowAssetParamsUtils::FindPropertyByGuid(Properties, ParentProp.Guid);
-		if (LocalProp && LocalProp->bIsOverride)
+		if (LocalProp != nullptr)
 		{
-			FFlowNamedDataPinProperty UpdatedProp = *LocalProp;
+			// We have a version of ParentProp locally.
+			// Determine if our local property has been modified since our last reconcile.
+			// A local property is considered modified if we've never added it to PropertyMap or is different from what currently exists in PropertyMap.
+			bool bLocalPropHasChanged = true;
+			if (PropertyMap.Contains(LocalProp->Name))
+			{
+				FFlowNamedDataPinProperty PreviousLocalProp = *LocalProp;
+				PreviousLocalProp.DataPinValue = PropertyMap[LocalProp->Name];
+				bLocalPropHasChanged = !FFlowAssetParamsUtils::ArePropertiesEqual(*LocalProp, PreviousLocalProp);
+			}
 
-			// Enforce Parent's name
-			UpdatedProp.Name = ParentProp.Name;
-
-			NewProperties.Add(UpdatedProp);
-
-			continue;
+			if (bLocalPropHasChanged)
+			{
+				// If the local property has been changed then compare it to the parent value to determine if it is an override or not.
+				if (FFlowAssetParamsUtils::ArePropertiesEqual(*LocalProp, ParentProp))
+				{
+					FFlowNamedDataPinProperty& NewProp = NewProperties.Add_GetRef(ParentProp);
+					NewProp.bIsOverride = false;
+				}
+				else
+				{
+					FFlowNamedDataPinProperty& NewProp = NewProperties.Add_GetRef(*LocalProp);
+					NewProp.Name = ParentProp.Name;
+					NewProp.bIsOverride = true;
+				}
+			}
+			else
+			{
+				// If the local property has not been changed then check whether it is an override.
+				// Overrides will get copied over while non-overrides will be updated to match the parent.
+				if (LocalProp->bIsOverride)
+				{
+					FFlowNamedDataPinProperty& NewProp = NewProperties.Add_GetRef(*LocalProp);
+					NewProp.Name = ParentProp.Name;
+					NewProp.bIsOverride = true;
+				}
+				else
+				{
+					FFlowNamedDataPinProperty& NewProp = NewProperties.Add_GetRef(ParentProp);
+					NewProp.bIsOverride = false;
+				}
+			}
 		}
-
-		if (LocalProp && FFlowAssetParamsUtils::ArePropertiesEqual(*LocalProp, ParentProp))
+		else
 		{
-			LocalProp->bIsOverride = false;
-
-			// Enforce Parent's name
-			LocalProp->Name = ParentProp.Name;
-
-			NewProperties.Add(*LocalProp);
-
-			continue;
+			// We do not have a version of ParentProp. Just make a non-override copy.
+			FFlowNamedDataPinProperty& NewProp = NewProperties.Add_GetRef(ParentProp);
+			NewProp.bIsOverride = false;
 		}
-
-		NewProperties.Add(ParentProp);
 	}
 
 	for (FFlowNamedDataPinProperty& LocalProp : Properties)
@@ -217,14 +274,7 @@ EFlowReconcilePropertiesResult UFlowAssetParams::ReconcilePropertiesWithParentPa
 		}
 	}
 
-	if (FFlowAssetParamsUtils::ArePropertyArraysEqual(NewProperties, Properties))
-	{
-		return EFlowReconcilePropertiesResult::NoChanges;
-	}
-
 	Properties = NewProperties;
-
-	(void) TryCheckOutFromSourceControl();
 
 	ModifyAndRebuildPropertiesMap();
 
@@ -241,21 +291,27 @@ void UFlowAssetParams::ConfigureFlowAssetParams(TSoftObjectPtr<UFlowAsset> Owner
 	ModifyAndRebuildPropertiesMap();
 }
 
-bool UFlowAssetParams::TryCheckOutFromSourceControl() const
+bool UFlowAssetParams::CanModifyFlowDataPinType() const
 {
-	if (!USourceControlHelpers::IsAvailable())
-	{
-		return true;
-	}
+	// These are set by the Flow asset, which is authoritative
+	return false;
+}
 
-	const FString FileName = USourceControlHelpers::PackageFilename(GetPathName());
-	if (!USourceControlHelpers::CheckOutOrAddFile(FileName))
-	{
-		UE_LOG(LogFlow, Warning, TEXT("%s is not checked out; properties updated in-memory only"), *GetPathName());
-		return false;
-	}
+bool UFlowAssetParams::ShowFlowDataPinValueInputPinCheckbox() const
+{
+	// These are set by the Flow asset, which is authoritative
+	return false;
+}
 
+bool UFlowAssetParams::ShowFlowDataPinValueClassFilter(const FFlowDataPinValue* Value) const
+{
 	return true;
+}
+
+bool UFlowAssetParams::CanEditFlowDataPinValueClassFilter(const FFlowDataPinValue* Value) const
+{
+	// These are set by the Flow asset, which is authoritative
+	return false;
 }
 
 EFlowReconcilePropertiesResult UFlowAssetParams::CheckForParentCycle() const
@@ -302,7 +358,7 @@ void UFlowAssetParams::RebuildPropertiesMap()
 	{
 		if (Prop.IsValid())
 		{
-			PropertyMap.Add(Prop.Name, Prop.DataPinProperty);
+			PropertyMap.Add(Prop.Name, Prop.DataPinValue);
 		}
 		else
 		{
@@ -317,254 +373,15 @@ bool UFlowAssetParams::CanSupplyDataPinValues_Implementation() const
 	return !PropertyMap.IsEmpty();
 }
 
-FFlowDataPinResult_Bool UFlowAssetParams::TrySupplyDataPinAsBool_Implementation(const FName& PinName) const
+FFlowDataPinResult UFlowAssetParams::TrySupplyDataPin_Implementation(FName PinName) const
 {
-	if (const TInstancedStruct<FFlowDataPinProperty>* Found = PropertyMap.Find(PinName))
+	if (const TInstancedStruct<FFlowDataPinValue>* Found = PropertyMap.Find(PinName))
 	{
-		if (Found->GetScriptStruct()->IsChildOf(FFlowDataPinOutputProperty_Bool::StaticStruct()))
-		{
-			const FFlowDataPinOutputProperty_Bool& BoolProp = Found->Get<FFlowDataPinOutputProperty_Bool>();
-			return FFlowDataPinResult_Bool(BoolProp.Value);
-		}
+		FFlowDataPinResult DataPinResult(EFlowDataPinResolveResult::Success);
+		DataPinResult.ResultValue = (*Found);
 
-		UE_LOG(LogFlow, Warning, TEXT("Type mismatch for Bool pin %s in %s"), *PinName.ToString(), *GetPathName());
+		return DataPinResult;
 	}
 
-	return FFlowDataPinResult_Bool(EFlowDataPinResolveResult::FailedUnknownPin);
-}
-
-FFlowDataPinResult_Int UFlowAssetParams::TrySupplyDataPinAsInt_Implementation(const FName& PinName) const
-{
-	if (const TInstancedStruct<FFlowDataPinProperty>* Found = PropertyMap.Find(PinName))
-	{
-		const UScriptStruct* Struct = Found->GetScriptStruct();
-		if (Struct->IsChildOf(FFlowDataPinOutputProperty_Int64::StaticStruct()))
-		{
-			const FFlowDataPinOutputProperty_Int64& IntProp = Found->Get<FFlowDataPinOutputProperty_Int64>();
-			return FFlowDataPinResult_Int(IntProp.Value);
-		}
-		else if (Struct->IsChildOf(FFlowDataPinOutputProperty_Int32::StaticStruct()))
-		{
-			const FFlowDataPinOutputProperty_Int32& IntProp = Found->Get<FFlowDataPinOutputProperty_Int32>();
-			return FFlowDataPinResult_Int(static_cast<int64>(IntProp.Value));
-		}
-
-		UE_LOG(LogFlow, Warning, TEXT("Type mismatch for Int pin %s in %s"), *PinName.ToString(), *GetPathName());
-	}
-
-	return FFlowDataPinResult_Int(EFlowDataPinResolveResult::FailedUnknownPin);
-}
-
-FFlowDataPinResult_Float UFlowAssetParams::TrySupplyDataPinAsFloat_Implementation(const FName& PinName) const
-{
-	if (const TInstancedStruct<FFlowDataPinProperty>* Found = PropertyMap.Find(PinName))
-	{
-		const UScriptStruct* Struct = Found->GetScriptStruct();
-		if (Struct->IsChildOf(FFlowDataPinOutputProperty_Double::StaticStruct()))
-		{
-			const FFlowDataPinOutputProperty_Double& FloatProp = Found->Get<FFlowDataPinOutputProperty_Double>();
-			return FFlowDataPinResult_Float(FloatProp.Value);
-		}
-		else if (Struct->IsChildOf(FFlowDataPinOutputProperty_Float::StaticStruct()))
-		{
-			const FFlowDataPinOutputProperty_Float& FloatProp = Found->Get<FFlowDataPinOutputProperty_Float>();
-			return FFlowDataPinResult_Float(static_cast<double>(FloatProp.Value));
-		}
-
-		UE_LOG(LogFlow, Warning, TEXT("Type mismatch for Float pin %s in %s"), *PinName.ToString(), *GetPathName());
-	}
-
-	return FFlowDataPinResult_Float(EFlowDataPinResolveResult::FailedUnknownPin);
-}
-
-FFlowDataPinResult_Name UFlowAssetParams::TrySupplyDataPinAsName_Implementation(const FName& PinName) const
-{
-	if (const TInstancedStruct<FFlowDataPinProperty>* Found = PropertyMap.Find(PinName))
-	{
-		if (Found->GetScriptStruct()->IsChildOf(FFlowDataPinOutputProperty_Name::StaticStruct()))
-		{
-			const FFlowDataPinOutputProperty_Name& NameProp = Found->Get<FFlowDataPinOutputProperty_Name>();
-			return FFlowDataPinResult_Name(NameProp.Value);
-		}
-
-		UE_LOG(LogFlow, Warning, TEXT("Type mismatch for Name pin %s in %s"), *PinName.ToString(), *GetPathName());
-	}
-
-	return FFlowDataPinResult_Name(EFlowDataPinResolveResult::FailedUnknownPin);
-}
-
-FFlowDataPinResult_String UFlowAssetParams::TrySupplyDataPinAsString_Implementation(const FName& PinName) const
-{
-	if (const TInstancedStruct<FFlowDataPinProperty>* Found = PropertyMap.Find(PinName))
-	{
-		if (Found->GetScriptStruct()->IsChildOf(FFlowDataPinOutputProperty_String::StaticStruct()))
-		{
-			const FFlowDataPinOutputProperty_String& StringProp = Found->Get<FFlowDataPinOutputProperty_String>();
-			return FFlowDataPinResult_String(StringProp.Value);
-		}
-
-		UE_LOG(LogFlow, Warning, TEXT("Type mismatch for String pin %s in %s"), *PinName.ToString(), *GetPathName());
-	}
-
-	return FFlowDataPinResult_String(EFlowDataPinResolveResult::FailedUnknownPin);
-}
-
-FFlowDataPinResult_Text UFlowAssetParams::TrySupplyDataPinAsText_Implementation(const FName& PinName) const
-{
-	if (const TInstancedStruct<FFlowDataPinProperty>* Found = PropertyMap.Find(PinName))
-	{
-		if (Found->GetScriptStruct()->IsChildOf(FFlowDataPinOutputProperty_Text::StaticStruct()))
-		{
-			const FFlowDataPinOutputProperty_Text& TextProp = Found->Get<FFlowDataPinOutputProperty_Text>();
-			return FFlowDataPinResult_Text(TextProp.Value);
-		}
-
-		UE_LOG(LogFlow, Warning, TEXT("Type mismatch for Text pin %s in %s"), *PinName.ToString(), *GetPathName());
-	}
-
-	return FFlowDataPinResult_Text(EFlowDataPinResolveResult::FailedUnknownPin);
-}
-
-FFlowDataPinResult_Enum UFlowAssetParams::TrySupplyDataPinAsEnum_Implementation(const FName& PinName) const
-{
-	if (const TInstancedStruct<FFlowDataPinProperty>* Found = PropertyMap.Find(PinName))
-	{
-		if (Found->GetScriptStruct()->IsChildOf(FFlowDataPinOutputProperty_Enum::StaticStruct()))
-		{
-			const FFlowDataPinOutputProperty_Enum& EnumProp = Found->Get<FFlowDataPinOutputProperty_Enum>();
-			return FFlowDataPinResult_Enum(EnumProp.Value, EnumProp.EnumClass);
-		}
-
-		UE_LOG(LogFlow, Warning, TEXT("Type mismatch for Enum pin %s in %s"), *PinName.ToString(), *GetPathName());
-	}
-
-	return FFlowDataPinResult_Enum(EFlowDataPinResolveResult::FailedUnknownPin);
-}
-
-FFlowDataPinResult_Vector UFlowAssetParams::TrySupplyDataPinAsVector_Implementation(const FName& PinName) const
-{
-	if (const TInstancedStruct<FFlowDataPinProperty>* Found = PropertyMap.Find(PinName))
-	{
-		if (Found->GetScriptStruct()->IsChildOf(FFlowDataPinOutputProperty_Vector::StaticStruct()))
-		{
-			const FFlowDataPinOutputProperty_Vector& VectorProp = Found->Get<FFlowDataPinOutputProperty_Vector>();
-			return FFlowDataPinResult_Vector(VectorProp.Value);
-		}
-
-		UE_LOG(LogFlow, Warning, TEXT("Type mismatch for Vector pin %s in %s"), *PinName.ToString(), *GetPathName());
-	}
-
-	return FFlowDataPinResult_Vector(EFlowDataPinResolveResult::FailedUnknownPin);
-}
-
-FFlowDataPinResult_Rotator UFlowAssetParams::TrySupplyDataPinAsRotator_Implementation(const FName& PinName) const
-{
-	if (const TInstancedStruct<FFlowDataPinProperty>* Found = PropertyMap.Find(PinName))
-	{
-		if (Found->GetScriptStruct()->IsChildOf(FFlowDataPinOutputProperty_Rotator::StaticStruct()))
-		{
-			const FFlowDataPinOutputProperty_Rotator& RotatorProp = Found->Get<FFlowDataPinOutputProperty_Rotator>();
-			return FFlowDataPinResult_Rotator(RotatorProp.Value);
-		}
-
-		UE_LOG(LogFlow, Warning, TEXT("Type mismatch for Rotator pin %s in %s"), *PinName.ToString(), *GetPathName());
-	}
-
-	return FFlowDataPinResult_Rotator(EFlowDataPinResolveResult::FailedUnknownPin);
-}
-
-FFlowDataPinResult_Transform UFlowAssetParams::TrySupplyDataPinAsTransform_Implementation(const FName& PinName) const
-{
-	if (const TInstancedStruct<FFlowDataPinProperty>* Found = PropertyMap.Find(PinName))
-	{
-		if (Found->GetScriptStruct()->IsChildOf(FFlowDataPinOutputProperty_Transform::StaticStruct()))
-		{
-			const FFlowDataPinOutputProperty_Transform& TransformProp = Found->Get<FFlowDataPinOutputProperty_Transform>();
-			return FFlowDataPinResult_Transform(TransformProp.Value);
-		}
-
-		UE_LOG(LogFlow, Warning, TEXT("Type mismatch for Transform pin %s in %s"), *PinName.ToString(), *GetPathName());
-	}
-
-	return FFlowDataPinResult_Transform(EFlowDataPinResolveResult::FailedUnknownPin);
-}
-
-FFlowDataPinResult_GameplayTag UFlowAssetParams::TrySupplyDataPinAsGameplayTag_Implementation(const FName& PinName) const
-{
-	if (const TInstancedStruct<FFlowDataPinProperty>* Found = PropertyMap.Find(PinName))
-	{
-		if (Found->GetScriptStruct()->IsChildOf(FFlowDataPinOutputProperty_GameplayTag::StaticStruct()))
-		{
-			const FFlowDataPinOutputProperty_GameplayTag& TagProp = Found->Get<FFlowDataPinOutputProperty_GameplayTag>();
-			return FFlowDataPinResult_GameplayTag(TagProp.Value);
-		}
-
-		UE_LOG(LogFlow, Warning, TEXT("Type mismatch for GameplayTag pin %s in %s"), *PinName.ToString(), *GetPathName());
-	}
-
-	return FFlowDataPinResult_GameplayTag(EFlowDataPinResolveResult::FailedUnknownPin);
-}
-
-FFlowDataPinResult_GameplayTagContainer UFlowAssetParams::TrySupplyDataPinAsGameplayTagContainer_Implementation(const FName& PinName) const
-{
-	if (const TInstancedStruct<FFlowDataPinProperty>* Found = PropertyMap.Find(PinName))
-	{
-		if (Found->GetScriptStruct()->IsChildOf(FFlowDataPinOutputProperty_GameplayTagContainer::StaticStruct()))
-		{
-			const FFlowDataPinOutputProperty_GameplayTagContainer& ContainerProp = Found->Get<FFlowDataPinOutputProperty_GameplayTagContainer>();
-			return FFlowDataPinResult_GameplayTagContainer(ContainerProp.Value);
-		}
-
-		UE_LOG(LogFlow, Warning, TEXT("Type mismatch for GameplayTagContainer pin %s in %s"), *PinName.ToString(), *GetPathName());
-	}
-
-	return FFlowDataPinResult_GameplayTagContainer(EFlowDataPinResolveResult::FailedUnknownPin);
-}
-
-FFlowDataPinResult_InstancedStruct UFlowAssetParams::TrySupplyDataPinAsInstancedStruct_Implementation(const FName& PinName) const
-{
-	if (const TInstancedStruct<FFlowDataPinProperty>* Found = PropertyMap.Find(PinName))
-	{
-		if (Found->GetScriptStruct()->IsChildOf(FFlowDataPinOutputProperty_InstancedStruct::StaticStruct()))
-		{
-			const FFlowDataPinOutputProperty_InstancedStruct& StructProp = Found->Get<FFlowDataPinOutputProperty_InstancedStruct>();
-			return FFlowDataPinResult_InstancedStruct(StructProp.Value);
-		}
-
-		UE_LOG(LogFlow, Warning, TEXT("Type mismatch for InstancedStruct pin %s in %s"), *PinName.ToString(), *GetPathName());
-	}
-
-	return FFlowDataPinResult_InstancedStruct(EFlowDataPinResolveResult::FailedUnknownPin);
-}
-
-FFlowDataPinResult_Object UFlowAssetParams::TrySupplyDataPinAsObject_Implementation(const FName& PinName) const
-{
-	if (const TInstancedStruct<FFlowDataPinProperty>* Found = PropertyMap.Find(PinName))
-	{
-		if (Found->GetScriptStruct()->IsChildOf(FFlowDataPinOutputProperty_Object::StaticStruct()))
-		{
-			const FFlowDataPinOutputProperty_Object& ObjectProp = Found->Get<FFlowDataPinOutputProperty_Object>();
-			return FFlowDataPinResult_Object(ObjectProp.GetObjectValue());
-		}
-
-		UE_LOG(LogFlow, Warning, TEXT("Type mismatch for Object pin %s in %s"), *PinName.ToString(), *GetPathName());
-	}
-
-	return FFlowDataPinResult_Object(EFlowDataPinResolveResult::FailedUnknownPin);
-}
-
-FFlowDataPinResult_Class UFlowAssetParams::TrySupplyDataPinAsClass_Implementation(const FName& PinName) const
-{
-	if (const TInstancedStruct<FFlowDataPinProperty>* Found = PropertyMap.Find(PinName))
-	{
-		if (Found->GetScriptStruct()->IsChildOf(FFlowDataPinOutputProperty_Class::StaticStruct()))
-		{
-			const FFlowDataPinOutputProperty_Class& ClassProp = Found->Get<FFlowDataPinOutputProperty_Class>();
-			return FFlowDataPinResult_Class(ClassProp.GetResolvedClass());
-		}
-
-		UE_LOG(LogFlow, Warning, TEXT("Type mismatch for Class pin %s in %s"), *PinName.ToString(), *GetPathName());
-	}
-
-	return FFlowDataPinResult_Class(EFlowDataPinResolveResult::FailedUnknownPin);
+	return FFlowDataPinResult(EFlowDataPinResolveResult::FailedUnknownPin);
 }

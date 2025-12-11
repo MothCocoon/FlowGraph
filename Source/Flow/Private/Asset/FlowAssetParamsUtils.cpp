@@ -1,13 +1,9 @@
 // Copyright https://github.com/MothCocoon/FlowGraph/graphs/contributors
 
 #include "Asset/FlowAssetParamsUtils.h"
-#include "Asset/FlowAssetParamsTypes.h"
-#include "Types/FlowDataPinProperties.h"
-#include "FlowLogChannels.h"
+#include "Types/FlowNamedDataPinProperty.h"
 #include "Misc/DateTime.h"
 #include "HAL/FileManager.h"
-#include "UObject/Class.h"
-#include "UObject/UObjectGlobals.h"
 
 #include UE_INLINE_GENERATED_CPP_BY_NAME(FlowAssetParamsUtils)
 
@@ -36,8 +32,8 @@ EFlowReconcilePropertiesResult FFlowAssetParamsUtils::CheckPropertiesMatch(
 	{
 		const FFlowNamedDataPinProperty& PropA = PropertiesA[Index];
 		const FFlowNamedDataPinProperty& PropB = PropertiesB[Index];
-		const UScriptStruct* ScriptStructA = PropA.DataPinProperty.GetScriptStruct();
-		const UScriptStruct* ScriptStructB = PropB.DataPinProperty.GetScriptStruct();
+		const UScriptStruct* ScriptStructA = PropA.DataPinValue.GetScriptStruct();
+		const UScriptStruct* ScriptStructB = PropB.DataPinValue.GetScriptStruct();
 
 		if (PropA.Name != PropB.Name ||
 			ScriptStructA != ScriptStructB ||
@@ -109,14 +105,14 @@ bool FFlowAssetParamsUtils::ArePropertiesEqual(
 		return false;
 	}
 
-	const UScriptStruct* ScriptStructA = A.DataPinProperty.GetScriptStruct();
-	const UScriptStruct* ScriptStructB = B.DataPinProperty.GetScriptStruct();
+	const UScriptStruct* ScriptStructA = A.DataPinValue.GetScriptStruct();
+	const UScriptStruct* ScriptStructB = B.DataPinValue.GetScriptStruct();
 	if (ScriptStructA != ScriptStructB)
 	{
 		return false;
 	}
 
-	return A.DataPinProperty == B.DataPinProperty;
+	return A.DataPinValue == B.DataPinValue;
 }
 
 #endif

@@ -4,7 +4,7 @@
 
 #include "UObject/NameTypes.h"
 
-#include "FlowDataPinTypeName.generated.h"
+#include "FlowPinTypeName.generated.h"
 
 USTRUCT(BlueprintType)
 struct FFlowPinTypeName
@@ -16,7 +16,9 @@ public:
 	FName Name = NAME_None;
 
 	FFlowPinTypeName() = default;
-	FFlowPinTypeName(const FName& InName) : Name(InName) {}
+	explicit FFlowPinTypeName(const TCHAR* InPinName) : Name(FName(InPinName)) {}
+	explicit FFlowPinTypeName(const FName& InName) : Name(InName) {}
+	explicit FFlowPinTypeName(const FString& InString) : Name(FName(InString)) {}
 
 	friend inline uint32 GetTypeHash(const FFlowPinTypeName& PinTypeName)
 	{

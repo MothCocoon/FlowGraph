@@ -63,23 +63,8 @@ public:
 	virtual void UpdateNodeConfigText_Implementation() override;
 	// --
 
-	// IFlowDataPinValueSupplierInterface
-	virtual bool CanSupplyDataPinValues_Implementation() const override;
-	virtual FFlowDataPinResult_Bool TrySupplyDataPinAsBool_Implementation(const FName& PinName) const override;
-	virtual FFlowDataPinResult_Int TrySupplyDataPinAsInt_Implementation(const FName& PinName) const override;
-	virtual FFlowDataPinResult_Float TrySupplyDataPinAsFloat_Implementation(const FName& PinName) const override;
-	virtual FFlowDataPinResult_Name TrySupplyDataPinAsName_Implementation(const FName& PinName) const override;
-	virtual FFlowDataPinResult_String TrySupplyDataPinAsString_Implementation(const FName& PinName) const override;
-	virtual FFlowDataPinResult_Text TrySupplyDataPinAsText_Implementation(const FName& PinName) const override;
-	virtual FFlowDataPinResult_Enum TrySupplyDataPinAsEnum_Implementation(const FName& PinName) const override;
-	virtual FFlowDataPinResult_Vector TrySupplyDataPinAsVector_Implementation(const FName& PinName) const override;
-	virtual FFlowDataPinResult_Rotator TrySupplyDataPinAsRotator_Implementation(const FName& PinName) const override;
-	virtual FFlowDataPinResult_Transform TrySupplyDataPinAsTransform_Implementation(const FName& PinName) const override;
-	virtual FFlowDataPinResult_GameplayTag TrySupplyDataPinAsGameplayTag_Implementation(const FName& PinName) const override;
-	virtual FFlowDataPinResult_GameplayTagContainer TrySupplyDataPinAsGameplayTagContainer_Implementation(const FName& PinName) const override;
-	virtual FFlowDataPinResult_InstancedStruct TrySupplyDataPinAsInstancedStruct_Implementation(const FName& PinName) const override;
-	virtual FFlowDataPinResult_Object TrySupplyDataPinAsObject_Implementation(const FName& PinName) const override;
-	virtual FFlowDataPinResult_Class TrySupplyDataPinAsClass_Implementation(const FName& PinName) const override;
+	// UFlowNode
+	virtual void GatherPotentialPropertyOwnersForDataPins(TArray<const UObject*>& InOutOwners) const override;
 	// --
 
 #if WITH_EDITOR
@@ -95,7 +80,7 @@ public:
 	// --
 
 	// UFlowNode
-	virtual FText GetNodeTitle() const override;
+	virtual FText K2_GetNodeTitle_Implementation() const override;
 	virtual EDataValidationResult ValidateNode() override;
 
 	virtual FString GetStatusString() const override;
@@ -112,6 +97,8 @@ protected:
 #endif // WITH_EDITOR
 
 	bool TryInjectComponent();
+
+	const UActorComponent* GetResolvedOrExpectedComponent() const;
 
 	UActorComponent* TryResolveComponent();
 	UActorComponent* GetResolvedComponent() const;

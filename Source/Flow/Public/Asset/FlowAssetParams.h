@@ -3,7 +3,8 @@
 #pragma once
 
 #include "Engine/DataAsset.h"
-#include "Types/FlowDataPinProperties.h"
+#include "Types/FlowNamedDataPinProperty.h"
+#include "Interfaces/FlowDataPinValueOwnerInterface.h"
 #include "Interfaces/FlowDataPinValueSupplierInterface.h"
 #include "Interfaces/FlowAssetProviderInterface.h"
 #include "Asset/FlowAssetParamsTypes.h"
@@ -16,7 +17,11 @@ class UFlowAsset;
 * Data asset for storing Flow Graph Start node parameters, supporting external configuration.
 */
 UCLASS(BlueprintType)
-class FLOW_API UFlowAssetParams : public UDataAsset, public IFlowDataPinValueSupplierInterface, public IFlowAssetProviderInterface
+class FLOW_API UFlowAssetParams
+	: public UDataAsset
+	, public IFlowAssetProviderInterface
+	, public IFlowDataPinValueOwnerInterface
+	, public IFlowDataPinValueSupplierInterface
 {
 	GENERATED_BODY()
 
@@ -36,31 +41,20 @@ public:
 #endif
 
 	UPROPERTY()
-	TMap<FName, TInstancedStruct<FFlowDataPinProperty>> PropertyMap;
+	TMap<FName, TInstancedStruct<FFlowDataPinValue>> PropertyMap;
 
 public:
 	// UObject interface
+#if WITH_EDITOR
 	virtual void PostLoad() override;
+	virtual void PreSaveRoot(FObjectPreSaveRootContext ObjectSaveContext) override;
+#endif
 	virtual void Serialize(FArchive& Ar) override;
 	// --
 
 	// IFlowDataPinValueSupplierInterface
 	virtual bool CanSupplyDataPinValues_Implementation() const override;
-	virtual FFlowDataPinResult_Bool TrySupplyDataPinAsBool_Implementation(const FName& PinName) const override;
-	virtual FFlowDataPinResult_Int TrySupplyDataPinAsInt_Implementation(const FName& PinName) const override;
-	virtual FFlowDataPinResult_Float TrySupplyDataPinAsFloat_Implementation(const FName& PinName) const override;
-	virtual FFlowDataPinResult_Name TrySupplyDataPinAsName_Implementation(const FName& PinName) const override;
-	virtual FFlowDataPinResult_String TrySupplyDataPinAsString_Implementation(const FName& PinName) const override;
-	virtual FFlowDataPinResult_Text TrySupplyDataPinAsText_Implementation(const FName& PinName) const override;
-	virtual FFlowDataPinResult_Enum TrySupplyDataPinAsEnum_Implementation(const FName& PinName) const override;
-	virtual FFlowDataPinResult_Vector TrySupplyDataPinAsVector_Implementation(const FName& PinName) const override;
-	virtual FFlowDataPinResult_Rotator TrySupplyDataPinAsRotator_Implementation(const FName& PinName) const override;
-	virtual FFlowDataPinResult_Transform TrySupplyDataPinAsTransform_Implementation(const FName& PinName) const override;
-	virtual FFlowDataPinResult_GameplayTag TrySupplyDataPinAsGameplayTag_Implementation(const FName& PinName) const override;
-	virtual FFlowDataPinResult_GameplayTagContainer TrySupplyDataPinAsGameplayTagContainer_Implementation(const FName& PinName) const override;
-	virtual FFlowDataPinResult_InstancedStruct TrySupplyDataPinAsInstancedStruct_Implementation(const FName& PinName) const override;
-	virtual FFlowDataPinResult_Object TrySupplyDataPinAsObject_Implementation(const FName& PinName) const override;
-	virtual FFlowDataPinResult_Class TrySupplyDataPinAsClass_Implementation(const FName& PinName) const override;
+	virtual FFlowDataPinResult TrySupplyDataPin_Implementation(FName PinName) const override;
 	// --
 
 	// IFlowAssetProviderInterface
@@ -80,12 +74,32 @@ public:
 
 	void ConfigureFlowAssetParams(TSoftObjectPtr<UFlowAsset> OwnerAsset, TSoftObjectPtr<UFlowAssetParams> InParentParams, const TArray<FFlowNamedDataPinProperty>& InProperties);
 
+	// IFlowDataPinValueOwnerInterface
+	virtual bool CanModifyFlowDataPinType() const override;
+	virtual bool ShowFlowDataPinValueInputPinCheckbox() const override;
+	virtual bool ShowFlowDataPinValueClassFilter(const FFlowDataPinValue* Value) const override;
+	virtual bool CanEditFlowDataPinValueClassFilter(const FFlowDataPinValue* Value) const override;
+	virtual void SetFlowDataPinValuesRebuildDelegate(FSimpleDelegate InDelegate) override
+	{
+		FlowDataPinValuesRebuildDelegate = InDelegate;
+	}
+
+	virtual void RequestFlowDataPinValuesDetailsRebuild() override
+	{
+		if (FlowDataPinValuesRebuildDelegate.IsBound())
+		{
+			FlowDataPinValuesRebuildDelegate.Execute();
+		}
+	}
+
+private:
+	FSimpleDelegate FlowDataPinValuesRebuildDelegate;
+	// --
+
 protected:
 
 	// Updates properties from ParentParams, handling inheritance and name enforcement.
 	EFlowReconcilePropertiesResult ReconcilePropertiesWithParentParams();
-
-	bool TryCheckOutFromSourceControl() const;
 
 	EFlowReconcilePropertiesResult CheckForParentCycle() const;
 

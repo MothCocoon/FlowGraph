@@ -5,7 +5,7 @@
 #include "FlowAsset.h"
 #include "FlowEditorLogChannels.h"
 #include "FlowEditorModule.h"
-#include "Types/FlowDataPinProperties.h"
+#include "Types/FlowDataPinValuesStandard.h"
 #include "AssetRegistry/AssetRegistryModule.h"
 #include "AssetToolsModule.h"
 #include "ContentBrowserMenuContexts.h"

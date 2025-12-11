@@ -2,18 +2,15 @@
 
 #include "Types/FlowDataPinValue.h"
 #include "Types/FlowDataPinResults.h"
-#include "Types/FlowDataPinType.h"
+#include "Types/FlowDataPinValuesStandard.h"
+#include "Types/FlowPinType.h"
+#include "Nodes/FlowPin.h"
 
 #include UE_INLINE_GENERATED_CPP_BY_NAME(FlowDataPinValue)
 
-const FFlowDataPinType* FFlowDataPinValue::LookupDataPinType() const
-{
-	return FFlowDataPinType::LookupDataPinType(GetPinTypeName());
-}
+const FString FFlowDataPinValue::StringArraySeparator = TEXT(",");
 
-bool FFlowDataPinValue::PopulateResult(const FProperty* Property, const UObject* Container, FFlowDataPinResult& OutResult) const
+const FFlowPinType* FFlowDataPinValue::LookupPinType() const
 {
-	OutResult = FFlowDataPinResult(EFlowDataPinResolveResult::FailedMismatchedType);
-
-	return false;
+	return FFlowPinType::LookupPinType(GetPinTypeName());
 }

@@ -2,27 +2,66 @@
 
 #pragma once
 
-#include "DetailCustomizations/FlowDataPinValueCustomization_ObjectBase.h"
+#include "DetailCustomizations/FlowDataPinValueCustomization.h"
 
 /*
-* Concrete customization for FFlowDataPinValue_Object.
-* Relies entirely on ObjectBase shared behavior (no inline creation).
+* Object value customization:
+*  - Conditionally shows ClassFilter (OwnerInterface->ShowFlowDataPinValueClassFilter).
+*  - MetaClass metadata forces filter (row shown but disabled).
+*  - Validates object references against effective filter.
 */
-class FLOWEDITOR_API FFlowDataPinValueCustomization_Object : public FFlowDataPinValueCustomization_ObjectBase
+class FLOWEDITOR_API FFlowDataPinValueCustomization_Object : public FFlowDataPinValueCustomization
 {
-	using Super = FFlowDataPinValueCustomization_ObjectBase;
+	using Super = FFlowDataPinValueCustomization;
 
 public:
-	FFlowDataPinValueCustomization_Object() = default;
-
 	static TSharedRef<IPropertyTypeCustomization> MakeInstance()
 	{
 		return MakeShareable(new FFlowDataPinValueCustomization_Object());
 	}
 
-	// Non-copyable / non-movable
-	FFlowDataPinValueCustomization_Object(const FFlowDataPinValueCustomization_Object&) = delete;
-	FFlowDataPinValueCustomization_Object& operator=(const FFlowDataPinValueCustomization_Object&) = delete;
-	FFlowDataPinValueCustomization_Object(FFlowDataPinValueCustomization_Object&&) = delete;
-	FFlowDataPinValueCustomization_Object& operator=(FFlowDataPinValueCustomization_Object&&) = delete;
+protected:
+	virtual void BuildValueRows(TSharedRef<IPropertyHandle> InStructPropertyHandle,
+		IDetailChildrenBuilder& StructBuilder,
+		IPropertyTypeCustomizationUtils& StructCustomizationUtils) override;
+
+private:
+	// Property handles
+	TSharedPtr<IPropertyHandle> ClassFilterHandle;
+
+	// MetaClass state
+	bool bMetaClassForced = false;
+	TWeakObjectPtr<UClass> EffectiveFilterClass;
+
+	// UI building
+	void BuildClassFilterRow(IDetailChildrenBuilder& StructBuilder, bool bSourceEditable);
+	void BuildSingleBranch(IDetailChildrenBuilder& StructBuilder);
+	void BuildArrayBranch(IDetailChildrenBuilder& StructBuilder);
+
+	// Metadata / filter
+	void TryApplyMetaClass();
+	void ResolveEffectiveFilter();
+
+	// Delegates & validation
+	void BindDelegates();
+	void OnClassFilterChanged();
+	void OnValuesChanged();
+	void ValidateAll();
+	bool IsElementValid(TSharedPtr<IPropertyHandle> ElementHandle) const;
+	void InvalidateElement(TSharedPtr<IPropertyHandle> ElementHandle);
+
+	// Value access
+	UObject* GetObjectValue(TSharedPtr<IPropertyHandle> ElementHandle) const;
+	void SetObjectValue(TSharedPtr<IPropertyHandle> ElementHandle, UObject* NewObj);
+
+	// Permissions (inline owner queries)
+	bool ShouldShowSourceRow() const;
+	bool IsSourceEditable() const;
+	bool AreValuesEditable() const { return true; }
+
+	// Value struct accessor
+	struct FFlowDataPinValue_Object* GetValueStruct() const;
+
+	// Widget
+	TSharedRef<SWidget> BuildObjectValueWidgetForElement(TSharedPtr<IPropertyHandle> ElementHandle);
 };

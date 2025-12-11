@@ -3,17 +3,18 @@
 #pragma once
 
 #include "FlowPinEnums.h"
-#include "FlowDataPinTypeNamesStandard.h"
+#include "FlowPinType.h"
 #include "UObject/NameTypes.h"
 #include "UObject/ObjectPtr.h"
+#include "StructUtils/InstancedStruct.h"
 
 #include "FlowDataPinValue.generated.h"
 
 struct FFlowDataPinResult;
-struct FFlowDataPinType;
 class FProperty;
 class UObject;
 class IPropertyHandle;
+class UScriptStruct;
 
 USTRUCT()
 struct FFlowDataPinValue
@@ -22,9 +23,12 @@ struct FFlowDataPinValue
 
 	friend class FFlowDataPinValueCustomization;
 
-	typedef void FValueType;
+public:
+	// IF a pin was created from this property, this is the cached pin name that was used
+	// (which can be used in UFlowDataPinBlueprintLibrary::ResolveAs... functions to lookup the correct pin by name)
+	UPROPERTY(VisibleAnywhere, Category = DataPins)
+	mutable FName PropertyPinName;
 
-protected:
 #if WITH_EDITORONLY_DATA
 	UPROPERTY(EditAnywhere, Category = DataPins)
 	bool bIsInputPin = false;
@@ -33,7 +37,6 @@ protected:
 	EFlowDataMultiType MultiType = EFlowDataMultiType::Single;
 #endif
 
-public:
 	FFlowDataPinValue() {}
 	virtual ~FFlowDataPinValue() {}
 
@@ -42,19 +45,20 @@ public:
 	FLOW_API bool IsArray() const { FLOW_ASSERT_ENUM_MAX(EFlowDataMultiType, 2); return MultiType == EFlowDataMultiType::Array; }
 
 	// Helper to get the Values property handle (implemented by subclasses or via type system)
-	FLOW_API virtual TSharedPtr<IPropertyHandle> GetValuesPropertyHandle() const { return nullptr; }
-
-	// Optional SubCategory object source (now moved off the Type class).
-	// Implementations can return e.g. Enum asset, struct UScriptStruct, etc. Default: nullptr.
-	FLOW_API virtual UObject* GetSubCategoryObject() const { return nullptr; }
+	FLOW_API virtual TSharedPtr<IPropertyHandle> GetValuesPropertyHandle() const PURE_VIRTUAL(GetValuesPropertyHandle, return nullptr;);
 #endif
 
 	// Pin Type Name (identity)
-	FLOW_API virtual const FFlowPinTypeName& GetPinTypeName() const PURE_VIRTUAL(GetPinTypeName, return FFlowDataPinTypeNamesStandard::UnknownPinTypeName;)
+	FLOW_API virtual const FFlowPinTypeName& GetPinTypeName() const PURE_VIRTUAL(GetPinTypeName, return FFlowPinType::PinTypeNameUnknown;);
+
+	// (optional) Get the field type if one exists (only used for UEnum For Now)
+	FLOW_API virtual UField* GetFieldType() const { return nullptr; }
+
+	// (optional)
+	FLOW_API virtual bool TryConvertValuesToString(FString& OutString) const { return false; }
 
 	// Resolve the registered data pin type
-	FLOW_API const FFlowDataPinType* LookupDataPinType() const;
+	FLOW_API const FFlowPinType* LookupPinType() const;
 
-	// Populate a result object from this value (property + container context)
-	FLOW_API bool PopulateResult(const FProperty* Property, const UObject* Container, FFlowDataPinResult& OutResult) const;
+	FLOW_API static const FString StringArraySeparator;
 };
