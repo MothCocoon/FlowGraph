@@ -61,9 +61,6 @@ public class FlowEditor : ModuleRules
 			"Slate",
 			"SlateCore",
 			"SourceControl",
-			// <RGI> #UE56Fix
-			//"StructUtils",
-			// </RGI>
 			"ToolMenus",
 			"UnrealEd"
 		});
