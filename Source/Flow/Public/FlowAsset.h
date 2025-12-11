@@ -91,6 +91,8 @@ public:
 	// Returns whether the node class is allowed in this flow asset
 	bool IsNodeOrAddOnClassAllowed(const UClass* FlowNodeClass, FText* OutOptionalFailureReason = nullptr) const;
 
+	virtual TSubclassOf<UFlowAsset> GetDefaultFlowAssetForSubgraphs() const { return GetClass(); }
+
 protected:
 	bool CanFlowNodeClassBeUsedByFlowAsset(const UClass& FlowNodeClass) const;
 	bool CanFlowAssetUseFlowNodeClass(const UClass& FlowNodeClass) const;
