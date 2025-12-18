@@ -3,6 +3,7 @@
 #pragma once
 
 #include "GameFramework/SaveGame.h"
+#include "Interfaces/FlowSaveDataContainerInterface.h"
 #include "Serialization/ObjectAndNameAsStringProxyArchive.h"
 #include "FlowSave.generated.h"
 
@@ -66,6 +67,23 @@ struct FLOW_API FFlowComponentSaveData
 	}
 };
 
+USTRUCT(BlueprintType)
+struct FLOW_API FFlowSaveData
+{
+	GENERATED_USTRUCT_BODY()
+
+	UPROPERTY(VisibleAnywhere, Category = "Flow")
+	TArray<FFlowComponentSaveData> FlowComponents;
+
+	UPROPERTY(VisibleAnywhere, Category = "Flow")
+	TArray<FFlowAssetSaveData> FlowInstances;
+
+	friend FArchive& operator<<(FArchive& Ar, FFlowSaveData& InData)
+	{
+		return Ar;
+	}
+};
+
 struct FLOW_API FFlowArchive : public FObjectAndNameAsStringProxyArchive
 {
 	FFlowArchive(FArchive& InInnerArchive) : FObjectAndNameAsStringProxyArchive(InInnerArchive, true)
@@ -75,26 +93,32 @@ struct FLOW_API FFlowArchive : public FObjectAndNameAsStringProxyArchive
 };
 
 UCLASS(BlueprintType)
-class FLOW_API UFlowSaveGame : public USaveGame
+class FLOW_API UFlowSaveGame : public USaveGame, public IFlowSaveDataContainerInterface
 {
 	GENERATED_BODY()
 
 public:
-	UFlowSaveGame() {};
+	UFlowSaveGame() {}
 
+	virtual const FFlowSaveData& GetSaveData() const override { return FlowSaveData; }
+	virtual FFlowSaveData& GetSaveDataMutable() override { return FlowSaveData; }
+	
 	UPROPERTY(VisibleAnywhere, Category = "SaveGame")
 	FString SaveSlotName = TEXT("FlowSave");
 
-	UPROPERTY(VisibleAnywhere, Category = "Flow")
+	UPROPERTY(VisibleAnywhere, Category = "Flow", meta=(Deprecated, DeprecationMessage="Use GetSaveData()/GetSaveDataMutable() for data access."))
 	TArray<FFlowComponentSaveData> FlowComponents;
 
-	UPROPERTY(VisibleAnywhere, Category = "Flow")
+	UPROPERTY(VisibleAnywhere, Category = "Flow", meta=(Deprecated, DeprecationMessage="Use GetSaveData()/GetSaveDataMutable() for data access."))
 	TArray<FFlowAssetSaveData> FlowInstances;
+	
+	UPROPERTY(VisibleAnywhere, Category = "Flow")
+	FFlowSaveData FlowSaveData;
 	
 	friend FArchive& operator<<(FArchive& Ar, UFlowSaveGame& SaveGame)
 	{
-		Ar << SaveGame.FlowComponents;
-		Ar << SaveGame.FlowInstances;
+		Ar << SaveGame.FlowSaveData.FlowComponents;
+		Ar << SaveGame.FlowSaveData.FlowInstances;
 		return Ar;
 	}
 };

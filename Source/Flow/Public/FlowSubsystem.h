@@ -60,7 +60,7 @@ public:
 
 protected:
 	UPROPERTY()
-	TObjectPtr<UFlowSaveGame> LoadedSaveGame;
+	TScriptInterface<IFlowSaveDataContainerInterface> LoadedSaveDataContainer;
 
 public:
 	virtual bool ShouldCreateSubsystem(UObject* Outer) const override;
@@ -124,11 +124,29 @@ public:
 	UPROPERTY(BlueprintAssignable, Category = "FlowSubsystem")
 	FSimpleFlowEvent OnSaveGame;
 
-	UFUNCTION(BlueprintCallable, Category = "FlowSubsystem")
+	UFUNCTION(BlueprintCallable, Category = "FlowSubsystem", meta=(DeprecatedFunction, DeprecationMessage="Use SaveFlowDataTo(..) instead"))
 	virtual void OnGameSaved(UFlowSaveGame* SaveGame);
+	
+	UFUNCTION(BlueprintCallable, Category = "FlowSubsystem", meta=(DeprecatedFunction, DeprecationMessage="Use LoadFlowDataFrom(..) instead"))
+	virtual void OnGameLoaded(UFlowSaveGame* SaveGame);
+	
+	UFUNCTION(BlueprintCallable, Category = "FlowSubsystem")
+	virtual void SaveFlowDataTo(TScriptInterface<IFlowSaveDataContainerInterface> SaveDataContainer);
 
 	UFUNCTION(BlueprintCallable, Category = "FlowSubsystem")
-	virtual void OnGameLoaded(UFlowSaveGame* SaveGame);
+	virtual void LoadFlowDataFrom(TScriptInterface<IFlowSaveDataContainerInterface> SaveDataContainer);
+
+	void SaveFlowDataTo(IFlowSaveDataContainerInterface* SaveDataContainer)
+	{
+		const TScriptInterface<IFlowSaveDataContainerInterface> SaveDataContainerScript = Cast<UObject>(SaveDataContainer);
+		SaveFlowDataTo(SaveDataContainerScript);
+	}
+
+	void LoadFlowDataFrom(IFlowSaveDataContainerInterface* SaveDataContainer)
+	{
+		const TScriptInterface<IFlowSaveDataContainerInterface> SaveDataContainerScript = Cast<UObject>(SaveDataContainer);
+		LoadFlowDataFrom(SaveDataContainerScript);
+	}
 
 	UFUNCTION(BlueprintCallable, Category = "FlowSubsystem")
 	virtual void LoadRootFlow(UObject* Owner, UFlowAsset* FlowAsset, const FString& SavedAssetInstanceName, const bool bAllowMultipleInstances);
@@ -137,7 +155,10 @@ public:
 	virtual void LoadSubFlow(UFlowNode_SubGraph* SubGraphNode, const FString& SavedAssetInstanceName);
 
 	UFUNCTION(BlueprintPure, Category = "FlowSubsystem")
-	UFlowSaveGame* GetLoadedSaveGame() const { return LoadedSaveGame; }
+	TScriptInterface<IFlowSaveDataContainerInterface> GetLoadedSaveDataContainer() const { return LoadedSaveDataContainer; }
+
+	UFUNCTION(BlueprintPure, Category = "FlowSubsystem")
+	UFlowSaveGame* GetLoadedSaveGame() const { return Cast<UFlowSaveGame>(LoadedSaveDataContainer.GetObject()); }
 
 //////////////////////////////////////////////////////////////////////////
 // Component Registry

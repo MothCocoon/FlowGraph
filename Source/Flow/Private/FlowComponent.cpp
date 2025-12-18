@@ -567,10 +567,10 @@ FFlowComponentSaveData UFlowComponent::SaveInstance()
 
 bool UFlowComponent::LoadInstance()
 {
-	const UFlowSaveGame* SaveGame = GetFlowSubsystem()->GetLoadedSaveGame();
-	if (SaveGame->FlowComponents.Num() > 0)
+	const FFlowSaveData& SaveData = GetFlowSubsystem()->GetLoadedSaveDataContainer()->GetSaveData();
+	if (SaveData.FlowComponents.Num() > 0)
 	{
-		for (const FFlowComponentSaveData& ComponentRecord : SaveGame->FlowComponents)
+		for (const FFlowComponentSaveData& ComponentRecord : SaveData.FlowComponents)
 		{
 			if (ComponentRecord.WorldName == GetWorld()->GetName() && ComponentRecord.ActorInstanceName == GetOwner()->GetName())
 			{
