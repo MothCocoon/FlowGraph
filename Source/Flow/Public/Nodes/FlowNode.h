@@ -368,6 +368,9 @@ protected:
 
 	UFUNCTION(BlueprintNativeEvent, Category = "FlowNode")
 	void OnPassThrough();
+
+	UFUNCTION(BlueprintNativeEvent, Category = "FlowNode")
+	bool ShouldSave();
 	
 //////////////////////////////////////////////////////////////////////////
 // Utils

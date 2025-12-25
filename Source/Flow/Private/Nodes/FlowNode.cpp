@@ -991,6 +991,11 @@ void UFlowNode::OnPassThrough_Implementation()
 	Finish();
 }
 
+bool UFlowNode::ShouldSave_Implementation()
+{
+	return GetActivationState() == EFlowNodeState::Active;
+}
+
 #if WITH_EDITOR
 TMap<uint8, FPinRecord> UFlowNode::GetWireRecords() const
 {
