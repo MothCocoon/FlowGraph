@@ -2,6 +2,7 @@
 
 #pragma once
 
+#include "FlowTypes.h"
 #include "Engine/DeveloperSettings.h"
 #include "Templates/SubclassOf.h"
 #include "UObject/SoftObjectPath.h"
@@ -43,6 +44,11 @@ class FLOW_API UFlowSettings : public UDeveloperSettings
 	// by incorporating data that would otherwise go in the Description
 	UPROPERTY(EditAnywhere, config, Category = "Nodes")
 	bool bUseAdaptiveNodeTitles;
+	
+	// On screen message type for runtime errors when a flow node 
+	// is attempted to be triggered after being finished or aborted.
+	UPROPERTY(EditAnywhere, config, Category = "Nodes")
+	EFlowOnScreenMessageType FinishedNodeTriggerErrorLogScreenPersistency = EFlowOnScreenMessageType::Permanent;
 
 #if WITH_EDITOR
 	DECLARE_DELEGATE(FFlowSettingsEvent);
