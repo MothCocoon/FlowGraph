@@ -1042,17 +1042,6 @@ FString UFlowNode::GetProgressAsString(const float Value)
 	return FString::Printf(TEXT("%.*f"), 2, Value);
 }
 
-#if WITH_EDITOR
-UFlowNode* UFlowNode::GetInspectedInstance() const
-{
-	if (const UFlowAsset* FlowInstance = GetFlowAsset()->GetInspectedInstance())
-	{
-		return FlowInstance->GetNode(GetGuid());
-	}
-
-	return nullptr;
-}
-
 FString UFlowNode::GetStatusStringForNodeAndAddOns() const
 {
 	FString CombinedStatusString = GetStatusString();
@@ -1077,6 +1066,17 @@ FString UFlowNode::GetStatusStringForNodeAndAddOns() const
 		});
 
 	return CombinedStatusString;
+}
+
+#if WITH_EDITOR
+UFlowNode* UFlowNode::GetInspectedInstance() const
+{
+	if (const UFlowAsset* FlowInstance = GetFlowAsset()->GetInspectedInstance())
+	{
+		return FlowInstance->GetNode(GetGuid());
+	}
+
+	return nullptr;
 }
 
 bool UFlowNode::GetStatusBackgroundColor(FLinearColor& OutColor) const

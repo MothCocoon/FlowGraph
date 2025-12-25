@@ -379,8 +379,6 @@ public:
 	TMap<uint8, FPinRecord> GetWireRecords() const;
 	TArray<FPinRecord> GetPinRecords(const FName& PinName, const EEdGraphPinDirection PinDirection) const;
 
-	// Information displayed while node is working - displayed over node as NodeInfoPopup
-	FString GetStatusStringForNodeAndAddOns() const;
 	virtual bool GetStatusBackgroundColor(FLinearColor& OutColor) const;
 
 	virtual FString GetAssetPath();
@@ -416,6 +414,9 @@ public:
 
 	UFUNCTION(BlueprintPure, Category = "FlowNode")
 	static FString GetProgressAsString(float Value);
+	
+	// Information displayed while node is working - displayed over node as NodeInfoPopup
+	FString GetStatusStringForNodeAndAddOns() const;
 };
 
 // Templates & inline implementations:

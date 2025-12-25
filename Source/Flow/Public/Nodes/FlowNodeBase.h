@@ -336,13 +336,12 @@ public:
 	// used when import graph from another asset
 	virtual void PostImport() {}
 
+	void RequestReconstruction() const { (void) OnReconstructionRequested.ExecuteIfBound(); }
+#endif
+
 	// Called by owning FlowNode to add to its Status String.
 	// (may be multi-line)
 	virtual FString GetStatusString() const;
-
-	void RequestReconstruction() const { (void) OnReconstructionRequested.ExecuteIfBound(); };
-	
-#endif
 
 protected:
 	// Information displayed while node is working - displayed over node as NodeInfoPopup

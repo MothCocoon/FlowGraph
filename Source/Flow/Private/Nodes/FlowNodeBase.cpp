@@ -259,12 +259,12 @@ TArray<FFlowPin> UFlowNodeBase::GetContextOutputs() const
 
 	return ContextOutputs;
 }
+#endif // WITH_EDITOR
 
 FString UFlowNodeBase::GetStatusString() const
 {
 	return K2_GetStatusString();
 }
-#endif // WITH_EDITOR
 
 UFlowAsset* UFlowNodeBase::GetFlowAsset() const
 {
