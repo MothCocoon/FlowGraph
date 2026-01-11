@@ -15,6 +15,7 @@ class UFlowAsset;
 
 /**
 * Data asset for storing Flow Graph Start node parameters, supporting external configuration.
+* This is considered experimental at the moment.
 */
 UCLASS(BlueprintType)
 class FLOW_API UFlowAssetParams
