@@ -47,16 +47,14 @@ private:
 
 	// Helpers
 	void ExtractMetadata();
-	void TrySetClassFilterFromMetaData();
+	void TrySetClassFilterFromMetaData() const;
 	UClass* DeriveBestClassFilter() const;
 	void RefreshEffectiveFilter();
 
 	// UI
-	void BuildClassFilterRow(IDetailChildrenBuilder& StructBuilder, bool bSourceEditable);
+	void BuildClassFilterRow(IDetailChildrenBuilder& StructBuilder, bool bSourceEditable) const;
 	void BuildSingleBranch(IDetailChildrenBuilder& StructBuilder);
 	void BuildArrayBranch(IDetailChildrenBuilder& StructBuilder);
-	void GenerateArrayElementRow(TSharedRef<IPropertyHandle> ElementHandle, int32 Index,
-		IDetailChildrenBuilder& ChildBuilder, const TAttribute<EVisibility>& RowVisibility);
 
 	// Delegates / validation
 	void BindDelegates();
@@ -65,13 +63,12 @@ private:
 
 	void ValidateAllElements();
 	bool IsElementValid(TSharedPtr<IPropertyHandle> ElementHandle) const;
-	void InvalidateElement(TSharedPtr<IPropertyHandle> ElementHandle);
 
 	// Access / modification
-	const UClass* GetSelectedClassForHandle(TSharedPtr<IPropertyHandle> ElementHandle) const;
-	void OnSetClassForHandle(const UClass* NewClass, TSharedPtr<IPropertyHandle> ElementHandle);
+	static const UClass* GetSelectedClassForHandle(TSharedPtr<IPropertyHandle> ElementHandle);
+	void OnSetClassForHandle(const UClass* NewClass, TSharedPtr<IPropertyHandle> ElementHandle) const;
 
-	bool GetElementPathString(const TSharedPtr<IPropertyHandle>& ElementHandle, FString& OutPath) const;
+	static bool GetElementPathString(const TSharedPtr<IPropertyHandle>& ElementHandle, FString& OutPath);
 	static bool IsNoneString(const FString& Str);
 
 	// Permissions (inline owner queries)

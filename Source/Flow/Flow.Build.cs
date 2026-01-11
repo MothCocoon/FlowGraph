@@ -10,7 +10,7 @@ public class Flow : ModuleRules
 
 		PublicDependencyModuleNames.AddRange(new[]
 		{
-			"LevelSequence",
+			"LevelSequence"
 		});
 
 		PrivateDependencyModuleNames.AddRange(new[]
@@ -34,8 +34,8 @@ public class Flow : ModuleRules
 				"GraphEditor",
 				"MessageLog",
 				"PropertyEditor",
-				"UnrealEd",
 				"SourceControl",
+				"UnrealEd"
 			});
 		}
 	}

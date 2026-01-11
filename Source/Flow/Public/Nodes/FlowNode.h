@@ -65,9 +65,7 @@ public:
 	// --
 
 	virtual EDataValidationResult ValidateNode();
-
 	void ValidateFlowPinArrayIsUnique(const TArray<FFlowPin>& FlowPins, TSet<FName>& InOutUniquePinNames, EDataValidationResult& InOutResult);
-
 #endif
 
 	// Inherits Guid after graph node
@@ -273,8 +271,8 @@ public:
 	void FixupDataPinTypes();
 
 protected:
-	void FixupDataPinTypesForArray(TArray<FFlowPin>& MutableDataPinArray);
-	void FixupDataPinTypesForPin(FFlowPin& MutableDataPin);
+	static void FixupDataPinTypesForArray(TArray<FFlowPin>& MutableDataPinArray);
+	static void FixupDataPinTypesForPin(FFlowPin& MutableDataPin);
 	// --
 
 public:
@@ -408,4 +406,3 @@ public:
 	UFUNCTION(BlueprintPure, Category = "FlowNode")
 	static FString GetProgressAsString(float Value);
 };
-

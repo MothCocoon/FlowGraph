@@ -76,7 +76,7 @@ void UFlowSubsystem::AbortActiveFlows()
 	RootInstances.Empty();
 }
 
-void UFlowSubsystem::StartRootFlow(UObject* Owner, UFlowAsset* FlowAsset, TScriptInterface<IFlowDataPinValueSupplierInterface> DataPinValueSupplier, const bool bAllowMultipleInstances)
+void UFlowSubsystem::StartRootFlow(UObject* Owner, UFlowAsset* FlowAsset, const TScriptInterface<IFlowDataPinValueSupplierInterface> DataPinValueSupplier, const bool bAllowMultipleInstances)
 {
 	if (FlowAsset)
 	{

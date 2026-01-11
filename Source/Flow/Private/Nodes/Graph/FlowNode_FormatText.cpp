@@ -7,8 +7,6 @@
 
 #define LOCTEXT_NAMESPACE "FlowNode_FormatText"
 
-const FName UFlowNode_FormatText::OUTPIN_TextOutput("Formatted Text");
-
 UFlowNode_FormatText::UFlowNode_FormatText(const FObjectInitializer& ObjectInitializer)
 	: Super(ObjectInitializer)
 {
@@ -17,12 +15,12 @@ UFlowNode_FormatText::UFlowNode_FormatText(const FObjectInitializer& ObjectIniti
 	NodeDisplayStyle = FlowNodeStyle::Terminal;
 #endif
 
-	OutputPins.Add(FFlowPin(OUTPIN_TextOutput, FFlowPinType_Text::GetPinTypeNameStatic()));
+	OutputPins.Add(FFlowPin(TEXT("Formatted Text"), FFlowPinType_Text::GetPinTypeNameStatic()));
 }
 
 FFlowDataPinResult UFlowNode_FormatText::TrySupplyDataPin_Implementation(FName PinName) const
 {
-	if (PinName == OUTPIN_TextOutput)
+	if (PinName == TEXT("Formatted Text"))
 	{
 		FText FormattedText;
 		const EFlowDataPinResolveResult FormatResult = TryResolveFormatText(PinName, FormattedText);
@@ -59,9 +57,7 @@ EFlowDataPinResolveResult UFlowNode_FormatText::TryResolveFormatText(const FName
 void UFlowNode_FormatText::UpdateNodeConfigText_Implementation()
 {
 	constexpr bool bErrorIfInputPinNotFound = false;
-	const bool bIsInputConnected = IsInputConnected(GET_MEMBER_NAME_CHECKED(ThisClass, FormatText), bErrorIfInputPinNotFound);
-
-	if (bIsInputConnected)
+	if (IsInputConnected(GET_MEMBER_NAME_CHECKED(ThisClass, FormatText), bErrorIfInputPinNotFound))
 	{
 		SetNodeConfigText(FText());
 	}

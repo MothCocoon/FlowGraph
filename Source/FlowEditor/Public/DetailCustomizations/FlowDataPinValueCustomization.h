@@ -78,9 +78,6 @@ protected:
 	virtual void BuildArrayBranch(IDetailChildrenBuilder& StructBuilder); // Skips if !bArraySupported
 
 	void EnsureSingleElementExists();
-
-	void OnPropertyValueChanged();
-	void OnChildPropertyValueChanged();
 	void RequestRefresh();
 
 	// Mode / State

@@ -85,8 +85,8 @@ void FFlowAutoDataPinsWorkingData::AddFlowDataPinForProperty(const FProperty* Pr
 	if (SourceForOutputFlowPinName && DefaultForInputFlowPinName)
 	{
 		UE_LOG(LogFlow, Error, TEXT("Error.  A property cannot be both a %s and %s"),
-			*FFlowPin::MetadataKey_SourceForOutputFlowPin.ToString(),
-			*FFlowPin::MetadataKey_DefaultForInputFlowPin.ToString());
+		       *FFlowPin::MetadataKey_SourceForOutputFlowPin.ToString(),
+		       *FFlowPin::MetadataKey_DefaultForInputFlowPin.ToString());
 
 		return;
 	}
@@ -94,15 +94,7 @@ void FFlowAutoDataPinsWorkingData::AddFlowDataPinForProperty(const FProperty* Pr
 	bIsInputPin = bIsInputPin || DefaultForInputFlowPinName != nullptr;
 
 	// Default assumption is the pin will be an output pin, unless metadata specifies otherwise
-	TArray<FFlowPin>* FlowPinArray = nullptr;
-	if (bIsInputPin)
-	{
-		FlowPinArray = &AutoInputDataPinsNext;
-	}
-	else
-	{
-		FlowPinArray = &AutoOutputDataPinsNext;
-	}
+	TArray<FFlowPin>* FlowPinArray = bIsInputPin ? &AutoInputDataPinsNext : &AutoOutputDataPinsNext;
 
 	// Create the new FlowPin
 	FFlowPin NewFlowPin = FlowPinType->CreateFlowPinFromProperty(*Property, Container);

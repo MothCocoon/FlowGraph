@@ -2,7 +2,6 @@
 
 #include "FlowExecutableActorComponent.h"
 #include "Nodes/FlowNode.h"
-#include "Types/FlowAutoDataPinsWorkingData.h"
 
 #include UE_INLINE_GENERATED_CPP_BY_NAME(FlowExecutableActorComponent)
 
@@ -39,7 +38,6 @@ void UFlowExecutableActorComponent::RequestFlowDataPinValuesDetailsRebuild()
 		FlowDataPinValuesRebuildDelegate.Execute();
 	}
 }
-
 #endif
 
 void UFlowExecutableActorComponent::PreActivateExternalFlowExecutable(UFlowNodeBase& FlowNodeBase)

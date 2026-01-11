@@ -7,6 +7,8 @@
 #include "Delegates/Delegate.h"
 #include "Templates/SharedPointer.h"
 
+#include "Interfaces/FlowDataPinValueOwnerInterface.h"
+
 class IFlowDataPinValueOwnerInterface;
 
 /*

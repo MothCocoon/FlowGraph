@@ -36,7 +36,7 @@ protected:
 public:
 
 	// IFlowContextPinSupplierInterface
-	virtual bool K2_SupportsContextPins_Implementation() const { return true; }
+	virtual bool K2_SupportsContextPins_Implementation() const override { return true; }
 	// --
 
 #if WITH_EDITOR

@@ -3,7 +3,6 @@
 #pragma once
 
 #include "UObject/NameTypes.h"
-#include "FlowPinTypeName.h"
 #include "Asset/FlowPinTypeMatchPolicy.h"
 
 struct FFlowPinTypeNamesStandard

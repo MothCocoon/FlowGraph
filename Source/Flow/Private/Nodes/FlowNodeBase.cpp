@@ -140,7 +140,7 @@ void UFlowNodeBase::OnActivate()
 void UFlowNodeBase::ExecuteInputForSelfAndAddOns(const FName& PinName)
 {
 	// AddOns can introduce input pins to Nodes without the Node being aware of the addition.
-	// To ensure that Nodes and AddOns only get the input pins signalled that they expect,
+	// To ensure that Nodes and AddOns only get the input pins signaled that they expect,
 	// we are filtering the PinName vs. the expected InputPins before carrying on with the ExecuteInput
 
 	if (IsSupportedInputPinName(PinName))

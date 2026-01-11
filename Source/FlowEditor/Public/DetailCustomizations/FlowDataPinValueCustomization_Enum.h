@@ -26,8 +26,8 @@ public:
 
 protected:
 	virtual void BuildValueRows(TSharedRef<IPropertyHandle> InStructPropertyHandle,
-		IDetailChildrenBuilder& StructBuilder,
-		IPropertyTypeCustomizationUtils& StructCustomizationUtils) override;
+	                            IDetailChildrenBuilder& StructBuilder,
+	                            IPropertyTypeCustomizationUtils& StructCustomizationUtils) override;
 
 private:
 	// Source handles
@@ -58,24 +58,14 @@ private:
 	// Multi-type reaction
 	void OnMultiTypeChanged();
 
-	// Array element generation
-	void GenerateArrayElementVisible(TSharedRef<IPropertyHandle> ElementHandle,
-		int32 Index,
-		IDetailChildrenBuilder& ChildBuilder,
-		const TAttribute<EVisibility>& RowVisibility);
-
 	// Widgets
 	TSharedRef<SWidget> GenerateEnumeratorWidget(TSharedPtr<FName> Item) const;
-	FText GetEnumeratorDisplayText(const FName& Value) const;
+	static FText GetEnumeratorDisplayText(const FName& Value);
 	FText GetEnumSourceTooltip() const;
 
 	// Selection handlers
-	void OnSingleValueChanged(TSharedPtr<FName> NewSelection,
-		ESelectInfo::Type SelectInfo,
-		TSharedPtr<IPropertyHandle> ElementHandle);
-	void OnArrayElementChanged(TSharedPtr<FName> NewSelection,
-		ESelectInfo::Type SelectInfo,
-		TSharedPtr<IPropertyHandle> ElementHandle);
+	static void OnSingleValueChanged(TSharedPtr<FName> NewSelection, ESelectInfo::Type SelectInfo, TSharedPtr<IPropertyHandle> ElementHandle);
+	static void OnArrayElementChanged(TSharedPtr<FName> NewSelection, ESelectInfo::Type SelectInfo, TSharedPtr<IPropertyHandle> ElementHandle);
 
 	// Convenience
 	struct FFlowDataPinValue_Enum* GetEnumValueStruct() const;

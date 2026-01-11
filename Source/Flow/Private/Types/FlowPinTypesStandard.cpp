@@ -7,8 +7,8 @@
 #include "Types/FlowDataPinResults.h"
 #include "Types/FlowPinTypeTemplates.h"
 #include "Types/FlowPinTypeNodeTemplates.h"
-#include "Types/FlowArray.h"
 #include "FlowLogChannels.h"
+
 #if WITH_EDITOR
 #include "EditorClassUtils.h"
 #endif
@@ -64,8 +64,8 @@ bool FFlowPinType_Double::PopulateResult(const UObject& PropertyOwnerObject, con
 bool FFlowPinType_Enum::PopulateResult(const UObject& PropertyOwnerObject, const UFlowNode& Node, const FFlowPin& Pin, FFlowDataPinResult& OutResult) const
 {
 	using TFlowPinType = FFlowPinType_Enum;
-	using TValue = typename TFlowPinType::ValueType;
-	using TWrapper = typename TFlowPinType::WrapperType;
+	using TValue = TFlowPinType::ValueType;
+	using TWrapper = TFlowPinType::WrapperType;
 	using Traits = FlowPinType::FFlowDataPinValueTraits<TFlowPinType>;
 
 	TInstancedStruct<FFlowDataPinValue> ValueStruct;
@@ -154,43 +154,43 @@ bool FFlowPinType_Class::PopulateResult(const UObject& PropertyOwnerObject, cons
 
 #if WITH_EDITOR
 
-UObject* FFlowPinType_Vector::GetPinSubCatetoryObjectFromProperty(const FProperty* Property, void const* InContainer, const FFlowDataPinValue* Wrapper) const
+UObject* FFlowPinType_Vector::GetPinSubCategoryObjectFromProperty(const FProperty* Property, void const* InContainer, const FFlowDataPinValue* Wrapper) const
 {
 	static UObject* PinSubCategoryObject = TBaseStructure<FVector>::Get();
 	return PinSubCategoryObject;
 }
 
-UObject* FFlowPinType_Rotator::GetPinSubCatetoryObjectFromProperty(const FProperty* Property, void const* InContainer, const FFlowDataPinValue* Wrapper) const
+UObject* FFlowPinType_Rotator::GetPinSubCategoryObjectFromProperty(const FProperty* Property, void const* InContainer, const FFlowDataPinValue* Wrapper) const
 {
 	static UObject* PinSubCategoryObject = TBaseStructure<FRotator>::Get();
 	return PinSubCategoryObject;
 }
 
-UObject* FFlowPinType_Transform::GetPinSubCatetoryObjectFromProperty(const FProperty* Property, void const* InContainer, const FFlowDataPinValue* Wrapper) const
+UObject* FFlowPinType_Transform::GetPinSubCategoryObjectFromProperty(const FProperty* Property, void const* InContainer, const FFlowDataPinValue* Wrapper) const
 {
 	static UObject* PinSubCategoryObject = TBaseStructure<FTransform>::Get();
 	return PinSubCategoryObject;
 }
 
-UObject* FFlowPinType_GameplayTag::GetPinSubCatetoryObjectFromProperty(const FProperty* Property, void const* InContainer, const FFlowDataPinValue* Wrapper) const
+UObject* FFlowPinType_GameplayTag::GetPinSubCategoryObjectFromProperty(const FProperty* Property, void const* InContainer, const FFlowDataPinValue* Wrapper) const
 {
 	static UObject* PinSubCategoryObject = TBaseStructure<FGameplayTag>::Get();
 	return PinSubCategoryObject;
 }
 
-UObject* FFlowPinType_GameplayTagContainer::GetPinSubCatetoryObjectFromProperty(const FProperty* Property, void const* InContainer, const FFlowDataPinValue* Wrapper) const
+UObject* FFlowPinType_GameplayTagContainer::GetPinSubCategoryObjectFromProperty(const FProperty* Property, void const* InContainer, const FFlowDataPinValue* Wrapper) const
 {
 	static UObject* PinSubCategoryObject = TBaseStructure<FGameplayTagContainer>::Get();
 	return PinSubCategoryObject;
 }
 
-UObject* FFlowPinType_InstancedStruct::GetPinSubCatetoryObjectFromProperty(const FProperty* Property, void const* InContainer, const FFlowDataPinValue* Wrapper) const
+UObject* FFlowPinType_InstancedStruct::GetPinSubCategoryObjectFromProperty(const FProperty* Property, void const* InContainer, const FFlowDataPinValue* Wrapper) const
 {
 	static UObject* PinSubCategoryObject = TBaseStructure<FInstancedStruct>::Get();
 	return PinSubCategoryObject;
 }
 
-UObject* FFlowPinType_Enum::GetPinSubCatetoryObjectFromProperty(const FProperty* Property, void const* InContainer, const FFlowDataPinValue* Wrapper) const
+UObject* FFlowPinType_Enum::GetPinSubCategoryObjectFromProperty(const FProperty* Property, void const* InContainer, const FFlowDataPinValue* Wrapper) const
 {
 	UEnum* EnumClass = nullptr;
 	if (Wrapper && Wrapper->GetPinTypeName() == FFlowPinType_Enum::GetPinTypeNameStatic())
@@ -296,7 +296,7 @@ UClass* FFlowPinType_Object::TryGetMetaClassFromProperty(const FProperty& MetaDa
 	return nullptr;
 }
 
-UObject* FFlowPinType_Object::GetPinSubCatetoryObjectFromProperty(const FProperty* Property, void const* InContainer, const FFlowDataPinValue* Wrapper) const
+UObject* FFlowPinType_Object::GetPinSubCategoryObjectFromProperty(const FProperty* Property, void const* InContainer, const FFlowDataPinValue* Wrapper) const
 {
 	UClass* Class = nullptr;
 	if (Wrapper && Wrapper->GetPinTypeName() == FFlowPinType_Object::GetPinTypeNameStatic())
@@ -361,7 +361,7 @@ UObject* FFlowPinType_Object::GetPinSubCatetoryObjectFromProperty(const FPropert
 	return Class;
 }
 
-UObject* FFlowPinType_Class::GetPinSubCatetoryObjectFromProperty(const FProperty* Property, void const* InContainer, const FFlowDataPinValue* Wrapper) const
+UObject* FFlowPinType_Class::GetPinSubCategoryObjectFromProperty(const FProperty* Property, void const* InContainer, const FFlowDataPinValue* Wrapper) const
 {
 	UClass* Class = nullptr;
 	if (Wrapper && Wrapper->GetPinTypeName() == FFlowPinType_Class::GetPinTypeNameStatic())

@@ -1,17 +1,16 @@
 // Copyright https://github.com/MothCocoon/FlowGraph/graphs/contributors
 
 #include "DetailCustomizations/FlowDataPinValueCustomization_Object.h"
+#include "Interfaces/FlowDataPinValueOwnerInterface.h"
+#include "Types/FlowDataPinValuesStandard.h"
 
 #include "DetailLayoutBuilder.h"
 #include "DetailWidgetRow.h"
 #include "IDetailChildrenBuilder.h"
 #include "PropertyHandle.h"
-#include "Types/FlowDataPinValuesStandard.h"
-#include "Interfaces/FlowDataPinValueOwnerInterface.h"
 #include "IPropertyUtilities.h"
 #include "PropertyCustomizationHelpers.h"
 #include "ScopedTransaction.h"
-#include "UnrealExtensions/VisibilityArrayBuilder.h"
 #include "EditorClassUtils.h"
 
 #define LOCTEXT_NAMESPACE "FlowDataPinValueCustomization_Object"
@@ -121,7 +120,7 @@ void FFlowDataPinValueCustomization_Object::ResolveEffectiveFilter()
 	EffectiveFilterClass = nullptr;
 }
 
-void FFlowDataPinValueCustomization_Object::BuildClassFilterRow(IDetailChildrenBuilder& StructBuilder, bool bSourceEditable)
+void FFlowDataPinValueCustomization_Object::BuildClassFilterRow(IDetailChildrenBuilder& StructBuilder, bool bSourceEditable) const
 {
 	if (!ClassFilterHandle.IsValid())
 	{
@@ -184,7 +183,7 @@ void FFlowDataPinValueCustomization_Object::BuildArrayBranch(IDetailChildrenBuil
 		TAttribute<EVisibility>::CreateSP(this, &FFlowDataPinValueCustomization_Object::GetArrayModeVisibility));
 }
 
-TSharedRef<SWidget> FFlowDataPinValueCustomization_Object::BuildObjectValueWidgetForElement(TSharedPtr<IPropertyHandle> ElementHandle)
+TSharedRef<SWidget> FFlowDataPinValueCustomization_Object::BuildObjectValueWidgetForElement(TSharedPtr<IPropertyHandle> ElementHandle) const
 {
 	return SNew(SObjectPropertyEntryBox)
 		.PropertyHandle(ElementHandle)
@@ -267,7 +266,7 @@ void FFlowDataPinValueCustomization_Object::InvalidateElement(TSharedPtr<IProper
 	}
 }
 
-UObject* FFlowDataPinValueCustomization_Object::GetObjectValue(TSharedPtr<IPropertyHandle> ElementHandle) const
+UObject* FFlowDataPinValueCustomization_Object::GetObjectValue(TSharedPtr<IPropertyHandle> ElementHandle)
 {
 	UObject* Obj = nullptr;
 	if (ElementHandle.IsValid())

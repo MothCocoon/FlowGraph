@@ -15,7 +15,6 @@
 #include "Nodes/Graph/FlowNode_SubGraph.h"
 #include "Types/FlowAutoDataPinsWorkingData.h"
 #include "Types/FlowDataPinValue.h"
-#include "Types/FlowPinType.h"
 #include "Types/FlowStructUtils.h"
 
 #include "Engine/World.h"
@@ -30,11 +29,9 @@
 #include "Editor.h"
 #include "Editor/EditorEngine.h"
 #include "Modules/ModuleManager.h"
-#include "ObjectTools.h"
 #include "SourceControlHelpers.h"
 #include "UObject/ObjectSaveContext.h"
 #include "UObject/Package.h"
-#include "UObject/SavePackage.h"
 
 FString UFlowAsset::ValidationError_NodeClassNotAllowed = TEXT("Node class {0} is not allowed in this asset.");
 FString UFlowAsset::ValidationError_NullNodeInstance = TEXT("Node with GUID {0} is NULL");
@@ -106,11 +103,11 @@ void UFlowAsset::PostLoad()
 
 		TSet<FGuid> NodesToRemoveGUID;
 
-		for (auto& [Guid, Node] : GetNodes())
+		for (const TPair<FGuid, UFlowNode*>& Node : GetNodes())
 		{
-			if (!IsValid(Node))
+			if (!IsValid(Node.Value))
 			{
-				NodesToRemoveGUID.Emplace(Guid);
+				NodesToRemoveGUID.Emplace(Node.Key);
 			}
 		}
 
@@ -588,7 +585,7 @@ bool UFlowAsset::TryGetDefaultForInputPinName(const FStructProperty& StructPrope
 
 bool UFlowAsset::TryUpdateManagedFlowPinsForNode(UFlowNode& FlowNode)
 {
-	// Setup the working data struct
+	// Set up the working data struct
 	FFlowAutoDataPinsWorkingData WorkingData =
 		FFlowAutoDataPinsWorkingData(
 			FlowNode.GetAutoInputDataPins(),

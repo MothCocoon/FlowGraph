@@ -3,7 +3,6 @@
 #pragma once
 
 #include "Types/FlowPinType.h"
-#include "Types/FlowPinTypeNamesStandard.h"
 #include "Nodes/FlowPin.h"
 #include "Math/Vector.h"
 #include "Math/Rotator.h"
@@ -301,7 +300,7 @@ public:
 #if WITH_EDITOR
 	virtual FLinearColor GetPinColor() const override { return GetDefault<UGraphEditorSettings>()->DefaultPinTypeColor; }
 	virtual bool ResolveAndFormatPinValue(const UFlowNodeBase& Node, const FName& PinName, FFormatArgumentValue& OutValue) const override;
-	virtual UObject* GetPinSubCatetoryObjectFromProperty(const FProperty* Property, void const* InContainer, const FFlowDataPinValue* Wrapper) const override;
+	virtual UObject* GetPinSubCategoryObjectFromProperty(const FProperty* Property, void const* InContainer, const FFlowDataPinValue* Wrapper) const override;
 #endif
 
 	virtual bool PopulateResult(const UObject& PropertyOwnerObject, const UFlowNode& Node, const FFlowPin& Pin, FFlowDataPinResult& OutResult) const override;
@@ -327,7 +326,7 @@ public:
 #if WITH_EDITOR
 	virtual FLinearColor GetPinColor() const override { return GetDefault<UGraphEditorSettings>()->StructPinTypeColor; }
 	virtual bool ResolveAndFormatPinValue(const UFlowNodeBase& Node, const FName& PinName, FFormatArgumentValue& OutValue) const override;
-	virtual UObject* GetPinSubCatetoryObjectFromProperty(const FProperty* Property, void const* InContainer, const FFlowDataPinValue* Wrapper) const override;
+	virtual UObject* GetPinSubCategoryObjectFromProperty(const FProperty* Property, void const* InContainer, const FFlowDataPinValue* Wrapper) const override;
 #endif
 
 	virtual bool PopulateResult(const UObject& PropertyOwnerObject, const UFlowNode& Node, const FFlowPin& Pin, FFlowDataPinResult& OutResult) const override;
@@ -353,7 +352,7 @@ public:
 #if WITH_EDITOR
 	virtual FLinearColor GetPinColor() const override { return GetDefault<UGraphEditorSettings>()->StructPinTypeColor; }
 	virtual bool ResolveAndFormatPinValue(const UFlowNodeBase& Node, const FName& PinName, FFormatArgumentValue& OutValue) const override;
-	virtual UObject* GetPinSubCatetoryObjectFromProperty(const FProperty* Property, void const* InContainer, const FFlowDataPinValue* Wrapper) const override;
+	virtual UObject* GetPinSubCategoryObjectFromProperty(const FProperty* Property, void const* InContainer, const FFlowDataPinValue* Wrapper) const override;
 #endif
 
 	virtual bool PopulateResult(const UObject& PropertyOwnerObject, const UFlowNode& Node, const FFlowPin& Pin, FFlowDataPinResult& OutResult) const override;
@@ -379,7 +378,7 @@ public:
 #if WITH_EDITOR
 	virtual FLinearColor GetPinColor() const override { return GetDefault<UGraphEditorSettings>()->StructPinTypeColor; }
 	virtual bool ResolveAndFormatPinValue(const UFlowNodeBase& Node, const FName& PinName, FFormatArgumentValue& OutValue) const override;
-	virtual UObject* GetPinSubCatetoryObjectFromProperty(const FProperty* Property, void const* InContainer, const FFlowDataPinValue* Wrapper) const override;
+	virtual UObject* GetPinSubCategoryObjectFromProperty(const FProperty* Property, void const* InContainer, const FFlowDataPinValue* Wrapper) const override;
 #endif
 
 	virtual bool PopulateResult(const UObject& PropertyOwnerObject, const UFlowNode& Node, const FFlowPin& Pin, FFlowDataPinResult& OutResult) const override;
@@ -405,7 +404,7 @@ public:
 #if WITH_EDITOR
 	virtual FLinearColor GetPinColor() const override { return GetDefault<UGraphEditorSettings>()->DefaultPinTypeColor; }
 	virtual bool ResolveAndFormatPinValue(const UFlowNodeBase& Node, const FName& PinName, FFormatArgumentValue& OutValue) const override;
-	virtual UObject* GetPinSubCatetoryObjectFromProperty(const FProperty* Property, void const* InContainer, const FFlowDataPinValue* Wrapper) const override;
+	virtual UObject* GetPinSubCategoryObjectFromProperty(const FProperty* Property, void const* InContainer, const FFlowDataPinValue* Wrapper) const override;
 #endif
 
 	virtual bool PopulateResult(const UObject& PropertyOwnerObject, const UFlowNode& Node, const FFlowPin& Pin, FFlowDataPinResult& OutResult) const override;
@@ -432,7 +431,7 @@ public:
 	virtual FLinearColor GetPinColor() const override { return GetDefault<UGraphEditorSettings>()->DefaultPinTypeColor; }
 	virtual bool SupportsMultiType(EFlowDataMultiType Mode) const { FLOW_ASSERT_ENUM_MAX(EFlowDataMultiType, 2); return (Mode == EFlowDataMultiType::Single); }
 	virtual bool ResolveAndFormatPinValue(const UFlowNodeBase& Node, const FName& PinName, FFormatArgumentValue& OutValue) const override;
-	virtual UObject* GetPinSubCatetoryObjectFromProperty(const FProperty* Property, void const* InContainer, const FFlowDataPinValue* Wrapper) const override;
+	virtual UObject* GetPinSubCategoryObjectFromProperty(const FProperty* Property, void const* InContainer, const FFlowDataPinValue* Wrapper) const override;
 #endif
 
 	virtual bool PopulateResult(const UObject& PropertyOwnerObject, const UFlowNode& Node, const FFlowPin& Pin, FFlowDataPinResult& OutResult) const override;
@@ -458,7 +457,7 @@ public:
 #if WITH_EDITOR
 	virtual FLinearColor GetPinColor() const override { return GetDefault<UGraphEditorSettings>()->StructPinTypeColor; }
 	virtual bool ResolveAndFormatPinValue(const UFlowNodeBase& Node, const FName& PinName, FFormatArgumentValue& OutValue) const override;
-	virtual UObject* GetPinSubCatetoryObjectFromProperty(const FProperty* Property, void const* InContainer, const FFlowDataPinValue* Wrapper) const override;
+	virtual UObject* GetPinSubCategoryObjectFromProperty(const FProperty* Property, void const* InContainer, const FFlowDataPinValue* Wrapper) const override;
 #endif
 
 	virtual bool PopulateResult(const UObject& PropertyOwnerObject, const UFlowNode& Node, const FFlowPin& Pin, FFlowDataPinResult& OutResult) const override;
@@ -484,7 +483,7 @@ public:
 #if WITH_EDITOR
 	virtual FLinearColor GetPinColor() const override { return GetDefault<UGraphEditorSettings>()->ObjectPinTypeColor; }
 	virtual bool ResolveAndFormatPinValue(const UFlowNodeBase& Node, const FName& PinName, FFormatArgumentValue& OutValue) const override;
-	virtual UObject* GetPinSubCatetoryObjectFromProperty(const FProperty* Property, void const* InContainer, const FFlowDataPinValue* Wrapper) const override;
+	virtual UObject* GetPinSubCategoryObjectFromProperty(const FProperty* Property, void const* InContainer, const FFlowDataPinValue* Wrapper) const override;
 
 	static UClass* TryGetObjectClassFromProperty(const FProperty& MetaDataProperty);
 	static UClass* TryGetMetaClassFromProperty(const FProperty& MetaDataProperty);
@@ -513,7 +512,7 @@ public:
 #if WITH_EDITOR
 	virtual FLinearColor GetPinColor() const override { return GetDefault<UGraphEditorSettings>()->ClassPinTypeColor; }
 	virtual bool ResolveAndFormatPinValue(const UFlowNodeBase& Node, const FName& PinName, FFormatArgumentValue& OutValue) const override;
-	virtual UObject* GetPinSubCatetoryObjectFromProperty(const FProperty* Property, void const* InContainer, const FFlowDataPinValue* Wrapper) const override;
+	virtual UObject* GetPinSubCategoryObjectFromProperty(const FProperty* Property, void const* InContainer, const FFlowDataPinValue* Wrapper) const override;
 #endif
 
 	virtual bool PopulateResult(const UObject& PropertyOwnerObject, const UFlowNode& Node, const FFlowPin& Pin, FFlowDataPinResult& OutResult) const override;

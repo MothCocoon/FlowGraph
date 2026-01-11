@@ -81,10 +81,9 @@ void UFlowNode_Log::ExecuteInput(const FName& PinName)
 #if WITH_EDITOR
 void UFlowNode_Log::PostEditChangeChainProperty(FPropertyChangedChainEvent& PropertyChainEvent)
 {
-	auto& Property = PropertyChainEvent.PropertyChain.GetActiveMemberNode()->GetValue();
+	const auto& Property = PropertyChainEvent.PropertyChain.GetActiveMemberNode()->GetValue();
 
-	const bool bChangedOutputProperties = Property->GetFName() == GET_MEMBER_NAME_CHECKED(ThisClass, NamedProperties);
-	if (bChangedOutputProperties)
+	if (Property->GetFName() == GET_MEMBER_NAME_CHECKED(ThisClass, NamedProperties))
 	{
 		for (FFlowNamedDataPinProperty& NamedProperty : NamedProperties)
 		{

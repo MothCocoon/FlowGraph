@@ -2,14 +2,10 @@
 
 // #FlowDataPinLegacy
 #include "Types/FlowDataPinProperties.h"
-#include "FlowLogChannels.h"
 #include "UObject/Class.h"
 #include "UObject/UObjectIterator.h"
-#include "Types/FlowPinTypesStandard.h"
 
 #include UE_INLINE_GENERATED_CPP_BY_NAME(FlowDataPinProperties)
-
-#define LOCTEXT_NAMESPACE "FlowDataPinProperties"
 
 FFlowDataPinOutputProperty_Object::FFlowDataPinOutputProperty_Object(UObject* InValue, UClass* InClassFilter)
 	: Super()
@@ -17,7 +13,7 @@ FFlowDataPinOutputProperty_Object::FFlowDataPinOutputProperty_Object(UObject* In
 	, ClassFilter(InClassFilter)
 #endif
 {
-	UClass* ObjectClass = IsValid(InValue) ? InValue->GetClass() : nullptr;
+	const UClass* ObjectClass = IsValid(InValue) ? InValue->GetClass() : nullptr;
 	if (IsValid(ObjectClass))
 	{
 		const bool bIsInstanced = (ObjectClass->ClassFlags & CLASS_EditInlineNew) != 0;
@@ -40,5 +36,4 @@ FFlowDataPinOutputProperty_Object::FFlowDataPinOutputProperty_Object(UObject* In
 	}
 }
 
-#undef LOCTEXT_NAMESPACE
 // --

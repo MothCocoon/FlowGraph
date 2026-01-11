@@ -1,17 +1,17 @@
 // Copyright https://github.com/MothCocoon/FlowGraph/graphs/contributors
 
 #include "DetailCustomizations/FlowDataPinValueCustomization_Class.h"
+#include "Interfaces/FlowDataPinValueOwnerInterface.h"
+#include "Types/FlowDataPinValuesStandard.h"
+#include "UnrealExtensions/VisibilityArrayBuilder.h"
 
 #include "DetailLayoutBuilder.h"
 #include "DetailWidgetRow.h"
 #include "IDetailChildrenBuilder.h"
 #include "PropertyHandle.h"
-#include "Types/FlowDataPinValuesStandard.h"
 #include "EditorClassUtils.h"
 #include "UObject/SoftObjectPath.h"
-#include "UnrealExtensions/VisibilityArrayBuilder.h"
 #include "IPropertyUtilities.h"
-#include "Interfaces/FlowDataPinValueOwnerInterface.h"
 #include "ScopedTransaction.h"
 
 #define LOCTEXT_NAMESPACE "FlowDataPinValueCustomization_Class"
@@ -99,7 +99,7 @@ void FFlowDataPinValueCustomization_Class::ExtractMetadata()
 	}
 }
 
-void FFlowDataPinValueCustomization_Class::BuildClassFilterRow(IDetailChildrenBuilder& StructBuilder, bool bSourceEditable)
+void FFlowDataPinValueCustomization_Class::BuildClassFilterRow(IDetailChildrenBuilder& StructBuilder, bool bSourceEditable) const
 {
 	if (!ClassFilterHandle.IsValid())
 	{
@@ -229,7 +229,7 @@ void FFlowDataPinValueCustomization_Class::OnValuesChanged()
 	ValidateAllElements();
 }
 
-void FFlowDataPinValueCustomization_Class::TrySetClassFilterFromMetaData()
+void FFlowDataPinValueCustomization_Class::TrySetClassFilterFromMetaData() const
 {
 	if (!StructPropertyHandle.IsValid() || !ClassFilterHandle.IsValid())
 	{
@@ -329,7 +329,7 @@ bool FFlowDataPinValueCustomization_Class::IsElementValid(TSharedPtr<IPropertyHa
 	return false;
 }
 
-const UClass* FFlowDataPinValueCustomization_Class::GetSelectedClassForHandle(TSharedPtr<IPropertyHandle> ElementHandle) const
+const UClass* FFlowDataPinValueCustomization_Class::GetSelectedClassForHandle(TSharedPtr<IPropertyHandle> ElementHandle)
 {
 	if (!ElementHandle.IsValid())
 	{
@@ -344,7 +344,7 @@ const UClass* FFlowDataPinValueCustomization_Class::GetSelectedClassForHandle(TS
 	return FEditorClassUtils::GetClassFromString(Path);
 }
 
-void FFlowDataPinValueCustomization_Class::OnSetClassForHandle(const UClass* NewClass, TSharedPtr<IPropertyHandle> ElementHandle)
+void FFlowDataPinValueCustomization_Class::OnSetClassForHandle(const UClass* NewClass, TSharedPtr<IPropertyHandle> ElementHandle) const
 {
 	if (!ElementHandle.IsValid())
 	{
@@ -369,7 +369,7 @@ void FFlowDataPinValueCustomization_Class::OnSetClassForHandle(const UClass* New
 	ElementHandle->SetValueFromFormattedString(NewValue);
 }
 
-bool FFlowDataPinValueCustomization_Class::GetElementPathString(const TSharedPtr<IPropertyHandle>& ElementHandle, FString& OutPath) const
+bool FFlowDataPinValueCustomization_Class::GetElementPathString(const TSharedPtr<IPropertyHandle>& ElementHandle, FString& OutPath)
 {
 	if (!ElementHandle.IsValid())
 	{

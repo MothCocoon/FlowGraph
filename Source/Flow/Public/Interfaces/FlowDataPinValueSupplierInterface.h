@@ -2,10 +2,9 @@
 
 #pragma once
 
-#include "Types/FlowDataPinResults.h"
-
 #include "UObject/Interface.h"
 
+#include "Types/FlowDataPinResults.h"
 #include "FlowDataPinValueSupplierInterface.generated.h"
 
 // Interface to define a Flow Data Pin value supplier.  This is generally a UFlowNode subclass, 
@@ -22,7 +21,6 @@ class FLOW_API IFlowDataPinValueSupplierInterface
 	GENERATED_BODY()
 
 public:
-
 	// Can this node actually supply Data Pin values?
 	// Implementers of this interface will need to use their own logic to answer this question.
 	UFUNCTION(BlueprintNativeEvent, Category = DataPins, DisplayName = "Can Supply DataPin Values")

@@ -2,12 +2,11 @@
 
 #pragma once
 
-#include "FlowPinEnums.h"
-#include "FlowPinType.h"
 #include "UObject/NameTypes.h"
 #include "UObject/ObjectPtr.h"
-#include "StructUtils/InstancedStruct.h"
 
+#include "FlowPinEnums.h"
+#include "FlowPinType.h"
 #include "FlowDataPinValue.generated.h"
 
 struct FFlowDataPinResult;

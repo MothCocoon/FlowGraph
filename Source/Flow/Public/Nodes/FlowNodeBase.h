@@ -318,10 +318,7 @@ public:
 	// --
 
 protected:
-
 	bool TryAddValueToFormatNamedArguments(const FFlowNamedDataPinProperty& NamedDataPinProperty, FFormatNamedArguments& InOutArguments) const;
-
-public:
 
 //////////////////////////////////////////////////////////////////////////
 // Editor
@@ -417,7 +414,6 @@ public:
 	virtual bool GetDynamicTitleColor(FLinearColor& OutColor) const;
 
 	virtual FText GetNodeTitle() const { return K2_GetNodeTitle(); }
-
 	virtual FText GetNodeToolTip() const { return K2_GetNodeToolTip(); }
 
 	FText GetGeneratedDisplayName() const;

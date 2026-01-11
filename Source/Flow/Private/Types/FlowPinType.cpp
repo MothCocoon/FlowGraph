@@ -6,6 +6,7 @@
 #include "Nodes/FlowNode.h"
 #include "FlowPinSubsystem.h"
 #include "FlowLogChannels.h"
+
 #if WITH_EDITOR
 #include "PropertyHandle.h"
 #endif
@@ -55,12 +56,12 @@ FFlowPin FFlowPinType::CreateFlowPinFromProperty(const FProperty& Property, void
 		NewFlowPin.SetPinTypeName(GetPinTypeName());
 
 		FLOW_ASSERT_ENUM_MAX(EFlowDataMultiType, 2);
-		if (const FArrayProperty* ArrayProperty = CastField<FArrayProperty>(&Property))
+		if (CastField<FArrayProperty>(&Property))
 		{
 			NewFlowPin.ContainerType = EPinContainerType::Array;
 		}
 
-		UObject* SubCategoryObject = GetPinSubCatetoryObjectFromProperty(&Property, InContainer, DataPinValue);
+		UObject* SubCategoryObject = GetPinSubCategoryObjectFromProperty(&Property, InContainer, DataPinValue);
 		NewFlowPin.SetPinSubCategoryObject(SubCategoryObject);
 	}
 
@@ -83,7 +84,7 @@ FFlowPin FFlowPinType::CreateFlowPinFromValueWrapper(const FName& PinName, const
 
 	constexpr const FProperty* Property = nullptr;
 	constexpr void const* InContainer = nullptr;
-	UObject* SubCategoryObject = GetPinSubCatetoryObjectFromProperty(Property, InContainer, &Wrapper);
+	UObject* SubCategoryObject = GetPinSubCategoryObjectFromProperty(Property, InContainer, &Wrapper);
 	NewFlowPin.SetPinSubCategoryObject(SubCategoryObject);
 
 	// Common property settings for both versions

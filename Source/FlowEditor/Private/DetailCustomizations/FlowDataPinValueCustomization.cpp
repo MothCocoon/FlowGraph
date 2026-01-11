@@ -1,20 +1,19 @@
 // Copyright https://github.com/MothCocoon/FlowGraph/graphs/contributors
 
 #include "DetailCustomizations/FlowDataPinValueCustomization.h"
+#include "Interfaces/FlowDataPinValueOwnerInterface.h"
+#include "Types/FlowDataPinValuesStandard.h"
+#include "UnrealExtensions/VisibilityArrayBuilder.h"
 
 #include "DetailLayoutBuilder.h"
 #include "DetailWidgetRow.h"
 #include "IDetailChildrenBuilder.h"
 #include "IDetailPropertyRow.h"
-#include "Interfaces/FlowDataPinValueOwnerInterface.h"
 #include "IPropertyUtilities.h"
 #include "ScopedTransaction.h"
 #include "Widgets/Input/SCheckBox.h"
 #include "Widgets/Input/SComboBox.h"
 #include "Widgets/Text/STextBlock.h"
-#include "FlowEditorLogChannels.h"
-#include "Types/FlowDataPinValuesStandard.h"
-#include "UnrealExtensions/VisibilityArrayBuilder.h"
 #include "UObject/EnumProperty.h"
 
 #define LOCTEXT_NAMESPACE "FlowDataPinValueCustomization"

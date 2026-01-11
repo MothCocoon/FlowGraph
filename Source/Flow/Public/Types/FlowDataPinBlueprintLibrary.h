@@ -185,135 +185,135 @@ public:
 
 	// Easy Resolve a Bool DataPin Value to a single bool (last value if array). Logs error on failure.
 	UFUNCTION(BlueprintPure, meta = (DisplayName = "Auto-Resolve to Bool", CompactNodeTitle = "->", BlueprintAutocast, DefaultToSelf = "Target"), Category = DataPins)
-	static bool AutoConvert_TryResolveAsBool(UPARAM(Ref) const FFlowDataPinValue_Bool& BoolValue, UFlowNodeBase* Target);
+	static bool AutoConvert_TryResolveAsBool(UPARAM(Ref) const FFlowDataPinValue_Bool& BoolValue, const UFlowNodeBase* Target);
 
 	// Easy Resolve a Bool DataPin Value to a bool array. Logs error on failure and returns empty array.
 	UFUNCTION(BlueprintPure, meta = (DisplayName = "Auto-Resolve to Bool Array", CompactNodeTitle = "->", BlueprintAutocast, DefaultToSelf = "Target"), Category = DataPins)
-	static TArray<bool> AutoConvert_TryResolveAsBoolArray(UPARAM(Ref) const FFlowDataPinValue_Bool& BoolValue, UFlowNodeBase* Target);
+	static TArray<bool> AutoConvert_TryResolveAsBoolArray(UPARAM(Ref) const FFlowDataPinValue_Bool& BoolValue, const UFlowNodeBase* Target);
 
 	// Easy Resolve an Int DataPin Value to a single int32. Logs error on failure.
 	UFUNCTION(BlueprintPure, meta = (DisplayName = "Auto-Resolve to Int", CompactNodeTitle = "->", BlueprintAutocast, DefaultToSelf = "Target"), Category = DataPins)
-	static int32 AutoConvert_TryResolveAsInt(UPARAM(Ref) const FFlowDataPinValue_Int& IntValue, UFlowNodeBase* Target);
+	static int32 AutoConvert_TryResolveAsInt(UPARAM(Ref) const FFlowDataPinValue_Int& IntValue, const UFlowNodeBase* Target);
 
 	// Easy Resolve an Int DataPin Value to an int32 array. Logs error on failure and returns empty array.
 	UFUNCTION(BlueprintPure, meta = (DisplayName = "Auto-Resolve to Int Array", CompactNodeTitle = "->", BlueprintAutocast, DefaultToSelf = "Target"), Category = DataPins)
-	static TArray<int32> AutoConvert_TryResolveAsIntArray(UPARAM(Ref) const FFlowDataPinValue_Int& IntValue, UFlowNodeBase* Target);
+	static TArray<int32> AutoConvert_TryResolveAsIntArray(UPARAM(Ref) const FFlowDataPinValue_Int& IntValue, const UFlowNodeBase* Target);
 
 	// Easy Resolve an Int64 DataPin Value to a single int64. Logs error on failure.
 	UFUNCTION(BlueprintPure, meta = (DisplayName = "Auto-Resolve to Int64", CompactNodeTitle = "->", BlueprintAutocast, DefaultToSelf = "Target"), Category = DataPins)
-	static int64 AutoConvert_TryResolveAsInt64(UPARAM(Ref) const FFlowDataPinValue_Int64& Int64Value, UFlowNodeBase* Target);
+	static int64 AutoConvert_TryResolveAsInt64(UPARAM(Ref) const FFlowDataPinValue_Int64& Int64Value, const UFlowNodeBase* Target);
 
 	// Easy Resolve an Int64 DataPin Value to an int64 array. Logs error on failure and returns empty array.
 	UFUNCTION(BlueprintPure, meta = (DisplayName = "Auto-Resolve to Int64 Array", CompactNodeTitle = "->", BlueprintAutocast, DefaultToSelf = "Target"), Category = DataPins)
-	static TArray<int64> AutoConvert_TryResolveAsInt64Array(UPARAM(Ref) const FFlowDataPinValue_Int64& Int64Value, UFlowNodeBase* Target);
+	static TArray<int64> AutoConvert_TryResolveAsInt64Array(UPARAM(Ref) const FFlowDataPinValue_Int64& Int64Value, const UFlowNodeBase* Target);
 
 	// Easy Resolve a Float DataPin Value to a single float. Logs error on failure.
 	UFUNCTION(BlueprintPure, meta = (DisplayName = "Auto-Resolve to Float", CompactNodeTitle = "->", BlueprintAutocast, DefaultToSelf = "Target"), Category = DataPins)
-	static float AutoConvert_TryResolveAsFloat(UPARAM(Ref) const FFlowDataPinValue_Float& FloatValue, UFlowNodeBase* Target);
+	static float AutoConvert_TryResolveAsFloat(UPARAM(Ref) const FFlowDataPinValue_Float& FloatValue, const UFlowNodeBase* Target);
 
 	// Easy Resolve a Float DataPin Value to a float array. Logs error on failure and returns empty array.
 	UFUNCTION(BlueprintPure, meta = (DisplayName = "Auto-Resolve to Float Array", CompactNodeTitle = "->", BlueprintAutocast, DefaultToSelf = "Target"), Category = DataPins)
-	static TArray<float> AutoConvert_TryResolveAsFloatArray(UPARAM(Ref) const FFlowDataPinValue_Float& FloatValue, UFlowNodeBase* Target);
+	static TArray<float> AutoConvert_TryResolveAsFloatArray(UPARAM(Ref) const FFlowDataPinValue_Float& FloatValue, const UFlowNodeBase* Target);
 
 	// Easy Resolve a Double DataPin Value to a single double. Logs error on failure.
 	UFUNCTION(BlueprintPure, meta = (DisplayName = "Auto-Resolve to Double", CompactNodeTitle = "->", BlueprintAutocast, DefaultToSelf = "Target"), Category = DataPins)
-	static double AutoConvert_TryResolveAsDouble(UPARAM(Ref) const FFlowDataPinValue_Double& DoubleValue, UFlowNodeBase* Target);
+	static double AutoConvert_TryResolveAsDouble(UPARAM(Ref) const FFlowDataPinValue_Double& DoubleValue, const UFlowNodeBase* Target);
 
 	// Easy Resolve a Double DataPin Value to a double array. Logs error on failure and returns empty array.
 	UFUNCTION(BlueprintPure, meta = (DisplayName = "Auto-Resolve to Double Array", CompactNodeTitle = "->", BlueprintAutocast, DefaultToSelf = "Target"), Category = DataPins)
-	static TArray<double> AutoConvert_TryResolveAsDoubleArray(UPARAM(Ref) const FFlowDataPinValue_Double& DoubleValue, UFlowNodeBase* Target);
+	static TArray<double> AutoConvert_TryResolveAsDoubleArray(UPARAM(Ref) const FFlowDataPinValue_Double& DoubleValue, const UFlowNodeBase* Target);
 
 	// Easy Resolve a Name DataPin Value to a single FName. Logs error on failure.
 	UFUNCTION(BlueprintPure, meta = (DisplayName = "Auto-Resolve to Name", CompactNodeTitle = "->", BlueprintAutocast, DefaultToSelf = "Target"), Category = DataPins)
-	static FName AutoConvert_TryResolveAsName(UPARAM(Ref) const FFlowDataPinValue_Name& NameValue, UFlowNodeBase* Target);
+	static FName AutoConvert_TryResolveAsName(UPARAM(Ref) const FFlowDataPinValue_Name& NameValue, const UFlowNodeBase* Target);
 
 	// Easy Resolve a Name DataPin Value to an FName array. Logs error on failure and returns empty array.
 	UFUNCTION(BlueprintPure, meta = (DisplayName = "Auto-Resolve to Name Array", CompactNodeTitle = "->", BlueprintAutocast, DefaultToSelf = "Target"), Category = DataPins)
-	static TArray<FName> AutoConvert_TryResolveAsNameArray(UPARAM(Ref) const FFlowDataPinValue_Name& NameValue, UFlowNodeBase* Target);
+	static TArray<FName> AutoConvert_TryResolveAsNameArray(UPARAM(Ref) const FFlowDataPinValue_Name& NameValue, const UFlowNodeBase* Target);
 
 	// Easy Resolve a String DataPin Value to a single FString. Logs error on failure.
 	UFUNCTION(BlueprintPure, meta = (DisplayName = "Auto-Resolve to String", CompactNodeTitle = "->", BlueprintAutocast, DefaultToSelf = "Target"), Category = DataPins)
-	static FString AutoConvert_TryResolveAsString(UPARAM(Ref) const FFlowDataPinValue_String& StringValue, UFlowNodeBase* Target);
+	static FString AutoConvert_TryResolveAsString(UPARAM(Ref) const FFlowDataPinValue_String& StringValue, const UFlowNodeBase* Target);
 
 	// Easy Resolve a String DataPin Value to an FString array. Logs error on failure and returns empty array.
 	UFUNCTION(BlueprintPure, meta = (DisplayName = "Auto-Resolve to String Array", CompactNodeTitle = "->", BlueprintAutocast, DefaultToSelf = "Target"), Category = DataPins)
-	static TArray<FString> AutoConvert_TryResolveAsStringArray(UPARAM(Ref) const FFlowDataPinValue_String& StringValue, UFlowNodeBase* Target);
+	static TArray<FString> AutoConvert_TryResolveAsStringArray(UPARAM(Ref) const FFlowDataPinValue_String& StringValue, const UFlowNodeBase* Target);
 
 	// Easy Resolve a Text DataPin Value to a single FText. Logs error on failure.
 	UFUNCTION(BlueprintPure, meta = (DisplayName = "Auto-Resolve to Text", CompactNodeTitle = "->", BlueprintAutocast, DefaultToSelf = "Target"), Category = DataPins)
-	static FText AutoConvert_TryResolveAsText(UPARAM(Ref) const FFlowDataPinValue_Text& TextValue, UFlowNodeBase* Target);
+	static FText AutoConvert_TryResolveAsText(UPARAM(Ref) const FFlowDataPinValue_Text& TextValue, const UFlowNodeBase* Target);
 
 	// Easy Resolve a Text DataPin Value to an FText array. Logs error on failure and returns empty array.
 	UFUNCTION(BlueprintPure, meta = (DisplayName = "Auto-Resolve to Text Array", CompactNodeTitle = "->", BlueprintAutocast, DefaultToSelf = "Target"), Category = DataPins)
-	static TArray<FText> AutoConvert_TryResolveAsTextArray(UPARAM(Ref) const FFlowDataPinValue_Text& TextValue, UFlowNodeBase* Target);
+	static TArray<FText> AutoConvert_TryResolveAsTextArray(UPARAM(Ref) const FFlowDataPinValue_Text& TextValue, const UFlowNodeBase* Target);
 
 	// Easy Resolve an Enum DataPin Value to a single uint8. Logs error on failure.
 	UFUNCTION(BlueprintPure, meta = (DisplayName = "Auto-Resolve to Enum", CompactNodeTitle = "->", BlueprintAutocast, DefaultToSelf = "Target"), Category = DataPins)
-	static uint8 AutoConvert_TryResolveAsEnum(UPARAM(Ref) const FFlowDataPinValue_Enum& EnumValue, UFlowNodeBase* Target);
+	static uint8 AutoConvert_TryResolveAsEnum(UPARAM(Ref) const FFlowDataPinValue_Enum& EnumValue, const UFlowNodeBase* Target);
 
 	// Easy Resolve an Enum DataPin Value to a uint8 array. Logs error on failure and returns empty array.
 	UFUNCTION(BlueprintPure, meta = (DisplayName = "Auto-Resolve to Enum Array", CompactNodeTitle = "->", BlueprintAutocast, DefaultToSelf = "Target"), Category = DataPins)
-	static TArray<uint8> AutoConvert_TryResolveAsEnumArray(UPARAM(Ref) const FFlowDataPinValue_Enum& EnumValue, UFlowNodeBase* Target);
+	static TArray<uint8> AutoConvert_TryResolveAsEnumArray(UPARAM(Ref) const FFlowDataPinValue_Enum& EnumValue, const UFlowNodeBase* Target);
 
 	// Easy Resolve a Vector DataPin Value to a single FVector. Logs error on failure.
 	UFUNCTION(BlueprintPure, meta = (DisplayName = "Auto-Resolve to Vector", CompactNodeTitle = "->", BlueprintAutocast, DefaultToSelf = "Target"), Category = DataPins)
-	static FVector AutoConvert_TryResolveAsVector(UPARAM(Ref) const FFlowDataPinValue_Vector& VectorValue, UFlowNodeBase* Target);
+	static FVector AutoConvert_TryResolveAsVector(UPARAM(Ref) const FFlowDataPinValue_Vector& VectorValue, const UFlowNodeBase* Target);
 
 	// Easy Resolve a Vector DataPin Value to an FVector array. Logs error on failure and returns empty array.
 	UFUNCTION(BlueprintPure, meta = (DisplayName = "Auto-Resolve to Vector Array", CompactNodeTitle = "->", BlueprintAutocast, DefaultToSelf = "Target"), Category = DataPins)
-	static TArray<FVector> AutoConvert_TryResolveAsVectorArray(UPARAM(Ref) const FFlowDataPinValue_Vector& VectorValue, UFlowNodeBase* Target);
+	static TArray<FVector> AutoConvert_TryResolveAsVectorArray(UPARAM(Ref) const FFlowDataPinValue_Vector& VectorValue, const UFlowNodeBase* Target);
 
 	// Easy Resolve a Rotator DataPin Value to a single FRotator. Logs error on failure.
 	UFUNCTION(BlueprintPure, meta = (DisplayName = "Auto-Resolve to Rotator", CompactNodeTitle = "->", BlueprintAutocast, DefaultToSelf = "Target"), Category = DataPins)
-	static FRotator AutoConvert_TryResolveAsRotator(UPARAM(Ref) const FFlowDataPinValue_Rotator& RotatorValue, UFlowNodeBase* Target);
+	static FRotator AutoConvert_TryResolveAsRotator(UPARAM(Ref) const FFlowDataPinValue_Rotator& RotatorValue, const UFlowNodeBase* Target);
 
 	// Easy Resolve a Rotator DataPin Value to an FRotator array. Logs error on failure and returns empty array.
 	UFUNCTION(BlueprintPure, meta = (DisplayName = "Auto-Resolve to Rotator Array", CompactNodeTitle = "->", BlueprintAutocast, DefaultToSelf = "Target"), Category = DataPins)
-	static TArray<FRotator> AutoConvert_TryResolveAsRotatorArray(UPARAM(Ref) const FFlowDataPinValue_Rotator& RotatorValue, UFlowNodeBase* Target);
+	static TArray<FRotator> AutoConvert_TryResolveAsRotatorArray(UPARAM(Ref) const FFlowDataPinValue_Rotator& RotatorValue, const UFlowNodeBase* Target);
 
 	// Easy Resolve a Transform DataPin Value to a single FTransform. Logs error on failure.
 	UFUNCTION(BlueprintPure, meta = (DisplayName = "Auto-Resolve to Transform", CompactNodeTitle = "->", BlueprintAutocast, DefaultToSelf = "Target"), Category = DataPins)
-	static FTransform AutoConvert_TryResolveAsTransform(UPARAM(Ref) const FFlowDataPinValue_Transform& TransformValue, UFlowNodeBase* Target);
+	static FTransform AutoConvert_TryResolveAsTransform(UPARAM(Ref) const FFlowDataPinValue_Transform& TransformValue, const UFlowNodeBase* Target);
 
 	// Easy Resolve a Transform DataPin Value to an FTransform array. Logs error on failure and returns empty array.
 	UFUNCTION(BlueprintPure, meta = (DisplayName = "Auto-Resolve to Transform Array", CompactNodeTitle = "->", BlueprintAutocast, DefaultToSelf = "Target"), Category = DataPins)
-	static TArray<FTransform> AutoConvert_TryResolveAsTransformArray(UPARAM(Ref) const FFlowDataPinValue_Transform& TransformValue, UFlowNodeBase* Target);
+	static TArray<FTransform> AutoConvert_TryResolveAsTransformArray(UPARAM(Ref) const FFlowDataPinValue_Transform& TransformValue, const UFlowNodeBase* Target);
 
 	// Easy Resolve a GameplayTag DataPin Value to a single FGameplayTag. Logs error on failure.
 	UFUNCTION(BlueprintPure, meta = (DisplayName = "Auto-Resolve to GameplayTag", CompactNodeTitle = "->", BlueprintAutocast, DefaultToSelf = "Target"), Category = DataPins)
-	static FGameplayTag AutoConvert_TryResolveAsGameplayTag(UPARAM(Ref) const FFlowDataPinValue_GameplayTag& GameplayTagValue, UFlowNodeBase* Target);
+	static FGameplayTag AutoConvert_TryResolveAsGameplayTag(UPARAM(Ref) const FFlowDataPinValue_GameplayTag& GameplayTagValue, const UFlowNodeBase* Target);
 
 	// Easy Resolve a GameplayTag DataPin Value to an FGameplayTag array. Logs error on failure and returns empty array.
 	UFUNCTION(BlueprintPure, meta = (DisplayName = "Auto-Resolve to GameplayTag Array", CompactNodeTitle = "->", BlueprintAutocast, DefaultToSelf = "Target"), Category = DataPins)
-	static TArray<FGameplayTag> AutoConvert_TryResolveAsGameplayTagArray(UPARAM(Ref) const FFlowDataPinValue_GameplayTag& GameplayTagValue, UFlowNodeBase* Target);
+	static TArray<FGameplayTag> AutoConvert_TryResolveAsGameplayTagArray(UPARAM(Ref) const FFlowDataPinValue_GameplayTag& GameplayTagValue, const UFlowNodeBase* Target);
 
 	// Easy Resolve a GameplayTagContainer DataPin Value (scalar only). Logs error on failure.
 	UFUNCTION(BlueprintPure, meta = (DisplayName = "Auto-Resolve to GameplayTagContainer", CompactNodeTitle = "->", BlueprintAutocast, DefaultToSelf = "Target"), Category = DataPins)
-	static FGameplayTagContainer AutoConvert_TryResolveAsGameplayTagContainer(UPARAM(Ref) const FFlowDataPinValue_GameplayTagContainer& GameplayTagContainerValue, UFlowNodeBase* Target);
+	static FGameplayTagContainer AutoConvert_TryResolveAsGameplayTagContainer(UPARAM(Ref) const FFlowDataPinValue_GameplayTagContainer& GameplayTagContainerValue, const UFlowNodeBase* Target);
 
 	// Easy Resolve an InstancedStruct DataPin Value to a single FInstancedStruct. Logs error on failure.
 	UFUNCTION(BlueprintPure, meta = (DisplayName = "Auto-Resolve to InstancedStruct", CompactNodeTitle = "->", BlueprintAutocast, DefaultToSelf = "Target"), Category = DataPins)
-	static FInstancedStruct AutoConvert_TryResolveAsInstancedStruct(UPARAM(Ref) const FFlowDataPinValue_InstancedStruct& InstancedStructValue, UFlowNodeBase* Target);
+	static FInstancedStruct AutoConvert_TryResolveAsInstancedStruct(UPARAM(Ref) const FFlowDataPinValue_InstancedStruct& InstancedStructValue, const UFlowNodeBase* Target);
 
 	// Easy Resolve an InstancedStruct DataPin Value to an FInstancedStruct array. Logs error on failure and returns empty array.
 	UFUNCTION(BlueprintPure, meta = (DisplayName = "Auto-Resolve to InstancedStruct Array", CompactNodeTitle = "->", BlueprintAutocast, DefaultToSelf = "Target"), Category = DataPins)
-	static TArray<FInstancedStruct> AutoConvert_TryResolveAsInstancedStructArray(UPARAM(Ref) const FFlowDataPinValue_InstancedStruct& InstancedStructValue, UFlowNodeBase* Target);
+	static TArray<FInstancedStruct> AutoConvert_TryResolveAsInstancedStructArray(UPARAM(Ref) const FFlowDataPinValue_InstancedStruct& InstancedStructValue, const UFlowNodeBase* Target);
 
 	// Easy Resolve an Object DataPin Value to a single UObject*. Logs error on failure.
 	UFUNCTION(BlueprintPure, meta = (DisplayName = "Auto-Resolve to Object", CompactNodeTitle = "->", BlueprintAutocast, DefaultToSelf = "Target"), Category = DataPins)
-	static UObject* AutoConvert_TryResolveAsObject(UPARAM(Ref) const FFlowDataPinValue_Object& ObjectValue, UFlowNodeBase* Target);
+	static UObject* AutoConvert_TryResolveAsObject(UPARAM(Ref) const FFlowDataPinValue_Object& ObjectValue, const UFlowNodeBase* Target);
 
 	// Easy Resolve an Object DataPin Value to a UObject* array. Logs error on failure and returns empty array.
 	UFUNCTION(BlueprintPure, meta = (DisplayName = "Auto-Resolve to Object Array", CompactNodeTitle = "->", BlueprintAutocast, DefaultToSelf = "Target"), Category = DataPins)
-	static TArray<UObject*> AutoConvert_TryResolveAsObjectArray(UPARAM(Ref) const FFlowDataPinValue_Object& ObjectValue, UFlowNodeBase* Target);
+	static TArray<UObject*> AutoConvert_TryResolveAsObjectArray(UPARAM(Ref) const FFlowDataPinValue_Object& ObjectValue, const UFlowNodeBase* Target);
 
 	// Easy Resolve a Class DataPin Value to a single UClass*. Logs error on failure.
 	UFUNCTION(BlueprintPure, meta = (DisplayName = "Auto-Resolve to Class", CompactNodeTitle = "->", BlueprintAutocast, DefaultToSelf = "Target"), Category = DataPins)
-	static UClass* AutoConvert_TryResolveAsClass(UPARAM(Ref) const FFlowDataPinValue_Class& ClassValue, UFlowNodeBase* Target);
+	static UClass* AutoConvert_TryResolveAsClass(UPARAM(Ref) const FFlowDataPinValue_Class& ClassValue, const UFlowNodeBase* Target);
 
 	// Easy Resolve a Class DataPin Value to a UClass* array. Logs error on failure and returns empty array.
 	UFUNCTION(BlueprintPure, meta = (DisplayName = "Auto-Resolve to Class Array", CompactNodeTitle = "->", BlueprintAutocast, DefaultToSelf = "Target"), Category = DataPins)
-	static TArray<UClass*> AutoConvert_TryResolveAsClassArray(UPARAM(Ref) const FFlowDataPinValue_Class& ClassValue, UFlowNodeBase* Target);
+	static TArray<UClass*> AutoConvert_TryResolveAsClassArray(UPARAM(Ref) const FFlowDataPinValue_Class& ClassValue, const UFlowNodeBase* Target);
 
 	//  ----------  Result → result enum converter ----------
 

@@ -34,9 +34,9 @@ private:
 	TWeakObjectPtr<UClass> EffectiveFilterClass;
 
 	// UI building
-	void BuildClassFilterRow(IDetailChildrenBuilder& StructBuilder, bool bSourceEditable);
-	void BuildSingleBranch(IDetailChildrenBuilder& StructBuilder);
-	void BuildArrayBranch(IDetailChildrenBuilder& StructBuilder);
+	void BuildClassFilterRow(IDetailChildrenBuilder& StructBuilder, bool bSourceEditable) const;
+	virtual void BuildSingleBranch(IDetailChildrenBuilder& StructBuilder) override;
+	virtual void BuildArrayBranch(IDetailChildrenBuilder& StructBuilder) override;
 
 	// Metadata / filter
 	void TryApplyMetaClass();
@@ -48,20 +48,20 @@ private:
 	void OnValuesChanged();
 	void ValidateAll();
 	bool IsElementValid(TSharedPtr<IPropertyHandle> ElementHandle) const;
-	void InvalidateElement(TSharedPtr<IPropertyHandle> ElementHandle);
+	static void InvalidateElement(TSharedPtr<IPropertyHandle> ElementHandle);
 
 	// Value access
-	UObject* GetObjectValue(TSharedPtr<IPropertyHandle> ElementHandle) const;
-	void SetObjectValue(TSharedPtr<IPropertyHandle> ElementHandle, UObject* NewObj);
+	static UObject* GetObjectValue(TSharedPtr<IPropertyHandle> ElementHandle);
+	static void SetObjectValue(TSharedPtr<IPropertyHandle> ElementHandle, UObject* NewObj);
 
 	// Permissions (inline owner queries)
 	bool ShouldShowSourceRow() const;
 	bool IsSourceEditable() const;
-	bool AreValuesEditable() const { return true; }
+	static bool AreValuesEditable() { return true; }
 
 	// Value struct accessor
 	struct FFlowDataPinValue_Object* GetValueStruct() const;
 
 	// Widget
-	TSharedRef<SWidget> BuildObjectValueWidgetForElement(TSharedPtr<IPropertyHandle> ElementHandle);
+	TSharedRef<SWidget> BuildObjectValueWidgetForElement(TSharedPtr<IPropertyHandle> ElementHandle) const;
 };

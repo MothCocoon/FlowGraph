@@ -221,7 +221,7 @@ protected:
 	/** Tree view that displays the differences, cached for the buttons that iterate the differences: */
 	TSharedPtr<STreeView<TSharedPtr<FBlueprintDifferenceTreeEntry>>> DifferencesTreeView;
 
-	/** Stored references to widgets used to display various parts of a asset, from the mode name */
+	/** Stored references to widgets used to display various parts of asset, from the mode name */
 	TMap<FName, FDiffControl> ModePanels;
 
 	/** A pointer to the window holding this */

@@ -904,8 +904,6 @@ void UFlowGraphNode::CreateInputPin(const FFlowPin& FlowPin, const int32 Index /
 
 	check(!EdGraphPinType.PinCategory.IsNone());
 
-	constexpr bool bIsReference = false;
-
 	UEdGraphPin* NewPin = CreatePin(EGPD_Input, EdGraphPinType, FlowPin.PinName, Index);
 	check(NewPin);
 
@@ -928,8 +926,6 @@ void UFlowGraphNode::CreateOutputPin(const FFlowPin& FlowPin, const int32 Index 
 	}
 
 	const FEdGraphPinType EdGraphPinType = FlowPin.BuildEdGraphPinType();
-	constexpr bool bIsReference = false;
-
 	check(!EdGraphPinType.PinCategory.IsNone());
 
 	UEdGraphPin* NewPin = CreatePin(EGPD_Output, EdGraphPinType, FlowPin.PinName, Index);

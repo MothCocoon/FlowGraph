@@ -7,14 +7,7 @@
 #include "StructUtils/InstancedStruct.h"
 #include "UObject/Class.h"
 
-#include "Nodes/FlowPin.h"
-#include "Types/FlowPinTypeName.h"
-#include "Types/FlowPinTypesStandard.h"
-
 #include "FlowDataPinProperties.generated.h"
-
-class FStructProperty;
-class UScriptStruct;
 
 // #FlowDataPinLegacy
 USTRUCT(DisplayName = "Base - Flow DataPin Property", meta = (Deprecated, DeprecationMessage = "Use FFlowDataPinValue* instead"))
@@ -368,7 +361,7 @@ public:
 
 // Wrapper-structs for a blueprint defaulted input pin types
 //   "Hidden" to keep them out of the TInstancedStruct<FFlowDataPinValue> selection list (but they can still be authored as properties in blueprint)
-//   "DefaultForInputFlowPin" to change them to an Defaulted-Input property (rather than an output property)
+//   "DefaultForInputFlowPin" to change them to a Defaulted-Input property (rather than an output property)
 
 USTRUCT(BlueprintType, DisplayName = "[DEPRECATED] Bool - Input Flow Data Pin Property", meta = (DefaultForInputFlowPin, FlowPinType = "Bool", Deprecated, DeprecationMessage = "Use FFlowDataPinValue* instead"))
 struct FFlowDataPinInputProperty_Bool : public FFlowDataPinOutputProperty_Bool

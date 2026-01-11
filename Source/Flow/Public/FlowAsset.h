@@ -128,7 +128,7 @@ protected:
 	TArray<FName> CustomInputs;
 
 	/**
-	 * Custom Outputs define custom graph outputs, this allow to send signals to the parent graph while executing this graph
+	 * Custom Outputs define custom graph outputs, this allows to send signals to the parent graph while executing this graph
 	 * Sub Graph node using this Flow Asset will generate context Output Pin for every valid Event name on this list
 	 */
 	UPROPERTY(EditAnywhere, Category = "Sub Graph")
@@ -149,9 +149,8 @@ public:
 
 	static bool TryGetDefaultForInputPinName(const FStructProperty& StructProperty, const void* Container, FString& OutString);
 
-	// Updates the auto-generated pins and bindings for a given FlowNode,
-	// returns true if any changes were made.
-	bool TryUpdateManagedFlowPinsForNode(UFlowNode& FlowNode);
+	// Updates the auto-generated pins and bindings for a given FlowNode, returns true if any changes were made.
+	static bool TryUpdateManagedFlowPinsForNode(UFlowNode& FlowNode);
 #endif
 
 public:

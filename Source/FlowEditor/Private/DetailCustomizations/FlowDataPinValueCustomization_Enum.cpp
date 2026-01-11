@@ -1,16 +1,15 @@
 // Copyright https://github.com/MothCocoon/FlowGraph/graphs/contributors
 
 #include "DetailCustomizations/FlowDataPinValueCustomization_Enum.h"
-
+#include "Interfaces/FlowDataPinValueOwnerInterface.h"
 #include "Types/FlowDataPinValuesStandard.h"
+
 #include "DetailLayoutBuilder.h"
 #include "DetailWidgetRow.h"
 #include "IDetailChildrenBuilder.h"
 #include "IPropertyUtilities.h"
 #include "PropertyHandle.h"
 #include "ScopedTransaction.h"
-#include "Interfaces/FlowDataPinValueOwnerInterface.h"
-#include "UnrealExtensions/VisibilityArrayBuilder.h"
 
 #include "Widgets/Input/SComboBox.h"
 #include "Widgets/Text/STextBlock.h"
@@ -254,7 +253,7 @@ void FFlowDataPinValueCustomization_Enum::BuildSingle(IDetailChildrenBuilder& St
 			SNew(SComboBox<TSharedPtr<FName>>)
 				.OptionsSource(&EnumeratorOptions)
 				.OnGenerateWidget(this, &FFlowDataPinValueCustomization_Enum::GenerateEnumeratorWidget)
-				.OnSelectionChanged(this, &FFlowDataPinValueCustomization_Enum::OnSingleValueChanged, First)
+				.OnSelectionChanged_Static(&FFlowDataPinValueCustomization_Enum::OnSingleValueChanged, First)
 				.IsEnabled(this, &FFlowDataPinValueCustomization_Enum::IsValueEditingEnabled)
 				.InitiallySelectedItem([this, First]()
 					{
@@ -305,9 +304,7 @@ void FFlowDataPinValueCustomization_Enum::BuildArray(IDetailChildrenBuilder& Str
 					SNew(SComboBox<TSharedPtr<FName>>)
 						.OptionsSource(&EnumeratorOptions)
 						.OnGenerateWidget(this, &FFlowDataPinValueCustomization_Enum::GenerateEnumeratorWidget)
-						.OnSelectionChanged(this,
-							&FFlowDataPinValueCustomization_Enum::OnArrayElementChanged,
-							TSharedPtr<IPropertyHandle>(ElementHandle))
+						.OnSelectionChanged_Static(&FFlowDataPinValueCustomization_Enum::OnArrayElementChanged, TSharedPtr<IPropertyHandle>(ElementHandle))
 						.IsEnabled(this, &FFlowDataPinValueCustomization_Enum::IsValueEditingEnabled)
 						.InitiallySelectedItem([this, ElementHandle]()
 							{
@@ -346,7 +343,7 @@ TSharedRef<SWidget> FFlowDataPinValueCustomization_Enum::GenerateEnumeratorWidge
 		.Font(IDetailLayoutBuilder::GetDetailFont());
 }
 
-FText FFlowDataPinValueCustomization_Enum::GetEnumeratorDisplayText(const FName& Value) const
+FText FFlowDataPinValueCustomization_Enum::GetEnumeratorDisplayText(const FName& Value)
 {
 	return Value.IsNone() ? LOCTEXT("EnumNoneDisplay", "<None>") : FText::FromName(Value);
 }
@@ -375,10 +372,7 @@ FText FFlowDataPinValueCustomization_Enum::GetEnumSourceTooltip() const
 	return FText::FromString(Source);
 }
 
-void FFlowDataPinValueCustomization_Enum::OnSingleValueChanged(
-	TSharedPtr<FName> NewSelection,
-	ESelectInfo::Type,
-	TSharedPtr<IPropertyHandle> ElementHandle)
+void FFlowDataPinValueCustomization_Enum::OnSingleValueChanged(TSharedPtr<FName> NewSelection, ESelectInfo::Type SelectInfo, TSharedPtr<IPropertyHandle> ElementHandle)
 {
 	if (!ElementHandle.IsValid() || !NewSelection.IsValid())
 	{
@@ -396,10 +390,7 @@ void FFlowDataPinValueCustomization_Enum::OnSingleValueChanged(
 	ElementHandle->SetValue(*NewSelection);
 }
 
-void FFlowDataPinValueCustomization_Enum::OnArrayElementChanged(
-	TSharedPtr<FName> NewSelection,
-	ESelectInfo::Type,
-	TSharedPtr<IPropertyHandle> ElementHandle)
+void FFlowDataPinValueCustomization_Enum::OnArrayElementChanged(TSharedPtr<FName> NewSelection,	ESelectInfo::Type SelectInfo,TSharedPtr<IPropertyHandle> ElementHandle)
 {
 	if (!ElementHandle.IsValid() || !NewSelection.IsValid())
 	{

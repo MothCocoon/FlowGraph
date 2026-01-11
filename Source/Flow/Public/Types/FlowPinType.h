@@ -3,10 +3,10 @@
 #pragma once
 
 #include "FlowPinEnums.h"
-#include "FlowPinTypeNamesStandard.h"
 
-#include "UObject/NameTypes.h"
 #include "Math/Color.h"
+#include "UObject/NameTypes.h"
+
 #if WITH_EDITOR
 #include "GraphEditorSettings.h"
 #endif
@@ -44,7 +44,7 @@ public:
 	FLOW_API virtual FLinearColor GetPinColor() const { return GetDefault<UGraphEditorSettings>()->DefaultPinTypeColor; }
 	FLOW_API virtual TSharedPtr<IPropertyHandle> GetValuesHandle(const TSharedRef<IPropertyHandle>& FlowDataPinValuePropertyHandle) const;
 	FLOW_API virtual bool SupportsMultiType(EFlowDataMultiType Mode) const { return true; }
-	FLOW_API virtual UObject* GetPinSubCatetoryObjectFromProperty(const FProperty* Property, void const* InContainer, const FFlowDataPinValue* Wrapper) const { return nullptr; }
+	FLOW_API virtual UObject* GetPinSubCategoryObjectFromProperty(const FProperty* Property, void const* InContainer, const FFlowDataPinValue* Wrapper) const { return nullptr; }
 
 	// Pin creation
 	FLOW_API FFlowPin CreateFlowPinFromProperty(const FProperty& Property, void const* InContainer) const;

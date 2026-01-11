@@ -137,10 +137,9 @@ void FFlowPin::TrySetStructSubCategoryObjectFromPinType()
 #if WITH_EDITOR
 FEdGraphPinType FFlowPin::BuildEdGraphPinType() const
 {
-	FEdGraphPinType EdGraphPinType;
-
 	check(!PinTypeName.Name.IsNone());
 
+	FEdGraphPinType EdGraphPinType;
 	EdGraphPinType.PinCategory = PinTypeName.Name;
 
 	// TODO (gtaylor) possible future extension for types, to allow sub categories
@@ -248,7 +247,7 @@ FText FFlowPin::BuildHeaderText() const
 	}
 	else
 	{
-		return FText::Format(LOCTEXT("FlowPinNameAndType", "{0} ({1})"), {PinNameToUse, FText::FromString(PinTypeName.ToString()) });
+		return FText::Format(LOCTEXT("FlowPinNameAndType", "{0} ({1})"), {PinNameToUse, FText::FromString(PinTypeName.ToString())});
 	}
 }
 

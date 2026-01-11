@@ -451,7 +451,7 @@ void UFlowComponent::StartRootFlow()
 		{
 			VerifyIdentityTags();
 
-			TScriptInterface<IFlowDataPinValueSupplierInterface> RootFlowParamsAsInterface = RootFlowParams.ResolveFlowAssetParams();
+			const TScriptInterface<IFlowDataPinValueSupplierInterface> RootFlowParamsAsInterface = RootFlowParams.ResolveFlowAssetParams();
 			FlowSubsystem->StartRootFlow(this, RootFlow, RootFlowParamsAsInterface, bAllowMultipleInstances);
 		}
 	}

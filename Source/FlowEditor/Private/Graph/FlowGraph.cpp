@@ -237,9 +237,9 @@ void UFlowGraph::UpgradeAllFlowNodePins()
 {
 	if (UFlowAsset* FlowAsset = GetFlowAsset())
 	{
-		for (auto& KV : FlowAsset->Nodes)
+		for (TPair<FGuid, TObjectPtr<UFlowNode>>& Node : FlowAsset->Nodes)
 		{
-			UFlowNode* FlowNode = KV.Value;
+			UFlowNode* FlowNode = Node.Value;
 			if (IsValid(FlowNode))
 			{
 				FlowNode->FixupDataPinTypes();

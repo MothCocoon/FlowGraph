@@ -3,8 +3,6 @@
 #pragma once
 
 #include "UObject/Interface.h"
-#include "Nodes/FlowPin.h"
-
 #include "FlowDataPinGeneratorInterface.generated.h"
 
 struct FFlowAutoDataPinsWorkingData;

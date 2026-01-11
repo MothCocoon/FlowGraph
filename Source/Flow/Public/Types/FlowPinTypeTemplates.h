@@ -299,10 +299,10 @@ namespace FlowPinType
 	template <typename TPinType>
 	struct FFlowSimplePropertyTraitsBase
 	{
-		using ValueType = typename TPinType::ValueType;
-		using WrapperType = typename TPinType::WrapperType;
-		using PropertyType = typename TPinType::MainPropertyType;
-		using LegacyWrapperType = typename TPinType::LegacyWrapperType;
+		using ValueType = TPinType::ValueType;
+		using WrapperType = TPinType::WrapperType;
+		using PropertyType = TPinType::MainPropertyType;
+		using LegacyWrapperType = TPinType::LegacyWrapperType;
 
 		static EFlowDataPinResolveResult ExtractFromProperty(const FProperty* Property, const void* Container, TArray<ValueType>& OutValues)
 		{
@@ -374,8 +374,8 @@ namespace FlowPinType
 	struct FFlowNumericTraitsBase : public FFlowSimplePropertyTraitsBase<TPinType>
 	{
 		using Super = FFlowSimplePropertyTraitsBase<TPinType>;
-		using ValueType = typename TPinType::ValueType;
-		using WrapperType = typename TPinType::WrapperType;
+		using ValueType = TPinType::ValueType;
+		using WrapperType = TPinType::WrapperType;
 
 		static EFlowDataPinResolveResult ExtractValues(const FFlowDataPinResult& DataPinResult, TArray<ValueType>& OutValues, EFlowSingleFromArray SingleFromArray)
 		{
@@ -438,8 +438,8 @@ namespace FlowPinType
 	struct FFlowStringTraitsBase : public FFlowSimplePropertyTraitsBase<TPinType>
 	{
 		using Super = FFlowSimplePropertyTraitsBase<TPinType>;
-		using ValueType = typename TPinType::ValueType;
-		using WrapperType = typename TPinType::WrapperType;
+		using ValueType = TPinType::ValueType;
+		using WrapperType = TPinType::WrapperType;
 
 		static EFlowDataPinResolveResult ExtractValues(const FFlowDataPinResult& DataPinResult, TArray<ValueType>& OutValues, EFlowSingleFromArray SingleFromArray)
 		{
@@ -511,9 +511,9 @@ namespace FlowPinType
 	template <typename TPinType>
 	struct FFlowStructTraitsBase : public FFlowSimplePropertyTraitsBase<TPinType>
 	{
-		using ValueType = typename TPinType::ValueType;
-		using WrapperType = typename TPinType::WrapperType;
-		using LegacyWrapperType = typename TPinType::LegacyWrapperType;
+		using ValueType = TPinType::ValueType;
+		using WrapperType = TPinType::WrapperType;
+		using LegacyWrapperType = TPinType::LegacyWrapperType;
 
 		static EFlowDataPinResolveResult ExtractFromProperty(const FProperty* Property, const void* Container, TArray<ValueType>& OutValues)
 		{
@@ -591,9 +591,9 @@ namespace FlowPinType
 	struct FFlowDataPinValueTraits<FFlowPinType_Enum> : public FFlowSimplePropertyTraitsBase<FFlowPinType_Enum>
 	{
 		using TPinType = FFlowPinType_Enum;
-		using WrapperType = typename TPinType::WrapperType;
-		using ValueType = typename TPinType::ValueType;
-		using LegacyWrapperType = typename TPinType::LegacyWrapperType;
+		using WrapperType = TPinType::WrapperType;
+		using ValueType = TPinType::ValueType;
+		using LegacyWrapperType = TPinType::LegacyWrapperType;
 
 		static EFlowDataPinResolveResult ExtractFromProperty(const FProperty* Property, const void* Container, TArray<FName>& OutValues, TSoftObjectPtr<UEnum>& OutEnumClass)
 		{
@@ -776,9 +776,9 @@ namespace FlowPinType
 	template <typename TPinType, typename TProperty, typename TSoftProperty, typename TValueObjectType>
 	struct FFlowObjectTraitsBase
 	{
-		using ValueType = typename TPinType::ValueType;
-		using WrapperType = typename TPinType::WrapperType;
-		using LegacyWrapperType = typename TPinType::LegacyWrapperType;
+		using ValueType = TPinType::ValueType;
+		using WrapperType = TPinType::WrapperType;
+		using LegacyWrapperType = TPinType::LegacyWrapperType;
 
 		static EFlowDataPinResolveResult ExtractFromProperty(const FProperty* Property, const void* Container, TArray<ValueType>& OutValues)
 		{
