@@ -1,8 +1,8 @@
 // Copyright https://github.com/MothCocoon/FlowGraph/graphs/contributors
 
 #include "FlowPinSubsystem.h"
-#include "FlowLogChannels.h"
 #include "Types/FlowPinTypesStandard.h"
+
 #include "Engine/Engine.h"
 
 #include UE_INLINE_GENERATED_CPP_BY_NAME(FlowPinSubsystem)
@@ -10,6 +10,14 @@
 UFlowPinSubsystem* UFlowPinSubsystem::Get()
 {
 	return GEngine->GetEngineSubsystem<UFlowPinSubsystem>();
+}
+
+bool UFlowPinSubsystem::ShouldCreateSubsystem(UObject* Outer) const
+{
+	// Only create an instance if there is no override implementation defined elsewhere
+	TArray<UClass*> ChildClasses;
+	GetDerivedClasses(GetClass(), ChildClasses, false);
+	return (ChildClasses.Num() == 0);
 }
 
 void UFlowPinSubsystem::Initialize(FSubsystemCollectionBase& Collection)
@@ -73,4 +81,3 @@ TArray<FFlowPinTypeName> UFlowPinSubsystem::GetPinTypeNames() const
 
 	return TypeNames;
 }
-

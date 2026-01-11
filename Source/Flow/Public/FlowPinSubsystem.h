@@ -9,6 +9,8 @@
 
 #include "FlowPinSubsystem.generated.h"
 
+struct FFlowPinTypeName;
+
 UCLASS(MinimalApi)
 class UFlowPinSubsystem : public UEngineSubsystem
 {
@@ -21,6 +23,7 @@ protected:
 public:
 	FLOW_API static UFlowPinSubsystem* Get();
 
+	virtual bool ShouldCreateSubsystem(UObject* Outer) const override;
 	virtual void Initialize(FSubsystemCollectionBase& Collection) override;
 	virtual void Deinitialize() override;
 
