@@ -20,7 +20,7 @@ UFlowNode_ExecuteComponent::UFlowNode_ExecuteComponent()
 	: Super()
 {
 #if WITH_EDITOR
-	Category = TEXT("Gameplay|Actor");
+	Category = TEXT("Actor");
 #endif
 
 	InputPins.Reset();
