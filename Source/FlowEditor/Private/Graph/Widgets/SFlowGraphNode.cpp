@@ -416,7 +416,7 @@ FSlateColor SFlowGraphNode::GetConfigBoxBackgroundColor() const
 
 void SFlowGraphNode::CreateBelowPinControls(const TSharedPtr<SVerticalBox> InnerVerticalBox)
 {
-	static const FMargin ConfigBoxPadding = FMargin(2.0f, 0.0f, 1.0f, 0.0);
+	static const FMargin ConfigBoxPadding = FMargin(2.0f, 0.0f, 1.0f, 0.0f);
 
 	// Add a box to wrap around the Config Text area to make it a more visually distinct part of the node
 	TSharedPtr<SVerticalBox> BelowPinsBox;

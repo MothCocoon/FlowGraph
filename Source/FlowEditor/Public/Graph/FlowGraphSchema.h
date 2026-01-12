@@ -2,6 +2,9 @@
 
 #pragma once
 
+#include "Asset/FlowPinTypeMatchPolicy.h"
+#include "Types/FlowPinTypeNamesStandard.h"
+
 #include "EdGraph/EdGraphSchema.h"
 #include "Runtime/Launch/Resources/Version.h"
 #include "Templates/SubclassOf.h"

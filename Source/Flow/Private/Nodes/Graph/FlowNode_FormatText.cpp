@@ -7,6 +7,8 @@
 
 #define LOCTEXT_NAMESPACE "FlowNode_FormatText"
 
+const FName UFlowNode_FormatText::OUTPIN_TextOutput("Formatted Text");
+
 UFlowNode_FormatText::UFlowNode_FormatText(const FObjectInitializer& ObjectInitializer)
 	: Super(ObjectInitializer)
 {
@@ -15,12 +17,12 @@ UFlowNode_FormatText::UFlowNode_FormatText(const FObjectInitializer& ObjectIniti
 	NodeDisplayStyle = FlowNodeStyle::Terminal;
 #endif
 
-	OutputPins.Add(FFlowPin(TEXT("Formatted Text"), FFlowPinType_Text::GetPinTypeNameStatic()));
+	OutputPins.Add(FFlowPin(OUTPIN_TextOutput, FFlowPinType_Text::GetPinTypeNameStatic()));
 }
 
 FFlowDataPinResult UFlowNode_FormatText::TrySupplyDataPin_Implementation(FName PinName) const
 {
-	if (PinName == TEXT("Formatted Text"))
+	if (PinName == OUTPIN_TextOutput)
 	{
 		FText FormattedText;
 		const EFlowDataPinResolveResult FormatResult = TryResolveFormatText(PinName, FormattedText);

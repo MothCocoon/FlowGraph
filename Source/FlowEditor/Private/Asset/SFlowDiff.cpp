@@ -1,9 +1,10 @@
 // Copyright https://github.com/MothCocoon/FlowGraph/graphs/contributors
 
 #include "Asset/SFlowDiff.h"
-#include "Asset/FlowDiffControl.h"
 
+#include "Asset/FlowDiffControl.h"
 #include "FlowAsset.h"
+#include "Graph/Nodes/FlowGraphNode.h"
 
 #include "EdGraphUtilities.h"
 #include "Editor.h"
@@ -38,11 +39,11 @@ static int32 GetCurrentIndex(SListView<TSharedPtr<FDiffSingleResult>> const& Lis
 	const TArray<TSharedPtr<FDiffSingleResult>>& Selected = ListView.GetSelectedItems();
 	if (Selected.Num() == 1)
 	{
-		for (const TSharedPtr<FDiffSingleResult>& Diff : ListViewSource)
+		for (int32 Index = 0; Index < ListViewSource.Num(); ++Index)
 		{
-			if (Diff == Selected[0])
+			if (ListViewSource[Index] == Selected[0])
 			{
-				return 0;
+				return Index;
 			}
 		}
 	}
@@ -52,23 +53,21 @@ static int32 GetCurrentIndex(SListView<TSharedPtr<FDiffSingleResult>> const& Lis
 void FlowDiffUtils::SelectNextRow(SListView<TSharedPtr<FDiffSingleResult>>& ListView, const TArray<TSharedPtr<FDiffSingleResult>>& ListViewSource)
 {
 	const int32 CurrentIndex = GetCurrentIndex(ListView, ListViewSource);
-	if (CurrentIndex == ListViewSource.Num() - 1)
+	const int32 NextIndex = CurrentIndex + 1;
+	if (ListViewSource.IsValidIndex(NextIndex))
 	{
-		return;
+		ListView.SetSelection(ListViewSource[NextIndex]);
 	}
-
-	ListView.SetSelection(ListViewSource[CurrentIndex + 1]);
 }
 
 void FlowDiffUtils::SelectPrevRow(SListView<TSharedPtr<FDiffSingleResult>>& ListView, const TArray<TSharedPtr<FDiffSingleResult>>& ListViewSource)
 {
 	const int32 CurrentIndex = GetCurrentIndex(ListView, ListViewSource);
-	if (CurrentIndex == 0)
+	const int32 PrevIndex = CurrentIndex - 1;
+	if (ListViewSource.IsValidIndex(PrevIndex))
 	{
-		return;
+		ListView.SetSelection(ListViewSource[PrevIndex]);
 	}
-
-	ListView.SetSelection(ListViewSource[CurrentIndex - 1]);
 }
 
 bool FlowDiffUtils::HasNextDifference(const SListView<TSharedPtr<FDiffSingleResult>>& ListView, const TArray<TSharedPtr<FDiffSingleResult>>& ListViewSource)
@@ -538,16 +537,28 @@ void FFlowDiffPanel::GeneratePanel(UEdGraph* Graph, TSharedPtr<TArray<FDiffSingl
 
 			InEvents.OnCreateNodeOrPinMenu = SGraphEditor::FOnCreateNodeOrPinMenu::CreateStatic(ContextMenuHandler);
 		}
-		
+
+		// Node single-click path (via SNodePanel)
 		InEvents.OnNodeSingleClicked = SGraphEditor::FOnNodeSingleClicked::CreateRaw(this, &FFlowDiffPanel::OnNodeClicked);
+
+		// Selection-change path (covers sub-node/AddOn clicks)
+		InEvents.OnSelectionChanged = SGraphEditor::FOnSelectionChanged::CreateLambda([this](const FGraphPanelSelectionSet& NewSelection)
+			{
+				if (NewSelection.Num() == 1)
+				{
+					UObject* SelectedObj = NewSelection.Array()[0];
+					OnNodeClicked(SelectedObj);
+				}
+			});
 
 		if (!GraphEditorCommands.IsValid())
 		{
 			GraphEditorCommands = MakeShared<FUICommandList>();
 
-			GraphEditorCommands->MapAction(FGenericCommands::Get().Copy,
-											FExecuteAction::CreateRaw(this, &FFlowDiffPanel::CopySelectedNodes),
-											FCanExecuteAction::CreateRaw(this, &FFlowDiffPanel::CanCopyNodes)
+			GraphEditorCommands->MapAction(
+				FGenericCommands::Get().Copy,
+				FExecuteAction::CreateRaw(this, &FFlowDiffPanel::CopySelectedNodes),
+				FCanExecuteAction::CreateRaw(this, &FFlowDiffPanel::CanCopyNodes)
 			);
 		}
 
@@ -683,14 +694,14 @@ void SFlowDiff::HandleGraphChanged(const FString& GraphPath)
 	const TAttribute<int32> FocusedDiffResult = TAttribute<int32>::CreateLambda(
 		[this, RealDifferencesStartIndex]()
 		{
-			int32 FocusedDiffResult = INDEX_NONE;
+			int32 FocusedIndex = INDEX_NONE;
 			if (RealDifferencesStartIndex != INDEX_NONE)
 			{
-				FocusedDiffResult = DiffTreeView::CurrentDifference(DifferencesTreeView.ToSharedRef(), RealDifferences) - RealDifferencesStartIndex;
+				FocusedIndex = DiffTreeView::CurrentDifference(DifferencesTreeView.ToSharedRef(), RealDifferences) - RealDifferencesStartIndex;
 			}
 
 			// find selected index in all the graphs, and subtract the index of the first entry in this graph
-			return FocusedDiffResult;
+			return FocusedIndex;
 		});
 
 	// only regenerate PanelOld if the old graph has changed

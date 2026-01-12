@@ -3,6 +3,8 @@
 #pragma once
 
 #include "Engine/DeveloperSettings.h"
+#include "Find/FindInFlowEnums.h"
+
 #include "FlowGraphEditorSettings.generated.h"
 
 UENUM()
@@ -66,6 +68,14 @@ public:
 
 	UPROPERTY(EditAnywhere, config, Category = "Wires")
 	bool bHighlightOutputWiresOfSelectedNodes;
+
+	// Default search filter flags for the Flow Editor
+	UPROPERTY(VisibleAnywhere, config, Category = "Search", meta = (Bitmask, BitmaskEnum = "/Script/Flow.EFlowSearchFlags"))
+	uint32 DefaultSearchFlags = uint32(EFlowSearchFlags::DefaultSearchFlags);
+
+	// Max search depth for inline objects in the Flow Editor
+	UPROPERTY(EditAnywhere, config, Category = "Search", meta = (ClampMin = 1))
+	int32 DefaultMaxSearchDepth = 1;
 
 public:
 	virtual FName GetCategoryName() const override { return FName("Flow Graph"); }
