@@ -33,9 +33,7 @@ public:
 
 public:
 	// IFlowDataPinValueSupplierInterface
-	virtual FFlowDataPinResult_Name TrySupplyDataPinAsName_Implementation(const FName& PinName) const override;
-	virtual FFlowDataPinResult_String TrySupplyDataPinAsString_Implementation(const FName& PinName) const override;
-	virtual FFlowDataPinResult_Text TrySupplyDataPinAsText_Implementation(const FName& PinName) const override;
+	virtual FFlowDataPinResult TrySupplyDataPin_Implementation(FName PinName) const override;
 	// --
 
 	static const FName OUTPIN_TextOutput;

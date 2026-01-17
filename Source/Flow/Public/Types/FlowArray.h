@@ -70,4 +70,21 @@ namespace FlowArray
 
 		return false;
 	}
+
+	template<typename T>
+	FString FormatArrayString(const TArray<T>& Values, TFunctionRef<FString(const T&)> Formatter, const FString& Separator = TEXT(","))
+	{
+		FString ValueString;
+		for (const T& Value : Values)
+		{
+			if (!ValueString.IsEmpty())
+			{
+				ValueString += Separator;
+			}
+
+			ValueString += Formatter(Value);
+		}
+
+		return ValueString;
+	}
 }

@@ -48,6 +48,8 @@ struct FLOWEDITOR_API FFlowDiffPanel
 	void FocusDiff(const UEdGraphPin& Pin) const;
 	void FocusDiff(const UEdGraphNode& Node) const;
 
+	void OnNodeClicked(UObject* ClickedNode );
+
 	/** The Flow Asset that owns the graph we are showing */
 	const UFlowAsset* FlowAsset;
 
@@ -55,8 +57,9 @@ struct FLOWEDITOR_API FFlowDiffPanel
 	TSharedPtr<SBox> GraphEditorBox;
 
 	/** using SNullWidget::NullNullWidget can only work for a single widget, since widget instances can only be
-	 * used one at a time. EmptyDetailsView is used for displaying an empty details panel instead. */
-	TSharedPtr<IDetailsView> EmptyDetailsView;
+	 * used one at a time. PanelDefaultDetailsView is used for displaying an empty details panel instead, as well
+	 * as if the user selects a node in the graph view. */
+	TSharedPtr<IDetailsView> PanelDefaultDetailsView;
 
 	/** The graph editor which does the work of displaying the graph */
 	TWeakPtr<class SGraphEditor> GraphEditor;
@@ -69,6 +72,10 @@ struct FLOWEDITOR_API FFlowDiffPanel
 
 	/** The widget that contains the revision info in graph mode */
 	TSharedPtr<SWidget> OverlayGraphRevisionInfo;
+
+	TWeakPtr<SSplitter2x2> GraphDiffSplitter = nullptr;
+	bool bIsOldPanel = false;
+	
 private:
 	/** Command list for this diff panel */
 	TSharedPtr<FUICommandList> GraphEditorCommands;
@@ -172,7 +179,7 @@ protected:
 	FDiffControl GenerateDetailsPanel();
 	FDiffControl GenerateGraphPanel();
 
-	TSharedRef<SOverlay> GenerateGraphWidgetForPanel(FFlowDiffPanel& OutDiffPanel) const;
+	TSharedRef<SWidget> GenerateGraphWidgetForPanel(FFlowDiffPanel& OutDiffPanel) const;
 	TSharedRef<SBox> GenerateRevisionInfoWidgetForPanel(TSharedPtr<SWidget>& OutGeneratedWidget, const FText& InRevisionText) const;
 
 	/** Accessor and event handler for toggling between diff view modes (defaults, components, graph view, interface, macro): */
@@ -214,7 +221,7 @@ protected:
 	/** Tree view that displays the differences, cached for the buttons that iterate the differences: */
 	TSharedPtr<STreeView<TSharedPtr<FBlueprintDifferenceTreeEntry>>> DifferencesTreeView;
 
-	/** Stored references to widgets used to display various parts of a asset, from the mode name */
+	/** Stored references to widgets used to display various parts of asset, from the mode name */
 	TMap<FName, FDiffControl> ModePanels;
 
 	/** A pointer to the window holding this */

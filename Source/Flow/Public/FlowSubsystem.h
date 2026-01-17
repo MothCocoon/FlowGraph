@@ -11,6 +11,7 @@
 
 class UFlowAsset;
 class UFlowNode_SubGraph;
+class IFlowDataPinValueSupplierInterface;
 
 DECLARE_DYNAMIC_MULTICAST_DELEGATE(FSimpleFlowEvent);
 DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FSimpleFlowComponentEvent, UFlowComponent*, Component);
@@ -73,7 +74,7 @@ public:
 
 	/* Start the root Flow, graph that will eventually instantiate next Flow Graphs through the SubGraph node */
 	UFUNCTION(BlueprintCallable, Category = "FlowSubsystem", meta = (DefaultToSelf = "Owner"))
-	virtual void StartRootFlow(UObject* Owner, UFlowAsset* FlowAsset, const bool bAllowMultipleInstances = true);
+	virtual void StartRootFlow(UObject* Owner, UFlowAsset* FlowAsset, const TScriptInterface<IFlowDataPinValueSupplierInterface> DataPinValueSupplier, const bool bAllowMultipleInstances = true);
 
 	virtual UFlowAsset* CreateRootFlow(UObject* Owner, UFlowAsset* FlowAsset, const bool bAllowMultipleInstances = true, const FString& NewInstanceName = FString());
 

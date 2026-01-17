@@ -219,9 +219,6 @@ void SFindInFlow::Construct( const FArguments& InArgs, TSharedPtr<FFlowAssetEdit
 				.BorderImage(FAppStyle::GetBrush("Menu.Background"))
 				[
 					SAssignNew(TreeView, STreeViewType)
-#if ENGINE_MAJOR_VERSION == 5 && ENGINE_MINOR_VERSION < 5
-					.ItemHeight(24)
-#endif
 					.TreeItemsSource(&ItemsFound)
 					.OnGenerateRow(this, &SFindInFlow::OnGenerateRow)
 					.OnGetChildren(this, &SFindInFlow::OnGetChildren)
