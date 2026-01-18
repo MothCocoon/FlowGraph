@@ -37,19 +37,20 @@ void UFlowNode_OnNotifyFromActor::OnNotifyFromComponent(UFlowComponent* Componen
 {
 	bool IdentityMatches = false;
 
-	switch (IdentityMatchType) {
-	case EFlowTagContainerMatchType::HasAny:
-		IdentityMatches = Component->IdentityTags.HasAny(IdentityTags);
-		break;
-	case EFlowTagContainerMatchType::HasAnyExact:
-		IdentityMatches = Component->IdentityTags.HasAnyExact(IdentityTags);
-		break;
-	case EFlowTagContainerMatchType::HasAll:
-		IdentityMatches = Component->IdentityTags.HasAll(IdentityTags);
-		break;
-	case EFlowTagContainerMatchType::HasAllExact:
-		IdentityMatches = Component->IdentityTags.HasAllExact(IdentityTags);
-		break;
+	switch (IdentityMatchType)
+	{
+		case EFlowTagContainerMatchType::HasAny:
+			IdentityMatches = Component->IdentityTags.HasAny(IdentityTags);
+			break;
+		case EFlowTagContainerMatchType::HasAnyExact:
+			IdentityMatches = Component->IdentityTags.HasAnyExact(IdentityTags);
+			break;
+		case EFlowTagContainerMatchType::HasAll:
+			IdentityMatches = Component->IdentityTags.HasAll(IdentityTags);
+			break;
+		case EFlowTagContainerMatchType::HasAllExact:
+			IdentityMatches = Component->IdentityTags.HasAllExact(IdentityTags);
+			break;
 	}
 
 	if (IdentityMatches && (!NotifyTags.IsValid() || NotifyTags.HasTagExact(Tag)))
