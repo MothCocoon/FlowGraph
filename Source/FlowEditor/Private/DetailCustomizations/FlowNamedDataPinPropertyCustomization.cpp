@@ -1,6 +1,7 @@
 // Copyright https://github.com/MothCocoon/FlowGraph/graphs/contributors
 
-#include "DetailCustomizations/FlowNamedDataPinOutputPropertyCustomization.h"
+#include "DetailCustomizations/FlowNamedDataPinPropertyCustomization.h"
+#include "Types/FlowNamedDataPinProperty.h"
 
 FText FFlowNamedDataPinPropertyCustomization::BuildHeaderText() const
 {

@@ -2,9 +2,13 @@
 
 #pragma once
 
+#include "FlowDataPinValueOwnerCustomization.h"
 #include "IDetailCustomization.h"
+#include "Templates/SharedPointer.h"
 
-class FFlowNodeAddOn_Details final : public IDetailCustomization
+class UFlowNodeAddOn;
+
+class FFlowNodeAddOn_Details final : public TFlowDataPinValueOwnerCustomization<UFlowNodeAddOn>
 {
 public:
 	static TSharedRef<IDetailCustomization> MakeInstance()

@@ -4,7 +4,7 @@
 
 #include "UnrealExtensions/IFlowExtendedPropertyTypeCustomization.h"
 
-#include "Types/FlowDataPinProperties.h"
+struct FFlowPin;
 
 // Details customization for FFlowPin
 class FFlowPinCustomization : public IFlowExtendedPropertyTypeCustomization

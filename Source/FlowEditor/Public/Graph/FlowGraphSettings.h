@@ -7,6 +7,7 @@
 #include "GameplayTagContainer.h"
 
 #include "FlowTypes.h"
+#include "Graph/FlowGraphNodesPolicy.h"
 #include "FlowGraphSettings.generated.h"
 
 class UFlowNodeBase;
@@ -98,6 +99,10 @@ class FLOWEDITOR_API UFlowGraphSettings : public UDeveloperSettings
 	UPROPERTY(EditAnywhere, config, Category = "Nodes", meta = (ConfigRestartRequired = true))
 	TArray<TSubclassOf<class UFlowNode>> NodesHiddenFromPalette;
 
+	/** Configurable map of FlowAsset subclasses to the FlowAssetNodePolicy for that subclass */
+	UPROPERTY(EditAnywhere, Config, Category = "Nodes", meta = (ConfigRestartRequired = true, AllowedClasses = "/Script/Flow.FlowAsset"))
+	TMap<FSoftClassPath, FFlowGraphNodesPolicy> PerAssetSubclassFlowNodePolicies;
+
 	/** Allows anyone to override Flow Palette category for specific nodes without modifying source code.*/
 	UPROPERTY(EditAnywhere, config, Category = "Nodes")
 	TMap<TSubclassOf<class UFlowNode>, FString> OverridenNodeCategories;
@@ -183,6 +188,9 @@ class FLOWEDITOR_API UFlowGraphSettings : public UDeveloperSettings
 public:
 	virtual FName GetCategoryName() const override { return FName("Flow Graph"); }
 	virtual FText GetSectionText() const override { return INVTEXT("Graph Settings"); }
+
+	// Override-safe category query for flow node
+	static FString GetNodeCategoryForNode(const UFlowNodeBase& FlowNodeBase);
 
 #if WITH_EDITOR
 	const TMap<FGameplayTag, FFlowNodeDisplayStyleConfig>& EnsureNodeDisplayStylesMap();

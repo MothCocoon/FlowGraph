@@ -98,6 +98,18 @@ void UFlowGraphSettings::PostEditChangeProperty(FPropertyChangedEvent& PropertyC
 	}
 }
 
+FString UFlowGraphSettings::GetNodeCategoryForNode(const UFlowNodeBase& FlowNodeBase)
+{
+	const UFlowGraphSettings* GraphSettings = UFlowGraphSettings::Get();
+
+	if (const FString* CategoryOverridenByUser = GraphSettings->OverridenNodeCategories.Find(FlowNodeBase.GetClass()))
+	{
+		return *CategoryOverridenByUser;
+	}
+
+	return FlowNodeBase.GetNodeCategory();
+}
+
 const TMap<FGameplayTag, FFlowNodeDisplayStyleConfig>& UFlowGraphSettings::EnsureNodeDisplayStylesMap()
 {
 	if (NodeDisplayStylesAuthoredTags.Num() != NodeDisplayStyles.Num())
