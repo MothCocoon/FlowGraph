@@ -26,20 +26,21 @@
 #include "DetailCustomizations/FlowNode_SubGraphDetails.h"
 #include "DetailCustomizations/FlowNodeAddOn_Details.h"
 #include "DetailCustomizations/FlowActorOwnerComponentRefCustomization.h"
-#include "DetailCustomizations/FlowDataPinPropertyCustomizations.h"
-#include "DetailCustomizations/FlowDataPinProperty_ClassCustomization.h"
-#include "DetailCustomizations/FlowDataPinProperty_EnumCustomization.h"
-#include "DetailCustomizations/FlowDataPinProperty_ObjectCustomization.h"
 #include "DetailCustomizations/FlowPinCustomization.h"
-#include "DetailCustomizations/FlowNamedDataPinOutputPropertyCustomization.h"
+#include "DetailCustomizations/FlowNamedDataPinPropertyCustomization.h"
+#include "DetailCustomizations/FlowAssetParamsPtrCustomization.h"
+#include "DetailCustomizations/FlowDataPinValueOwnerCustomizations.h"
+#include "DetailCustomizations/FlowDataPinValueStandardCustomizations.h"
 
 #include "FlowAsset.h"
 #include "AddOns/FlowNodeAddOn.h"
+#include "Asset/FlowAssetParamsTypes.h"
 #include "Nodes/Actor/FlowNode_ComponentObserver.h"
 #include "Nodes/Actor/FlowNode_PlayLevelSequence.h"
 #include "Nodes/Graph/FlowNode_CustomInput.h"
 #include "Nodes/Graph/FlowNode_CustomOutput.h"
 #include "Nodes/Graph/FlowNode_SubGraph.h"
+#include "Types/FlowNamedDataPinProperty.h"
 
 #include "AssetToolsModule.h"
 #include "EdGraphUtilities.h"
@@ -55,7 +56,7 @@ static FName AssetSearchModuleName = TEXT("AssetSearch");
 #define LOCTEXT_NAMESPACE "FlowEditorModule"
 
 EAssetTypeCategories::Type FFlowEditorModule::FlowAssetCategory = static_cast<EAssetTypeCategories::Type>(0);
-FAssetCategoryPath FFLowAssetCategoryPaths::Flow(LOCTEXT("Flow", "Flow"));
+FAssetCategoryPath FFlowAssetCategoryPaths::Flow(LOCTEXT("Flow", "Flow"));
 
 void FFlowEditorModule::StartupModule()
 {
@@ -97,9 +98,6 @@ void FFlowEditorModule::StartupModule()
 		RegisterAssetIndexers();
 	}
 	ModulesChangedHandle = FModuleManager::Get().OnModulesChanged().AddRaw(this, &FFlowEditorModule::ModulesChangesCallback);
-
-	// run one-time asserts that cannot be asserted statically
-	UFlowK2SchemaSubclassForAccess::AssertPinCategoryNames();
 }
 
 void FFlowEditorModule::ShutdownModule()
@@ -224,6 +222,9 @@ void FFlowEditorModule::RegisterDetailCustomizations()
 		FPropertyEditorModule& PropertyModule = FModuleManager::GetModuleChecked<FPropertyEditorModule>("PropertyEditor");
 
 		RegisterCustomClassLayout(UFlowAsset::StaticClass(), FOnGetDetailCustomizationInstance::CreateStatic(&FFlowAssetDetails::MakeInstance));
+		RegisterCustomClassLayout(UFlowAssetParams::StaticClass(), FOnGetDetailCustomizationInstance::CreateStatic(&FFlowAssetParamsCustomization::MakeInstance));
+		RegisterCustomClassLayout(UFlowExecutableActorComponent::StaticClass(), FOnGetDetailCustomizationInstance::CreateStatic(&FFlowExecutableActorComponentCustomization::MakeInstance));
+		RegisterCustomClassLayout(UFlowNodeBase::StaticClass(), FOnGetDetailCustomizationInstance::CreateStatic(&FFlowNodeBaseCustomization::MakeInstance));
 		RegisterCustomClassLayout(UFlowNode::StaticClass(), FOnGetDetailCustomizationInstance::CreateStatic(&FFlowNode_Details::MakeInstance));
 		RegisterCustomClassLayout(UFlowNodeAddOn::StaticClass(), FOnGetDetailCustomizationInstance::CreateStatic(&FFlowNodeAddOn_Details::MakeInstance));
 		RegisterCustomClassLayout(UFlowNode_ComponentObserver::StaticClass(), FOnGetDetailCustomizationInstance::CreateStatic(&FFlowNode_ComponentObserverDetails::MakeInstance));
@@ -234,33 +235,24 @@ void FFlowEditorModule::RegisterDetailCustomizations()
 		RegisterCustomStructLayout(*FFlowActorOwnerComponentRef::StaticStruct(), FOnGetPropertyTypeCustomizationInstance::CreateStatic(&FFlowActorOwnerComponentRefCustomization::MakeInstance));
 		RegisterCustomStructLayout(*FFlowPin::StaticStruct(), FOnGetPropertyTypeCustomizationInstance::CreateStatic(&FFlowPinCustomization::MakeInstance));
 		RegisterCustomStructLayout(*FFlowNamedDataPinProperty::StaticStruct(), FOnGetPropertyTypeCustomizationInstance::CreateStatic(&FFlowNamedDataPinPropertyCustomization::MakeInstance));
-
-		RegisterCustomStructLayout(*FFlowDataPinOutputProperty_Bool::StaticStruct(), FOnGetPropertyTypeCustomizationInstance::CreateStatic(&FFlowDataPinOutputProperty_BoolCustomization::MakeInstance));
-		RegisterCustomStructLayout(*FFlowDataPinOutputProperty_Int64::StaticStruct(), FOnGetPropertyTypeCustomizationInstance::CreateStatic(&FFlowDataPinOutputProperty_Int64Customization::MakeInstance));
-		RegisterCustomStructLayout(*FFlowDataPinOutputProperty_Int32::StaticStruct(), FOnGetPropertyTypeCustomizationInstance::CreateStatic(&FFlowDataPinOutputProperty_Int32Customization::MakeInstance));
-		RegisterCustomStructLayout(*FFlowDataPinOutputProperty_Double::StaticStruct(), FOnGetPropertyTypeCustomizationInstance::CreateStatic(&FFlowDataPinOutputProperty_DoubleCustomization::MakeInstance));
-		RegisterCustomStructLayout(*FFlowDataPinOutputProperty_Float::StaticStruct(), FOnGetPropertyTypeCustomizationInstance::CreateStatic(&FFlowDataPinOutputProperty_FloatCustomization::MakeInstance));
-		RegisterCustomStructLayout(*FFlowDataPinOutputProperty_Name::StaticStruct(), FOnGetPropertyTypeCustomizationInstance::CreateStatic(&FFlowDataPinOutputProperty_NameCustomization::MakeInstance));
-		RegisterCustomStructLayout(*FFlowDataPinOutputProperty_String::StaticStruct(), FOnGetPropertyTypeCustomizationInstance::CreateStatic(&FFlowDataPinOutputProperty_StringCustomization::MakeInstance));
-		RegisterCustomStructLayout(*FFlowDataPinOutputProperty_Text::StaticStruct(), FOnGetPropertyTypeCustomizationInstance::CreateStatic(&FFlowDataPinOutputProperty_TextCustomization::MakeInstance));
-		RegisterCustomStructLayout(*FFlowDataPinOutputProperty_Enum::StaticStruct(), FOnGetPropertyTypeCustomizationInstance::CreateStatic(&FFlowDataPinOutputProperty_EnumCustomization::MakeInstance));
-		RegisterCustomStructLayout(*FFlowDataPinOutputProperty_Class::StaticStruct(), FOnGetPropertyTypeCustomizationInstance::CreateStatic(&FFlowDataPinOutputProperty_ClassCustomization::MakeInstance));
-		RegisterCustomStructLayout(*FFlowDataPinOutputProperty_Object::StaticStruct(), FOnGetPropertyTypeCustomizationInstance::CreateStatic(&FFlowDataPinOutputProperty_ObjectCustomization::MakeInstance));
-
-		RegisterCustomStructLayout(*FFlowDataPinInputProperty_Bool::StaticStruct(), FOnGetPropertyTypeCustomizationInstance::CreateStatic(&FFlowDataPinInputProperty_BoolCustomization::MakeInstance));
-		RegisterCustomStructLayout(*FFlowDataPinInputProperty_Int64::StaticStruct(), FOnGetPropertyTypeCustomizationInstance::CreateStatic(&FFlowDataPinInputProperty_Int64Customization::MakeInstance));
-		RegisterCustomStructLayout(*FFlowDataPinInputProperty_Int32::StaticStruct(), FOnGetPropertyTypeCustomizationInstance::CreateStatic(&FFlowDataPinInputProperty_Int32Customization::MakeInstance));
-		RegisterCustomStructLayout(*FFlowDataPinInputProperty_Double::StaticStruct(), FOnGetPropertyTypeCustomizationInstance::CreateStatic(&FFlowDataPinInputProperty_DoubleCustomization::MakeInstance));
-		RegisterCustomStructLayout(*FFlowDataPinInputProperty_Float::StaticStruct(), FOnGetPropertyTypeCustomizationInstance::CreateStatic(&FFlowDataPinInputProperty_FloatCustomization::MakeInstance));
-		RegisterCustomStructLayout(*FFlowDataPinInputProperty_Name::StaticStruct(), FOnGetPropertyTypeCustomizationInstance::CreateStatic(&FFlowDataPinInputProperty_NameCustomization::MakeInstance));
-		RegisterCustomStructLayout(*FFlowDataPinInputProperty_String::StaticStruct(), FOnGetPropertyTypeCustomizationInstance::CreateStatic(&FFlowDataPinInputProperty_StringCustomization::MakeInstance));
-		RegisterCustomStructLayout(*FFlowDataPinInputProperty_Text::StaticStruct(), FOnGetPropertyTypeCustomizationInstance::CreateStatic(&FFlowDataPinInputProperty_TextCustomization::MakeInstance));
-		RegisterCustomStructLayout(*FFlowDataPinInputProperty_Enum::StaticStruct(), FOnGetPropertyTypeCustomizationInstance::CreateStatic(&FFlowDataPinInputProperty_EnumCustomization::MakeInstance));
-		RegisterCustomStructLayout(*FFlowDataPinInputProperty_Class::StaticStruct(), FOnGetPropertyTypeCustomizationInstance::CreateStatic(&FFlowDataPinInputProperty_ClassCustomization::MakeInstance));
-		RegisterCustomStructLayout(*FFlowDataPinInputProperty_Object::StaticStruct(), FOnGetPropertyTypeCustomizationInstance::CreateStatic(&FFlowDataPinInputProperty_ObjectCustomization::MakeInstance));
-
-		// Consider implementing details customizations... for every EFlowPinType
-		FLOW_ASSERT_ENUM_MAX(EFlowPinType, 16);
+		RegisterCustomStructLayout(*FFlowAssetParamsPtr::StaticStruct(), FOnGetPropertyTypeCustomizationInstance::CreateStatic(&FFlowAssetParamsPtrCustomization::MakeInstance));
+		RegisterCustomStructLayout(*FFlowDataPinValue_Bool::StaticStruct(), FOnGetPropertyTypeCustomizationInstance::CreateStatic(&FFlowDataPinValueCustomization_Bool::MakeInstance));
+		RegisterCustomStructLayout(*FFlowDataPinValue_Int::StaticStruct(), FOnGetPropertyTypeCustomizationInstance::CreateStatic(&FFlowDataPinValueCustomization_Int::MakeInstance));
+		RegisterCustomStructLayout(*FFlowDataPinValue_Int64::StaticStruct(), FOnGetPropertyTypeCustomizationInstance::CreateStatic(&FFlowDataPinValueCustomization_Int64::MakeInstance));
+		RegisterCustomStructLayout(*FFlowDataPinValue_Float::StaticStruct(), FOnGetPropertyTypeCustomizationInstance::CreateStatic(&FFlowDataPinValueCustomization_Float::MakeInstance));
+		RegisterCustomStructLayout(*FFlowDataPinValue_Double::StaticStruct(), FOnGetPropertyTypeCustomizationInstance::CreateStatic(&FFlowDataPinValueCustomization_Double::MakeInstance));
+		RegisterCustomStructLayout(*FFlowDataPinValue_Name::StaticStruct(), FOnGetPropertyTypeCustomizationInstance::CreateStatic(&FFlowDataPinValueCustomization_Name::MakeInstance));
+		RegisterCustomStructLayout(*FFlowDataPinValue_String::StaticStruct(), FOnGetPropertyTypeCustomizationInstance::CreateStatic(&FFlowDataPinValueCustomization_String::MakeInstance));
+		RegisterCustomStructLayout(*FFlowDataPinValue_Text::StaticStruct(), FOnGetPropertyTypeCustomizationInstance::CreateStatic(&FFlowDataPinValueCustomization_Text::MakeInstance));
+		RegisterCustomStructLayout(*FFlowDataPinValue_Enum::StaticStruct(), FOnGetPropertyTypeCustomizationInstance::CreateStatic(&FFlowDataPinValueCustomization_Enum::MakeInstance));
+		RegisterCustomStructLayout(*FFlowDataPinValue_Vector::StaticStruct(), FOnGetPropertyTypeCustomizationInstance::CreateStatic(&FFlowDataPinValueCustomization_Vector::MakeInstance));
+		RegisterCustomStructLayout(*FFlowDataPinValue_Rotator::StaticStruct(), FOnGetPropertyTypeCustomizationInstance::CreateStatic(&FFlowDataPinValueCustomization_Rotator::MakeInstance));
+		RegisterCustomStructLayout(*FFlowDataPinValue_Transform::StaticStruct(), FOnGetPropertyTypeCustomizationInstance::CreateStatic(&FFlowDataPinValueCustomization_Transform::MakeInstance));
+		RegisterCustomStructLayout(*FFlowDataPinValue_GameplayTag::StaticStruct(), FOnGetPropertyTypeCustomizationInstance::CreateStatic(&FFlowDataPinValueCustomization_GameplayTag::MakeInstance));
+		RegisterCustomStructLayout(*FFlowDataPinValue_GameplayTagContainer::StaticStruct(), FOnGetPropertyTypeCustomizationInstance::CreateStatic(&FFlowDataPinValueCustomization_GameplayTagContainer::MakeInstance));
+		RegisterCustomStructLayout(*FFlowDataPinValue_InstancedStruct::StaticStruct(), FOnGetPropertyTypeCustomizationInstance::CreateStatic(&FFlowDataPinValueCustomization_InstancedStruct::MakeInstance));
+		RegisterCustomStructLayout(*FFlowDataPinValue_Class::StaticStruct(), FOnGetPropertyTypeCustomizationInstance::CreateStatic(&FFlowDataPinValueCustomization_Class::MakeInstance));
+		RegisterCustomStructLayout(*FFlowDataPinValue_Object::StaticStruct(), FOnGetPropertyTypeCustomizationInstance::CreateStatic(&FFlowDataPinValueCustomization_Object::MakeInstance));
 
 		PropertyModule.NotifyCustomizationModuleChanged();
 	}

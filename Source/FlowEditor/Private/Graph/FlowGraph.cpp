@@ -176,6 +176,8 @@ void UFlowGraph::OnLoaded()
 
 	bIsLoadingGraph = true;
 
+	UpdateVersion();
+
 	// Setup all the Nodes in the graph for editing
 	for (UEdGraphNode* Node : Nodes)
 	{
@@ -214,20 +216,52 @@ void UFlowGraph::Initialize()
 
 void UFlowGraph::UpdateVersion()
 {
-	if (GraphVersion == 1)
+	if (GraphVersion == CurrentGraphVersion)
 	{
 		return;
 	}
 
+	const int32 PrevGraphVersion = GraphVersion;
 	MarkVersion();
 	Modify();
 
 	// Insert any Version updating code here
+
+	if (PrevGraphVersion < 2)
+	{
+		UpgradeAllFlowNodePins();
+	}
+}
+
+void UFlowGraph::UpgradeAllFlowNodePins()
+{
+	if (UFlowAsset* FlowAsset = GetFlowAsset())
+	{
+		for (TPair<FGuid, TObjectPtr<UFlowNode>>& Node : FlowAsset->Nodes)
+		{
+			UFlowNode* FlowNode = Node.Value;
+			if (IsValid(FlowNode))
+			{
+				FlowNode->FixupDataPinTypes();
+
+				FlowAsset->TryUpdateManagedFlowPinsForNode(*FlowNode);
+			}
+		}
+	}
+
+	for (UEdGraphNode* Node : Nodes)
+	{
+		if (UFlowGraphNode* FlowGraphNode = Cast<UFlowGraphNode>(Node))
+		{
+			FlowGraphNode->MarkNeedsFullReconstruction();
+			FlowGraphNode->ReconstructNode();
+		}
+	}
 }
 
 void UFlowGraph::MarkVersion()
 {
-	GraphVersion = 1;
+	GraphVersion = CurrentGraphVersion;
 }
 
 void UFlowGraph::UpdateClassData()

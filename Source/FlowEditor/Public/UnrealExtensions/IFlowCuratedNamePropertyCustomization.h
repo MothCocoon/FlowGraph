@@ -12,7 +12,7 @@
 class FLOWEDITOR_API IFlowCuratedNamePropertyCustomization : public IFlowExtendedPropertyTypeCustomization
 {
 protected:
-	// IExtendedPropertyTypeCustomization
+	// IFlowExtendedPropertyTypeCustomization
 	virtual void CreateHeaderRowWidget(FDetailWidgetRow& HeaderRow, IPropertyTypeCustomizationUtils& StructCustomizationUtils) override;
 	// ---
 
@@ -34,9 +34,9 @@ protected:
 	void AddToCachedTextList(const TSharedPtr<FText> Text);
 	void InsertAtHeadOfCachedTextList(const TSharedPtr<FText> Text);
 
-	bool CustomIsResetToDefaultVisible(TSharedPtr<IPropertyHandle> Property) const;
-	void CustomResetToDefault(TSharedPtr<IPropertyHandle> Property);
-	bool CustomIsEnabled() const;
+	bool CustomIsResetToDefaultVisible(TSharedPtr<IPropertyHandle> Property) const { return CustomIsResetToDefaultVisibleImpl(Property); }
+	void CustomResetToDefault(TSharedPtr<IPropertyHandle> Property) { CustomResetToDefaultImpl(Property); }
+	bool CustomIsEnabled() const { return CustomIsEnabledImpl(); }
 
 	// IFlowCuratedNamePropertyCustomization
 	virtual TSharedPtr<IPropertyHandle> GetCuratedNamePropertyHandle() const = 0;
@@ -44,6 +44,9 @@ protected:
 	virtual bool TryGetCuratedName(FName& OutName) const = 0;
 	virtual TArray<FName> GetCuratedNameOptions() const = 0;
 	virtual bool AllowNameNoneIfOtherOptionsExist() const { return true; }
+	virtual bool CustomIsResetToDefaultVisibleImpl(TSharedPtr<IPropertyHandle> Property) const;
+	virtual void CustomResetToDefaultImpl(TSharedPtr<IPropertyHandle> Property);
+	virtual bool CustomIsEnabledImpl() const;
 	// ---
 
 public:

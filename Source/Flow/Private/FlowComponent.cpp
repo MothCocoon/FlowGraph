@@ -2,6 +2,7 @@
 
 #include "FlowComponent.h"
 
+#include "Asset/FlowAssetParams.h"
 #include "FlowAsset.h"
 #include "FlowLogChannels.h"
 #include "FlowSettings.h"
@@ -450,7 +451,8 @@ void UFlowComponent::StartRootFlow()
 		{
 			VerifyIdentityTags();
 
-			FlowSubsystem->StartRootFlow(this, RootFlow, bAllowMultipleInstances);
+			const TScriptInterface<IFlowDataPinValueSupplierInterface> RootFlowParamsAsInterface = RootFlowParams.ResolveFlowAssetParams();
+			FlowSubsystem->StartRootFlow(this, RootFlow, RootFlowParamsAsInterface, bAllowMultipleInstances);
 		}
 	}
 }
