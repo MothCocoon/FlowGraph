@@ -1,10 +1,10 @@
-// Copyright https://github.com/MothCocoon/FlowGraph/graphs/contributors
+﻿// Copyright https://github.com/MothCocoon/FlowGraph/graphs/contributors
 
 #include "Asset/FlowObjectDiff.h"
 
 #include "Asset/FlowDiffControl.h"
-#include "Graph/Nodes/FlowGraphNode.h"
 #include "Nodes/FlowNodeBase.h"
+#include "Graph/Nodes/FlowGraphNode.h"
 
 #include "DiffResults.h"
 #include "EdGraph/EdGraph.h"
@@ -72,7 +72,7 @@ void FFlowObjectDiff::DiffProperties(TArray<FSingleObjectDiffEntry>& OutProperty
 	if (OldDetailsView.IsValid() && NewDetailsView.IsValid())
 	{
 		static constexpr bool bSortByDisplayOrder = true;
-		OldDetailsView->DiffAgainst(*NewDetailsView.Get(), OutPropertyDiffsArray, bSortByDisplayOrder);
+		//OldDetailsView->DiffAgainst(*NewDetailsView.Get(), OutPropertyDiffsArray, bSortByDisplayOrder);
 	}
 }
 

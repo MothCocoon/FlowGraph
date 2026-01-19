@@ -5,8 +5,6 @@
 #include "EdGraphSchema_K2.h"
 #include "EdGraphUtilities.h"
 
-#include "FlowGraphPinFactory.generated.h"
-
 struct FFlowPin;
 
 class FFlowGraphPinFactory : public FGraphPanelPinFactory
@@ -17,14 +15,4 @@ public:
 	// --
 
 	static int32 GatherValidPinsCount(const TArray<FFlowPin>& Pins);
-};
-
-// Thin subclass of UEdGraphSchema_K2 to gain access to PC_* defines so we can assert their values
-UCLASS()
-class UFlowK2SchemaSubclassForAccess : public UEdGraphSchema_K2
-{
-	GENERATED_BODY()
-
-public:
-	static void AssertPinCategoryNames();
 };

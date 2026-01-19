@@ -30,7 +30,7 @@ TConstArrayView<FAssetCategoryPath> UAssetDefinition_FlowAsset::GetAssetCategori
 {
 	if (UFlowGraphSettings::Get()->bExposeFlowAssetCreation)
 	{
-		static const auto Categories = {FFLowAssetCategoryPaths::Flow};
+		static const auto Categories = {FFlowAssetCategoryPaths::Flow};
 		return Categories;
 	}
 
@@ -60,15 +60,15 @@ EAssetCommandResult UAssetDefinition_FlowAsset::PerformAssetDiff(const FAssetDif
 		return EAssetCommandResult::Unhandled;
 	}
 
-	const UFlowAsset* OldFlow = CastChecked<UFlowAsset>(DiffArgs.OldAsset);
-	const UFlowAsset* NewFlow = CastChecked<UFlowAsset>(DiffArgs.NewAsset);
+	const UFlowAsset* OldFlow = Cast<UFlowAsset>(DiffArgs.OldAsset);
+	const UFlowAsset* NewFlow = Cast<UFlowAsset>(DiffArgs.NewAsset);
 
 	// sometimes we're comparing different revisions of one single asset (other 
 	// times we're comparing two completely separate assets altogether)
-	const bool bIsSingleAsset = (OldFlow->GetName() == NewFlow->GetName());
-
+	const bool bIsSingleAsset = !IsValid(OldFlow) || !IsValid(NewFlow) || (OldFlow->GetName() == NewFlow->GetName());
+	
 	static const FText BasicWindowTitle = LOCTEXT("FlowAssetDiff", "FlowAsset Diff");
-	const FText WindowTitle = !bIsSingleAsset ? BasicWindowTitle : FText::Format(LOCTEXT("FlowAsset Diff", "{0} - FlowAsset Diff"), FText::FromString(NewFlow->GetName()));
+	const FText WindowTitle = !bIsSingleAsset ? BasicWindowTitle : FText::Format(LOCTEXT("FlowAsset Diff", "{0} - FlowAsset Diff"), FText::FromString(IsValid(NewFlow) ? NewFlow->GetName() : OldFlow->GetName()));
 
 	SFlowDiff::CreateDiffWindow(WindowTitle, OldFlow, NewFlow, DiffArgs.OldRevision, DiffArgs.NewRevision);
 	return EAssetCommandResult::Handled;

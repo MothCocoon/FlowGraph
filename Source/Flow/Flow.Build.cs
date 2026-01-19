@@ -31,7 +31,10 @@ public class Flow : ModuleRules
 		{
 			PublicDependencyModuleNames.AddRange(new[]
 			{
+				"GraphEditor",
 				"MessageLog",
+				"PropertyEditor",
+				"SourceControl",
 				"UnrealEd"
 			});
 		}

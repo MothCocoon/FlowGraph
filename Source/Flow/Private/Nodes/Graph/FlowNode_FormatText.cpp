@@ -1,12 +1,11 @@
 // Copyright https://github.com/MothCocoon/FlowGraph/graphs/contributors
 
 #include "Nodes/Graph/FlowNode_FormatText.h"
+#include "Types/FlowPinTypesStandard.h"
 
 #include UE_INLINE_GENERATED_CPP_BY_NAME(FlowNode_FormatText)
 
 #define LOCTEXT_NAMESPACE "FlowNode_FormatText"
-
-const FName UFlowNode_FormatText::OUTPIN_TextOutput("Formatted Text");
 
 UFlowNode_FormatText::UFlowNode_FormatText(const FObjectInitializer& ObjectInitializer)
 	: Super(ObjectInitializer)
@@ -16,81 +15,41 @@ UFlowNode_FormatText::UFlowNode_FormatText(const FObjectInitializer& ObjectIniti
 	NodeDisplayStyle = FlowNodeStyle::Terminal;
 #endif
 
-	OutputPins.Add(FFlowPin(OUTPIN_TextOutput, EFlowPinType::Text));
+	OutputPins.Add(FFlowPin(TEXT("Formatted Text"), FFlowPinType_Text::GetPinTypeNameStatic()));
 }
 
-FFlowDataPinResult_Name UFlowNode_FormatText::TrySupplyDataPinAsName_Implementation(const FName& PinName) const
+FFlowDataPinResult UFlowNode_FormatText::TrySupplyDataPin_Implementation(FName PinName) const
 {
-	FText FormattedText;
-	const EFlowDataPinResolveResult FormatResult = TryResolveFormatText(PinName, FormattedText);
-	if (FormatResult != EFlowDataPinResolveResult::Invalid)
+	if (PinName == TEXT("Formatted Text"))
 	{
-		if (FormatResult == EFlowDataPinResolveResult::Success)
+		FText FormattedText;
+		const EFlowDataPinResolveResult FormatResult = TryResolveFormatText(PinName, FormattedText);
+	
+		if (FlowPinType::IsSuccess(FormatResult))
 		{
-			return FFlowDataPinResult_Name(FName(FormattedText.ToString()));
+			return FFlowDataPinResult(FFlowDataPinValue_Text(FormattedText));
 		}
 		else
 		{
-			return FFlowDataPinResult_Name(FormatResult);
+			return FFlowDataPinResult(FormatResult);
 		}
 	}
 
-	return Super::TrySupplyDataPinAsName_Implementation(PinName);
-}
-
-FFlowDataPinResult_String UFlowNode_FormatText::TrySupplyDataPinAsString_Implementation(const FName& PinName) const
-{
-	FText FormattedText;
-	const EFlowDataPinResolveResult FormatResult = TryResolveFormatText(PinName, FormattedText);
-	if (FormatResult != EFlowDataPinResolveResult::Invalid)
-	{
-		if (FormatResult == EFlowDataPinResolveResult::Success)
-		{
-			return FFlowDataPinResult_String(FormattedText.ToString());
-		}
-		else
-		{
-			return FFlowDataPinResult_String(FormatResult);
-		}
-	}
-
-	return Super::TrySupplyDataPinAsString_Implementation(PinName);
-}
-
-FFlowDataPinResult_Text UFlowNode_FormatText::TrySupplyDataPinAsText_Implementation(const FName& PinName) const
-{
-	FText FormattedText;
-	const EFlowDataPinResolveResult FormatResult = TryResolveFormatText(PinName, FormattedText);
-	if (FormatResult != EFlowDataPinResolveResult::Invalid)
-	{
-		if (FormatResult == EFlowDataPinResolveResult::Success)
-		{
-			return FFlowDataPinResult_Text(FormattedText);
-		}
-		else
-		{
-			return FFlowDataPinResult_Text(FormatResult);
-		}
-	}
-
-	return Super::TrySupplyDataPinAsText_Implementation(PinName);
+	return Super::TrySupplyDataPin_Implementation(PinName);
 }
 
 EFlowDataPinResolveResult UFlowNode_FormatText::TryResolveFormatText(const FName& PinName, FText& OutFormattedText) const
 {
-	if (PinName == OUTPIN_TextOutput)
+	if (TryFormatTextWithNamedPropertiesAsParameters(FormatText, OutFormattedText))
 	{
-		if (TryFormatTextWithNamedPropertiesAsParameters(FormatText, OutFormattedText))
-		{
-			return EFlowDataPinResolveResult::Success;
-		}
-		else
-		{
-			return EFlowDataPinResolveResult::FailedWithError;
-		}
+		return EFlowDataPinResolveResult::Success;
 	}
+	else
+	{
+		LogError(FString::Printf(TEXT("Could not format text '%s' with properties as parameters"), *FormatText.ToString()), EFlowOnScreenMessageType::Temporary);
 
-	return EFlowDataPinResolveResult::Invalid;
+		return EFlowDataPinResolveResult::FailedWithError;
+	}
 }
 
 #if WITH_EDITOR
@@ -98,9 +57,7 @@ EFlowDataPinResolveResult UFlowNode_FormatText::TryResolveFormatText(const FName
 void UFlowNode_FormatText::UpdateNodeConfigText_Implementation()
 {
 	constexpr bool bErrorIfInputPinNotFound = false;
-	const bool bIsInputConnected = IsInputConnected(GET_MEMBER_NAME_CHECKED(ThisClass, FormatText), bErrorIfInputPinNotFound);
-
-	if (bIsInputConnected)
+	if (IsInputConnected(GET_MEMBER_NAME_CHECKED(ThisClass, FormatText), bErrorIfInputPinNotFound))
 	{
 		SetNodeConfigText(FText());
 	}
