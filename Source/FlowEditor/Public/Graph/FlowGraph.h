@@ -21,6 +21,8 @@ protected:
 	UPROPERTY()
 	int32 GraphVersion;
 
+	static constexpr int32 CurrentGraphVersion = 2;
+
 	/** if set, graph modifications won't cause updates in internal tree structure
 	 *  flag allows freezing update during heavy changes like pasting new nodes 
 	 */
@@ -37,6 +39,8 @@ public:
 	void RefreshGraph();
 
 protected:
+	void UpgradeAllFlowNodePins();
+
 	void RecursivelyRefreshAddOns(UFlowGraphNode& FromFlowGraphNode);
 	static void RecursivelySetupAllFlowGraphNodesForEditing(UFlowGraphNode& FromFlowGraphNode);
 
