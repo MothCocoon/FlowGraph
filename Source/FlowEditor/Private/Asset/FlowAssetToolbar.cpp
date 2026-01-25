@@ -10,7 +10,6 @@
 
 #include "FlowAsset.h"
 #include "Nodes/Graph/FlowNode_SubGraph.h"
-#include "FlowUserSettings.h"
 
 #include "Kismet2/DebuggerCommands.h"
 #include "Misc/Attribute.h"
@@ -185,16 +184,10 @@ void SFlowAssetInstanceList::GenerateDebugInstances()
 {
 	check(TemplateAsset.IsValid());
 
-	TSharedPtr<FFlowDebugInstance> LastSelection;
-	if (UFlowUserSettings::Get()->bKeepLastInspectedInstance)
-	{
-		LastSelection = GetDebugInstance();
-	}
-	
 	DebugInstances.Empty();
 	DebugInstances.Add(MakeShareable(new FFlowDebugInstance(nullptr, *NoInstanceSelectedText.ToString())));
 
-	TWeakObjectPtr<const UWorld> DebugWorld = DebugWorldsComboBox->GetSelectedItem()->WorldPtr;
+	const TWeakObjectPtr<const UWorld> DebugWorld = DebugWorldsComboBox->GetSelectedItem()->WorldPtr;
 	
 	// collect active instances of this Flow Asset
 	for (const UFlowAsset* ActiveInstance: TemplateAsset->GetActiveInstances())
@@ -207,27 +200,15 @@ void SFlowAssetInstanceList::GenerateDebugInstances()
 		TSharedPtr<FFlowDebugInstance> NewInstance = MakeShareable(new FFlowDebugInstance(ActiveInstance, ActiveInstance->GetDebugName()));
 		DebugInstances.Add(NewInstance);
 	}
-	
-	TSharedPtr<FFlowDebugInstance> Selection = GetDebugInstance();
+
+	const TSharedPtr<FFlowDebugInstance> Selection = GetDebugInstance();
 	if (Selection.IsValid() && !Selection->IsEmptyObject())
 	{
-		// If our new selection matches the actual debug instance, set it
-		if (LastSelection.IsValid() && LastSelection->InstanceLabel == Selection->InstanceLabel)
-		{
-			// new selection is the same as our selected instance from previous PIE session, set it as inspected
-			TemplateAsset->SetInspectedInstance(Selection->InstancePtr);
-		}
 		DebugInstancesComboBox->SetSelectedItem(Selection);
-	}
-	else if (LastSelection.IsValid() && !LastSelection->IsEmptyObject())
-	{
-		// Re-add the desired runtime instance, even though it is currently null
-		DebugInstances.Add(LastSelection);
-		DebugInstancesComboBox->SetSelectedItem(LastSelection);
 	}
 	
 	// Finally ensure we have a valid selection, this will set to all objects as a backup
-	TSharedPtr<FFlowDebugInstance> CurrentSelection = DebugInstancesComboBox->GetSelectedItem();
+	const TSharedPtr<FFlowDebugInstance> CurrentSelection = DebugInstancesComboBox->GetSelectedItem();
 	if (DebugInstances.Find(CurrentSelection) == INDEX_NONE)
 	{
 		check(DebugInstances.Num() > 0);

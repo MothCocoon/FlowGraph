@@ -5,7 +5,6 @@
 #include "FlowLogChannels.h"
 #include "FlowSettings.h"
 #include "FlowSubsystem.h"
-#include "FlowUserSettings.h"
 #include "AddOns/FlowNodeAddOn.h"
 #include "Asset/FlowAssetParams.h"
 #include "Asset/FlowAssetParamsUtils.h"
@@ -827,16 +826,7 @@ int32 UFlowAsset::RemoveInstance(UFlowAsset* Instance)
 #if WITH_EDITOR
 	if (InspectedInstance.IsValid() && InspectedInstance.Get() == Instance)
 	{
-		if (UFlowUserSettings::Get()->bKeepLastInspectedInstance)
-		{
-			FString LastPath = LastInspectedInstanceName;
-			SetInspectedInstance(nullptr, false);
-			LastInspectedInstanceName = LastPath;
-		}
-		else
-		{
-			SetInspectedInstance(nullptr);
-		}
+		SetInspectedInstance(nullptr);
 	}
 #endif
 
@@ -849,16 +839,7 @@ void UFlowAsset::ClearInstances()
 #if WITH_EDITOR
 	if (InspectedInstance.IsValid())
 	{
-		if (UFlowUserSettings::Get()->bKeepLastInspectedInstance)
-		{
-			FString LastPath = LastInspectedInstanceName;
-			SetInspectedInstance(nullptr, false);
-			LastInspectedInstanceName = LastPath;
-		}
-		else
-		{
-			SetInspectedInstance(nullptr);
-		}
+		SetInspectedInstance(nullptr);
 	}
 #endif
 
@@ -1012,9 +993,7 @@ void UFlowAsset::PreStartFlow()
 #if WITH_EDITOR
 	check(IsInstanceInitialized());
 
-	bool bCanSetInstanceAsInspected = UFlowUserSettings::Get()->bSetFirstAssetInstanceAsInspected && TemplateAsset->ActiveInstances.Num() == 1;
-	bool bKeepLastInstance = UFlowUserSettings::Get()->bKeepLastInspectedInstance && TemplateAsset->GetLastInspectedInstanceName().IsEmpty();
-	if (bCanSetInstanceAsInspected && !bKeepLastInstance)
+	if (TemplateAsset->ActiveInstances.Num() == 1)
 	{
 		// this instance is the only active one, set it directly as Inspected Instance
 		TemplateAsset->SetInspectedInstance(this, false);
