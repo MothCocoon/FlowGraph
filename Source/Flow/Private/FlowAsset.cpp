@@ -886,7 +886,7 @@ FString UFlowAsset::GetDebugName() const
 	return Name;
 }
 
-void UFlowAsset::SetInspectedInstance(TWeakObjectPtr<const UFlowAsset> NewInspectedInstance, bool bRefreshDebugger)
+void UFlowAsset::SetInspectedInstance(TWeakObjectPtr<const UFlowAsset> NewInspectedInstance)
 {
 	if (NewInspectedInstance.IsValid())
 	{
@@ -908,11 +908,7 @@ void UFlowAsset::SetInspectedInstance(TWeakObjectPtr<const UFlowAsset> NewInspec
 	}
 
 	InspectedInstance = NewInspectedInstance;
-
-	if (bRefreshDebugger)
-	{
-		BroadcastDebuggerRefresh();
-	}
+	BroadcastDebuggerRefresh();
 }
 
 void UFlowAsset::SetWorldBeingDebugged(const TWeakObjectPtr<const UWorld> NewWorld)
@@ -987,11 +983,13 @@ void UFlowAsset::PreStartFlow()
 	if (TemplateAsset->ActiveInstances.Num() == 1)
 	{
 		// this instance is the only active one, set it directly as Inspected Instance
-		TemplateAsset->SetInspectedInstance(this, false);
+		TemplateAsset->SetInspectedInstance(this);
 	}
-
-	// request to refresh list to show newly created instance
-	TemplateAsset->BroadcastDebuggerRefresh();
+	else
+	{
+		// request to refresh list to show newly created instance
+		TemplateAsset->BroadcastDebuggerRefresh();
+	}
 #endif
 }
 

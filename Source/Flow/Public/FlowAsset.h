@@ -269,7 +269,7 @@ public:
 #if WITH_EDITOR
 	FString GetDebugName() const;
 
-	void SetInspectedInstance(TWeakObjectPtr<const UFlowAsset> NewInspectedInstance, bool bRefreshDebugger = true);
+	void SetInspectedInstance(TWeakObjectPtr<const UFlowAsset> NewInspectedInstance);
 	const UFlowAsset* GetInspectedInstance() const { return InspectedInstance.IsValid() ? InspectedInstance.Get() : nullptr; }
 	
 	void SetWorldBeingDebugged(const TWeakObjectPtr<const UWorld> NewWorld);
