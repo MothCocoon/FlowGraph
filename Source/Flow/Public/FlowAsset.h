@@ -271,12 +271,6 @@ public:
 
 	void SetInspectedInstance(TWeakObjectPtr<const UFlowAsset> NewInspectedInstance, bool bRefreshDebugger = true);
 	const UFlowAsset* GetInspectedInstance() const { return InspectedInstance.IsValid() ? InspectedInstance.Get() : nullptr; }
-
-	/** @return debug name of instance that should be debugged, may be from previous PIE session */
-	const FStringView GetLastInspectedInstanceName() const
-	{
-		return LastInspectedInstanceName;
-	}
 	
 	void SetWorldBeingDebugged(const TWeakObjectPtr<const UWorld> NewWorld);
 	const TWeakObjectPtr<const UWorld> GetWorldBeingDebugged() const { return CurrentWorldBeingDebugged; }

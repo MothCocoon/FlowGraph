@@ -110,7 +110,7 @@ EVisibility SFlowAssetInstanceList::GetWorldComboVisibility()
 			}
 			return LocalWorldCount;
 		};
-		
+
 		if (GetNumLocalWorlds() > 1)
 		{
 			return EVisibility::Visible;
@@ -134,7 +134,7 @@ void SFlowAssetInstanceList::GenerateDebugWorldNames()
 			DebugWorlds.Add(MakeShareable(new FFlowDebugWorld(PlayWorld, WorldName)));
 		}
 	}
-	
+
 	TSharedPtr<FFlowDebugWorld> LastSelection = GetDebugWorld();
 	DebugWorldsComboBox->SetSelectedItem(LastSelection);
 }
@@ -188,15 +188,15 @@ void SFlowAssetInstanceList::GenerateDebugInstances()
 	DebugInstances.Add(MakeShareable(new FFlowDebugInstance(nullptr, *NoInstanceSelectedText.ToString())));
 
 	const TWeakObjectPtr<const UWorld> DebugWorld = DebugWorldsComboBox->GetSelectedItem()->WorldPtr;
-	
+
 	// collect active instances of this Flow Asset
-	for (const UFlowAsset* ActiveInstance: TemplateAsset->GetActiveInstances())
+	for (const UFlowAsset* ActiveInstance : TemplateAsset->GetActiveInstances())
 	{
 		if (DebugWorld.IsValid() && DebugWorld.Get() != ActiveInstance->GetWorld())
 		{
 			continue;
 		}
-		
+
 		TSharedPtr<FFlowDebugInstance> NewInstance = MakeShareable(new FFlowDebugInstance(ActiveInstance, ActiveInstance->GetDebugName()));
 		DebugInstances.Add(NewInstance);
 	}
@@ -206,7 +206,7 @@ void SFlowAssetInstanceList::GenerateDebugInstances()
 	{
 		DebugInstancesComboBox->SetSelectedItem(Selection);
 	}
-	
+
 	// Finally ensure we have a valid selection, this will set to all objects as a backup
 	const TSharedPtr<FFlowDebugInstance> CurrentSelection = DebugInstancesComboBox->GetSelectedItem();
 	if (DebugInstances.Find(CurrentSelection) == INDEX_NONE)
@@ -241,9 +241,10 @@ FText SFlowAssetInstanceList::GetSelectedInstanceName() const
 TSharedPtr<FFlowDebugInstance> SFlowAssetInstanceList::GetDebugInstance() const
 {
 	check(TemplateAsset.IsValid());
-	const FStringView DebugName = TemplateAsset->GetLastInspectedInstanceName();
-	if (!DebugName.IsEmpty())
+
+	if (TemplateAsset->GetInspectedInstance())
 	{
+		const FStringView DebugName = TemplateAsset->GetInspectedInstance()->GetDebugName();
 		for (int32 ObjectIndex = 0; ObjectIndex < DebugInstances.Num(); ++ObjectIndex)
 		{
 			if (ensure(DebugInstances[ObjectIndex].IsValid()) && DebugName.Equals(DebugInstances[ObjectIndex]->InstanceLabel))
@@ -252,7 +253,7 @@ TSharedPtr<FFlowDebugInstance> SFlowAssetInstanceList::GetDebugInstance() const
 			}
 		}
 	}
-	
+
 	if (DebugInstances.Num() > 0)
 	{
 		return DebugInstances[0];
@@ -272,8 +273,8 @@ void SFlowAssetBreadcrumb::Construct(const FArguments& InArgs, const TWeakObject
 		.OnCrumbClicked(this, &SFlowAssetBreadcrumb::OnCrumbClicked)
 		.ButtonStyle(FAppStyle::Get(), "SimpleButton")
 		.TextStyle(FAppStyle::Get(), "NormalText")
-		.ButtonContentPadding( FMargin(2.f, 4.f) )
-		.DelimiterImage( FAppStyle::GetBrush("Icons.ChevronRight") )
+		.ButtonContentPadding(FMargin(2.f, 4.f))
+		.DelimiterImage(FAppStyle::GetBrush("Icons.ChevronRight"))
 		.ShowLeadingDelimiter(true)
 		.PersistentBreadcrumbs(true);
 
@@ -319,7 +320,7 @@ void SFlowAssetBreadcrumb::FillBreadcrumb()
 		{
 			TWeakObjectPtr<const UFlowAsset> Instance = InstancesFromRoot[Index];
 			TWeakObjectPtr<const UFlowAsset> ChildInstance = Index < InstancesFromRoot.Num() - 1 ? InstancesFromRoot[Index + 1] : nullptr;
-				
+
 			BreadcrumbTrail->PushCrumb(FText::FromName(Instance->GetDisplayName()), FFlowBreadcrumb(Instance, ChildInstance));
 		}
 	}
@@ -332,7 +333,7 @@ void SFlowAssetBreadcrumb::OnCrumbClicked(const FFlowBreadcrumb& Item) const
 	{
 		const TWeakObjectPtr<const UFlowAsset> ClickedInstance = Item.CurrentInstance;
 		UFlowAsset* ClickedTemplateAsset = ClickedInstance->GetTemplateAsset();
-		
+
 		if (GEditor->GetEditorSubsystem<UAssetEditorSubsystem>()->OpenEditorForAsset(ClickedTemplateAsset))
 		{
 			ClickedTemplateAsset->SetInspectedInstance(ClickedInstance);
@@ -365,7 +366,7 @@ void FFlowAssetToolbar::BuildAssetToolbar(UToolMenu* ToolbarMenu) const
 		Section.AddEntry(FToolMenuEntry::InitToolBarButton(FFlowEditorCommands::Get().ValidateAsset));
 		Section.AddEntry(FToolMenuEntry::InitToolBarButton(FFlowEditorCommands::Get().EditAssetDefaults));
 	}
-	
+
 	{
 		FToolMenuSection& Section = ToolbarMenu->AddSection("View");
 		Section.InsertPosition = FToolMenuInsert("FlowAsset", EToolMenuInsertType::After);
@@ -389,7 +390,7 @@ void FFlowAssetToolbar::BuildAssetToolbar(UToolMenu* ToolbarMenu) const
 				InSection.AddEntry(DiffEntry);
 			}
 		}));
-		
+
 		Section.AddEntry(FToolMenuEntry::InitToolBarButton(
 			FFlowEditorCommands::Get().SearchInAsset,
 			TAttribute<FText>(),

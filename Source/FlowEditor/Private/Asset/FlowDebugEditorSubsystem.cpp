@@ -54,7 +54,6 @@ void UFlowDebugEditorSubsystem::OnPinTriggered(const UFlowAsset* Instance, const
 	if (ensure(Instance))
 	{
 		const UFlowAsset* InspectedInstance = Instance->GetTemplateAsset()->GetInspectedInstance();
-		const FStringView InstanceName = Instance->GetTemplateAsset()->GetLastInspectedInstanceName();
 		TWeakObjectPtr<const UWorld> DebugWorld = Instance->GetTemplateAsset()->GetWorldBeingDebugged();
 
 		bOverrideInspectedInstance = false;
@@ -65,11 +64,6 @@ void UFlowDebugEditorSubsystem::OnPinTriggered(const UFlowAsset* Instance, const
 			{
 				return;
 			}
-		}
-		else if (!InstanceName.IsEmpty() && InstanceName != Instance->GetDebugName())
-		{
-			// there is other inspected asset, from previous PIE session. Wait for it
-			return;
 		}
 		else if (DebugWorld.IsValid() && DebugWorld.Get() != Instance->GetWorld())
 		{
