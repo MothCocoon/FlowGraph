@@ -911,11 +911,6 @@ void UFlowAsset::SetInspectedInstance(TWeakObjectPtr<const UFlowAsset> NewInspec
 	BroadcastDebuggerRefresh();
 }
 
-void UFlowAsset::SetWorldBeingDebugged(const TWeakObjectPtr<const UWorld> NewWorld)
-{
-	CurrentWorldBeingDebugged = NewWorld;
-}
-
 void UFlowAsset::BroadcastDebuggerRefresh() const
 {
 	RefreshDebuggerEvent.Broadcast();

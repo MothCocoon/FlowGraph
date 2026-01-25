@@ -16,6 +16,7 @@
 #include UE_INLINE_GENERATED_CPP_BY_NAME(FlowDebuggerSubsystem)
 
 UFlowDebuggerSubsystem::UFlowDebuggerSubsystem()
+	: bPausedAtFlowBreakpoint(false)
 {
 	UFlowSubsystem::OnInstancedTemplateAdded.BindUObject(this, &ThisClass::OnInstancedTemplateAdded);
 	UFlowSubsystem::OnInstancedTemplateRemoved.BindUObject(this, &ThisClass::OnInstancedTemplateRemoved);
@@ -44,12 +45,17 @@ void UFlowDebuggerSubsystem::OnInstancedTemplateRemoved(UFlowAsset* AssetTemplat
 	AssetTemplate->OnPinTriggered.Unbind();
 }
 
-void UFlowDebuggerSubsystem::OnPinTriggered(const UFlowAsset* Instance, const FGuid& NodeGuid, const FName& PinName)
+void UFlowDebuggerSubsystem::OnPinTriggered(const UFlowNode* Node, const FName& PinName)
 {
-	if (!TryMarkAsHit(NodeGuid, PinName))
+	if (bPausedAtFlowBreakpoint)
+	{
+		return;
+	}
+
+	if (!TryMarkAsHit(Node, PinName))
 	{
 		// Node breakpoints waits on any pin triggered, but check it only if there is no hit pin breakpoint
-		TryMarkAsHit(NodeGuid);
+		TryMarkAsHit(Node);
 	}
 }
 
@@ -340,14 +346,14 @@ bool UFlowDebuggerSubsystem::IsBreakpointEnabled(const FGuid& NodeGuid, const FN
 	return false;
 }
 
-bool UFlowDebuggerSubsystem::TryMarkAsHit(const FGuid& NodeGuid)
+bool UFlowDebuggerSubsystem::TryMarkAsHit(const UFlowNode* Node)
 {
-	if (FFlowBreakpoint* NodeBreakpoint = FindBreakpoint(NodeGuid))
+	if (FFlowBreakpoint* NodeBreakpoint = FindBreakpoint(Node->NodeGuid))
 	{
 		if (NodeBreakpoint->IsEnabled())
 		{
 			NodeBreakpoint->MarkAsHit(true);
-			PauseSession(NodeGuid);
+			PauseSession(Node);
 			return true;
 		}
 	}
@@ -355,22 +361,22 @@ bool UFlowDebuggerSubsystem::TryMarkAsHit(const FGuid& NodeGuid)
 	return false;
 }
 
-bool UFlowDebuggerSubsystem::TryMarkAsHit(const FGuid& NodeGuid, const FName& PinName)
+bool UFlowDebuggerSubsystem::TryMarkAsHit(const UFlowNode* Node, const FName& PinName)
 {
-	if (FFlowBreakpoint* PinBreakpoint = FindBreakpoint(NodeGuid, PinName))
+	if (FFlowBreakpoint* PinBreakpoint = FindBreakpoint(Node->NodeGuid, PinName))
 	{
 		if (PinBreakpoint->IsEnabled())
 		{
 			PinBreakpoint->MarkAsHit(true);
-			PauseSession(NodeGuid);
+			PauseSession(Node);
 			return true;
 		}
 	}
-  
+
 	return false;
 }
 
-void UFlowDebuggerSubsystem::PauseSession(const FGuid& FromNode)
+void UFlowDebuggerSubsystem::PauseSession(const UFlowNode* Node)
 {
 	SetPause(true);
 }
@@ -417,8 +423,9 @@ void UFlowDebuggerSubsystem::SetPause(const bool bPause)
 
 void UFlowDebuggerSubsystem::ClearHitBreakpoints()
 {
-	UFlowDebuggerSettings* Settings = GetMutableDefault<UFlowDebuggerSettings>();
+	bPausedAtFlowBreakpoint = false;
 
+	UFlowDebuggerSettings* Settings = GetMutableDefault<UFlowDebuggerSettings>();
 	for (TPair<FGuid, FNodeBreakpoint>& NodeBreakpoint : Settings->NodeBreakpoints)
 	{
 		NodeBreakpoint.Value.Breakpoint.MarkAsHit(false);

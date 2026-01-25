@@ -18,8 +18,6 @@
 #define LOCTEXT_NAMESPACE "FlowDebugEditorSubsystem"
 
 UFlowDebugEditorSubsystem::UFlowDebugEditorSubsystem()
-	: bOverrideInspectedInstance(false)
-	, bPausedAtFlowBreakpoint(false)
 {
 	FEditorDelegates::BeginPIE.AddUObject(this, &ThisClass::OnBeginPIE);
 	FEditorDelegates::ResumePIE.AddUObject(this, &ThisClass::OnResumePIE);
@@ -44,42 +42,6 @@ void UFlowDebugEditorSubsystem::OnInstancedTemplateRemoved(UFlowAsset* AssetTemp
 	Super::OnInstancedTemplateRemoved(AssetTemplate);
 }
 
-void UFlowDebugEditorSubsystem::OnPinTriggered(const UFlowAsset* Instance, const FGuid& NodeGuid, const FName& PinName)
-{
-	if (bPausedAtFlowBreakpoint)
-	{
-		return;
-	}
-	
-	if (ensure(Instance))
-	{
-		const UFlowAsset* InspectedInstance = Instance->GetTemplateAsset()->GetInspectedInstance();
-		TWeakObjectPtr<const UWorld> DebugWorld = Instance->GetTemplateAsset()->GetWorldBeingDebugged();
-
-		bOverrideInspectedInstance = false;
-
-		if (InspectedInstance)
-		{
-			if (InspectedInstance != Instance)
-			{
-				return;
-			}
-		}
-		else if (DebugWorld.IsValid() && DebugWorld.Get() != Instance->GetWorld())
-		{
-			return;
-		}
-		else
-		{
-			bOverrideInspectedInstance = true;
-		}
-
-		OverrideInstancePtr = Instance;
-	
-		Super::OnPinTriggered(Instance, NodeGuid, PinName);
-	}
-}
-
 void UFlowDebugEditorSubsystem::OnRuntimeMessageAdded(const UFlowAsset* AssetTemplate, const TSharedRef<FTokenizedMessage>& Message) const
 {
 	const TSharedPtr<class IMessageLogListing> Log = RuntimeLogs.FindRef(AssetTemplate);
@@ -98,12 +60,12 @@ void UFlowDebugEditorSubsystem::OnBeginPIE(const bool bIsSimulating)
 
 void UFlowDebugEditorSubsystem::OnResumePIE(const bool bIsSimulating)
 {
-	ClearPausedState();
+	ClearHitBreakpoints();
 }
 
 void UFlowDebugEditorSubsystem::OnEndPIE(const bool bIsSimulating)
 {
-	ClearPausedState();
+	ClearHitBreakpoints();
 
 	for (const TPair<TWeakObjectPtr<UFlowAsset>, TSharedPtr<class IMessageLogListing>>& Log : RuntimeLogs)
 	{
@@ -131,57 +93,35 @@ void UFlowDebugEditorSubsystem::OnEndPIE(const bool bIsSimulating)
 	}
 }
 
-void UFlowDebugEditorSubsystem::PauseSession(const FGuid& FromNode)
+void UFlowDebugEditorSubsystem::PauseSession(const UFlowNode* Node)
 {
 	if (GEditor->ShouldEndPlayMap())
 	{
 		return;
 	}
-	
+
 	if (GUnrealEd->SetPIEWorldsPaused(true))
 	{
 		bPausedAtFlowBreakpoint = true;
 
-		check(OverrideInstancePtr.IsValid());
-		UFlowAsset* TemplateInstance = OverrideInstancePtr->GetTemplateAsset();
-		
-		if (bOverrideInspectedInstance)
+		const UFlowAsset* HitInstance = Node->GetFlowAsset();
+		if (ensure(HitInstance))
 		{
-			TemplateInstance->SetInspectedInstance(OverrideInstancePtr);
-		}
+			UFlowAsset* AssetTemplate = HitInstance->GetTemplateAsset();
+			AssetTemplate->SetInspectedInstance(HitInstance);
 
-		UFlowNode* FlowNode = TemplateInstance->GetNode(FromNode);
-		check(FlowNode);
-
-		UAssetEditorSubsystem* AssetEditorSubsystem = GEditor->GetEditorSubsystem<UAssetEditorSubsystem>();
-		if (AssetEditorSubsystem->OpenEditorForAsset(TemplateInstance))
-		{
-			if (const TSharedPtr<FFlowAssetEditor> FlowAssetEditor = FFlowGraphUtils::GetFlowAssetEditor(TemplateInstance))
+			UAssetEditorSubsystem* AssetEditorSubsystem = GEditor->GetEditorSubsystem<UAssetEditorSubsystem>();
+			if (AssetEditorSubsystem->OpenEditorForAsset(AssetTemplate))
 			{
-				FlowAssetEditor->JumpToNode(FlowNode->GetGraphNode());
+				if (const TSharedPtr<FFlowAssetEditor> FlowAssetEditor = FFlowGraphUtils::GetFlowAssetEditor(AssetTemplate))
+				{
+					FlowAssetEditor->JumpToNode(Node->GetGraphNode());
+				}
 			}
 		}
-		
+
 		GUnrealEd->PlaySessionPaused();
 	}
-}
-
-void UFlowDebugEditorSubsystem::ClearPausedState()
-{
-	ClearHitBreakpoints();
-	
-	if (bPausedAtFlowBreakpoint && bOverrideInspectedInstance)
-	{
-		bOverrideInspectedInstance = false;
-		
-		// do not reset inspected instance if it does not match temporary OverrideInstance. It means user selected other instance when editor was in debug mode
-		if (ensure(OverrideInstancePtr.IsValid()) && OverrideInstancePtr == OverrideInstancePtr->GetTemplateAsset()->GetInspectedInstance())
-		{
-			OverrideInstancePtr->GetTemplateAsset()->SetInspectedInstance(nullptr);
-		}
-	}
-
-	bPausedAtFlowBreakpoint = false;
 }
 
 #undef LOCTEXT_NAMESPACE

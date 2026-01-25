@@ -12,45 +12,21 @@ class FFlowAssetEditor;
 class UFlowAssetEditorContext;
 class UToolMenu;
 
-struct FFlowDebugWorld
+//////////////////////////////////////////////////////////////////////////
+// Flow Asset Instance Context
+
+struct FFlowAssetInstanceContext
 {
-	/** Actual World object */
-	TWeakObjectPtr<const UWorld> WorldPtr;
-	
-	/** Friendly label for debug world */
-    FString WorldLabel;
+	FText DisplayText;
+	TArray<TWeakObjectPtr<const UFlowAsset>> AssetInstances;
 
-	FFlowDebugWorld(const TWeakObjectPtr<const UWorld>& InWorldPtr, const FString& InWorldLabel)
-		: WorldPtr(InWorldPtr)
-		, WorldLabel(InWorldLabel)
+	FFlowAssetInstanceContext()
 	{
 	}
 
-	/** Returns true if this is the special entry for no specific world */
-	bool IsEmptyObject() const
+	explicit FFlowAssetInstanceContext(const FText& InDisplayText)
+		: DisplayText(InDisplayText)
 	{
-		return WorldPtr.IsExplicitlyNull();
-	}
-};
-
-struct FFlowDebugInstance
-{
-	/** Actual FlowAsset instance */
-	TWeakObjectPtr<const UFlowAsset> InstancePtr;
-
-	/** Friendly label for debug instance */
-	FString InstanceLabel;
-
-	FFlowDebugInstance(const TWeakObjectPtr<const UFlowAsset>& InInstancePtr, const FString& InInstanceLabel)
-		: InstancePtr(InInstancePtr)
-		, InstanceLabel(InInstanceLabel)
-	{
-	}
-
-	/** Returns true if this is the special entry for no specific instance */
-	bool IsEmptyObject() const
-	{
-		return InstancePtr.IsExplicitlyNull();
 	}
 };
 
@@ -60,38 +36,44 @@ struct FFlowDebugInstance
 class FLOWEDITOR_API SFlowAssetInstanceList : public SCompoundWidget
 {
 public:
-	SLATE_BEGIN_ARGS(SFlowAssetInstanceList) {}
+	SLATE_BEGIN_ARGS(SFlowAssetInstanceList)
+	{
+	}
+
 	SLATE_END_ARGS()
 
 	void Construct(const FArguments& InArgs, const TWeakObjectPtr<UFlowAsset> InTemplateAsset);
 	virtual ~SFlowAssetInstanceList() override;
 
-private:
-	static EVisibility GetWorldComboVisibility();
+	static EVisibility GetDebuggerVisibility();
 
-	void GenerateDebugWorldNames();
-	TSharedRef<SWidget> GenerateWorldItemWidget(TSharedPtr<FFlowDebugWorld> Item) const;
-	void DebugWorldSelectionChanged(TSharedPtr<FFlowDebugWorld> SelectedItem, ESelectInfo::Type SelectionType);
-	FText GetSelectedWorldName() const;
-	TSharedPtr<FFlowDebugWorld> GetDebugWorld() const;
+protected:
+	void RefreshInstances();
 
-	void GenerateDebugInstances();
-	TSharedRef<SWidget> GenerateInstanceItemWidget(TSharedPtr<FFlowDebugInstance> Item) const;
-	void DebugInstanceSelectionChanged(TSharedPtr<FFlowDebugInstance> SelectedItem, ESelectInfo::Type SelectionType);
+	EVisibility GetContextVisibility() const;
+	TSharedRef<SWidget> OnGenerateContextWidget(TSharedPtr<FObjectKey> Item);
+	void OnContextSelectionChanged(TSharedPtr<FObjectKey> SelectedItem, ESelectInfo::Type SelectionType);
+	FText GetSelectedContextName() const;
+
+	TSharedRef<SWidget> OnGenerateInstanceWidget(TSharedPtr<FObjectKey> Item) const;
+	void OnInstanceSelectionChanged(TSharedPtr<FObjectKey> SelectedItem, ESelectInfo::Type SelectionType);
 	FText GetSelectedInstanceName() const;
-	TSharedPtr<FFlowDebugInstance> GetDebugInstance() const;
 
-	
 	TWeakObjectPtr<UFlowAsset> TemplateAsset;
-	
-	TSharedPtr<SComboBox<TSharedPtr<FFlowDebugWorld>>> DebugWorldsComboBox;
-	TSharedPtr<SComboBox<TSharedPtr<FFlowDebugInstance>>> DebugInstancesComboBox;
 
-	TArray<TSharedPtr<FFlowDebugWorld>> DebugWorlds;
-	TArray<TSharedPtr<FFlowDebugInstance>> DebugInstances;
+	TSharedPtr<SComboBox<TSharedPtr<FObjectKey>>> ContextComboBox;
+	TSharedPtr<SComboBox<TSharedPtr<FObjectKey>>> InstanceComboBox;
+
+	TArray<TSharedPtr<FObjectKey>> Contexts;
+	TArray<TSharedPtr<FObjectKey>> Instances;
+	TMap<FObjectKey, FFlowAssetInstanceContext> InstancesPerContext;
+
+	static FText AllContextsText;
+	TSharedPtr<FObjectKey> NoContext;
+	TSharedPtr<FObjectKey> SelectedContext;
 
 	static FText NoInstanceSelectedText;
-	static FText AllWorldsText;
+	TSharedPtr<FObjectKey> SelectedInstance;
 };
 
 //////////////////////////////////////////////////////////////////////////
@@ -108,18 +90,23 @@ struct FLOWEDITOR_API FFlowBreadcrumb
 	FFlowBreadcrumb()
 		: CurrentInstance(nullptr)
 		, ChildInstance(nullptr)
-	{}
+	{
+	}
 
 	explicit FFlowBreadcrumb(const TWeakObjectPtr<const UFlowAsset> InCurrentInstance, const TWeakObjectPtr<const UFlowAsset> InChildInstance)
 		: CurrentInstance(InCurrentInstance)
 		, ChildInstance(InChildInstance)
-	{}
+	{
+	}
 };
 
 class FLOWEDITOR_API SFlowAssetBreadcrumb : public SCompoundWidget
 {
 public:
-	SLATE_BEGIN_ARGS(SFlowAssetInstanceList) {}
+	SLATE_BEGIN_ARGS(SFlowAssetInstanceList)
+	{
+	}
+
 	SLATE_END_ARGS()
 
 	void Construct(const FArguments& InArgs, const TWeakObjectPtr<UFlowAsset> InTemplateAsset);
@@ -144,7 +131,7 @@ public:
 private:
 	void BuildAssetToolbar(UToolMenu* ToolbarMenu) const;
 	static TSharedRef<SWidget> MakeDiffMenu(const UFlowAssetEditorContext* InContext);
-	
+
 	void BuildDebuggerToolbar(UToolMenu* ToolbarMenu) const;
 
 private:

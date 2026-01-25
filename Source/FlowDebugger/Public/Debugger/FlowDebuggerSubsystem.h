@@ -8,7 +8,9 @@
 #include "FlowDebuggerSubsystem.generated.h"
 
 class UEdGraphNode;
+
 class UFlowAsset;
+class UFlowNode;
 
 /**
  * Persistent subsystem supporting Flow Graph debugging.
@@ -25,10 +27,13 @@ public:
 	virtual bool ShouldCreateSubsystem(UObject* Outer) const override;
 
 protected:
+	bool bPausedAtFlowBreakpoint;
+
+protected:
 	virtual void OnInstancedTemplateAdded(UFlowAsset* AssetTemplate);
 	virtual void OnInstancedTemplateRemoved(UFlowAsset* AssetTemplate) const;
 
-	virtual void OnPinTriggered(const UFlowAsset* Instance, const FGuid& NodeGuid, const FName& PinName);
+	virtual void OnPinTriggered(const UFlowNode* Node, const FName& PinName);
 
 public:
 	virtual void AddBreakpoint(const FGuid& NodeGuid);
@@ -61,10 +66,10 @@ public:
 	virtual bool IsBreakpointEnabled(const FGuid& NodeGuid, const FName& PinName);
 
 protected:
-	virtual bool TryMarkAsHit(const FGuid& NodeGuid);
-	virtual bool TryMarkAsHit(const FGuid& NodeGuid, const FName& PinName);
-	
-	virtual void PauseSession(const FGuid& FromNode);
+	virtual bool TryMarkAsHit(const UFlowNode* Node);
+	virtual bool TryMarkAsHit(const UFlowNode* Node, const FName& PinName);
+
+	virtual void PauseSession(const UFlowNode* Node);
 	virtual void ResumeSession();
 	void SetPause(const bool bPause);
 

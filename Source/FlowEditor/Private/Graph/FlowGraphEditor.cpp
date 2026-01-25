@@ -276,41 +276,15 @@ FText SFlowGraphEditor::GetCornerText() const
 
 FText SFlowGraphEditor::GetPIEStatus() const
 {
-	ENetMode NetMode = NM_Standalone;
-	const UWorld* World = nullptr;
-	if (FlowAsset.IsValid())
+	if (const UFlowAsset* InspectedInstance = FlowAsset->GetInspectedInstance())
 	{
-		TWeakObjectPtr<const UWorld> DebugWorld = FlowAsset->GetWorldBeingDebugged();
-		if (DebugWorld.IsValid())
+		if (const UWorld* InspectedWorld = InspectedInstance->GetWorld())
 		{
-			World = DebugWorld.Get();
-			NetMode = DebugWorld->GetNetMode();
-		}
-		else
-		{
-			TWeakObjectPtr<const UFlowAsset> InspectedInstance = FlowAsset->GetInspectedInstance();
-			if (InspectedInstance.IsValid())
-			{
-				World = InspectedInstance->GetWorld();
-				if (World) // not sure if it is okay if we don't have a valid world for InspectedInstance
-				{
-					NetMode = World->GetNetMode();
-				}
-			}
+			return FText::FromString(GetDebugStringForWorld(InspectedWorld));
 		}
 	}
 
-	if (NetMode == NM_ListenServer || NetMode == NM_DedicatedServer)
-	{
-		return LOCTEXT("PIEStatusServerSimulating", "SERVER - SIMULATING");
-	}
-	else if (NetMode == NM_Client)
-	{
-		FWorldContext* PIEContext = GEngine->GetWorldContextFromWorld(World);
-		return FText::Format(LOCTEXT("PIEStatusClientSimulatingFormat", "CLIENT {0} - SIMULATING"), FText::AsNumber(PIEContext->PIEInstance));
-	}
-
-	return LOCTEXT("PIEStatusSimulating", "SIMULATING");
+	return FText::GetEmpty();
 }
 
 void SFlowGraphEditor::UndoGraphAction()
