@@ -15,7 +15,6 @@ class SFlowGraphEditor;
 class SFlowPalette;
 class UFlowAsset;
 class UFlowGraphNode;
-class UFlowDebuggerSubsystem;
 
 class IDetailsView;
 class SDockableTab;
@@ -59,8 +58,6 @@ protected:
 	/** Asset Validation message log, with the log listing that it reflects */
 	TSharedPtr<class SWidget> ValidationLog;
 	TSharedPtr<class IMessageLogListing> ValidationLogListing;
-
-	TWeakObjectPtr<UFlowDebuggerSubsystem> DebuggerSubsystem;
 
 private:
 	/** The current UI selection state of this editor */
@@ -127,11 +124,8 @@ public:
 	void InitFlowAssetEditor(const EToolkitMode::Type Mode, const TSharedPtr<class IToolkitHost>& InitToolkitHost, UObject* ObjectToEdit);
 
 protected:
-	virtual void RegisterMenus();
-	
 	virtual void CreateToolbar();
-	virtual void BindEditorCommands();
-	virtual void InitalizeExtenders();
+	virtual void BindToolbarCommands();
 	
 	virtual void RefreshAsset();
 	virtual void RefreshDetails();
@@ -147,15 +141,6 @@ protected:
 
 	virtual void GoToParentInstance();
 	virtual bool CanGoToParentInstance();
-
-	void EnableAllBreakpoints();
-	bool HasAnyDisabledBreakpoints();
-
-	void DisableAllBreakpoints();
-	bool HasAnyEnabledBreakpoints();
-
-	void ClearAllBreakpoints();
-	bool HasAnyBreakpoints();
 
 	virtual void CreateWidgets();
 	virtual void CreateGraphWidget();

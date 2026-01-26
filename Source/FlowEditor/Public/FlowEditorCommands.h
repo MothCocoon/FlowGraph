@@ -7,10 +7,10 @@
 #include "Framework/Commands/UICommandInfo.h"
 #include "Templates/SharedPointer.h"
 
-class FLOWEDITOR_API FFlowEditorCommands : public TCommands<FFlowEditorCommands>
+class FLOWEDITOR_API FFlowToolbarCommands : public TCommands<FFlowToolbarCommands>
 {
 public:
-	FFlowEditorCommands();
+	FFlowToolbarCommands();
 
 	TSharedPtr<FUICommandInfo> RefreshAsset;
 	TSharedPtr<FUICommandInfo> ValidateAsset;
@@ -19,10 +19,6 @@ public:
 	TSharedPtr<FUICommandInfo> EditAssetDefaults;
 
 	TSharedPtr<FUICommandInfo> GoToParentInstance;
-
-	TSharedPtr<FUICommandInfo> EnableAllBreakpoints;
-	TSharedPtr<FUICommandInfo> DisableAllBreakpoints;
-	TSharedPtr<FUICommandInfo> RemoveAllBreakpoints;
 
 	virtual void RegisterCommands() override;
 };
@@ -41,12 +37,17 @@ public:
 	TSharedPtr<FUICommandInfo> AddOutput;
 	TSharedPtr<FUICommandInfo> RemovePin;
 
-	/** Breakpoints */
+	/** Pin Breakpoints */
 	TSharedPtr<FUICommandInfo> AddPinBreakpoint;
 	TSharedPtr<FUICommandInfo> RemovePinBreakpoint;
 	TSharedPtr<FUICommandInfo> EnablePinBreakpoint;
 	TSharedPtr<FUICommandInfo> DisablePinBreakpoint;
 	TSharedPtr<FUICommandInfo> TogglePinBreakpoint;
+
+	/** Breakpoints */
+	TSharedPtr<FUICommandInfo> EnableAllBreakpoints;
+	TSharedPtr<FUICommandInfo> DisableAllBreakpoints;
+	TSharedPtr<FUICommandInfo> RemoveAllBreakpoints;
 
 	/** Execution Override */
 	TSharedPtr<FUICommandInfo> EnableNode;

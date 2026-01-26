@@ -78,16 +78,17 @@ void UFlowDebuggerSubsystem::AddBreakpoint(const FGuid& NodeGuid, const FName& P
 	SaveSettings();
 }
 
-void UFlowDebuggerSubsystem::RemoveAllBreakpoints(const UFlowAsset* Asset)
+void UFlowDebuggerSubsystem::RemoveAllBreakpoints(const TWeakObjectPtr<UFlowAsset> FlowAsset)
 {
 	UFlowDebuggerSettings* Settings = GetMutableDefault<UFlowDebuggerSettings>();
-	for (auto& [NodeGuid, Node] : Asset->GetNodes())
+	for (auto& [NodeGuid, Node] : FlowAsset->GetNodes())
 	{
 		if (Settings->NodeBreakpoints.Contains(NodeGuid))
 		{
 			Settings->NodeBreakpoints.Remove(NodeGuid);
 		}
 	}
+
 	SaveSettings();
 }
 
@@ -204,20 +205,6 @@ void UFlowDebuggerSubsystem::ToggleBreakpoint(const FGuid& NodeGuid, const FName
 	}
 }
 
-bool UFlowDebuggerSubsystem::HasAnyBreakpoints(const UFlowAsset* Asset) const
-{
-	UFlowDebuggerSettings* Settings = GetMutableDefault<UFlowDebuggerSettings>();
-	for (auto& [NodeGuid, Node] : Asset->GetNodes())
-	{
-		if (Settings->NodeBreakpoints.Find(NodeGuid))
-		{
-			return true;
-		}
-	}
-
-	return false;
-}
-
 FFlowBreakpoint* UFlowDebuggerSubsystem::FindBreakpoint(const FGuid& NodeGuid)
 {
 	UFlowDebuggerSettings* Settings = GetMutableDefault<UFlowDebuggerSettings>();
@@ -237,25 +224,18 @@ FFlowBreakpoint* UFlowDebuggerSubsystem::FindBreakpoint(const FGuid& NodeGuid, c
 	return NodeBreakpoint ? NodeBreakpoint->PinBreakpoints.Find(PinName) : nullptr;
 }
 
-void UFlowDebuggerSubsystem::SetAllBreakpointsEnabled(const UFlowAsset* Asset, bool bEnabled)
+bool UFlowDebuggerSubsystem::HasAnyBreakpoints(const TWeakObjectPtr<UFlowAsset> FlowAsset)
 {
 	UFlowDebuggerSettings* Settings = GetMutableDefault<UFlowDebuggerSettings>();
-	for (auto& [NodeGuid, Node] : Asset->GetNodes())
+	for (const TPair<FGuid, UFlowNode*>& Node : FlowAsset->GetNodes())
 	{
-		if (FNodeBreakpoint* NodeBreakpoint = Settings->NodeBreakpoints.Find(NodeGuid))
+		if (Settings->NodeBreakpoints.Find(Node.Key))
 		{
-			if (NodeBreakpoint->Breakpoint.IsActive())
-			{
-				NodeBreakpoint->Breakpoint.SetEnabled(bEnabled);
-			}
-
-			for (auto& [Name, PinBreakpoint] : NodeBreakpoint->PinBreakpoints)
-			{
-				PinBreakpoint.SetEnabled(bEnabled);
-			}
+			return true;
 		}
 	}
-	SaveSettings();
+
+	return false;
 }
 
 void UFlowDebuggerSubsystem::SetBreakpointEnabled(const FGuid& NodeGuid, const bool bEnabled)
@@ -276,37 +256,54 @@ void UFlowDebuggerSubsystem::SetBreakpointEnabled(const FGuid& NodeGuid, const F
 	}
 }
 
-bool UFlowDebuggerSubsystem::HasAnyBreakpointsDisabled(const UFlowAsset* Asset) const
+void UFlowDebuggerSubsystem::SetAllBreakpointsEnabled(const TWeakObjectPtr<UFlowAsset> FlowAsset, const bool bEnabled)
 {
 	UFlowDebuggerSettings* Settings = GetMutableDefault<UFlowDebuggerSettings>();
-	for (auto& [NodeGuid, Node] : Asset->GetNodes())
+	for (const TPair<FGuid, UFlowNode*>& Node : FlowAsset->GetNodes())
 	{
-		if (FNodeBreakpoint* NodeBreakpoint = Settings->NodeBreakpoints.Find(NodeGuid))
+		if (FNodeBreakpoint* NodeBreakpoint = Settings->NodeBreakpoints.Find(Node.Key))
 		{
-			if (NodeBreakpoint->Breakpoint.IsActive() && !NodeBreakpoint->Breakpoint.IsEnabled())
+			if (NodeBreakpoint->Breakpoint.IsActive())
 			{
-				return true;
+				NodeBreakpoint->Breakpoint.SetEnabled(bEnabled);
 			}
 
 			for (auto& [Name, PinBreakpoint] : NodeBreakpoint->PinBreakpoints)
 			{
-				if (!PinBreakpoint.IsEnabled())
-				{
-					return true;
-				}
+				PinBreakpoint.SetEnabled(bEnabled);
 			}
 		}
+	}
+
+	SaveSettings();
+}
+
+bool UFlowDebuggerSubsystem::IsBreakpointEnabled(const FGuid& NodeGuid)
+{
+	if (const FFlowBreakpoint* PinBreakpoint = FindBreakpoint(NodeGuid))
+	{
+		return PinBreakpoint->IsEnabled();
 	}
 
 	return false;
 }
 
-bool UFlowDebuggerSubsystem::HasAnyBreakpointsEnabled(const UFlowAsset* Asset) const
+bool UFlowDebuggerSubsystem::IsBreakpointEnabled(const FGuid& NodeGuid, const FName& PinName)
+{
+	if (const FFlowBreakpoint* PinBreakpoint = FindBreakpoint(NodeGuid, PinName))
+	{
+		return PinBreakpoint->IsEnabled();
+	}
+
+	return false;
+}
+
+bool UFlowDebuggerSubsystem::HasAnyBreakpointsEnabled(const TWeakObjectPtr<UFlowAsset> FlowAsset)
 {
 	UFlowDebuggerSettings* Settings = GetMutableDefault<UFlowDebuggerSettings>();
-	for (auto& [NodeGuid, Node] : Asset->GetNodes())
+	for (const TPair<FGuid, UFlowNode*>& Node : FlowAsset->GetNodes())
 	{
-		if (FNodeBreakpoint* NodeBreakpoint = Settings->NodeBreakpoints.Find(NodeGuid))
+		if (FNodeBreakpoint* NodeBreakpoint = Settings->NodeBreakpoints.Find(Node.Key))
 		{
 			if (NodeBreakpoint->Breakpoint.IsActive() && NodeBreakpoint->Breakpoint.IsEnabled())
 			{
@@ -326,21 +323,26 @@ bool UFlowDebuggerSubsystem::HasAnyBreakpointsEnabled(const UFlowAsset* Asset) c
 	return false;
 }
 
-bool UFlowDebuggerSubsystem::IsBreakpointEnabled(const FGuid& NodeGuid)
+bool UFlowDebuggerSubsystem::HasAnyBreakpointsDisabled(const TWeakObjectPtr<UFlowAsset> FlowAsset)
 {
-	if (const FFlowBreakpoint* PinBreakpoint = FindBreakpoint(NodeGuid))
+	UFlowDebuggerSettings* Settings = GetMutableDefault<UFlowDebuggerSettings>();
+	for (const TPair<FGuid, UFlowNode*>& Node : FlowAsset->GetNodes())
 	{
-		return PinBreakpoint->IsEnabled();
-	}
+		if (FNodeBreakpoint* NodeBreakpoint = Settings->NodeBreakpoints.Find(Node.Key))
+		{
+			if (NodeBreakpoint->Breakpoint.IsActive() && !NodeBreakpoint->Breakpoint.IsEnabled())
+			{
+				return true;
+			}
 
-	return false;
-}
-
-bool UFlowDebuggerSubsystem::IsBreakpointEnabled(const FGuid& NodeGuid, const FName& PinName)
-{
-	if (const FFlowBreakpoint* PinBreakpoint = FindBreakpoint(NodeGuid, PinName))
-	{
-		return PinBreakpoint->IsEnabled();
+			for (auto& [Name, PinBreakpoint] : NodeBreakpoint->PinBreakpoints)
+			{
+				if (!PinBreakpoint.IsEnabled())
+				{
+					return true;
+				}
+			}
+		}
 	}
 
 	return false;

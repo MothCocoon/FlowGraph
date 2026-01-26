@@ -31,15 +31,15 @@ private:
 	TSet<FName> CustomClassLayouts;
 	TSet<FName> CustomStructLayouts;
 
-	TSharedPtr<FExtensibilityManager> MenuExtensibilityManager;
-	TSharedPtr<FExtensibilityManager> ToolBarExtensibilityManager;
-
 public:
 	virtual void StartupModule() override;
 	virtual void ShutdownModule() override;
 
-	virtual TSharedPtr<FExtensibilityManager> GetMenuExtensibilityManager() override { return MenuExtensibilityManager; }
-	virtual TSharedPtr<FExtensibilityManager> GetToolBarExtensibilityManager() override { return ToolBarExtensibilityManager; }
+	UE_DEPRECATED(5.5, "The old method has been removed. Please use UToolMenus::Get()->ExtendMenu() instead. You can find example in SFlowGraphEditor::CreateDebugMenu().")
+	virtual TSharedPtr<FExtensibilityManager> GetMenuExtensibilityManager() override { return nullptr; }
+	
+	UE_DEPRECATED(5.5, "The old method has been removed. Please use UToolMenus::Get()->ExtendMenu() instead. You can find example in SFlowGraphEditor::CreateDebugMenu().")
+	virtual TSharedPtr<FExtensibilityManager> GetToolBarExtensibilityManager() override { return nullptr; }
 
 private:
 	void TrySetFlowNodeDisplayStyleDefaults() const;

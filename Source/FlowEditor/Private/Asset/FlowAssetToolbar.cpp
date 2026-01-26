@@ -323,9 +323,9 @@ void FFlowAssetToolbar::BuildAssetToolbar(UToolMenu* ToolbarMenu) const
 		Section.InsertPosition = FToolMenuInsert("Asset", EToolMenuInsertType::After);
 
 		// add buttons
-		Section.AddEntry(FToolMenuEntry::InitToolBarButton(FFlowEditorCommands::Get().RefreshAsset));
-		Section.AddEntry(FToolMenuEntry::InitToolBarButton(FFlowEditorCommands::Get().ValidateAsset));
-		Section.AddEntry(FToolMenuEntry::InitToolBarButton(FFlowEditorCommands::Get().EditAssetDefaults));
+		Section.AddEntry(FToolMenuEntry::InitToolBarButton(FFlowToolbarCommands::Get().RefreshAsset));
+		Section.AddEntry(FToolMenuEntry::InitToolBarButton(FFlowToolbarCommands::Get().ValidateAsset));
+		Section.AddEntry(FToolMenuEntry::InitToolBarButton(FFlowToolbarCommands::Get().EditAssetDefaults));
 	}
 
 	{
@@ -353,7 +353,7 @@ void FFlowAssetToolbar::BuildAssetToolbar(UToolMenu* ToolbarMenu) const
 		}));
 
 		Section.AddEntry(FToolMenuEntry::InitToolBarButton(
-			FFlowEditorCommands::Get().SearchInAsset,
+			FFlowToolbarCommands::Get().SearchInAsset,
 			TAttribute<FText>(),
 			TAttribute<FText>(),
 			FSlateIcon(FAppStyle::GetAppStyleSetName(), "Kismet.Tabs.FindResults")
@@ -448,9 +448,6 @@ void FFlowAssetToolbar::BuildDebuggerToolbar(UToolMenu* ToolbarMenu) const
 			FPlayWorldCommands::BuildToolbar(InSection);
 
 			InSection.AddEntry(FToolMenuEntry::InitWidget("AssetInstances", SNew(SFlowAssetInstanceList, Context->GetFlowAsset()), FText(), true));
-
-			InSection.AddSeparator(NAME_None).StyleNameOverride = FName("Toolbar.BackplateRight");
-
 			InSection.AddEntry(FToolMenuEntry::InitWidget("AssetBreadcrumb", SNew(SFlowAssetBreadcrumb, Context->GetFlowAsset()), FText(), true));
 		}
 	}));

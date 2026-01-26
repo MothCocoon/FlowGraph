@@ -7,7 +7,6 @@
 
 #include "FlowAsset.h"
 
-class UFlowNode_SubGraph;
 class FFlowAssetEditor;
 class UFlowAssetEditorContext;
 class UToolMenu;
