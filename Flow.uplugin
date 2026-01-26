@@ -8,7 +8,7 @@
 	"DocsURL" : "https://github.com/MothCocoon/FlowGraph/wiki",
 	"MarketplaceURL" : "",
 	"SupportURL": "https://discord.gg/Xmtr6GhbmW",
-	"EnabledByDefault" : true,
+	"EnabledByDefault" : false,
 	"CanContainContent" : false,
 	"IsBetaVersion" : false,
 	"Installed" : false,

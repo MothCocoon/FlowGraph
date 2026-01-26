@@ -62,9 +62,6 @@ FAssetCategoryPath FFlowAssetCategoryPaths::Flow(LOCTEXT("Flow", "Flow"));
 
 void FFlowEditorModule::StartupModule()
 {
-	MenuExtensibilityManager = MakeShared<FExtensibilityManager>();
-	ToolBarExtensibilityManager = MakeShared<FExtensibilityManager>();
-	
 	FFlowEditorStyle::Initialize();
 
 	TrySetFlowNodeDisplayStyleDefaults();
@@ -118,9 +115,6 @@ void FFlowEditorModule::RegisterForAssetChanges()
 
 void FFlowEditorModule::ShutdownModule()
 {
-	MenuExtensibilityManager.Reset();
-	ToolBarExtensibilityManager.Reset();
-	
 	FFlowEditorStyle::Shutdown();
 
 	UnregisterDetailCustomizations();

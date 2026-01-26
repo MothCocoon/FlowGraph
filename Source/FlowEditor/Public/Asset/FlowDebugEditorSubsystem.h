@@ -33,5 +33,5 @@ protected:
 	virtual void OnResumePIE(const bool bIsSimulating);
 	virtual void OnEndPIE(const bool bIsSimulating);
 
-	virtual void PauseSession() override;
+	virtual void PauseSession(const UFlowNode* Node) override;
 };

@@ -20,6 +20,7 @@
 #include "Engine/World.h"
 #include "Serialization/MemoryReader.h"
 #include "Serialization/MemoryWriter.h"
+#include "Algo/AnyOf.h"
 
 #if WITH_EDITOR
 #include "AssetRegistry/AssetRegistryModule.h"
@@ -115,7 +116,7 @@ void UFlowAsset::PostLoad()
 		{
 			UnregisterNode(Guid);
 		}
-	
+
 		ReconcileBaseAssetParams(FFlowAssetParamsUtils::GetLastSavedTimestampForObject(this));
 	}
 }
@@ -153,7 +154,7 @@ void UFlowAsset::ReconcileBaseAssetParams(const FDateTime& AssetLastSavedTimesta
 	if (EFlowReconcilePropertiesResult_Classifiers::IsErrorResult(ReconcileResult))
 	{
 		UE_LOG(LogFlow, Error, TEXT("Failed to reconcile BaseAssetParams for %s: %s"),
-			*BaseAssetParamsPtr->GetPathName(), *UEnum::GetDisplayValueAsText(ReconcileResult).ToString());
+		       *BaseAssetParamsPtr->GetPathName(), *UEnum::GetDisplayValueAsText(ReconcileResult).ToString());
 	}
 }
 
@@ -213,9 +214,9 @@ UFlowAssetParams* UFlowAsset::GenerateParamsFromStartNode()
 
 	FAssetRegistryModule& AssetRegistryModule = FModuleManager::LoadModuleChecked<FAssetRegistryModule>("AssetRegistry");
 	AssetRegistryModule.Get().AssetCreated(NewParams);
-	
+
 	FContentBrowserModule& ContentBrowserModule = FModuleManager::LoadModuleChecked<FContentBrowserModule>("ContentBrowser");
-	TArray<UObject*> AssetsToSync = { NewParams };
+	TArray<UObject*> AssetsToSync = {NewParams};
 	ContentBrowserModule.Get().SyncBrowserToAssets(AssetsToSync, true);
 
 	return NewParams;
@@ -442,7 +443,7 @@ void UFlowAsset::RegisterNode(const FGuid& NewGuid, UFlowNode* NewNode)
 
 	if (TryUpdateManagedFlowPinsForNode(*NewNode))
 	{
-		(void) NewNode->OnReconstructionRequested.ExecuteIfBound();
+		(void)NewNode->OnReconstructionRequested.ExecuteIfBound();
 	}
 }
 
@@ -557,7 +558,7 @@ void UFlowAsset::HarvestNodeConnections(UFlowNode* TargetNode)
 		}
 	}
 }
-	
+
 bool UFlowAsset::TryGetDefaultForInputPinName(const FStructProperty& StructProperty, const void* Container, FString& OutString)
 {
 	// We also look in the USTRUCT for DefaultForInputFlowPin
@@ -802,7 +803,7 @@ TArray<FConnectedPin> UFlowAsset::GatherPinsConnectedToPin(const FConnectedPin& 
 			ConnectedPins.Append(GuidNodePair.Value->GetKnownConnectionsToPin(Pin));
 		}
 	}
-	
+
 	return ConnectedPins;
 }
 
@@ -825,7 +826,7 @@ int32 UFlowAsset::RemoveInstance(UFlowAsset* Instance)
 #if WITH_EDITOR
 	if (InspectedInstance.IsValid() && InspectedInstance.Get() == Instance)
 	{
-		SetInspectedInstance(NAME_None);
+		SetInspectedInstance(nullptr);
 	}
 #endif
 
@@ -838,7 +839,7 @@ void UFlowAsset::ClearInstances()
 #if WITH_EDITOR
 	if (InspectedInstance.IsValid())
 	{
-		SetInspectedInstance(NAME_None);
+		SetInspectedInstance(nullptr);
 	}
 #endif
 
@@ -854,35 +855,28 @@ void UFlowAsset::ClearInstances()
 }
 
 #if WITH_EDITOR
-void UFlowAsset::GetInstanceDisplayNames(TArray<TSharedPtr<FName>>& OutDisplayNames) const
+void UFlowAsset::SetInspectedInstance(TWeakObjectPtr<const UFlowAsset> NewInspectedInstance)
 {
-	for (const UFlowAsset* Instance : ActiveInstances)
+	if (NewInspectedInstance.IsValid())
 	{
-		OutDisplayNames.Emplace(MakeShareable(new FName(Instance->GetDisplayName())));
-	}
-}
-
-void UFlowAsset::SetInspectedInstance(const FName& NewInspectedInstanceName)
-{
-	if (NewInspectedInstanceName.IsNone())
-	{
-		InspectedInstance = nullptr;
-	}
-	else
-	{
-		for (UFlowAsset* ActiveInstance : ActiveInstances)
+		if (InspectedInstance == NewInspectedInstance)
 		{
-			if (ActiveInstance && ActiveInstance->GetDisplayName() == NewInspectedInstanceName)
-			{
-				if (!InspectedInstance.IsValid() || InspectedInstance != ActiveInstance)
-				{
-					InspectedInstance = ActiveInstance;
-				}
-				break;
-			}
+			// Nothing changed
+			return;
+		}
+
+		bool bIsNewInstancePresent = Algo::AnyOf(ActiveInstances, [NewInspectedInstance](const UFlowAsset* ActiveInstance)
+		{
+			return ActiveInstance && ActiveInstance == NewInspectedInstance;
+		});
+
+		if (!ensureMsgf(bIsNewInstancePresent, TEXT("Trying to set %s as InspectedInstance, but it is not one of the ActiveInstances"), *NewInspectedInstance->GetName()))
+		{
+			NewInspectedInstance = nullptr;
 		}
 	}
 
+	InspectedInstance = NewInspectedInstance;
 	BroadcastDebuggerRefresh();
 }
 
@@ -953,7 +947,7 @@ void UFlowAsset::PreStartFlow()
 	if (TemplateAsset->ActiveInstances.Num() == 1)
 	{
 		// this instance is the only active one, set it directly as Inspected Instance
-		TemplateAsset->SetInspectedInstance(GetDisplayName());
+		TemplateAsset->SetInspectedInstance(this);
 	}
 	else
 	{
@@ -1242,7 +1236,7 @@ void UFlowAsset::OnLoad_Implementation()
 {
 }
 
-bool UFlowAsset::IsBoundToWorld_Implementation()
+bool UFlowAsset::IsBoundToWorld_Implementation() const
 {
 	return bWorldBound;
 }

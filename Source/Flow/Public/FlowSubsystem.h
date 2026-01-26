@@ -37,7 +37,7 @@ public:
 	friend class UFlowComponent;
 	friend class UFlowNode_SubGraph;
 
-private:
+protected:
 	/* All asset templates with active instances */
 	UPROPERTY()
 	TArray<TObjectPtr<UFlowAsset>> InstancedTemplates;
