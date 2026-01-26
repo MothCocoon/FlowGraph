@@ -17,7 +17,7 @@ class UToolMenu;
 struct FFlowAssetInstanceContext
 {
 	FText DisplayText;
-	TArray<TWeakObjectPtr<const UFlowAsset>> AssetInstances;
+	TArray<TSharedPtr<FObjectKey>> AssetInstances;
 
 	FFlowAssetInstanceContext()
 	{
@@ -57,6 +57,7 @@ protected:
 	TSharedRef<SWidget> OnGenerateInstanceWidget(TSharedPtr<FObjectKey> Item) const;
 	void OnInstanceSelectionChanged(TSharedPtr<FObjectKey> SelectedItem, ESelectInfo::Type SelectionType);
 	FText GetSelectedInstanceName() const;
+	FText JoinInstanceAndContextTexts(const FObjectKey& AssetInstance) const;
 
 	TWeakObjectPtr<UFlowAsset> TemplateAsset;
 
@@ -67,12 +68,12 @@ protected:
 	TArray<TSharedPtr<FObjectKey>> Instances;
 	TMap<FObjectKey, FFlowAssetInstanceContext> InstancesPerContext;
 
-	static FText AllContextsText;
 	TSharedPtr<FObjectKey> NoContext;
 	TSharedPtr<FObjectKey> SelectedContext;
-
-	static FText NoInstanceSelectedText;
 	TSharedPtr<FObjectKey> SelectedInstance;
+	
+	static FText AllContextsText;
+	static FText NoInstanceSelectedText;
 };
 
 //////////////////////////////////////////////////////////////////////////
@@ -112,7 +113,7 @@ public:
 
 private:
 	EVisibility GetBreadcrumbVisibility() const;
-	void FillBreadcrumb();
+	void FillBreadcrumb() const;
 	void OnCrumbClicked(const FFlowBreadcrumb& Item) const;
 
 	TWeakObjectPtr<UFlowAsset> TemplateAsset;

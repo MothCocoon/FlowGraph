@@ -855,37 +855,6 @@ void UFlowAsset::ClearInstances()
 }
 
 #if WITH_EDITOR
-FString UFlowAsset::GetDebugName() const
-{
-	auto GetNumLocalWorlds = []()
-	{
-		int32 LocalWorldCount = 0;
-		for (const FWorldContext& Context : GEngine->GetWorldContexts())
-		{
-			if (Context.WorldType == EWorldType::PIE && Context.World() != nullptr)
-			{
-				++LocalWorldCount;
-			}
-		}
-		return LocalWorldCount;
-	};
-
-	FString Name = GetDisplayName().ToString();
-
-	if (GetNumLocalWorlds() > 1 || GetWorld()->GetNetMode() == NM_ListenServer)
-	{
-		FString Context = GetDebugStringForWorld(GetWorld());
-		if (!Context.IsEmpty())
-		{
-			Name = FString::Printf(TEXT("%s (%s)"), *Name, *Context);
-		}
-
-		return Name;
-	}
-
-	return Name;
-}
-
 void UFlowAsset::SetInspectedInstance(TWeakObjectPtr<const UFlowAsset> NewInspectedInstance)
 {
 	if (NewInspectedInstance.IsValid())

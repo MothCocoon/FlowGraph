@@ -24,8 +24,6 @@ class UEdGraphNode;
 class UFlowAsset;
 class UFlowAssetParams;
 
-class UWorld;
-
 #if !UE_BUILD_SHIPPING
 DECLARE_DELEGATE(FFlowGraphEvent);
 DECLARE_DELEGATE_TwoParams(FFlowSignalEvent, const UFlowNode* /*Node*/, const FName& /*PinName*/);
@@ -262,8 +260,6 @@ public:
 	int32 GetInstancesNum() const { return ActiveInstances.Num(); }
 
 #if WITH_EDITOR
-	FString GetDebugName() const;
-
 	void SetInspectedInstance(TWeakObjectPtr<const UFlowAsset> NewInspectedInstance);
 	const UFlowAsset* GetInspectedInstance() const { return InspectedInstance.IsValid() ? InspectedInstance.Get() : nullptr; }
 

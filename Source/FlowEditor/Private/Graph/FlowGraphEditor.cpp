@@ -300,8 +300,7 @@ FGraphAppearanceInfo SFlowGraphEditor::GetGraphAppearanceInfo() const
 {
 	FGraphAppearanceInfo AppearanceInfo;
 	AppearanceInfo.CornerText = GetCornerText();
-	AppearanceInfo.PIENotifyText = GetPIEStatus();
-
+	AppearanceInfo.PIENotifyText = GetPIENotifyText();
 	return AppearanceInfo;
 }
 
@@ -310,7 +309,7 @@ FText SFlowGraphEditor::GetCornerText() const
 	return LOCTEXT("AppearanceCornerText_FlowAsset", "FLOW");
 }
 
-FText SFlowGraphEditor::GetPIEStatus() const
+FText SFlowGraphEditor::GetPIENotifyText() const
 {
 	if (const UFlowAsset* InspectedInstance = FlowAsset->GetInspectedInstance())
 	{
@@ -320,7 +319,7 @@ FText SFlowGraphEditor::GetPIEStatus() const
 		}
 	}
 
-	return FText::GetEmpty();
+	return LOCTEXT("PIENotifyText_FlowAsset", "Template");
 }
 
 void SFlowGraphEditor::UndoGraphAction()

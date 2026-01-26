@@ -68,18 +68,19 @@ void SFlowAssetInstanceList::Construct(const FArguments& InArgs, const TWeakObje
 	ChildSlot
 	[
 		SNew(SHorizontalBox)
-			.Visibility_Static(&SFlowAssetInstanceList::GetDebuggerVisibility)
-			+ SHorizontalBox::Slot()
-			.AutoWidth()
-			[
-				ContextComboBox.ToSharedRef()
-			]
-			+ SHorizontalBox::Slot()
-			.Padding(8.0, 0.f, 4.f, 0.f)
-			.AutoWidth()
-			[
-				InstanceComboBox.ToSharedRef()
-			]
+		.Visibility_Static(&SFlowAssetInstanceList::GetDebuggerVisibility)
+		+ SHorizontalBox::Slot()
+		.AutoWidth()
+		.Padding(0.0f, 0.0f, 8.0f, 0.0f)
+		[
+			ContextComboBox.ToSharedRef()
+		]
+		+ SHorizontalBox::Slot()
+		.AutoWidth()
+		.Padding(0.0f, 0.0f, 4.0f, 0.0f)
+		[
+			InstanceComboBox.ToSharedRef()
+		]
 	];
 }
 
@@ -98,65 +99,84 @@ EVisibility SFlowAssetInstanceList::GetDebuggerVisibility()
 
 void SFlowAssetInstanceList::RefreshInstances()
 {
-	if (GEditor->ShouldEndPlayMap())
-	{
-		Contexts.Empty();
-		Instances.Empty();
-		InstancesPerContext.Empty();
-		return;
-	}
-	
+	Contexts.Empty();
+	Instances.Empty();
 	InstancesPerContext.Empty();
 
-	// gather contexts
+	if (GEditor->ShouldEndPlayMap())
 	{
-		NoContext = MakeShareable(new FObjectKey(nullptr));
-		Contexts.Add(NoContext);
-		
-		// support World context in case of online multiplayer
-		// todo: support Local Player context in case of split-screen
-		for (const FWorldContext& WorldContext : GEngine->GetWorldContexts())
-		{
-			const UWorld* PlayWorld = WorldContext.World();
-			if (PlayWorld && PlayWorld->IsGameWorld())
-			{
-				FText WorldName = FText::FromString(GetDebugStringForWorld(PlayWorld));
-				InstancesPerContext.Add(PlayWorld, FFlowAssetInstanceContext(WorldName));
-			}
-		}
-
-		if (!SelectedContext.IsValid() || !InstancesPerContext.Contains(*SelectedContext.Get()))
-		{
-			SelectedContext = NoContext;
-		}
+		// prevent redundant refreshing list for every asset instance being destroyed
+		return;
 	}
 
+	// add empty context, users sees this as the default "All" option 
+	NoContext = MakeShareable(new FObjectKey(nullptr));
+	Contexts.Add(NoContext);
+
+	// add empty instance as default
+	Instances.Add(MakeShareable(new FObjectKey(nullptr)));
+
 	// gather all instances of given UFlowAsset
+	for (const UFlowAsset* ActiveInstance : TemplateAsset->GetActiveInstances())
 	{
-		Instances.Empty();
-		Instances.Add(MakeShareable(new FObjectKey(nullptr)));
+		Instances.Add(MakeShareable(new FObjectKey(ActiveInstance)));
 
-		for (const UFlowAsset* ActiveInstance : TemplateAsset->GetActiveInstances())
+		// support World context in case of online multiplayer
 		{
-			const FObjectKey WeakPtrKey = ActiveInstance->GetWorld();
-			if (FFlowAssetInstanceContext* FoundContext = InstancesPerContext.Find(WeakPtrKey))
+			const UWorld* World = ActiveInstance->GetWorld();
+			if (World && !InstancesPerContext.Contains(World))
 			{
-				FoundContext->AssetInstances.Add(ActiveInstance);
+				FText WorldName = FText::FromString(GetDebugStringForWorld(World));
+				Contexts.Add(MakeShareable(new FObjectKey(World)));
+				InstancesPerContext.Add(World, FFlowAssetInstanceContext(WorldName));
 			}
 
-			// if no context is selected (we list all instances),
-			// or give Flow Asset instance belongs to selected context
-			if (SelectedContext == NoContext || *SelectedContext.Get() == WeakPtrKey)
+			if (FFlowAssetInstanceContext* FoundContext = InstancesPerContext.Find(World))
 			{
-				Instances.Add(MakeShareable(new FObjectKey(ActiveInstance)));
+				FoundContext->AssetInstances.Add(Instances.Last());
 			}
+		}
+
+		// todo: support Local Player context in case of split-screen
+	}
+
+	// set empty context by default, user must choose a specific context
+	if (!SelectedContext.IsValid() || !Contexts.Contains(SelectedContext))
+	{
+		SelectedContext = NoContext;
+	}
+
+	// pre-select instance if current one does no longer exists
+	if (!SelectedInstance.IsValid() || !Instances.Contains(SelectedInstance))
+	{
+		if (Instances.Num() > 1)
+		{
+			if (SelectedContext->ResolveObjectPtr())
+			{
+				// try to set first Instance for a selected context
+				const FFlowAssetInstanceContext* InstanceContext = InstancesPerContext.Find(*SelectedContext.Get());
+				if (InstanceContext && InstanceContext->AssetInstances.Num() > 0)
+				{
+					SelectedInstance = InstanceContext->AssetInstances[0];
+				}
+			}
+			else
+			{
+				// set first active instance for any context
+				SelectedInstance = Instances[1];
+			}
+		}
+		else
+		{
+			// set empty instance if there's no active instances
+			SelectedInstance = Instances[0];
 		}
 	}
 }
 
 EVisibility SFlowAssetInstanceList::GetContextVisibility() const
 {
-	// switching makes sense only if we have more than 1 specific context
+	// switching makes sense only if we have at least 1 specific context
 	return InstancesPerContext.Num() > 1 ? EVisibility::Visible : EVisibility::Collapsed;
 }
 
@@ -181,15 +201,21 @@ void SFlowAssetInstanceList::OnContextSelectionChanged(TSharedPtr<FObjectKey> Se
 
 FText SFlowAssetInstanceList::GetSelectedContextName() const
 {
-	const UObject* Context = SelectedInstance->ResolveObjectPtr();
-	return InstancesPerContext.Find(Context) ? InstancesPerContext.Find(Context)->DisplayText : AllContextsText;
+	if (SelectedContext.IsValid())
+	{
+		const UObject* Context = SelectedContext->ResolveObjectPtr();
+		if (const FFlowAssetInstanceContext* InstanceContext = InstancesPerContext.Find(Context))
+		{
+			return InstanceContext->DisplayText;
+		}
+	}
+
+	return AllContextsText;
 }
 
 TSharedRef<SWidget> SFlowAssetInstanceList::OnGenerateInstanceWidget(const TSharedPtr<FObjectKey> Item) const
 {
-	const UFlowAsset* Instance = Cast<UFlowAsset>(Item->ResolveObjectPtr());
-	const FText Result = Instance ? FText::FromString(Instance->GetDebugName()) : NoInstanceSelectedText;
-	return SNew(STextBlock).Text(Result);
+	return SNew(STextBlock).Text(JoinInstanceAndContextTexts(*Item.Get()));
 }
 
 void SFlowAssetInstanceList::OnInstanceSelectionChanged(const TSharedPtr<FObjectKey> SelectedItem, const ESelectInfo::Type SelectionType)
@@ -199,7 +225,7 @@ void SFlowAssetInstanceList::OnInstanceSelectionChanged(const TSharedPtr<FObject
 		SelectedInstance = SelectedItem;
 
 		const UFlowAsset* Instance = Cast<UFlowAsset>(SelectedInstance->ResolveObjectPtr());
-		if (TemplateAsset.IsValid() && Instance)
+		if (TemplateAsset.IsValid())
 		{
 			TemplateAsset->SetInspectedInstance(Instance);
 		}
@@ -208,12 +234,27 @@ void SFlowAssetInstanceList::OnInstanceSelectionChanged(const TSharedPtr<FObject
 
 FText SFlowAssetInstanceList::GetSelectedInstanceName() const
 {
-	if (SelectedInstance.IsValid())
+	return SelectedInstance.IsValid() ? JoinInstanceAndContextTexts(*SelectedInstance.Get()) : NoInstanceSelectedText;
+}
+
+FText SFlowAssetInstanceList::JoinInstanceAndContextTexts(const FObjectKey& AssetInstance) const
+{
+	if (const UFlowAsset* Instance = Cast<UFlowAsset>(AssetInstance.ResolveObjectPtr()))
 	{
-		if (const UFlowAsset* Instance = Cast<UFlowAsset>(SelectedInstance->ResolveObjectPtr()))
+		FText Result = FText::FromName(Instance->GetDisplayName());
+
+		// add context name if there are multiple contexts present 
+		if (InstancesPerContext.Num() > 1)
 		{
-			return FText::FromString(Instance->GetDebugName());
+			if (const FFlowAssetInstanceContext* Context = InstancesPerContext.Find(Instance->GetWorld()))
+			{
+				static const FText OpeningBracket = FText::AsCultureInvariant(TEXT("("));
+				static const FText ClosingBracket = FText::AsCultureInvariant(TEXT(")"));
+				FText::Format(Result, OpeningBracket, Context->DisplayText, ClosingBracket);
+			}
 		}
+
+		return Result;
 	}
 
 	return NoInstanceSelectedText;
@@ -228,14 +269,14 @@ void SFlowAssetBreadcrumb::Construct(const FArguments& InArgs, const TWeakObject
 
 	// create breadcrumb
 	SAssignNew(BreadcrumbTrail, SBreadcrumbTrail<FFlowBreadcrumb>)
-		.Visibility_Static(&SFlowAssetInstanceList::GetDebuggerVisibility)
-		.OnCrumbClicked(this, &SFlowAssetBreadcrumb::OnCrumbClicked)
-		.ButtonStyle(FAppStyle::Get(), "SimpleButton")
-		.TextStyle(FAppStyle::Get(), "NormalText")
-		.ButtonContentPadding(FMargin(2.f, 4.f))
-		.DelimiterImage(FAppStyle::GetBrush("Icons.ChevronRight"))
-		.ShowLeadingDelimiter(true)
-		.PersistentBreadcrumbs(true);
+	.Visibility_Static(&SFlowAssetInstanceList::GetDebuggerVisibility)
+	.OnCrumbClicked(this, &SFlowAssetBreadcrumb::OnCrumbClicked)
+	.ButtonStyle(FAppStyle::Get(), "SimpleButton")
+	.TextStyle(FAppStyle::Get(), "NormalText")
+	.ButtonContentPadding(FMargin(2.0f, 4.0f))
+	.DelimiterImage(FAppStyle::GetBrush("Icons.ChevronRight"))
+	.ShowLeadingDelimiter(true)
+	.PersistentBreadcrumbs(true);
 
 	ChildSlot
 	[
@@ -260,7 +301,7 @@ EVisibility SFlowAssetBreadcrumb::GetBreadcrumbVisibility() const
 	return GEditor->PlayWorld && TemplateAsset->GetInspectedInstance() ? EVisibility::Visible : EVisibility::Collapsed;
 }
 
-void SFlowAssetBreadcrumb::FillBreadcrumb()
+void SFlowAssetBreadcrumb::FillBreadcrumb() const
 {
 	BreadcrumbTrail->ClearCrumbs();
 	if (const UFlowAsset* InspectedInstance = TemplateAsset->GetInspectedInstance())
