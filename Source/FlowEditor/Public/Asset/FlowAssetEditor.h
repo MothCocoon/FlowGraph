@@ -121,7 +121,7 @@ private:
 
 public:
 	/** Edits the specified FlowAsset object */
-	void InitFlowAssetEditor(const EToolkitMode::Type Mode, const TSharedPtr<class IToolkitHost>& InitToolkitHost, UObject* ObjectToEdit);
+	virtual void InitFlowAssetEditor(const EToolkitMode::Type Mode, const TSharedPtr<class IToolkitHost>& InitToolkitHost, UObject* ObjectToEdit);
 
 protected:
 	virtual void CreateToolbar();

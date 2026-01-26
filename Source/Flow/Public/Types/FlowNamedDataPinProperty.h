@@ -27,7 +27,7 @@ public:
 
 private:
 	// DataPinProperty payload
-	UPROPERTY(VisibleAnywhere, Category = DataPins, meta = (DeprecatedProperty))
+	UPROPERTY(meta = (DeprecatedProperty))
 	TInstancedStruct<FFlowDataPinProperty> DataPinProperty;
 
 public:

@@ -3,11 +3,18 @@
 #include "Asset/FlowDebugEditorSubsystem.h"
 #include "Asset/FlowAssetEditor.h"
 #include "Asset/FlowMessageLogListing.h"
+#include "Graph/FlowGraph.h"
+#include "Graph/FlowGraphEditor.h"
+#include "Graph/FlowGraphUtils.h"
+#include "Graph/Nodes/FlowGraphNode.h"
+#include "Interfaces/FlowExecutionGate.h"
+#include "FlowAsset.h"
 
 #include "Editor/UnrealEdEngine.h"
 #include "Engine/Engine.h"
 #include "Engine/World.h"
 #include "Framework/Notifications/NotificationManager.h"
+#include "Subsystems/AssetEditorSubsystem.h"
 #include "Templates/Function.h"
 #include "UnrealEdGlobals.h"
 #include "Widgets/Notifications/SNotificationList.h"
@@ -21,6 +28,8 @@ UFlowDebugEditorSubsystem::UFlowDebugEditorSubsystem()
 	FEditorDelegates::BeginPIE.AddUObject(this, &ThisClass::OnBeginPIE);
 	FEditorDelegates::ResumePIE.AddUObject(this, &ThisClass::OnResumePIE);
 	FEditorDelegates::EndPIE.AddUObject(this, &ThisClass::OnEndPIE);
+
+	OnDebuggerBreakpointHit.AddUObject(this, &ThisClass::OnBreakpointHit);
 }
 
 void UFlowDebugEditorSubsystem::OnInstancedTemplateAdded(UFlowAsset* AssetTemplate)
@@ -34,7 +43,7 @@ void UFlowDebugEditorSubsystem::OnInstancedTemplateAdded(UFlowAsset* AssetTempla
 	}
 }
 
-void UFlowDebugEditorSubsystem::OnInstancedTemplateRemoved(UFlowAsset* AssetTemplate) const
+void UFlowDebugEditorSubsystem::OnInstancedTemplateRemoved(UFlowAsset* AssetTemplate)
 {
 	AssetTemplate->OnRuntimeMessageAdded().RemoveAll(this);
 
@@ -53,18 +62,33 @@ void UFlowDebugEditorSubsystem::OnRuntimeMessageAdded(const UFlowAsset* AssetTem
 
 void UFlowDebugEditorSubsystem::OnBeginPIE(const bool bIsSimulating)
 {
-	// clear all logs from a previous session
+	// Clear all logs from a previous session
 	RuntimeLogs.Empty();
+
+	// Clear any stale "hit" state from previous run
+	ClearHitBreakpoints();
 }
 
 void UFlowDebugEditorSubsystem::OnResumePIE(const bool bIsSimulating)
 {
-	ClearHitBreakpoints();
+	// Editor-level resume event (also used by Advance Single Frame).
+	// This does not necessarily flow through AGameModeBase::ClearPause(), so we must unhalt Flow here.
+	//
+	// Clear only the last-hit breakpoint to return to enabled/disabled visuals without racing against
+	// a newly hit breakpoint during FlushDeferredTriggerInputs().
+	ClearHaltFlowExecution();
+	ClearLastHitBreakpoint();
+
+	FFlowExecutionGate::FlushDeferredTriggerInputs();
 }
 
 void UFlowDebugEditorSubsystem::OnEndPIE(const bool bIsSimulating)
 {
+	// Ensure we don't carry over a halted state between PIE sessions.
 	ClearHitBreakpoints();
+
+	ClearHaltFlowExecution();
+	FFlowExecutionGate::FlushDeferredTriggerInputs();
 
 	for (const TPair<TWeakObjectPtr<UFlowAsset>, TSharedPtr<class IMessageLogListing>>& Log : RuntimeLogs)
 	{
@@ -92,11 +116,83 @@ void UFlowDebugEditorSubsystem::OnEndPIE(const bool bIsSimulating)
 	}
 }
 
-void UFlowDebugEditorSubsystem::PauseSession()
+void UFlowDebugEditorSubsystem::PauseSession(const UFlowAsset& FlowAssetInstance)
 {
-	if (!GUnrealEd->SetPIEWorldsPaused(true))
+	Super::PauseSession(FlowAssetInstance);
+
+	constexpr bool bShouldBePaused = true;
+	const bool bWasPaused = GUnrealEd->SetPIEWorldsPaused(bShouldBePaused);
+	if (!bWasPaused)
 	{
 		GUnrealEd->PlaySessionPaused();
+	}
+}
+
+void UFlowDebugEditorSubsystem::ResumeSession(const UFlowAsset& FlowAssetInstance)
+{
+	Super::ResumeSession(FlowAssetInstance);
+
+	constexpr bool bShouldBePaused = false;
+	const bool bWasPaused = GUnrealEd->SetPIEWorldsPaused(bShouldBePaused);
+	if (bWasPaused)
+	{
+		GUnrealEd->PlaySessionResumed();
+	}
+}
+
+void UFlowDebugEditorSubsystem::OnBreakpointHit(const UFlowAsset& FlowAssetInstance, const FGuid& NodeGuid) const
+{
+	UFlowAsset* TemplateAsset = const_cast<UFlowAsset*>(FlowAssetInstance.GetTemplateAsset());
+	if (!IsValid(TemplateAsset))
+	{
+		return;
+	}
+
+	UAssetEditorSubsystem* AssetEditorSubsystem = GEditor ? GEditor->GetEditorSubsystem<UAssetEditorSubsystem>() : nullptr;
+	if (!AssetEditorSubsystem)
+	{
+		return;
+	}
+
+	if (!AssetEditorSubsystem->OpenEditorForAsset(TemplateAsset))
+	{
+		return;
+	}
+
+	TemplateAsset->SetInspectedInstance(FlowAssetInstance.GetDisplayName());
+
+	UFlowGraph* FlowGraph = Cast<UFlowGraph>(TemplateAsset->GetGraph());
+	if (!IsValid(FlowGraph))
+	{
+		return;
+	}
+
+	// NOTE: This may be redundant call, but it ensures Slate re-queries breakpoint hit state and updates node overlays immediately.
+	FlowGraph->NotifyGraphChanged();
+
+	UEdGraphNode* NodeToFocus = nullptr;
+	for (UEdGraphNode* Node : FlowGraph->Nodes)
+	{
+		UFlowGraphNode* FlowGraphNode = Cast<UFlowGraphNode>(Node);
+		if (IsValid(FlowGraphNode) && FlowGraphNode->NodeGuid == NodeGuid)
+		{
+			NodeToFocus = FlowGraphNode;
+			break;
+		}
+	}
+
+	if (!NodeToFocus)
+	{
+		return;
+	}
+
+	const TSharedPtr<SFlowGraphEditor> GraphEditor = FFlowGraphUtils::GetFlowGraphEditor(FlowGraph);
+	if (GraphEditor.IsValid())
+	{
+		constexpr bool bRequestRename = false;
+		constexpr bool bSelectNode = true;
+
+		GraphEditor->JumpToNode(NodeToFocus, bRequestRename, bSelectNode);
 	}
 }
 

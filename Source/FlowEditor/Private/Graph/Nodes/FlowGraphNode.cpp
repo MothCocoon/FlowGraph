@@ -15,6 +15,8 @@
 #include "Graph/FlowGraphSettings.h"
 #include "Graph/Widgets/SFlowGraphNode.h"
 #include "Graph/Widgets/SGraphEditorActionMenuFlow.h"
+#include "Interfaces/FlowDataPinValueSupplierInterface.h"
+#include "Types/FlowDataPinValue.h"
 
 #include "BlueprintNodeHelpers.h"
 #include "Developer/ToolMenus/Public/ToolMenus.h"
@@ -1082,8 +1084,10 @@ void UFlowGraphNode::GetPinHoverText(const UEdGraphPin& Pin, FString& HoverTextO
 	// start with the default hover text (from the pin's tool-tip)
 	Super::GetPinHoverText(Pin, HoverTextOut);
 
+	const bool bHasValidPlayWorld = IsValid(GEditor->PlayWorld);
+
 	// add information on pin activations
-	if (GEditor->PlayWorld)
+	if (bHasValidPlayWorld)
 	{
 		if (const UFlowNode* InspectedNodeInstance = GetInspectedNodeInstance())
 		{
@@ -1093,11 +1097,7 @@ void UFlowGraphNode::GetPinHoverText(const UEdGraphPin& Pin, FString& HoverTextO
 			}
 
 			const TArray<FPinRecord>& PinRecords = InspectedNodeInstance->GetPinRecords(Pin.PinName, Pin.Direction);
-			if (PinRecords.Num() == 0)
-			{
-				HoverTextOut.Append(FPinRecord::NoActivations);
-			}
-			else
+			if (PinRecords.Num() > 0)
 			{
 				HoverTextOut.Append(FPinRecord::PinActivations);
 				for (int32 i = 0; i < PinRecords.Num(); i++)
@@ -1107,22 +1107,78 @@ void UFlowGraphNode::GetPinHoverText(const UEdGraphPin& Pin, FString& HoverTextO
 
 					switch (PinRecords[i].ActivationType)
 					{
-						case EFlowPinActivationType::Default:
-							break;
-						case EFlowPinActivationType::Forced:
-							HoverTextOut.Append(FPinRecord::ForcedActivation);
-							break;
-						case EFlowPinActivationType::PassThrough:
-							HoverTextOut.Append(FPinRecord::PassThroughActivation);
-							break;
-						default: ;
+					case EFlowPinActivationType::Default:
+						break;
+					case EFlowPinActivationType::Forced:
+						HoverTextOut.Append(FPinRecord::ForcedActivation);
+						break;
+					case EFlowPinActivationType::PassThrough:
+						HoverTextOut.Append(FPinRecord::PassThroughActivation);
+						break;
+					default:;
 					}
 				}
 			}
 		}
 	}
-}
 
+	// add information on data pin values (only for data pins)
+	const bool bIsDataPinCategory = !FFlowPin::IsExecPinCategory(Pin.PinType.PinCategory);
+	if (bIsDataPinCategory)
+	{
+		const UEdGraphPin* GraphPinObj = &Pin;
+
+		// Prefer showing runtime values when PIE (consistent with activation history)
+		const UFlowNodeBase* FlowNodeBase = GetFlowNodeBase();
+
+		if (bHasValidPlayWorld)
+		{
+			FlowNodeBase = GetInspectedNodeInstance();
+		}
+
+		FFlowDataPinResult DataResult(EFlowDataPinResolveResult::FailedNullFlowNodeBase);
+
+		if (IsValid(FlowNodeBase))
+		{
+			if (GraphPinObj->Direction == EGPD_Input)
+			{
+				// Input pins: do a pin resolve to source the value
+				DataResult = FlowNodeBase->TryResolveDataPin(GraphPinObj->PinName);
+			}
+			else
+			{
+				// Output pins: ask this node what it supplies for that output data pin
+				const UFlowNode* FlowNode = Cast<UFlowNode>(FlowNodeBase);
+				if (FlowNode)
+				{
+					DataResult = IFlowDataPinValueSupplierInterface::Execute_TrySupplyDataPin(FlowNode, GraphPinObj->PinName);
+				}
+			}
+		}
+
+		FString ValueString;
+
+		if (FlowPinType::IsSuccess(DataResult.Result) && DataResult.ResultValue.IsValid())
+		{
+			const FFlowDataPinValue& Value = DataResult.ResultValue.Get<FFlowDataPinValue>();
+			if (!Value.TryConvertValuesToString(ValueString))
+			{
+				ValueString = TEXT("<unformattable>");
+			}
+		}
+		else
+		{
+			ValueString = TEXT("<unresolved>");
+		}
+
+		if (!HoverTextOut.IsEmpty())
+		{
+			HoverTextOut.Append(LINE_TERMINATOR).Append(LINE_TERMINATOR);
+		}
+
+		HoverTextOut.Appendf(TEXT("Value: %s"), *ValueString);
+	}
+}
 
 void UFlowGraphNode::ForcePinActivation(const FEdGraphPinReference PinReference) const
 {

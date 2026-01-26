@@ -26,7 +26,7 @@ class UFlowAssetParams;
 
 #if !UE_BUILD_SHIPPING
 DECLARE_DELEGATE(FFlowGraphEvent);
-DECLARE_DELEGATE_TwoParams(FFlowSignalEvent, const FGuid& /*NodeGuid*/, const FName& /*PinName*/);
+DECLARE_DELEGATE_ThreeParams(FFlowSignalEvent, UFlowAsset* /*FlowAsset*/, const FGuid& /*NodeGuid*/, const FName& /*PinName*/);
 #endif
 
 /**
@@ -352,6 +352,10 @@ public:
 
 	// Get Flow Asset instance created by the given SubGraph node
 	TWeakObjectPtr<UFlowAsset> GetFlowInstance(UFlowNode_SubGraph* SubGraphNode) const;
+
+	// Public trigger input signature for the FFlowExecutionGate mechanism in the Flow Debugger
+	FORCEINLINE void TriggerDeferredInputFromDebugger(const FGuid& NodeGuid, const FName& PinName, const FConnectedPin& FromPin)
+		{ TriggerInput(NodeGuid, PinName, FromPin); }
 
 protected:
 	void TriggerCustomInput_FromSubGraph(UFlowNode_SubGraph* Node, const FName& EventName) const;

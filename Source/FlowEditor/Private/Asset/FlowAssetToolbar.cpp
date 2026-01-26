@@ -67,6 +67,11 @@ SFlowAssetInstanceList::~SFlowAssetInstanceList()
 
 void SFlowAssetInstanceList::RefreshInstances()
 {
+	if (!TemplateAsset.IsValid())
+	{
+		return;
+	}
+
 	// collect instance names of this Flow Asset
 	InstanceNames = {MakeShareable(new FName(*NoInstanceSelectedText.ToString()))};
 	TemplateAsset->GetInstanceDisplayNames(InstanceNames);
@@ -77,7 +82,7 @@ void SFlowAssetInstanceList::RefreshInstances()
 		const FName& InspectedInstanceName = InspectedInstance->GetDisplayName();
 		for (const TSharedPtr<FName>& Instance : InstanceNames)
 		{
-			if (*Instance == InspectedInstanceName)
+			if (Instance.IsValid() && *Instance == InspectedInstanceName)
 			{
 				SelectedInstance = Instance;
 				break;
@@ -109,7 +114,11 @@ void SFlowAssetInstanceList::OnSelectionChanged(const TSharedPtr<FName> Selected
 
 		if (TemplateAsset.IsValid())
 		{
-			const FName NewSelectedInstanceName = (SelectedInstance.IsValid() && *SelectedInstance != *InstanceNames[0]) ? *SelectedInstance : NAME_None;
+			const bool bIsNoInstance =
+				(!SelectedInstance.IsValid()) ||
+				(InstanceNames.Num() > 0 && SelectedInstance.IsValid() && *SelectedInstance == *InstanceNames[0]);
+
+			const FName NewSelectedInstanceName = bIsNoInstance ? NAME_None : *SelectedInstance;
 			TemplateAsset->SetInspectedInstance(NewSelectedInstanceName);
 		}
 	}

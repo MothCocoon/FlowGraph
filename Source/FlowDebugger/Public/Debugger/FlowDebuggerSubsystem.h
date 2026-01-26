@@ -5,32 +5,44 @@
 #include "Subsystems/EngineSubsystem.h"
 
 #include "Debugger/FlowDebuggerTypes.h"
+#include "Interfaces/FlowExecutionGate.h"
+
 #include "FlowDebuggerSubsystem.generated.h"
 
 class UEdGraphNode;
 class UFlowAsset;
 
+DECLARE_MULTICAST_DELEGATE_OneParam(FFlowAssetDebuggerEvent, const UFlowAsset& /*FlowAsset*/);
+DECLARE_MULTICAST_DELEGATE_TwoParams(FFlowAssetDebuggerBreakpointHitEvent, const UFlowAsset& /*FlowAsset*/, const FGuid& /*NodeGuid*/);
+
 /**
- * Persistent subsystem supporting Flow Graph debugging.
- * It might be utilized to use cook-specific graph debugger.
- */
+* Persistent subsystem supporting Flow Graph debugging.
+* It might be utilized to use cook-specific graph debugger.
+*/
 UCLASS()
-class FLOWDEBUGGER_API UFlowDebuggerSubsystem : public UEngineSubsystem
+class FLOWDEBUGGER_API UFlowDebuggerSubsystem : public UEngineSubsystem, public IFlowExecutionGate
 {
 	GENERATED_BODY()
 
 public:
 	UFlowDebuggerSubsystem();
 
+	virtual void Initialize(FSubsystemCollectionBase& Collection) override;
+	virtual void Deinitialize() override;
+
 	virtual bool ShouldCreateSubsystem(UObject* Outer) const override;
 
 protected:
 	virtual void OnInstancedTemplateAdded(UFlowAsset* AssetTemplate);
-	virtual void OnInstancedTemplateRemoved(UFlowAsset* AssetTemplate) const;
+	virtual void OnInstancedTemplateRemoved(UFlowAsset* AssetTemplate);
 
-	virtual void OnPinTriggered(const FGuid& NodeGuid, const FName& PinName);
+	virtual void OnPinTriggered(UFlowAsset* FlowAsset, const FGuid& NodeGuid, const FName& PinName);
 
 public:
+	// IFlowExecutionGate
+	virtual bool IsFlowExecutionHalted() const override { return bHaltFlowExecution; }
+	// --
+
 	virtual void AddBreakpoint(const FGuid& NodeGuid);
 	virtual void AddBreakpoint(const FGuid& NodeGuid, const FName& PinName);
 
@@ -56,20 +68,45 @@ public:
 	virtual bool IsBreakpointEnabled(const FGuid& NodeGuid, const FName& PinName);
 
 protected:
-	virtual void MarkAsHit(const FGuid& NodeGuid);
-	virtual void MarkAsHit(const FGuid& NodeGuid, const FName& PinName);
-	
-	virtual void PauseSession();
-	virtual void ResumeSession();
-	void SetPause(const bool bPause);
+	virtual void MarkAsHit(const UFlowAsset& FlowAssetInstance, const FGuid& NodeGuid);
+	virtual void MarkAsHit(const UFlowAsset& FlowAssetInstance, const FGuid& NodeGuid, const FName& PinName);
 
+	virtual void PauseSession(const UFlowAsset& FlowAssetInstance);
+	virtual void ResumeSession(const UFlowAsset& FlowAssetInstance);
+	void SetPause(const UFlowAsset& FlowAssetInstance, const bool bPause);
+
+	/**
+	 * Clears the "currently hit" breakpoint only (node or pin).
+	 * This avoids races where blanket-clearing all hit flags can erase a newly-hit breakpoint during resume/flush.
+	 */
+	void ClearLastHitBreakpoint();
+
+	/** Clears hit state for all breakpoints. Prefer ClearLastHitBreakpoint() for resume/step logic. */
 	virtual void ClearHitBreakpoints();
+
+protected:
+	void RequestHaltFlowExecution(const UFlowAsset& FlowAssetInstance, const FGuid& NodeGuid);
+	void ClearHaltFlowExecution();
 
 public:
 	virtual bool IsBreakpointHit(const FGuid& NodeGuid);
 	virtual bool IsBreakpointHit(const FGuid& NodeGuid, const FName& PinName);
 
+	// Delegates for debugger events (broadcast when pausing, resuming, or hitting breakpoints)
+	FFlowAssetDebuggerEvent OnDebuggerPaused;
+	FFlowAssetDebuggerEvent OnDebuggerResumed;
+	FFlowAssetDebuggerBreakpointHitEvent OnDebuggerBreakpointHit;
+	FFlowAssetDebuggerEvent OnDebuggerFlowAssetTemplateRemoved;
+
 private:
+	bool bHaltFlowExecution = false;
+	TWeakObjectPtr<const UFlowAsset> HaltedOnFlowAssetInstance;
+	FGuid HaltedOnNodeGuid;
+
+	// Track the single breakpoint location that is currently "hit" (node or pin).
+	FGuid LastHitNodeGuid;
+	FName LastHitPinName;
+
 	/** Saves any modifications made to breakpoints */
 	virtual void SaveSettings();
 };
