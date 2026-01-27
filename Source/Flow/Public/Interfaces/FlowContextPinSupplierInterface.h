@@ -30,7 +30,10 @@ public:
 	UFUNCTION(BlueprintNativeEvent, Category = "FlowNode In-Editor Functions", DisplayName = "SupportsContextPins", meta = (DevelopmentOnly))
 	bool K2_SupportsContextPins() const;
 	virtual bool K2_SupportsContextPins_Implementation() const;
+	
 #if WITH_EDITOR
+	// Note: This method can only be called by native implementors of the interface, so we still have to manually handle and check
+	// classes that only implement the interface in Blueprint.
 	virtual bool SupportsContextPins() const { return Execute_K2_SupportsContextPins(Cast<UObject>(this)); }
 #endif // WITH_EDITOR
 

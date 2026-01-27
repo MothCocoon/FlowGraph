@@ -51,6 +51,10 @@ protected:
 
 #if WITH_EDITOR
 public:
+	// UObject
+	virtual void PostEditChangeChainProperty(FPropertyChangedChainEvent& PropertyChangedEvent) override;
+	// --
+
 	virtual void UpdateNodeConfigText_Implementation() override;
 #endif
 };

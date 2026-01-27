@@ -375,8 +375,13 @@ void SFlowGraphNode::UpdateGraphNode()
 			.IsGraphNodeHovered(this, &SGraphNode::IsHovered);
 
 		GetOrAddSlot(ENodeZone::TopCenter)
+#if ENGINE_MAJOR_VERSION == 5 && ENGINE_MINOR_VERSION < 6		
 			.SlotOffset(TAttribute<FVector2D>(CommentBubble.Get(), &SCommentBubble::GetOffset))
 			.SlotSize(TAttribute<FVector2D>(CommentBubble.Get(), &SCommentBubble::GetSize))
+#else
+			.SlotOffset2f(TAttribute<FVector2f>(CommentBubble.Get(), &SCommentBubble::GetOffset2f))
+			.SlotSize2f(TAttribute<FVector2f>(CommentBubble.Get(), &SCommentBubble::GetSize2f))
+#endif		
 			.AllowScaling(TAttribute<bool>(CommentBubble.Get(), &SCommentBubble::IsScalingAllowed))
 			.VAlign(VAlign_Top)
 			[
@@ -511,7 +516,7 @@ EVisibility SFlowGraphNode::GetNodeConfigTextVisibility() const
 {
 	// Hide in lower LODs
 	const TSharedPtr<SGraphPanel> OwnerPanel = GetOwnerPanel();
-	if (!OwnerPanel.IsValid() || OwnerPanel->GetCurrentLOD() > EGraphRenderingLOD::MediumDetail)
+	if (!OwnerPanel.IsValid() || OwnerPanel->GetCurrentLOD() >= EGraphRenderingLOD::MediumDetail)
 	{
 		if (ConfigTextBlock && !ConfigTextBlock->GetText().IsEmptyOrWhitespace())
 		{
