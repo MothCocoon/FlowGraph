@@ -124,6 +124,29 @@ void UFlowDebugEditorSubsystem::PauseSession(const UFlowAsset& FlowAssetInstance
 	const bool bWasPaused = GUnrealEd->SetPIEWorldsPaused(bShouldBePaused);
 	if (!bWasPaused)
 	{
+		return;
+	}
+
+	if (GUnrealEd->SetPIEWorldsPaused(true))
+	{
+		bPausedAtFlowBreakpoint = true;
+
+		const UFlowAsset* HitInstance = Node->GetFlowAsset();
+		if (ensure(HitInstance))
+		{
+			UFlowAsset* AssetTemplate = HitInstance->GetTemplateAsset();
+			AssetTemplate->SetInspectedInstance(HitInstance);
+
+			UAssetEditorSubsystem* AssetEditorSubsystem = GEditor->GetEditorSubsystem<UAssetEditorSubsystem>();
+			if (AssetEditorSubsystem->OpenEditorForAsset(AssetTemplate))
+			{
+				if (const TSharedPtr<FFlowAssetEditor> FlowAssetEditor = FFlowGraphUtils::GetFlowAssetEditor(AssetTemplate))
+				{
+					FlowAssetEditor->JumpToNode(Node->GetGraphNode());
+				}
+			}
+		}
+
 		GUnrealEd->PlaySessionPaused();
 	}
 }

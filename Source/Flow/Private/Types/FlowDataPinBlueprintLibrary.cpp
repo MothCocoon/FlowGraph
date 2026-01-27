@@ -2167,198 +2167,107 @@ TArray<FSoftClassPath> UFlowDataPinBlueprintLibrary::GetClassValues(FFlowDataPin
 
 FFlowDataPinResult UFlowDataPinBlueprintLibrary::MakeFlowDataPinResult_Bool(const TArray<bool>& BoolValues)
 {
-	FFlowDataPinResult Out(EFlowDataPinResolveResult::Success);
-
-	FFlowDataPinValue_Bool ValueStruct;
-	ValueStruct.Values = BoolValues;
-	Out.ResultValue = TInstancedStruct<FFlowDataPinValue>::Make(ValueStruct);
-
+	FFlowDataPinResult Out{ FFlowDataPinValue_Bool(BoolValues) };
 	return Out;
 }
 
 FFlowDataPinResult UFlowDataPinBlueprintLibrary::MakeFlowDataPinResult_Int(const TArray<int32>& IntValues)
 {
-	FFlowDataPinResult Out(EFlowDataPinResolveResult::Success);
-
-	FFlowDataPinValue_Int ValueStruct;
-	ValueStruct.Values = IntValues;
-	Out.ResultValue = TInstancedStruct<FFlowDataPinValue>::Make(ValueStruct);
-
+	FFlowDataPinResult Out{ FFlowDataPinValue_Int(IntValues) };
 	return Out;
 }
 
 FFlowDataPinResult UFlowDataPinBlueprintLibrary::MakeFlowDataPinResult_Int64(const TArray<int64>& Int64Values)
 {
-	FFlowDataPinResult Out(EFlowDataPinResolveResult::Success);
-
-	FFlowDataPinValue_Int64 ValueStruct;
-	ValueStruct.Values = Int64Values;
-	Out.ResultValue = TInstancedStruct<FFlowDataPinValue>::Make(ValueStruct);
-
+	FFlowDataPinResult Out{ FFlowDataPinValue_Int64(Int64Values) };
 	return Out;
 }
 
 FFlowDataPinResult UFlowDataPinBlueprintLibrary::MakeFlowDataPinResult_Float(const TArray<float>& FloatValues)
 {
-	FFlowDataPinResult Out(EFlowDataPinResolveResult::Success);
-
-	FFlowDataPinValue_Float ValueStruct;
-	ValueStruct.Values = FloatValues;
-	Out.ResultValue = TInstancedStruct<FFlowDataPinValue>::Make(ValueStruct);
-
+	FFlowDataPinResult Out{ FFlowDataPinValue_Float(FloatValues) };
 	return Out;
 }
 
 FFlowDataPinResult UFlowDataPinBlueprintLibrary::MakeFlowDataPinResult_Double(const TArray<double>& DoubleValues)
 {
-	FFlowDataPinResult Out(EFlowDataPinResolveResult::Success);
-
-	FFlowDataPinValue_Double ValueStruct;
-	ValueStruct.Values = DoubleValues;
-	Out.ResultValue = TInstancedStruct<FFlowDataPinValue>::Make(ValueStruct);
-
+	FFlowDataPinResult Out{ FFlowDataPinValue_Double(DoubleValues) };
 	return Out;
 }
 
 FFlowDataPinResult UFlowDataPinBlueprintLibrary::MakeFlowDataPinResult_Name(const TArray<FName>& NameValues)
 {
-	FFlowDataPinResult Out(EFlowDataPinResolveResult::Success);
-
-	FFlowDataPinValue_Name ValueStruct;
-	ValueStruct.Values = NameValues;
-	Out.ResultValue = TInstancedStruct<FFlowDataPinValue>::Make(ValueStruct);
-
+	FFlowDataPinResult Out{ FFlowDataPinValue_Name(NameValues) };
 	return Out;
 }
 
 FFlowDataPinResult UFlowDataPinBlueprintLibrary::MakeFlowDataPinResult_String(const TArray<FString>& StringValues)
 {
-	FFlowDataPinResult Out(EFlowDataPinResolveResult::Success);
-
-	FFlowDataPinValue_String ValueStruct;
-	ValueStruct.Values = StringValues;
-	Out.ResultValue = TInstancedStruct<FFlowDataPinValue>::Make(ValueStruct);
-
+	FFlowDataPinResult Out{ FFlowDataPinValue_String(StringValues) };
 	return Out;
 }
 
 FFlowDataPinResult UFlowDataPinBlueprintLibrary::MakeFlowDataPinResult_Text(const TArray<FText>& TextValues)
 {
-	FFlowDataPinResult Out(EFlowDataPinResolveResult::Success);
-
-	FFlowDataPinValue_Text ValueStruct;
-	ValueStruct.Values = TextValues;
-	Out.ResultValue = TInstancedStruct<FFlowDataPinValue>::Make(ValueStruct);
-
+	FFlowDataPinResult Out{ FFlowDataPinValue_Text(TextValues) };
 	return Out;
 }
 
 FFlowDataPinResult UFlowDataPinBlueprintLibrary::MakeFlowDataPinResult_Enum(const TArray<uint8>& EnumValues, UEnum* EnumClass)
 {
-	FFlowDataPinResult Out(EFlowDataPinResolveResult::Success);
-
 	if (EnumClass)
 	{
-		FFlowDataPinValue_Enum ValueStruct;
-		ValueStruct.EnumClass = EnumClass;
-		ValueStruct.Values.Reserve(EnumValues.Num());
-
-		for (uint8 RawValue : EnumValues)
-		{
-			const FName EnumName = EnumClass->GetNameByValue(RawValue);
-			ValueStruct.Values.Add(EnumName);
-		}
-
-		Out.ResultValue = TInstancedStruct<FFlowDataPinValue>::Make(ValueStruct);
+		FFlowDataPinResult Out{ FFlowDataPinValue_Enum(*EnumClass, EnumValues) };
+		return Out;
 	}
 
-	return Out;
+	return FFlowDataPinResult(EFlowDataPinResolveResult::FailedUnknownEnumValue);
 }
 
 FFlowDataPinResult UFlowDataPinBlueprintLibrary::MakeFlowDataPinResult_Vector(const TArray<FVector>& VectorValues)
 {
-	FFlowDataPinResult Out(EFlowDataPinResolveResult::Success);
-
-	FFlowDataPinValue_Vector ValueStruct;
-	ValueStruct.Values = VectorValues;
-	Out.ResultValue = TInstancedStruct<FFlowDataPinValue>::Make(ValueStruct);
-
+	FFlowDataPinResult Out{ FFlowDataPinValue_Vector(VectorValues) };
 	return Out;
 }
 
 FFlowDataPinResult UFlowDataPinBlueprintLibrary::MakeFlowDataPinResult_Rotator(const TArray<FRotator>& RotatorValues)
 {
-	FFlowDataPinResult Out(EFlowDataPinResolveResult::Success);
-
-	FFlowDataPinValue_Rotator ValueStruct;
-	ValueStruct.Values = RotatorValues;
-	Out.ResultValue = TInstancedStruct<FFlowDataPinValue>::Make(ValueStruct);
-
+	FFlowDataPinResult Out{ FFlowDataPinValue_Rotator(RotatorValues) };
 	return Out;
 }
 
 FFlowDataPinResult UFlowDataPinBlueprintLibrary::MakeFlowDataPinResult_Transform(const TArray<FTransform>& TransformValues)
 {
-	FFlowDataPinResult Out(EFlowDataPinResolveResult::Success);
-
-	FFlowDataPinValue_Transform ValueStruct;
-	ValueStruct.Values = TransformValues;
-	Out.ResultValue = TInstancedStruct<FFlowDataPinValue>::Make(ValueStruct);
-
+	FFlowDataPinResult Out{ FFlowDataPinValue_Transform(TransformValues) };
 	return Out;
 }
 
 FFlowDataPinResult UFlowDataPinBlueprintLibrary::MakeFlowDataPinResult_GameplayTag(const TArray<FGameplayTag>& GameplayTagValues)
 {
-	FFlowDataPinResult Out(EFlowDataPinResolveResult::Success);
-
-	FFlowDataPinValue_GameplayTag ValueStruct;
-	ValueStruct.Values = GameplayTagValues;
-	Out.ResultValue = TInstancedStruct<FFlowDataPinValue>::Make(ValueStruct);
-
+	FFlowDataPinResult Out{ FFlowDataPinValue_GameplayTag(GameplayTagValues) };
 	return Out;
 }
 
 FFlowDataPinResult UFlowDataPinBlueprintLibrary::MakeFlowDataPinResult_GameplayTagContainer(FGameplayTagContainer GameplayTagContainerValue)
 {
-	FFlowDataPinResult Out(EFlowDataPinResolveResult::Success);
-
-	FFlowDataPinValue_GameplayTagContainer ValueStruct;
-	ValueStruct.Values = GameplayTagContainerValue;
-	Out.ResultValue = TInstancedStruct<FFlowDataPinValue>::Make(ValueStruct);
-
+	FFlowDataPinResult Out{ FFlowDataPinValue_GameplayTagContainer(GameplayTagContainerValue) };
 	return Out;
 }
 
 FFlowDataPinResult UFlowDataPinBlueprintLibrary::MakeFlowDataPinResult_InstancedStruct(const TArray<FInstancedStruct>& InstancedStructValues)
 {
-	FFlowDataPinResult Out(EFlowDataPinResolveResult::Success);
-
-	FFlowDataPinValue_InstancedStruct ValueStruct;
-	ValueStruct.Values = InstancedStructValues;
-	Out.ResultValue = TInstancedStruct<FFlowDataPinValue>::Make(ValueStruct);
-
+	FFlowDataPinResult Out{ FFlowDataPinValue_InstancedStruct(InstancedStructValues) };
 	return Out;
 }
 
 FFlowDataPinResult UFlowDataPinBlueprintLibrary::MakeFlowDataPinResult_Object(const TArray<UObject*>& ObjectValues)
 {
-	FFlowDataPinResult Out(EFlowDataPinResolveResult::Success);
-
-	FFlowDataPinValue_Object ValueStruct;
-	ValueStruct.Values = ObjectValues;
-	Out.ResultValue = TInstancedStruct<FFlowDataPinValue>::Make(ValueStruct);
-
+	FFlowDataPinResult Out{ FFlowDataPinValue_Object(ObjectValues) };
 	return Out;
 }
 
 FFlowDataPinResult UFlowDataPinBlueprintLibrary::MakeFlowDataPinResult_Class(const TArray<FSoftClassPath>& ClassValues)
 {
-	FFlowDataPinResult Out(EFlowDataPinResolveResult::Success);
-
-	FFlowDataPinValue_Class ValueStruct;
-	ValueStruct.Values = ClassValues;
-
-	Out.ResultValue = TInstancedStruct<FFlowDataPinValue>::Make(ValueStruct);
+	FFlowDataPinResult Out{ FFlowDataPinValue_Class(ClassValues) };
 	return Out;
 }

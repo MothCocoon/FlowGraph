@@ -10,7 +10,9 @@
 #include "FlowDebuggerSubsystem.generated.h"
 
 class UEdGraphNode;
+
 class UFlowAsset;
+class UFlowNode;
 
 DECLARE_MULTICAST_DELEGATE_OneParam(FFlowAssetDebuggerEvent, const UFlowAsset& /*FlowAsset*/);
 DECLARE_MULTICAST_DELEGATE_TwoParams(FFlowAssetDebuggerBreakpointHitEvent, const UFlowAsset& /*FlowAsset*/, const FGuid& /*NodeGuid*/);
@@ -33,6 +35,9 @@ public:
 	virtual bool ShouldCreateSubsystem(UObject* Outer) const override;
 
 protected:
+	bool bPausedAtFlowBreakpoint;
+
+protected:
 	virtual void OnInstancedTemplateAdded(UFlowAsset* AssetTemplate);
 	virtual void OnInstancedTemplateRemoved(UFlowAsset* AssetTemplate);
 
@@ -46,6 +51,7 @@ public:
 	virtual void AddBreakpoint(const FGuid& NodeGuid);
 	virtual void AddBreakpoint(const FGuid& NodeGuid, const FName& PinName);
 
+	virtual void RemoveAllBreakpoints(const TWeakObjectPtr<UFlowAsset> FlowAsset);
 	virtual void RemoveAllBreakpoints(const FGuid& NodeGuid);
 	virtual void RemoveNodeBreakpoint(const FGuid& NodeGuid);
 	virtual void RemovePinBreakpoint(const FGuid& NodeGuid, const FName& PinName);
@@ -60,12 +66,16 @@ public:
 
 	virtual FFlowBreakpoint* FindBreakpoint(const FGuid& NodeGuid);
 	virtual FFlowBreakpoint* FindBreakpoint(const FGuid& NodeGuid, const FName& PinName);
+	static bool HasAnyBreakpoints(const TWeakObjectPtr<UFlowAsset> FlowAsset);
 
 	virtual void SetBreakpointEnabled(const FGuid& NodeGuid, bool bEnabled);
 	virtual void SetBreakpointEnabled(const FGuid& NodeGuid, const FName& PinName, bool bEnabled);
+	virtual void SetAllBreakpointsEnabled(const TWeakObjectPtr<UFlowAsset> FlowAsset, bool bEnabled);
 
 	virtual bool IsBreakpointEnabled(const FGuid& NodeGuid);
 	virtual bool IsBreakpointEnabled(const FGuid& NodeGuid, const FName& PinName);
+	static bool HasAnyBreakpointsEnabled(const TWeakObjectPtr<UFlowAsset> FlowAsset);
+	static bool HasAnyBreakpointsDisabled(const TWeakObjectPtr<UFlowAsset> FlowAsset);
 
 protected:
 	virtual void MarkAsHit(const UFlowAsset& FlowAssetInstance, const FGuid& NodeGuid);

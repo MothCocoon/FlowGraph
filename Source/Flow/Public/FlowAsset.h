@@ -244,7 +244,7 @@ private:
 	TArray<TObjectPtr<UFlowAsset>> ActiveInstances;
 
 #if WITH_EDITORONLY_DATA
-	TWeakObjectPtr<UFlowAsset> InspectedInstance;
+	TWeakObjectPtr<const UFlowAsset> InspectedInstance;
 
 	// Message log for storing runtime errors/notes/warnings that will only last until the next game run
 	// Log lives in the asset template, so it can be inspected after ending the PIE
@@ -254,15 +254,14 @@ private:
 public:
 	void AddInstance(UFlowAsset* Instance);
 	int32 RemoveInstance(UFlowAsset* Instance);
+	TConstArrayView<TObjectPtr<UFlowAsset>> GetActiveInstances() const { return ActiveInstances; }
 
 	void ClearInstances();
 	int32 GetInstancesNum() const { return ActiveInstances.Num(); }
 
 #if WITH_EDITOR
-	void GetInstanceDisplayNames(TArray<TSharedPtr<FName>>& OutDisplayNames) const;
-
-	void SetInspectedInstance(const FName& NewInspectedInstanceName);
-	UFlowAsset* GetInspectedInstance() const { return InspectedInstance.IsValid() ? InspectedInstance.Get() : nullptr; }
+	void SetInspectedInstance(TWeakObjectPtr<const UFlowAsset> NewInspectedInstance);
+	const UFlowAsset* GetInspectedInstance() const { return InspectedInstance.IsValid() ? InspectedInstance.Get() : nullptr; }
 
 	DECLARE_EVENT(UFlowAsset, FRefreshDebuggerEvent);
 
