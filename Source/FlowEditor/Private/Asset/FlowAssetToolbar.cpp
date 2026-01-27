@@ -92,37 +92,6 @@ SFlowAssetInstanceList::~SFlowAssetInstanceList()
 	}
 }
 
-void SFlowAssetInstanceList::RefreshInstances()
-{
-	if (!TemplateAsset.IsValid())
-	{
-		return;
-	}
-
-	// collect instance names of this Flow Asset
-	InstanceNames = {MakeShareable(new FName(*NoInstanceSelectedText.ToString()))};
-	TemplateAsset->GetInstanceDisplayNames(InstanceNames);
-
-	// select instance
-	if (const UFlowAsset* InspectedInstance = TemplateAsset->GetInspectedInstance())
-	{
-		const FName& InspectedInstanceName = InspectedInstance->GetDisplayName();
-		for (const TSharedPtr<FName>& Instance : InstanceNames)
-		{
-			if (Instance.IsValid() && *Instance == InspectedInstanceName)
-			{
-				SelectedInstance = Instance;
-				break;
-			}
-		}
-	}
-	else
-	{
-		// default object is always available
-		SelectedInstance = InstanceNames[0];
-	}
-}
-
 EVisibility SFlowAssetInstanceList::GetDebuggerVisibility()
 {
 	return GEditor->PlayWorld ? EVisibility::Visible : EVisibility::Collapsed;
@@ -258,12 +227,7 @@ void SFlowAssetInstanceList::OnInstanceSelectionChanged(const TSharedPtr<FObject
 		const UFlowAsset* Instance = Cast<UFlowAsset>(SelectedInstance->ResolveObjectPtr());
 		if (TemplateAsset.IsValid())
 		{
-			const bool bIsNoInstance =
-				(!SelectedInstance.IsValid()) ||
-				(InstanceNames.Num() > 0 && SelectedInstance.IsValid() && *SelectedInstance == *InstanceNames[0]);
-
-			const FName NewSelectedInstanceName = bIsNoInstance ? NAME_None : *SelectedInstance;
-			TemplateAsset->SetInspectedInstance(NewSelectedInstanceName);
+			TemplateAsset->SetInspectedInstance(Instance);
 		}
 	}
 }

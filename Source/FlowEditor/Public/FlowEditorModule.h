@@ -32,11 +32,6 @@ private:
 	TSet<FName> CustomStructLayouts;
 	bool bIsRegisteredForAssetChanges = false;
 
-	TSharedPtr<FExtensibilityManager> MenuExtensibilityManager;
-	TSharedPtr<FExtensibilityManager> ToolBarExtensibilityManager;
-
-	bool bIsRegisteredForAssetChanges = false;
-
 public:
 	virtual void StartupModule() override;
 	virtual void ShutdownModule() override;
