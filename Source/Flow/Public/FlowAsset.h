@@ -26,7 +26,7 @@ class UFlowAssetParams;
 
 #if !UE_BUILD_SHIPPING
 DECLARE_DELEGATE(FFlowGraphEvent);
-DECLARE_DELEGATE_ThreeParams(FFlowSignalEvent, UFlowAsset* /*FlowAsset*/, const FGuid& /*NodeGuid*/, const FName& /*PinName*/);
+DECLARE_DELEGATE_TwoParams(FFlowSignalEvent, UFlowNode* /*FlowNode*/, const FName& /*PinName*/);
 #endif
 
 /**

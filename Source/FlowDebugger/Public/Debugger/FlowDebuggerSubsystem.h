@@ -15,7 +15,7 @@ class UFlowAsset;
 class UFlowNode;
 
 DECLARE_MULTICAST_DELEGATE_OneParam(FFlowAssetDebuggerEvent, const UFlowAsset& /*FlowAsset*/);
-DECLARE_MULTICAST_DELEGATE_TwoParams(FFlowAssetDebuggerBreakpointHitEvent, const UFlowAsset& /*FlowAsset*/, const FGuid& /*NodeGuid*/);
+DECLARE_MULTICAST_DELEGATE_OneParam(FFlowAssetDebuggerBreakpointHitEvent, const UFlowNode* /*FlowNode*/);
 
 /**
 * Persistent subsystem supporting Flow Graph debugging.
@@ -41,7 +41,7 @@ protected:
 	virtual void OnInstancedTemplateAdded(UFlowAsset* AssetTemplate);
 	virtual void OnInstancedTemplateRemoved(UFlowAsset* AssetTemplate);
 
-	virtual void OnPinTriggered(UFlowAsset* FlowAsset, const FGuid& NodeGuid, const FName& PinName);
+	virtual void OnPinTriggered(UFlowNode* FlowNode, const FName& PinName);
 
 public:
 	// IFlowExecutionGate
@@ -78,12 +78,12 @@ public:
 	static bool HasAnyBreakpointsDisabled(const TWeakObjectPtr<UFlowAsset> FlowAsset);
 
 protected:
-	virtual void MarkAsHit(const UFlowAsset& FlowAssetInstance, const FGuid& NodeGuid);
-	virtual void MarkAsHit(const UFlowAsset& FlowAssetInstance, const FGuid& NodeGuid, const FName& PinName);
+	virtual void MarkAsHit(const UFlowNode* FlowNode);
+	virtual void MarkAsHit(const UFlowNode* FlowNode, const FName& PinName);
 
-	virtual void PauseSession(const UFlowAsset& FlowAssetInstance);
-	virtual void ResumeSession(const UFlowAsset& FlowAssetInstance);
-	void SetPause(const UFlowAsset& FlowAssetInstance, const bool bPause);
+	virtual void PauseSession(const UFlowNode& FlowNode);
+	virtual void ResumeSession(const UFlowNode& FlowNode);
+	void SetPause(const UFlowNode& FlowNode, const bool bPause);
 
 	/**
 	 * Clears the "currently hit" breakpoint only (node or pin).
@@ -95,7 +95,7 @@ protected:
 	virtual void ClearHitBreakpoints();
 
 protected:
-	void RequestHaltFlowExecution(const UFlowAsset& FlowAssetInstance, const FGuid& NodeGuid);
+	void RequestHaltFlowExecution(const UFlowNode* Node);
 	void ClearHaltFlowExecution();
 
 public:

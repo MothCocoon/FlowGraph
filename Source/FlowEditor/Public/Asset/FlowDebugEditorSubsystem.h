@@ -33,8 +33,8 @@ protected:
 	virtual void OnResumePIE(const bool bIsSimulating);
 	virtual void OnEndPIE(const bool bIsSimulating);
 
-	virtual void PauseSession(const UFlowAsset& FlowAssetInstance) override;
-	virtual void ResumeSession(const UFlowAsset& FlowAssetInstance) override;
+	virtual void PauseSession(const UFlowNode& FlowNode) override;
+	virtual void ResumeSession(const UFlowNode& FlowNode) override;
 
-	void OnBreakpointHit(const UFlowAsset& FlowAssetInstance, const FGuid& NodeGuid) const;
+	void OnBreakpointHit(const UFlowNode* FlowNode) const;
 };
