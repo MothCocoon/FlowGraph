@@ -59,13 +59,11 @@ public:
 	virtual void PostLoad() override;
 	// --
 
-
 #if WITH_EDITOR
 	// UObject	
 	virtual void PostEditChangeProperty(FPropertyChangedEvent& PropertyChangedEvent) override;
 	// --
-
-	void ValidateFlowPinArrayIsUnique(const TArray<FFlowPin>& FlowPins, TSet<FName>& InOutUniquePinNames, EDataValidationResult& InOutResult);
+#endif
 
 	// Inherits Guid after graph node
 	UPROPERTY()
@@ -301,6 +299,12 @@ protected:
 	static FString MissingClass;
 	static FString NoActorsFound;
 
+#if WITH_EDITOR
+protected:
+	virtual EDataValidationResult ValidateNode() override;
+	void ValidateFlowPinArrayIsUnique(const TArray<FFlowPin>& FlowPins, TSet<FName>& InOutUniquePinNames, EDataValidationResult& InOutResult);
+#endif
+	
 //////////////////////////////////////////////////////////////////////////
 // Executing node instance
 

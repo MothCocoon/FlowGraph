@@ -264,16 +264,6 @@ TArray<FFlowPin> UFlowNodeBase::GetContextOutputs() const
 	return ContextOutputs;
 }
 
-EDataValidationResult UFlowNodeBase::ValidateNode()
-{
-	if (GetClass()->IsFunctionImplementedInScript(GET_FUNCTION_NAME_CHECKED(UFlowNodeBase, K2_ValidateNode)))
-	{
-		return K2_ValidateNode();
-	}
-
-	return EDataValidationResult::NotValidated;
-}
-
 FString UFlowNodeBase::GetStatusString() const
 {
 	return K2_GetStatusString();
@@ -595,6 +585,11 @@ void UFlowNodeBase::SetGraphNode(UEdGraphNode* NewGraphNode)
 	GraphNode = NewGraphNode;
 
 	UpdateNodeConfigText();
+}
+
+void UFlowNodeBase::SetCanDelete(const bool CanDelete)
+{
+	bCanDelete = CanDelete;
 }
 
 void UFlowNodeBase::SetupForEditing(UEdGraphNode& EdGraphNode)
@@ -962,6 +957,18 @@ bool UFlowNodeBase::BuildMessage(FString& Message) const
 }
 #endif
 
+EDataValidationResult UFlowNodeBase::ValidateNode()
+{
+	EDataValidationResult ValidationResult = EDataValidationResult::NotValidated;
+	
+	if (GetClass()->IsFunctionImplementedInScript(GET_FUNCTION_NAME_CHECKED(UFlowNodeBase, K2_ValidateNode)))
+	{
+		ValidationResult = K2_ValidateNode();
+	}
+
+	return ValidationResult;
+}
+
 bool UFlowNodeBase::TryAddValueToFormatNamedArguments(const FFlowNamedDataPinProperty& NamedDataPinProperty, FFormatNamedArguments& InOutArguments) const
 {
 	const FFlowDataPinValue& DataPinValue = NamedDataPinProperty.DataPinValue.Get();
@@ -1146,4 +1153,5 @@ FFlowDataPinResult_Class UFlowNodeBase::TryResolveDataPinAsClass(const FName& Pi
 	ResolveResult.SetValueFromObjectPtr(Value);
 	return ResolveResult;
 }
+
 // --

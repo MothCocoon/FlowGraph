@@ -46,7 +46,6 @@ UFlowNode::UFlowNode(const FObjectInitializer& ObjectInitializer)
 }
 
 #if WITH_EDITOR
-
 void UFlowNode::PostEditChangeProperty(FPropertyChangedEvent& PropertyChangedEvent)
 {
 	Super::PostEditChangeProperty(PropertyChangedEvent);
@@ -68,7 +67,7 @@ void UFlowNode::PostEditChangeProperty(FPropertyChangedEvent& PropertyChangedEve
 
 EDataValidationResult UFlowNode::ValidateNode()
 {
-	EDataValidationResult ValidationResult = EDataValidationResult::Valid;
+	EDataValidationResult ValidationResult = Super::ValidateNode();
 
 	// Validate that output and input pins have unique names
 	TSet<FName> UniquePinNames;
@@ -99,7 +98,6 @@ void UFlowNode::ValidateFlowPinArrayIsUnique(const TArray<FFlowPin>& FlowPins, T
 		}
 	}
 }
-
 #endif
 
 void UFlowNode::PostLoad()
