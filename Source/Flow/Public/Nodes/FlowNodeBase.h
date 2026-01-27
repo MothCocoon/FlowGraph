@@ -353,7 +353,7 @@ public:
 	virtual void PostLoad() override;
 
 	void SetGraphNode(UEdGraphNode* NewGraphNode);
-	UEdGraphNode* GetGraphNode() const { return GraphNode; }
+	virtual UEdGraphNode* GetGraphNode() const { return GraphNode; }
 
 	void SetCanDelete(const bool CanDelete);
 

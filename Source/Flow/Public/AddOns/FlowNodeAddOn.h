@@ -17,17 +17,14 @@ class UFlowNodeAddOn : public UFlowNodeBase
 {
 	GENERATED_BODY()
 
+public:
+	FLOW_API UFlowNodeAddOn();
+	
 protected:
 	// The FlowNode that contains this AddOn
 	// (accessible only when initialized, runtime only)
 	UPROPERTY(Transient)
 	TObjectPtr<UFlowNode> FlowNode;
-	
-#if WITH_EDITORONLY_DATA
-	// Editor-only pointer to the owning top-level UFlowNode
-	UPROPERTY(Transient)
-	TObjectPtr<UFlowNode> ParentNode;
-#endif
 
 	// Input pins to add to the owning flow node
 	// If defined, ExecuteInput will only be executed for these inputs
@@ -39,12 +36,13 @@ protected:
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "FlowNodeAddOn")
 	TArray<FFlowPin> OutputPins;
 #endif
-	
+
 public:
-
-	FLOW_API UFlowNodeAddOn();
-
 	// UFlowNodeBase
+
+#if WITH_EDITOR
+	virtual UEdGraphNode* GetGraphNode() const override;
+#endif
 
 	// AddOns may opt in to be eligible for a given parent
 	// - ParentTemplate - the template of the FlowNode or FlowNodeAddOn that is being considered as a potential parent
@@ -83,23 +81,6 @@ public:
 	// Returns a random seed suitable for this flow node addon
 	// by default, uses the seed for the Flow Node that this addon is attached to.
 	FLOW_API virtual int32 GetRandomSeed() const override;
-
-	// Sets the parent node. Editor only.
-	FLOW_API virtual void SetParentNode(UFlowNode* InParent)
-	{
-#if WITH_EDITORONLY_DATA
-		ParentNode = InParent;
-#endif // WITH_EDITOR
-	}
-	
-	// Editor only.
-	FLOW_API virtual const UFlowNode* GetParentNode() const override
-	{
-#if WITH_EDITORONLY_DATA
-		if (ParentNode) return ParentNode;
-#endif // WITH_EDITOR
-		return UFlowNodeBase::GetFlowNodeSelfOrOwner();
-	}
 
 #if WITH_EDITOR
 	// IFlowContextPinSupplierInterface

@@ -16,11 +16,7 @@ FFlowGraphToken::FFlowGraphToken(const UFlowAsset* InFlowAsset)
 }
 
 FFlowGraphToken::FFlowGraphToken(const UFlowNodeBase* InFlowNodeBase)
-	: GraphNode(
-		InFlowNodeBase->GetParentNode()
-		? InFlowNodeBase->GetParentNode()->GetGraphNode()
-		: nullptr
-	)
+	: GraphNode(InFlowNodeBase->GetGraphNode())
 {
 	CachedText = InFlowNodeBase->GetNodeTitle();
 }
@@ -61,7 +57,7 @@ TSharedPtr<IMessageToken> FFlowGraphToken::Create(const UFlowNodeBase* InFlowNod
 		Message.AddToken(MakeShareable(new FFlowGraphToken(InFlowNodeBase)));
 		return Message.GetMessageTokens().Last();
 	}
-	
+
 	return nullptr;
 }
 
@@ -83,7 +79,7 @@ TSharedPtr<IMessageToken> FFlowGraphToken::Create(const UEdGraphPin* InPin, FTok
 		Message.AddToken(MakeShareable(new FFlowGraphToken(InPin->GetOwningNode(), InPin)));
 		return Message.GetMessageTokens().Last();
 	}
-	
+
 	return nullptr;
 }
 
