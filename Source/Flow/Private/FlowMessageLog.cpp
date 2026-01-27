@@ -57,7 +57,7 @@ TSharedPtr<IMessageToken> FFlowGraphToken::Create(const UFlowNodeBase* InFlowNod
 		Message.AddToken(MakeShareable(new FFlowGraphToken(InFlowNodeBase)));
 		return Message.GetMessageTokens().Last();
 	}
-	
+
 	return nullptr;
 }
 
@@ -79,7 +79,7 @@ TSharedPtr<IMessageToken> FFlowGraphToken::Create(const UEdGraphPin* InPin, FTok
 		Message.AddToken(MakeShareable(new FFlowGraphToken(InPin->GetOwningNode(), InPin)));
 		return Message.GetMessageTokens().Last();
 	}
-	
+
 	return nullptr;
 }
 

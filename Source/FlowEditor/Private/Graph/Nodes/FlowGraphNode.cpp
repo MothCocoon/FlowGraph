@@ -1547,6 +1547,7 @@ void UFlowGraphNode::AddSubNode(UFlowGraphNode* SubNode, class UEdGraph* ParentG
 
 	SubNode->CreateNewGuid();
 	SubNode->PostPlacedNewNode();
+
 	SubNode->AllocateDefaultPins();
 	SubNode->AutowireNewNode(nullptr);
 

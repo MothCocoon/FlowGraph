@@ -17,6 +17,9 @@ class UFlowNodeAddOn : public UFlowNodeBase
 {
 	GENERATED_BODY()
 
+public:
+	FLOW_API UFlowNodeAddOn();
+	
 protected:
 	// The FlowNode that contains this AddOn
 	// (accessible only when initialized, runtime only)
@@ -33,12 +36,13 @@ protected:
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "FlowNodeAddOn")
 	TArray<FFlowPin> OutputPins;
 #endif
-	
+
 public:
-
-	FLOW_API UFlowNodeAddOn();
-
 	// UFlowNodeBase
+
+#if WITH_EDITOR
+	virtual UEdGraphNode* GetGraphNode() const override;
+#endif
 
 	// AddOns may opt in to be eligible for a given parent
 	// - ParentTemplate - the template of the FlowNode or FlowNodeAddOn that is being considered as a potential parent

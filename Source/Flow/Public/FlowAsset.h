@@ -75,7 +75,9 @@ public:
 	FSimpleDelegate OnDetailsRefreshRequested;
 
 	static FString ValidationError_NodeClassNotAllowed;
+	static FString ValidationError_AddOnNodeClassNotAllowed;
 	static FString ValidationError_NullNodeInstance;
+	static FString ValidationError_NullAddOnNodeInstance;
 
 private:
 	UPROPERTY()
@@ -100,6 +102,10 @@ protected:
 
 	bool IsFlowNodeClassInAllowedClasses(const UClass& FlowNodeClass, const TSubclassOf<UFlowNodeBase>& RequiredAncestor = nullptr) const;
 	bool IsFlowNodeClassInDeniedClasses(const UClass& FlowNodeClass) const;
+
+private:
+	// Recursively validates the given addon and its children.
+	void ValidateAddOnTree(UFlowNodeAddOn& AddOn, FFlowMessageLog& MessageLog);
 #endif
 
 //////////////////////////////////////////////////////////////////////////
