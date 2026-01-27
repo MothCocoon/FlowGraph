@@ -894,10 +894,9 @@ void UFlowNode::TriggerInput(const FName& PinName, const EFlowPinActivationType 
 		TArray<FPinRecord>& Records = InputRecords.FindOrAdd(PinName);
 		Records.Add(FPinRecord(FApp::GetCurrentTime(), ActivationType));
 
-		UFlowAsset* FlowAssetInstance = GetFlowAsset();
-		if (const UFlowAsset* FlowAssetTemplate = FlowAssetInstance->GetTemplateAsset())
+		if (const UFlowAsset* FlowAssetTemplate = GetFlowAsset()->GetTemplateAsset())
 		{
-			(void) FlowAssetTemplate->OnPinTriggered.ExecuteIfBound(FlowAssetInstance, NodeGuid, PinName);
+			(void)FlowAssetTemplate->OnPinTriggered.ExecuteIfBound(this, PinName);
 		}
 #endif
 	}
@@ -961,10 +960,9 @@ void UFlowNode::TriggerOutput(const FName PinName, const bool bFinish /*= false*
 		TArray<FPinRecord>& Records = OutputRecords.FindOrAdd(PinName);
 		Records.Add(FPinRecord(FApp::GetCurrentTime(), ActivationType));
 
-		UFlowAsset* FlowAssetInstance = GetFlowAsset();
-		if (const UFlowAsset* FlowAssetTemplate = FlowAssetInstance->GetTemplateAsset())
+		if (const UFlowAsset* FlowAssetTemplate = GetFlowAsset()->GetTemplateAsset())
 		{
-			FlowAssetTemplate->OnPinTriggered.ExecuteIfBound(FlowAssetInstance, NodeGuid, PinName);
+			FlowAssetTemplate->OnPinTriggered.ExecuteIfBound(this, PinName);
 		}
 	}
 	else

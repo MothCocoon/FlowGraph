@@ -116,9 +116,9 @@ void UFlowDebugEditorSubsystem::OnEndPIE(const bool bIsSimulating)
 	}
 }
 
-void UFlowDebugEditorSubsystem::PauseSession(const UFlowAsset& FlowAssetInstance)
+void UFlowDebugEditorSubsystem::PauseSession(const UFlowNode& FlowNode)
 {
-	Super::PauseSession(FlowAssetInstance);
+	Super::PauseSession(FlowNode);
 
 	constexpr bool bShouldBePaused = true;
 	const bool bWasPaused = GUnrealEd->SetPIEWorldsPaused(bShouldBePaused);
@@ -128,9 +128,9 @@ void UFlowDebugEditorSubsystem::PauseSession(const UFlowAsset& FlowAssetInstance
 	}
 }
 
-void UFlowDebugEditorSubsystem::ResumeSession(const UFlowAsset& FlowAssetInstance)
+void UFlowDebugEditorSubsystem::ResumeSession(const UFlowNode& FlowNode)
 {
-	Super::ResumeSession(FlowAssetInstance);
+	Super::ResumeSession(FlowNode);
 
 	constexpr bool bShouldBePaused = false;
 	const bool bWasPaused = GUnrealEd->SetPIEWorldsPaused(bShouldBePaused);
@@ -140,9 +140,9 @@ void UFlowDebugEditorSubsystem::ResumeSession(const UFlowAsset& FlowAssetInstanc
 	}
 }
 
-void UFlowDebugEditorSubsystem::OnBreakpointHit(const UFlowAsset& FlowAssetInstance, const FGuid& NodeGuid) const
+void UFlowDebugEditorSubsystem::OnBreakpointHit(const UFlowNode* FlowNode) const
 {
-	UFlowAsset* TemplateAsset = const_cast<UFlowAsset*>(FlowAssetInstance.GetTemplateAsset());
+	UFlowAsset* TemplateAsset = const_cast<UFlowAsset*>(FlowNode->GetFlowAsset()->GetTemplateAsset());
 	if (!IsValid(TemplateAsset))
 	{
 		return;
@@ -160,6 +160,7 @@ void UFlowDebugEditorSubsystem::OnBreakpointHit(const UFlowAsset& FlowAssetInsta
 	}
 
 	TemplateAsset->SetInspectedInstance(&FlowAssetInstance);
+	TemplateAsset->SetInspectedInstance(FlowNode->GetFlowAsset());
 
 	UFlowGraph* FlowGraph = Cast<UFlowGraph>(TemplateAsset->GetGraph());
 	if (!IsValid(FlowGraph))
@@ -174,7 +175,7 @@ void UFlowDebugEditorSubsystem::OnBreakpointHit(const UFlowAsset& FlowAssetInsta
 	for (UEdGraphNode* Node : FlowGraph->Nodes)
 	{
 		UFlowGraphNode* FlowGraphNode = Cast<UFlowGraphNode>(Node);
-		if (IsValid(FlowGraphNode) && FlowGraphNode->NodeGuid == NodeGuid)
+		if (IsValid(FlowGraphNode) && FlowGraphNode->NodeGuid == FlowNode->NodeGuid)
 		{
 			NodeToFocus = FlowGraphNode;
 			break;
