@@ -8,7 +8,9 @@
 #include "FlowDebuggerSubsystem.generated.h"
 
 class UEdGraphNode;
+
 class UFlowAsset;
+class UFlowNode;
 
 /**
  * Persistent subsystem supporting Flow Graph debugging.
@@ -25,15 +27,19 @@ public:
 	virtual bool ShouldCreateSubsystem(UObject* Outer) const override;
 
 protected:
+	bool bPausedAtFlowBreakpoint;
+
+protected:
 	virtual void OnInstancedTemplateAdded(UFlowAsset* AssetTemplate);
 	virtual void OnInstancedTemplateRemoved(UFlowAsset* AssetTemplate) const;
 
-	virtual void OnPinTriggered(const FGuid& NodeGuid, const FName& PinName);
+	virtual void OnPinTriggered(const UFlowNode* Node, const FName& PinName);
 
 public:
 	virtual void AddBreakpoint(const FGuid& NodeGuid);
 	virtual void AddBreakpoint(const FGuid& NodeGuid, const FName& PinName);
 
+	virtual void RemoveAllBreakpoints(const TWeakObjectPtr<UFlowAsset> FlowAsset);
 	virtual void RemoveAllBreakpoints(const FGuid& NodeGuid);
 	virtual void RemoveNodeBreakpoint(const FGuid& NodeGuid);
 	virtual void RemovePinBreakpoint(const FGuid& NodeGuid, const FName& PinName);
@@ -48,18 +54,22 @@ public:
 
 	virtual FFlowBreakpoint* FindBreakpoint(const FGuid& NodeGuid);
 	virtual FFlowBreakpoint* FindBreakpoint(const FGuid& NodeGuid, const FName& PinName);
+	static bool HasAnyBreakpoints(const TWeakObjectPtr<UFlowAsset> FlowAsset);
 
 	virtual void SetBreakpointEnabled(const FGuid& NodeGuid, bool bEnabled);
 	virtual void SetBreakpointEnabled(const FGuid& NodeGuid, const FName& PinName, bool bEnabled);
+	virtual void SetAllBreakpointsEnabled(const TWeakObjectPtr<UFlowAsset> FlowAsset, bool bEnabled);
 
 	virtual bool IsBreakpointEnabled(const FGuid& NodeGuid);
 	virtual bool IsBreakpointEnabled(const FGuid& NodeGuid, const FName& PinName);
+	static bool HasAnyBreakpointsEnabled(const TWeakObjectPtr<UFlowAsset> FlowAsset);
+	static bool HasAnyBreakpointsDisabled(const TWeakObjectPtr<UFlowAsset> FlowAsset);
 
 protected:
-	virtual void MarkAsHit(const FGuid& NodeGuid);
-	virtual void MarkAsHit(const FGuid& NodeGuid, const FName& PinName);
-	
-	virtual void PauseSession();
+	virtual bool TryMarkAsHit(const UFlowNode* Node);
+	virtual bool TryMarkAsHit(const UFlowNode* Node, const FName& PinName);
+
+	virtual void PauseSession(const UFlowNode* Node);
 	virtual void ResumeSession();
 	void SetPause(const bool bPause);
 

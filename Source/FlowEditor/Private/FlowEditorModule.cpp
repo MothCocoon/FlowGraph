@@ -35,6 +35,7 @@
 #include "FlowAsset.h"
 #include "AddOns/FlowNodeAddOn.h"
 #include "Asset/FlowAssetParamsTypes.h"
+#include "Find/FindInFlow.h"
 #include "Nodes/Actor/FlowNode_ComponentObserver.h"
 #include "Nodes/Actor/FlowNode_PlayLevelSequence.h"
 #include "Nodes/Graph/FlowNode_CustomInput.h"
@@ -43,6 +44,7 @@
 #include "Types/FlowNamedDataPinProperty.h"
 
 #include "AssetToolsModule.h"
+#include "AssetRegistry/AssetRegistryModule.h"
 #include "EdGraphUtilities.h"
 #include "IAssetSearchModule.h"
 #include "Framework/MultiBox/MultiBoxBuilder.h"
@@ -60,9 +62,6 @@ FAssetCategoryPath FFlowAssetCategoryPaths::Flow(LOCTEXT("Flow", "Flow"));
 
 void FFlowEditorModule::StartupModule()
 {
-	MenuExtensibilityManager = MakeShared<FExtensibilityManager>();
-	ToolBarExtensibilityManager = MakeShared<FExtensibilityManager>();
-	
 	FFlowEditorStyle::Initialize();
 
 	TrySetFlowNodeDisplayStyleDefaults();
@@ -100,11 +99,22 @@ void FFlowEditorModule::StartupModule()
 	ModulesChangedHandle = FModuleManager::Get().OnModulesChanged().AddRaw(this, &FFlowEditorModule::ModulesChangesCallback);
 }
 
+void FFlowEditorModule::RegisterForAssetChanges()
+{
+	if (!bIsRegisteredForAssetChanges)
+	{
+		// Register asset change detection for search cache invalidation
+		FAssetRegistryModule& AssetRegistry = FModuleManager::LoadModuleChecked<FAssetRegistryModule>("AssetRegistry");
+		AssetRegistry.Get().OnAssetUpdated().AddRaw(this, &FFlowEditorModule::OnAssetUpdated);
+		AssetRegistry.Get().OnAssetRenamed().AddRaw(this, &FFlowEditorModule::OnAssetRenamed);
+		AssetRegistry.Get().OnAssetRemoved().AddRaw(this, &FFlowEditorModule::OnAssetUpdated);
+
+		bIsRegisteredForAssetChanges = true;
+	}
+}
+
 void FFlowEditorModule::ShutdownModule()
 {
-	MenuExtensibilityManager.Reset();
-	ToolBarExtensibilityManager.Reset();
-	
 	FFlowEditorStyle::Shutdown();
 
 	UnregisterDetailCustomizations();
@@ -116,6 +126,18 @@ void FFlowEditorModule::ShutdownModule()
 	SequencerModule.UnRegisterTrackEditor(FlowTrackCreateEditorHandle);
 
 	FModuleManager::Get().OnModulesChanged().Remove(ModulesChangedHandle);
+
+	if (bIsRegisteredForAssetChanges && FModuleManager::Get().IsModuleLoaded("AssetRegistry"))
+	{
+		// Unregister asset change detection
+		FAssetRegistryModule& AssetRegistry = FModuleManager::Get().GetModuleChecked<FAssetRegistryModule>("AssetRegistry");
+
+		AssetRegistry.Get().OnAssetUpdated().RemoveAll(this);
+		AssetRegistry.Get().OnAssetRenamed().RemoveAll(this);
+		AssetRegistry.Get().OnAssetRemoved().RemoveAll(this);
+
+		bIsRegisteredForAssetChanges = false;
+	}
 }
 
 void FFlowEditorModule::TrySetFlowNodeDisplayStyleDefaults() const
@@ -312,6 +334,19 @@ TSharedRef<FFlowAssetEditor> FFlowEditorModule::CreateFlowAssetEditor(const EToo
 	TSharedRef<FFlowAssetEditor> NewFlowAssetEditor(new FFlowAssetEditor());
 	NewFlowAssetEditor->InitFlowAssetEditor(Mode, InitToolkitHost, FlowAsset);
 	return NewFlowAssetEditor;
+}
+
+void FFlowEditorModule::OnAssetUpdated(const FAssetData& AssetData)
+{
+	if (UFlowAsset* FlowAsset = Cast<UFlowAsset>(AssetData.GetAsset()))
+	{
+		FFindInFlowCache::OnFlowAssetChanged(*FlowAsset);
+	}
+}
+
+void FFlowEditorModule::OnAssetRenamed(const FAssetData& AssetData, const FString& OldObjectPath)
+{
+	OnAssetUpdated(AssetData);
 }
 
 #undef LOCTEXT_NAMESPACE

@@ -27,6 +27,6 @@ void UFlowGraphNode_SubGraph::OnNodeDoubleClickedInPIE() const
 	const TWeakObjectPtr<UFlowAsset> SubFlowInstance = GetFlowAsset()->GetFlowInstance(SubGraphNode);
 	if (SubFlowInstance.IsValid())
 	{
-		SubGraphNode->GetFlowAsset()->GetTemplateAsset()->SetInspectedInstance(SubFlowInstance->GetDisplayName());
+		SubGraphNode->GetFlowAsset()->GetTemplateAsset()->SetInspectedInstance(SubFlowInstance);
 	}
 }

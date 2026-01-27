@@ -264,11 +264,28 @@ TArray<FFlowPin> UFlowNodeBase::GetContextOutputs() const
 	return ContextOutputs;
 }
 
-FString UFlowNodeBase::GetStatusString() const
-{
-	return K2_GetStatusString();
-}
 #endif // WITH_EDITOR
+
+void UFlowNodeBase::LogValidationError(const FString& Message)
+{
+#if WITH_EDITOR
+	ValidationLog.Error<UFlowNodeBase>(*Message, this);
+#endif
+}
+
+void UFlowNodeBase::LogValidationWarning(const FString& Message)
+{
+#if WITH_EDITOR
+	ValidationLog.Warning<UFlowNodeBase>(*Message, this);
+#endif
+}
+
+void UFlowNodeBase::LogValidationNote(const FString& Message)
+{
+#if WITH_EDITOR
+	ValidationLog.Note<UFlowNodeBase>(*Message, this);
+#endif
+}
 
 UFlowAsset* UFlowNodeBase::GetFlowAsset() const
 {
@@ -565,6 +582,11 @@ void UFlowNodeBase::SetGraphNode(UEdGraphNode* NewGraphNode)
 	UpdateNodeConfigText();
 }
 
+void UFlowNodeBase::SetCanDelete(const bool CanDelete)
+{
+	bCanDelete = CanDelete;
+}
+
 void UFlowNodeBase::SetupForEditing(UEdGraphNode& EdGraphNode)
 {
 	SetGraphNode(&EdGraphNode);
@@ -600,7 +622,14 @@ void UFlowNodeBase::PostEditChangeProperty(FPropertyChangedEvent& PropertyChange
 
 	UpdateNodeConfigText();
 }
+#endif // WITH_EDITOR
 
+FString UFlowNodeBase::GetStatusString() const
+{
+	return K2_GetStatusString();
+}
+
+#if WITH_EDITOR
 FString UFlowNodeBase::GetNodeCategory() const
 {
 	if (GetClass()->ClassGeneratedBy)
@@ -735,7 +764,6 @@ bool UFlowNodeBase::IsFlowNamedPropertiesSupplier() const
 {
 	return Implements<UFlowNamedPropertiesSupplierInterface>();
 }
-
 #endif
 
 FText UFlowNodeBase::K2_GetNodeTitle_Implementation() const
@@ -930,6 +958,18 @@ bool UFlowNodeBase::BuildMessage(FString& Message) const
 }
 #endif
 
+EDataValidationResult UFlowNodeBase::ValidateNode()
+{
+	EDataValidationResult ValidationResult = EDataValidationResult::NotValidated;
+	
+	if (GetClass()->IsFunctionImplementedInScript(GET_FUNCTION_NAME_CHECKED(UFlowNodeBase, K2_ValidateNode)))
+	{
+		ValidationResult = K2_ValidateNode();
+	}
+
+	return ValidationResult;
+}
+
 bool UFlowNodeBase::TryAddValueToFormatNamedArguments(const FFlowNamedDataPinProperty& NamedDataPinProperty, FFormatNamedArguments& InOutArguments) const
 {
 	const FFlowDataPinValue& DataPinValue = NamedDataPinProperty.DataPinValue.Get();
@@ -1114,4 +1154,5 @@ FFlowDataPinResult_Class UFlowNodeBase::TryResolveDataPinAsClass(const FName& Pi
 	ResolveResult.SetValueFromObjectPtr(Value);
 	return ResolveResult;
 }
+
 // --

@@ -106,6 +106,9 @@ public:
 	UFUNCTION(BlueprintPure, Category = "FlowNode")
 	virtual int32 GetRandomSeed() const PURE_VIRTUAL(GetRandomSeed, return 0;);
 
+	// Returns the owning top-level Flow node.
+	virtual const UFlowNode* GetParentNode() const PURE_VIRTUAL(GetParentNode, return nullptr;);
+
 //////////////////////////////////////////////////////////////////////////
 // Pins	
 
@@ -327,13 +330,13 @@ protected:
 protected:
 	UPROPERTY()
 	TObjectPtr<UEdGraphNode> GraphNode;
-	
+
 	UPROPERTY(EditDefaultsOnly, Category = "FlowNode")
 	uint8 bDisplayNodeTitleWithoutPrefix : 1;
-	
+
 	uint8 bCanDelete : 1 ;
 	uint8 bCanDuplicate : 1;
-	
+
 	UPROPERTY(EditDefaultsOnly, Category = "FlowNode")
 	bool bNodeDeprecated;
 
@@ -343,15 +346,16 @@ protected:
 
 	FFlowNodeEvent OnReconstructionRequested;
 	FFlowNodeEvent OnAddOnRequestedParentReconstruction;
-	FFlowMessageLog ValidationLog;
 #endif // WITH_EDITORONLY_DATA
 
 #if WITH_EDITOR
 public:
 	virtual void PostLoad() override;
-	
+
 	void SetGraphNode(UEdGraphNode* NewGraphNode);
-	UEdGraphNode* GetGraphNode() const { return GraphNode; }
+	virtual UEdGraphNode* GetGraphNode() const { return GraphNode; }
+
+	void SetCanDelete(const bool CanDelete);
 
 	// Set up UFlowNodeBase when being opened for edit in the editor
 	virtual void SetupForEditing(UEdGraphNode& EdGraphNode);
@@ -362,19 +366,16 @@ public:
 	// UObject
 	virtual void PostEditChangeProperty(FPropertyChangedEvent& PropertyChangedEvent) override;
 	// --
-	
-	// used when import graph from another asset
-	virtual void PostImport() {}
-
-	// Called by owning FlowNode to add to its Status String.
-	// (may be multi-line)
-	virtual FString GetStatusString() const;
 
 	void RequestReconstruction() const { (void) OnReconstructionRequested.ExecuteIfBound(); };
-	
-	void SetCanDelete(bool CanDelete) { bCanDelete = CanDelete;}
-	
+
+	// used when import graph from another asset
+	virtual void PostImport() {}
 #endif
+
+public:
+	// Called by owning FlowNode to add to its Status String.
+	virtual FString GetStatusString() const;
 
 protected:
 	// Information displayed while node is working - displayed over node as NodeInfoPopup
@@ -445,7 +446,12 @@ protected:
 
 //////////////////////////////////////////////////////////////////////////
 // Debug support
-	
+
+#if WITH_EDITORONLY_DATA
+protected:
+	FFlowMessageLog ValidationLog;
+#endif // WITH_EDITORONLY_DATA
+
 #if WITH_EDITOR
 public:
 	// Short summary of node's content - displayed over node as NodeInfoPopup
@@ -474,6 +480,27 @@ public:
 protected:
 	bool BuildMessage(FString& Message) const;
 #endif
+
+#if WITH_EDITOR
+	virtual EDataValidationResult ValidateNode();
+#endif	
+
+	// Optional validation override for Blueprints
+	UFUNCTION(BlueprintImplementableEvent, Category = "FlowNode|Validation", meta = (DisplayName = "Validate Node", DevelopmentOnly))
+	EDataValidationResult K2_ValidateNode();
+
+	// Log validation error (editor-only)
+	UFUNCTION(BlueprintCallable, Category = "FlowNode|Validation", meta = (DevelopmentOnly))
+	void LogValidationError(const FString& Message);
+
+	// Log validation warning (editor-only)
+	UFUNCTION(BlueprintCallable, Category = "FlowNode|Validation", meta = (DevelopmentOnly))
+	void LogValidationWarning(const FString& Message);
+
+	// Log validation note (editor-only)
+	UFUNCTION(BlueprintCallable, Category = "FlowNode|Validation", meta = (DevelopmentOnly))
+	void LogValidationNote(const FString& Message);
+	// --
 };
 
 // Templates & inline implementations:
