@@ -228,6 +228,8 @@ public:
 	FLOW_API FFlowDataPinValue_Enum() = default;
 	FLOW_API FFlowDataPinValue_Enum(const TSoftObjectPtr<UEnum>& InEnumClass, const ValueType& InValue);
 	FLOW_API FFlowDataPinValue_Enum(const TSoftObjectPtr<UEnum>& InEnumClass, const TArray<ValueType>& InValues);
+	FLOW_API FFlowDataPinValue_Enum(UEnum& InEnumClass, const TArray<uint8>& InValues);
+
 
 #if WITH_EDITOR
 	FLOW_API void OnEnumNameChanged();
@@ -458,6 +460,7 @@ public:
 	FLOW_API FFlowDataPinValue_Object() = default;
 	FLOW_API FFlowDataPinValue_Object(TObjectPtr<UObject> InObject, UClass* InClassFilter = UObject::StaticClass());
 	FLOW_API FFlowDataPinValue_Object(const TArray<TObjectPtr<UObject>>& InObjects, UClass* InClassFilter = UObject::StaticClass());
+	FLOW_API FFlowDataPinValue_Object(const TArray<UObject*>& InObjects, UClass* InClassFilter = UObject::StaticClass());
 	FLOW_API FFlowDataPinValue_Object(AActor* InActor, UClass* InClassFilter = nullptr /* nullptr here defaults to AActor::StaticClass() */ );
 	FLOW_API FFlowDataPinValue_Object(const TArray<AActor*>& InActors, UClass* InClassFilter = nullptr /* nullptr here defaults to AActor::StaticClass() */);
 

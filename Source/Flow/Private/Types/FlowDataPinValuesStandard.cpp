@@ -267,6 +267,22 @@ FFlowDataPinValue_Enum::FFlowDataPinValue_Enum(const TSoftObjectPtr<UEnum>& InEn
 #endif
 }
 
+FFlowDataPinValue_Enum::FFlowDataPinValue_Enum(UEnum& InEnumClass, const TArray<uint8>& InValues)
+{
+#if WITH_EDITOR
+	MultiType = EFlowDataMultiType::Array;
+#endif
+
+	EnumClass = &InEnumClass;
+	Values.Reserve(InValues.Num());
+
+	for (uint8 RawValue : InValues)
+	{
+		const FName EnumValueName = InEnumClass.GetNameByValue(RawValue);
+		Values.Add(EnumValueName);
+	}
+}
+
 #if WITH_EDITOR
 void FFlowDataPinValue_Enum::OnEnumNameChanged()
 {
@@ -530,6 +546,14 @@ FFlowDataPinValue_Object::FFlowDataPinValue_Object(const TArray<AActor*>& InActo
 	{
 		Values.Add(Cast<UObject>(Actor));
 	}
+}
+
+FFlowDataPinValue_Object::FFlowDataPinValue_Object(const TArray<UObject*>& InObjects, UClass* InClassFilter)
+{
+#if WITH_EDITOR
+	MultiType = EFlowDataMultiType::Array;
+#endif
+	Values = InObjects;
 }
 
 bool FFlowDataPinValue_Object::TryConvertValuesToString(FString& OutString) const
