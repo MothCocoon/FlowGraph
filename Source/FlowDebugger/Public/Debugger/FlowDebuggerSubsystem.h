@@ -35,9 +35,6 @@ public:
 	virtual bool ShouldCreateSubsystem(UObject* Outer) const override;
 
 protected:
-	bool bPausedAtFlowBreakpoint;
-
-protected:
 	virtual void OnInstancedTemplateAdded(UFlowAsset* AssetTemplate);
 	virtual void OnInstancedTemplateRemoved(UFlowAsset* AssetTemplate);
 
@@ -74,8 +71,9 @@ public:
 
 	virtual bool IsBreakpointEnabled(const FGuid& NodeGuid);
 	virtual bool IsBreakpointEnabled(const FGuid& NodeGuid, const FName& PinName);
-	static bool HasAnyBreakpointsEnabled(const TWeakObjectPtr<UFlowAsset> FlowAsset);
-	static bool HasAnyBreakpointsDisabled(const TWeakObjectPtr<UFlowAsset> FlowAsset);
+	static bool HasAnyBreakpointsEnabled(const TWeakObjectPtr<UFlowAsset>& FlowAsset);
+	static bool HasAnyBreakpointsDisabled(const TWeakObjectPtr<UFlowAsset>& FlowAsset);
+	static bool HasAnyBreakpointsMatching(const TWeakObjectPtr<UFlowAsset>& FlowAsset, bool bDesiresEnabled);
 
 protected:
 	virtual void MarkAsHit(const UFlowAsset& FlowAssetInstance, const FGuid& NodeGuid);

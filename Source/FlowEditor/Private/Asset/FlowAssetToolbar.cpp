@@ -11,6 +11,7 @@
 #include "FlowAsset.h"
 #include "Nodes/Graph/FlowNode_SubGraph.h"
 
+#include "Brushes/SlateRoundedBoxBrush.h"
 #include "Kismet2/DebuggerCommands.h"
 #include "Misc/Attribute.h"
 #include "Misc/MessageDialog.h"
@@ -52,7 +53,7 @@ void SFlowAssetInstanceList::Construct(const FArguments& InArgs, const TWeakObje
 		.ContentPadding(FMargin(0.f, 2.f))
 		[
 			SNew(STextBlock)
-			.Text(this, &SFlowAssetInstanceList::GetSelectedContextName)
+				.Text(this, &SFlowAssetInstanceList::GetSelectedContextName)
 		];
 
 	InstanceComboBox = SNew(SComboBox<TSharedPtr<FObjectKey>>)
@@ -62,26 +63,26 @@ void SFlowAssetInstanceList::Construct(const FArguments& InArgs, const TWeakObje
 		.ContentPadding(FMargin(0.f, 2.f))
 		[
 			SNew(STextBlock)
-			.Text(this, &SFlowAssetInstanceList::GetSelectedInstanceName)
+				.Text(this, &SFlowAssetInstanceList::GetSelectedInstanceName)
 		];
 
 	ChildSlot
-	[
-		SNew(SHorizontalBox)
-		.Visibility_Static(&SFlowAssetInstanceList::GetDebuggerVisibility)
-		+ SHorizontalBox::Slot()
-		.AutoWidth()
-		.Padding(0.0f, 0.0f, 8.0f, 0.0f)
 		[
-			ContextComboBox.ToSharedRef()
-		]
-		+ SHorizontalBox::Slot()
-		.AutoWidth()
-		.Padding(0.0f, 0.0f, 4.0f, 0.0f)
-		[
-			InstanceComboBox.ToSharedRef()
-		]
-	];
+			SNew(SHorizontalBox)
+				.Visibility_Static(&SFlowAssetInstanceList::GetDebuggerVisibility)
+				+ SHorizontalBox::Slot()
+				.AutoWidth()
+				.Padding(0.0f, 0.0f, 8.0f, 0.0f)
+				[
+					ContextComboBox.ToSharedRef()
+				]
+				+ SHorizontalBox::Slot()
+				.AutoWidth()
+				.Padding(0.0f, 0.0f, 4.0f, 0.0f)
+				[
+					InstanceComboBox.ToSharedRef()
+				]
+		];
 }
 
 SFlowAssetInstanceList::~SFlowAssetInstanceList()
@@ -89,37 +90,6 @@ SFlowAssetInstanceList::~SFlowAssetInstanceList()
 	if (TemplateAsset.IsValid())
 	{
 		TemplateAsset->OnDebuggerRefresh().RemoveAll(this);
-	}
-}
-
-void SFlowAssetInstanceList::RefreshInstances()
-{
-	if (!TemplateAsset.IsValid())
-	{
-		return;
-	}
-
-	// collect instance names of this Flow Asset
-	InstanceNames = {MakeShareable(new FName(*NoInstanceSelectedText.ToString()))};
-	TemplateAsset->GetInstanceDisplayNames(InstanceNames);
-
-	// select instance
-	if (const UFlowAsset* InspectedInstance = TemplateAsset->GetInspectedInstance())
-	{
-		const FName& InspectedInstanceName = InspectedInstance->GetDisplayName();
-		for (const TSharedPtr<FName>& Instance : InstanceNames)
-		{
-			if (Instance.IsValid() && *Instance == InspectedInstanceName)
-			{
-				SelectedInstance = Instance;
-				break;
-			}
-		}
-	}
-	else
-	{
-		// default object is always available
-		SelectedInstance = InstanceNames[0];
 	}
 }
 
@@ -258,12 +228,7 @@ void SFlowAssetInstanceList::OnInstanceSelectionChanged(const TSharedPtr<FObject
 		const UFlowAsset* Instance = Cast<UFlowAsset>(SelectedInstance->ResolveObjectPtr());
 		if (TemplateAsset.IsValid())
 		{
-			const bool bIsNoInstance =
-				(!SelectedInstance.IsValid()) ||
-				(InstanceNames.Num() > 0 && SelectedInstance.IsValid() && *SelectedInstance == *InstanceNames[0]);
-
-			const FName NewSelectedInstanceName = bIsNoInstance ? NAME_None : *SelectedInstance;
-			TemplateAsset->SetInspectedInstance(NewSelectedInstanceName);
+			TemplateAsset->SetInspectedInstance(Instance);
 		}
 	}
 }
@@ -305,28 +270,28 @@ void SFlowAssetBreadcrumb::Construct(const FArguments& InArgs, const TWeakObject
 
 	// create breadcrumb
 	SAssignNew(BreadcrumbTrail, SBreadcrumbTrail<FFlowBreadcrumb>)
-	.Visibility_Static(&SFlowAssetInstanceList::GetDebuggerVisibility)
-	.OnCrumbClicked(this, &SFlowAssetBreadcrumb::OnCrumbClicked)
-	.ButtonStyle(FAppStyle::Get(), "SimpleButton")
-	.TextStyle(FAppStyle::Get(), "NormalText")
-	.ButtonContentPadding(FMargin(2.0f, 4.0f))
-	.DelimiterImage(FAppStyle::GetBrush("Icons.ChevronRight"))
-	.ShowLeadingDelimiter(true)
-	.PersistentBreadcrumbs(true);
+		.Visibility_Static(&SFlowAssetInstanceList::GetDebuggerVisibility)
+		.OnCrumbClicked(this, &SFlowAssetBreadcrumb::OnCrumbClicked)
+		.ButtonStyle(FAppStyle::Get(), "SimpleButton")
+		.TextStyle(FAppStyle::Get(), "NormalText")
+		.ButtonContentPadding(FMargin(2.0f, 4.0f))
+		.DelimiterImage(FAppStyle::GetBrush("Icons.ChevronRight"))
+		.ShowLeadingDelimiter(true)
+		.PersistentBreadcrumbs(true);
 
 	ChildSlot
-	[
-		SNew(SBorder)
-		.Visibility(this, &SFlowAssetBreadcrumb::GetBreadcrumbVisibility)
-		.BorderImage(new FSlateRoundedBoxBrush(FStyleColors::Transparent, 4, FStyleColors::InputOutline, 1))
 		[
-			SNew(SBox)
-			.MaxDesiredWidth(500.f)
-			[
-				BreadcrumbTrail.ToSharedRef()
-			]
-		]
-	];
+			SNew(SBorder)
+				.Visibility(this, &SFlowAssetBreadcrumb::GetBreadcrumbVisibility)
+				.BorderImage(new FSlateRoundedBoxBrush(FStyleColors::Transparent, 4, FStyleColors::InputOutline, 1))
+				[
+					SNew(SBox)
+						.MaxDesiredWidth(500.f)
+						[
+							BreadcrumbTrail.ToSharedRef()
+						]
+				]
+		];
 
 	TemplateAsset->OnDebuggerRefresh().AddSP(this, &SFlowAssetBreadcrumb::FillBreadcrumb);
 	FillBreadcrumb();
@@ -342,7 +307,7 @@ void SFlowAssetBreadcrumb::FillBreadcrumb() const
 	BreadcrumbTrail->ClearCrumbs();
 	if (const UFlowAsset* InspectedInstance = TemplateAsset->GetInspectedInstance())
 	{
-		TArray<TWeakObjectPtr<const UFlowAsset>> InstancesFromRoot = {InspectedInstance};
+		TArray<TWeakObjectPtr<const UFlowAsset>> InstancesFromRoot = { InspectedInstance };
 
 		const UFlowAsset* CheckedInstance = InspectedInstance;
 		while (UFlowAsset* ParentInstance = CheckedInstance->GetParentInstance())
@@ -411,23 +376,23 @@ void FFlowAssetToolbar::BuildAssetToolbar(UToolMenu* ToolbarMenu) const
 
 		// Visual Diff: menu to choose asset revision compared with the current one 
 		Section.AddDynamicEntry("SourceControlCommands", FNewToolMenuSectionDelegate::CreateLambda([](FToolMenuSection& InSection)
-		{
-			const UFlowAssetEditorContext* Context = InSection.FindContext<UFlowAssetEditorContext>();
-			if (Context && Context->FlowAssetEditor.IsValid())
 			{
-				InSection.InsertPosition = FToolMenuInsert();
-				FToolMenuEntry DiffEntry = FToolMenuEntry::InitComboButton(
-					"Diff",
-					FUIAction(),
-					FOnGetContent::CreateStatic(&FFlowAssetToolbar::MakeDiffMenu, Context),
-					LOCTEXT("Diff", "Diff"),
-					LOCTEXT("FlowAssetEditorDiffToolTip", "Diff against previous revisions"),
-					FSlateIcon(FAppStyle::Get().GetStyleSetName(), "BlueprintDiff.ToolbarIcon")
-				);
-				DiffEntry.StyleNameOverride = "CalloutToolbar";
-				InSection.AddEntry(DiffEntry);
-			}
-		}));
+				const UFlowAssetEditorContext* Context = InSection.FindContext<UFlowAssetEditorContext>();
+				if (Context && Context->FlowAssetEditor.IsValid())
+				{
+					InSection.InsertPosition = FToolMenuInsert();
+					FToolMenuEntry DiffEntry = FToolMenuEntry::InitComboButton(
+						"Diff",
+						FUIAction(),
+						FOnGetContent::CreateStatic(&FFlowAssetToolbar::MakeDiffMenu, Context),
+						LOCTEXT("Diff", "Diff"),
+						LOCTEXT("FlowAssetEditorDiffToolTip", "Diff against previous revisions"),
+						FSlateIcon(FAppStyle::Get().GetStyleSetName(), "BlueprintDiff.ToolbarIcon")
+					);
+					DiffEntry.StyleNameOverride = "CalloutToolbar";
+					InSection.AddEntry(DiffEntry);
+				}
+			}));
 
 		Section.AddEntry(FToolMenuEntry::InitToolBarButton(
 			FFlowToolbarCommands::Get().SearchInAsset,
@@ -467,8 +432,8 @@ static void OnDiffRevisionPicked(FRevisionInfo const& RevisionInfo, const FStrin
 						if (PreviousAsset)
 						{
 							const FAssetToolsModule& AssetToolsModule = FModuleManager::LoadModuleChecked<FAssetToolsModule>(TEXT("AssetTools"));
-							const FRevisionInfo OldRevision = {Revision->GetRevision(), Revision->GetCheckInIdentifier(), Revision->GetDate()};
-							const FRevisionInfo CurrentRevision = {TEXT(""), Revision->GetCheckInIdentifier(), Revision->GetDate()};
+							const FRevisionInfo OldRevision = { Revision->GetRevision(), Revision->GetCheckInIdentifier(), Revision->GetDate() };
+							const FRevisionInfo CurrentRevision = { TEXT(""), Revision->GetCheckInIdentifier(), Revision->GetDate() };
 							AssetToolsModule.Get().DiffAssets(PreviousAsset, CurrentAsset.Get(), OldRevision, CurrentRevision);
 						}
 					}
@@ -518,16 +483,16 @@ void FFlowAssetToolbar::BuildDebuggerToolbar(UToolMenu* ToolbarMenu) const
 	Section.InsertPosition = FToolMenuInsert("View", EToolMenuInsertType::After);
 
 	Section.AddDynamicEntry("DebuggingCommands", FNewToolMenuSectionDelegate::CreateLambda([](FToolMenuSection& InSection)
-	{
-		const UFlowAssetEditorContext* Context = InSection.FindContext<UFlowAssetEditorContext>();
-		if (Context && Context->GetFlowAsset())
 		{
-			FPlayWorldCommands::BuildToolbar(InSection);
+			const UFlowAssetEditorContext* Context = InSection.FindContext<UFlowAssetEditorContext>();
+			if (Context && Context->GetFlowAsset())
+			{
+				FPlayWorldCommands::BuildToolbar(InSection);
 
-			InSection.AddEntry(FToolMenuEntry::InitWidget("AssetInstances", SNew(SFlowAssetInstanceList, Context->GetFlowAsset()), FText(), true));
-			InSection.AddEntry(FToolMenuEntry::InitWidget("AssetBreadcrumb", SNew(SFlowAssetBreadcrumb, Context->GetFlowAsset()), FText(), true));
-		}
-	}));
+				InSection.AddEntry(FToolMenuEntry::InitWidget("AssetInstances", SNew(SFlowAssetInstanceList, Context->GetFlowAsset()), FText(), true));
+				InSection.AddEntry(FToolMenuEntry::InitWidget("AssetBreadcrumb", SNew(SFlowAssetBreadcrumb, Context->GetFlowAsset()), FText(), true));
+			}
+		}));
 }
 
 #undef LOCTEXT_NAMESPACE
