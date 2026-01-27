@@ -159,7 +159,6 @@ void UFlowDebugEditorSubsystem::OnBreakpointHit(const UFlowNode* FlowNode) const
 		return;
 	}
 
-	TemplateAsset->SetInspectedInstance(&FlowAssetInstance);
 	TemplateAsset->SetInspectedInstance(FlowNode->GetFlowAsset());
 
 	UFlowGraph* FlowGraph = Cast<UFlowGraph>(TemplateAsset->GetGraph());

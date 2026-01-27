@@ -31,6 +31,8 @@ private:
 	TSet<FName> CustomClassLayouts;
 	TSet<FName> CustomStructLayouts;
 
+	bool bIsRegisteredForAssetChanges = false;
+
 public:
 	virtual void StartupModule() override;
 	virtual void ShutdownModule() override;

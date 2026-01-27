@@ -325,21 +325,44 @@ bool UFlowDebuggerSubsystem::IsBreakpointEnabled(const FGuid& NodeGuid, const FN
 	return false;
 }
 
-bool UFlowDebuggerSubsystem::HasAnyBreakpointsEnabled(const TWeakObjectPtr<UFlowAsset> FlowAsset)
+bool UFlowDebuggerSubsystem::HasAnyBreakpointsEnabled(const TWeakObjectPtr<UFlowAsset>& FlowAsset)
 {
-	UFlowDebuggerSettings* Settings = GetMutableDefault<UFlowDebuggerSettings>();
-	for (const TPair<FGuid, UFlowNode*>& Node : FlowAsset->GetNodes())
+	return HasAnyBreakpointsMatching(FlowAsset, true);
+}
+
+bool UFlowDebuggerSubsystem::HasAnyBreakpointsDisabled(const TWeakObjectPtr<UFlowAsset>& FlowAsset)
+{
+	return HasAnyBreakpointsMatching(FlowAsset, false);
+}
+
+bool UFlowDebuggerSubsystem::HasAnyBreakpointsMatching(const TWeakObjectPtr<UFlowAsset>& FlowAsset, bool bDesiresEnabled)
+{
+	if (!FlowAsset.IsValid())
 	{
-		if (FNodeBreakpoint* NodeBreakpoint = Settings->NodeBreakpoints.Find(Node.Key))
+		return false;
+	}
+
+	const UFlowDebuggerSettings* Settings = GetDefault<UFlowDebuggerSettings>();
+	if (!Settings)
+	{
+		return false;
+	}
+
+	for (const TPair<FGuid, UFlowNode*>& NodePair : FlowAsset->GetNodes())
+	{
+		if (const FNodeBreakpoint* NodeBreakpoint = Settings->NodeBreakpoints.Find(NodePair.Key))
 		{
-			if (NodeBreakpoint->Breakpoint.IsActive() && NodeBreakpoint->Breakpoint.IsEnabled())
+			// Node-level breakpoint must be active to count (matches original behavior)
+			if (NodeBreakpoint->Breakpoint.IsActive() &&
+				(NodeBreakpoint->Breakpoint.IsEnabled() == bDesiresEnabled))
 			{
 				return true;
 			}
 
-			for (auto& [Name, PinBreakpoint] : NodeBreakpoint->PinBreakpoints)
+			// Pin-level breakpoints
+			for (const auto& PinPair : NodeBreakpoint->PinBreakpoints)
 			{
-				if (PinBreakpoint.IsEnabled())
+				if (PinPair.Value.IsEnabled() == bDesiresEnabled)
 				{
 					return true;
 				}
@@ -350,29 +373,45 @@ bool UFlowDebuggerSubsystem::HasAnyBreakpointsEnabled(const TWeakObjectPtr<UFlow
 	return false;
 }
 
-bool UFlowDebuggerSubsystem::HasAnyBreakpointsDisabled(const TWeakObjectPtr<UFlowAsset> FlowAsset)
+void UFlowDebuggerSubsystem::RequestHaltFlowExecution(const UFlowNode* Node)
 {
-	UFlowDebuggerSettings* Settings = GetMutableDefault<UFlowDebuggerSettings>();
-	for (const TPair<FGuid, UFlowNode*>& Node : FlowAsset->GetNodes())
-	{
-		if (FNodeBreakpoint* NodeBreakpoint = Settings->NodeBreakpoints.Find(Node.Key))
-		{
-			if (NodeBreakpoint->Breakpoint.IsActive() && !NodeBreakpoint->Breakpoint.IsEnabled())
-			{
-				return true;
-			}
+	bHaltFlowExecution = true;
+	HaltedOnFlowAssetInstance = Node->GetFlowAsset();
+	HaltedOnNodeGuid = Node->NodeGuid;
+}
 
-			for (auto& [Name, PinBreakpoint] : NodeBreakpoint->PinBreakpoints)
-			{
-				if (!PinBreakpoint.IsEnabled())
-				{
-					return true;
-				}
-			}
+void UFlowDebuggerSubsystem::ClearHaltFlowExecution()
+{
+	bHaltFlowExecution = false;
+	HaltedOnFlowAssetInstance.Reset();
+	HaltedOnNodeGuid.Invalidate();
+}
+
+void UFlowDebuggerSubsystem::ClearLastHitBreakpoint()
+{
+	if (!LastHitNodeGuid.IsValid())
+	{
+		return;
+	}
+
+	// Pin breakpoint "hit" state lives in the PinBreakpoints map, node breakpoint "hit" lives on NodeBreakpoint.Breakpoint.
+	if (!LastHitPinName.IsNone())
+	{
+		if (FFlowBreakpoint* PinBreakpoint = FindBreakpoint(LastHitNodeGuid, LastHitPinName))
+		{
+			PinBreakpoint->MarkAsHit(false);
+		}
+	}
+	else
+	{
+		if (FFlowBreakpoint* NodeBreakpoint = FindBreakpoint(LastHitNodeGuid))
+		{
+			NodeBreakpoint->MarkAsHit(false);
 		}
 	}
 
-	return false;
+	LastHitNodeGuid.Invalidate();
+	LastHitPinName = NAME_None;
 }
 
 void UFlowDebuggerSubsystem::MarkAsHit(const UFlowNode* FlowNode)
@@ -413,100 +452,12 @@ void UFlowDebuggerSubsystem::MarkAsHit(const UFlowNode* FlowNode, const FName& P
 			LastHitPinName = PinName;
 
 			RequestHaltFlowExecution(FlowNode);
+
 			OnDebuggerBreakpointHit.Broadcast(FlowNode);
 
 			PauseSession(*FlowNode);
 		}
 	}
-}
-
-void UFlowDebuggerSubsystem::RequestHaltFlowExecution(const UFlowNode* Node)
-{
-	bHaltFlowExecution = true;
-	HaltedOnFlowAssetInstance = Node->GetFlowAsset();
-	HaltedOnNodeGuid = Node->NodeGuid;
-}
-
-void UFlowDebuggerSubsystem::ClearHaltFlowExecution()
-{
-	bHaltFlowExecution = false;
-	HaltedOnFlowAssetInstance.Reset();
-	HaltedOnNodeGuid.Invalidate();
-}
-
-void UFlowDebuggerSubsystem::ClearLastHitBreakpoint()
-{
-	if (!LastHitNodeGuid.IsValid())
-	{
-		return;
-	}
-
-	// Pin breakpoint "hit" state lives in the PinBreakpoints map, node breakpoint "hit" lives on NodeBreakpoint.Breakpoint.
-	if (!LastHitPinName.IsNone())
-	{
-		if (FFlowBreakpoint* PinBreakpoint = FindBreakpoint(LastHitNodeGuid, LastHitPinName))
-		{
-			PinBreakpoint->MarkAsHit(false);
-		}
-	}
-	else
-	{
-		if (FFlowBreakpoint* NodeBreakpoint = FindBreakpoint(LastHitNodeGuid))
-		{
-			NodeBreakpoint->MarkAsHit(false);
-		}
-	}
-}
-
-bool UFlowDebuggerSubsystem::HasAnyBreakpointsEnabled(const TWeakObjectPtr<UFlowAsset>& FlowAsset)
-{
-    return HasAnyBreakpointsMatching(FlowAsset, true);
-}
-
-bool UFlowDebuggerSubsystem::HasAnyBreakpointsDisabled(const TWeakObjectPtr<UFlowAsset>& FlowAsset)
-{
-    return HasAnyBreakpointsMatching(FlowAsset, false);
-}
-
-bool UFlowDebuggerSubsystem::HasAnyBreakpointsMatching(const TWeakObjectPtr<UFlowAsset>& FlowAsset, bool bDesiresEnabled)
-{
-    if (!FlowAsset.IsValid())
-    {
-        return false;
-    }
-
-    const UFlowDebuggerSettings* Settings = GetDefault<UFlowDebuggerSettings>();
-    if (!Settings)
-    {
-        return false;
-    }
-
-    for (const TPair<FGuid, UFlowNode*>& NodePair : FlowAsset->GetNodes())
-    {
-        if (const FNodeBreakpoint* NodeBreakpoint = Settings->NodeBreakpoints.Find(NodePair.Key))
-        {
-            // Node-level breakpoint must be active to count (matches original behavior)
-            if (NodeBreakpoint->Breakpoint.IsActive() &&
-                (NodeBreakpoint->Breakpoint.IsEnabled() == bDesiresEnabled))
-            {
-                return true;
-            }
-
-            // Pin-level breakpoints
-            for (const auto& PinPair : NodeBreakpoint->PinBreakpoints)
-            {
-                if (PinPair.Value.IsEnabled() == bDesiresEnabled)
-                {
-                    return true;
-                }
-            }
-        }
-    }
-
-    return false;
-
-	LastHitNodeGuid.Invalidate();
-	LastHitPinName = NAME_None;
 }
 
 void UFlowDebuggerSubsystem::PauseSession(const UFlowNode& FlowNode)
