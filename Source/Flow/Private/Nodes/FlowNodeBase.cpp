@@ -958,7 +958,6 @@ bool UFlowNodeBase::BuildMessage(FString& Message) const
 }
 #endif
 
-#if WITH_EDITOR
 EDataValidationResult UFlowNodeBase::ValidateNode()
 {
 	EDataValidationResult ValidationResult = EDataValidationResult::NotValidated;
@@ -970,7 +969,6 @@ EDataValidationResult UFlowNodeBase::ValidateNode()
 
 	return ValidationResult;
 }
-#endif
 
 bool UFlowNodeBase::TryAddValueToFormatNamedArguments(const FFlowNamedDataPinProperty& NamedDataPinProperty, FFormatNamedArguments& InOutArguments) const
 {
