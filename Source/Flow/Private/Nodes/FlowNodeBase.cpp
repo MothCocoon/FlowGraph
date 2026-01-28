@@ -743,6 +743,7 @@ FString UFlowNodeBase::GetNodeDescriptionWithAddons() const
 
 	return Description;
 }
+
 bool UFlowNodeBase::CanModifyFlowDataPinType() const
 {
 	return !IsPlacedInFlowAsset() || IsFlowNamedPropertiesSupplier();
