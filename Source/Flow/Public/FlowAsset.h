@@ -4,6 +4,7 @@
 
 #include "FlowSave.h"
 #include "FlowTypes.h"
+#include "Asset/FlowAssetParamsTypes.h"
 #include "Nodes/FlowNode.h"
 
 #if WITH_EDITOR
@@ -21,41 +22,12 @@ class UFlowSubsystem;
 class UEdGraph;
 class UEdGraphNode;
 class UFlowAsset;
+class UFlowAssetParams;
 
 #if !UE_BUILD_SHIPPING
 DECLARE_DELEGATE(FFlowGraphEvent);
-DECLARE_DELEGATE_TwoParams(FFlowSignalEvent, const FGuid& /*NodeGuid*/, const FName& /*PinName*/);
+DECLARE_DELEGATE_TwoParams(FFlowSignalEvent, const UFlowNode* /*Node*/, const FName& /*PinName*/);
 #endif
-
-// Working Data struct for the Harvest Data Pins operation
-// (passed between functions involved in the harvesting operation to simplify the function signatures)
-struct FFlowHarvestDataPinsWorkingData
-{
-	FFlowHarvestDataPinsWorkingData(UFlowNode& InFlowNode, const TMap<FName, FName>& PinNameMapPrev, const TArray<FFlowPin>& InputPinsPrev, const TArray<FFlowPin>& OutputPinsPrev)
-		: FlowNode(&InFlowNode)
-		, PinNameToBoundPropertyNameMapPrev(PinNameMapPrev)
-		, AutoInputDataPinsPrev(InputPinsPrev)
-		, AutoOutputDataPinsPrev(OutputPinsPrev)
-		{ }
-
-#if WITH_EDITOR
-	bool DidPinNameToBoundPropertyNameMapChange() const;
-	bool DidAutoInputDataPinsChange() const;
-	bool DidAutoOutputDataPinsChange() const;
-#endif
-
-	UFlowNode* FlowNode = nullptr;
-
-	const TMap<FName, FName>& PinNameToBoundPropertyNameMapPrev;
-	const TArray<FFlowPin>& AutoInputDataPinsPrev;
-	const TArray<FFlowPin>& AutoOutputDataPinsPrev;
-	
-	TMap<FName, FName> PinNameToBoundPropertyNameMapNext;
-	TArray<FFlowPin> AutoInputDataPinsNext;
-	TArray<FFlowPin> AutoOutputDataPinsNext;
-
-	bool bPinNameMapChanged = false;
-};
 
 /**
  * Single asset containing flow nodes.
@@ -103,7 +75,9 @@ public:
 	FSimpleDelegate OnDetailsRefreshRequested;
 
 	static FString ValidationError_NodeClassNotAllowed;
+	static FString ValidationError_AddOnNodeClassNotAllowed;
 	static FString ValidationError_NullNodeInstance;
+	static FString ValidationError_NullAddOnNodeInstance;
 
 private:
 	UPROPERTY()
@@ -119,6 +93,8 @@ public:
 	// Returns whether the node class is allowed in this flow asset
 	bool IsNodeOrAddOnClassAllowed(const UClass* FlowNodeClass, FText* OutOptionalFailureReason = nullptr) const;
 
+	virtual TSubclassOf<UFlowAsset> GetDefaultFlowAssetForSubgraphs() const { return GetClass(); }
+
 protected:
 	bool CanFlowNodeClassBeUsedByFlowAsset(const UClass& FlowNodeClass) const;
 	bool CanFlowAssetUseFlowNodeClass(const UClass& FlowNodeClass) const;
@@ -126,6 +102,10 @@ protected:
 
 	bool IsFlowNodeClassInAllowedClasses(const UClass& FlowNodeClass, const TSubclassOf<UFlowNodeBase>& RequiredAncestor = nullptr) const;
 	bool IsFlowNodeClassInDeniedClasses(const UClass& FlowNodeClass) const;
+
+private:
+	// Recursively validates the given addon and its children.
+	void ValidateAddOnTree(UFlowNodeAddOn& AddOn, FFlowMessageLog& MessageLog);
 #endif
 
 //////////////////////////////////////////////////////////////////////////
@@ -154,7 +134,7 @@ protected:
 	TArray<FName> CustomInputs;
 
 	/**
-	 * Custom Outputs define custom graph outputs, this allow to send signals to the parent graph while executing this graph
+	 * Custom Outputs define custom graph outputs, this allows to send signals to the parent graph while executing this graph
 	 * Sub Graph node using this Flow Asset will generate context Output Pin for every valid Event name on this list
 	 */
 	UPROPERTY(EditAnywhere, Category = "Sub Graph")
@@ -173,24 +153,10 @@ public:
 	// Processes nodes and updates pin connections from the graph to the UFlowNode (processes all nodes in the graph if passed nullptr)
 	void HarvestNodeConnections(UFlowNode* TargetNode = nullptr);
 
-	// Updates the auto-generated pins and bindings for a given FlowNode,
-	// returns true if any changes were made.
-	bool TryUpdateManagedFlowPinsForNode(UFlowNode& FlowNode);
+	static bool TryGetDefaultForInputPinName(const FStructProperty& StructProperty, const void* Container, FString& OutString);
 
-protected:
-	void AddDataPinPropertyBindingToMap(
-		const FName& PinAuthoredName,
-		const FName& PropertyAuthoredName,
-		FFlowHarvestDataPinsWorkingData& InOutData);
-	virtual bool TryCreateFlowDataPinFromMetadataValue(
-		const FString& MetadataValue,
-		UFlowNode& FlowNode,
-		const FProperty& Property,
-		const FText& PinDisplayName,
-		const bool bIsInputPin,
-		TArray<FFlowPin>* InOutDataPinsNext) const;
-
-	void HarvestFlowPinMetadataForProperty(const FProperty* Property, FFlowHarvestDataPinsWorkingData& InOutData);
+	// Updates the auto-generated pins and bindings for a given FlowNode, returns true if any changes were made.
+	static bool TryUpdateManagedFlowPinsForNode(UFlowNode& FlowNode);
 #endif
 
 public:
@@ -209,12 +175,17 @@ public:
 
 		return nullptr;
 	}
+	
+	TArray<UFlowNode*> GetAllNodes() const;
 
 	UFUNCTION(BlueprintPure, Category = "FlowAsset")
 	virtual UFlowNode* GetDefaultEntryNode() const;
 
 	// Gathers all of the nodes that are connected to the Start & Custom Inputs of the flow graph
 	TArray<UFlowNode*> GatherNodesConnectedToAllInputs() const;
+
+	// Return all other Pins connected to the passed Pin.
+	TArray<FConnectedPin> GatherPinsConnectedToPin(const FConnectedPin& Pin) const;
 
 	UFUNCTION(BlueprintPure, Category = "FlowAsset", meta = (DeterminesOutputType = "FlowNodeClass"))
 	TArray<UFlowNode*> GetNodesInExecutionOrder(UFlowNode* FirstIteratedNode, const TSubclassOf<UFlowNode> FlowNodeClass);
@@ -279,7 +250,7 @@ private:
 	TArray<TObjectPtr<UFlowAsset>> ActiveInstances;
 
 #if WITH_EDITORONLY_DATA
-	TWeakObjectPtr<UFlowAsset> InspectedInstance;
+	TWeakObjectPtr<const UFlowAsset> InspectedInstance;
 
 	// Message log for storing runtime errors/notes/warnings that will only last until the next game run
 	// Log lives in the asset template, so it can be inspected after ending the PIE
@@ -289,15 +260,14 @@ private:
 public:
 	void AddInstance(UFlowAsset* Instance);
 	int32 RemoveInstance(UFlowAsset* Instance);
+	TConstArrayView<TObjectPtr<UFlowAsset>> GetActiveInstances() const { return ActiveInstances; }
 
 	void ClearInstances();
 	int32 GetInstancesNum() const { return ActiveInstances.Num(); }
 
 #if WITH_EDITOR
-	void GetInstanceDisplayNames(TArray<TSharedPtr<FName>>& OutDisplayNames) const;
-
-	void SetInspectedInstance(const FName& NewInspectedInstanceName);
-	UFlowAsset* GetInspectedInstance() const { return InspectedInstance.IsValid() ? InspectedInstance.Get() : nullptr; }
+	void SetInspectedInstance(TWeakObjectPtr<const UFlowAsset> NewInspectedInstance);
+	const UFlowAsset* GetInspectedInstance() const { return InspectedInstance.IsValid() ? InspectedInstance.Get() : nullptr; }
 
 	DECLARE_EVENT(UFlowAsset, FRefreshDebuggerEvent);
 
@@ -392,9 +362,10 @@ protected:
 	void TriggerCustomInput_FromSubGraph(UFlowNode_SubGraph* Node, const FName& EventName) const;
 	void TriggerCustomOutput(const FName& EventName);
 
-	void TriggerInput(const FGuid& NodeGuid, const FName& PinName);
+	// TODO: Extend FromPin through to Node level Trigger functions
+	virtual void TriggerInput(const FGuid& NodeGuid, const FName& PinName, const FConnectedPin& FromPin);
 
-	void FinishNode(UFlowNode* Node);
+	virtual void FinishNode(UFlowNode* Node);
 	void ResetNodes();
 
 #if !UE_BUILD_SHIPPING
@@ -431,7 +402,7 @@ protected:
 	// Expects to be owned (at runtime) by an object with this class (or one of its subclasses)
 	// NOTE - If the class is an AActor, and the flow asset is owned by a component,
 	//        it will consider the component's owner for the AActor
-	UPROPERTY(EditAnywhere, Category = "Flow", meta = (MustImplement = "/Script/Flow.FlowOwnerInterface"))
+	UPROPERTY(EditAnywhere, Category = "Flow")
 	TSubclassOf<UObject> ExpectedOwnerClass;
 
 //////////////////////////////////////////////////////////////////////////
@@ -455,7 +426,29 @@ protected:
 
 public:
 	UFUNCTION(BlueprintNativeEvent, Category = "SaveGame")
-	bool IsBoundToWorld();
+	bool IsBoundToWorld() const;
+
+//////////////////////////////////////////////////////////////////////////
+// FlowAssetParams support (Start node params for a flow graph)
+
+	// Default parameters asset for this Flow Asset (optional)
+	UPROPERTY(EditAnywhere, Category = FlowAssetParams, meta = (ShowCreateNew, HideChildParams))
+	FFlowAssetParamsPtr BaseAssetParams;
+
+#if WITH_EDITOR
+	// Called before saving the asset.
+	virtual void PreSaveRoot(FObjectPreSaveRootContext ObjectSaveContext) override;
+
+	// Generates a new params asset from the Start node.
+	UFlowAssetParams* GenerateParamsFromStartNode();
+
+	// Generates the FlowAssetParams name for the 'base' (root) asset, used when creating the params asset
+	virtual FString GenerateParamsAssetName() const;
+
+protected:
+
+	void ReconcileBaseAssetParams(const FDateTime& AssetLastSavedTimestamp);		
+#endif
 
 //////////////////////////////////////////////////////////////////////////
 // Utils

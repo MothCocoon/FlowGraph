@@ -17,6 +17,21 @@ UFlowNodeAddOn::UFlowNodeAddOn()
 #endif
 }
 
+#if WITH_EDITOR
+UEdGraphNode* UFlowNodeAddOn::GetGraphNode() const
+{
+	// todo: we might want to cache editor-time pointer to owning Flow Node
+	// it may require more work than just caching it, as pointer needs 
+	// to be updated during editor operations
+	if (const UFlowNode* OwningFlowNode = FindOwningFlowNode())
+	{
+		return OwningFlowNode->GetGraphNode();
+	}
+
+	return nullptr;
+}
+#endif
+
 void UFlowNodeAddOn::InitializeInstance()
 {
 	CacheFlowNode();
@@ -65,9 +80,8 @@ EFlowAddOnAcceptResult UFlowNodeAddOn::AcceptFlowNodeAddOnParent_Implementation(
 
 UFlowNode* UFlowNodeAddOn::GetFlowNode() const
 {
-	// We are making the assumption that this would addlways be known
-	// during runtime and that we are not calling this method before the addon has been
-	// initialized.
+	// We are making the assumption that this would always be known during runtime 
+	// and that we are not calling this method before the addon has been initialized.
 	ensure(FlowNode);
 
 	return FlowNode;
@@ -122,7 +136,7 @@ bool UFlowNodeAddOn::IsSupportedInputPinName(const FName& PinName) const
 void UFlowNodeAddOn::CacheFlowNode()
 {
 	FlowNode = FindOwningFlowNode();
-	
+
 	ensureAsRuntimeWarning(FlowNode);
 }
 
@@ -132,7 +146,7 @@ TArray<FFlowPin> UFlowNodeAddOn::GetPinsForContext(const TArray<FFlowPin>& Conte
 	TArray<FFlowPin> ContextPins = Super::GetContextInputs();
 
 	ContextPins.Reserve(ContextPins.Num() + Context.Num());
-	
+
 	for (const FFlowPin& InputPin : Context)
 	{
 		if (InputPin.IsValid())
@@ -160,6 +174,6 @@ TArray<FFlowPin> UFlowNodeAddOn::GetContextOutputs() const
 
 void UFlowNodeAddOn::RequestReconstructionOnOwningFlowNode() const
 {
-	(void) OnAddOnRequestedParentReconstruction.ExecuteIfBound();	
+	(void)OnAddOnRequestedParentReconstruction.ExecuteIfBound();
 }
 #endif // WITH_EDITOR

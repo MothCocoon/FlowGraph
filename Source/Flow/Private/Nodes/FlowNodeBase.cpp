@@ -2,13 +2,17 @@
 
 #include "Nodes/FlowNodeBase.h"
 
-#include "AddOns/FlowNodeAddOn.h"
 #include "FlowAsset.h"
 #include "FlowLogChannels.h"
 #include "FlowSubsystem.h"
 #include "FlowTypes.h"
+#include "AddOns/FlowNodeAddOn.h"
 #include "Interfaces/FlowDataPinValueSupplierInterface.h"
+#include "Interfaces/FlowNamedPropertiesSupplierInterface.h"
 #include "Types/FlowArray.h"
+#include "Types/FlowDataPinResults.h"
+#include "Types/FlowPinTypesStandard.h"
+#include "Types/FlowNamedDataPinProperty.h"
 
 #include "Components/ActorComponent.h"
 #if WITH_EDITOR
@@ -136,7 +140,7 @@ void UFlowNodeBase::OnActivate()
 void UFlowNodeBase::ExecuteInputForSelfAndAddOns(const FName& PinName)
 {
 	// AddOns can introduce input pins to Nodes without the Node being aware of the addition.
-	// To ensure that Nodes and AddOns only get the input pins signalled that they expect,
+	// To ensure that Nodes and AddOns only get the input pins signaled that they expect,
 	// we are filtering the PinName vs. the expected InputPins before carrying on with the ExecuteInput
 
 	if (IsSupportedInputPinName(PinName))
@@ -260,11 +264,28 @@ TArray<FFlowPin> UFlowNodeBase::GetContextOutputs() const
 	return ContextOutputs;
 }
 
-FString UFlowNodeBase::GetStatusString() const
-{
-	return K2_GetStatusString();
-}
 #endif // WITH_EDITOR
+
+void UFlowNodeBase::LogValidationError(const FString& Message)
+{
+#if WITH_EDITOR
+	ValidationLog.Error<UFlowNodeBase>(*Message, this);
+#endif
+}
+
+void UFlowNodeBase::LogValidationWarning(const FString& Message)
+{
+#if WITH_EDITOR
+	ValidationLog.Warning<UFlowNodeBase>(*Message, this);
+#endif
+}
+
+void UFlowNodeBase::LogValidationNote(const FString& Message)
+{
+#if WITH_EDITOR
+	ValidationLog.Note<UFlowNodeBase>(*Message, this);
+#endif
+}
 
 UFlowAsset* UFlowNodeBase::GetFlowAsset() const
 {
@@ -319,39 +340,6 @@ UObject* UFlowNodeBase::TryGetRootFlowObjectOwner() const
 	return nullptr;
 }
 
-IFlowOwnerInterface* UFlowNodeBase::GetFlowOwnerInterface() const
-{
-	const UFlowAsset* FlowAsset = GetFlowAsset();
-	if (!IsValid(FlowAsset))
-	{
-		return nullptr;
-	}
-
-	const UClass* ExpectedOwnerClass = FlowAsset->GetExpectedOwnerClass();
-	if (!IsValid(ExpectedOwnerClass))
-	{
-		return nullptr;
-	}
-
-	UObject* RootFlowOwner = FlowAsset->GetOwner();
-	if (!IsValid(RootFlowOwner))
-	{
-		return nullptr;
-	}
-
-	if (IFlowOwnerInterface* FlowOwnerInterface = TryGetFlowOwnerInterfaceFromRootFlowOwner(*RootFlowOwner, *ExpectedOwnerClass))
-	{
-		return FlowOwnerInterface;
-	}
-
-	if (IFlowOwnerInterface* FlowOwnerInterface = TryGetFlowOwnerInterfaceActor(*RootFlowOwner, *ExpectedOwnerClass))
-	{
-		return FlowOwnerInterface;
-	}
-
-	return nullptr;
-}
-
 TArray<UFlowNodeBase*> UFlowNodeBase::BuildFlowNodeBaseAncestorChain(UFlowNodeBase& FromFlowNodeBase, bool bIncludeFromFlowNodeBase)
 {
 	TArray<UFlowNodeBase*> AncestorChain;
@@ -372,47 +360,6 @@ TArray<UFlowNodeBase*> UFlowNodeBase::BuildFlowNodeBaseAncestorChain(UFlowNodeBa
 	}
 
 	return AncestorChain;
-}
-
-IFlowOwnerInterface* UFlowNodeBase::TryGetFlowOwnerInterfaceFromRootFlowOwner(UObject& RootFlowOwner, const UClass& ExpectedOwnerClass)
-{
-	const UClass* RootFlowOwnerClass = RootFlowOwner.GetClass();
-	if (!IsValid(RootFlowOwnerClass))
-	{
-		return nullptr;
-	}
-
-	if (!RootFlowOwnerClass->IsChildOf(&ExpectedOwnerClass))
-	{
-		return nullptr;
-	}
-
-	// If the immediate owner is the expected class type, return its FlowOwnerInterface
-	return CastChecked<IFlowOwnerInterface>(&RootFlowOwner);
-}
-
-IFlowOwnerInterface* UFlowNodeBase::TryGetFlowOwnerInterfaceActor(UObject& RootFlowOwner, const UClass& ExpectedOwnerClass)
-{
-	// Special case if the immediate owner is a component, also consider the component's owning actor
-	const UActorComponent* FlowComponent = Cast<UActorComponent>(&RootFlowOwner);
-	if (!IsValid(FlowComponent))
-	{
-		return nullptr;
-	}
-
-	AActor* ActorOwner = FlowComponent->GetOwner();
-	if (!IsValid(ActorOwner))
-	{
-		return nullptr;
-	}
-
-	const UClass* ActorOwnerClass = ActorOwner->GetClass();
-	if (!ActorOwnerClass->IsChildOf(&ExpectedOwnerClass))
-	{
-		return nullptr;
-	}
-
-	return CastChecked<IFlowOwnerInterface>(ActorOwner);
 }
 
 EFlowAddOnAcceptResult UFlowNodeBase::AcceptFlowNodeAddOnChild_Implementation(
@@ -635,6 +582,11 @@ void UFlowNodeBase::SetGraphNode(UEdGraphNode* NewGraphNode)
 	UpdateNodeConfigText();
 }
 
+void UFlowNodeBase::SetCanDelete(const bool CanDelete)
+{
+	bCanDelete = CanDelete;
+}
+
 void UFlowNodeBase::SetupForEditing(UEdGraphNode& EdGraphNode)
 {
 	SetGraphNode(&EdGraphNode);
@@ -670,7 +622,14 @@ void UFlowNodeBase::PostEditChangeProperty(FPropertyChangedEvent& PropertyChange
 
 	UpdateNodeConfigText();
 }
+#endif // WITH_EDITOR
 
+FString UFlowNodeBase::GetStatusString() const
+{
+	return K2_GetStatusString();
+}
+
+#if WITH_EDITOR
 FString UFlowNodeBase::GetNodeCategory() const
 {
 	if (GetClass()->ClassGeneratedBy)
@@ -695,61 +654,6 @@ bool UFlowNodeBase::GetDynamicTitleColor(FLinearColor& OutColor) const
 	}
 
 	return false;
-}
-
-FText UFlowNodeBase::GetNodeTitle() const
-{
-	if (GetClass()->ClassGeneratedBy)
-	{
-		const FString& BlueprintTitle = Cast<UBlueprint>(GetClass()->ClassGeneratedBy)->BlueprintDisplayName;
-		if (!BlueprintTitle.IsEmpty())
-		{
-			return FText::FromString(BlueprintTitle);
-		}
-	}
-
-	static const FName NAME_DisplayName(TEXT("DisplayName"));
-	if (bDisplayNodeTitleWithoutPrefix && !GetClass()->HasMetaData(NAME_DisplayName))
-	{
-		return GetGeneratedDisplayName();
-	}
-
-	return GetClass()->GetDisplayNameText();
-}
-
-FText UFlowNodeBase::GetNodeToolTip() const
-{
-	if (GetClass()->ClassGeneratedBy)
-	{
-		const FString& BlueprintToolTip = Cast<UBlueprint>(GetClass()->ClassGeneratedBy)->BlueprintDescription;
-		if (!BlueprintToolTip.IsEmpty())
-		{
-			return FText::FromString(BlueprintToolTip);
-		}
-	}
-
-	static const FName NAME_Tooltip(TEXT("Tooltip"));
-	if (bDisplayNodeTitleWithoutPrefix && !GetClass()->HasMetaData(NAME_Tooltip))
-	{
-		return GetGeneratedDisplayName();
-	}
-
-	// GetClass()->GetToolTipText() can return meta = (DisplayName = ... ), but ignore BlueprintDisplayName even if it is BP Node
-	if (GetClass()->ClassGeneratedBy)
-	{
-		const FString& BlueprintTitle = Cast<UBlueprint>(GetClass()->ClassGeneratedBy)->BlueprintDisplayName;
-		if (!BlueprintTitle.IsEmpty())
-		{
-			return FText::FromString(BlueprintTitle);
-		}
-	}
-
-	return GetClass()->GetToolTipText();
-}
-
-FText UFlowNodeBase::GetNodeConfigText() const
-{
-	return DevNodeConfigText;
 }
 
 FText UFlowNodeBase::GetGeneratedDisplayName() const
@@ -825,15 +729,115 @@ FString UFlowNodeBase::GetNodeDescription() const
 {
 	return K2_GetNodeDescription();
 }
+
+bool UFlowNodeBase::CanModifyFlowDataPinType() const
+{
+	return !IsPlacedInFlowAsset() || IsFlowNamedPropertiesSupplier();
+}
+
+bool UFlowNodeBase::ShowFlowDataPinValueInputPinCheckbox() const
+{
+	const bool bIsPlacedInFlowAsset = IsPlacedInFlowAsset();
+	return !bIsPlacedInFlowAsset;
+}
+
+bool UFlowNodeBase::ShowFlowDataPinValueClassFilter(const FFlowDataPinValue* Value) const
+{
+	const bool bIsPlacedInFlowAsset = IsPlacedInFlowAsset();
+	const bool bIsFlowNamedPropertiesSupplier = IsFlowNamedPropertiesSupplier();
+	return !bIsPlacedInFlowAsset || bIsFlowNamedPropertiesSupplier;
+}
+
+bool UFlowNodeBase::CanEditFlowDataPinValueClassFilter(const FFlowDataPinValue* Value) const
+{
+	const bool bIsPlacedInFlowAsset = IsPlacedInFlowAsset();
+	const bool bIsFlowNamedPropertiesSupplier = IsFlowNamedPropertiesSupplier();
+	return !bIsPlacedInFlowAsset || bIsFlowNamedPropertiesSupplier;
+}
+
+bool UFlowNodeBase::IsPlacedInFlowAsset() const
+{
+	return GetFlowAsset() != nullptr;
+}
+
+bool UFlowNodeBase::IsFlowNamedPropertiesSupplier() const
+{
+	return Implements<UFlowNamedPropertiesSupplierInterface>();
+}
 #endif
+
+FText UFlowNodeBase::K2_GetNodeTitle_Implementation() const
+{
+#if WITH_EDITOR
+	if (GetClass()->ClassGeneratedBy)
+	{
+		const FString& BlueprintTitle = Cast<UBlueprint>(GetClass()->ClassGeneratedBy)->BlueprintDisplayName;
+		if (!BlueprintTitle.IsEmpty())
+		{
+			return FText::FromString(BlueprintTitle);
+		}
+	}
+
+	static const FName NAME_DisplayName(TEXT("DisplayName"));
+	if (bDisplayNodeTitleWithoutPrefix && !GetClass()->HasMetaData(NAME_DisplayName))
+	{
+		return GetGeneratedDisplayName();
+	}
+
+	return GetClass()->GetDisplayNameText();
+#else
+	return FText::GetEmpty();
+#endif
+}
+
+FText UFlowNodeBase::K2_GetNodeToolTip_Implementation() const
+{
+#if WITH_EDITOR
+	if (GetClass()->ClassGeneratedBy)
+	{
+		const FString& BlueprintToolTip = Cast<UBlueprint>(GetClass()->ClassGeneratedBy)->BlueprintDescription;
+		if (!BlueprintToolTip.IsEmpty())
+		{
+			return FText::FromString(BlueprintToolTip);
+		}
+	}
+
+	static const FName NAME_Tooltip(TEXT("Tooltip"));
+	if (bDisplayNodeTitleWithoutPrefix && !GetClass()->HasMetaData(NAME_Tooltip))
+	{
+		return GetGeneratedDisplayName();
+	}
+
+	// GetClass()->GetToolTipText() can return meta = (DisplayName = ... ), but ignore BlueprintDisplayName even if it is BP Node
+	if (GetClass()->ClassGeneratedBy)
+	{
+		const FString& BlueprintTitle = Cast<UBlueprint>(GetClass()->ClassGeneratedBy)->BlueprintDisplayName;
+		if (!BlueprintTitle.IsEmpty())
+		{
+			return FText::FromString(BlueprintTitle);
+		}
+	}
+
+	return GetClass()->GetToolTipText();
+#else
+	return FText::GetEmpty();
+#endif
+}
+
+FText UFlowNodeBase::GetNodeConfigText() const
+{
+#if WITH_EDITORONLY_DATA
+	return DevNodeConfigText;
+#else
+	return FText::GetEmpty();
+#endif // WITH_EDITORONLY_DATA
+}
 
 void UFlowNodeBase::SetNodeConfigText(const FText& NodeConfigText)
 {
 #if WITH_EDITOR
 	if (!NodeConfigText.EqualTo(DevNodeConfigText))
 	{
-		Modify();
-
 		DevNodeConfigText = NodeConfigText;
 	}
 #endif // WITH_EDITOR
@@ -858,7 +862,7 @@ void UFlowNodeBase::LogError(FString Message, const EFlowOnScreenMessageType OnS
 					StatsSubsystem->AddDisplayDelegate([WeakThis = TWeakObjectPtr<const UFlowNodeBase>(this), Message](FText& OutText, FLinearColor& OutColor)
 					{
 						const UFlowNodeBase* ThisPtr = WeakThis.Get();
-						if (ThisPtr && ThisPtr->GetFlowNodeSelfOrOwner()->GetActivationState() != EFlowNodeState::NeverActivated)
+						if (ThisPtr && ThisPtr->GetFlowNodeSelfOrOwner() && ThisPtr->GetFlowNodeSelfOrOwner()->GetActivationState() != EFlowNodeState::NeverActivated)
 						{
 							OutText = FText::FromString(Message);
 							OutColor = FLinearColor::Red;
@@ -870,7 +874,7 @@ void UFlowNodeBase::LogError(FString Message, const EFlowOnScreenMessageType OnS
 				}
 			}
 		}
-		else
+		else if (OnScreenMessageType == EFlowOnScreenMessageType::Temporary)
 		{
 			GEngine->AddOnScreenDebugMessage(-1, 2.0f, FColor::Red, Message);
 		}
@@ -954,571 +958,203 @@ bool UFlowNodeBase::BuildMessage(FString& Message) const
 }
 #endif
 
+#if WITH_EDITOR
+EDataValidationResult UFlowNodeBase::ValidateNode()
+{
+	EDataValidationResult ValidationResult = EDataValidationResult::NotValidated;
+	
+	if (GetClass()->IsFunctionImplementedInScript(GET_FUNCTION_NAME_CHECKED(UFlowNodeBase, K2_ValidateNode)))
+	{
+		ValidationResult = K2_ValidateNode();
+	}
+
+	return ValidationResult;
+}
+#endif
+
 bool UFlowNodeBase::TryAddValueToFormatNamedArguments(const FFlowNamedDataPinProperty& NamedDataPinProperty, FFormatNamedArguments& InOutArguments) const
 {
-	const FFlowDataPinProperty* FlowDataPinProperty = NamedDataPinProperty.DataPinProperty.GetPtr();
-	if (!FlowDataPinProperty)
+	const FFlowDataPinValue& DataPinValue = NamedDataPinProperty.DataPinValue.Get();
+
+	const FFlowPinTypeName PinTypeName = DataPinValue.GetPinTypeName();
+	if (PinTypeName.IsNone())
 	{
 		return false;
 	}
 
-	const EFlowPinType FlowPinType = FlowDataPinProperty->GetFlowPinType();
-
-	FLOW_ASSERT_ENUM_MAX(EFlowPinType, 16);
-	switch (FlowPinType)
+	const FFlowPinType* PinType = FFlowPinType::LookupPinType(PinTypeName);
+	if (!PinType)
 	{
-	case EFlowPinType::Exec:
-		{
-			LogError(TEXT("Cannot add Exec pin value to FFormatNamedArguments"));
-		}
-		break;
+		return false;
+	}
 
-	case EFlowPinType::InstancedStruct:
-		{
-			LogError(TEXT("Cannot add InstancedStruct pin value to FFormatNamedArguments"));
-		}
-		break;
-
-	case EFlowPinType::Bool:
-		{
-			const FFlowDataPinResult_Bool ResolvedResult = TryResolveDataPinAsBool(NamedDataPinProperty.Name);
-			if (ResolvedResult.Result == EFlowDataPinResolveResult::Success)
-			{
-				InOutArguments.Add(NamedDataPinProperty.Name.ToString(), FFormatArgumentValue(ResolvedResult.Value));
-
-				return true;
-			}
-		}
-		break;
-
-	case EFlowPinType::Int:
-		{
-			const FFlowDataPinResult_Int ResolvedResult = TryResolveDataPinAsInt(NamedDataPinProperty.Name);
-			if (ResolvedResult.Result == EFlowDataPinResolveResult::Success)
-			{
-				InOutArguments.Add(NamedDataPinProperty.Name.ToString(), FFormatArgumentValue(ResolvedResult.Value));
-
-				return true;
-			}
-		}
-		break;
-
-	case EFlowPinType::Float:
-		{
-			const FFlowDataPinResult_Float ResolvedResult = TryResolveDataPinAsFloat(NamedDataPinProperty.Name);
-			if (ResolvedResult.Result == EFlowDataPinResolveResult::Success)
-			{
-				InOutArguments.Add(NamedDataPinProperty.Name.ToString(), FFormatArgumentValue(ResolvedResult.Value));
-
-				return true;
-			}
-		}
-		break;
-
-	case EFlowPinType::Name:
-		{
-			const FFlowDataPinResult_Name ResolvedResult = TryResolveDataPinAsName(NamedDataPinProperty.Name);
-			if (ResolvedResult.Result == EFlowDataPinResolveResult::Success)
-			{
-				InOutArguments.Add(NamedDataPinProperty.Name.ToString(), FFormatArgumentValue(FText::FromString(ResolvedResult.Value.ToString())));
-
-				return true;
-			}
-		}
-		break;
-
-	case EFlowPinType::String:
-		{
-			const FFlowDataPinResult_String ResolvedResult = TryResolveDataPinAsString(NamedDataPinProperty.Name);
-			if (ResolvedResult.Result == EFlowDataPinResolveResult::Success)
-			{
-				InOutArguments.Add(NamedDataPinProperty.Name.ToString(), FFormatArgumentValue(FText::FromString(ResolvedResult.Value)));
-
-				return true;
-			}
-		}
-		break;
-
-	case EFlowPinType::Text:
-		{
-			const FFlowDataPinResult_Text ResolvedResult = TryResolveDataPinAsText(NamedDataPinProperty.Name);
-			if (ResolvedResult.Result == EFlowDataPinResolveResult::Success)
-			{
-				InOutArguments.Add(NamedDataPinProperty.Name.ToString(), FFormatArgumentValue(ResolvedResult.Value));
-
-				return true;
-			}
-		}
-		break;
-
-	case EFlowPinType::Enum:
-		{
-			const FFlowDataPinResult_Enum ResolvedResult = TryResolveDataPinAsEnum(NamedDataPinProperty.Name);
-			if (ResolvedResult.Result == EFlowDataPinResolveResult::Success)
-			{
-				InOutArguments.Add(NamedDataPinProperty.Name.ToString(), FFormatArgumentValue(FText::FromString(ResolvedResult.Value.ToString())));
-
-				return true;
-			}
-		}
-		break;
-
-	case EFlowPinType::Vector:
-		{
-			const FFlowDataPinResult_Vector ResolvedResult = TryResolveDataPinAsVector(NamedDataPinProperty.Name);
-			if (ResolvedResult.Result == EFlowDataPinResolveResult::Success)
-			{
-				InOutArguments.Add(NamedDataPinProperty.Name.ToString(), FFormatArgumentValue(FText::FromString(ResolvedResult.Value.ToString())));
-
-				return true;
-			}
-		}
-		break;
-
-	case EFlowPinType::Rotator:
-		{
-			const FFlowDataPinResult_Rotator ResolvedResult = TryResolveDataPinAsRotator(NamedDataPinProperty.Name);
-			if (ResolvedResult.Result == EFlowDataPinResolveResult::Success)
-			{
-				InOutArguments.Add(NamedDataPinProperty.Name.ToString(), FFormatArgumentValue(FText::FromString(ResolvedResult.Value.ToString())));
-
-				return true;
-			}
-		}
-		break;
-
-	case EFlowPinType::Transform:
-		{
-			const FFlowDataPinResult_Transform ResolvedResult = TryResolveDataPinAsTransform(NamedDataPinProperty.Name);
-			if (ResolvedResult.Result == EFlowDataPinResolveResult::Success)
-			{
-				InOutArguments.Add(NamedDataPinProperty.Name.ToString(), FFormatArgumentValue(FText::FromString(ResolvedResult.Value.ToString())));
-
-				return true;
-			}
-		}
-		break;
-
-	case EFlowPinType::GameplayTag:
-		{
-			const FFlowDataPinResult_GameplayTag ResolvedResult = TryResolveDataPinAsGameplayTag(NamedDataPinProperty.Name);
-			if (ResolvedResult.Result == EFlowDataPinResolveResult::Success)
-			{
-				InOutArguments.Add(NamedDataPinProperty.Name.ToString(), FFormatArgumentValue(FText::FromString(ResolvedResult.Value.ToString())));
-
-				return true;
-			}
-		}
-		break;
-
-	case EFlowPinType::GameplayTagContainer:
-		{
-			const FFlowDataPinResult_GameplayTagContainer ResolvedResult = TryResolveDataPinAsGameplayTagContainer(NamedDataPinProperty.Name);
-			if (ResolvedResult.Result == EFlowDataPinResolveResult::Success)
-			{
-				InOutArguments.Add(NamedDataPinProperty.Name.ToString(), FFormatArgumentValue(FText::FromString(ResolvedResult.Value.ToString())));
-
-				return true;
-			}
-		}
-		break;
-
-	case EFlowPinType::Object:
-		{
-			const FFlowDataPinResult_Object ResolvedResult = TryResolveDataPinAsObject(NamedDataPinProperty.Name);
-			if (ResolvedResult.Result == EFlowDataPinResolveResult::Success)
-			{
-				if (IsValid(ResolvedResult.Value))
-				{
-					InOutArguments.Add(NamedDataPinProperty.Name.ToString(), FFormatArgumentValue(FText::FromString(ResolvedResult.Value->GetName())));
-				}
-				else
-				{
-					InOutArguments.Add(NamedDataPinProperty.Name.ToString(), FFormatArgumentValue(FText::FromString(TEXT("null"))));
-				}
-
-				return true;
-			}
-		}
-		break;
-
-	case EFlowPinType::Class:
-		{
-			const FFlowDataPinResult_Class ResolvedResult = TryResolveDataPinAsClass(NamedDataPinProperty.Name);
-			if (ResolvedResult.Result == EFlowDataPinResolveResult::Success)
-			{
-				InOutArguments.Add(NamedDataPinProperty.Name.ToString(), FFormatArgumentValue(FText::FromString(ResolvedResult.GetAsSoftClass().ToString())));
-
-				return true;
-			}
-		}
-		break;
-
-	default: break;
+	FFormatArgumentValue FormatValue;
+	if (PinType->ResolveAndFormatPinValue(*this, NamedDataPinProperty.Name, FormatValue))
+	{
+		InOutArguments.Add(NamedDataPinProperty.Name.ToString(), FormatValue);
+		return true;
 	}
 
 	return false;
 }
 
-EFlowDataPinResolveResult UFlowNodeBase::TryResolveDataPinPrerequisites(const FName& PinName, const UFlowNode*& FlowNode, const FFlowPin*& FlowPin, EFlowPinType PinType) const
+FFlowDataPinResult UFlowNodeBase::TryResolveDataPin(FName PinName) const
 {
-	FlowNode = GetFlowNodeSelfOrOwner();
+	FFlowDataPinResult DataPinResult(EFlowDataPinResolveResult::Success);
 
-	if (!IsValid(FlowNode))
-	{
-		LogError(FString::Printf(TEXT("Unexpected for %s to not have an associated FlowNode"), *GetName()), EFlowOnScreenMessageType::Temporary);
-
-		return EFlowDataPinResolveResult::FailedWithError;
-	}
-
-	FlowPin = FindFlowPinByName(PinName, FlowNode->GetInputPins());
-	if (!FlowPin)
-	{
-		return EFlowDataPinResolveResult::FailedMissingPin;
-	}
-
-	if (FlowPin->GetPinType() != PinType)
-	{
-		return EFlowDataPinResolveResult::FailedMismatchedType;
-	}
-
-	return EFlowDataPinResolveResult::Success;
-}
-
-// Must implement TryResolveDataPinAs...() for every EFlowPinType
-FLOW_ASSERT_ENUM_MAX(EFlowPinType, 16);
-
-template <typename TFlowDataPinResultType, EFlowPinType PinType>
-bool TResolveDataPinWorkingData<TFlowDataPinResultType, PinType>::TrySetupWorkingData(const FName& PinName, const UFlowNodeBase& FlowNodeBase)
-{
-	DataPinResult.Result = FlowNodeBase.TryResolveDataPinPrerequisites(PinName, FlowNode, FlowPin, PinType);
-	if (DataPinResult.Result != EFlowDataPinResolveResult::Success)
-	{
-		return false;
-	}
-
-	if (!FlowNode->TryGetFlowDataPinSupplierDatasForPinName(FlowPin->PinName, PinValueSupplierDatas))
+	const UFlowNode* FlowNode = GetFlowNodeSelfOrOwner();
+	UFlowNode::TFlowPinValueSupplierDataArray PinValueSupplierDatas;
+	if (!FlowNode->TryGetFlowDataPinSupplierDatasForPinName(PinName, PinValueSupplierDatas))
 	{
 		// If we could not build the PinValueDataSuppliers array, 
 		// then the pin must be disconnected and have no default value available.
-		DataPinResult.Result = EFlowDataPinResolveResult::FailedUnconnected;
-		return false;
+		DataPinResult.Result = EFlowDataPinResolveResult::FailedWithError;
+
+		LogError(FString::Printf(TEXT("DataPin named '%s' could not be supplied with a value."), *PinName.ToString()), EFlowOnScreenMessageType::Temporary);
+
+		return DataPinResult;
 	}
 
-	return true;
-}
-
-FFlowDataPinResult_Bool UFlowNodeBase::TryResolveDataPinAsBool(const FName& PinName) const
-{
-	TResolveDataPinWorkingData<FFlowDataPinResult_Bool, EFlowPinType::Bool> WorkData;
-	if (!WorkData.TrySetupWorkingData(PinName, *this))
+	// Iterate over the suppliers in inverse order
+	for (int32 Index = PinValueSupplierDatas.Num() - 1; Index >= 0; --Index)
 	{
-		return WorkData.DataPinResult;
-	}
+		const FFlowPinValueSupplierData& SupplierData = PinValueSupplierDatas[Index];
 
-	for (const FFlowPinValueSupplierData& SupplierData : WorkData.PinValueSupplierDatas)
-	{
-		WorkData.DataPinResult = IFlowDataPinValueSupplierInterface::Execute_TrySupplyDataPinAsBool(CastChecked<UObject>(SupplierData.PinValueSupplier), SupplierData.SupplierPinName);
+		DataPinResult = IFlowDataPinValueSupplierInterface::Execute_TrySupplyDataPin(CastChecked<UObject>(SupplierData.PinValueSupplier), SupplierData.SupplierPinName);
 
-		if (WorkData.DataPinResult.Result == EFlowDataPinResolveResult::Success)
+		if (FlowPinType::IsSuccess(DataPinResult.Result))
 		{
-			return WorkData.DataPinResult;
+			return DataPinResult;
 		}
 	}
 
-	return WorkData.DataPinResult;
+	return DataPinResult;
+}
+
+// #FlowDataPinLegacy
+FFlowDataPinResult_Bool UFlowNodeBase::TryResolveDataPinAsBool(const FName& PinName) const
+{
+	FFlowDataPinResult_Bool BoolResolveResult;
+	BoolResolveResult.Result = TryResolveDataPinValue<FFlowPinType_Bool>(PinName, BoolResolveResult.Value);
+	return BoolResolveResult;
 }
 
 FFlowDataPinResult_Int UFlowNodeBase::TryResolveDataPinAsInt(const FName& PinName) const
 {
-	TResolveDataPinWorkingData<FFlowDataPinResult_Int, EFlowPinType::Int> WorkData;
-	if (!WorkData.TrySetupWorkingData(PinName, *this))
-	{
-		return WorkData.DataPinResult;
-	}
-
-	for (const FFlowPinValueSupplierData& SupplierData : WorkData.PinValueSupplierDatas)
-	{
-		WorkData.DataPinResult = IFlowDataPinValueSupplierInterface::Execute_TrySupplyDataPinAsInt(CastChecked<UObject>(SupplierData.PinValueSupplier), SupplierData.SupplierPinName);
-
-		if (WorkData.DataPinResult.Result == EFlowDataPinResolveResult::Success)
-		{
-			return WorkData.DataPinResult;
-		}
-	}
-
-	return WorkData.DataPinResult;
+	FFlowDataPinResult_Int ResolveResult;
+	int32 Value = 0;
+	ResolveResult.Result = TryResolveDataPinValue<FFlowPinType_Int>(PinName, Value);
+	ResolveResult.Value = Value;
+	return ResolveResult;
 }
 
 FFlowDataPinResult_Float UFlowNodeBase::TryResolveDataPinAsFloat(const FName& PinName) const
 {
-	TResolveDataPinWorkingData<FFlowDataPinResult_Float, EFlowPinType::Float> WorkData;
-	if (!WorkData.TrySetupWorkingData(PinName, *this))
-	{
-		return WorkData.DataPinResult;
-	}
-
-	for (const FFlowPinValueSupplierData& SupplierData : WorkData.PinValueSupplierDatas)
-	{
-		WorkData.DataPinResult = IFlowDataPinValueSupplierInterface::Execute_TrySupplyDataPinAsFloat(CastChecked<UObject>(SupplierData.PinValueSupplier), SupplierData.SupplierPinName);
-
-		if (WorkData.DataPinResult.Result == EFlowDataPinResolveResult::Success)
-		{
-			return WorkData.DataPinResult;
-		}
-	}
-
-	return WorkData.DataPinResult;
+	FFlowDataPinResult_Float ResolveResult;
+	float Value = 0.0f;
+	ResolveResult.Result = TryResolveDataPinValue<FFlowPinType_Float>(PinName, Value);
+	ResolveResult.Value = Value;
+	return ResolveResult;
 }
 
 FFlowDataPinResult_Name UFlowNodeBase::TryResolveDataPinAsName(const FName& PinName) const
 {
-	TResolveDataPinWorkingData<FFlowDataPinResult_Name, EFlowPinType::Name> WorkData;
-	if (!WorkData.TrySetupWorkingData(PinName, *this))
-	{
-		return WorkData.DataPinResult;
-	}
-
-	for (const FFlowPinValueSupplierData& SupplierData : WorkData.PinValueSupplierDatas)
-	{
-		WorkData.DataPinResult = IFlowDataPinValueSupplierInterface::Execute_TrySupplyDataPinAsName(CastChecked<UObject>(SupplierData.PinValueSupplier), SupplierData.SupplierPinName);
-
-		if (WorkData.DataPinResult.Result == EFlowDataPinResolveResult::Success)
-		{
-			return WorkData.DataPinResult;
-		}
-	}
-
-	return WorkData.DataPinResult;
+	FFlowDataPinResult_Name ResolveResult;
+	ResolveResult.Result = TryResolveDataPinValue<FFlowPinType_Name>(PinName, ResolveResult.Value);
+	return ResolveResult;
 }
 
 FFlowDataPinResult_String UFlowNodeBase::TryResolveDataPinAsString(const FName& PinName) const
 {
-	TResolveDataPinWorkingData<FFlowDataPinResult_String, EFlowPinType::String> WorkData;
-	if (!WorkData.TrySetupWorkingData(PinName, *this))
-	{
-		return WorkData.DataPinResult;
-	}
-
-	for (const FFlowPinValueSupplierData& SupplierData : WorkData.PinValueSupplierDatas)
-	{
-		WorkData.DataPinResult = IFlowDataPinValueSupplierInterface::Execute_TrySupplyDataPinAsString(CastChecked<UObject>(SupplierData.PinValueSupplier), SupplierData.SupplierPinName);
-
-		if (WorkData.DataPinResult.Result == EFlowDataPinResolveResult::Success)
-		{
-			return WorkData.DataPinResult;
-		}
-	}
-
-	return WorkData.DataPinResult;
+	FFlowDataPinResult_String ResolveResult;
+	ResolveResult.Result = TryResolveDataPinValue<FFlowPinType_String>(PinName, ResolveResult.Value);
+	return ResolveResult;
 }
 
 FFlowDataPinResult_Text UFlowNodeBase::TryResolveDataPinAsText(const FName& PinName) const
 {
-	TResolveDataPinWorkingData<FFlowDataPinResult_Text, EFlowPinType::Text> WorkData;
-	if (!WorkData.TrySetupWorkingData(PinName, *this))
-	{
-		return WorkData.DataPinResult;
-	}
-
-	for (const FFlowPinValueSupplierData& SupplierData : WorkData.PinValueSupplierDatas)
-	{
-		WorkData.DataPinResult = IFlowDataPinValueSupplierInterface::Execute_TrySupplyDataPinAsText(CastChecked<UObject>(SupplierData.PinValueSupplier), SupplierData.SupplierPinName);
-
-		if (WorkData.DataPinResult.Result == EFlowDataPinResolveResult::Success)
-		{
-			return WorkData.DataPinResult;
-		}
-	}
-
-	return WorkData.DataPinResult;
+	FFlowDataPinResult_Text ResolveResult;
+	ResolveResult.Result = TryResolveDataPinValue<FFlowPinType_Text>(PinName, ResolveResult.Value);
+	return ResolveResult;
 }
 
 FFlowDataPinResult_Enum UFlowNodeBase::TryResolveDataPinAsEnum(const FName& PinName) const
 {
-	TResolveDataPinWorkingData<FFlowDataPinResult_Enum, EFlowPinType::Enum> WorkData;
-	if (!WorkData.TrySetupWorkingData(PinName, *this))
+	const FFlowDataPinResult DataPinResult = TryResolveDataPin(PinName);
+	if (!FlowPinType::IsSuccess(DataPinResult.Result))
 	{
-		return WorkData.DataPinResult;
+		return FFlowDataPinResult_Enum(DataPinResult.Result);
 	}
 
-	for (const FFlowPinValueSupplierData& SupplierData : WorkData.PinValueSupplierDatas)
-	{
-		WorkData.DataPinResult = IFlowDataPinValueSupplierInterface::Execute_TrySupplyDataPinAsEnum(CastChecked<UObject>(SupplierData.PinValueSupplier), SupplierData.SupplierPinName);
+	const FFlowDataPinValue_Enum& Wrapper = DataPinResult.ResultValue.Get<FFlowDataPinValue_Enum>();
 
-		if (WorkData.DataPinResult.Result == EFlowDataPinResolveResult::Success)
-		{
-			return WorkData.DataPinResult;
-		}
+	if (Wrapper.Values.IsEmpty())
+	{
+		return FFlowDataPinResult_Enum(EFlowDataPinResolveResult::FailedInsufficientValues);
 	}
 
-	return WorkData.DataPinResult;
+	const FFlowDataPinResult_Enum ResolveResult(Wrapper.Values[0], Wrapper.EnumClass.LoadSynchronous());
+	return ResolveResult;
 }
 
 FFlowDataPinResult_Vector UFlowNodeBase::TryResolveDataPinAsVector(const FName& PinName) const
 {
-	TResolveDataPinWorkingData<FFlowDataPinResult_Vector, EFlowPinType::Vector> WorkData;
-	if (!WorkData.TrySetupWorkingData(PinName, *this))
-	{
-		return WorkData.DataPinResult;
-	}
-
-	for (const FFlowPinValueSupplierData& SupplierData : WorkData.PinValueSupplierDatas)
-	{
-		WorkData.DataPinResult = IFlowDataPinValueSupplierInterface::Execute_TrySupplyDataPinAsVector(CastChecked<UObject>(SupplierData.PinValueSupplier), SupplierData.SupplierPinName);
-
-		if (WorkData.DataPinResult.Result == EFlowDataPinResolveResult::Success)
-		{
-			return WorkData.DataPinResult;
-		}
-	}
-
-	return WorkData.DataPinResult;
+	FFlowDataPinResult_Vector ResolveResult;
+	ResolveResult.Result = TryResolveDataPinValue<FFlowPinType_Vector>(PinName, ResolveResult.Value);
+	return ResolveResult;
 }
 
 FFlowDataPinResult_Rotator UFlowNodeBase::TryResolveDataPinAsRotator(const FName& PinName) const
 {
-	TResolveDataPinWorkingData<FFlowDataPinResult_Rotator, EFlowPinType::Rotator> WorkData;
-	if (!WorkData.TrySetupWorkingData(PinName, *this))
-	{
-		return WorkData.DataPinResult;
-	}
-
-	for (const FFlowPinValueSupplierData& SupplierData : WorkData.PinValueSupplierDatas)
-	{
-		WorkData.DataPinResult = IFlowDataPinValueSupplierInterface::Execute_TrySupplyDataPinAsRotator(CastChecked<UObject>(SupplierData.PinValueSupplier), SupplierData.SupplierPinName);
-
-		if (WorkData.DataPinResult.Result == EFlowDataPinResolveResult::Success)
-		{
-			return WorkData.DataPinResult;
-		}
-	}
-
-	return WorkData.DataPinResult;
+	FFlowDataPinResult_Rotator ResolveResult;
+	ResolveResult.Result = TryResolveDataPinValue<FFlowPinType_Rotator>(PinName, ResolveResult.Value);
+	return ResolveResult;
 }
 
 FFlowDataPinResult_Transform UFlowNodeBase::TryResolveDataPinAsTransform(const FName& PinName) const
 {
-	TResolveDataPinWorkingData<FFlowDataPinResult_Transform, EFlowPinType::Transform> WorkData;
-	if (!WorkData.TrySetupWorkingData(PinName, *this))
-	{
-		return WorkData.DataPinResult;
-	}
-
-	for (const FFlowPinValueSupplierData& SupplierData : WorkData.PinValueSupplierDatas)
-	{
-		WorkData.DataPinResult = IFlowDataPinValueSupplierInterface::Execute_TrySupplyDataPinAsTransform(CastChecked<UObject>(SupplierData.PinValueSupplier), SupplierData.SupplierPinName);
-
-		if (WorkData.DataPinResult.Result == EFlowDataPinResolveResult::Success)
-		{
-			return WorkData.DataPinResult;
-		}
-	}
-
-	return WorkData.DataPinResult;
+	FFlowDataPinResult_Transform ResolveResult;
+	ResolveResult.Result = TryResolveDataPinValue<FFlowPinType_Transform>(PinName, ResolveResult.Value);
+	return ResolveResult;
 }
 
 FFlowDataPinResult_GameplayTag UFlowNodeBase::TryResolveDataPinAsGameplayTag(const FName& PinName) const
 {
-	TResolveDataPinWorkingData<FFlowDataPinResult_GameplayTag, EFlowPinType::GameplayTag> WorkData;
-	if (!WorkData.TrySetupWorkingData(PinName, *this))
-	{
-		return WorkData.DataPinResult;
-	}
-
-	for (const FFlowPinValueSupplierData& SupplierData : WorkData.PinValueSupplierDatas)
-	{
-		WorkData.DataPinResult = IFlowDataPinValueSupplierInterface::Execute_TrySupplyDataPinAsGameplayTag(CastChecked<UObject>(SupplierData.PinValueSupplier), SupplierData.SupplierPinName);
-
-		if (WorkData.DataPinResult.Result == EFlowDataPinResolveResult::Success)
-		{
-			return WorkData.DataPinResult;
-		}
-	}
-
-	return WorkData.DataPinResult;
+	FFlowDataPinResult_GameplayTag ResolveResult;
+	ResolveResult.Result = TryResolveDataPinValue<FFlowPinType_GameplayTag>(PinName, ResolveResult.Value);
+	return ResolveResult;
 }
 
 FFlowDataPinResult_GameplayTagContainer UFlowNodeBase::TryResolveDataPinAsGameplayTagContainer(const FName& PinName) const
 {
-	TResolveDataPinWorkingData<FFlowDataPinResult_GameplayTagContainer, EFlowPinType::GameplayTagContainer> WorkData;
-	if (!WorkData.TrySetupWorkingData(PinName, *this))
-	{
-		return WorkData.DataPinResult;
-	}
-
-	for (const FFlowPinValueSupplierData& SupplierData : WorkData.PinValueSupplierDatas)
-	{
-		WorkData.DataPinResult = IFlowDataPinValueSupplierInterface::Execute_TrySupplyDataPinAsGameplayTagContainer(CastChecked<UObject>(SupplierData.PinValueSupplier), SupplierData.SupplierPinName);
-
-		if (WorkData.DataPinResult.Result == EFlowDataPinResolveResult::Success)
-		{
-			return WorkData.DataPinResult;
-		}
-	}
-
-	return WorkData.DataPinResult;
+	FFlowDataPinResult_GameplayTagContainer ResolveResult;
+	ResolveResult.Result = TryResolveDataPinValue<FFlowPinType_GameplayTagContainer>(PinName, ResolveResult.Value);
+	return ResolveResult;
 }
 
 FFlowDataPinResult_InstancedStruct UFlowNodeBase::TryResolveDataPinAsInstancedStruct(const FName& PinName) const
 {
-	TResolveDataPinWorkingData<FFlowDataPinResult_InstancedStruct, EFlowPinType::InstancedStruct> WorkData;
-	if (!WorkData.TrySetupWorkingData(PinName, *this))
-	{
-		return WorkData.DataPinResult;
-	}
-
-	for (const FFlowPinValueSupplierData& SupplierData : WorkData.PinValueSupplierDatas)
-	{
-		WorkData.DataPinResult = IFlowDataPinValueSupplierInterface::Execute_TrySupplyDataPinAsInstancedStruct(CastChecked<UObject>(SupplierData.PinValueSupplier), SupplierData.SupplierPinName);
-
-		if (WorkData.DataPinResult.Result == EFlowDataPinResolveResult::Success)
-		{
-			return WorkData.DataPinResult;
-		}
-	}
-
-	return WorkData.DataPinResult;
+	FFlowDataPinResult_InstancedStruct ResolveResult;
+	ResolveResult.Result = TryResolveDataPinValue<FFlowPinType_InstancedStruct>(PinName, ResolveResult.Value);
+	return ResolveResult;
 }
 
 FFlowDataPinResult_Object UFlowNodeBase::TryResolveDataPinAsObject(const FName& PinName) const
 {
-	TResolveDataPinWorkingData<FFlowDataPinResult_Object, EFlowPinType::Object> WorkData;
-	if (!WorkData.TrySetupWorkingData(PinName, *this))
-	{
-		return WorkData.DataPinResult;
-	}
-
-	for (const FFlowPinValueSupplierData& SupplierData : WorkData.PinValueSupplierDatas)
-	{
-		WorkData.DataPinResult = IFlowDataPinValueSupplierInterface::Execute_TrySupplyDataPinAsObject(CastChecked<UObject>(SupplierData.PinValueSupplier), SupplierData.SupplierPinName);
-
-		if (WorkData.DataPinResult.Result == EFlowDataPinResolveResult::Success)
-		{
-			return WorkData.DataPinResult;
-		}
-	}
-
-	return WorkData.DataPinResult;
+	FFlowDataPinResult_Object ResolveResult;
+	TObjectPtr<UObject> Value = nullptr;
+	ResolveResult.Result = TryResolveDataPinValue<FFlowPinType_Object>(PinName, Value);
+	ResolveResult.Value = Value;
+	return ResolveResult;
 }
 
 FFlowDataPinResult_Class UFlowNodeBase::TryResolveDataPinAsClass(const FName& PinName) const
 {
-	TResolveDataPinWorkingData<FFlowDataPinResult_Class, EFlowPinType::Class> WorkData;
-	if (!WorkData.TrySetupWorkingData(PinName, *this))
-	{
-		return WorkData.DataPinResult;
-	}
-
-	for (const FFlowPinValueSupplierData& SupplierData : WorkData.PinValueSupplierDatas)
-	{
-		WorkData.DataPinResult = IFlowDataPinValueSupplierInterface::Execute_TrySupplyDataPinAsClass(CastChecked<UObject>(SupplierData.PinValueSupplier), SupplierData.SupplierPinName);
-
-		if (WorkData.DataPinResult.Result == EFlowDataPinResolveResult::Success)
-		{
-			return WorkData.DataPinResult;
-		}
-	}
-
-	return WorkData.DataPinResult;
+	FFlowDataPinResult_Class ResolveResult;
+	TObjectPtr<UClass> Value = nullptr;
+	ResolveResult.Result = TryResolveDataPinValue<FFlowPinType_Class>(PinName, Value);
+	ResolveResult.SetValueFromObjectPtr(Value);
+	return ResolveResult;
 }
+
+// --

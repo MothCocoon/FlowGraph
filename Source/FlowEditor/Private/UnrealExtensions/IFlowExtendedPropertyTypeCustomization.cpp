@@ -10,9 +10,6 @@
 #include "IDetailPropertyRow.h"
 #include "Widgets/Text/STextBlock.h"
 
-
-// IFlowExtendedPropertyTypeCustomization Implementation
-
 void IFlowExtendedPropertyTypeCustomization::CustomizeHeader(TSharedRef<IPropertyHandle> InStructPropertyHandle, FDetailWidgetRow& HeaderRow, IPropertyTypeCustomizationUtils& StructCustomizationUtils)
 {
 	StructPropertyHandle = InStructPropertyHandle;

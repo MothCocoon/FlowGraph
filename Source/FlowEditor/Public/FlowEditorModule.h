@@ -16,7 +16,7 @@ struct FGraphPanelPinConnectionFactory;
 class FFlowAssetEditor;
 class UFlowAsset;
 
-struct FLOWEDITOR_API FFLowAssetCategoryPaths : EAssetCategoryPaths
+struct FLOWEDITOR_API FFlowAssetCategoryPaths : EAssetCategoryPaths
 {
 	static FAssetCategoryPath Flow;
 };
@@ -30,16 +30,19 @@ private:
 	TArray<TSharedRef<IAssetTypeActions>> RegisteredAssetActions;
 	TSet<FName> CustomClassLayouts;
 	TSet<FName> CustomStructLayouts;
-
-	TSharedPtr<FExtensibilityManager> MenuExtensibilityManager;
-	TSharedPtr<FExtensibilityManager> ToolBarExtensibilityManager;
+	bool bIsRegisteredForAssetChanges = false;
 
 public:
 	virtual void StartupModule() override;
 	virtual void ShutdownModule() override;
 
-	virtual TSharedPtr<FExtensibilityManager> GetMenuExtensibilityManager() override { return MenuExtensibilityManager; }
-	virtual TSharedPtr<FExtensibilityManager> GetToolBarExtensibilityManager() override { return ToolBarExtensibilityManager; }
+	UE_DEPRECATED(5.5, "The old method has been removed. Please use UToolMenus::Get()->ExtendMenu() instead. You can find example in SFlowGraphEditor::CreateDebugMenu().")
+	virtual TSharedPtr<FExtensibilityManager> GetMenuExtensibilityManager() override { return nullptr; }
+	
+	UE_DEPRECATED(5.5, "The old method has been removed. Please use UToolMenus::Get()->ExtendMenu() instead. You can find example in SFlowGraphEditor::CreateDebugMenu().")
+	virtual TSharedPtr<FExtensibilityManager> GetToolBarExtensibilityManager() override { return nullptr; }
+
+	void RegisterForAssetChanges();
 
 private:
 	void TrySetFlowNodeDisplayStyleDefaults() const;
@@ -65,4 +68,7 @@ private:
 
 public:
 	static TSharedRef<FFlowAssetEditor> CreateFlowAssetEditor(const EToolkitMode::Type Mode, const TSharedPtr<IToolkitHost>& InitToolkitHost, UFlowAsset* FlowAsset);
+
+	void OnAssetUpdated(const FAssetData& AssetData);
+	void OnAssetRenamed(const FAssetData& AssetData, const FString& OldObjectPath);
 };

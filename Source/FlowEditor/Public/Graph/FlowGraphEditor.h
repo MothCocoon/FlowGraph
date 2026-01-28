@@ -38,10 +38,12 @@ protected:
 public:
 	void Construct(const FArguments& InArgs, const TSharedPtr<FFlowAssetEditor> InAssetEditor);
 
+	virtual void CreateDebugMenu();
 	virtual void BindGraphCommands();
 
 	virtual FGraphAppearanceInfo GetGraphAppearanceInfo() const;
 	virtual FText GetCornerText() const;
+	virtual FText GetPIENotifyText() const;
 
 private:
 	static void UndoGraphAction();
@@ -146,6 +148,15 @@ private:
 
 	bool CanToggleBreakpoint() const;
 	bool CanTogglePinBreakpoint();
+
+	void EnableAllBreakpoints() const;
+	bool HasAnyDisabledBreakpoints() const;
+
+	void DisableAllBreakpoints() const;
+	bool HasAnyEnabledBreakpoints() const;
+
+	void RemoveAllBreakpoints() const;
+	bool HasAnyBreakpoints() const;
 
 	void SetSignalMode(const EFlowSignalMode Mode) const;
 	bool CanSetSignalMode(const EFlowSignalMode Mode) const;

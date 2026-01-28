@@ -37,12 +37,17 @@ public:
 	TSharedPtr<FUICommandInfo> AddOutput;
 	TSharedPtr<FUICommandInfo> RemovePin;
 
-	/** Breakpoints */
+	/** Pin Breakpoints */
 	TSharedPtr<FUICommandInfo> AddPinBreakpoint;
 	TSharedPtr<FUICommandInfo> RemovePinBreakpoint;
 	TSharedPtr<FUICommandInfo> EnablePinBreakpoint;
 	TSharedPtr<FUICommandInfo> DisablePinBreakpoint;
 	TSharedPtr<FUICommandInfo> TogglePinBreakpoint;
+
+	/** Breakpoints */
+	TSharedPtr<FUICommandInfo> EnableAllBreakpoints;
+	TSharedPtr<FUICommandInfo> DisableAllBreakpoints;
+	TSharedPtr<FUICommandInfo> RemoveAllBreakpoints;
 
 	/** Execution Override */
 	TSharedPtr<FUICommandInfo> EnableNode;
