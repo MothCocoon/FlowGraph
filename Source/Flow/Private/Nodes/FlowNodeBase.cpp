@@ -743,7 +743,99 @@ FString UFlowNodeBase::GetNodeDescriptionWithAddons() const
 
 	return Description;
 }
+bool UFlowNodeBase::CanModifyFlowDataPinType() const
+{
+	return !IsPlacedInFlowAsset() || IsFlowNamedPropertiesSupplier();
+}
+
+bool UFlowNodeBase::ShowFlowDataPinValueInputPinCheckbox() const
+{
+	const bool bIsPlacedInFlowAsset = IsPlacedInFlowAsset();
+	return !bIsPlacedInFlowAsset;
+}
+
+bool UFlowNodeBase::ShowFlowDataPinValueClassFilter(const FFlowDataPinValue* Value) const
+{
+	const bool bIsPlacedInFlowAsset = IsPlacedInFlowAsset();
+	const bool bIsFlowNamedPropertiesSupplier = IsFlowNamedPropertiesSupplier();
+	return !bIsPlacedInFlowAsset || bIsFlowNamedPropertiesSupplier;
+}
+
+bool UFlowNodeBase::CanEditFlowDataPinValueClassFilter(const FFlowDataPinValue* Value) const
+{
+	const bool bIsPlacedInFlowAsset = IsPlacedInFlowAsset();
+	const bool bIsFlowNamedPropertiesSupplier = IsFlowNamedPropertiesSupplier();
+	return !bIsPlacedInFlowAsset || bIsFlowNamedPropertiesSupplier;
+}
+
+bool UFlowNodeBase::IsPlacedInFlowAsset() const
+{
+	return GetFlowAsset() != nullptr;
+}
+
+bool UFlowNodeBase::IsFlowNamedPropertiesSupplier() const
+{
+	return Implements<UFlowNamedPropertiesSupplierInterface>();
+}
 #endif
+
+FText UFlowNodeBase::K2_GetNodeTitle_Implementation() const
+{
+#if WITH_EDITOR
+	if (GetClass()->ClassGeneratedBy)
+	{
+		const FString& BlueprintTitle = Cast<UBlueprint>(GetClass()->ClassGeneratedBy)->BlueprintDisplayName;
+		if (!BlueprintTitle.IsEmpty())
+		{
+			return FText::FromString(BlueprintTitle);
+		}
+	}
+
+	static const FName NAME_DisplayName(TEXT("DisplayName"));
+	if (bDisplayNodeTitleWithoutPrefix && !GetClass()->HasMetaData(NAME_DisplayName))
+	{
+		return GetGeneratedDisplayName();
+	}
+
+	return GetClass()->GetDisplayNameText();
+#else
+	return FText::GetEmpty();
+#endif
+}
+
+FText UFlowNodeBase::K2_GetNodeToolTip_Implementation() const
+{
+#if WITH_EDITOR
+	if (GetClass()->ClassGeneratedBy)
+	{
+		const FString& BlueprintToolTip = Cast<UBlueprint>(GetClass()->ClassGeneratedBy)->BlueprintDescription;
+		if (!BlueprintToolTip.IsEmpty())
+		{
+			return FText::FromString(BlueprintToolTip);
+		}
+	}
+
+	static const FName NAME_Tooltip(TEXT("Tooltip"));
+	if (bDisplayNodeTitleWithoutPrefix && !GetClass()->HasMetaData(NAME_Tooltip))
+	{
+		return GetGeneratedDisplayName();
+	}
+
+	// GetClass()->GetToolTipText() can return meta = (DisplayName = ... ), but ignore BlueprintDisplayName even if it is BP Node
+	if (GetClass()->ClassGeneratedBy)
+	{
+		const FString& BlueprintTitle = Cast<UBlueprint>(GetClass()->ClassGeneratedBy)->BlueprintDisplayName;
+		if (!BlueprintTitle.IsEmpty())
+		{
+			return FText::FromString(BlueprintTitle);
+		}
+	}
+
+	return GetClass()->GetToolTipText();
+#else
+	return FText::GetEmpty();
+#endif
+}
 
 FText UFlowNodeBase::GetNodeConfigText() const
 {
