@@ -6,10 +6,12 @@
 
 #include "Interfaces/FlowCoreExecutableInterface.h"
 #include "Interfaces/FlowContextPinSupplierInterface.h"
+#include "Interfaces/FlowDataPinValueOwnerInterface.h"
 #include "FlowMessageLog.h"
 #include "FlowTags.h" // used by subclasses
 #include "FlowTypes.h"
 #include "Types/FlowDataPinResults.h"
+#include "Types/FlowPinTypeTemplates.h"
 
 #include "FlowNodeBase.generated.h"
 
@@ -18,9 +20,10 @@ class UFlowNode;
 class UFlowNodeAddOn;
 class UFlowSubsystem;
 class UEdGraphNode;
-class IFlowOwnerInterface;
 class IFlowDataPinValueSupplierInterface;
 struct FFlowPin;
+struct FFlowNamedDataPinProperty;
+struct FFlowPinType;
 
 #if WITH_EDITORONLY_DATA
 DECLARE_DELEGATE(FFlowNodeEvent);
@@ -36,21 +39,6 @@ struct FFlowPinValueSupplierData
 	const IFlowDataPinValueSupplierInterface* PinValueSupplier = nullptr;
 };
 
-// Helper template to reduce (some) of the boilerplate in TryResolveDataPinAs...() functions
-template <typename TFlowDataPinResultType, EFlowPinType PinType>
-struct TResolveDataPinWorkingData
-{
-	bool TrySetupWorkingData(const FName& PinName, const UFlowNodeBase& FlowNodeBase);
-
-	TFlowDataPinResultType DataPinResult;
-	const UFlowNode* FlowNode = nullptr;
-	const FFlowPin* FlowPin = nullptr;
-	
-	TArray<FFlowPinValueSupplierData> PinValueSupplierDatas;
-
-	static constexpr bool bCheckDefaultProperties = true;
-};
-
 /**
  * The base class for UFlowNode and UFlowNodeAddOn, with their shared functionality
  */
@@ -59,6 +47,7 @@ class FLOW_API UFlowNodeBase
 	: public UObject
 	, public IFlowCoreExecutableInterface
 	, public IFlowContextPinSupplierInterface
+	, public IFlowDataPinValueOwnerInterface
 {
 	GENERATED_UCLASS_BODY()
 
@@ -113,6 +102,13 @@ public:
 	UFUNCTION(BlueprintCallable, Category = "FlowNode", meta = (HidePin = "ActivationType"))
 	virtual void TriggerOutputPin(const FFlowOutputPinHandle Pin, const bool bFinish = false, const EFlowPinActivationType ActivationType = EFlowPinActivationType::Default);
 
+	// Returns a random seed suitable for this flow node base
+	UFUNCTION(BlueprintPure, Category = "FlowNode")
+	virtual int32 GetRandomSeed() const PURE_VIRTUAL(GetRandomSeed, return 0;);
+
+	// Returns the owning top-level Flow node.
+	virtual const UFlowNode* GetParentNode() const PURE_VIRTUAL(GetParentNode, return nullptr;);
+
 //////////////////////////////////////////////////////////////////////////
 // Pins	
 
@@ -152,14 +148,7 @@ public:
 	UFUNCTION(BlueprintCallable, Category = "FlowNode")
 	UObject* TryGetRootFlowObjectOwner() const;
 
-	// Returns the IFlowOwnerInterface for the owner object (if implemented)
-	//  NOTE - will consider a UActorComponent owner's owning actor if appropriate
-	IFlowOwnerInterface* GetFlowOwnerInterface() const;
-
-protected:
-	// Helper functions for GetFlowOwnerInterface()
-	static IFlowOwnerInterface* TryGetFlowOwnerInterfaceFromRootFlowOwner(UObject& RootFlowOwner, const UClass& ExpectedOwnerClass);
-	static IFlowOwnerInterface* TryGetFlowOwnerInterfaceActor(UObject& RootFlowOwner, const UClass& ExpectedOwnerClass);
+	static TArray<UFlowNodeBase*> BuildFlowNodeBaseAncestorChain(UFlowNodeBase& FromFlowNodeBase, bool bIncludeFromFlowNodeBase);
 
 //////////////////////////////////////////////////////////////////////////
 // AddOn support
@@ -188,83 +177,151 @@ public:
 	EFlowAddOnAcceptResult CheckAcceptFlowNodeAddOnChild(const UFlowNodeAddOn* AddOnTemplate, const TArray<UFlowNodeAddOn*>& AdditionalAddOnsToAssumeAreChildren) const;
 #endif // WITH_EDITOR
 
-	// Call a function for all of this object's AddOns (recursively iterating AddOns inside AddOn)
-	EFlowForEachAddOnFunctionReturnValue ForEachAddOnConst(const FConstFlowNodeAddOnFunction& Function) const;
-	EFlowForEachAddOnFunctionReturnValue ForEachAddOn(const FFlowNodeAddOnFunction& Function) const;
+	bool IsClassOrImplementsInterface(const UClass& InterfaceOrClass) const
+	{
+		// InterfaceOrClass can either be the AddOn's UClass (or its superclass)
+		// or an interface (the UClass version) that its UClass implements 
+		return IsA(&InterfaceOrClass) || GetClass()->ImplementsInterface(&InterfaceOrClass);
+	}
 
 	template <typename TInterfaceOrClass>
+	bool IsClassOrImplementsInterface() const
+	{
+		return IsClassOrImplementsInterface(*TInterfaceOrClass::StaticClass());
+	}
+
+	// Call a function for all of this object's AddOns (recursively iterating AddOns inside AddOn)
+	EFlowForEachAddOnFunctionReturnValue ForEachAddOnConst(const FConstFlowNodeAddOnFunction& Function, EFlowForEachAddOnChildRule AddOnChildRule = EFlowForEachAddOnChildRule::AllChildren) const;
+	EFlowForEachAddOnFunctionReturnValue ForEachAddOn(const FFlowNodeAddOnFunction& Function, EFlowForEachAddOnChildRule AddOnChildRule = EFlowForEachAddOnChildRule::AllChildren) const;
+
+	template <typename TInterfaceOrClass, EFlowForEachAddOnChildRule TAddOnChildRule = EFlowForEachAddOnChildRule::AllChildren>
 	EFlowForEachAddOnFunctionReturnValue ForEachAddOnForClassConst(const FConstFlowNodeAddOnFunction Function) const
 	{
-		return ForEachAddOnForClassConst(*TInterfaceOrClass::StaticClass(), Function);
+		return ForEachAddOnForClassConst(*TInterfaceOrClass::StaticClass(), Function, TAddOnChildRule);
 	}
 
-	EFlowForEachAddOnFunctionReturnValue ForEachAddOnForClassConst(const UClass& InterfaceOrClass, const FConstFlowNodeAddOnFunction& Function) const;
+	EFlowForEachAddOnFunctionReturnValue ForEachAddOnForClassConst(const UClass& InterfaceOrClass, const FConstFlowNodeAddOnFunction& Function, EFlowForEachAddOnChildRule AddOnChildRule = EFlowForEachAddOnChildRule::AllChildren) const;
 
-	template <typename TInterfaceOrClass>
+	template <typename TInterfaceOrClass, EFlowForEachAddOnChildRule TAddOnChildRule = EFlowForEachAddOnChildRule::AllChildren>
 	EFlowForEachAddOnFunctionReturnValue ForEachAddOnForClass(const FFlowNodeAddOnFunction Function) const
 	{
-		return ForEachAddOnForClass(*TInterfaceOrClass::StaticClass(), Function);
+		return ForEachAddOnForClass(*TInterfaceOrClass::StaticClass(), Function, TAddOnChildRule);
 	}
 
-	EFlowForEachAddOnFunctionReturnValue ForEachAddOnForClass(const UClass& InterfaceOrClass, const FFlowNodeAddOnFunction& Function) const;
+	EFlowForEachAddOnFunctionReturnValue ForEachAddOnForClass(const UClass& InterfaceOrClass, const FFlowNodeAddOnFunction& Function, EFlowForEachAddOnChildRule AddOnChildRule = EFlowForEachAddOnChildRule::AllChildren) const;
 
 public:
 
 //////////////////////////////////////////////////////////////////////////
 // Data Pins
 
-	// Must implement TryResolveDataAs... for every EFlowPinType
-	FLOW_ASSERT_ENUM_MAX(EFlowPinType, 16);
+	// IFlowDataPinValueOwnerInterface
+#if WITH_EDITOR
+public:
+	virtual bool CanModifyFlowDataPinType() const override;
+	virtual bool ShowFlowDataPinValueInputPinCheckbox() const override;
+	virtual bool ShowFlowDataPinValueClassFilter(const FFlowDataPinValue* Value) const override;
+	virtual bool CanEditFlowDataPinValueClassFilter(const FFlowDataPinValue* Value) const override;
+	virtual void SetFlowDataPinValuesRebuildDelegate(FSimpleDelegate InDelegate) override
+	{
+		FlowDataPinValuesRebuildDelegate = InDelegate;
+	}
+	virtual void RequestFlowDataPinValuesDetailsRebuild() override
+	{
+		if (FlowDataPinValuesRebuildDelegate.IsBound())
+		{
+			FlowDataPinValuesRebuildDelegate.Execute();
+		}
+	}
+private:
+	FSimpleDelegate FlowDataPinValuesRebuildDelegate;
+protected:
+	// Helpers for IFlowDataPinValueOwnerInterface
+	bool IsPlacedInFlowAsset() const;
+	bool IsFlowNamedPropertiesSupplier() const;
+#endif
+	// --
 
-	UFUNCTION(BlueprintCallable, Category = DataPins, DisplayName = "Try Resolve DataPin As Bool")
-	FFlowDataPinResult_Bool TryResolveDataPinAsBool(const FName& PinName) const;
+private:
+	UFUNCTION(BlueprintPure, Category = DataPins, DisplayName = "Resolve DataPin By Name")
+	FFlowDataPinResult TryResolveDataPin(FName PinName) const;
+	
+public:
+	// Generic single-value resolve & extractor
+	template <typename TFlowPinType>
+	EFlowDataPinResolveResult TryResolveDataPinValue(const FName& PinName, typename TFlowPinType::ValueType& OutValue, EFlowSingleFromArray SingleFromArray = EFlowSingleFromArray::LastValue) const;
 
-	UFUNCTION(BlueprintCallable, Category = DataPins, DisplayName = "Try Resolve DataPin As Int")
-	FFlowDataPinResult_Int TryResolveDataPinAsInt(const FName& PinName) const;
+	// Generic array-value resolve & extractor
+	template <typename TFlowPinType>
+	EFlowDataPinResolveResult TryResolveDataPinValues(const FName& PinName, TArray<typename TFlowPinType::ValueType>& OutValues) const;
 
-	UFUNCTION(BlueprintCallable, Category = DataPins, DisplayName = "Try Resolve DataPin As Float")
-	FFlowDataPinResult_Float TryResolveDataPinAsFloat(const FName& PinName) const;
+	// Special-case single-value resolve & extractor for native enums
+	template <typename TEnumType> requires std::is_enum_v<TEnumType>
+	EFlowDataPinResolveResult TryResolveDataPinValue(const FName& PinName, TEnumType& OutValue, EFlowSingleFromArray SingleFromArray = EFlowSingleFromArray::LastValue) const;
 
-	UFUNCTION(BlueprintCallable, Category = DataPins, DisplayName = "Try Resolve DataPin As Name")
-	FFlowDataPinResult_Name TryResolveDataPinAsName(const FName& PinName) const;
+	// Special-case array-value resolve & extractor for native enums 
+	template <typename TEnumType> requires std::is_enum_v<TEnumType>
+	EFlowDataPinResolveResult TryResolveDataPinValues(const FName& PinName, TArray<TEnumType>& OutValues) const;
 
-	UFUNCTION(BlueprintCallable, Category = DataPins, DisplayName = "Try Resolve DataPin As String")
-	FFlowDataPinResult_String TryResolveDataPinAsString(const FName& PinName) const;
+	// Special-case single-value resolve & extractor for enums (as FName values)
+	template <typename TFlowPinType = FFlowPinType_Enum>
+	EFlowDataPinResolveResult TryResolveDataPinValue(const FName& PinName, FName& OutEnumValue, UEnum*& OutEnumClass, EFlowSingleFromArray SingleFromArray = EFlowSingleFromArray::LastValue) const;
 
-	UFUNCTION(BlueprintCallable, Category = DataPins, DisplayName = "Try Resolve DataPin As Text")
-	FFlowDataPinResult_Text TryResolveDataPinAsText(const FName& PinName) const;
-
-	UFUNCTION(BlueprintCallable, Category = DataPins, DisplayName = "Try Resolve DataPin As Enum")
-	FFlowDataPinResult_Enum TryResolveDataPinAsEnum(const FName& PinName) const;
-
-	UFUNCTION(BlueprintCallable, Category = DataPins, DisplayName = "Try Resolve DataPin As Vector")
-	FFlowDataPinResult_Vector TryResolveDataPinAsVector(const FName& PinName) const;
-
-	UFUNCTION(BlueprintCallable, Category = DataPins, DisplayName = "Try Resolve DataPin As Rotator")
-	FFlowDataPinResult_Rotator TryResolveDataPinAsRotator(const FName& PinName) const;
-
-	UFUNCTION(BlueprintCallable, Category = DataPins, DisplayName = "Try Resolve DataPin As Transform")
-	FFlowDataPinResult_Transform TryResolveDataPinAsTransform(const FName& PinName) const;
-
-	UFUNCTION(BlueprintCallable, Category = DataPins, DisplayName = "Try Resolve DataPin As GameplayTag")
-	FFlowDataPinResult_GameplayTag TryResolveDataPinAsGameplayTag(const FName& PinName) const;
-
-	UFUNCTION(BlueprintCallable, Category = DataPins, DisplayName = "Try Resolve DataPin As GameplayTagContainer")
-	FFlowDataPinResult_GameplayTagContainer TryResolveDataPinAsGameplayTagContainer(const FName& PinName) const;
-
-	UFUNCTION(BlueprintCallable, Category = DataPins, DisplayName = "Try Resolve DataPin As InstancedStruct")
-	FFlowDataPinResult_InstancedStruct TryResolveDataPinAsInstancedStruct(const FName& PinName) const;
-
-	UFUNCTION(BlueprintCallable, Category = DataPins, DisplayName = "Try Resolve DataPin As Object")
-	FFlowDataPinResult_Object TryResolveDataPinAsObject(const FName& PinName) const;
-
-	UFUNCTION(BlueprintCallable, Category = DataPins, DisplayName = "Try Resolve DataPin As Class")
-	FFlowDataPinResult_Class TryResolveDataPinAsClass(const FName& PinName) const;
-
-	// Public only for TResolveDataPinWorkingData's use
-	EFlowDataPinResolveResult TryResolveDataPinPrerequisites(const FName& PinName, const UFlowNode*& FlowNode, const FFlowPin*& FlowPin, EFlowPinType PinType) const;
+	// Special-case array-value resolve & extractor for enums (as FName values)
+	template <typename TFlowPinType = FFlowPinType_Enum>
+	EFlowDataPinResolveResult TryResolveDataPinValues(const FName& PinName, TArray<FName>& OutEnumValues, UEnum*& OutEnumClass) const;
 
 public:
+
+	// #FlowDataPinLegacy
+	UFUNCTION(BlueprintCallable, Category = DataPins, DisplayName = "Try Resolve DataPin As Bool", meta = (DeprecatedFunction, DeprecationMessage = "Use TryResolveDataPin (in blueprint) or TryResolveDataPinValue(s) (in code) instead"))
+	FFlowDataPinResult_Bool TryResolveDataPinAsBool(const FName& PinName) const;
+
+	UFUNCTION(BlueprintCallable, Category = DataPins, DisplayName = "Try Resolve DataPin As Int", meta = (DeprecatedFunction, DeprecationMessage = "Use TryResolveDataPin (in blueprint) or TryResolveDataPinValue(s) (in code) instead"))
+	FFlowDataPinResult_Int TryResolveDataPinAsInt(const FName& PinName) const;
+
+	UFUNCTION(BlueprintCallable, Category = DataPins, DisplayName = "Try Resolve DataPin As Float", meta = (DeprecatedFunction, DeprecationMessage = "Use TryResolveDataPin (in blueprint) or TryResolveDataPinValue(s) (in code) instead"))
+	FFlowDataPinResult_Float TryResolveDataPinAsFloat(const FName& PinName) const;
+
+	UFUNCTION(BlueprintCallable, Category = DataPins, DisplayName = "Try Resolve DataPin As Name", meta = (DeprecatedFunction, DeprecationMessage = "Use TryResolveDataPin (in blueprint) or TryResolveDataPinValue(s) (in code) instead"))
+	FFlowDataPinResult_Name TryResolveDataPinAsName(const FName& PinName) const;
+
+	UFUNCTION(BlueprintCallable, Category = DataPins, DisplayName = "Try Resolve DataPin As String", meta = (DeprecatedFunction, DeprecationMessage = "Use TryResolveDataPin (in blueprint) or TryResolveDataPinValue(s) (in code) instead"))
+	FFlowDataPinResult_String TryResolveDataPinAsString(const FName& PinName) const;
+
+	UFUNCTION(BlueprintCallable, Category = DataPins, DisplayName = "Try Resolve DataPin As Text", meta = (DeprecatedFunction, DeprecationMessage = "Use TryResolveDataPin (in blueprint) or TryResolveDataPinValue(s) (in code) instead"))
+	FFlowDataPinResult_Text TryResolveDataPinAsText(const FName& PinName) const;
+
+	UFUNCTION(BlueprintCallable, Category = DataPins, DisplayName = "Try Resolve DataPin As Enum", meta = (DeprecatedFunction, DeprecationMessage = "Use TryResolveDataPin (in blueprint) or TryResolveDataPinValue(s) (in code) instead"))
+	FFlowDataPinResult_Enum TryResolveDataPinAsEnum(const FName& PinName) const;
+
+	UFUNCTION(BlueprintCallable, Category = DataPins, DisplayName = "Try Resolve DataPin As Vector", meta = (DeprecatedFunction, DeprecationMessage = "Use TryResolveDataPin (in blueprint) or TryResolveDataPinValue(s) (in code) instead"))
+	FFlowDataPinResult_Vector TryResolveDataPinAsVector(const FName& PinName) const;
+
+	UFUNCTION(BlueprintCallable, Category = DataPins, DisplayName = "Try Resolve DataPin As Rotator", meta = (DeprecatedFunction, DeprecationMessage = "Use TryResolveDataPin (in blueprint) or TryResolveDataPinValue(s) (in code) instead"))
+	FFlowDataPinResult_Rotator TryResolveDataPinAsRotator(const FName& PinName) const;
+
+	UFUNCTION(BlueprintCallable, Category = DataPins, DisplayName = "Try Resolve DataPin As Transform", meta = (DeprecatedFunction, DeprecationMessage = "Use TryResolveDataPin (in blueprint) or TryResolveDataPinValue(s) (in code) instead"))
+	FFlowDataPinResult_Transform TryResolveDataPinAsTransform(const FName& PinName) const;
+
+	UFUNCTION(BlueprintCallable, Category = DataPins, DisplayName = "Try Resolve DataPin As GameplayTag", meta = (DeprecatedFunction, DeprecationMessage = "Use TryResolveDataPin (in blueprint) or TryResolveDataPinValue(s) (in code) instead"))
+	FFlowDataPinResult_GameplayTag TryResolveDataPinAsGameplayTag(const FName& PinName) const;
+
+	UFUNCTION(BlueprintCallable, Category = DataPins, DisplayName = "Try Resolve DataPin As GameplayTagContainer", meta = (DeprecatedFunction, DeprecationMessage = "Use TryResolveDataPin (in blueprint) or TryResolveDataPinValue(s) (in code) instead"))
+	FFlowDataPinResult_GameplayTagContainer TryResolveDataPinAsGameplayTagContainer(const FName& PinName) const;
+
+	UFUNCTION(BlueprintCallable, Category = DataPins, DisplayName = "Try Resolve DataPin As InstancedStruct", meta = (DeprecatedFunction, DeprecationMessage = "Use TryResolveDataPin (in blueprint) or TryResolveDataPinValue(s) (in code) instead"))
+	FFlowDataPinResult_InstancedStruct TryResolveDataPinAsInstancedStruct(const FName& PinName) const;
+
+	UFUNCTION(BlueprintCallable, Category = DataPins, DisplayName = "Try Resolve DataPin As Object", meta = (DeprecatedFunction, DeprecationMessage = "Use TryResolveDataPin (in blueprint) or TryResolveDataPinValue(s) (in code) instead"))
+	FFlowDataPinResult_Object TryResolveDataPinAsObject(const FName& PinName) const;
+
+	UFUNCTION(BlueprintCallable, Category = DataPins, DisplayName = "Try Resolve DataPin As Class", meta = (DeprecatedFunction, DeprecationMessage = "Use TryResolveDataPin (in blueprint) or TryResolveDataPinValue(s) (in code) instead"))
+	FFlowDataPinResult_Class TryResolveDataPinAsClass(const FName& PinName) const;
+	// --
+
+protected:
+	bool TryAddValueToFormatNamedArguments(const FFlowNamedDataPinProperty& NamedDataPinProperty, FFormatNamedArguments& InOutArguments) const;
 
 //////////////////////////////////////////////////////////////////////////
 // Editor
@@ -273,13 +330,13 @@ public:
 protected:
 	UPROPERTY()
 	TObjectPtr<UEdGraphNode> GraphNode;
-	
+
 	UPROPERTY(EditDefaultsOnly, Category = "FlowNode")
 	uint8 bDisplayNodeTitleWithoutPrefix : 1;
-	
+
 	uint8 bCanDelete : 1 ;
 	uint8 bCanDuplicate : 1;
-	
+
 	UPROPERTY(EditDefaultsOnly, Category = "FlowNode")
 	bool bNodeDeprecated;
 
@@ -288,15 +345,17 @@ protected:
 	TSubclassOf<UFlowNode> ReplacedBy;
 
 	FFlowNodeEvent OnReconstructionRequested;
-	FFlowMessageLog ValidationLog;
+	FFlowNodeEvent OnAddOnRequestedParentReconstruction;
 #endif // WITH_EDITORONLY_DATA
 
 #if WITH_EDITOR
 public:
 	virtual void PostLoad() override;
-	
+
 	void SetGraphNode(UEdGraphNode* NewGraphNode);
-	UEdGraphNode* GetGraphNode() const { return GraphNode; }
+	virtual UEdGraphNode* GetGraphNode() const { return GraphNode; }
+
+	void SetCanDelete(const bool CanDelete);
 
 	// Set up UFlowNodeBase when being opened for edit in the editor
 	virtual void SetupForEditing(UEdGraphNode& EdGraphNode);
@@ -307,14 +366,16 @@ public:
 	// UObject
 	virtual void PostEditChangeProperty(FPropertyChangedEvent& PropertyChangedEvent) override;
 	// --
-	
+
+	void RequestReconstruction() const { (void) OnReconstructionRequested.ExecuteIfBound(); };
+
 	// used when import graph from another asset
 	virtual void PostImport() {}
+#endif
 
+public:
 	// Called by owning FlowNode to add to its Status String.
-	// (may be multi-line)
 	virtual FString GetStatusString() const;
-#endif // WITH_EDITOR
 
 protected:
 	// Information displayed while node is working - displayed over node as NodeInfoPopup
@@ -345,21 +406,32 @@ protected:
 
 #if WITH_EDITOR
 public:
+	// WARNING! Call UFlowGraphSettings::GetNodeCategoryForNode() instead!
 	virtual FString GetNodeCategory() const;
 
 	const FGameplayTag& GetNodeDisplayStyle() const { return NodeDisplayStyle; }
 
 	// This method allows to have different for every node instance, i.e. Red if node represents enemy, Green if node represents a friend
 	virtual bool GetDynamicTitleColor(FLinearColor& OutColor) const;
-	
-	virtual FText GetNodeTitle() const;
-	virtual FText GetNodeToolTip() const;
-	virtual FText GetNodeConfigText() const;
+
+	virtual FText GetNodeTitle() const { return K2_GetNodeTitle(); }
+	virtual FText GetNodeToolTip() const { return K2_GetNodeToolTip(); }
+
 	FText GetGeneratedDisplayName() const;
 
 protected:
 	void EnsureNodeDisplayStyle();
 #endif // WITH_EDITOR
+
+public:
+	UFUNCTION(BlueprintNativeEvent, Category = "FlowNode")
+	FText K2_GetNodeTitle() const;
+	
+	UFUNCTION(BlueprintNativeEvent, Category = "FlowNode")
+	FText K2_GetNodeToolTip() const;
+
+	UFUNCTION(BlueprintPure, Category = "FlowNode")
+	virtual FText GetNodeConfigText() const;
 
 protected:	
 	// Set the editor-only Config Text 
@@ -374,7 +446,12 @@ protected:
 
 //////////////////////////////////////////////////////////////////////////
 // Debug support
-	
+
+#if WITH_EDITORONLY_DATA
+protected:
+	FFlowMessageLog ValidationLog;
+#endif // WITH_EDITORONLY_DATA
+
 #if WITH_EDITOR
 public:
 	// Short summary of node's content - displayed over node as NodeInfoPopup
@@ -386,6 +463,7 @@ protected:
 	UFUNCTION(BlueprintImplementableEvent, Category = "FlowNode", meta = (DisplayName = "Get Node Description"))
 	FString K2_GetNodeDescription() const;
 
+public:
 	UFUNCTION(BlueprintCallable, Category = "FlowNode", meta = (DevelopmentOnly))
 	void LogError(FString Message, const EFlowOnScreenMessageType OnScreenMessageType = EFlowOnScreenMessageType::Permanent) const;
 
@@ -402,4 +480,79 @@ protected:
 protected:
 	bool BuildMessage(FString& Message) const;
 #endif
+
+#if WITH_EDITOR
+	virtual EDataValidationResult ValidateNode();
+#endif
+
+	// Optional validation override for Blueprints
+	UFUNCTION(BlueprintImplementableEvent, Category = "FlowNode|Validation", meta = (DisplayName = "Validate Node", DevelopmentOnly))
+	EDataValidationResult K2_ValidateNode();
+
+	// Log validation error (editor-only)
+	UFUNCTION(BlueprintCallable, Category = "FlowNode|Validation", meta = (DevelopmentOnly))
+	void LogValidationError(const FString& Message);
+
+	// Log validation warning (editor-only)
+	UFUNCTION(BlueprintCallable, Category = "FlowNode|Validation", meta = (DevelopmentOnly))
+	void LogValidationWarning(const FString& Message);
+
+	// Log validation note (editor-only)
+	UFUNCTION(BlueprintCallable, Category = "FlowNode|Validation", meta = (DevelopmentOnly))
+	void LogValidationNote(const FString& Message);
+	// --
 };
+
+// Templates & inline implementations:
+
+template <typename TFlowPinType>
+EFlowDataPinResolveResult UFlowNodeBase::TryResolveDataPinValue(const FName& PinName, typename TFlowPinType::ValueType& OutValue, EFlowSingleFromArray SingleFromArray /*= EFlowSingleFromArray::LastValue*/) const
+{
+	const FFlowDataPinResult DataPinResult = TryResolveDataPin(PinName);
+	return FlowPinType::TryExtractValue<TFlowPinType>(DataPinResult, OutValue, SingleFromArray);
+}
+
+template <typename TFlowPinType>
+EFlowDataPinResolveResult UFlowNodeBase::TryResolveDataPinValues(const FName& PinName, TArray<typename TFlowPinType::ValueType>& OutValues) const
+{
+	const FFlowDataPinResult DataPinResult = TryResolveDataPin(PinName);
+	return FlowPinType::TryExtractValues<TFlowPinType>(DataPinResult, OutValues);
+}
+
+template <typename TFlowPinType>
+EFlowDataPinResolveResult UFlowNodeBase::TryResolveDataPinValue(const FName& PinName, FName& OutEnumValue, UEnum*& OutEnumClass, EFlowSingleFromArray SingleFromArray /*= EFlowSingleFromArray::LastValue*/) const
+{
+	const FFlowDataPinResult DataPinResult = TryResolveDataPin(PinName);
+	if (!FlowPinType::IsSuccess(DataPinResult.Result))
+	{
+		return DataPinResult.Result;
+	}
+
+	return FlowPinType::TryExtractValue<TFlowPinType>(DataPinResult, OutEnumValue, OutEnumClass, SingleFromArray);
+}
+
+template <typename TFlowPinType>
+EFlowDataPinResolveResult UFlowNodeBase::TryResolveDataPinValues(const FName& PinName, TArray<FName>& OutEnumValues, UEnum*& OutEnumClass) const
+{
+	const FFlowDataPinResult DataPinResult = TryResolveDataPin(PinName);
+	if (!FlowPinType::IsSuccess(DataPinResult.Result))
+	{
+		return DataPinResult.Result;
+	}
+
+	return FlowPinType::TryExtractValues<TFlowPinType>(DataPinResult, OutEnumValues, OutEnumClass);
+}
+
+template <typename TEnumType> requires std::is_enum_v<TEnumType>
+EFlowDataPinResolveResult UFlowNodeBase::TryResolveDataPinValue(const FName& PinName, TEnumType& OutValue, EFlowSingleFromArray SingleFromArray /*= EFlowSingleFromArray::LastValue*/) const
+{
+	const FFlowDataPinResult DataPinResult = TryResolveDataPin(PinName);
+	return FlowPinType::TryExtractValue<TEnumType>(DataPinResult, OutValue, SingleFromArray);
+}
+
+template <typename TEnumType> requires std::is_enum_v<TEnumType>
+EFlowDataPinResolveResult UFlowNodeBase::TryResolveDataPinValues(const FName& PinName, TArray<TEnumType>& OutValues) const
+{
+	const FFlowDataPinResult DataPinResult = TryResolveDataPin(PinName);
+	return FlowPinType::TryExtractValues<TEnumType>(DataPinResult, OutValues);
+}

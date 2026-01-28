@@ -61,7 +61,6 @@ public class FlowEditor : ModuleRules
 			"Slate",
 			"SlateCore",
 			"SourceControl",
-			"StructUtils",
 			"ToolMenus",
 			"UnrealEd"
 		});

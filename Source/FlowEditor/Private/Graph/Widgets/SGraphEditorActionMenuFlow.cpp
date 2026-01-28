@@ -9,6 +9,7 @@
 #include "HAL/PlatformCrt.h"
 #include "Layout/Margin.h"
 #include "Misc/Attribute.h"
+#include "Runtime/Launch/Resources/Version.h"
 #include "SGraphActionMenu.h"
 #include "Styling/AppStyle.h"
 #include "Templates/Casts.h"

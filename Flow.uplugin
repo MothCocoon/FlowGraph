@@ -1,6 +1,6 @@
-{
+﻿{
 	"FileVersion" : 3,
-	"Version" : 2.1,
+	"Version" : 2.2,
 	"FriendlyName" : "Flow",
 	"Description" : "Design-agnostic node editor for scripting game’s flow.",
 	"Category" : "Gameplay",
@@ -8,7 +8,7 @@
 	"DocsURL" : "https://github.com/MothCocoon/FlowGraph/wiki",
 	"MarketplaceURL" : "",
 	"SupportURL": "https://discord.gg/Xmtr6GhbmW",
-	"EnabledByDefault" : true,
+	"EnabledByDefault" : false,
 	"CanContainContent" : false,
 	"IsBetaVersion" : false,
 	"Installed" : false,
@@ -41,10 +41,6 @@
 		},
 		{
 			"Name": "EngineAssetDefinitions",
-			"Enabled": true
-		},
-		{
-			"Name": "StructUtils",
 			"Enabled": true
 		}
 	]

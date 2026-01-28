@@ -2,16 +2,13 @@
 
 #pragma once
 
-#include "Types/FlowActorOwnerComponentRef.h"
-
 #include "Nodes/FlowNode.h"
-#include "Types/FlowInjectComponentsHelper.h"
+#include "Types/FlowActorOwnerComponentRef.h"
 #include "Types/FlowEnumUtils.h"
 
 #include "FlowNode_ExecuteComponent.generated.h"
 
 // Forward Declarations
-class IFlowOwnerInterface;
 class UFlowInjectComponentsManager;
 
 UENUM()
@@ -64,14 +61,24 @@ public:
 	virtual void UpdateNodeConfigText_Implementation() override;
 	// --
 
+	// UFlowNode
+	virtual void GatherPotentialPropertyOwnersForDataPins(TArray<const UObject*>& InOutOwners) const override;
+	// --
+
 #if WITH_EDITOR
+	// IFlowContextPinSupplierInterface	
+	virtual bool SupportsContextPins() const override { return true; }
+	virtual TArray<FFlowPin> GetContextInputs() const override;
+	virtual TArray<FFlowPin> GetContextOutputs() const override;
+	// --
+
 	// UObject
 	virtual void PostLoad() override;
 	virtual void PostEditChangeProperty(struct FPropertyChangedEvent& PropertyChangedEvent) override;
 	// --
 
 	// UFlowNode
-	virtual FText GetNodeTitle() const override;
+	virtual FText K2_GetNodeTitle_Implementation() const override;
 	virtual EDataValidationResult ValidateNode() override;
 
 	virtual FString GetStatusString() const override;
@@ -89,7 +96,10 @@ protected:
 
 	bool TryInjectComponent();
 
+	const UActorComponent* GetResolvedOrExpectedComponent() const;
+
 	UActorComponent* TryResolveComponent();
+	UActorComponent* GetResolvedComponent() const;
 	TSubclassOf<AActor> TryGetExpectedActorOwnerClass() const;
 
 protected:

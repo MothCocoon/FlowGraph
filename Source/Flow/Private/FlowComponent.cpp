@@ -2,6 +2,7 @@
 
 #include "FlowComponent.h"
 
+#include "Asset/FlowAssetParams.h"
 #include "FlowAsset.h"
 #include "FlowLogChannels.h"
 #include "FlowSettings.h"
@@ -302,7 +303,7 @@ void UFlowComponent::LogError(FString Message, const EFlowOnScreenMessageType On
 			}
 		}
 	}
-	else
+	else if (OnScreenMessageType == EFlowOnScreenMessageType::Temporary)
 	{
 		GEngine->AddOnScreenDebugMessage(-1, 2.0f, FColor::Red, Message);
 	}
@@ -450,7 +451,8 @@ void UFlowComponent::StartRootFlow()
 		{
 			VerifyIdentityTags();
 
-			FlowSubsystem->StartRootFlow(this, RootFlow, bAllowMultipleInstances);
+			const TScriptInterface<IFlowDataPinValueSupplierInterface> RootFlowParamsAsInterface = RootFlowParams.ResolveFlowAssetParams();
+			FlowSubsystem->StartRootFlow(this, RootFlow, RootFlowParamsAsInterface, bAllowMultipleInstances);
 		}
 	}
 }
