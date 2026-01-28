@@ -107,34 +107,34 @@ void FFlowAssetEditor::RegisterTabSpawners(const TSharedRef<class FTabManager>& 
 	FAssetEditorToolkit::RegisterTabSpawners(InTabManager);
 
 	InTabManager->RegisterTabSpawner(DetailsTab, FOnSpawnTab::CreateSP(this, &FFlowAssetEditor::SpawnTab_Details))
-				.SetDisplayName(LOCTEXT("DetailsTab", "Details"))
-				.SetGroup(WorkspaceMenuCategoryRef)
-				.SetIcon(FSlateIcon(FAppStyle::GetAppStyleSetName(), "LevelEditor.Tabs.Details"));
+	            .SetDisplayName(LOCTEXT("DetailsTab", "Details"))
+	            .SetGroup(WorkspaceMenuCategoryRef)
+	            .SetIcon(FSlateIcon(FAppStyle::GetAppStyleSetName(), "LevelEditor.Tabs.Details"));
 
 	InTabManager->RegisterTabSpawner(GraphTab, FOnSpawnTab::CreateSP(this, &FFlowAssetEditor::SpawnTab_Graph))
-				.SetDisplayName(LOCTEXT("GraphTab", "Graph"))
-				.SetGroup(WorkspaceMenuCategoryRef)
-				.SetIcon(FSlateIcon(FAppStyle::GetAppStyleSetName(), "GraphEditor.EventGraph_16x"));
+	            .SetDisplayName(LOCTEXT("GraphTab", "Graph"))
+	            .SetGroup(WorkspaceMenuCategoryRef)
+	            .SetIcon(FSlateIcon(FAppStyle::GetAppStyleSetName(), "GraphEditor.EventGraph_16x"));
 
 	InTabManager->RegisterTabSpawner(PaletteTab, FOnSpawnTab::CreateSP(this, &FFlowAssetEditor::SpawnTab_Palette))
-				.SetDisplayName(LOCTEXT("PaletteTab", "Palette"))
-				.SetGroup(WorkspaceMenuCategoryRef)
-				.SetIcon(FSlateIcon(FAppStyle::GetAppStyleSetName(), "Kismet.Tabs.Palette"));
+	            .SetDisplayName(LOCTEXT("PaletteTab", "Palette"))
+	            .SetGroup(WorkspaceMenuCategoryRef)
+	            .SetIcon(FSlateIcon(FAppStyle::GetAppStyleSetName(), "Kismet.Tabs.Palette"));
 
 	InTabManager->RegisterTabSpawner(RuntimeLogTab, FOnSpawnTab::CreateSP(this, &FFlowAssetEditor::SpawnTab_RuntimeLog))
-				.SetDisplayName(LOCTEXT("RuntimeLog", "Runtime Log"))
-				.SetGroup(WorkspaceMenuCategoryRef)
-				.SetIcon(FSlateIcon(FAppStyle::GetAppStyleSetName(), "Kismet.Tabs.CompilerResults"));
-	
+	            .SetDisplayName(LOCTEXT("RuntimeLog", "Runtime Log"))
+	            .SetGroup(WorkspaceMenuCategoryRef)
+	            .SetIcon(FSlateIcon(FAppStyle::GetAppStyleSetName(), "Kismet.Tabs.CompilerResults"));
+
 	InTabManager->RegisterTabSpawner(SearchTab, FOnSpawnTab::CreateSP(this, &FFlowAssetEditor::SpawnTab_Search))
-				.SetDisplayName(LOCTEXT("SearchTab", "Search"))
-				.SetGroup(WorkspaceMenuCategoryRef)
-				.SetIcon(FSlateIcon(FAppStyle::GetAppStyleSetName(), "Kismet.Tabs.FindResults"));
-	
+	            .SetDisplayName(LOCTEXT("SearchTab", "Search"))
+	            .SetGroup(WorkspaceMenuCategoryRef)
+	            .SetIcon(FSlateIcon(FAppStyle::GetAppStyleSetName(), "Kismet.Tabs.FindResults"));
+
 	InTabManager->RegisterTabSpawner(ValidationLogTab, FOnSpawnTab::CreateSP(this, &FFlowAssetEditor::SpawnTab_ValidationLog))
-				.SetDisplayName(LOCTEXT("ValidationLog", "Validation Log"))
-				.SetGroup(WorkspaceMenuCategoryRef)
-				.SetIcon(FSlateIcon(FAppStyle::GetAppStyleSetName(), "Debug"));
+	            .SetDisplayName(LOCTEXT("ValidationLog", "Validation Log"))
+	            .SetGroup(WorkspaceMenuCategoryRef)
+	            .SetIcon(FSlateIcon(FAppStyle::GetAppStyleSetName(), "Debug"));
 }
 
 void FFlowAssetEditor::UnregisterTabSpawners(const TSharedRef<class FTabManager>& InTabManager)
@@ -187,6 +187,7 @@ void FFlowAssetEditor::SaveAsset_Execute()
 
 	FAssetEditorToolkit::SaveAsset_Execute();
 }
+
 void FFlowAssetEditor::SaveAssetAs_Execute()
 {
 	DoPresaveAssetUpdate();
@@ -317,49 +318,49 @@ void FFlowAssetEditor::InitFlowAssetEditor(const EToolkitMode::Type Mode, const 
 		->AddArea
 		(
 			FTabManager::NewPrimaryArea()->SetOrientation(Orient_Horizontal)
-										->Split
-										(
-											FTabManager::NewStack()
-											->SetSizeCoefficient(0.225f)
-											->AddTab(DetailsTab, ETabState::OpenedTab)
-										)
-										->Split
-										(
-											FTabManager::NewSplitter()
-											->SetSizeCoefficient(0.65f)
-											->SetOrientation(Orient_Vertical)
-											->Split
-											(
-												FTabManager::NewStack()
-												->SetSizeCoefficient(0.8f)
-												->SetHideTabWell(true)
-												->AddTab(GraphTab, ETabState::OpenedTab)
-											)
-											->Split
-											(
-												FTabManager::NewStack()
-												->SetSizeCoefficient(0.15f)
-												->AddTab(RuntimeLogTab, ETabState::ClosedTab)
-											)
-											->Split
-											(
-												FTabManager::NewStack()
-												->SetSizeCoefficient(0.15f)
-												->AddTab(SearchTab, ETabState::ClosedTab)
-											)
-											->Split
-											(
-												FTabManager::NewStack()
-												->SetSizeCoefficient(0.15f)
-												->AddTab(ValidationLogTab, ETabState::ClosedTab)
-											)
-										)
-										->Split
-										(
-											FTabManager::NewStack()
-											->SetSizeCoefficient(0.125f)
-											->AddTab(PaletteTab, ETabState::OpenedTab)
-										)
+			                             ->Split
+			                             (
+				                             FTabManager::NewStack()
+				                             ->SetSizeCoefficient(0.225f)
+				                             ->AddTab(DetailsTab, ETabState::OpenedTab)
+			                             )
+			                             ->Split
+			                             (
+				                             FTabManager::NewSplitter()
+				                             ->SetSizeCoefficient(0.65f)
+				                             ->SetOrientation(Orient_Vertical)
+				                             ->Split
+				                             (
+					                             FTabManager::NewStack()
+					                             ->SetSizeCoefficient(0.8f)
+					                             ->SetHideTabWell(true)
+					                             ->AddTab(GraphTab, ETabState::OpenedTab)
+				                             )
+				                             ->Split
+				                             (
+					                             FTabManager::NewStack()
+					                             ->SetSizeCoefficient(0.15f)
+					                             ->AddTab(RuntimeLogTab, ETabState::ClosedTab)
+				                             )
+				                             ->Split
+				                             (
+					                             FTabManager::NewStack()
+					                             ->SetSizeCoefficient(0.15f)
+					                             ->AddTab(SearchTab, ETabState::ClosedTab)
+				                             )
+				                             ->Split
+				                             (
+					                             FTabManager::NewStack()
+					                             ->SetSizeCoefficient(0.15f)
+					                             ->AddTab(ValidationLogTab, ETabState::ClosedTab)
+				                             )
+			                             )
+			                             ->Split
+			                             (
+				                             FTabManager::NewStack()
+				                             ->SetSizeCoefficient(0.125f)
+				                             ->AddTab(PaletteTab, ETabState::OpenedTab)
+			                             )
 		);
 
 	constexpr bool bCreateDefaultStandaloneMenu = true;
@@ -394,30 +395,30 @@ void FFlowAssetEditor::BindToolbarCommands()
 
 	// Editing
 	ToolkitCommands->MapAction(ToolbarCommands.RefreshAsset,
-								FExecuteAction::CreateSP(this, &FFlowAssetEditor::RefreshAsset),
-								FCanExecuteAction::CreateStatic(&FFlowAssetEditor::CanEdit));
+	                           FExecuteAction::CreateSP(this, &FFlowAssetEditor::RefreshAsset),
+	                           FCanExecuteAction::CreateStatic(&FFlowAssetEditor::CanEdit));
 
 	ToolkitCommands->MapAction(ToolbarCommands.ValidateAsset,
-								FExecuteAction::CreateSP(this, &FFlowAssetEditor::ValidateAsset_Internal),
-								FCanExecuteAction());
-	
+	                           FExecuteAction::CreateSP(this, &FFlowAssetEditor::ValidateAsset_Internal),
+	                           FCanExecuteAction());
+
 	ToolkitCommands->MapAction(ToolbarCommands.SearchInAsset,
-								FExecuteAction::CreateSP(this, &FFlowAssetEditor::SearchInAsset),
-								FCanExecuteAction());
+	                           FExecuteAction::CreateSP(this, &FFlowAssetEditor::SearchInAsset),
+	                           FCanExecuteAction());
 
 	ToolkitCommands->MapAction(ToolbarCommands.EditAssetDefaults,
-								FExecuteAction::CreateSP(this, &FFlowAssetEditor::EditAssetDefaults_Clicked),
-								FCanExecuteAction());
+	                           FExecuteAction::CreateSP(this, &FFlowAssetEditor::EditAssetDefaults_Clicked),
+	                           FCanExecuteAction());
 
 	// Engine's Play commands
 	ToolkitCommands->Append(FPlayWorldCommands::GlobalPlayWorldActions.ToSharedRef());
 
 	// Debugging
 	ToolkitCommands->MapAction(ToolbarCommands.GoToParentInstance,
-								FExecuteAction::CreateSP(this, &FFlowAssetEditor::GoToParentInstance),
-								FCanExecuteAction::CreateSP(this, &FFlowAssetEditor::CanGoToParentInstance),
-								FIsActionChecked(),
-								FIsActionButtonVisible::CreateSP(this, &FFlowAssetEditor::CanGoToParentInstance));
+	                           FExecuteAction::CreateSP(this, &FFlowAssetEditor::GoToParentInstance),
+	                           FCanExecuteAction::CreateSP(this, &FFlowAssetEditor::CanGoToParentInstance),
+	                           FIsActionChecked(),
+	                           FIsActionButtonVisible::CreateSP(this, &FFlowAssetEditor::CanGoToParentInstance));
 }
 
 void FFlowAssetEditor::RefreshAsset()
@@ -477,7 +478,7 @@ void FFlowAssetEditor::GoToParentInstance()
 	const UFlowAsset* AssetThatInstancedThisAsset = FlowAsset->GetInspectedInstance()->GetParentInstance();
 
 	GEditor->GetEditorSubsystem<UAssetEditorSubsystem>()->OpenEditorForAsset(AssetThatInstancedThisAsset->GetTemplateAsset());
-	AssetThatInstancedThisAsset->GetTemplateAsset()->SetInspectedInstance(AssetThatInstancedThisAsset->GetDisplayName());
+	AssetThatInstancedThisAsset->GetTemplateAsset()->SetInspectedInstance(AssetThatInstancedThisAsset);
 }
 
 bool FFlowAssetEditor::CanGoToParentInstance()
@@ -531,8 +532,8 @@ void FFlowAssetEditor::CreateWidgets()
 
 void FFlowAssetEditor::CreateGraphWidget()
 {
-	 SAssignNew(GraphEditor, SFlowGraphEditor, SharedThis(this))
-		.DetailsView(DetailsView);
+	SAssignNew(GraphEditor, SFlowGraphEditor, SharedThis(this))
+	.DetailsView(DetailsView);
 }
 
 bool FFlowAssetEditor::CanEdit()
@@ -629,4 +630,5 @@ void FFlowAssetEditor::JumpToNode(const UEdGraphNode* Node) const
 		GetFlowGraph()->JumpToNode(Node, false);
 	}
 }
+
 #undef LOCTEXT_NAMESPACE

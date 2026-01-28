@@ -1,19 +1,14 @@
 // Copyright https://github.com/MothCocoon/FlowGraph/graphs/contributors
 
 #include "Types/FlowDataPinResults.h"
-#include "Types/FlowDataPinProperties.h"
+#include "Types/FlowDataPinValuesStandard.h"
 
-// FFlowDataPinResult_Object
+#include UE_INLINE_GENERATED_CPP_BY_NAME(FlowDataPinResults)
 
 FFlowDataPinResult_Object::FFlowDataPinResult_Object(UObject* InValue)
 	: Super(EFlowDataPinResolveResult::Success)
 {
 	SetValueFromObjectPtr(InValue);
-}
-
-void FFlowDataPinResult_Object::SetValueFromPropertyWrapper(const FFlowDataPinOutputProperty_Object& InPropertyWrapper)
-{
-	Value = InPropertyWrapper.GetObjectValue();
 }
 
 // FFlowDataPinResult_Class
@@ -28,11 +23,6 @@ FFlowDataPinResult_Class::FFlowDataPinResult_Class(UClass* InValueClass)
 	: Super(EFlowDataPinResolveResult::Success)
 {
 	SetValueFromObjectPtr(InValueClass);
-}
-
-void FFlowDataPinResult_Class::SetValueFromPropertyWrapper(const FFlowDataPinOutputProperty_Class& PropertyWrapper)
-{
-	SetValueFromSoftPath(PropertyWrapper.GetAsSoftClass());
 }
 
 void FFlowDataPinResult_Class::SetValueFromSoftPath(const FSoftObjectPath& SoftObjectPath)

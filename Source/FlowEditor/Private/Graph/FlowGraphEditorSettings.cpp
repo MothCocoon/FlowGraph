@@ -5,9 +5,8 @@
 
 #include UE_INLINE_GENERATED_CPP_BY_NAME(FlowGraphEditorSettings)
 
-UFlowGraphEditorSettings::UFlowGraphEditorSettings(const FObjectInitializer& ObjectInitializer)
-	: Super(ObjectInitializer)
-	, NodeDoubleClickTarget(EFlowNodeDoubleClickTarget::PrimaryAssetOrNodeDefinition)
+UFlowGraphEditorSettings::UFlowGraphEditorSettings()
+	: NodeDoubleClickTarget(EFlowNodeDoubleClickTarget::PrimaryAssetOrNodeDefinition)
 	, bShowNodeClass(false)
 	, bShowNodeDescriptionWhilePlaying(true)
 	, bEnforceFriendlyPinNames(false)
@@ -24,8 +23,8 @@ UFlowGraphEditorSettings::UFlowGraphEditorSettings(const FObjectInitializer& Obj
 void UFlowGraphEditorSettings::PostEditChangeProperty(FPropertyChangedEvent& PropertyChangedEvent)
 {
 	Super::PostEditChangeProperty(PropertyChangedEvent);
-	
-	if (PropertyChangedEvent.GetMemberPropertyName() == GET_MEMBER_NAME_CHECKED( UFlowGraphEditorSettings, bShowNodeClass ))
+
+	if (PropertyChangedEvent.GetMemberPropertyName() == GET_MEMBER_NAME_CHECKED(UFlowGraphEditorSettings, bShowNodeClass))
 	{
 		GetDefault<UFlowGraphSchema>()->ForceVisualizationCacheClear();
 	}

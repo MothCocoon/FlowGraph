@@ -7,7 +7,8 @@
 
 #include "FlowSave.h"
 #include "FlowTypes.h"
-#include "Interfaces/FlowOwnerInterface.h"
+#include "Interfaces/FlowAssetProviderInterface.h"
+#include "Asset/FlowAssetParamsTypes.h"
 #include "FlowComponent.generated.h"
 
 class UFlowAsset;
@@ -42,7 +43,7 @@ DECLARE_DYNAMIC_MULTICAST_DELEGATE_TwoParams(FFlowComponentDynamicNotify, class 
 * Base component of Flow System - makes possible to communicate between Actor, Flow Subsystem and Flow Graphs
 */
 UCLASS(Blueprintable, meta = (BlueprintSpawnableComponent))
-class FLOW_API UFlowComponent : public UActorComponent, public IFlowOwnerInterface
+class FLOW_API UFlowComponent : public UActorComponent, public IFlowAssetProviderInterface
 {
 	GENERATED_UCLASS_BODY()
 
@@ -53,17 +54,8 @@ class FLOW_API UFlowComponent : public UActorComponent, public IFlowOwnerInterfa
 //////////////////////////////////////////////////////////////////////////
 // Identity Tags
 
-	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Flow")
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, ReplicatedUsing = OnRep_IdentityTags, Category = "Flow")
 	FGameplayTagContainer IdentityTags;
-
-private:
-	// Used to replicate tags added during gameplay
-	UPROPERTY(ReplicatedUsing = OnRep_AddedIdentityTags)
-	FGameplayTagContainer AddedIdentityTags;
-
-	// Used to replicate tags removed during gameplay
-	UPROPERTY(ReplicatedUsing = OnRep_RemovedIdentityTags)
-	FGameplayTagContainer RemovedIdentityTags;
 
 public:
 	virtual void BeginPlay() override;
@@ -88,10 +80,7 @@ protected:
 
 private:
 	UFUNCTION()
-	void OnRep_AddedIdentityTags();
-
-	UFUNCTION()
-	void OnRep_RemovedIdentityTags();
+	void OnRep_IdentityTags(const FGameplayTagContainer& PreviousTags);
 
 public:
 	UPROPERTY(BlueprintAssignable, Category = "Flow")
@@ -179,6 +168,10 @@ public:
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "RootFlow")
 	TObjectPtr<UFlowAsset> RootFlow;
 
+	// Flow Asset Params to use as the data pin value supplier for the Root Flow
+	UPROPERTY(EditAnywhere, Category = "RootFlow")
+	FFlowAssetParamsPtr RootFlowParams;
+
 	// If true, component will start Root Flow on Begin Play
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "RootFlow")
 	bool bAutoStartRootFlow;
@@ -208,6 +201,10 @@ public:
 
 	UFUNCTION(BlueprintPure, Category = "RootFlow", meta = (DeprecatedFunction, DeprecationMessage="Use GetRootInstances() instead."))
 	UFlowAsset* GetRootFlowInstance() const;
+
+	// IFlowAssetProviderInterface
+	virtual UFlowAsset* ProvideFlowAsset() const override { return RootFlow; }
+	// --
 
 //////////////////////////////////////////////////////////////////////////
 // Custom Input and Output events

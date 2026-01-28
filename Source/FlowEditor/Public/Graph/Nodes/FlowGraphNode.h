@@ -38,6 +38,7 @@ private:
 
 	bool bBlueprintCompilationPending;
 	bool bIsReconstructingNode;
+	bool bIsDestroyingNode;
 	bool bNeedsFullReconstruction;
 	static bool bFlowAssetsLoaded;
 
@@ -47,7 +48,7 @@ public:
 	UPROPERTY()
 	TArray<TSubclassOf<UFlowNodeBase>> AssignedNodeClasses;
 	
-	void SetNodeTemplate(UFlowNodeBase* InFlowNodeBase);
+	void SetNodeTemplate(UFlowNodeBase* InNodeInstance);
 	const UFlowNodeBase* GetNodeTemplate() const;
 
 	UFlowNodeBase* GetFlowNodeBase() const;
@@ -61,6 +62,7 @@ public:
 	// UEdGraphNode
 	virtual void PostPlacedNewNode() override;
 	virtual void PrepareForCopying() override;
+	virtual void PostPasteNode() override;
     // --
 	
 	void PostCopyNode();
@@ -71,14 +73,12 @@ private:
 
 public:
 	virtual void OnGraphRefresh();
+	virtual bool CanPlaceBreakpoints() const;
 
 //////////////////////////////////////////////////////////////////////////
 // Graph node
 
 public:
-	UPROPERTY()
-	FFlowPinTrait NodeBreakpoint;
-
 	// UEdGraphNode
 	virtual bool CanCreateUnderSpecifiedSchema(const UEdGraphSchema* Schema) const override;
 	virtual void AutowireNewNode(UEdGraphPin* FromPin) override;
@@ -93,6 +93,8 @@ public:
 	 */
 	void InsertNewNode(UEdGraphPin* FromPin, UEdGraphPin* NewLinkPin, TSet<UEdGraphNode*>& OutNodeList);
 
+	void MarkNeedsFullReconstruction() { bNeedsFullReconstruction = true; }
+
 	// UEdGraphNode
 	virtual void ReconstructNode() override;
 	virtual void AllocateDefaultPins() override;
@@ -100,7 +102,7 @@ public:
 
 	// variants of K2Node methods
 	void RewireOldPinsToNewPins(TArray<UEdGraphPin*>& InOldPins);
-	void ReconstructSinglePin(UEdGraphPin* NewPin, UEdGraphPin* OldPin);
+	static void ReconstructSinglePin(UEdGraphPin* NewPin, UEdGraphPin* OldPin);
 	// --
 
 	// UEdGraphNode
@@ -117,9 +119,7 @@ public:
 	// --
 
 	void CreateAttachAddOnSubMenu(UToolMenu* Menu, UEdGraph* Graph) const;
-
 	bool CanAcceptSubNodeAsChild(const UFlowGraphNode& OtherSubNode, const TSet<const UEdGraphNode*>& AllRootSubNodesToPaste, FString* OutReasonString = nullptr) const;
-
 	bool IsAncestorNode(const UFlowGraphNode& OtherNode) const;
 
 protected:
@@ -158,13 +158,20 @@ public:
 	virtual bool SupportsCommentBubble() const override;
 	// --
 
+	virtual void OnNodeDoubleClicked() const;
+	virtual void OnNodeDoubleClickedInPIE() const {}
+
 	/** check if node has any errors, used for assigning colors on graph */
 	virtual bool HasErrors() const;
 
 	void ValidateGraphNode(FFlowMessageLog& MessageLog) const;
 
 protected:
-	bool ShouldReconstructNode() const;
+	bool CanReconstructNode() const;
+	
+	bool TryUpdateNodePins() const;
+	bool TryUpdateAutoDataPins() const;
+	bool CheckGraphPinsMatchNodePins() const;
 	
 //////////////////////////////////////////////////////////////////////////
 // Pins
@@ -172,9 +179,6 @@ protected:
 public:
 	TArray<UEdGraphPin*> InputPins;
 	TArray<UEdGraphPin*> OutputPins;
-
-	UPROPERTY()
-	TMap<FEdGraphPinReference, FFlowPinTrait> PinBreakpoints;
 
 	void CreateInputPin(const FFlowPin& FlowPin, const int32 Index = INDEX_NONE);
 	void CreateOutputPin(const FFlowPin& FlowPin, const int32 Index = INDEX_NONE);
@@ -200,10 +204,6 @@ public:
 	// Call node and graph updates manually, if using bBatchRemoval
 	void RemoveInstancePin(UEdGraphPin* Pin);
 
-protected:
-	// Create pins from the context asset, i.e. Sequencer events
-	void RefreshContextPins();
-	
 public:
 	// UEdGraphNode
 	virtual void GetPinHoverText(const UEdGraphPin& Pin, FString& HoverTextOut) const override;
@@ -211,25 +211,6 @@ public:
 
 	// @return true, if pins cannot be connected due to node's inner logic, put message for user in OutReason
 	virtual bool IsConnectionDisallowed(const UEdGraphPin* MyPin, const UEdGraphPin* OtherPin, FString& OutReason) const { return false; }
-
-protected:
-	// Gets the PinCategory from the FlowPin
-	// (accounting for FFlowPin structs that predate the PinCategory field)
-	static const FName& GetPinCategoryFromFlowPin(const FFlowPin& FlowPin);
-
-//////////////////////////////////////////////////////////////////////////
-// Breakpoints
-
-public:
-	void OnInputTriggered(const int32 Index);
-	void OnOutputTriggered(const int32 Index);
-
-private:
-	void TryPausingSession(bool bPauseSession);
-
-	void OnResumePIE(const bool bIsSimulating);
-	void OnEndPIE(const bool bIsSimulating);
-	void ResetBreakpoints();
 
 //////////////////////////////////////////////////////////////////////////
 // Execution Override
@@ -264,11 +245,7 @@ public:
 	void OnUpdateAsset(int32 UpdateFlags) { RebuildRuntimeAddOnsFromEditorSubNodes(); }
 	void RebuildRuntimeAddOnsFromEditorSubNodes();
 
-	static void DiffSubNodes(
-		const FText& NodeTypeDisplayName,
-		const TArray<UFlowGraphNode*>& LhsSubNodes,
-		const TArray<UFlowGraphNode*>& RhsSubNodes,
-		FDiffResults& Results);
+	static void DiffSubNodes(const FText& NodeTypeDisplayName, const TArray<UFlowGraphNode*>& LhsSubNodes,	const TArray<UFlowGraphNode*>& RhsSubNodes,	FDiffResults& Results);
 
 	//~ Begin UObject Interface
 #if WITH_EDITOR
@@ -276,11 +253,9 @@ public:
 #endif
 	// End UObject
 
-	// @return the input pin for this state
 	virtual UEdGraphPin* GetInputPin(int32 InputIndex = 0) const;
-	// @return the output pin for this state
 	virtual UEdGraphPin* GetOutputPin(int32 InputIndex = 0) const;
-	virtual UEdGraph* GetBoundGraph() const { return NULL; }
+	virtual UEdGraph* GetBoundGraph() const { return nullptr; }
 
 	virtual FText GetDescription() const;
 
@@ -291,7 +266,7 @@ public:
 	virtual void OnSubNodeAdded(UFlowGraphNode* SubNode);
 
 	virtual int32 FindSubNodeDropIndex(UFlowGraphNode* SubNode) const;
-	virtual void InsertSubNodeAt(UFlowGraphNode* SubNode, int32 DropIndex);
+	virtual void InsertSubNodeAt(UFlowGraphNode* SubNode, const int32 DropIndex);
 
 	/** check if node is subnode */
 	virtual bool IsSubNode() const;
@@ -309,15 +284,11 @@ public:
 	bool UsesBlueprint() const;
 
 protected:
-
 	virtual void ResetNodeOwner();
 
 	void LogError(const FString& MessageToLog, const UFlowNodeBase* FlowNodeBase) const;
 
-	bool HavePinsChanged() const;
-
 public:
-	
 	/** instance class */
 	UPROPERTY()
 	TSoftClassPtr<UFlowNodeBase> NodeInstanceClass;
@@ -337,10 +308,6 @@ public:
 	/** if set, this node will be always considered as subnode */
 	UPROPERTY()
 	bool bIsSubNode = false;
-
-	/** if set, this node has context pins from the last RefreshContextPins */
-	UPROPERTY()
-	bool bHasContextPins = false;
 
 	/** error message for node */
 	UPROPERTY()

@@ -3,12 +3,14 @@
 #pragma once
 
 #include "GraphEditor.h"
+#include "Runtime/Launch/Resources/Version.h"
 #include "Widgets/DeclarativeSyntaxSupport.h"
 
 #include "FlowGraph.h"
 
 class FFlowAssetEditor;
 class IDetailsView;
+class UFlowDebuggerSubsystem;
 
 /**
  *
@@ -29,28 +31,38 @@ protected:
 
 	TWeakPtr<FFlowAssetEditor> FlowAssetEditor;
 	TSharedPtr<IDetailsView> DetailsView;
-
 	TSharedPtr<FUICommandList> CommandList;
+
+	TWeakObjectPtr<UFlowDebuggerSubsystem> DebuggerSubsystem;
 
 public:
 	void Construct(const FArguments& InArgs, const TSharedPtr<FFlowAssetEditor> InAssetEditor);
 
+	virtual void CreateDebugMenu();
 	virtual void BindGraphCommands();
 
 	virtual FGraphAppearanceInfo GetGraphAppearanceInfo() const;
 	virtual FText GetCornerText() const;
+	virtual FText GetPIENotifyText() const;
 
 private:
 	static void UndoGraphAction();
 	static void RedoGraphAction();
 
+#if ENGINE_MAJOR_VERSION == 5 && ENGINE_MINOR_VERSION < 6
 	static FReply OnSpawnGraphNodeByShortcut(FInputChord InChord, const FVector2D& InPosition, UEdGraph* InGraph);
+#else
+	static FReply OnSpawnGraphNodeByShortcut(FInputChord InChord, const FVector2f& InPosition, UEdGraph* InGraph);
+#endif
+
 	void OnCreateComment() const;
 
 public:
+	virtual bool IsTabFocused() const;
+	
 	static bool CanEdit();
 	static bool IsPIE();
-	virtual bool IsTabFocused() const;
+	static bool IsPlaySessionPaused();
 
 	virtual void SelectSingleNode(UEdGraphNode* Node);
 
@@ -122,7 +134,7 @@ private:
 	void OnEnableBreakpoint() const;
 	void OnEnablePinBreakpoint();
 
-	bool CanEnableBreakpoint();
+	bool CanEnableBreakpoint() const;
 	bool CanEnablePinBreakpoint();
 
 	void OnDisableBreakpoint() const;
@@ -136,6 +148,15 @@ private:
 
 	bool CanToggleBreakpoint() const;
 	bool CanTogglePinBreakpoint();
+
+	void EnableAllBreakpoints() const;
+	bool HasAnyDisabledBreakpoints() const;
+
+	void DisableAllBreakpoints() const;
+	bool HasAnyEnabledBreakpoints() const;
+
+	void RemoveAllBreakpoints() const;
+	bool HasAnyBreakpoints() const;
 
 	void SetSignalMode(const EFlowSignalMode Mode) const;
 	bool CanSetSignalMode(const EFlowSignalMode Mode) const;

@@ -112,7 +112,11 @@ void FFlowGraphConnectionDrawingPolicy::BuildPaths()
 	}
 }
 
+#if ENGINE_MAJOR_VERSION == 5 && ENGINE_MINOR_VERSION < 6
 void FFlowGraphConnectionDrawingPolicy::DrawConnection(int32 LayerId, const FVector2D& Start, const FVector2D& End, const FConnectionParams& Params)
+#else
+void FFlowGraphConnectionDrawingPolicy::DrawConnection(int32 LayerId, const FVector2f& Start, const FVector2f& End, const FConnectionParams& Params)
+#endif
 {
 	switch (UFlowGraphSettings::Get()->ConnectionDrawType)
 	{
@@ -120,7 +124,11 @@ void FFlowGraphConnectionDrawingPolicy::DrawConnection(int32 LayerId, const FVec
 			FConnectionDrawingPolicy::DrawConnection(LayerId, Start, End, Params);
 			break;
 		case EFlowConnectionDrawType::Circuit:
+#if ENGINE_MAJOR_VERSION == 5 && ENGINE_MINOR_VERSION < 6
+			DrawCircuitSpline(LayerId, FVector2f(Start), FVector2f(End), Params);
+#else
 			DrawCircuitSpline(LayerId, Start, End, Params);
+#endif		
 			break;
 		default: ;
 	}
@@ -219,14 +227,14 @@ void FFlowGraphConnectionDrawingPolicy::Draw(TMap<TSharedRef<SWidget>, FArranged
 	FConnectionDrawingPolicy::Draw(InPinGeometries, ArrangedNodes);
 }
 
-void FFlowGraphConnectionDrawingPolicy::DrawCircuitSpline(const int32& LayerId, const FVector2D& Start, const FVector2D& End, const FConnectionParams& Params) const
+void FFlowGraphConnectionDrawingPolicy::DrawCircuitSpline(const int32& LayerId, const FVector2f& Start, const FVector2f& End, const FConnectionParams& Params) const
 {
-	const FVector2D StartingPoint = FVector2D(Start.X + UFlowGraphSettings::Get()->CircuitConnectionSpacing.X, Start.Y);
-	const FVector2D EndPoint = FVector2D(End.X - UFlowGraphSettings::Get()->CircuitConnectionSpacing.Y, End.Y);
-	const FVector2D ControlPoint = GetControlPoint(StartingPoint, EndPoint);
+	const FVector2f StartingPoint = FVector2f(Start.X + UFlowGraphSettings::Get()->CircuitConnectionSpacing.X, Start.Y);
+	const FVector2f EndPoint = FVector2f(End.X - UFlowGraphSettings::Get()->CircuitConnectionSpacing.Y, End.Y);
+	const FVector2f ControlPoint = GetControlPoint(StartingPoint, EndPoint);
 
-	const FVector2D StartDirection = (Params.StartDirection == EGPD_Output) ? FVector2D(1.0f, 0.0f) : FVector2D(-1.0f, 0.0f);
-	const FVector2D EndDirection = (Params.EndDirection == EGPD_Input) ? FVector2D(1.0f, 0.0f) : FVector2D(-1.0f, 0.0f);
+	const FVector2f StartDirection = (Params.StartDirection == EGPD_Output) ? FVector2f(1.0f, 0.0f) : FVector2f(-1.0f, 0.0f);
+	const FVector2f EndDirection = (Params.EndDirection == EGPD_Input) ? FVector2f(1.0f, 0.0f) : FVector2f(-1.0f, 0.0f);
 
 	DrawCircuitConnection(LayerId, Start, StartDirection, StartingPoint, EndDirection, Params);
 	DrawCircuitConnection(LayerId, StartingPoint, StartDirection, ControlPoint, EndDirection, Params);
@@ -234,7 +242,7 @@ void FFlowGraphConnectionDrawingPolicy::DrawCircuitSpline(const int32& LayerId, 
 	DrawCircuitConnection(LayerId, EndPoint, StartDirection, End, EndDirection, Params);
 }
 
-void FFlowGraphConnectionDrawingPolicy::DrawCircuitConnection(const int32& LayerId, const FVector2D& Start, const FVector2D& StartDirection, const FVector2D& End, const FVector2D& EndDirection, const FConnectionParams& Params) const
+void FFlowGraphConnectionDrawingPolicy::DrawCircuitConnection(const int32& LayerId, const FVector2f& Start, const FVector2f& StartDirection, const FVector2f& End, const FVector2f& EndDirection, const FConnectionParams& Params) const
 {
 	FSlateDrawElement::MakeDrawSpaceSpline(DrawElementsList, LayerId, Start, StartDirection, End, EndDirection, Params.WireThickness, ESlateDrawEffect::None, Params.WireColor);
 
@@ -242,14 +250,18 @@ void FFlowGraphConnectionDrawingPolicy::DrawCircuitConnection(const int32& Layer
 	{
 		// This table maps distance along curve to alpha
 		FInterpCurve<float> SplineReparamTable;
+#if ENGINE_MAJOR_VERSION == 5 && ENGINE_MINOR_VERSION < 6
+		const float SplineLength = MakeSplineReparamTable(FVector2D(Start), FVector2D(StartDirection), FVector2D(End), FVector2D(EndDirection), SplineReparamTable);
+#else
 		const float SplineLength = MakeSplineReparamTable(Start, StartDirection, End, EndDirection, SplineReparamTable);
+#endif
 
 		// Draw bubbles on the spline
 		if (Params.bDrawBubbles)
 		{
 			const float BubbleSpacing = 64.f * ZoomFactor;
 			const float BubbleSpeed = 192.f * ZoomFactor;
-			const FVector2D BubbleSize = BubbleImage->ImageSize * ZoomFactor * 0.2f * Params.WireThickness;
+			const FVector2f BubbleSize = BubbleImage->ImageSize * ZoomFactor * 0.2f * Params.WireThickness;
 
 			const float Time = (FPlatformTime::Seconds() - GStartTime);
 			const float BubbleOffset = FMath::Fmod(Time * BubbleSpeed, BubbleSpacing);
@@ -260,7 +272,7 @@ void FFlowGraphConnectionDrawingPolicy::DrawCircuitConnection(const int32& Layer
 				if (Distance < SplineLength)
 				{
 					const float Alpha = SplineReparamTable.Eval(Distance, 0.f);
-					FVector2D BubblePos = FMath::CubicInterp(Start, StartDirection, End, EndDirection, Alpha);
+					FVector2f BubblePos = FMath::CubicInterp(Start, StartDirection, End, EndDirection, Alpha);
 					BubblePos -= (BubbleSize * 0.5f);
 
 					FSlateDrawElement::MakeBox(DrawElementsList, LayerId, FPaintGeometry(BubblePos, BubbleSize, ZoomFactor), BubbleImage, ESlateDrawEffect::None, Params.WireColor);
@@ -270,9 +282,9 @@ void FFlowGraphConnectionDrawingPolicy::DrawCircuitConnection(const int32& Layer
 	}
 }
 
-FVector2D FFlowGraphConnectionDrawingPolicy::GetControlPoint(const FVector2D& Source, const FVector2D& Target)
+FVector2f FFlowGraphConnectionDrawingPolicy::GetControlPoint(const FVector2f& Source, const FVector2f& Target)
 {
-	const FVector2D Delta = Target - Source;
+	const FVector2f Delta = Target - Source;
 	const float Tangent = FMath::Tan(UFlowGraphSettings::Get()->CircuitConnectionAngle * (PI / 180.f));
 
 	const float DeltaX = FMath::Abs(Delta.X);
@@ -281,7 +293,7 @@ FVector2D FFlowGraphConnectionDrawingPolicy::GetControlPoint(const FVector2D& So
 	const float SlopeWidth = DeltaY / Tangent;
 	if (DeltaX > SlopeWidth)
 	{
-		return Delta.X > 0.f ? FVector2D(Target.X - SlopeWidth, Source.Y) : FVector2D(Source.X - SlopeWidth, Target.Y);
+		return Delta.X > 0.f ? FVector2f(Target.X - SlopeWidth, Source.Y) : FVector2f(Source.X - SlopeWidth, Target.Y);
 	}
 
 	const float SlopeHeight = DeltaX * Tangent;
@@ -289,16 +301,16 @@ FVector2D FFlowGraphConnectionDrawingPolicy::GetControlPoint(const FVector2D& So
 	{
 		if (Delta.Y > 0.f)
 		{
-			return Delta.X < 0.f ? FVector2D(Source.X, Target.Y - SlopeHeight) : FVector2D(Target.X, Source.Y + SlopeHeight);
+			return Delta.X < 0.f ? FVector2f(Source.X, Target.Y - SlopeHeight) : FVector2f(Target.X, Source.Y + SlopeHeight);
 		}
 
 		if (Delta.X < 0.f)
 		{
-			return FVector2D(Source.X, Target.Y + SlopeHeight);
+			return FVector2f(Source.X, Target.Y + SlopeHeight);
 		}
 	}
 
-	return FVector2D(Target.X, Source.Y - SlopeHeight);
+	return FVector2f(Target.X, Source.Y - SlopeHeight);
 }
 
 bool FFlowGraphConnectionDrawingPolicy::ShouldChangeTangentForReroute(UFlowGraphNode_Reroute* Reroute)

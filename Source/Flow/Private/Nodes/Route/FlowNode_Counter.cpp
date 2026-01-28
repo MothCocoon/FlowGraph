@@ -65,6 +65,8 @@ void UFlowNode_Counter::ExecuteInput(const FName& PinName)
 void UFlowNode_Counter::Cleanup()
 {
 	CurrentSum = 0;
+
+	Super::Cleanup();
 }
 
 #if WITH_EDITOR

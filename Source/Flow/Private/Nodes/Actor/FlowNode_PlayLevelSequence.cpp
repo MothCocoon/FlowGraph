@@ -75,9 +75,10 @@ TArray<FFlowPin> UFlowNode_PlayLevelSequence::GetContextOutputs() const
 					{
 						for (const FString& EventName : FlowSection->GetAllEntryPoints())
 						{
-							if (!EventName.IsEmpty() && !Pins.Contains(EventName))
+							FFlowPin NewEventPin(EventName);
+							if (!EventName.IsEmpty() && !Pins.Contains(NewEventPin))
 							{
-								Pins.Emplace(EventName);
+								Pins.Emplace(NewEventPin);
 							}
 						}
 					}
@@ -300,6 +301,8 @@ void UFlowNode_PlayLevelSequence::Cleanup()
 #if ENABLE_VISUAL_LOG
 	UE_VLOG(this, LogFlow, Log, TEXT("Finished playback: %s"), *Sequence.ToString());
 #endif
+
+	Super::Cleanup();
 }
 
 FString UFlowNode_PlayLevelSequence::GetPlaybackProgress() const

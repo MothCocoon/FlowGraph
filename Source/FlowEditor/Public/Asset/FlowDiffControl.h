@@ -4,7 +4,13 @@
 
 #include "Asset/FlowObjectDiff.h"
 #include "DiffResults.h"
+
+#include "Runtime/Launch/Resources/Version.h"
+#if ENGINE_MAJOR_VERSION == 5 && ENGINE_MINOR_VERSION < 7
 #include "Editor/Kismet/Private/DiffControl.h"
+#else
+#include "Editor/Kismet/Internal/DiffControl.h"
+#endif
 
 class FBlueprintDifferenceTreeEntry;
 class SFlowDiff;
