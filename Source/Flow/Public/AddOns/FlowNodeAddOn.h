@@ -41,7 +41,7 @@ public:
 	// UFlowNodeBase
 
 #if WITH_EDITOR
-	virtual UEdGraphNode* GetGraphNode() const override;
+	FLOW_API virtual UEdGraphNode* GetGraphNode() const override;
 #endif
 
 	// AddOns may opt in to be eligible for a given parent
