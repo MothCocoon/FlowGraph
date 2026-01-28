@@ -29,23 +29,24 @@ class FLOWEDITOR_API SGraphEditorActionMenuFlow : public SBorder
 {
 public:
 	SLATE_BEGIN_ARGS(SGraphEditorActionMenuFlow)
-		: _GraphObj( static_cast<UEdGraph*>(nullptr) )
+		: _GraphObj(static_cast<UEdGraph*>(nullptr))
 		, _GraphNode(nullptr)
-		, _NewNodePosition( FVector2D::ZeroVector )
-		, _AutoExpandActionMenu( false )
+		, _NewNodePosition(FVector2f::ZeroVector)
+		, _AutoExpandActionMenu(false)
 		, _SubNodeFlags(0)
-		{}
+		{
+		}
 
-		SLATE_ARGUMENT( UEdGraph*, GraphObj )
-		SLATE_ARGUMENT( UEdGraphNode*, GraphNode)
-		SLATE_ARGUMENT( FVector2D, NewNodePosition )
-		SLATE_ARGUMENT( TArray<UEdGraphPin*>, DraggedFromPins )
-		SLATE_ARGUMENT( SGraphEditor::FActionMenuClosed, OnClosedCallback )
-		SLATE_ARGUMENT( bool, AutoExpandActionMenu )
-		SLATE_ARGUMENT( int32, SubNodeFlags)
+		SLATE_ARGUMENT(UEdGraph*, GraphObj)
+		SLATE_ARGUMENT(UEdGraphNode*, GraphNode)
+		SLATE_ARGUMENT(FVector2f, NewNodePosition)
+		SLATE_ARGUMENT(TArray<UEdGraphPin*>, DraggedFromPins)
+		SLATE_ARGUMENT(SGraphEditor::FActionMenuClosed, OnClosedCallback)
+		SLATE_ARGUMENT(bool, AutoExpandActionMenu)
+		SLATE_ARGUMENT(int32, SubNodeFlags)
 	SLATE_END_ARGS()
 
-	void Construct( const FArguments& InArgs );
+	void Construct(const FArguments& InArgs);
 
 	~SGraphEditorActionMenuFlow();
 
@@ -55,14 +56,14 @@ protected:
 	UEdGraph* GraphObj;
 	UEdGraphNode* GraphNode;
 	TArray<UEdGraphPin*> DraggedFromPins;
-	FVector2D NewNodePosition;
+	FVector2f NewNodePosition;
 	bool AutoExpandActionMenu;
 	int32 SubNodeFlags;
 
 	SGraphEditor::FActionMenuClosed OnClosedCallback;
 	TSharedPtr<SGraphActionMenu> GraphActionMenu;
 
-	void OnActionSelected( const TArray< TSharedPtr<FEdGraphSchemaAction> >& SelectedAction, ESelectInfo::Type InSelectionType );
+	void OnActionSelected(const TArray<TSharedPtr<FEdGraphSchemaAction>>& SelectedAction, ESelectInfo::Type InSelectionType);
 
 	/** Callback used to populate all actions list in SGraphActionMenu */
 	void CollectAllActions(FGraphActionListBuilderBase& OutAllActions);

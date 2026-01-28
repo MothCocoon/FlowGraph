@@ -6,7 +6,9 @@
 #include "FlowAsset.h"
 #include "FlowSettings.h"
 #include "Interfaces/FlowNodeWithExternalDataPinSupplierInterface.h"
-#include "Types/FlowDataPinProperties.h"
+#include "Types/FlowPinType.h"
+#include "Types/FlowDataPinValue.h"
+#include "Types/FlowAutoDataPinsWorkingData.h"
 
 #include "Components/ActorComponent.h"
 #if WITH_EDITOR
@@ -44,7 +46,6 @@ UFlowNode::UFlowNode(const FObjectInitializer& ObjectInitializer)
 }
 
 #if WITH_EDITOR
-
 void UFlowNode::PostEditChangeProperty(FPropertyChangedEvent& PropertyChangedEvent)
 {
 	Super::PostEditChangeProperty(PropertyChangedEvent);
@@ -59,38 +60,72 @@ void UFlowNode::PostEditChangeProperty(FPropertyChangedEvent& PropertyChangedEve
 	if (PropertyName == GET_MEMBER_NAME_CHECKED(UFlowNode, InputPins) || PropertyName == GET_MEMBER_NAME_CHECKED(UFlowNode, OutputPins)
 		|| MemberPropertyName == GET_MEMBER_NAME_CHECKED(UFlowNode, InputPins) || MemberPropertyName == GET_MEMBER_NAME_CHECKED(UFlowNode, OutputPins))
 	{
-		// Potentially need to rebuild the pins from the this node
+		// Potentially need to rebuild the pins from this node
 		OnReconstructionRequested.ExecuteIfBound();
 	}
 }
+
+EDataValidationResult UFlowNode::ValidateNode()
+{
+	EDataValidationResult ValidationResult = Super::ValidateNode();
+
+	// Validate that output and input pins have unique names
+	TSet<FName> UniquePinNames;
+	ValidateFlowPinArrayIsUnique(InputPins, UniquePinNames, ValidationResult);
+	ValidateFlowPinArrayIsUnique(OutputPins, UniquePinNames, ValidationResult);
+
+	return ValidationResult;
+}
+
+void UFlowNode::ValidateFlowPinArrayIsUnique(const TArray<FFlowPin>& FlowPins, TSet<FName>& InOutUniquePinNames, EDataValidationResult& InOutResult)
+{
+	for (const FFlowPin& FlowPin : FlowPins)
+	{
+		const FName& ThisPinName = FlowPin.PinName;
+		if (InOutUniquePinNames.Contains(ThisPinName))
+		{
+			ValidationLog.Warning<UFlowNode>(
+				*FString::Printf(
+					TEXT("All pin names on a flow node must be unique, pin name %s is duplicated"),
+					*ThisPinName.ToString()),
+				this);
+
+			InOutResult = EDataValidationResult::Invalid;
+		}
+		else
+		{
+			InOutUniquePinNames.Add(FlowPin.PinName);
+		}
+	}
+}
+#endif
 
 void UFlowNode::PostLoad()
 {
 	Super::PostLoad();
 
+#if WITH_EDITOR
 	// fix Class Default Object
 	FixNode(nullptr);
-}
-
 #endif
+
+	if (!HasAnyFlags(RF_ArchetypeObject | RF_ClassDefaultObject))
+	{
+		FixupDataPinTypes();
+	}
+}
 
 bool UFlowNode::IsSupportedInputPinName(const FName& PinName) const
 {
+	const FFlowPin* InputPin = FindFlowPinByName(PinName, InputPins);
+
 	if (AddOns.IsEmpty())
 	{
-		checkf(FindFlowPinByName(PinName, InputPins), TEXT("Only AddOns should introduce unknown Pins to a FlowNode, so if we have no AddOns, we should have no unknown pins"));
-
+		checkf(InputPin, TEXT("Only AddOns should introduce unknown Pins to a FlowNode, so if we have no AddOns, we should have no unknown pins"));
 		return true;
 	}
 
-	if (const FFlowPin* FoundInputFlowPin = FindFlowPinByName(PinName, InputPins))
-	{
-		return true;
-	}
-	else
-	{
-		return false;
-	}
+	return (InputPin != nullptr);
 }
 
 void UFlowNode::AddInputPins(const TArray<FFlowPin>& Pins)
@@ -370,11 +405,6 @@ void UFlowNode::RemoveUserOutput(const FName& PinName)
 	}
 }
 
-void UFlowNode::SetPinNameToBoundPropertyNameMap(const TMap<FName, FName>& Map)
-{
-	PinNameToBoundPropertyNameMap = Map;
-}
-
 void UFlowNode::SetAutoInputDataPins(const TArray<FFlowPin>& AutoInputPins)
 {
 	AutoInputDataPins = AutoInputPins;
@@ -387,28 +417,114 @@ void UFlowNode::SetAutoOutputDataPins(const TArray<FFlowPin>& AutoOutputPins)
 
 #endif // WITH_EDITOR
 
-bool UFlowNode::CanSupplyDataPinValues_Implementation() const
+FFlowDataPinResult UFlowNode::TrySupplyDataPin_Implementation(FName PinName) const
 {
-	if (!PinNameToBoundPropertyNameMap.IsEmpty())
+	const FFlowPin* FlowPin = FindOutputPinByName(PinName);
+	if (!FlowPin)
 	{
+		// Also look in the Input Pins (for supplying default values for unconnected pins)
+		FlowPin = FindInputPinByName(PinName);
+		if (!FlowPin)
+		{
+			return FFlowDataPinResult(EFlowDataPinResolveResult::FailedUnknownPin);
+		}
+	}
+
+	const FFlowPinType* DataPinType = FlowPin->ResolveFlowPinType();
+	if (!DataPinType)
+	{
+		return FFlowDataPinResult(EFlowDataPinResolveResult::FailedMismatchedType);
+	}
+
+	FFlowDataPinResult SuppliedResult;
+	if (TryGatherPropertyOwnersAndPopulateResult(PinName, *DataPinType, *FlowPin, SuppliedResult))
+	{
+		return SuppliedResult;
+	}
+
+	return FFlowDataPinResult(EFlowDataPinResolveResult::FailedUnknownPin);
+}
+
+bool UFlowNode::TryFindPropertyByPinName(
+	const UObject& PropertyOwnerObject,
+	const FName& PinName,
+	const FProperty*& OutFoundProperty,
+	TInstancedStruct<FFlowDataPinValue>& OutFoundInstancedStruct) const
+{
+	return UFlowNode::TryFindPropertyByPinName_Static(PropertyOwnerObject, PinName, OutFoundProperty, OutFoundInstancedStruct);
+}
+
+bool UFlowNode::TryFindPropertyByPinName_Static(
+	const UObject& PropertyOwnerObject,
+	const FName& PinName,
+	const FProperty*& OutFoundProperty,
+	TInstancedStruct<FFlowDataPinValue>& OutFoundInstancedStruct)
+{
+	// Try direct property match
+	OutFoundProperty = PropertyOwnerObject.GetClass()->FindPropertyByName(PinName);
+	if (OutFoundProperty)
+	{
+		const FStructProperty* StructProperty = CastField<FStructProperty>(OutFoundProperty);
+		if (StructProperty && StructProperty->Struct->IsChildOf(FFlowDataPinValue::StaticStruct()))
+		{
+			// Initialize to match property's struct
+			OutFoundInstancedStruct.InitializeAsScriptStruct(StructProperty->Struct);
+
+			StructProperty->GetValue_InContainer(&PropertyOwnerObject, OutFoundInstancedStruct.GetMutableMemory());
+			return true;
+		}
+
+		// Raw property (e.g., bool, TArray<bool>) is valid
 		return true;
 	}
 
 	return false;
 }
 
-bool UFlowNode::TryGetFlowDataPinSupplierDatasForPinName(
+void UFlowNode::GatherPotentialPropertyOwnersForDataPins(TArray<const UObject*>& InOutOwners) const
+{
+	// TODO (gtaylor) Also add any AddOns that can supply data pins, when/if we want to add AddOn data pin supply support
+
+	InOutOwners.AddUnique(this);
+}
+
+bool UFlowNode::TryGatherPropertyOwnersAndPopulateResult(
 	const FName& PinName,
-	TArray<FFlowPinValueSupplierData>& InOutPinValueSupplierDatas) const
+	const FFlowPinType& DataPinType,
+	const FFlowPin& FlowPin,
+	FFlowDataPinResult& OutSuppliedResult) const
+{
+	// Gather all of the potential providers for this DataPin
+	TArray<const UObject*> PropertyOwnerObjects;
+	GatherPotentialPropertyOwnersForDataPins(PropertyOwnerObjects);
+
+	// Look through all of the potential providers
+	for (const UObject* PropertyOwnerObject : PropertyOwnerObjects)
+	{
+		const UFlowNode& FlowNodeThis = *this;
+
+		checkf(IsValid(PropertyOwnerObject), TEXT("Every UObject provided by GatherPotentialPropertyOwnersForDataPins must be valid"));
+
+		if (DataPinType.PopulateResult(*PropertyOwnerObject, FlowNodeThis, FlowPin, OutSuppliedResult))
+		{
+			return true;
+		}
+	}
+
+	return false;
+}
+// --
+
+bool UFlowNode::TryGetFlowDataPinSupplierDatasForPinName(const FName& PinName, TFlowPinValueSupplierDataArray& InOutPinValueSupplierDatas) const
 {
 	const IFlowDataPinValueSupplierInterface* ThisAsPinValueSupplier = Cast<IFlowDataPinValueSupplierInterface>(this);
 
-	// This function will build the priority-ordered array of data suppliers for a given PinName.
+	// This function will build the inverse-priority-ordered array of data suppliers for a given PinName.
 	// It works in two modes:
 	// - Standard case - Add a connected node as the priority supplier, and this node as the default value supplier
 	// - Exception case - for External data supplied nodes, we recurse (below) to crawl further and add the supplier
 	//   for the external supplier's node.  In practice, this is a node (A) connected to a Start node, which is 
-	//   supplied by its outer SubGraph node, which sources its values from the nodes tha are connected to the external inputs
+	//   supplied by its outer SubGraph node, which sources its values from the nodes that are connected to the external inputs
 	//   that the subgraph node added as inputs for its instanced subgraph).  The external supplier's value has top priority,
 	//   then it falls to the standard case sources (as above).
 
@@ -421,7 +537,7 @@ bool UFlowNode::TryGetFlowDataPinSupplierDatasForPinName(
 		NewPinValueSupplier.SupplierPinName = PinName;
 
 		// Put this node as the backup supplier
-		InOutPinValueSupplierDatas.Insert(NewPinValueSupplier, 0);
+		InOutPinValueSupplierDatas.Add(NewPinValueSupplier);
 	}
 
 	// If the pin is connected, try to add the connected node as the priority supplier
@@ -440,7 +556,7 @@ bool UFlowNode::TryGetFlowDataPinSupplierDatasForPinName(
 			{
 				ConnectedPinValueSupplier.PinValueSupplier = SupplierFlowNodeAsInterface;
 
-				InOutPinValueSupplierDatas.Insert(ConnectedPinValueSupplier, 0);
+				InOutPinValueSupplierDatas.Add(ConnectedPinValueSupplier);
 			}
 
 			// Exception case for nodes with external suppliers, recurse here to crawl further 
@@ -458,48 +574,69 @@ bool UFlowNode::TryGetFlowDataPinSupplierDatasForPinName(
 	return !InOutPinValueSupplierDatas.IsEmpty();
 }
 
-bool UFlowNode::TryFindPropertyByPinName(
-	const FName& PinName,
-	const FProperty*& OutFoundProperty,
-	TInstancedStruct<FFlowDataPinProperty>& OutFoundInstancedStruct,
-	EFlowDataPinResolveResult& InOutResult) const
+#if WITH_EDITOR
+void UFlowNode::AutoGenerateDataPins(FFlowAutoDataPinsWorkingData& InOutWorkingData) const
 {
-	const FName* RemappedPinName = PinNameToBoundPropertyNameMap.Find(PinName);
-	if (!RemappedPinName)
+	// Gather all of the potential providers for this DataPin
+	TArray<const UObject*> PropertyOwnerObjects;
+	GatherPotentialPropertyOwnersForDataPins(PropertyOwnerObjects);
+
+	// GenerateDataPins for all of the potential providers
+	for (const UObject* PropertyOwnerObject : PropertyOwnerObjects)
 	{
-		InOutResult = EFlowDataPinResolveResult::FailedUnknownPin;
+		checkf(IsValid(PropertyOwnerObject), TEXT("Every UObject provided by GatherPotentialPropertyOwnersForDataPins must be valid"));
 
-		return false;
+		InOutWorkingData.AddFlowDataPinsForClassProperties(*PropertyOwnerObject);
 	}
+}
+#endif
 
-	if (!TryFindPropertyByRemappedPinName(*RemappedPinName, OutFoundProperty, OutFoundInstancedStruct, InOutResult))
-	{
-		return false;
-	}
-
-	return true;
+// #FlowDataPinLegacy
+void UFlowNode::FixupDataPinTypes()
+{
+	FixupDataPinTypesForArray(InputPins);
+	FixupDataPinTypesForArray(OutputPins);
+#if WITH_EDITOR
+	FixupDataPinTypesForArray(AutoInputDataPins);
+	FixupDataPinTypesForArray(AutoOutputDataPins);
+#endif
 }
 
-bool UFlowNode::TryFindPropertyByRemappedPinName(
-	const FName& RemappedPinName,
-	const FProperty*& OutFoundProperty,
-	TInstancedStruct<FFlowDataPinProperty>& OutFoundInstancedStruct,
-	EFlowDataPinResolveResult& InOutResult) const
+void UFlowNode::FixupDataPinTypesForArray(TArray<FFlowPin>& MutableDataPinArray)
 {
-	const UClass* ThisClass = GetClass();
-	OutFoundProperty = ThisClass->FindPropertyByName(RemappedPinName);
-
-	if (!OutFoundProperty)
+	for (FFlowPin& MutableFlowPin : MutableDataPinArray)
 	{
-		LogError(FString::Printf(TEXT("Could not find property %s, but expected to"), *RemappedPinName.ToString()), EFlowOnScreenMessageType::Temporary);
+		FixupDataPinTypesForPin(MutableFlowPin);
+	}
+}
 
-		InOutResult = EFlowDataPinResolveResult::FailedWithError;
+void UFlowNode::FixupDataPinTypesForPin(FFlowPin& MutableDataPin)
+{
+	const FFlowPinTypeName NewPinTypeName = FFlowPin::GetPinTypeNameForLegacyPinType(MutableDataPin.PinType);
 
-		return false;
+	if (!NewPinTypeName.IsNone())
+	{
+		MutableDataPin.SetPinTypeName(NewPinTypeName);
 	}
 
-	return true;
+	if (MutableDataPin.GetPinTypeName().IsNone())
+	{
+		// Ensure we have a pin type even if the enum was invalid before
+		MutableDataPin.SetPinTypeName(FFlowPinType_Exec::GetPinTypeNameStatic());
+	}
+
+	MutableDataPin.PinType = EFlowPinType::Invalid;
 }
+// --
+
+#if WITH_EDITOR
+void UFlowNode::SetConnections(const TMap<FName, FConnectedPin>& InConnections)
+{
+	const TMap<FName, FConnectedPin> OldConnections = Connections;
+	Connections = InConnections;
+	OnConnectionsChanged(OldConnections);
+}
+#endif
 
 TSet<UFlowNode*> UFlowNode::GatherConnectedNodes() const
 {
@@ -582,15 +719,15 @@ bool UFlowNode::IsInputConnected(const FFlowPin& FlowPin) const
 		return false;
 	}
 
-	if (FlowPin.IsDataPin())
-	{
-		return FindConnectedNodeForPinFast(FlowPin.PinName);
-	}
-	else
+	if (FlowPin.IsExecPin())
 	{
 		// We don't cache the input exec pins for fast lookup in Connections, so use the slow path for them:
 
 		return FindConnectedNodeForPinSlow(FlowPin.PinName);
+	}
+	else
+	{
+		return FindConnectedNodeForPinFast(FlowPin.PinName);
 	}
 }
 
@@ -675,82 +812,30 @@ bool UFlowNode::FindConnectedNodeForPinSlow(const FName& PinName, FGuid* OutGuid
 	return false;
 }
 
-// Must implement TrySupplyDataPinAs... for every EFlowPinType 
-FLOW_ASSERT_ENUM_MAX(EFlowPinType, 16);
-
-FFlowDataPinResult_Bool UFlowNode::TrySupplyDataPinAsBool_Implementation(const FName& PinName) const
+TArray<FConnectedPin> UFlowNode::GetKnownConnectionsToPin(const FConnectedPin& Pin) const
 {
-	return TrySupplyDataPinAsType<FFlowDataPinResult_Bool, FFlowDataPinOutputProperty_Bool, FBoolProperty>(PinName);
-}
+	TArray<FConnectedPin> ConnectedPins;
 
-FFlowDataPinResult_Int UFlowNode::TrySupplyDataPinAsInt_Implementation(const FName& PinName) const
-{
-	return TrySupplyDataPinAsNumericType<FFlowDataPinResult_Int, FFlowDataPinOutputProperty_Int64, FFlowDataPinOutputProperty_Int32>(PinName);
-}
-
-FFlowDataPinResult_Float UFlowNode::TrySupplyDataPinAsFloat_Implementation(const FName& PinName) const
-{
-	return TrySupplyDataPinAsNumericType<FFlowDataPinResult_Float, FFlowDataPinOutputProperty_Double, FFlowDataPinOutputProperty_Float>(PinName);
-}
-
-FFlowDataPinResult_Name UFlowNode::TrySupplyDataPinAsName_Implementation(const FName& PinName) const
-{
-	return TrySupplyDataPinAsAnyTextType<FFlowDataPinResult_Name>(PinName);
-}
-
-FFlowDataPinResult_String UFlowNode::TrySupplyDataPinAsString_Implementation(const FName& PinName) const
-{
-	return TrySupplyDataPinAsAnyTextType<FFlowDataPinResult_String>(PinName);
-}
-
-FFlowDataPinResult_Text UFlowNode::TrySupplyDataPinAsText_Implementation(const FName& PinName) const
-{
-	return TrySupplyDataPinAsAnyTextType<FFlowDataPinResult_Text>(PinName);
-}
-
-FFlowDataPinResult_Enum UFlowNode::TrySupplyDataPinAsEnum_Implementation(const FName& PinName) const
-{
-	return TrySupplyDataPinAsEnumType(PinName);
-}
-
-FFlowDataPinResult_Vector UFlowNode::TrySupplyDataPinAsVector_Implementation(const FName& PinName) const
-{
-	return TrySupplyDataPinAsStructType<FFlowDataPinResult_Vector, FFlowDataPinOutputProperty_Vector, FVector>(PinName);
-}
-
-FFlowDataPinResult_Rotator UFlowNode::TrySupplyDataPinAsRotator_Implementation(const FName& PinName) const
-{
-	return TrySupplyDataPinAsStructType<FFlowDataPinResult_Rotator, FFlowDataPinOutputProperty_Rotator, FRotator>(PinName);
-}
-
-FFlowDataPinResult_Transform UFlowNode::TrySupplyDataPinAsTransform_Implementation(const FName& PinName) const
-{
-	return TrySupplyDataPinAsStructType<FFlowDataPinResult_Transform, FFlowDataPinOutputProperty_Transform, FTransform>(PinName);
-}
-
-FFlowDataPinResult_GameplayTag UFlowNode::TrySupplyDataPinAsGameplayTag_Implementation(const FName& PinName) const
-{
-	return TrySupplyDataPinAsStructType<FFlowDataPinResult_GameplayTag, FFlowDataPinOutputProperty_GameplayTag, FGameplayTag>(PinName);
-}
-
-FFlowDataPinResult_GameplayTagContainer UFlowNode::TrySupplyDataPinAsGameplayTagContainer_Implementation(const FName& PinName) const
-{
-	return TrySupplyDataPinAsStructType<FFlowDataPinResult_GameplayTagContainer, FFlowDataPinOutputProperty_GameplayTagContainer, FGameplayTagContainer>(PinName);
-}
-
-FFlowDataPinResult_InstancedStruct UFlowNode::TrySupplyDataPinAsInstancedStruct_Implementation(const FName& PinName) const
-{
-	return TrySupplyDataPinAsStructType<FFlowDataPinResult_InstancedStruct, FFlowDataPinOutputProperty_InstancedStruct, FInstancedStruct>(PinName);
-}
-
-FFlowDataPinResult_Object UFlowNode::TrySupplyDataPinAsObject_Implementation(const FName& PinName) const
-{
-	return TrySupplyDataPinAsUObjectType<FFlowDataPinResult_Object, FFlowDataPinOutputProperty_Object, UObject, FObjectProperty, FSoftObjectProperty, FWeakObjectProperty, FLazyObjectProperty>(PinName);
-}
-
-FFlowDataPinResult_Class UFlowNode::TrySupplyDataPinAsClass_Implementation(const FName& PinName) const
-{
-	return TrySupplyDataPinAsUClassType<FFlowDataPinResult_Class, FFlowDataPinOutputProperty_Class, UClass, FClassProperty, FSoftClassProperty>(PinName);
+	if (Pin.NodeGuid == NodeGuid)
+	{
+		const FConnectedPin& Connection = Connections.FindRef(Pin.PinName);
+		if (Connection.NodeGuid.IsValid())
+		{
+			ConnectedPins.Add(Connection);
+		}
+	}
+	else
+	{
+		for (const TPair<FName, FConnectedPin>& Connection : Connections)
+		{
+			if (Connection.Value.NodeGuid == Pin.NodeGuid && Connection.Value.PinName == Pin.PinName)
+			{
+				ConnectedPins.Emplace(NodeGuid, Connection.Key);
+			}
+		}
+	}
+	
+	return ConnectedPins;
 }
 
 void UFlowNode::RecursiveFindNodesByClass(UFlowNode* Node, const TSubclassOf<UFlowNode> Class, uint8 Depth, TArray<UFlowNode*>& OutNodes)
@@ -813,23 +898,19 @@ void UFlowNode::TriggerInput(const FName& PinName, const EFlowPinActivationType 
 		TArray<FPinRecord>& Records = InputRecords.FindOrAdd(PinName);
 		Records.Add(FPinRecord(FApp::GetCurrentTime(), ActivationType));
 
-		LogVerbose(FString::Printf(TEXT("Triggering input %s."), *PinName.ToString()));
-#endif // UE_BUILD_SHIPPING
-
-#if WITH_EDITOR
-		if (GEditor && UFlowAsset::GetFlowGraphInterface().IsValid())
+		if (const UFlowAsset* FlowAssetTemplate = GetFlowAsset()->GetTemplateAsset())
 		{
-			UFlowAsset::GetFlowGraphInterface()->OnInputTriggered(GraphNode, InputPins.IndexOfByKey(PinName));
+			(void)FlowAssetTemplate->OnPinTriggered.ExecuteIfBound(this, PinName);
 		}
-#endif // WITH_EDITOR
+#endif
 	}
+#if !UE_BUILD_SHIPPING
 	else
 	{
-#if !UE_BUILD_SHIPPING
 		LogError(FString::Printf(TEXT("Input Pin name %s invalid"), *PinName.ToString()));
-#endif // UE_BUILD_SHIPPING
 		return;
 	}
+#endif
 
 	switch (SignalMode)
 	{
@@ -863,10 +944,10 @@ void UFlowNode::TriggerFirstOutput(const bool bFinish)
 
 void UFlowNode::TriggerOutput(const FName PinName, const bool bFinish /*= false*/, const EFlowPinActivationType ActivationType /*= Default*/)
 {
-	if (ActivationState == EFlowNodeState::Completed || ActivationState == EFlowNodeState::Aborted)
+	if (HasFinished())
 	{
 		// do not trigger output if node is already finished or aborted
-		LogError(TEXT("Trying to TriggerOutput after finished or aborted"));
+		LogError(TEXT("Trying to TriggerOutput after finished or aborted"), EFlowOnScreenMessageType::Disabled);
 		return;
 	}
 
@@ -883,31 +964,22 @@ void UFlowNode::TriggerOutput(const FName PinName, const bool bFinish /*= false*
 		TArray<FPinRecord>& Records = OutputRecords.FindOrAdd(PinName);
 		Records.Add(FPinRecord(FApp::GetCurrentTime(), ActivationType));
 
-		LogVerbose(FString::Printf(TEXT("\n Triggering output: %s.  bFinish: %s "), *PinName.ToString(), bFinish ? TEXT("true") : TEXT("false")));
-
-#if WITH_EDITOR
-		if (GEditor && UFlowAsset::GetFlowGraphInterface().IsValid())
+		if (const UFlowAsset* FlowAssetTemplate = GetFlowAsset()->GetTemplateAsset())
 		{
-			UFlowAsset::GetFlowGraphInterface()->OnOutputTriggered(GraphNode, OutputPins.IndexOfByKey(PinName));
+			FlowAssetTemplate->OnPinTriggered.ExecuteIfBound(this, PinName);
 		}
-#endif
 	}
 	else
 	{
 		LogError(FString::Printf(TEXT("Output Pin name %s invalid"), *PinName.ToString()));
 	}
-#endif // UE_BUILD_SHIPPING
-
-#if WITH_EDITOR
-	LogVerbose(FString::Printf(TEXT("\n Description: %s"), *GetNodeDescription()));
-	LogVerbose(FString::Printf(TEXT("\n Status: %s"), *GetStatusStringForNodeAndAddOns()));
 #endif
 
 	// call the next node
 	if (OutputPins.Contains(PinName) && Connections.Contains(PinName))
 	{
 		const FConnectedPin FlowPin = GetConnection(PinName);
-		GetFlowAsset()->TriggerInput(FlowPin.NodeGuid, FlowPin.PinName);
+		GetFlowAsset()->TriggerInput(FlowPin.NodeGuid, FlowPin.PinName, FConnectedPin(GetGuid(), PinName));
 	}
 }
 
@@ -924,7 +996,7 @@ void UFlowNode::Deactivate()
 		// there is nothing to deactivate, node was never active
 		return;
 	}
-	
+
 	if (GetFlowAsset()->FinishPolicy == EFlowFinishPolicy::Abort)
 	{
 		ActivationState = EFlowNodeState::Aborted;
@@ -1010,6 +1082,11 @@ void UFlowNode::OnPassThrough_Implementation()
 	Finish();
 }
 
+bool UFlowNode::ShouldSave_Implementation()
+{
+	return GetActivationState() == EFlowNodeState::Active;
+}
+
 #if WITH_EDITOR
 TMap<uint8, FPinRecord> UFlowNode::GetWireRecords() const
 {
@@ -1077,7 +1154,7 @@ FString UFlowNode::GetStatusStringForNodeAndAddOns() const
 	FString CombinedStatusString = GetStatusString();
 
 	// Give all of the AddOns a chance to add their status strings as well
-	(void) ForEachAddOnConst(
+	(void)ForEachAddOnConst(
 		[&CombinedStatusString](const UFlowNodeAddOn& AddOn)
 		{
 			const FString AddOnStatusString = AddOn.GetStatusString();

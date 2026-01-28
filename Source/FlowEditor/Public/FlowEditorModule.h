@@ -6,6 +6,7 @@
 #include "IAssetTypeActions.h"
 #include "Modules/ModuleInterface.h"
 #include "PropertyEditorDelegates.h"
+#include "Toolkits/AssetEditorToolkit.h"
 #include "Toolkits/IToolkit.h"
 
 class FSlateStyleSet;
@@ -15,12 +16,12 @@ struct FGraphPanelPinConnectionFactory;
 class FFlowAssetEditor;
 class UFlowAsset;
 
-struct FLOWEDITOR_API FFLowAssetCategoryPaths : EAssetCategoryPaths
+struct FLOWEDITOR_API FFlowAssetCategoryPaths : EAssetCategoryPaths
 {
 	static FAssetCategoryPath Flow;
 };
 
-class FLOWEDITOR_API FFlowEditorModule : public IModuleInterface
+class FLOWEDITOR_API FFlowEditorModule : public IModuleInterface, public IHasMenuExtensibility, public IHasToolBarExtensibility
 {
 public:
 	static EAssetTypeCategories::Type FlowAssetCategory;
@@ -29,10 +30,19 @@ private:
 	TArray<TSharedRef<IAssetTypeActions>> RegisteredAssetActions;
 	TSet<FName> CustomClassLayouts;
 	TSet<FName> CustomStructLayouts;
+	bool bIsRegisteredForAssetChanges = false;
 
 public:
 	virtual void StartupModule() override;
 	virtual void ShutdownModule() override;
+
+	UE_DEPRECATED(5.5, "The old method has been removed. Please use UToolMenus::Get()->ExtendMenu() instead. You can find example in SFlowGraphEditor::CreateDebugMenu().")
+	virtual TSharedPtr<FExtensibilityManager> GetMenuExtensibilityManager() override { return nullptr; }
+	
+	UE_DEPRECATED(5.5, "The old method has been removed. Please use UToolMenus::Get()->ExtendMenu() instead. You can find example in SFlowGraphEditor::CreateDebugMenu().")
+	virtual TSharedPtr<FExtensibilityManager> GetToolBarExtensibilityManager() override { return nullptr; }
+
+	void RegisterForAssetChanges();
 
 private:
 	void TrySetFlowNodeDisplayStyleDefaults() const;
@@ -58,4 +68,7 @@ private:
 
 public:
 	static TSharedRef<FFlowAssetEditor> CreateFlowAssetEditor(const EToolkitMode::Type Mode, const TSharedPtr<IToolkitHost>& InitToolkitHost, UFlowAsset* FlowAsset);
+
+	void OnAssetUpdated(const FAssetData& AssetData);
+	void OnAssetRenamed(const FAssetData& AssetData, const FString& OldObjectPath);
 };

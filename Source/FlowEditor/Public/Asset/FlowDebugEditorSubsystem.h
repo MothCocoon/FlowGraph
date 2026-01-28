@@ -2,18 +2,19 @@
 
 #pragma once
 
-#include "EditorSubsystem.h"
 #include "Logging/TokenizedMessage.h"
+
+#include "Debugger/FlowDebuggerSubsystem.h"
 #include "FlowDebugEditorSubsystem.generated.h"
 
 class UFlowAsset;
 class FFlowMessageLog;
 
 /**
-** Persistent subsystem supporting Flow Graph debugging
+ * Editor-only extension of debugger subsystem. Supports Message Log.
  */
 UCLASS()
-class FLOWEDITOR_API UFlowDebugEditorSubsystem : public UEditorSubsystem
+class FLOWEDITOR_API UFlowDebugEditorSubsystem : public UFlowDebuggerSubsystem
 {
 	GENERATED_BODY()
 
@@ -23,15 +24,14 @@ public:
 protected:
 	TMap<TWeakObjectPtr<UFlowAsset>, TSharedPtr<class IMessageLogListing>> RuntimeLogs;
 
-	void OnInstancedTemplateAdded(UFlowAsset* FlowAsset);
-	void OnInstancedTemplateRemoved(UFlowAsset* FlowAsset) const;
+	virtual void OnInstancedTemplateAdded(UFlowAsset* AssetTemplate) override;
+	virtual void OnInstancedTemplateRemoved(UFlowAsset* AssetTemplate) const override;
 
-	void OnRuntimeMessageAdded(const UFlowAsset* FlowAsset, const TSharedRef<FTokenizedMessage>& Message) const;
+	void OnRuntimeMessageAdded(const UFlowAsset* AssetTemplate, const TSharedRef<FTokenizedMessage>& Message) const;
 
-	void OnBeginPIE(const bool bIsSimulating);
-	void OnEndPIE(const bool bIsSimulating);
+	virtual void OnBeginPIE(const bool bIsSimulating);
+	virtual void OnResumePIE(const bool bIsSimulating);
+	virtual void OnEndPIE(const bool bIsSimulating);
 
-public:
-	static void PausePlaySession();
-	static bool IsPlaySessionPaused();
+	virtual void PauseSession(const UFlowNode* Node) override;
 };

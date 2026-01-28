@@ -23,6 +23,6 @@ public:
 
 #if WITH_EDITOR
 public:
-	virtual FText GetNodeTitle() const override;
+	virtual FText K2_GetNodeTitle_Implementation() const override;
 #endif
 };

@@ -11,15 +11,6 @@ class SFlowGraphEditor;
 class UFlowGraphNode;
 class UFlowGraphSchema;
 
-class FLOWEDITOR_API FFlowGraphInterface : public IFlowGraphInterface
-{
-public:
-	virtual ~FFlowGraphInterface() override {}
-
-	virtual void OnInputTriggered(UEdGraphNode* GraphNode, const int32 Index) const override;
-	virtual void OnOutputTriggered(UEdGraphNode* GraphNode, const int32 Index) const override;
-};
-
 UCLASS()
 class FLOWEDITOR_API UFlowGraph : public UEdGraph
 {
@@ -30,6 +21,8 @@ protected:
 	UPROPERTY()
 	int32 GraphVersion;
 
+	static constexpr int32 CurrentGraphVersion = 2;
+
 	/** if set, graph modifications won't cause updates in internal tree structure
 	 *  flag allows freezing update during heavy changes like pasting new nodes 
 	 */
@@ -38,12 +31,16 @@ protected:
 	// is currently loading the Flow Graph (used to suppress some work during load)
 	uint32 bIsLoadingGraph : 1;
 
+	bool bIsSavingGraph = false;
+	
 public:
 	static void CreateGraph(UFlowAsset* InFlowAsset);
 	static void CreateGraph(UFlowAsset* InFlowAsset, TSubclassOf<UFlowGraphSchema> FlowSchema);
 	void RefreshGraph();
 
 protected:
+	void UpgradeAllFlowNodePins();
+
 	void RecursivelyRefreshAddOns(UFlowGraphNode& FromFlowGraphNode);
 	static void RecursivelySetupAllFlowGraphNodesForEditing(UFlowGraphNode& FromFlowGraphNode);
 
@@ -93,4 +90,6 @@ public:
 	void UnlockUpdates();
 
 	bool IsLoadingGraph() const { return bIsLoadingGraph; }
+
+	bool IsSavingGraph() const { return bIsSavingGraph; }
 };

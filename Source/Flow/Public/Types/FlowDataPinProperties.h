@@ -2,68 +2,26 @@
 
 #pragma once
 
-#include "Nodes/FlowPin.h"
-
 #include "GameplayTagContainer.h"
 #include "Kismet/BlueprintFunctionLibrary.h"
-#include "Runtime/Launch/Resources/Version.h"
-#include "UObject/Class.h"
-
-#if ENGINE_MAJOR_VERSION == 5 && ENGINE_MINOR_VERSION < 5
-#include "InstancedStruct.h"
-#else
 #include "StructUtils/InstancedStruct.h"
-#endif
+#include "UObject/Class.h"
 
 #include "FlowDataPinProperties.generated.h"
 
-class FStructProperty;
-class UScriptStruct;
-
-USTRUCT(BlueprintType, DisplayName = "Base - Flow DataPin Property")
+// #FlowDataPinLegacy
+USTRUCT(DisplayName = "Base - Flow DataPin Property", meta = (Deprecated, DeprecationMessage = "Use FFlowDataPinValue* instead"))
 struct FFlowDataPinProperty
 {
 	GENERATED_BODY()
 
-	FFlowDataPinProperty() { }
+	FFlowDataPinProperty() = default;
 
 	virtual ~FFlowDataPinProperty() { }
-
-	virtual EFlowPinType GetFlowPinType() const { return EFlowPinType::Invalid; }
-
-#if WITH_EDITOR
-	FLOW_API static FFlowPin CreateFlowPin(const FName& PinName, const TInstancedStruct<FFlowDataPinProperty>& DataPinProperty);
-
-	template <typename TFlowDataPinPropertyType, typename TUnrealType>
-	static UScriptStruct* FindScriptStructForFlowDataPinProperty(const FProperty& Property)
-	{
-		// Find the ScriptStruct of the wrapped struct in a wrapper (eg, FFlowDataPinOutputProperty_Vector) or the struct itself (eg, FVector)
-		const FStructProperty* StructProperty = CastField<FStructProperty>(&Property);
-		if (!StructProperty)
-		{
-			return nullptr;
-		}
-
-		UScriptStruct* ScriptStruct = TFlowDataPinPropertyType::StaticStruct();
-		if (StructProperty->Struct == ScriptStruct)
-		{
-			static UScriptStruct* UnrealType = TBaseStructure<TUnrealType>::Get();
-
-			return UnrealType;
-		}
-		else
-		{
-			return StructProperty->Struct;
-		}
-	}
-#endif
 };
 
-// Recommend implementing FFlowDataPinProperty... for every EFlowPinType
-FLOW_ASSERT_ENUM_MAX(EFlowPinType, 16);
-
 // Wrapper struct for a bool that will generate and link to a Data Pin with its same name
-USTRUCT(BlueprintType, DisplayName = "Bool - Output Flow Data Pin Property", meta = (FlowPinType = "Bool"))
+USTRUCT(BlueprintType, DisplayName = "[DEPRECATED] Bool - Output Flow Data Pin Property", meta = (FlowPinType = "Bool", Deprecated, DeprecationMessage = "Use FFlowDataPinValue* instead"))
 struct FFlowDataPinOutputProperty_Bool : public FFlowDataPinProperty
 {
 	GENERATED_BODY()
@@ -77,12 +35,10 @@ public:
 
 	FFlowDataPinOutputProperty_Bool() { }
 	FFlowDataPinOutputProperty_Bool(bool InValue) : Value(InValue) { }
-
-	virtual EFlowPinType GetFlowPinType() const override { return EFlowPinType::Bool; }
 };
 
-// Wrapper struct for a int64 that will generate and link to a Data Pin with its same name
-USTRUCT(BlueprintType, DisplayName = "Int64 - Output Flow Data Pin Property", meta = (FlowPinType = "Int"))
+// Wrapper struct for an int64 that will generate and link to a Data Pin with its same name
+USTRUCT(BlueprintType, DisplayName = "[DEPRECATED] Int64 - Output Flow Data Pin Property", meta = (FlowPinType = "Int64", Deprecated, DeprecationMessage = "Use FFlowDataPinValue* instead"))
 struct FFlowDataPinOutputProperty_Int64 : public FFlowDataPinProperty
 {
 	GENERATED_BODY()
@@ -96,12 +52,10 @@ public:
 
 	FFlowDataPinOutputProperty_Int64() { }
 	FFlowDataPinOutputProperty_Int64(int64 InValue) : Value(InValue) { }
-
-	virtual EFlowPinType GetFlowPinType() const override { return EFlowPinType::Int; }
 };
 
-// Wrapper struct for a int32 that will generate and link to a Data Pin with its same name
-USTRUCT(BlueprintType, DisplayName = "Int - Output Flow Data Pin Property", meta = (FlowPinType = "Int"))
+// Wrapper struct for an int32 that will generate and link to a Data Pin with its same name
+USTRUCT(BlueprintType, DisplayName = "[DEPRECATED] Int - Output Flow Data Pin Property", meta = (FlowPinType = "Int", Deprecated, DeprecationMessage = "Use FFlowDataPinValue* instead"))
 struct FFlowDataPinOutputProperty_Int32 : public FFlowDataPinProperty
 {
 	GENERATED_BODY()
@@ -115,12 +69,10 @@ public:
 
 	FFlowDataPinOutputProperty_Int32() { }
 	FFlowDataPinOutputProperty_Int32(int32 InValue) : Value(InValue) { }
-
-	virtual EFlowPinType GetFlowPinType() const override { return EFlowPinType::Int; }
 };
 
 // Wrapper struct for a Double (64bit float) that will generate and link to a Data Pin with its same name
-USTRUCT(BlueprintType, DisplayName = "Double (float64) - Output Flow Data Pin Property", meta = (FlowPinType = "Float"))
+USTRUCT(BlueprintType, DisplayName = "Double (float64) - Output Flow Data Pin Property", meta = (FlowPinType = "Double", Deprecated, DeprecationMessage = "Use FFlowDataPinValue* instead"))
 struct FFlowDataPinOutputProperty_Double : public FFlowDataPinProperty
 {
 	GENERATED_BODY()
@@ -134,12 +86,10 @@ public:
 
 	FFlowDataPinOutputProperty_Double() { }
 	FFlowDataPinOutputProperty_Double(double InValue) : Value(InValue) { }
-
-	virtual EFlowPinType GetFlowPinType() const override { return EFlowPinType::Float; }
 };
 
 // Wrapper struct for a Float (32bit) that will generate and link to a Data Pin with its same name
-USTRUCT(BlueprintType, DisplayName = "Float - Output Flow Data Pin Property", meta = (FlowPinType = "Float"))
+USTRUCT(BlueprintType, DisplayName = "[DEPRECATED] Float - Output Flow Data Pin Property", meta = (FlowPinType = "Float", Deprecated, DeprecationMessage = "Use FFlowDataPinValue* instead"))
 struct FFlowDataPinOutputProperty_Float : public FFlowDataPinProperty
 {
 	GENERATED_BODY()
@@ -153,12 +103,10 @@ public:
 
 	FFlowDataPinOutputProperty_Float() { }
 	FFlowDataPinOutputProperty_Float(float InValue) : Value(InValue) { }
-
-	virtual EFlowPinType GetFlowPinType() const override { return EFlowPinType::Float; }
 };
 
 // Wrapper struct for a FName that will generate and link to a Data Pin with its same name
-USTRUCT(BlueprintType, DisplayName = "Name - Output Flow Data Pin Property", meta = (FlowPinType = "Name"))
+USTRUCT(BlueprintType, DisplayName = "[DEPRECATED] Name - Output Flow Data Pin Property", meta = (FlowPinType = "Name", Deprecated, DeprecationMessage = "Use FFlowDataPinValue* instead"))
 struct FFlowDataPinOutputProperty_Name : public FFlowDataPinProperty
 {
 	GENERATED_BODY()
@@ -172,12 +120,10 @@ public:
 
 	FFlowDataPinOutputProperty_Name() { }
 	FFlowDataPinOutputProperty_Name(const FName& InValue) : Value(InValue) { }
-
-	virtual EFlowPinType GetFlowPinType() const override { return EFlowPinType::Name; }
 };
 
 // Wrapper struct for a FString that will generate and link to a Data Pin with its same name
-USTRUCT(BlueprintType, DisplayName = "String - Output Flow Data Pin Property", meta = (FlowPinType = "String"))
+USTRUCT(BlueprintType, DisplayName = "[DEPRECATED] String - Output Flow Data Pin Property", meta = (FlowPinType = "String", Deprecated, DeprecationMessage = "Use FFlowDataPinValue* instead"))
 struct FFlowDataPinOutputProperty_String : public FFlowDataPinProperty
 {
 	GENERATED_BODY()
@@ -191,12 +137,10 @@ public:
 
 	FFlowDataPinOutputProperty_String() { }
 	FFlowDataPinOutputProperty_String(const FString& InValue) : Value(InValue) { }
-
-	virtual EFlowPinType GetFlowPinType() const override { return EFlowPinType::String; }
 };
 
 // Wrapper struct for a FText that will generate and link to a Data Pin with its same name
-USTRUCT(BlueprintType, DisplayName = "Text - Output Flow Data Pin Property", meta = (FlowPinType = "Text"))
+USTRUCT(BlueprintType, DisplayName = "[DEPRECATED] Text - Output Flow Data Pin Property", meta = (FlowPinType = "Text", Deprecated, DeprecationMessage = "Use FFlowDataPinValue* instead"))
 struct FFlowDataPinOutputProperty_Text : public FFlowDataPinProperty
 {
 	GENERATED_BODY()
@@ -210,12 +154,10 @@ public:
 
 	FFlowDataPinOutputProperty_Text() { }
 	FFlowDataPinOutputProperty_Text(const FText& InValue) : Value(InValue) { }
-
-	virtual EFlowPinType GetFlowPinType() const override { return EFlowPinType::Text; }
 };
 
 // Wrapper struct for an enum that will generate and link to a Data Pin with its same name
-USTRUCT(BlueprintType, DisplayName = "Enum - Output Flow Data Pin Property", meta = (FlowPinType = "Enum"))
+USTRUCT(BlueprintType, DisplayName = "[DEPRECATED] Enum - Output Flow Data Pin Property", meta = (FlowPinType = "Enum", Deprecated, DeprecationMessage = "Use FFlowDataPinValue* instead"))
 struct FFlowDataPinOutputProperty_Enum : public FFlowDataPinProperty
 {
 	GENERATED_BODY()
@@ -245,17 +187,12 @@ public:
 	FFlowDataPinOutputProperty_Enum(const FName& InValue, UEnum* InEnumClass)
 		: Value(InValue)
 		, EnumClass(InEnumClass)
-		{ }
-
-	virtual EFlowPinType GetFlowPinType() const override { return EFlowPinType::Enum; }
-
-#if WITH_EDITOR
-	FLOW_API void OnEnumNameChanged();
-#endif // WITH_EDITOR
+	{
+	}
 };
 
 // Wrapper struct for a FVector that will generate and link to a Data Pin with its same name
-USTRUCT(BlueprintType, DisplayName = "Vector - Output Flow Data Pin Property", meta = (FlowPinType = "Vector"))
+USTRUCT(BlueprintType, DisplayName = "[DEPRECATED] Vector - Output Flow Data Pin Property", meta = (FlowPinType = "Vector", Deprecated, DeprecationMessage = "Use FFlowDataPinValue* instead"))
 struct FFlowDataPinOutputProperty_Vector : public FFlowDataPinProperty
 {
 	GENERATED_BODY()
@@ -269,12 +206,10 @@ public:
 
 	FFlowDataPinOutputProperty_Vector() {}
 	FFlowDataPinOutputProperty_Vector(const FVector& InValue) : Value(InValue) { }
-
-	virtual EFlowPinType GetFlowPinType() const override { return EFlowPinType::Vector; }
 };
 
 // Wrapper struct for a FRotator that will generate and link to a Data Pin with its same name
-USTRUCT(BlueprintType, DisplayName = "Rotator - Output Flow Data Pin Property", meta = (FlowPinType = "Rotator"))
+USTRUCT(BlueprintType, DisplayName = "Rotator - Output Flow Data Pin Property", meta = (FlowPinType = "Rotator", Deprecated, DeprecationMessage = "Use FFlowDataPinValue* instead"))
 struct FFlowDataPinOutputProperty_Rotator : public FFlowDataPinProperty
 {
 	GENERATED_BODY()
@@ -288,12 +223,10 @@ public:
 
 	FFlowDataPinOutputProperty_Rotator() {}
 	FFlowDataPinOutputProperty_Rotator(const FRotator& InValue) : Value(InValue) { }
-
-	virtual EFlowPinType GetFlowPinType() const override { return EFlowPinType::Rotator; }
 };
 
 // Wrapper struct for a FTransform that will generate and link to a Data Pin with its same name
-USTRUCT(BlueprintType, DisplayName = "Transform - Output Flow Data Pin Property", meta = (FlowPinType = "Transform"))
+USTRUCT(BlueprintType, DisplayName = "[DEPRECATED] Transform - Output Flow Data Pin Property", meta = (FlowPinType = "Transform", Deprecated, DeprecationMessage = "Use FFlowDataPinValue* instead"))
 struct FFlowDataPinOutputProperty_Transform : public FFlowDataPinProperty
 {
 	GENERATED_BODY()
@@ -307,12 +240,10 @@ public:
 
 	FFlowDataPinOutputProperty_Transform() {}
 	FFlowDataPinOutputProperty_Transform(const FTransform& InValue) : Value(InValue) { }
-
-	virtual EFlowPinType GetFlowPinType() const override { return EFlowPinType::Transform; }
 };
 
 // Wrapper struct for a FGameplayTag that will generate and link to a Data Pin with its same name
-USTRUCT(BlueprintType, DisplayName = "GameplayTag - Output Flow Data Pin Property", meta = (FlowPinType = "GameplayTag"))
+USTRUCT(BlueprintType, DisplayName = "GameplayTag - Output Flow Data Pin Property", meta = (FlowPinType = "GameplayTag", Deprecated, DeprecationMessage = "Use FFlowDataPinValue* instead"))
 struct FFlowDataPinOutputProperty_GameplayTag : public FFlowDataPinProperty
 {
 	GENERATED_BODY()
@@ -326,12 +257,10 @@ public:
 
 	FFlowDataPinOutputProperty_GameplayTag() {}
 	FFlowDataPinOutputProperty_GameplayTag(const FGameplayTag& InValue) : Value(InValue) { }
-
-	virtual EFlowPinType GetFlowPinType() const override { return EFlowPinType::GameplayTag; }
 };
 
 // Wrapper struct for a FGameplayTagContainer that will generate and link to a Data Pin with its same name
-USTRUCT(BlueprintType, DisplayName = "GameplayTagContainer - Output Flow DataPin Property", meta = (FlowPinType = "GameplayTagContainer"))
+USTRUCT(BlueprintType, DisplayName = "[DEPRECATED] GameplayTagContainer - Output Flow DataPin Property", meta = (FlowPinType = "GameplayTagContainer", Deprecated, DeprecationMessage = "Use FFlowDataPinValue* instead"))
 struct FFlowDataPinOutputProperty_GameplayTagContainer : public FFlowDataPinProperty
 {
 	GENERATED_BODY()
@@ -345,12 +274,10 @@ public:
 
 	FFlowDataPinOutputProperty_GameplayTagContainer() {}
 	FFlowDataPinOutputProperty_GameplayTagContainer(const FGameplayTagContainer& InValue) : Value(InValue) { }
-
-	virtual EFlowPinType GetFlowPinType() const override { return EFlowPinType::GameplayTagContainer; }
 };
 
 // Wrapper struct for a FInstancedStruct that will generate and link to a Data Pin with its same name
-USTRUCT(BlueprintType, DisplayName = "InstancedStruct - Output Flow DataPin Property", meta = (FlowPinType = "InstancedStruct"))
+USTRUCT(BlueprintType, DisplayName = "InstancedStruct - Output Flow DataPin Property", meta = (FlowPinType = "InstancedStruct", Deprecated, DeprecationMessage = "Use FFlowDataPinValue* instead"))
 struct FFlowDataPinOutputProperty_InstancedStruct : public FFlowDataPinProperty
 {
 	GENERATED_BODY()
@@ -364,19 +291,17 @@ public:
 
 	FFlowDataPinOutputProperty_InstancedStruct() {}
 	FFlowDataPinOutputProperty_InstancedStruct(const FInstancedStruct& InValue) : Value(InValue) { }
-
-	virtual EFlowPinType GetFlowPinType() const override { return EFlowPinType::InstancedStruct; }
 };
 
 // Wrapper struct for a UObject that will generate and link to a Data Pin with its same name
-USTRUCT(BlueprintType, DisplayName = "Object - Output Flow DataPin Property", meta = (FlowPinType = "Object"))
+USTRUCT(BlueprintType, DisplayName = "[DEPRECATED] Object - Output Flow DataPin Property", meta = (FlowPinType = "Object", Deprecated, DeprecationMessage = "Use FFlowDataPinValue* instead"))
 struct FFlowDataPinOutputProperty_Object : public FFlowDataPinProperty
 {
 	GENERATED_BODY()
 
 	friend class FFlowDataPinProperty_ObjectCustomizationBase;
 
-protected:
+public:
 
 	// These pointers are separate so that the default value for the object can be configured 
 	// in the editor according to the type of object that it is (instanced or not).
@@ -389,11 +314,9 @@ protected:
 	UPROPERTY(EditAnywhere, Instanced, BlueprintReadWrite, Category = DataPins, DisplayName = "Value (inline)", meta = (EditCondition = "ReferenceValue == nullptr"))
 	TObjectPtr<UObject> InlineValue = nullptr;
 
-public:
-
 #if WITH_EDITORONLY_DATA
 	UPROPERTY(EditAnywhere, Category = DataPins, meta = (AllowAbstract))
-	TObjectPtr<UClass> ClassFilter = nullptr;
+	TObjectPtr<UClass> ClassFilter = UObject::StaticClass();
 #endif // WITH_EDITORONLY_DATA
 
 public:
@@ -401,35 +324,25 @@ public:
 	FFlowDataPinOutputProperty_Object() {}
 	FLOW_API FFlowDataPinOutputProperty_Object(UObject* InValue, UClass* InClassFilter = nullptr);
 
-	virtual EFlowPinType GetFlowPinType() const override { return EFlowPinType::Object; }
-
 	UObject* GetObjectValue() const { return ReferenceValue ? ReferenceValue : InlineValue; }
-	void SetObjectValue(UObject* InValue);
-
-#if WITH_EDITOR
-	UClass* DeriveObjectClass(const FProperty& MetaDataProperty) const;
-	FLOW_API static UClass* TryGetObjectClassFromProperty(const FProperty& MetaDataProperty);
-#endif
 };
 
 // Wrapper struct for a UClass that will generate and link to a Data Pin with its same name
-USTRUCT(BlueprintType, DisplayName = "Class - Output Flow DataPin Property", meta = (FlowPinType = "Class"))
+USTRUCT(BlueprintType, DisplayName = "[DEPRECATED] Class - Output Flow DataPin Property", meta = (FlowPinType = "Class", Deprecated, DeprecationMessage = "Use FFlowDataPinValue* instead"))
 struct FFlowDataPinOutputProperty_Class : public FFlowDataPinProperty
 {
 	GENERATED_BODY()
 
 	friend class FFlowDataPinProperty_ClassCustomizationBase;
 
-protected:
+public:
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = DataPins)
 	FSoftClassPath Value;
 
-public:
-
 #if WITH_EDITORONLY_DATA
 	UPROPERTY(EditAnywhere, Category = DataPins, meta = (AllowAbstract))
-	TObjectPtr<UClass> ClassFilter = nullptr;
+	TObjectPtr<UClass> ClassFilter = UObject::StaticClass();
 #endif // WITH_EDITORONLY_DATA
 
 public:
@@ -440,55 +353,17 @@ public:
 #if WITH_EDITOR
 		, ClassFilter(InClassFilter)
 #endif
-	{ }
+	{
+	}
 
-	virtual EFlowPinType GetFlowPinType() const override { return EFlowPinType::Class; }
-
-#if WITH_EDITOR
-	UClass* DeriveMetaClass(const FProperty& MetaDataProperty) const;
-	FLOW_API static UClass* TryGetMetaClassFromProperty(const FProperty& MetaDataProperty);
-#endif
-
-	const FSoftClassPath& GetAsSoftClass() const { return Value; }
-	UClass* GetResolvedClass() const { return Value.ResolveClass(); }
-};
-
-// Wrapper for FFlowDataPinProperty that is used for flow nodes that add 
-// dynamic properties, with associated data pins, on the flow node instance
-// (as opposed to C++ or blueprint compile-time).
-USTRUCT(BlueprintType, DisplayName = "Flow Named Output DataPin Property")
-struct FFlowNamedDataPinOutputProperty
-{
-	GENERATED_BODY()
-
-public:
-
-	// Name of this instanced property
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = DataPins)
-	FName Name;
-
-	// DataPinProperty payload
-	UPROPERTY(EditAnywhere, Category = DataPins, meta = (ExcludeBaseStruct, NoClear))
-	TInstancedStruct<FFlowDataPinProperty> DataPinProperty;
-
-public:
-
-	FFlowNamedDataPinOutputProperty() { }
-
-	bool IsValid() const { return Name != NAME_None && DataPinProperty.GetPtr() != nullptr; }
-
-#if WITH_EDITOR
-	FFlowPin CreateFlowPin() const { return FFlowDataPinProperty::CreateFlowPin(Name, DataPinProperty); }
-
-	FLOW_API FText BuildHeaderText() const;
-#endif // WITH_EDITOR
+	UClass* GetObjectValue() const { return Value.ResolveClass(); }
 };
 
 // Wrapper-structs for a blueprint defaulted input pin types
-//   "Hidden" to keep them out of the TInstancedStruct<FFlowDataPinProperty> selection list (but they can still be authored as properties in blueprint)
-//   "DefaultForInputFlowPin" to change them to an Defaulted-Input property (rather than an output property)
+//   "Hidden" to keep them out of the TInstancedStruct<FFlowDataPinValue> selection list (but they can still be authored as properties in blueprint)
+//   "DefaultForInputFlowPin" to change them to a Defaulted-Input property (rather than an output property)
 
-USTRUCT(BlueprintType, DisplayName = "Bool - Input Flow Data Pin Property", meta = (Hidden, DefaultForInputFlowPin, FlowPinType = "Bool"))
+USTRUCT(BlueprintType, DisplayName = "[DEPRECATED] Bool - Input Flow Data Pin Property", meta = (DefaultForInputFlowPin, FlowPinType = "Bool", Deprecated, DeprecationMessage = "Use FFlowDataPinValue* instead"))
 struct FFlowDataPinInputProperty_Bool : public FFlowDataPinOutputProperty_Bool
 {
 	GENERATED_BODY()
@@ -496,7 +371,7 @@ struct FFlowDataPinInputProperty_Bool : public FFlowDataPinOutputProperty_Bool
 	FFlowDataPinInputProperty_Bool(bool InValue = false) : Super(InValue) { }
 };
 
-USTRUCT(BlueprintType, DisplayName = "Int64 - Input Flow Data Pin Property", meta = (Hidden, DefaultForInputFlowPin, FlowPinType = "Int"))
+USTRUCT(BlueprintType, DisplayName = "[DEPRECATED] Int64 - Input Flow Data Pin Property", meta = (DefaultForInputFlowPin, FlowPinType = "Int64", Deprecated, DeprecationMessage = "Use FFlowDataPinValue* instead"))
 struct FFlowDataPinInputProperty_Int64 : public FFlowDataPinOutputProperty_Int64
 {
 	GENERATED_BODY()
@@ -504,7 +379,7 @@ struct FFlowDataPinInputProperty_Int64 : public FFlowDataPinOutputProperty_Int64
 	FFlowDataPinInputProperty_Int64(int64 InValue = 0) : Super(InValue) { }
 };
 
-USTRUCT(BlueprintType, DisplayName = "Int - Input Flow Data Pin Property", meta = (Hidden, DefaultForInputFlowPin, FlowPinType = "Int"))
+USTRUCT(BlueprintType, DisplayName = "[DEPRECATED] Int - Input Flow Data Pin Property", meta = (DefaultForInputFlowPin, FlowPinType = "Int", Deprecated, DeprecationMessage = "Use FFlowDataPinValue* instead"))
 struct FFlowDataPinInputProperty_Int32 : public FFlowDataPinOutputProperty_Int32
 {
 	GENERATED_BODY()
@@ -512,7 +387,7 @@ struct FFlowDataPinInputProperty_Int32 : public FFlowDataPinOutputProperty_Int32
 	FFlowDataPinInputProperty_Int32(int32 InValue = 0) : Super(InValue) { }
 };
 
-USTRUCT(BlueprintType, DisplayName = "Double (float64) - Input Flow Data Pin Property", meta = (Hidden, DefaultForInputFlowPin, FlowPinType = "Float"))
+USTRUCT(BlueprintType, DisplayName = "[DEPRECATED] Double (float64) - Input Flow Data Pin Property", meta = (DefaultForInputFlowPin, FlowPinType = "Double", Deprecated, DeprecationMessage = "Use FFlowDataPinValue* instead"))
 struct FFlowDataPinInputProperty_Double : public FFlowDataPinOutputProperty_Double
 {
 	GENERATED_BODY()
@@ -520,7 +395,7 @@ struct FFlowDataPinInputProperty_Double : public FFlowDataPinOutputProperty_Doub
 	FFlowDataPinInputProperty_Double(double InValue = 0.0) : Super(InValue) { }
 };
 
-USTRUCT(BlueprintType, DisplayName = "Float - Input Flow Data Pin Property", meta = (Hidden, DefaultForInputFlowPin, FlowPinType = "Float"))
+USTRUCT(BlueprintType, DisplayName = "[DEPRECATED] Float - Input Flow Data Pin Property", meta = (DefaultForInputFlowPin, FlowPinType = "Float", Deprecated, DeprecationMessage = "Use FFlowDataPinValue* instead"))
 struct FFlowDataPinInputProperty_Float : public FFlowDataPinOutputProperty_Float
 {
 	GENERATED_BODY()
@@ -528,7 +403,7 @@ struct FFlowDataPinInputProperty_Float : public FFlowDataPinOutputProperty_Float
 	FFlowDataPinInputProperty_Float(float InValue = 0.0f) : Super(InValue) { }
 };
 
-USTRUCT(BlueprintType, DisplayName = "Name - Input Flow Data Pin Property", meta = (Hidden, DefaultForInputFlowPin, FlowPinType = "Name"))
+USTRUCT(BlueprintType, DisplayName = "[DEPRECATED] Name - Input Flow Data Pin Property", meta = (DefaultForInputFlowPin, FlowPinType = "Name", Deprecated, DeprecationMessage = "Use FFlowDataPinValue* instead"))
 struct FFlowDataPinInputProperty_Name : public FFlowDataPinOutputProperty_Name
 {
 	GENERATED_BODY()
@@ -537,7 +412,7 @@ struct FFlowDataPinInputProperty_Name : public FFlowDataPinOutputProperty_Name
 	FFlowDataPinInputProperty_Name(const FName& InValue) : Super(InValue) { }
 };
 
-USTRUCT(BlueprintType, DisplayName = "String - Input Flow Data Pin Property", meta = (Hidden, DefaultForInputFlowPin, FlowPinType = "String"))
+USTRUCT(BlueprintType, DisplayName = "String - Input Flow Data Pin Property", meta = (DefaultForInputFlowPin, FlowPinType = "String", Deprecated, DeprecationMessage = "Use FFlowDataPinValue* instead"))
 struct FFlowDataPinInputProperty_String : public FFlowDataPinOutputProperty_String
 {
 	GENERATED_BODY()
@@ -546,7 +421,7 @@ struct FFlowDataPinInputProperty_String : public FFlowDataPinOutputProperty_Stri
 	FFlowDataPinInputProperty_String(const FString& InValue) : Super(InValue) { }
 };
 
-USTRUCT(BlueprintType, DisplayName = "Text - Input Flow Data Pin Property", meta = (Hidden, DefaultForInputFlowPin, FlowPinType = "Text"))
+USTRUCT(BlueprintType, DisplayName = "[DEPRECATED] Text - Input Flow Data Pin Property", meta = (DefaultForInputFlowPin, FlowPinType = "Text", Deprecated, DeprecationMessage = "Use FFlowDataPinValue* instead"))
 struct FFlowDataPinInputProperty_Text : public FFlowDataPinOutputProperty_Text
 {
 	GENERATED_BODY()
@@ -555,7 +430,7 @@ struct FFlowDataPinInputProperty_Text : public FFlowDataPinOutputProperty_Text
 	FFlowDataPinInputProperty_Text(const FText& InValue) : Super(InValue) { }
 };
 
-USTRUCT(BlueprintType, DisplayName = "Enum - Input Flow Data Pin Property", meta = (Hidden, DefaultForInputFlowPin, FlowPinType = "Enum"))
+USTRUCT(BlueprintType, DisplayName = "[DEPRECATED] Enum - Input Flow Data Pin Property", meta = (DefaultForInputFlowPin, FlowPinType = "Enum", Deprecated, DeprecationMessage = "Use FFlowDataPinValue* instead"))
 struct FFlowDataPinInputProperty_Enum : public FFlowDataPinOutputProperty_Enum
 {
 	GENERATED_BODY()
@@ -564,7 +439,7 @@ struct FFlowDataPinInputProperty_Enum : public FFlowDataPinOutputProperty_Enum
 	FFlowDataPinInputProperty_Enum(const FName& InValue, UEnum* InEnumClass) : Super(InValue, InEnumClass) { }
 };
 
-USTRUCT(BlueprintType, DisplayName = "Vector - Input Flow Data Pin Property", meta = (Hidden, DefaultForInputFlowPin, FlowPinType = "Vector"))
+USTRUCT(BlueprintType, DisplayName = "[DEPRECATED] Vector - Input Flow Data Pin Property", meta = (DefaultForInputFlowPin, FlowPinType = "Vector", Deprecated, DeprecationMessage = "Use FFlowDataPinValue* instead"))
 struct FFlowDataPinInputProperty_Vector : public FFlowDataPinOutputProperty_Vector
 {
 	GENERATED_BODY()
@@ -573,7 +448,7 @@ struct FFlowDataPinInputProperty_Vector : public FFlowDataPinOutputProperty_Vect
 	FFlowDataPinInputProperty_Vector(const FVector& InValue) : Super(InValue) { }
 };
 
-USTRUCT(BlueprintType, DisplayName = "Rotator - Input Flow Data Pin Property", meta = (Hidden, DefaultForInputFlowPin, FlowPinType = "Rotator"))
+USTRUCT(BlueprintType, DisplayName = "[DEPRECATED] Rotator - Input Flow Data Pin Property", meta = (DefaultForInputFlowPin, FlowPinType = "Rotator", Deprecated, DeprecationMessage = "Use FFlowDataPinValue* instead"))
 struct FFlowDataPinInputProperty_Rotator : public FFlowDataPinOutputProperty_Rotator
 {
 	GENERATED_BODY()
@@ -582,7 +457,7 @@ struct FFlowDataPinInputProperty_Rotator : public FFlowDataPinOutputProperty_Rot
 	FFlowDataPinInputProperty_Rotator(const FRotator& InValue) : Super(InValue) { }
 };
 
-USTRUCT(BlueprintType, DisplayName = "Transform - Input Flow Data Pin Property", meta = (Hidden, DefaultForInputFlowPin, FlowPinType = "Transform"))
+USTRUCT(BlueprintType, DisplayName = "[DEPRECATED] Transform - Input Flow Data Pin Property", meta = (DefaultForInputFlowPin, FlowPinType = "Transform", Deprecated, DeprecationMessage = "Use FFlowDataPinValue* instead"))
 struct FFlowDataPinInputProperty_Transform : public FFlowDataPinOutputProperty_Transform
 {
 	GENERATED_BODY()
@@ -591,7 +466,7 @@ struct FFlowDataPinInputProperty_Transform : public FFlowDataPinOutputProperty_T
 	FFlowDataPinInputProperty_Transform(const FTransform& InValue) : Super(InValue) { }
 };
 
-USTRUCT(BlueprintType, DisplayName = "GameplayTag - Input Flow Data Pin Property", meta = (Hidden, DefaultForInputFlowPin, FlowPinType = "GameplayTag"))
+USTRUCT(BlueprintType, DisplayName = "[DEPRECATED] GameplayTag - Input Flow Data Pin Property", meta = (DefaultForInputFlowPin, FlowPinType = "GameplayTag", Deprecated, DeprecationMessage = "Use FFlowDataPinValue* instead"))
 struct FFlowDataPinInputProperty_GameplayTag : public FFlowDataPinOutputProperty_GameplayTag
 {
 	GENERATED_BODY()
@@ -600,7 +475,7 @@ struct FFlowDataPinInputProperty_GameplayTag : public FFlowDataPinOutputProperty
 	FFlowDataPinInputProperty_GameplayTag(const FGameplayTag& InValue) : Super(InValue) { }
 };
 
-USTRUCT(BlueprintType, DisplayName = "GameplayTagContainer - Input Flow DataPin Property", meta = (Hidden, DefaultForInputFlowPin, FlowPinType = "GameplayTagContainer"))
+USTRUCT(BlueprintType, DisplayName = "[DEPRECATED] GameplayTagContainer - Input Flow DataPin Property", meta = (DefaultForInputFlowPin, FlowPinType = "GameplayTagContainer", Deprecated, DeprecationMessage = "Use FFlowDataPinValue* instead"))
 struct FFlowDataPinInputProperty_GameplayTagContainer : public FFlowDataPinOutputProperty_GameplayTagContainer
 {
 	GENERATED_BODY()
@@ -609,7 +484,7 @@ struct FFlowDataPinInputProperty_GameplayTagContainer : public FFlowDataPinOutpu
 	FFlowDataPinInputProperty_GameplayTagContainer(const FGameplayTagContainer& InValue) : Super(InValue) { }
 };
 
-USTRUCT(BlueprintType, DisplayName = "InstancedStruct - Input Flow DataPin Property", meta = (Hidden, DefaultForInputFlowPin, FlowPinType = "InstancedStruct"))
+USTRUCT(BlueprintType, DisplayName = "[DEPRECATED] InstancedStruct - Input Flow DataPin Property", meta = (DefaultForInputFlowPin, FlowPinType = "InstancedStruct", Deprecated, DeprecationMessage = "Use FFlowDataPinValue* instead"))
 struct FFlowDataPinInputProperty_InstancedStruct : public FFlowDataPinOutputProperty_InstancedStruct
 {
 	GENERATED_BODY()
@@ -618,7 +493,7 @@ struct FFlowDataPinInputProperty_InstancedStruct : public FFlowDataPinOutputProp
 	FFlowDataPinInputProperty_InstancedStruct(const FInstancedStruct& InValue) : Super(InValue) { }
 };
 
-USTRUCT(BlueprintType, DisplayName = "Object - Input Flow DataPin Property", meta = (Hidden, DefaultForInputFlowPin, FlowPinType = "Object"))
+USTRUCT(BlueprintType, DisplayName = "[DEPRECATED] Object - Input Flow DataPin Property", meta = (DefaultForInputFlowPin, FlowPinType = "Object", Deprecated, DeprecationMessage = "Use FFlowDataPinValue* instead"))
 struct FFlowDataPinInputProperty_Object : public FFlowDataPinOutputProperty_Object
 {
 	GENERATED_BODY()
@@ -627,7 +502,7 @@ struct FFlowDataPinInputProperty_Object : public FFlowDataPinOutputProperty_Obje
 	FFlowDataPinInputProperty_Object(UObject* InValue, UClass* InClassFilter) : Super(InValue, InClassFilter) { }
 };
 
-USTRUCT(BlueprintType, DisplayName = "Class - Input Flow DataPin Property", meta = (Hidden, DefaultForInputFlowPin, FlowPinType = "Class"))
+USTRUCT(BlueprintType, DisplayName = "[DEPRECATED] Class - Input Flow DataPin Property", meta = (DefaultForInputFlowPin, FlowPinType = "Class", Deprecated, DeprecationMessage = "Use FFlowDataPinValue* instead"))
 struct FFlowDataPinInputProperty_Class : public FFlowDataPinOutputProperty_Class
 {
 	GENERATED_BODY()
@@ -635,4 +510,3 @@ struct FFlowDataPinInputProperty_Class : public FFlowDataPinOutputProperty_Class
 	FFlowDataPinInputProperty_Class() : Super() { }
 	FFlowDataPinInputProperty_Class(const FSoftClassPath& InValue, UClass* InClassFilter) : Super(InValue, InClassFilter) { }
 };
-

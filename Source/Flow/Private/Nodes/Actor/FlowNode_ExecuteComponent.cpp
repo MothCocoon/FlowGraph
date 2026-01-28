@@ -22,6 +22,9 @@ UFlowNode_ExecuteComponent::UFlowNode_ExecuteComponent()
 #if WITH_EDITOR
 	Category = TEXT("Actor");
 #endif
+
+	InputPins.Reset();
+	OutputPins.Reset();
 }
 
 void UFlowNode_ExecuteComponent::InitializeInstance()
@@ -122,7 +125,7 @@ void UFlowNode_ExecuteComponent::OnActivate()
 		}
 		else
 		{
-			UE_LOG(LogFlow, Error, TEXT("Expected a valid UActorComponent that implemented the IFlowExternalExecutableInterface"));
+			UE_LOG(LogFlow, Error, TEXT("Expected a valid UActorComponent that implemented the IFlowExternalExecutableInterface (%s)"), *ResolvedComp->GetClass()->GetName());
 		}
 
 		if (IFlowCoreExecutableInterface* ComponentAsCoreExecutable = Cast<IFlowCoreExecutableInterface>(ResolvedComp))
@@ -135,7 +138,7 @@ void UFlowNode_ExecuteComponent::OnActivate()
 		}
 		else
 		{
-			UE_LOG(LogFlow, Error, TEXT("Expected a valid UActorComponent that implemented the IFlowCoreExecutableInterface"));
+			UE_LOG(LogFlow, Error, TEXT("Expected a valid UActorComponent that implemented the IFlowCoreExecutableInterface (%s)"), *ResolvedComp->GetClass()->GetName());
 		}
 	}
 }
@@ -192,6 +195,101 @@ void UFlowNode_ExecuteComponent::ExecuteInput(const FName& PinName)
 	else
 	{
 		LogError(FString::Printf(TEXT("Could not ExecuteInput %s, because the component was missing or could not be resolved."), *PinName.ToString()));
+	}
+}
+
+#if WITH_EDITOR
+TArray<FFlowPin> UFlowNode_ExecuteComponent::GetContextInputs() const
+{
+	TArray<FFlowPin> ContextInputs;
+	const UActorComponent* ResolvedComp = GetResolvedComponent();
+	
+	if (!IsValid(ResolvedComp))
+	{
+		// If we don't have a Resolved Component object yet, try to find the expected component object. For
+		// injected components this will return the CDO 
+		ResolvedComp = TryGetExpectedComponent();
+	}
+
+	// NOTE: we have to call GetClass on the Resolved Component; not StaticClass(). This makes it so we can handle classes that only implement the
+	// interface in Blueprints. 
+	if (ResolvedComp && ResolvedComp->GetClass()->ImplementsInterface(UFlowContextPinSupplierInterface::StaticClass()))
+	{
+		if (const IFlowContextPinSupplierInterface* CompAsStaticInterface = Cast<IFlowContextPinSupplierInterface>(ResolvedComp))
+		{
+			// The native (static) class implements the interface, so we call it directly (default implementation provided by the interface will call the K2 BP version of it).
+			// Ee assume that the implementor of the interface is responsible for invoking Execute_K2_GetContextInputs in their overrides of GetContextInputs()
+			ContextInputs = CompAsStaticInterface->GetContextInputs();
+		}
+		else
+		{
+			// Only the BP class implements the interface, so we call it here. 
+			ContextInputs = IFlowContextPinSupplierInterface::Execute_K2_GetContextInputs(ResolvedComp);			
+		}
+	}
+
+	if (ContextInputs.IsEmpty())
+	{
+		// Add the default input if none are desired by the component
+		ContextInputs.Add(UFlowNode::DefaultInputPin);
+	}
+
+	ContextInputs.Append(Super::GetContextInputs());
+
+	return ContextInputs;
+}
+
+TArray<FFlowPin> UFlowNode_ExecuteComponent::GetContextOutputs() const
+{
+	TArray<FFlowPin> ContextOutputs;
+	const UActorComponent* ResolvedComp = GetResolvedComponent();
+
+	if (!IsValid(ResolvedComp))
+	{
+		// If we don't have a Resolved Component object yet, try to find the expected component object. For
+		// injected components this will return the CDO 
+		ResolvedComp = TryGetExpectedComponent();
+	}
+
+	// NOTE: we have to call GetClass on the Resolved Component; not StaticClass(). This makes it so we can handle classes that only implement the
+	// interface in Blueprints. 
+	if (ResolvedComp && ResolvedComp->GetClass()->ImplementsInterface(UFlowContextPinSupplierInterface::StaticClass()))
+	{
+		if (const IFlowContextPinSupplierInterface* CompAsStaticInterface = Cast<IFlowContextPinSupplierInterface>(ResolvedComp))
+		{
+			// The native (static) class implements the interface, so we call it directly (default implementation provided by the interface will call the K2 BP version of it.
+			// we assume that the implementor of the interface is responsible for invoking K2_GetContextOutputs in their overrides of GetContextOutputs()
+			ContextOutputs = CompAsStaticInterface->GetContextOutputs();
+		}
+		else
+		{
+			// Only the BP class implements the interface, so we call it here. 
+			ContextOutputs = IFlowContextPinSupplierInterface::Execute_K2_GetContextOutputs(ResolvedComp);
+		}
+	}
+
+	if (ContextOutputs.IsEmpty())
+	{
+		// Add the default output if none are desired by the component
+		ContextOutputs.Add(UFlowNode::DefaultOutputPin);
+	}
+
+	ContextOutputs.Append(Super::GetContextOutputs());
+
+	return ContextOutputs;
+}
+
+#endif // WITH_EDITOR
+
+void UFlowNode_ExecuteComponent::GatherPotentialPropertyOwnersForDataPins(TArray<const UObject*>& InOutOwners) const
+{
+	Super::GatherPotentialPropertyOwnersForDataPins(InOutOwners);
+
+	// Can also source properties from the resolved component (runtime) or expected component (in-editor)
+	const UActorComponent* ResolvedComp = GetResolvedOrExpectedComponent();
+	if (IsValid(ResolvedComp))
+	{
+		InOutOwners.AddUnique(ResolvedComp);
 	}
 }
 
@@ -282,6 +380,25 @@ bool UFlowNode_ExecuteComponent::TryInjectComponent()
 	return true;
 }
 
+const UActorComponent* UFlowNode_ExecuteComponent::GetResolvedOrExpectedComponent() const
+{
+	const UActorComponent* ResolvedComp = ComponentRef.GetResolvedComponent();
+	if (IsValid(ResolvedComp))
+	{
+		return ResolvedComp;
+	}
+
+#if WITH_EDITOR
+	const UActorComponent* ExpectedComp = TryGetExpectedComponent();
+	if (IsValid(ExpectedComp))
+	{
+		return ExpectedComp;
+	}
+#endif
+
+	return nullptr;
+}
+
 UActorComponent* UFlowNode_ExecuteComponent::TryResolveComponent()
 {
 	UActorComponent* ResolvedComp = ComponentRef.GetResolvedComponent();
@@ -304,6 +421,19 @@ UActorComponent* UFlowNode_ExecuteComponent::TryResolveComponent()
 	ResolvedComp = ComponentRef.TryResolveComponent(*ActorOwner, bAllowWarnIfFailed);
 
 	return ResolvedComp;
+}
+
+UActorComponent* UFlowNode_ExecuteComponent::GetResolvedComponent() const
+{
+	// This version of the function assumes the component has already been resolved previously.
+	// (using TryResolveComponent)
+	UActorComponent* ResolvedComp = ComponentRef.GetResolvedComponent();
+	if (IsValid(ResolvedComp))
+	{
+		return ResolvedComp;
+	}
+
+	return nullptr;
 }
 
 #if WITH_EDITOR
@@ -381,35 +511,24 @@ void UFlowNode_ExecuteComponent::RefreshComponentSource()
 
 void UFlowNode_ExecuteComponent::RefreshPins()
 {
-	bool bChangedPins = false;
-
-	const UActorComponent* ExpectedComponent = TryGetExpectedComponent();
-	if (const IFlowContextPinSupplierInterface* ContextPinSupplierInterface = Cast<IFlowContextPinSupplierInterface>(ExpectedComponent))
-	{
-		const TArray<FFlowPin> NewInputPins = ContextPinSupplierInterface->GetContextInputs();
-		bChangedPins = RebuildPinArray(NewInputPins, InputPins, DefaultInputPin) || bChangedPins;
-
-		const TArray<FFlowPin> NewOutputPins = ContextPinSupplierInterface->GetContextOutputs();
-		bChangedPins = RebuildPinArray(NewOutputPins, OutputPins, DefaultOutputPin) || bChangedPins;
-	}
-	else
-	{
-		bChangedPins = RebuildPinArray(TArray<FName>(&DefaultInputPin.PinName, 1), InputPins, DefaultInputPin) || bChangedPins;
-		bChangedPins = RebuildPinArray(TArray<FName>(&DefaultOutputPin.PinName, 1), OutputPins, DefaultOutputPin) || bChangedPins;
-	}
-
-	if (bChangedPins)
-	{
-		OnReconstructionRequested.ExecuteIfBound();
-	}
+	OnReconstructionRequested.ExecuteIfBound();
 }
 
 EDataValidationResult UFlowNode_ExecuteComponent::ValidateNode()
 {
+	const EDataValidationResult SuperResult = Super::ValidateNode();
+
+	EDataValidationResult FinalResult = CombineDataValidationResults(SuperResult, EDataValidationResult::Valid);
+			
+	if (IsValid(ComponentTemplate) || IsValid(ComponentClass))
+	{
+		return FinalResult;
+	}
+	
 	const bool bHasComponent = ComponentRef.IsConfigured();
 	if (!bHasComponent)
 	{
-		ValidationLog.Error<UFlowNode>(TEXT("ExectuteComponent requires a valid Compoennt reference"), this);
+		ValidationLog.Error<UFlowNode>(TEXT("ExecuteComponent requires a valid Compoennt reference"), this);
 
 		return EDataValidationResult::Invalid;
 	}
@@ -447,8 +566,8 @@ EDataValidationResult UFlowNode_ExecuteComponent::ValidateNode()
 			return EDataValidationResult::Invalid;
 		}
 	}
-
-	return EDataValidationResult::Valid;
+		
+	return FinalResult;
 }
 
 FString UFlowNode_ExecuteComponent::GetStatusString() const
@@ -472,7 +591,7 @@ TSubclassOf<AActor> UFlowNode_ExecuteComponent::TryGetExpectedActorOwnerClass() 
 	return nullptr;
 }
 
-FText UFlowNode_ExecuteComponent::GetNodeTitle() const
+FText UFlowNode_ExecuteComponent::K2_GetNodeTitle_Implementation() const
 {
 	if (UFlowSettings::Get()->bUseAdaptiveNodeTitles)
 	{
@@ -524,7 +643,7 @@ FText UFlowNode_ExecuteComponent::GetNodeTitle() const
 		}
 	}
 
-	return Super::GetNodeTitle();
+	return Super::K2_GetNodeTitle_Implementation();
 }
 
 #endif // WITH_EDITOR

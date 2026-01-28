@@ -1,0 +1,27 @@
+// Copyright https://github.com/MothCocoon/FlowGraph/graphs/contributors
+
+#pragma once
+
+#include "FlowDataPinValueCustomization.h"
+#include "Types/FlowDataPinValuesStandard.h"
+
+// Specialized customizations
+#include "DetailCustomizations/FlowDataPinValueCustomization_Enum.h"
+#include "DetailCustomizations/FlowDataPinValueCustomization_Class.h"
+#include "DetailCustomizations/FlowDataPinValueCustomization_Object.h"
+
+// Scalar / simple using aliases
+using FFlowDataPinValueCustomization_Bool = TFlowDataPinValueCustomization<FFlowDataPinValue_Bool>;
+using FFlowDataPinValueCustomization_Int = TFlowDataPinValueCustomization<FFlowDataPinValue_Int>;
+using FFlowDataPinValueCustomization_Int64 = TFlowDataPinValueCustomization<FFlowDataPinValue_Int64>;
+using FFlowDataPinValueCustomization_Float = TFlowDataPinValueCustomization<FFlowDataPinValue_Float>;
+using FFlowDataPinValueCustomization_Double = TFlowDataPinValueCustomization<FFlowDataPinValue_Double>;
+using FFlowDataPinValueCustomization_Name = TFlowDataPinValueCustomization<FFlowDataPinValue_Name>;
+using FFlowDataPinValueCustomization_String = TFlowDataPinValueCustomization<FFlowDataPinValue_String>;
+using FFlowDataPinValueCustomization_Text = TFlowDataPinValueCustomization<FFlowDataPinValue_Text>;
+using FFlowDataPinValueCustomization_Vector = TFlowDataPinValueCustomization<FFlowDataPinValue_Vector>;
+using FFlowDataPinValueCustomization_Rotator = TFlowDataPinValueCustomization<FFlowDataPinValue_Rotator>;
+using FFlowDataPinValueCustomization_Transform = TFlowDataPinValueCustomization<FFlowDataPinValue_Transform>;
+using FFlowDataPinValueCustomization_GameplayTag = TFlowDataPinValueCustomization<FFlowDataPinValue_GameplayTag>;
+using FFlowDataPinValueCustomization_GameplayTagContainer = TFlowDataPinValueCustomization<FFlowDataPinValue_GameplayTagContainer>;
+using FFlowDataPinValueCustomization_InstancedStruct = TFlowDataPinValueCustomization<FFlowDataPinValue_InstancedStruct>;

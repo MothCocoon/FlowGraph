@@ -24,3 +24,8 @@ bool UFlowGraphNode_Reroute::ShouldDrawNodeAsControlPointOnly(int32& OutInputPin
 	OutOutputPinIndex = 1;
 	return true;
 }
+
+bool UFlowGraphNode_Reroute::CanPlaceBreakpoints() const
+{
+	return false;
+}

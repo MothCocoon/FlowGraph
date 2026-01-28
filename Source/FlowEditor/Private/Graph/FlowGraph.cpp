@@ -15,27 +15,12 @@
 
 #include UE_INLINE_GENERATED_CPP_BY_NAME(FlowGraph)
 
-void FFlowGraphInterface::OnInputTriggered(UEdGraphNode* GraphNode, const int32 Index) const
-{
-	CastChecked<UFlowGraphNode>(GraphNode)->OnInputTriggered(Index);
-}
-
-void FFlowGraphInterface::OnOutputTriggered(UEdGraphNode* GraphNode, const int32 Index) const
-{
-	CastChecked<UFlowGraphNode>(GraphNode)->OnOutputTriggered(Index);
-}
-
 UFlowGraph::UFlowGraph(const FObjectInitializer& ObjectInitializer)
 	: Super(ObjectInitializer)
 	, GraphVersion(0)
 {
 	bLockUpdates = false;
 	bIsLoadingGraph = false;
-
-	if (!UFlowAsset::GetFlowGraphInterface().IsValid())
-	{
-		UFlowAsset::SetFlowGraphInterface(MakeShared<FFlowGraphInterface>());
-	}
 }
 
 void UFlowGraph::CreateGraph(UFlowAsset* InFlowAsset)
@@ -93,15 +78,8 @@ void UFlowGraph::RefreshGraph()
 			}
 		}
 
+		// This function will (eventually) result in all graph nodes being reconstructed
 		UnlockUpdates();
-	}
-
-	// refresh nodes
-	TArray<UFlowGraphNode*> FlowGraphNodes;
-	GetNodesOfClass<UFlowGraphNode>(FlowGraphNodes);
-	for (UFlowGraphNode* GraphNode : FlowGraphNodes)
-	{
-		GraphNode->OnGraphRefresh();
 	}
 }
 
@@ -198,6 +176,8 @@ void UFlowGraph::OnLoaded()
 
 	bIsLoadingGraph = true;
 
+	UpdateVersion();
+
 	// Setup all the Nodes in the graph for editing
 	for (UEdGraphNode* Node : Nodes)
 	{
@@ -222,7 +202,11 @@ void UFlowGraph::OnLoaded()
 
 void UFlowGraph::OnSave()
 {
+	bIsSavingGraph = true;
+	
 	UpdateAsset();
+
+	bIsSavingGraph = false;
 }
 
 void UFlowGraph::Initialize()
@@ -232,20 +216,52 @@ void UFlowGraph::Initialize()
 
 void UFlowGraph::UpdateVersion()
 {
-	if (GraphVersion == 1)
+	if (GraphVersion == CurrentGraphVersion)
 	{
 		return;
 	}
 
+	const int32 PrevGraphVersion = GraphVersion;
 	MarkVersion();
 	Modify();
 
 	// Insert any Version updating code here
+
+	if (PrevGraphVersion < 2)
+	{
+		UpgradeAllFlowNodePins();
+	}
+}
+
+void UFlowGraph::UpgradeAllFlowNodePins()
+{
+	if (UFlowAsset* FlowAsset = GetFlowAsset())
+	{
+		for (TPair<FGuid, TObjectPtr<UFlowNode>>& Node : FlowAsset->Nodes)
+		{
+			UFlowNode* FlowNode = Node.Value;
+			if (IsValid(FlowNode))
+			{
+				FlowNode->FixupDataPinTypes();
+
+				FlowAsset->TryUpdateManagedFlowPinsForNode(*FlowNode);
+			}
+		}
+	}
+
+	for (UEdGraphNode* Node : Nodes)
+	{
+		if (UFlowGraphNode* FlowGraphNode = Cast<UFlowGraphNode>(Node))
+		{
+			FlowGraphNode->MarkNeedsFullReconstruction();
+			FlowGraphNode->ReconstructNode();
+		}
+	}
 }
 
 void UFlowGraph::MarkVersion()
 {
-	GraphVersion = 1;
+	GraphVersion = CurrentGraphVersion;
 }
 
 void UFlowGraph::UpdateClassData()

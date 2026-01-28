@@ -13,4 +13,8 @@ class FLOWEDITOR_API UFlowGraphNode_SubGraph : public UFlowGraphNode
 	// UEdGraphNode
 	virtual TSharedPtr<SGraphNode> CreateVisualWidget() override;
 	// --
+
+	// UFlowGraphNode
+	virtual void OnNodeDoubleClickedInPIE() const override;
+	// --
 };

@@ -43,7 +43,7 @@ class FLOW_API UFlowSettings : public UDeveloperSettings
 	// by incorporating data that would otherwise go in the Description
 	UPROPERTY(EditAnywhere, config, Category = "Nodes")
 	bool bUseAdaptiveNodeTitles;
-
+	
 #if WITH_EDITOR
 	DECLARE_DELEGATE(FFlowSettingsEvent);
 	FFlowSettingsEvent OnAdaptiveNodeTitlesChanged;

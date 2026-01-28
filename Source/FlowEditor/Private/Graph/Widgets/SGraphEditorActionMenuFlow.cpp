@@ -1,8 +1,6 @@
 // Copyright https://github.com/MothCocoon/FlowGraph/graphs/contributors
 
 #include "Graph/Widgets/SGraphEditorActionMenuFlow.h"
-
-#include "Graph/Nodes/FlowGraphNode.h"
 #include "Graph/FlowGraphSchema.h"
 
 #include "EdGraph/EdGraph.h"
@@ -11,6 +9,7 @@
 #include "HAL/PlatformCrt.h"
 #include "Layout/Margin.h"
 #include "Misc/Attribute.h"
+#include "Runtime/Launch/Resources/Version.h"
 #include "SGraphActionMenu.h"
 #include "Styling/AppStyle.h"
 #include "Templates/Casts.h"
@@ -22,7 +21,7 @@ SGraphEditorActionMenuFlow::~SGraphEditorActionMenuFlow()
 	OnClosedCallback.ExecuteIfBound();
 }
 
-void SGraphEditorActionMenuFlow::Construct( const FArguments& InArgs )
+void SGraphEditorActionMenuFlow::Construct(const FArguments& InArgs)
 {
 	this->GraphObj = InArgs._GraphObj;
 	this->GraphNode = InArgs._GraphNode;
@@ -33,9 +32,9 @@ void SGraphEditorActionMenuFlow::Construct( const FArguments& InArgs )
 	this->SubNodeFlags = InArgs._SubNodeFlags;
 
 	// Build the widget layout
-	SBorder::Construct( SBorder::FArguments()
-		.BorderImage( FAppStyle::GetBrush("Menu.Background") )
-		.Padding(5.f)
+	SBorder::Construct(SBorder::FArguments()
+        .BorderImage(FAppStyle::GetBrush("Menu.Background"))
+        .Padding(5.f)
 		[
 			// Achieving fixed width by nesting items within a fixed width box.
 			SNew(SBox)
@@ -80,21 +79,25 @@ TSharedRef<SEditableTextBox> SGraphEditorActionMenuFlow::GetFilterTextBox()
 	return GraphActionMenu->GetFilterTextBox();
 }
 
-void SGraphEditorActionMenuFlow::OnActionSelected( const TArray< TSharedPtr<FEdGraphSchemaAction> >& SelectedAction, ESelectInfo::Type InSelectionType )
+void SGraphEditorActionMenuFlow::OnActionSelected(const TArray<TSharedPtr<FEdGraphSchemaAction>>& SelectedAction, ESelectInfo::Type InSelectionType)
 {
-	if (InSelectionType == ESelectInfo::OnMouseClick  || InSelectionType == ESelectInfo::OnKeyPress || SelectedAction.Num() == 0)
+	if (InSelectionType == ESelectInfo::OnMouseClick || InSelectionType == ESelectInfo::OnKeyPress || SelectedAction.Num() == 0)
 	{
 		bool bDoDismissMenus = false;
 
 		if (GraphObj)
 		{
-			for ( int32 ActionIndex = 0; ActionIndex < SelectedAction.Num(); ActionIndex++ )
+			for (int32 ActionIndex = 0; ActionIndex < SelectedAction.Num(); ActionIndex++)
 			{
 				TSharedPtr<FEdGraphSchemaAction> CurrentAction = SelectedAction[ActionIndex];
 
-				if ( CurrentAction.IsValid() )
+				if (CurrentAction.IsValid())
 				{
+#if ENGINE_MAJOR_VERSION == 5 && ENGINE_MINOR_VERSION < 6
+					CurrentAction->PerformAction(GraphObj, DraggedFromPins, FVector2D(NewNodePosition));
+#else
 					CurrentAction->PerformAction(GraphObj, DraggedFromPins, NewNodePosition);
+#endif
 					bDoDismissMenus = true;
 				}
 			}
