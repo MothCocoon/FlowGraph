@@ -1237,7 +1237,7 @@ FFlowAssetSaveData UFlowAsset::SaveInstance(TArray<FFlowAssetSaveData>& SavedFlo
 	GetNodesInExecutionOrder<UFlowNode>(GetDefaultEntryNode(), NodesInExecutionOrder);
 	for (UFlowNode* Node : NodesInExecutionOrder)
 	{
-		if (Node && Node->ActivationState == EFlowNodeState::Active)
+		if (Node && Node->ShouldSave())
 		{
 			// iterate SubGraphs
 			if (UFlowNode_SubGraph* SubGraphNode = Cast<UFlowNode_SubGraph>(Node))

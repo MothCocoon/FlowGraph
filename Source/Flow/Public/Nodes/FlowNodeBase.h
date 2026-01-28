@@ -483,7 +483,7 @@ protected:
 
 #if WITH_EDITOR
 	virtual EDataValidationResult ValidateNode();
-#endif	
+#endif
 
 	// Optional validation override for Blueprints
 	UFUNCTION(BlueprintImplementableEvent, Category = "FlowNode|Validation", meta = (DisplayName = "Validate Node", DevelopmentOnly))

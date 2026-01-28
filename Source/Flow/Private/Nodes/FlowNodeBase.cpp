@@ -874,7 +874,7 @@ void UFlowNodeBase::LogError(FString Message, const EFlowOnScreenMessageType OnS
 				}
 			}
 		}
-		else
+		else if (OnScreenMessageType == EFlowOnScreenMessageType::Temporary)
 		{
 			GEngine->AddOnScreenDebugMessage(-1, 2.0f, FColor::Red, Message);
 		}
@@ -970,7 +970,7 @@ EDataValidationResult UFlowNodeBase::ValidateNode()
 
 	return ValidationResult;
 }
-#endif	
+#endif
 
 bool UFlowNodeBase::TryAddValueToFormatNamedArguments(const FFlowNamedDataPinProperty& NamedDataPinProperty, FFormatNamedArguments& InOutArguments) const
 {
