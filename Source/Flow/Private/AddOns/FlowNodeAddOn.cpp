@@ -17,21 +17,6 @@ UFlowNodeAddOn::UFlowNodeAddOn()
 #endif
 }
 
-#if WITH_EDITOR
-UEdGraphNode* UFlowNodeAddOn::GetGraphNode() const
-{
-	// todo: we might want to cache editor-time pointer to owning Flow Node
-	// it may require more work than just caching it, as pointer needs 
-	// to be updated during editor operations
-	if (const UFlowNode* OwningFlowNode = FindOwningFlowNode())
-	{
-		return OwningFlowNode->GetGraphNode();
-	}
-
-	return nullptr;
-}
-#endif
-
 void UFlowNodeAddOn::InitializeInstance()
 {
 	CacheFlowNode();

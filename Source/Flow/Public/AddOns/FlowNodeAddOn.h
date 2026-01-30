@@ -40,10 +40,6 @@ protected:
 public:
 	// UFlowNodeBase
 
-#if WITH_EDITOR
-	virtual UEdGraphNode* GetGraphNode() const override;
-#endif
-
 	// AddOns may opt in to be eligible for a given parent
 	// - ParentTemplate - the template of the FlowNode or FlowNodeAddOn that is being considered as a potential parent
 	// - AdditionalAddOnsToAssumeAreChildren - other AddOns to assume that are already child AddOns for the purposes of this test.
