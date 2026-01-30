@@ -339,7 +339,7 @@ void SFlowAssetBreadcrumb::OnCrumbClicked(const FFlowBreadcrumb& Item) const
 			ClickedTemplateAsset->SetInspectedInstance(ClickedInstance);
 			if (const TSharedPtr<FFlowAssetEditor> FlowAssetEditor = FFlowGraphUtils::GetFlowAssetEditor(ClickedTemplateAsset))
 			{
-				if (!Item.ChildInstance.IsExplicitlyNull())
+				if (Item.ChildInstance.IsValid())
 				{
 					FlowAssetEditor->JumpToNode(Item.ChildInstance->GetNodeOwningThisAssetInstance()->GetGraphNode());
 				}
