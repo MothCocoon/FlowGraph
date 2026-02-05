@@ -83,6 +83,11 @@ public:
 	{
 	}
 
+	FFlowPin(const FFlowPin& InFlowPin) = default;
+	FFlowPin(FFlowPin&& InFlowPin) = default;
+	FFlowPin& operator =(FFlowPin&& InFlowPin) = default;
+	FFlowPin& operator =(const FFlowPin& InFlowPin) = default;
+
 	explicit FFlowPin(const FName& InPinName)
 		: PinName(InPinName)
 	{
@@ -225,8 +230,6 @@ public:
 
 	const TWeakObjectPtr<UObject>& GetPinSubCategoryObject() const { return PinSubCategoryObject; }
 
-	FORCEINLINE_DEBUGGABLE static bool DeepArePinArraysMatching(const TArray<FFlowPin>& Left, const TArray<FFlowPin>& Right);
-
 	// FFlowPin instance signatures for "trait" functions
 	bool IsExecPin() const;
 	static bool IsExecPinCategory(const FName& PC);
@@ -277,25 +280,6 @@ protected:
 
 	void TrySetStructSubCategoryObjectFromPinType();
 };
-
-// Inline implementations
-bool FFlowPin::DeepArePinArraysMatching(const TArray<FFlowPin>& Left, const TArray<FFlowPin>& Right)
-{
-	if (Left.Num() != Right.Num())
-	{
-		return false;
-	}
-
-	for (int32 Index = 0; Index < Left.Num(); ++Index)
-	{
-		if (!Left[Index].DeepIsEqual(Right[Index]))
-		{
-			return false;
-		}
-	}
-
-	return true;
-}
 
 USTRUCT()
 struct FLOW_API FFlowPinHandle

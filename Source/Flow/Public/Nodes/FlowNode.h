@@ -16,6 +16,22 @@
 
 #include "FlowNode.generated.h"
 
+// Entry in MapDataPinNameToPropertySource for how to source a non-trivial pin mapping in TryGatherPropertyOwnersAndPopulateResult
+USTRUCT()
+struct FFlowPinPropertySource
+{
+	GENERATED_BODY()
+
+	FFlowPinPropertySource() = default;
+	FFlowPinPropertySource(const FName& InPropertyName, int32 InPropertyOwnerIndex)
+		: PropertyName(InPropertyName)
+		, PropertyOwnerIndex(InPropertyOwnerIndex)
+	{ }
+
+	FName PropertyName;
+	int32 PropertyOwnerIndex = INDEX_NONE;
+};
+
 /**
  * A Flow Node is UObject-based node designed to handle entire gameplay feature within single node.
  */
@@ -26,6 +42,7 @@ class FLOW_API UFlowNode : public UFlowNodeBase
 						 , public IVisualLoggerDebugSnapshotInterface
 {
 	GENERATED_UCLASS_BODY()
+
 	friend class SFlowGraphNode;
 	friend class UFlowAsset;
 	friend class UFlowGraphNode;
@@ -223,6 +240,12 @@ public:
 	UPROPERTY(VisibleDefaultsOnly, AdvancedDisplay, Category = "FlowNode", meta = (GetByRef))
 	TArray<FFlowPin> AutoOutputDataPins;
 #endif // WITH_EDITORONLY_DATA	
+
+	// Map for PinName to Property supplier for non-trivial data pin property lookups
+	// (non-trivial means a different pin name from its property source, or a non-zero property owner object index)
+	// see TryGatherPropertyOwnersAndPopulateResult()
+	UPROPERTY()
+	TMap<FName, FFlowPinPropertySource> MapDataPinNameToPropertySource;
 
 #if WITH_EDITOR
 	void SetAutoInputDataPins(const TArray<FFlowPin>& AutoInputPins);
