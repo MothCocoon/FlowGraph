@@ -39,6 +39,12 @@ class FLOW_API UFlowSettings : public UDeveloperSettings
 	UPROPERTY(Config, EditAnywhere, Category = "Flow")
 	bool bLogOnSignalPassthrough;
 
+	// If enabled, defer the Triggered Outputs for a FlowAsset while it is currently processing a TriggeredInput.
+	// This is the new default in Flow, but the old behavior is provided (via false, here)
+	// for backward compatability during the transition.
+	UPROPERTY(Config, EditAnywhere, Category = "Flow")
+	bool bDeferTriggeredOutputsWhileTriggering;
+
 	// Adjust the Titles for FlowNodes to be more expressive than default
 	// by incorporating data that would otherwise go in the Description
 	UPROPERTY(EditAnywhere, config, Category = "Nodes")

@@ -971,6 +971,9 @@ void UFlowAsset::InitializeInstance(const TWeakObjectPtr<UObject> InOwner, UFlow
 
 void UFlowAsset::DeinitializeInstance()
 {
+	// These should have been flushed in FinishFlow()
+	check(DeferredTransitionScopes.IsEmpty());
+
 	if (IsInstanceInitialized())
 	{
 		for (const TPair<FGuid, UFlowNode*>& Node : ObjectPtrDecay(Nodes))
@@ -1037,6 +1040,8 @@ void UFlowAsset::FinishFlow(const EFlowFinishPolicy InFinishPolicy, const bool b
 {
 	FinishPolicy = InFinishPolicy;
 
+	CancelAndWarnForUnflushedDeferredTriggers();
+
 	// end execution of this asset and all of its nodes
 	for (UFlowNode* Node : ActiveNodes)
 	{
@@ -1055,6 +1060,62 @@ void UFlowAsset::FinishFlow(const EFlowFinishPolicy InFinishPolicy, const bool b
 	if (bRemoveInstance)
 	{
 		DeinitializeInstance();
+	}
+}
+
+void UFlowAsset::CancelAndWarnForUnflushedDeferredTriggers()
+{
+	// Aggressively drop any pending deferred triggers — graph is done
+	// In normal execution these should have been flushed via PopDeferredTransitionScope() in TriggerInputDirect
+	// In the debugger they should have been flushed by ResumePIE
+	// Remaining scopes here usually mean:
+	//   - early/abnormal termination (e.g. FinishFlow called from unexpected place)
+	//   - exception/early return before Pop
+	//   - forced deinitialization during active execution (e.g. PIE stop, subsystem cleanup)
+	if (!DeferredTransitionScopes.IsEmpty())
+	{
+		int32 TotalDroppedTriggers = 0;
+
+		for (const TSharedPtr<FFlowDeferredTransitionScope>& ScopePtr : DeferredTransitionScopes)
+		{
+			if (!ScopePtr.IsValid())
+			{
+				continue;
+			}
+
+			const TArray<FFlowDeferredTriggerInput>& Triggers = ScopePtr->GetDeferredTriggers();
+
+			if (TotalDroppedTriggers == 0 && !Triggers.IsEmpty())
+			{
+				UE_LOG(LogFlow, Warning, TEXT("FlowAsset '%s' is finishing with %d lingering deferred transition scope(s) — dropping them. "
+					"This is usually unexpected and may indicate a bug or abnormal termination."),
+					*GetName(), DeferredTransitionScopes.Num());
+			}
+
+			TotalDroppedTriggers += Triggers.Num();
+
+			for (const FFlowDeferredTriggerInput& Trigger : Triggers)
+			{
+				const UFlowNode* ToNode = GetNode(Trigger.NodeGuid);
+				const UFlowNode* FromNode = Trigger.FromPin.NodeGuid.IsValid() ? GetNode(Trigger.FromPin.NodeGuid) : nullptr;
+
+				UE_LOG(LogFlow, Error,
+					TEXT("  → Dropped deferred trigger:\n")
+					TEXT("      To Node: %s (%s)\n")
+					TEXT("      To Pin:  %s\n")
+					TEXT("      From Node: %s (%s)\n")
+					TEXT("      From Pin:  %s"),
+					*ToNode->GetName(),
+					*Trigger.NodeGuid.ToString(),
+					*Trigger.PinName.ToString(),
+					*FromNode->GetName(),
+					*Trigger.FromPin.NodeGuid.ToString(),
+					*Trigger.FromPin.PinName.ToString()
+				);
+			}
+		}
+
+		ClearAllDeferredTriggerScopes();
 	}
 }
 
@@ -1081,11 +1142,6 @@ TWeakObjectPtr<UFlowAsset> UFlowAsset::GetFlowInstance(UFlowNode_SubGraph* SubGr
 
 void UFlowAsset::TriggerCustomInput_FromSubGraph(UFlowNode_SubGraph* SubGraphNode, const FName& EventName) const
 {
-	if (FFlowExecutionGate::IsHalted())
-	{
-		return;
-	}
-
 	// NOTE (gtaylor) Custom Input nodes cannot currently add data pins (like Start or DefineProperties nodes can)
 	// but we may want to allow them to source parameters, so I am providing the subgraph node as the 
 	// IFlowDataPinValueSupplierInterface when triggering the node (even though it's not used at this time).
@@ -1099,11 +1155,6 @@ void UFlowAsset::TriggerCustomInput_FromSubGraph(UFlowNode_SubGraph* SubGraphNod
 
 void UFlowAsset::TriggerCustomInput(const FName& EventName, IFlowDataPinValueSupplierInterface* DataPinValueSupplier)
 {
-	if (FFlowExecutionGate::IsHalted())
-	{
-		return;
-	}
-
 	for (UFlowNode_CustomInput* CustomInputNode : CustomInputNodes)
 	{
 		if (CustomInputNode->EventName == EventName)
@@ -1143,11 +1194,34 @@ void UFlowAsset::TriggerCustomOutput(const FName& EventName)
 
 void UFlowAsset::TriggerInput(const FGuid& NodeGuid, const FName& PinName, const FConnectedPin& FromPin)
 {
-	if (FFlowExecutionGate::EnqueueDeferredTriggerInput(this, NodeGuid, PinName, FromPin))
+	if (ShouldDeferTriggersForDebugger())
 	{
-		return;
+		EnqueueDeferredTrigger(NodeGuid, PinName, FromPin);
 	}
+	else if (ShouldUseStandardDeferTriggers())
+	{
+		// Defer only if we have an open top scope
+		if (!DeferredTransitionScopes.IsEmpty() && DeferredTransitionScopes.Top()->IsOpen())
+		{
+			EnqueueDeferredTrigger(NodeGuid, PinName, FromPin);
+		}
+		else
+		{
+			const TSharedPtr<FFlowDeferredTransitionScope> CurScope = PushDeferredTransitionScope();
 
+			TriggerInputDirect(NodeGuid, PinName, FromPin);
+
+			PopDeferredTransitionScope(CurScope);
+		}
+	}
+	else
+	{
+		TriggerInputDirect(NodeGuid, PinName, FromPin);
+	}
+}
+
+void UFlowAsset::TriggerInputDirect(const FGuid& NodeGuid, const FName& PinName, const FConnectedPin& FromPin)
+{
 	if (UFlowNode* Node = Nodes.FindRef(NodeGuid))
 	{
 		if (!ActiveNodes.Contains(Node))
@@ -1158,6 +1232,86 @@ void UFlowAsset::TriggerInput(const FGuid& NodeGuid, const FName& PinName, const
 
 		Node->TriggerInput(PinName);
 	}
+}
+
+bool UFlowAsset::ShouldDeferTriggersForDebugger() const
+{
+	// Halt always takes precedence for debugger correctness
+	return FFlowExecutionGate::IsHalted();
+}
+
+bool UFlowAsset::ShouldUseStandardDeferTriggers() const
+{
+	return UFlowSettings::Get()->bDeferTriggeredOutputsWhileTriggering;
+}
+
+TSharedPtr<FFlowDeferredTransitionScope> UFlowAsset::PushDeferredTransitionScope()
+{
+	// Close the former top scope (if any)
+	if (!DeferredTransitionScopes.IsEmpty())
+	{
+		const TSharedPtr<FFlowDeferredTransitionScope>& FormerTop = DeferredTransitionScopes.Top();
+		FormerTop->CloseScope();
+	}
+
+	// Push a fresh open scope
+	return DeferredTransitionScopes.Add_GetRef(MakeShared<FFlowDeferredTransitionScope>());
+}
+
+bool UFlowAsset::TryFlushAndRemoveDeferredTransitionScope(const TSharedPtr<FFlowDeferredTransitionScope>& ScopeToFlush)
+{
+	if (ScopeToFlush->TryFlushDeferredTriggers(*this))
+	{
+		// Remove the exact instance we were holding (handles nested push/pop cases)
+		DeferredTransitionScopes.RemoveSingle(ScopeToFlush);
+		return true;
+	}
+	else
+	{
+		// Flush was interrupted — should only happen due to execution gate halt
+		check(FFlowExecutionGate::IsHalted());
+		return false;
+	}
+}
+
+void UFlowAsset::EnqueueDeferredTrigger(const FGuid& NodeGuid, const FName& PinName, const FConnectedPin& FromPin)
+{
+	if (DeferredTransitionScopes.IsEmpty() || !DeferredTransitionScopes.Top()->IsOpen())
+	{
+		// This should only occur when halted at an execution gate
+		check(FFlowExecutionGate::IsHalted());
+		PushDeferredTransitionScope();
+	}
+
+	// Always enqueue to the current innermost (top) scope
+	DeferredTransitionScopes.Top()->EnqueueDeferredTrigger(FFlowDeferredTriggerInput{ NodeGuid, PinName, FromPin });
+}
+
+bool UFlowAsset::TryFlushAllDeferredTriggerScopes()
+{
+	while (const TSharedPtr<FFlowDeferredTransitionScope> TopScope = GetTopDeferredTransitionScope())
+	{
+		if (!TryFlushAndRemoveDeferredTransitionScope(TopScope))
+		{
+			break;
+		}
+
+		// Keep flushing until stack is empty or we hit an ExecutionGate halt
+	}
+
+	check(DeferredTransitionScopes.IsEmpty() || FFlowExecutionGate::IsHalted());
+
+	return DeferredTransitionScopes.IsEmpty();
+}
+
+void UFlowAsset::ClearAllDeferredTriggerScopes()
+{
+	DeferredTransitionScopes.Reset();
+}
+
+TSharedPtr<FFlowDeferredTransitionScope> UFlowAsset::GetTopDeferredTransitionScope() const
+{
+	return !DeferredTransitionScopes.IsEmpty() ? DeferredTransitionScopes.Top() : nullptr;
 }
 
 void UFlowAsset::FinishNode(UFlowNode* Node)

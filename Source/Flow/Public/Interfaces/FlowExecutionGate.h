@@ -31,15 +31,6 @@ public:
 	/** True if a gate exists and it currently wants Flow execution halted. */
 	static bool IsHalted();
 
-	/** If halted, queues the trigger for later. Returns true if queued (caller should early-out). */
-	static bool EnqueueDeferredTriggerInput(UFlowAsset* FlowAssetInstance, const FGuid& NodeGuid, const FName& PinName, const struct FConnectedPin& FromPin);
-
-	/**
-	 * Flushes queued trigger inputs (FIFO).
-	 * Safe to call even if nothing is queued.
-	 */
-	static void FlushDeferredTriggerInputs();
-
 private:
 	static IFlowExecutionGate* Gate;
 };
