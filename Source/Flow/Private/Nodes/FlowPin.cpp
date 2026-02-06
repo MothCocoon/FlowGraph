@@ -149,6 +149,13 @@ FEdGraphPinType FFlowPin::BuildEdGraphPinType() const
 
 	return EdGraphPinType;
 }
+
+void FFlowPin::ConfigureFromEdGraphPin(const FEdGraphPinType& EdGraphPinType)
+{
+	PinTypeName.Name = EdGraphPinType.PinCategory;
+	PinSubCategoryObject = EdGraphPinType.PinSubCategoryObject;
+	ContainerType = EdGraphPinType.ContainerType;
+}
 #endif
 
 const FFlowPinType* FFlowPin::ResolveFlowPinType() const
@@ -199,6 +206,7 @@ FFlowPinTypeName FFlowPin::GetPinTypeNameForLegacyPinType(EFlowPinType PinType)
 		return FFlowPinTypeName();
 	}
 }
+// --
 
 #if WITH_EDITOR
 void FFlowPin::PostEditChangedPinTypeOrSubCategorySource()

@@ -769,7 +769,7 @@ FFlowPin* UFlowNode::FindOutputPinByName(const FName& PinName)
 	return nullptr;
 }
 
-bool UFlowNode::IsInputConnected(const FFlowPin& FlowPin) const
+bool UFlowNode::IsInputConnected(const FFlowPin& FlowPin, FGuid* FoundGuid, FName* OutConnectedPinName) const
 {
 	if (!InputPins.Contains(FlowPin.PinName))
 	{
@@ -780,15 +780,15 @@ bool UFlowNode::IsInputConnected(const FFlowPin& FlowPin) const
 	{
 		// We don't cache the input exec pins for fast lookup in Connections, so use the slow path for them:
 
-		return FindConnectedNodeForPinSlow(FlowPin.PinName);
+		return FindConnectedNodeForPinSlow(FlowPin.PinName, FoundGuid, OutConnectedPinName);
 	}
 	else
 	{
-		return FindConnectedNodeForPinFast(FlowPin.PinName);
+		return FindConnectedNodeForPinFast(FlowPin.PinName, FoundGuid, OutConnectedPinName);
 	}
 }
 
-bool UFlowNode::IsOutputConnected(const FFlowPin& FlowPin) const
+bool UFlowNode::IsOutputConnected(const FFlowPin& FlowPin, FGuid* FirstFoundGuid, FName* OutFirstConnectedPinName) const
 {
 	if (!OutputPins.Contains(FlowPin.PinName))
 	{
@@ -797,13 +797,13 @@ bool UFlowNode::IsOutputConnected(const FFlowPin& FlowPin) const
 
 	if (FlowPin.IsExecPin())
 	{
-		return FindConnectedNodeForPinFast(FlowPin.PinName);
+		return FindConnectedNodeForPinFast(FlowPin.PinName, FirstFoundGuid, OutFirstConnectedPinName);
 	}
 	else
 	{
 		// We don't cache the input data pins for fast lookup in Connections, so use the slow path for them:
 
-		return FindConnectedNodeForPinSlow(FlowPin.PinName);
+		return FindConnectedNodeForPinSlow(FlowPin.PinName, FirstFoundGuid, OutFirstConnectedPinName);
 	}
 }
 

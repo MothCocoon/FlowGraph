@@ -226,6 +226,7 @@ public:
 
 #if WITH_EDITOR
 	FEdGraphPinType BuildEdGraphPinType() const;
+	void ConfigureFromEdGraphPin(const FEdGraphPinType& EdGraphPinType);
 #endif
 
 	const TWeakObjectPtr<UObject>& GetPinSubCategoryObject() const { return PinSubCategoryObject; }
@@ -233,6 +234,7 @@ public:
 	// FFlowPin instance signatures for "trait" functions
 	bool IsExecPin() const;
 	static bool IsExecPinCategory(const FName& PC);
+	FORCEINLINE bool IsDataPin() const { return !IsExecPin(); }
 	// --
 
 	// Metadata keys for properties that bind and auto-generate Data Pins:

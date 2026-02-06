@@ -33,7 +33,7 @@ void UFlowNode_Log::ExecuteInput(const FName& PinName)
 	const EFlowDataPinResolveResult MessageResult = TryResolveDataPinValue<FFlowPinType_String>(GET_MEMBER_NAME_CHECKED(ThisClass, Message), ResolvedMessage);
 
 	// #FlowDataPinLegacy - retire this backward compatibility when we remove legacy data pin support?  
-	FLOW_ASSERT_ENUM_MAX(EFlowDataPinResolveResult, 8);
+	FLOW_ASSERT_ENUM_MAX(EFlowDataPinResolveResult, 9);
 	if (MessageResult == EFlowDataPinResolveResult::FailedUnknownPin)
 	{
 		// Handle lookup of a FlowNode_Log that predated DataPins

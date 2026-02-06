@@ -207,8 +207,8 @@ public:
 	UFUNCTION(BlueprintPure, Category= "FlowNode")
 	bool IsOutputConnected(const FName& PinName, bool bErrorIfPinNotFound = true) const;
 
-	bool IsInputConnected(const FFlowPin& FlowPin) const;
-	bool IsOutputConnected(const FFlowPin& FlowPin) const;
+	bool IsInputConnected(const FFlowPin& FlowPin, FGuid* FoundGuid = nullptr, FName* OutConnectedPinName = nullptr) const;
+	bool IsOutputConnected(const FFlowPin& FlowPin, FGuid* FirstFoundGuid = nullptr, FName* OutFirstConnectedPinName = nullptr) const;
 
 	FFlowPin* FindInputPinByName(const FName& PinName);
 	FFlowPin* FindOutputPinByName(const FName& PinName);
