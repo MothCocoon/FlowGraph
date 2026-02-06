@@ -1315,6 +1315,11 @@ void UFlowGraphNode::NodeConnectionListChanged()
 		Graph->GetFlowAsset()->HarvestNodeConnections(Cast<UFlowNode>(GetFlowNodeBase()));
 		Graph->NotifyNodeChanged(this);
 	}
+	
+	if (const UEdGraphSchema* Schema = GetSchema())
+	{
+		Schema->ForceVisualizationCacheClear();
+	}
 }
 
 FString UFlowGraphNode::GetPropertyNameAndValueForDiff(const FProperty* Prop, const uint8* PropertyAddr) const

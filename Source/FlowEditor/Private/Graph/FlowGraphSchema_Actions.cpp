@@ -17,6 +17,7 @@
 #include "EdGraphNode_Comment.h"
 #include "Editor.h"
 #include "ScopedTransaction.h"
+#include "Nodes/Route/FlowNode_NamedReroute.h"
 
 #include UE_INLINE_GENERATED_CPP_BY_NAME(FlowGraphSchema_Actions)
 
@@ -63,7 +64,7 @@ UFlowGraphNode* FFlowGraphSchemaAction_NewNode::CreateNode(UEdGraph* ParentGraph
 
 	// register to the graph
 	NewGraphNode->CreateNewGuid();
-	ParentGraph->AddNode(NewGraphNode, false, bSelectNewNode);
+	ParentGraph->AddNode(NewGraphNode, bSelectNewNode, bSelectNewNode);
 
 	// link editor and runtime nodes together
 	UFlowNode* FlowNode = FlowAsset->CreateNode(NodeClass, NewGraphNode);
@@ -269,6 +270,28 @@ TSharedPtr<FFlowSchemaAction_NewSubNode> FFlowSchemaAction_NewSubNode::AddNewSub
 
 /////////////////////////////////////////////////////
 // Paste
+
+UEdGraphNode* FFlowGraphSchemaAction_NewNamedRerouteUsage::PerformAction(class UEdGraph* ParentGraph, UEdGraphPin* FromPin, const FVector2f& Location, bool bSelectNewNode)
+{
+	// prevent adding new nodes while playing
+	if (GEditor->PlayWorld != nullptr)
+	{
+		return nullptr;
+	}
+	
+	check(Declaration);
+	
+	const FScopedTransaction Transaction(LOCTEXT("FlowEditorNewNamedRerouteUsage", "Flow Editor: New Named Reroute Usage"));
+
+	auto* NewGraphNode = FFlowGraphSchemaAction_NewNode::CreateNode(ParentGraph, FromPin, UFlowNode_NamedRerouteUsage::StaticClass(), FDeprecateSlateVector2D(Location), bSelectNewNode);
+	if (NewGraphNode)
+	{
+		auto* Usage = CastChecked<UFlowNode_NamedRerouteUsage>(NewGraphNode->GetFlowNodeBase());
+		Usage->Declaration = Declaration;
+		Usage->DeclarationVariableGuid = Declaration->GetVariableGuid();
+	}
+	return NewGraphNode;
+}
 
 UEdGraphNode* FFlowGraphSchemaAction_Paste::PerformAction(class UEdGraph* ParentGraph, UEdGraphPin* FromPin, const FVector2D Location, const bool bSelectNewNode/* = true*/)
 {

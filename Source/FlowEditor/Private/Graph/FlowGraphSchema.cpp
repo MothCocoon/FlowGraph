@@ -30,6 +30,7 @@
 #include "Engine/MemberReference.h"
 #include "Kismet2/KismetEditorUtilities.h"
 #include "ScopedTransaction.h"
+#include "Nodes/Route/FlowNode_NamedReroute.h"
 
 #if ENGINE_MAJOR_VERSION == 5 && ENGINE_MINOR_VERSION < 6
 #include "Kismet/BlueprintTypeConversions.h"
@@ -243,6 +244,7 @@ void UFlowGraphSchema::GetGraphContextActions(FGraphContextMenuBuilder& ContextM
 {
 	GetFlowNodeActions(ContextMenuBuilder, GetEditedAssetOrClassDefault(ContextMenuBuilder.CurrentGraph), FString());
 	GetCommentAction(ContextMenuBuilder, ContextMenuBuilder.CurrentGraph);
+	GetNamedRerouteActions(ContextMenuBuilder, ContextMenuBuilder.CurrentGraph);
 
 	if (!ContextMenuBuilder.FromPin && FFlowGraphUtils::GetFlowGraphEditor(ContextMenuBuilder.CurrentGraph)->CanPasteNodes())
 	{
@@ -1266,6 +1268,28 @@ void UFlowGraphSchema::GetCommentAction(FGraphActionMenuBuilder& ActionMenuBuild
 
 		const TSharedPtr<FFlowGraphSchemaAction_NewComment> NewAction(new FFlowGraphSchemaAction_NewComment(FText::GetEmpty(), MenuDescription, ToolTip, 0));
 		ActionMenuBuilder.AddAction(NewAction);
+	}
+}
+
+void UFlowGraphSchema::GetNamedRerouteActions(FGraphActionMenuBuilder& ActionMenuBuilder, const UEdGraph* CurrentGraph)
+{
+	if (CurrentGraph)
+	{
+		for (UEdGraphNode* GraphNode : CurrentGraph->Nodes)
+		{
+			if (auto* FlowGraphNode = Cast<UFlowGraphNode>(GraphNode))
+			{
+				if (auto Declaration = Cast<UFlowNode_NamedRerouteDeclaration>(FlowGraphNode->GetFlowNodeBase()))
+				{
+					static const FText Category = LOCTEXT("NamedRerouteCategory", "Named Reroutes");
+					const FText Name = FText::FromString(Declaration->GetVariableName().ToString());
+					const FText Tooltip = FText::Format(LOCTEXT("NamedRerouteTooltip", "Add a usage of {0} here"), Name);
+					TSharedPtr<FFlowGraphSchemaAction_NewNamedRerouteUsage> NewAction(new FFlowGraphSchemaAction_NewNamedRerouteUsage(Category, Name, Tooltip, 1 /* We want named reroutes to be on top */));
+					NewAction->Declaration = Declaration;
+					ActionMenuBuilder.AddAction(NewAction);
+				}
+			}
+		}
 	}
 }
 

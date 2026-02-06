@@ -13,6 +13,7 @@
 #include "Nodes/Graph/FlowNode_CustomOutput.h"
 #include "Nodes/Graph/FlowNode_Start.h"
 #include "Nodes/Graph/FlowNode_SubGraph.h"
+#include "Nodes/Route/FlowNode_NamedReroute.h"
 #include "Types/FlowAutoDataPinsWorkingData.h"
 #include "Types/FlowDataPinValue.h"
 #include "Types/FlowStructUtils.h"
@@ -570,6 +571,15 @@ void UFlowAsset::HarvestNodeConnections(UFlowNode* TargetNode)
 					const UEdGraphNode* LinkedNode = LinkedPin->GetOwningNode();
 					FoundConnections.Add(ThisPin->PinName, FConnectedPin(LinkedNode->NodeGuid, LinkedPin->PinName));
 				}
+			}
+		}
+
+		// Process the Named Reroute Usage node
+		if (auto* NamedRerouteUsage = Cast<UFlowNode_NamedRerouteUsage>(FlowNode))
+		{
+			if (NamedRerouteUsage->IsDeclarationValid())
+			{
+				FoundConnections.Add(UFlowNode::DefaultOutputPin.PinName, FConnectedPin(NamedRerouteUsage->Declaration->GetGuid(), UFlowNode::DefaultInputPin.PinName));
 			}
 		}
 

@@ -94,6 +94,34 @@ struct FLOWEDITOR_API FFlowSchemaAction_NewSubNode : public FEdGraphSchemaAction
 	static TSharedPtr<FFlowSchemaAction_NewSubNode> AddNewSubNodeAction(FGraphActionListBuilderBase& ContextMenuBuilder, const FText& Category, const FText& MenuDesc, const FText& Tooltip);
 };
 
+/** Action to add a local variable usage to the graph */
+USTRUCT()
+struct FFlowGraphSchemaAction_NewNamedRerouteUsage : public FEdGraphSchemaAction
+{
+	GENERATED_USTRUCT_BODY();
+
+	// Declaration that we want to add an usage of
+	UPROPERTY()
+	TObjectPtr<class UFlowNode_NamedRerouteDeclaration> Declaration = nullptr;
+
+	// Simple type info
+	static FName StaticGetTypeId() {static FName Type("FFlowSchemaAction_NewNamedRerouteUsage"); return Type;}
+	virtual FName GetTypeId() const override { return StaticGetTypeId(); } 
+
+	FFlowGraphSchemaAction_NewNamedRerouteUsage() 
+		: FEdGraphSchemaAction()
+	{}
+
+	FFlowGraphSchemaAction_NewNamedRerouteUsage(FText InNodeCategory, FText InMenuDesc, FText InToolTip, const int32 InGrouping)
+		: FEdGraphSchemaAction(MoveTemp(InNodeCategory), MoveTemp(InMenuDesc), MoveTemp(InToolTip), InGrouping)
+	{}
+
+	//~ Begin FEdGraphSchemaAction Interface
+	using FEdGraphSchemaAction::PerformAction; // Prevent hiding of deprecated base class function with FVector2D
+	virtual UEdGraphNode* PerformAction(class UEdGraph* ParentGraph, UEdGraphPin* FromPin, const FVector2f& Location, bool bSelectNewNode = true) override;
+	//~ End FEdGraphSchemaAction Interface
+};
+
 /** Action to paste clipboard contents into the graph */
 USTRUCT()
 struct FLOWEDITOR_API FFlowGraphSchemaAction_Paste : public FEdGraphSchemaAction

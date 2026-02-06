@@ -77,6 +77,10 @@ void FFlowAssetEditor::HandleUndoTransaction()
 
 void FFlowAssetEditor::NotifyPostChange(const FPropertyChangedEvent& PropertyChangedEvent, FProperty* PropertyThatChanged)
 {
+	if( PropertyChangedEvent.ChangeType != EPropertyChangeType::Interactive )
+	{
+		GetDefault<UFlowGraphSchema>()->ForceVisualizationCacheClear();
+	}
 }
 
 FName FFlowAssetEditor::GetToolkitFName() const

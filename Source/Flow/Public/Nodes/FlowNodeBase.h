@@ -371,6 +371,8 @@ public:
 
 	// used when import graph from another asset
 	virtual void PostImport() {}
+
+	virtual void PostPasteNode(const TArray<UFlowNode*>& PastedNodes) {}
 #endif
 
 public:

@@ -543,7 +543,7 @@ void SFlowGraphEditor::DeleteSelectedNodes()
 
 			if (const UFlowGraphNode* FlowGraphNode = Cast<UFlowGraphNode>(Node))
 			{
-				if (const UFlowNode* FlowNode = Cast<UFlowNode>(FlowGraphNode->GetFlowNodeBase()))
+				if (UFlowNode* FlowNode = Cast<UFlowNode>(FlowGraphNode->GetFlowNodeBase()))
 				{
 					// If the user is pressing shift then try and reconnect the pins
 					if (FSlateApplication::Get().GetModifierKeys().IsShiftDown())
@@ -555,6 +555,9 @@ void SFlowGraphEditor::DeleteSelectedNodes()
 					Node->DestroyNode();
 
 					FlowAsset->UnregisterNode(FlowNode->GetGuid());
+					FlowNode->Modify();
+					// Make sure the deleted node is caught by gc
+					FlowNode->MarkAsGarbage();
 					continue;
 				}
 			}
@@ -769,6 +772,8 @@ void SFlowGraphEditor::PasteNodesHere(const FVector2D& Location)
 		AvgNodePosition.Y *= InvNumNodes;
 	}
 
+	TArray<UFlowNode*> NewFlowNodes;
+	NewFlowNodes.Reset(NodesToPaste.Num());
 	TMap<int32, UFlowGraphNode*> EdNodeCopyIndexMap;
 	for (TSet<UEdGraphNode*>::TConstIterator It(NodesToPaste); It; ++It)
 	{
@@ -802,6 +807,7 @@ void SFlowGraphEditor::PasteNodesHere(const FVector2D& Location)
 				// Only full FlowNodes are registered with the Asset
 				// (for now?  perhaps we register AddOns in the future?)
 				FlowAsset->RegisterNode(PastedNode->NodeGuid, FlowNode);
+				NewFlowNodes.Add(FlowNode);
 			}
 
 			PastedFlowGraphNode->RemoveAllSubNodes();
@@ -832,6 +838,11 @@ void SFlowGraphEditor::PasteNodesHere(const FVector2D& Location)
 				PastedParentNode->AddSubNode(PasteNode, FlowGraph);
 			}
 		}
+	}
+
+	for (auto* NewNode : NewFlowNodes)
+	{
+		NewNode->PostPasteNode(NewFlowNodes);
 	}
 
 	if (FlowGraph)
