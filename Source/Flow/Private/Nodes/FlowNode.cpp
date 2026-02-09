@@ -417,7 +417,7 @@ void UFlowNode::SetAutoOutputDataPins(const TArray<FFlowPin>& AutoOutputPins)
 
 #endif // WITH_EDITOR
 
-FFlowDataPinResult UFlowNode::TrySupplyDataPin_Implementation(FName PinName) const
+FFlowDataPinResult UFlowNode::TrySupplyDataPin(FName PinName) const
 {
 	const FFlowPin* FlowPin = FindOutputPinByName(PinName);
 	if (!FlowPin)
@@ -585,7 +585,7 @@ bool UFlowNode::TryGetFlowDataPinSupplierDatasForPinName(const FName& PinName, T
 
 	// Potentially add this current node as a default value supplier
 	// (this will be pushed down the priority queue as higher priority suppliers are found)
-	if (ThisAsPinValueSupplier && IFlowDataPinValueSupplierInterface::Execute_CanSupplyDataPinValues(this))
+	if (ThisAsPinValueSupplier && CanSupplyDataPinValues())
 	{
 		FFlowPinValueSupplierData NewPinValueSupplier;
 		NewPinValueSupplier.PinValueSupplier = ThisAsPinValueSupplier;
@@ -607,7 +607,7 @@ bool UFlowNode::TryGetFlowDataPinSupplierDatasForPinName(const FName& PinName, T
 
 			// If the connected node can supply data pin values, insert it into the top of the priority queue
 			const IFlowDataPinValueSupplierInterface* SupplierFlowNodeAsInterface = Cast<IFlowDataPinValueSupplierInterface>(SupplierFlowNode);
-			if (SupplierFlowNodeAsInterface && IFlowDataPinValueSupplierInterface::Execute_CanSupplyDataPinValues(SupplierFlowNode))
+			if (SupplierFlowNodeAsInterface && SupplierFlowNode->CanSupplyDataPinValues())
 			{
 				ConnectedPinValueSupplier.PinValueSupplier = SupplierFlowNodeAsInterface;
 

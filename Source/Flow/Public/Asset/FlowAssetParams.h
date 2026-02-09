@@ -54,8 +54,8 @@ public:
 	// --
 
 	// IFlowDataPinValueSupplierInterface
-	virtual bool CanSupplyDataPinValues_Implementation() const override;
-	virtual FFlowDataPinResult TrySupplyDataPin_Implementation(FName PinName) const override;
+	virtual bool CanSupplyDataPinValues() const override;
+	virtual FFlowDataPinResult TrySupplyDataPin(FName PinName) const override;
 	// --
 
 	// IFlowAssetProviderInterface

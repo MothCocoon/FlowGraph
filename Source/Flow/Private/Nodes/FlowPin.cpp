@@ -209,40 +209,6 @@ FFlowPinTypeName FFlowPin::GetPinTypeNameForLegacyPinType(EFlowPinType PinType)
 // --
 
 #if WITH_EDITOR
-void FFlowPin::PostEditChangedPinTypeOrSubCategorySource()
-{
-	// PinTypes with PinSubCategoryObjects will need to update this function
-
-	// Must be called from PostEditChangeProperty() by an owning UObject <sigh>
-
-	if (PinTypeName == FFlowPinType_Class::GetPinTypeNameStatic())
-	{
-		PinSubCategoryObject = SubCategoryClassFilter;
-	}
-	else if (PinTypeName == FFlowPinType_Object::GetPinTypeNameStatic())
-	{
-		PinSubCategoryObject = SubCategoryObjectFilter;
-	}
-	else if (PinTypeName == FFlowPinType_Enum::GetPinTypeNameStatic())
-	{
-		if (!SubCategoryEnumName.IsEmpty())
-		{
-			SubCategoryEnumClass = UClass::TryFindTypeSlow<UEnum>(SubCategoryEnumName, EFindFirstObjectOptions::ExactClass);
-			if (SubCategoryEnumClass != nullptr && !FFlowPin::ValidateEnum(*SubCategoryEnumClass))
-			{
-				SubCategoryEnumClass = nullptr;
-			}
-		}
-
-		PinSubCategoryObject = SubCategoryEnumClass;
-	}
-	else
-	{
-		TrySetStructSubCategoryObjectFromPinType();
-	}
-}
-
-// --
 
 FText FFlowPin::BuildHeaderText() const
 {

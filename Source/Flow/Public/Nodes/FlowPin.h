@@ -24,17 +24,17 @@ struct FLOW_API FFlowPin
 	GENERATED_BODY()
 
 	// A logical name, used during execution of pin
-	UPROPERTY(EditDefaultsOnly, Category = DataPins)
+	UPROPERTY(EditDefaultsOnly, Category = FlowPin)
 	FName PinName;
 
 	// An optional Display Name, you can use it to override PinName without the need to update graph connections
-	UPROPERTY(EditDefaultsOnly, Category = DataPins)
+	UPROPERTY(EditDefaultsOnly, Category = FlowPin)
 	FText PinFriendlyName;
 
-	UPROPERTY(EditDefaultsOnly, Category = DataPins)
+	UPROPERTY(EditDefaultsOnly, Category = FlowPin)
 	FString PinToolTip;
 
-	// PinType (implies PinCategory)
+	// Deprecated PinType, use PinTypeName instead (all standard names are defined in FFlowPinTypeNamesStandard)
 	UPROPERTY(Meta = (DeprecatedProperty, DeprecationMessage = "Use PinTypeName instead"))
 	EFlowPinType PinType = EFlowPinType::Invalid;
 
@@ -43,41 +43,15 @@ struct FLOW_API FFlowPin
 	EPinContainerType ContainerType = EPinContainerType::None;
 
 protected:
-	UPROPERTY(EditDefaultsOnly, Category = DataPins)
+	UPROPERTY()
 	FFlowPinTypeName PinTypeName = FFlowPinTypeName(FFlowPinTypeNamesStandard::PinTypeNameExec);
 
 	// Sub-category object
 	// (used to identify the struct or class type for some PinCategories)
-	UPROPERTY(VisibleAnywhere, Category = DataPins)
+	UPROPERTY()
 	TWeakObjectPtr<UObject> PinSubCategoryObject;
 
-#if WITH_EDITORONLY_DATA
-	// Filter for limiting the compatible classes for this data pin.
-	// This property is editor-only, but it is automatically copied into PinSubCategoryObject if the PinTypeName matches (for runtime use).
-	UPROPERTY(EditAnywhere, Category = DataPins, meta = (EditCondition = "PinTypeName == Class", EditConditionHides))
-	TSubclassOf<UClass> SubCategoryClassFilter = UClass::StaticClass();
-
-	// Filter for limiting the compatible object types for this data pin.
-	// This property is editor-only, but it is automatically copied into PinSubCategoryObject if the PinTypeName matches (for runtime use).
-	UPROPERTY(EditAnywhere, Category = DataPins, meta = (EditCondition = "PinTypeName == Object", EditConditionHides))
-	TSubclassOf<UObject> SubCategoryObjectFilter = UObject::StaticClass();
-
-	// Configuration option for setting the EnumClass to a Blueprint Enum
-	// (C++ enums must bind by name using SubCategoryEnumName, due to a limitation with UE's UEnum discovery).
-	// This property is editor-only, but it is automatically copied into PinSubCategoryObject if the PinType matches (for runtime use).
-	UPROPERTY(EditAnywhere, Category = DataPins, meta = (EditCondition = "PinTypeName == Enum", EditConditionHides))
-	TObjectPtr<UEnum> SubCategoryEnumClass = nullptr;
-
-	// name of enum defined in c++ code, will take priority over asset from EnumType property
-	// (this is a work-around because EnumClass cannot find C++ Enums,
-	// so you need to type the name of the enum in here, manually)
-	// See also: FFlowPin::PostEditChangedEnumName()
-	UPROPERTY(EditAnywhere, Category = DataPins, meta = (EditCondition = "PinTypeName == Enum", EditConditionHides))
-	FString SubCategoryEnumName;
-#endif
-
 public:
-
 	FFlowPin()
 		: PinName(NAME_None)
 	{
@@ -210,24 +184,19 @@ public:
 public:
 
 #if WITH_EDITOR
-	// Must be called from PostEditChangeProperty() by an owning UObject <sigh>
-	// whenever PinType, 
-	void PostEditChangedPinTypeOrSubCategorySource();
 	FText BuildHeaderText() const;
 
 	static bool ValidateEnum(const UEnum& EnumType);
-#endif // WITH_EDITOR
+		
+	FEdGraphPinType BuildEdGraphPinType() const;
+	void ConfigureFromEdGraphPin(const FEdGraphPinType& EdGraphPinType);
+#endif
 
 	void SetPinTypeName(const FFlowPinTypeName& InTypeName);
 	const FFlowPinTypeName& GetPinTypeName() const { return PinTypeName; }
 	const FFlowPinType* ResolveFlowPinType() const;
 	void SetPinSubCategoryObject(UObject* Object) { PinSubCategoryObject = Object; }
 	static FFlowPinTypeName GetPinTypeNameForLegacyPinType(EFlowPinType PinType);
-
-#if WITH_EDITOR
-	FEdGraphPinType BuildEdGraphPinType() const;
-	void ConfigureFromEdGraphPin(const FEdGraphPinType& EdGraphPinType);
-#endif
 
 	const TWeakObjectPtr<UObject>& GetPinSubCategoryObject() const { return PinSubCategoryObject; }
 

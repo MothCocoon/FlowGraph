@@ -1151,7 +1151,7 @@ void UFlowGraphNode::GetPinHoverText(const UEdGraphPin& Pin, FString& HoverTextO
 				const UFlowNode* FlowNode = Cast<UFlowNode>(FlowNodeBase);
 				if (FlowNode)
 				{
-					DataResult = IFlowDataPinValueSupplierInterface::Execute_TrySupplyDataPin(FlowNode, GraphPinObj->PinName);
+					DataResult = FlowNode->TrySupplyDataPin(GraphPinObj->PinName);
 				}
 			}
 		}

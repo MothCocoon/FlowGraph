@@ -87,7 +87,7 @@ public:
 	// --
 
 	// IFlowDataPinValueSupplierInterface
-	virtual bool CanSupplyDataPinValues_Implementation() const override;
+	virtual bool CanSupplyDataPinValues() const override;
 	// --
 
 	// IFlowDataPinGeneratorInterface

@@ -38,7 +38,7 @@ void UFlowNode_Reroute::ConfigureOutputPin(const UFlowNode& ConnectedNode, const
 }
 #endif
 
-FFlowDataPinResult UFlowNode_Reroute::TrySupplyDataPin_Implementation(FName PinName) const
+FFlowDataPinResult UFlowNode_Reroute::TrySupplyDataPin(FName PinName) const
 {
 	const FFlowPin* InputPin = FindInputPinByName(UFlowNode::DefaultInputPin.PinName);
 	if (!InputPin)
@@ -62,5 +62,5 @@ FFlowDataPinResult UFlowNode_Reroute::TrySupplyDataPin_Implementation(FName PinN
 	}
 
 	// Hand-off to the connected flow node to supply the value
-	return IFlowDataPinValueSupplierInterface::Execute_TrySupplyDataPin(ConnectedFlowNodeSupplier, ConnectedPinName);
+	return ConnectedFlowNodeSupplier->TrySupplyDataPin(ConnectedPinName);
 }

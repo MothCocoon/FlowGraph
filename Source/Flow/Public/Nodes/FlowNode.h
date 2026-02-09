@@ -259,7 +259,7 @@ public:
 
 	// IFlowDataPinValueSupplierInterface
 public:
-	virtual FFlowDataPinResult TrySupplyDataPin_Implementation(FName PinName) const override;
+	virtual FFlowDataPinResult TrySupplyDataPin(FName PinName) const override;
 
 	// Advanced helper for TrySupplyDataPin, which can be overridden in subclasses to provide alternate sourcing for properties.
 	// If returns true, either OutFoundProperty or OutFoundInstancedStruct is expected to carry the property value.

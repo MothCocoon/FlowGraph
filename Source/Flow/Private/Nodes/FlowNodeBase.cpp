@@ -1020,7 +1020,7 @@ FFlowDataPinResult UFlowNodeBase::TryResolveDataPin(FName PinName) const
 	{
 		const FFlowPinValueSupplierData& SupplierData = PinValueSupplierDatas[Index];
 
-		DataPinResult = IFlowDataPinValueSupplierInterface::Execute_TrySupplyDataPin(CastChecked<UObject>(SupplierData.PinValueSupplier), SupplierData.SupplierPinName);
+		DataPinResult = SupplierData.PinValueSupplier->TrySupplyDataPin(SupplierData.SupplierPinName);
 
 		if (FlowPinType::IsSuccess(DataPinResult.Result))
 		{
