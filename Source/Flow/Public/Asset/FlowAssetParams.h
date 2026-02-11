@@ -73,6 +73,9 @@ public:
 		const TSoftObjectPtr<UFlowAsset>& InOwnerFlowAsset,
 		TArray<FFlowNamedDataPinProperty>& MutablePropertiesFromStartNode);
 
+	// Updates properties from ParentParams, handling inheritance and name enforcement.
+	EFlowReconcilePropertiesResult ReconcilePropertiesWithParentParams();
+
 	void ConfigureFlowAssetParams(TSoftObjectPtr<UFlowAsset> OwnerAsset, TSoftObjectPtr<UFlowAssetParams> InParentParams, const TArray<FFlowNamedDataPinProperty>& InProperties);
 
 	// IFlowDataPinValueOwnerInterface
@@ -98,9 +101,6 @@ private:
 	// --
 
 protected:
-
-	// Updates properties from ParentParams, handling inheritance and name enforcement.
-	EFlowReconcilePropertiesResult ReconcilePropertiesWithParentParams();
 
 	EFlowReconcilePropertiesResult CheckForParentCycle() const;
 

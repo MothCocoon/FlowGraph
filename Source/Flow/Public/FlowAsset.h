@@ -449,9 +449,6 @@ protected:
 	//        it will consider the component's owner for the AActor
 	UPROPERTY(EditAnywhere, Category = "Flow")
 	TSubclassOf<UObject> ExpectedOwnerClass;
-	
-public:
-	UClass* GetExpectedOwnerClass() const { return ExpectedOwnerClass; }
 
 //////////////////////////////////////////////////////////////////////////
 // SaveGame support

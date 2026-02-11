@@ -2,17 +2,12 @@
 
 #include "Asset/AssetDefinition_FlowAssetParams.h"
 #include "Asset/FlowAssetParams.h"
+#include "Asset/FlowAssetParamsUtils.h"
 #include "FlowAsset.h"
 #include "FlowEditorLogChannels.h"
 #include "FlowEditorModule.h"
 #include "Types/FlowDataPinValuesStandard.h"
-#include "AssetRegistry/AssetRegistryModule.h"
-#include "AssetToolsModule.h"
 #include "ContentBrowserMenuContexts.h"
-#include "ContentBrowserModule.h"
-#include "FileHelpers.h"
-#include "IContentBrowserSingleton.h"
-#include "SourceControlHelpers.h"
 #include "ToolMenus.h"
 
 #include UE_INLINE_GENERATED_CPP_BY_NAME(AssetDefinition_FlowAssetParams)
@@ -70,54 +65,8 @@ namespace MenuExtension_FlowAssetParams
 			return;
 		}
 
-		FAssetToolsModule& AssetToolsModule = FModuleManager::LoadModuleChecked<FAssetToolsModule>("AssetTools");
-		const FString PackagePath = FPackageName::GetLongPackagePath(ParentParams->GetPackage()->GetPathName());
-		const FString BaseAssetName = ParentParams->GetName();
-
-		FString UniquePackageName, UniqueAssetName;
-		AssetToolsModule.Get().CreateUniqueAssetName(PackagePath + TEXT("/") + BaseAssetName, TEXT(""), UniquePackageName, UniqueAssetName);
-		if (UniqueAssetName.IsEmpty())
-		{
-			UE_LOG(LogFlowEditor, Error, TEXT("Failed to generate unique asset name for child params of %s"), *BaseAssetName);
-			return;
-		}
-
-		UFlowAssetParams* NewParams = Cast<UFlowAssetParams>(
-			AssetToolsModule.Get().CreateAsset(UniqueAssetName, PackagePath, ParentParams->GetClass(), nullptr));
-		if (!IsValid(NewParams))
-		{
-			UE_LOG(LogFlowEditor, Error, TEXT("Failed to create child Flow Asset Params: %s"), *UniqueAssetName);
-			return;
-		}
-
-		if (USourceControlHelpers::IsAvailable())
-		{
-			const FString FileName = USourceControlHelpers::PackageFilename(NewParams->GetPathName());
-			if (!USourceControlHelpers::CheckOutOrAddFile(FileName))
-			{
-				UE_LOG(LogFlowEditor, Warning, TEXT("Failed to check out/add %s; saved in-memory only"), *NewParams->GetPathName());
-			}
-		}
-
-		NewParams->ConfigureFlowAssetParams(ParentParams->OwnerFlowAsset, ParentParams, ParentParams->Properties);
-
-		// Save the package (force save even if not prompted)
-		UPackage* Package = NewParams->GetPackage();
-		TArray<UPackage*> PackagesToSave = { Package };
-
-		// Saves without dialog/prompt
-		const bool bForceSave = true;
-		if (!UEditorLoadingAndSavingUtils::SavePackages(PackagesToSave, bForceSave))
-		{
-			UE_LOG(LogFlowEditor, Error, TEXT("Failed to save child Flow Asset Params: %s"), *NewParams->GetPathName());
-			return;
-		}
-
-		FContentBrowserModule& ContentBrowserModule = FModuleManager::LoadModuleChecked<FContentBrowserModule>("ContentBrowser");
-		FAssetRegistryModule& AssetRegistryModule = FModuleManager::LoadModuleChecked<FAssetRegistryModule>("AssetRegistry");
-		AssetRegistryModule.Get().AssetCreated(NewParams);
-		TArray<UObject*> AssetsToSync = { NewParams };
-		ContentBrowserModule.Get().SyncBrowserToAssets(AssetsToSync, true);
+		constexpr bool bShowDialogs = true;
+		FFlowAssetParamsUtils::CreateChildParamsAsset(*ParentParams, bShowDialogs);
 	}
 
 	static void RegisterContextMenu()
