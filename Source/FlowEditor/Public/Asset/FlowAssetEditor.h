@@ -139,9 +139,6 @@ protected:
 
 	void EditAssetDefaults_Clicked() const;
 
-	virtual void GoToParentInstance();
-	virtual bool CanGoToParentInstance();
-
 	virtual void CreateWidgets();
 	virtual void CreateGraphWidget();
 
