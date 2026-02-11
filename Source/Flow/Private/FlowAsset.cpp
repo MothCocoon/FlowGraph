@@ -1020,11 +1020,6 @@ void UFlowAsset::PreStartFlow()
 
 void UFlowAsset::StartFlow(IFlowDataPinValueSupplierInterface* DataPinValueSupplier)
 {
-	if (FFlowExecutionGate::IsHalted())
-	{
-		return;
-	}
-
 	PreStartFlow();
 
 	if (UFlowNode* ConnectedEntryNode = GetDefaultEntryNode())

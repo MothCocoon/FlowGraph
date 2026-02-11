@@ -834,7 +834,7 @@ namespace FlowPinType
 					for (int32 i = 0; i < Num; ++i)
 					{
 						const FSoftObjectPath Path = InnerSoftProp->GetPropertyValue(ArrHelper.GetRawPtr(i)).ToSoftObjectPath();
-						OutValues.Add(Cast<TValueObjectType>(Path.ResolveObject()));
+						OutValues.Add(Cast<TValueObjectType>(Path.TryLoad()));
 					}
 					return EFlowDataPinResolveResult::Success;
 				}
@@ -859,7 +859,7 @@ namespace FlowPinType
 			else if (const TSoftProperty* SoftObjProp = CastField<TSoftProperty>(Property))
 			{
 				const FSoftObjectPath Path = SoftObjProp->GetPropertyValue_InContainer(Container).ToSoftObjectPath();
-				OutValues = { Cast<TValueObjectType>(Path.ResolveObject()) };
+				OutValues = { Cast<TValueObjectType>(Path.TryLoad()) };
 				return EFlowDataPinResolveResult::Success;
 			}
 			else if (const FWeakObjectProperty* WeakProp = CastField<FWeakObjectProperty>(Property))

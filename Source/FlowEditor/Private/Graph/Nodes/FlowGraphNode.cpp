@@ -1140,20 +1140,7 @@ void UFlowGraphNode::GetPinHoverText(const UEdGraphPin& Pin, FString& HoverTextO
 
 		if (IsValid(FlowNodeBase))
 		{
-			if (GraphPinObj->Direction == EGPD_Input)
-			{
-				// Input pins: do a pin resolve to source the value
-				DataResult = FlowNodeBase->TryResolveDataPin(GraphPinObj->PinName);
-			}
-			else
-			{
-				// Output pins: ask this node what it supplies for that output data pin
-				const UFlowNode* FlowNode = Cast<UFlowNode>(FlowNodeBase);
-				if (FlowNode)
-				{
-					DataResult = FlowNode->TrySupplyDataPin(GraphPinObj->PinName);
-				}
-			}
+			DataResult = FlowNodeBase->TryResolveDataPin(GraphPinObj->PinName);
 		}
 
 		FString ValueString;

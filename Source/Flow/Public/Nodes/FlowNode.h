@@ -233,6 +233,8 @@ protected:
 // Data Pins
 
 public:
+	using TFlowPinValueSupplierDataArray = FlowArray::TInlineArray<FFlowPinValueSupplierData, 4>;
+
 #if WITH_EDITORONLY_DATA
 	UPROPERTY(VisibleDefaultsOnly, AdvancedDisplay, Category = "FlowNode", meta = (GetByRef))
 	TArray<FFlowPin> AutoInputDataPins;
@@ -271,6 +273,9 @@ public:
 		TInstancedStruct<FFlowDataPinValue>& OutFoundInstancedStruct) const;
 
 protected:
+	// Helper for TryGetFlowDataPinSupplierDatasForPinName()
+	void TryAddSupplierDataToArray(FFlowPinValueSupplierData& InOutSupplierData, TFlowPinValueSupplierDataArray& InOutPinValueSupplierDatas) const;
+
 	// Static implementation of the default TryFindPropertyByPinName (which subclasses can incorporate into overrides)
 	static bool TryFindPropertyByPinName_Static(
 		const UObject& PropertyOwnerObject,
@@ -290,7 +295,6 @@ public:
 		const FFlowPin& FlowPin,
 		FFlowDataPinResult& OutSuppliedResult) const;
 
-	using TFlowPinValueSupplierDataArray = FlowArray::TInlineArray<FFlowPinValueSupplierData, 4>;
 	bool TryGetFlowDataPinSupplierDatasForPinName(const FName& PinName, TFlowPinValueSupplierDataArray& InOutPinValueSupplierDatas) const;
 
 	// IFlowDataPinGeneratorInterface
