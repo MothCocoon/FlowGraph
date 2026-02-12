@@ -324,7 +324,7 @@ public:
 	virtual const FFlowPinTypeName& GetPinTypeName() const override { return PinTypeNameVector; }
 
 #if WITH_EDITOR
-	virtual FLinearColor GetPinColor() const override { return GetDefault<UGraphEditorSettings>()->StructPinTypeColor; }
+	virtual FLinearColor GetPinColor() const override { return GetDefault<UGraphEditorSettings>()->VectorPinTypeColor; }
 	virtual bool ResolveAndFormatPinValue(const UFlowNodeBase& Node, const FName& PinName, FFormatArgumentValue& OutValue) const override;
 	virtual UObject* GetPinSubCategoryObjectFromProperty(const FProperty* Property, void const* InContainer, const FFlowDataPinValue* Wrapper) const override;
 #endif
@@ -350,7 +350,7 @@ public:
 	virtual const FFlowPinTypeName& GetPinTypeName() const override { return PinTypeNameRotator; }
 
 #if WITH_EDITOR
-	virtual FLinearColor GetPinColor() const override { return GetDefault<UGraphEditorSettings>()->StructPinTypeColor; }
+	virtual FLinearColor GetPinColor() const override { return GetDefault<UGraphEditorSettings>()->RotatorPinTypeColor; }
 	virtual bool ResolveAndFormatPinValue(const UFlowNodeBase& Node, const FName& PinName, FFormatArgumentValue& OutValue) const override;
 	virtual UObject* GetPinSubCategoryObjectFromProperty(const FProperty* Property, void const* InContainer, const FFlowDataPinValue* Wrapper) const override;
 #endif
@@ -376,7 +376,7 @@ public:
 	virtual const FFlowPinTypeName& GetPinTypeName() const override { return PinTypeNameTransform; }
 
 #if WITH_EDITOR
-	virtual FLinearColor GetPinColor() const override { return GetDefault<UGraphEditorSettings>()->StructPinTypeColor; }
+	virtual FLinearColor GetPinColor() const override { return GetDefault<UGraphEditorSettings>()->TransformPinTypeColor; }
 	virtual bool ResolveAndFormatPinValue(const UFlowNodeBase& Node, const FName& PinName, FFormatArgumentValue& OutValue) const override;
 	virtual UObject* GetPinSubCategoryObjectFromProperty(const FProperty* Property, void const* InContainer, const FFlowDataPinValue* Wrapper) const override;
 #endif
