@@ -55,6 +55,14 @@ EFlowDataPinResolveResult UFlowNode_FormatText::TryResolveFormatText(const FName
 }
 
 #if WITH_EDITOR
+void UFlowNode_FormatText::PostEditChangeChainProperty(FPropertyChangedChainEvent& PropertyChainEvent)
+{
+	const auto& Property = PropertyChainEvent.PropertyChain.GetActiveMemberNode()->GetValue();
+	constexpr bool bIsInput = true;
+	OnPostEditEnsureAllNamedPropertiesPinDirection(*Property, bIsInput);
+
+	Super::PostEditChangeChainProperty(PropertyChainEvent);
+}
 
 void UFlowNode_FormatText::UpdateNodeConfigText_Implementation()
 {

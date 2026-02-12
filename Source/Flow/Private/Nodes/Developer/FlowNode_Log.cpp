@@ -82,19 +82,8 @@ void UFlowNode_Log::ExecuteInput(const FName& PinName)
 void UFlowNode_Log::PostEditChangeChainProperty(FPropertyChangedChainEvent& PropertyChainEvent)
 {
 	const auto& Property = PropertyChainEvent.PropertyChain.GetActiveMemberNode()->GetValue();
-
-	if (Property->GetFName() == GET_MEMBER_NAME_CHECKED(ThisClass, NamedProperties))
-	{
-		for (FFlowNamedDataPinProperty& NamedProperty : NamedProperties)
-		{
-			const UScriptStruct* ScriptStruct = NamedProperty.DataPinValue.GetScriptStruct();
-			if (IsValid(ScriptStruct) && ScriptStruct->IsChildOf<FFlowDataPinValue>())
-			{
-				FFlowDataPinValue& Value = NamedProperty.DataPinValue.GetMutable<FFlowDataPinValue>();
-				Value.bIsInputPin = true;
-			}
-		}
-	}
+	constexpr bool bIsInput = true;
+	OnPostEditEnsureAllNamedPropertiesPinDirection(*Property, bIsInput);
 
 	Super::PostEditChangeChainProperty(PropertyChainEvent);
 }
