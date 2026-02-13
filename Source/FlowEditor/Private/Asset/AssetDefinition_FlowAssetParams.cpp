@@ -3,10 +3,8 @@
 #include "Asset/AssetDefinition_FlowAssetParams.h"
 #include "Asset/FlowAssetParams.h"
 #include "Asset/FlowAssetParamsUtils.h"
-#include "FlowAsset.h"
 #include "FlowEditorLogChannels.h"
 #include "FlowEditorModule.h"
-#include "Types/FlowDataPinValuesStandard.h"
 #include "ContentBrowserMenuContexts.h"
 #include "ToolMenus.h"
 
@@ -31,7 +29,7 @@ TSoftClassPtr<UObject> UAssetDefinition_FlowAssetParams::GetAssetClass() const
 
 TConstArrayView<FAssetCategoryPath> UAssetDefinition_FlowAssetParams::GetAssetCategories() const
 {
-	static const auto Categories = { FFlowAssetCategoryPaths::Flow };
+	static const auto Categories = {FFlowAssetCategoryPaths::Flow};
 	return Categories;
 }
 
@@ -72,27 +70,27 @@ namespace MenuExtension_FlowAssetParams
 	static void RegisterContextMenu()
 	{
 		UToolMenus::RegisterStartupCallback(FSimpleMulticastDelegate::FDelegate::CreateLambda([]()
+		{
+			FToolMenuOwnerScoped OwnerScoped(UE_MODULE_NAME);
+			UToolMenu* Menu = UE::ContentBrowser::ExtendToolMenu_AssetContextMenu(UFlowAssetParams::StaticClass());
+
+			FToolMenuSection& Section = Menu->FindOrAddSection("GetAssetActions");
+			Section.AddDynamicEntry("Flow Asset Params Commands", FNewToolMenuSectionDelegate::CreateLambda([](FToolMenuSection& InSection)
 			{
-				FToolMenuOwnerScoped OwnerScoped(UE_MODULE_NAME);
-				UToolMenu* Menu = UE::ContentBrowser::ExtendToolMenu_AssetContextMenu(UFlowAssetParams::StaticClass());
+				const TAttribute<FText> Label = LOCTEXT("FlowAssetParams_CreateChildParams", "Create Child Params");
+				const TAttribute<FText> ToolTip = LOCTEXT("FlowAssetParams_CreateChildParamsTooltip", "Creates a new Flow Asset Params inheriting from the selected params.");
+				const FSlateIcon Icon = FSlateIcon();
 
-				FToolMenuSection& Section = Menu->FindOrAddSection("GetAssetActions");
-				Section.AddDynamicEntry("Flow Asset Params Commands", FNewToolMenuSectionDelegate::CreateLambda([](FToolMenuSection& InSection)
-					{
-						const TAttribute<FText> Label = LOCTEXT("FlowAssetParams_CreateChildParams", "Create Child Params");
-						const TAttribute<FText> ToolTip = LOCTEXT("FlowAssetParams_CreateChildParamsTooltip", "Creates a new Flow Asset Params inheriting from the selected params.");
-						const FSlateIcon Icon = FSlateIcon();
-
-						FToolUIAction UIAction;
-						UIAction.ExecuteAction = FToolMenuExecuteAction::CreateStatic(&ExecuteCreateChildParams);
-						UIAction.CanExecuteAction = FToolMenuCanExecuteAction::CreateLambda([](const FToolMenuContext& InContext)
-							{
-								const UContentBrowserAssetContextMenuContext* Context = UContentBrowserAssetContextMenuContext::FindContextWithAssets(InContext);
-								return Context && Context->SelectedAssets.Num() == 1;
-							});
-						InSection.AddMenuEntry("FlowAssetParams_CreateChildParams", Label, ToolTip, Icon, UIAction);
-					}));
+				FToolUIAction UIAction;
+				UIAction.ExecuteAction = FToolMenuExecuteAction::CreateStatic(&ExecuteCreateChildParams);
+				UIAction.CanExecuteAction = FToolMenuCanExecuteAction::CreateLambda([](const FToolMenuContext& InContext)
+				{
+					const UContentBrowserAssetContextMenuContext* Context = UContentBrowserAssetContextMenuContext::FindContextWithAssets(InContext);
+					return Context && Context->SelectedAssets.Num() == 1;
+				});
+				InSection.AddMenuEntry("FlowAssetParams_CreateChildParams", Label, ToolTip, Icon, UIAction);
 			}));
+		}));
 	}
 
 	static FDelayedAutoRegisterHelper DelayedAutoRegister(EDelayedRegisterRunPhase::EndOfEngineInit, &RegisterContextMenu);

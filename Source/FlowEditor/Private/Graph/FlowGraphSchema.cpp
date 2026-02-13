@@ -889,13 +889,11 @@ void UFlowGraphSchema::OnPinConnectionDoubleCicked(UEdGraphPin* PinA, UEdGraphPi
 	if (PinA->Direction == EGPD_Output)
 	{
 		check(PinB->Direction == EGPD_Input && PinA->Direction == EGPD_Output);
-
 		NewRerouteEdNode->ConfigureRerouteNodeFromPinConnections(*PinB, *PinA);
 	}
 	else
 	{
 		check(PinA->Direction == EGPD_Input && PinB->Direction == EGPD_Output);
-
 		NewRerouteEdNode->ConfigureRerouteNodeFromPinConnections(*PinA, *PinB);
 	}
 }

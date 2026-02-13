@@ -14,7 +14,7 @@
 
 FFlowPin UFlowNode_SubGraph::StartPin(TEXT("Start"));
 FFlowPin UFlowNode_SubGraph::FinishPin(TEXT("Finish"));
-const FName UFlowNode_SubGraph::INPIN_AssetParams = GET_MEMBER_NAME_CHECKED(ThisClass, AssetParams);
+const FName UFlowNode_SubGraph::AssetParams_MemberName = GET_MEMBER_NAME_CHECKED(ThisClass, AssetParams);
 
 UFlowNode_SubGraph::UFlowNode_SubGraph(const FObjectInitializer& ObjectInitializer)
 	: Super(ObjectInitializer)
@@ -260,22 +260,21 @@ void UFlowNode_SubGraph::PostEditChangeProperty(FPropertyChangedEvent& PropertyC
 
 FFlowDataPinResult UFlowNode_SubGraph::TrySupplyDataPin(FName PinName) const
 {
-	if (PinName == INPIN_AssetParams)
+	if (PinName == AssetParams_MemberName)
 	{
-		// Prevent infinite recursion by sourcing the AssetParams pin directly 
-		// (otherwise, it would attempt to resolve it below and infinitely crash our stack.
-		// don't ask me how I know).
+		// Prevent infinite recursion by sourcing the AssetParams pin directly.
+		// Otherwise, it would attempt to resolve it below and infinitely crash our stack.
 		return Super::TrySupplyDataPin(PinName);
 	}
 
 	if (!IsInputConnected(PinName))
 	{
-		const bool bHasAssetParams = IsInputConnected(INPIN_AssetParams) || !AssetParams.IsNull();
+		const bool bHasAssetParams = IsInputConnected(AssetParams_MemberName) || !AssetParams.IsNull();
 		if (bHasAssetParams)
 		{
 			// If not connected, we can source the value from the asset data params (if available)
 			TObjectPtr<UObject> Value = nullptr;
-			const EFlowDataPinResolveResult ResultEnum = Super::TryResolveDataPinValue<FFlowPinType_Object>(INPIN_AssetParams, Value);
+			const EFlowDataPinResolveResult ResultEnum = Super::TryResolveDataPinValue<FFlowPinType_Object>(AssetParams_MemberName, Value);
 			if (FlowPinType::IsSuccess(ResultEnum) && IsValid(Value))
 			{
 				if (const IFlowDataPinValueSupplierInterface* SupplierInterface = Cast<IFlowDataPinValueSupplierInterface>(Value))

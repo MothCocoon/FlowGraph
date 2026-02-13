@@ -57,14 +57,10 @@ struct FLOW_API FFlowAssetParamsUtils
 	* @param OutOptionalFailureReason If provided, filled with a human-readable error message on failure.
 	* @return The created child params asset or nullptr on failure.
 	*/
-	static UFlowAssetParams* CreateChildParamsAsset(
-		UFlowAssetParams& ParentParams,
-		bool bShowDialogs = true,
-		FText* OutOptionalFailureReason = nullptr);
+	static UFlowAssetParams* CreateChildParamsAsset(UFlowAssetParams& ParentParams, bool bShowDialogs = true, FText* OutOptionalFailureReason = nullptr);
 
 protected:
-
-	static void FailCreateChild(const FText& Reason, bool bShowDialogs, FText* OutOptionalFailureReason);
+	static void FailCreateChild(const FText& Reason, const bool bShowDialogs, FText* OutOptionalFailureReason);
 
 #endif
 };

@@ -34,9 +34,7 @@ bool UFlowAssetParamsFactory::ConfigureProperties()
 
 bool UFlowAssetParamsFactory::ShowParentPickerDialog()
 {
-	FContentBrowserModule& ContentBrowserModule = FModuleManager::LoadModuleChecked<FContentBrowserModule>("ContentBrowser");
-
-	TSharedPtr<SWindow> PickerWindow;
+	const FContentBrowserModule& ContentBrowserModule = FModuleManager::LoadModuleChecked<FContentBrowserModule>("ContentBrowser");
 
 	// Holds current required parent selection (the params asset)
 	TSharedPtr<FAssetData> CurrentSelection = MakeShared<FAssetData>();
@@ -54,11 +52,11 @@ bool UFlowAssetParamsFactory::ShowParentPickerDialog()
 			*CurrentSelection = AssetData;
 		});
 
-	TSharedRef<SWidget> ParamsPicker = ContentBrowserModule.Get().CreateAssetPicker(ParamsPickerConfig);
+	const TSharedRef<SWidget> ParamsPicker = ContentBrowserModule.Get().CreateAssetPicker(ParamsPickerConfig);
 
 	bool bUserAccepted = false;
 
-	PickerWindow = SNew(SWindow)
+	TSharedPtr<SWindow> PickerWindow = SNew(SWindow)
 		.Title(LOCTEXT("CreateChildParamsTitle", "Create Flow Asset Params"))
 		.SizingRule(ESizingRule::UserSized)
 		.ClientSize(FVector2D(850, 600))

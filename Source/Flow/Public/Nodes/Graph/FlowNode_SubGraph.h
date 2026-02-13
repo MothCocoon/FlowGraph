@@ -3,7 +3,6 @@
 #pragma once
 
 #include "Nodes/FlowNode.h"
-
 #include "FlowNode_SubGraph.generated.h"
 
 class UFlowAssetParams;
@@ -28,14 +27,12 @@ private:
 	UPROPERTY(EditAnywhere, Category = "Graph")
 	TSoftObjectPtr<UFlowAsset> Asset;
 
-	// Flow Asset Params to use as the data pin value supplier for the Asset
+	/* Flow Asset Params to use as the data pin value supplier for the Asset */
 	UPROPERTY(EditAnywhere, Category = "Graph", meta = (DefaultForInputFlowPin, FlowPinType = "Object"))
 	TSoftObjectPtr<UFlowAssetParams> AssetParams;
 
-	/*
-	 * Allow to create instance of the same Flow Asset as the asset containing this node
-	 * Enabling it may cause an infinite loop, if graph would keep creating copies of itself
-	 */
+	/* Allow to create instance of the same Flow Asset as the asset containing this node.
+	 * Enabling it may cause an infinite loop, if graph would keep creating copies of itself. */
 	UPROPERTY(EditAnywhere, Category = "Graph")
 	bool bCanInstanceIdenticalAsset;
 
@@ -60,11 +57,11 @@ protected:
 #if WITH_EDITORONLY_DATA
 
 protected:
-	// All the classes allowed to be used as assets on this subgraph node
+	/* All the classes allowed to be used as assets on this subgraph node. */
 	UPROPERTY()
 	TArray<TSubclassOf<UFlowAsset>> AllowedAssignedAssetClasses;
 
-	// All the classes disallowed to be used as assets on this subgraph node
+	/* All the classes disallowed to be used as assets on this subgraph node. */
 	UPROPERTY()
 	TArray<TSubclassOf<UFlowAsset>> DeniedAssignedAssetClasses;
 #endif
@@ -101,5 +98,5 @@ private:
 	void SubscribeToAssetChanges();
 #endif
 
-	static const FName INPIN_AssetParams;
+	static const FName AssetParams_MemberName;
 };

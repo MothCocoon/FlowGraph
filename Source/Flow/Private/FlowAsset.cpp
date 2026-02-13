@@ -1193,24 +1193,23 @@ void UFlowAsset::TriggerCustomOutput(const FName& EventName)
 
 void UFlowAsset::TriggerInput(const FGuid& NodeGuid, const FName& PinName, const FConnectedPin& FromPin)
 {
-	if (ShouldDeferTriggersForDebugger())
+	if (FFlowExecutionGate::IsHalted())
 	{
+		// Halt always takes precedence for debugger correctness
 		EnqueueDeferredTrigger(NodeGuid, PinName, FromPin);
 	}
 	else if (ShouldUseStandardDeferTriggers())
 	{
-		// Defer only if we have an open top scope
+		// Defer only if we have an open the top scope
 		if (!DeferredTransitionScopes.IsEmpty() && DeferredTransitionScopes.Top()->IsOpen())
 		{
 			EnqueueDeferredTrigger(NodeGuid, PinName, FromPin);
 		}
 		else
 		{
-			const TSharedPtr<FFlowDeferredTransitionScope> CurScope = PushDeferredTransitionScope();
-
+			const TSharedPtr<FFlowDeferredTransitionScope> CurentScope = PushDeferredTransitionScope();
 			TriggerInputDirect(NodeGuid, PinName, FromPin);
-
-			PopDeferredTransitionScope(CurScope);
+			PopDeferredTransitionScope(CurentScope);
 		}
 	}
 	else
@@ -1233,15 +1232,9 @@ void UFlowAsset::TriggerInputDirect(const FGuid& NodeGuid, const FName& PinName,
 	}
 }
 
-bool UFlowAsset::ShouldDeferTriggersForDebugger() const
-{
-	// Halt always takes precedence for debugger correctness
-	return FFlowExecutionGate::IsHalted();
-}
-
 bool UFlowAsset::ShouldUseStandardDeferTriggers() const
 {
-	return UFlowSettings::Get()->bDeferTriggeredOutputsWhileTriggering;
+	return GetDefault<UFlowSettings>()->bDeferTriggeredOutputsWhileTriggering;
 }
 
 TSharedPtr<FFlowDeferredTransitionScope> UFlowAsset::PushDeferredTransitionScope()

@@ -24,17 +24,19 @@ void UFlowNode_Reroute::ExecuteInput(const FName& PinName)
 void UFlowNode_Reroute::ConfigureInputPin(const UFlowNode& ConnectedNode, const FEdGraphPinType& EdGraphPinType)
 {
 	FFlowPin* InputPin = FindInputPinByName(UFlowNode::DefaultInputPin.PinName);
-	check(InputPin);
-
-	InputPin->ConfigureFromEdGraphPin(EdGraphPinType);
+	if (ensure(InputPin))
+	{
+		InputPin->ConfigureFromEdGraphPin(EdGraphPinType);
+	}
 }
 
 void UFlowNode_Reroute::ConfigureOutputPin(const UFlowNode& ConnectedNode, const FEdGraphPinType& EdGraphPinType)
 {
 	FFlowPin* OutputPin = FindOutputPinByName(UFlowNode::DefaultOutputPin.PinName);
-	check(OutputPin);
-
-	OutputPin->ConfigureFromEdGraphPin(EdGraphPinType);
+	if (ensure(OutputPin))
+	{
+		OutputPin->ConfigureFromEdGraphPin(EdGraphPinType);
+	}
 }
 #endif
 
@@ -53,11 +55,10 @@ FFlowDataPinResult UFlowNode_Reroute::TrySupplyDataPin(FName PinName) const
 		return FFlowDataPinResult(EFlowDataPinResolveResult::FailedNotConnected);
 	}
 
-	UFlowNode* ConnectedFlowNodeSupplier = GetFlowAsset()->GetNode(FoundGuid);
+	const UFlowNode* ConnectedFlowNodeSupplier = GetFlowAsset()->GetNode(FoundGuid);
 	if (!IsValid(ConnectedFlowNodeSupplier))
 	{
 		checkf(IsValid(ConnectedFlowNodeSupplier), TEXT("This node should be valid if IsInputConnected returned true"));
-
 		return FFlowDataPinResult(EFlowDataPinResolveResult::FailedNotConnected);
 	}
 

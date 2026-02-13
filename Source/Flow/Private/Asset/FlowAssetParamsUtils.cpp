@@ -130,10 +130,7 @@ bool FFlowAssetParamsUtils::ArePropertiesEqual(
 	return A.DataPinValue == B.DataPinValue;
 }
 
-UFlowAssetParams* FFlowAssetParamsUtils::CreateChildParamsAsset(
-	UFlowAssetParams& ParentParams,
-	bool bShowDialogs,
-	FText* OutOptionalFailureReason)
+UFlowAssetParams* FFlowAssetParamsUtils::CreateChildParamsAsset(UFlowAssetParams& ParentParams, const bool bShowDialogs, FText* OutOptionalFailureReason)
 {
 	if (!IsValid(&ParentParams))
 	{
@@ -145,7 +142,7 @@ UFlowAssetParams* FFlowAssetParamsUtils::CreateChildParamsAsset(
 		return nullptr;
 	}
 
-	FAssetToolsModule& AssetToolsModule = FModuleManager::LoadModuleChecked<FAssetToolsModule>("AssetTools");
+	const FAssetToolsModule& AssetToolsModule = FModuleManager::LoadModuleChecked<FAssetToolsModule>("AssetTools");
 
 	const FString PackagePath = FPackageName::GetLongPackagePath(ParentParams.GetPackage()->GetPathName());
 	const FString BaseAssetName = ParentParams.GetName();
@@ -233,18 +230,18 @@ UFlowAssetParams* FFlowAssetParamsUtils::CreateChildParamsAsset(
 
 	// Register + sync to Content Browser
 	{
-		FAssetRegistryModule& AssetRegistryModule = FModuleManager::LoadModuleChecked<FAssetRegistryModule>("AssetRegistry");
+		const FAssetRegistryModule& AssetRegistryModule = FModuleManager::LoadModuleChecked<FAssetRegistryModule>("AssetRegistry");
 		AssetRegistryModule.Get().AssetCreated(NewParams);
 
-		FContentBrowserModule& ContentBrowserModule = FModuleManager::LoadModuleChecked<FContentBrowserModule>("ContentBrowser");
-		TArray<UObject*> AssetsToSync = { NewParams };
+		const FContentBrowserModule& ContentBrowserModule = FModuleManager::LoadModuleChecked<FContentBrowserModule>("ContentBrowser");
+		const TArray<UObject*> AssetsToSync = { NewParams };
 		ContentBrowserModule.Get().SyncBrowserToAssets(AssetsToSync, true);
 	}
 
 	return NewParams;
 }
 
-void FFlowAssetParamsUtils::FailCreateChild(const FText& Reason, bool bShowDialogs, FText* OutOptionalFailureReason)
+void FFlowAssetParamsUtils::FailCreateChild(const FText& Reason, const bool bShowDialogs, FText* OutOptionalFailureReason)
 {
 	if (OutOptionalFailureReason)
 	{

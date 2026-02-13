@@ -12,7 +12,7 @@ UCLASS(NotBlueprintable, meta = (DisplayName = "Reroute"))
 class FLOW_API UFlowNode_Reroute final : public UFlowNode
 {
 	GENERATED_UCLASS_BODY()
-	
+
 protected:
 	// IFlowCoreExecutableInterface
 	virtual void ExecuteInput(const FName& PinName) override;
@@ -27,5 +27,5 @@ public:
 	// For configuration from connecting pins via UFlowGraphNode_Reroute
 	void ConfigureInputPin(const UFlowNode& ConnectedNode, const FEdGraphPinType& EdGraphPinType);
 	void ConfigureOutputPin(const UFlowNode& ConnectedNode, const FEdGraphPinType& EdGraphPinType);
-#endif 
+#endif
 };
