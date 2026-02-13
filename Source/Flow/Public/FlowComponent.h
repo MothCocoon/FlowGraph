@@ -132,6 +132,7 @@ private:
 	FGameplayTagContainer NotifyTagsFromGraph;
 
 public:
+	UFUNCTION(BlueprintCallable, Category = "Flow")
 	virtual void NotifyFromGraph(const FGameplayTagContainer& NotifyTags, const EFlowNetMode NetMode = EFlowNetMode::Authority);
 
 private:
