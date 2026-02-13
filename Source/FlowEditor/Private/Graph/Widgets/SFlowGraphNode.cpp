@@ -29,6 +29,7 @@
 #include "SNodePanel.h"
 #include "Styling/SlateColor.h"
 #include "TutorialMetaData.h"
+#include "Styling/SlateStyleRegistry.h"
 #include "Widgets/Images/SImage.h"
 #include "Widgets/Input/SButton.h"
 #include "Widgets/Layout/SBorder.h"
@@ -168,6 +169,80 @@ void SFlowGraphNode::GetOverlayBrushes(bool bSelected, const FVector2f& WidgetSi
 			}	
 		}
 	}
+
+	// Node custom overlay icons
+	if (const UFlowNodeBase* FlowNodeBase = FlowGraphNode->GetFlowNodeBase())
+	{
+		FName CornerIconBrushName = NAME_None;
+		FName CornerIconStyleSetName = NAME_None;
+		if (FlowNodeBase->GetCornerIcon(CornerIconBrushName, CornerIconStyleSetName))
+		{
+			if (const FSlateBrush* CornerIconBrush = GetSlateBrush(CornerIconBrushName, CornerIconStyleSetName))
+			{
+				FOverlayBrushInfo CornerIconInfo;
+				CornerIconInfo.Brush = CornerIconBrush;
+				CornerIconInfo.OverlayOffset.X = WidgetSize.X - (CornerIconBrush->ImageSize.X * .5f);
+				CornerIconInfo.OverlayOffset.Y = -CornerIconBrush->ImageSize.Y * .5f;
+				Brushes.Add(CornerIconInfo);
+			}
+		}
+		
+		TArray<FFlowNodeOverlayIcon> OverlayIcons;
+		FlowNodeBase->GetOverlayIcons(OverlayIcons, WidgetSize);
+		for (const FFlowNodeOverlayIcon& OverlayIcon : OverlayIcons)
+		{
+			if (OverlayIcon.BrushName.IsNone())
+			{
+				continue;
+			}
+
+			if (const FSlateBrush* IconBrush = GetSlateBrush(OverlayIcon.BrushName, OverlayIcon.StyleSetName))
+			{
+				FOverlayBrushInfo IconBrushInfo;
+				IconBrushInfo.Brush = IconBrush;
+				IconBrushInfo.OverlayOffset = OverlayIcon.Offset;
+				Brushes.Add(IconBrushInfo);
+			}
+		}
+	}
+}
+
+const FSlateBrush* SFlowGraphNode::GetSlateBrush(const FName BrushName, const FName StyleSetName) const
+{
+	if (!StyleSetName.IsNone())
+	{
+		// If we have a specific Style Set Name try and find the brush there.
+		if (const ISlateStyle* AppStyle = FSlateStyleRegistry::FindSlateStyle(StyleSetName))
+		{
+			const FSlateBrush* SlateBrush = AppStyle->GetBrush(BrushName);
+			if (SlateBrush != nullptr && SlateBrush != AppStyle->GetDefaultBrush())
+			{
+				return SlateBrush;
+			}
+		}
+	}
+	else
+	{
+		// If we do not have a specific StyleSet Name then first search the default Flow Editor StyleSet
+		// and finally fallback to the default Unreal StyleSet.
+		
+		const FSlateBrush* SlateBrush = FFlowEditorStyle::Get()->GetBrush(BrushName);
+
+		if (SlateBrush != nullptr && SlateBrush != FFlowEditorStyle::Get()->GetDefaultBrush())
+		{
+			return SlateBrush;
+		}
+		else
+		{
+			SlateBrush = FAppStyle::GetBrush(BrushName);
+			if (SlateBrush != nullptr && SlateBrush != FAppStyle::GetDefaultBrush())
+			{
+				return SlateBrush;
+			}
+		}
+	}
+
+	return nullptr;
 }
 
 void SFlowGraphNode::GetPinBrush(const bool bLeftSide, const float WidgetWidth, const int32 PinIndex, const FFlowBreakpoint* Breakpoint, TArray<FOverlayBrushInfo>& Brushes) const

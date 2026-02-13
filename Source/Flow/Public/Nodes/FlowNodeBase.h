@@ -29,6 +29,36 @@ struct FFlowPinType;
 DECLARE_DELEGATE(FFlowNodeEvent);
 #endif
 
+/**
+ * Describes an overlay icon to display on a flow node in the editor.
+ */
+USTRUCT()
+struct FLOW_API FFlowNodeOverlayIcon
+{
+	GENERATED_BODY()
+
+	FFlowNodeOverlayIcon() = default;
+
+	FFlowNodeOverlayIcon(const FName& InBrushName, const FVector2D& InOffset = FVector2D::ZeroVector, const FName& InStyleSetName = NAME_None)
+		: BrushName(InBrushName)
+		, Offset(InOffset)
+		, StyleSetName(InStyleSetName)
+	{
+	}
+
+	/** Name of the brush to use for the icon */
+	UPROPERTY()
+	FName BrushName = NAME_None;
+	
+	/** Offset from the top-left corner of the node (position X moves right, positive Y moves down) */
+	UPROPERTY()
+	FVector2D Offset = FVector2D::ZeroVector;
+
+	/** Name of the StyleSet that contains your brush. If left empty Flow will first search the default Flow StyleSet and then the default Unreal StyleSet */
+	UPROPERTY()
+	FName StyleSetName = NAME_None;
+};
+
 typedef TFunction<EFlowForEachAddOnFunctionReturnValue(const UFlowNodeAddOn&)> FConstFlowNodeAddOnFunction;
 typedef TFunction<EFlowForEachAddOnFunctionReturnValue(UFlowNodeAddOn&)> FFlowNodeAddOnFunction;
 
@@ -419,6 +449,24 @@ public:
 
 	FText GetGeneratedDisplayName() const;
 
+
+	/**
+	 * Returns overlay icons to display on this node instance in the editor.
+	 * Icons are positioned relative to the top-left corner of the node.
+	 * @param OutOverlayIcons Brush and positioning details of each icon to overlay on the node.
+	 * @param WidgetSize The size of the Node in the editor. Useful for determining offset position values for each overlay icon.
+	 */
+	virtual void GetOverlayIcons(TArray<FFlowNodeOverlayIcon>& OutOverlayIcons, const FVector2f& WidgetSize) const {};
+
+	/**
+	 * Gets details to draw an optional corner icon on the node.
+	 * If this function returns true and valid Brush details are given then the corresponding icon will be displayed centered on the top-right of the node.
+	 * @param OutBrushName The Brush name of the icon to display.
+	 * @param OutStyleSetName The StyleSet name of the icon to display. If NAME_None is set we will first search the default Flow StyleSet and then the default Unreal StyleSet.
+	 * @return Returns true if the Node wants to display an icon in the top-right corner.
+	 */
+	virtual bool GetCornerIcon(FName& OutBrushName, FName& OutStyleSetName) const { return false; }
+	
 protected:
 	void EnsureNodeDisplayStyle();
 #endif // WITH_EDITOR
