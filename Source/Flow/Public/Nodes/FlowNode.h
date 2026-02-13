@@ -85,7 +85,7 @@ public:
 	}
 
 public:
-	virtual bool CanFinishGraph() const { return false; }
+	virtual bool CanFinishGraph() const { return K2_CanFinishGraph(); }
 
 protected:
 	UPROPERTY(EditDefaultsOnly, Category = "FlowNode")
@@ -154,6 +154,9 @@ public:
 #endif
 
 protected:
+	UFUNCTION(BlueprintImplementableEvent, Category = "FlowNode", meta = (DisplayName = "Can Finish Graph"))
+	bool K2_CanFinishGraph() const;
+	
 	UFUNCTION(BlueprintImplementableEvent, Category = "FlowNode", meta = (DisplayName = "Can User Add Input"))
 	bool K2_CanUserAddInput() const;
 
