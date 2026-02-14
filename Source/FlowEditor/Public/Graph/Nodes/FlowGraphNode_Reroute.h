@@ -16,4 +16,6 @@ class FLOWEDITOR_API UFlowGraphNode_Reroute : public UFlowGraphNode
 	// --
 
 	virtual bool CanPlaceBreakpoints() const override;
+
+	void ConfigureRerouteNodeFromPinConnections(UEdGraphPin& InPin, UEdGraphPin &OutPin);
 };

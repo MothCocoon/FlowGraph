@@ -59,6 +59,15 @@ public:
 	static FNativeFlowAssetEvent OnInstancedTemplateRemoved;
 #endif
 
+public:
+	// Try to flush (and clear) all Deferred Trigger scopes
+	// (can fail to flush all if a FFlowExecutionGate causes a new halt)
+	bool TryFlushAllDeferredTriggerScopes();
+
+	// Clear (do not trigger) any remaining deferred transitions
+	// (for shutdown cases)
+	void ClearAllDeferredTriggerScopes();
+
 protected:
 	UPROPERTY()
 	TObjectPtr<UFlowSaveGame> LoadedSaveGame;

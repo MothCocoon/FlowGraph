@@ -39,7 +39,7 @@ public:
 
 	// Value resolution
 	FLOW_API virtual bool ResolveAndFormatPinValue(const UFlowNodeBase& Node, const FName& PinName, FFormatArgumentValue& OutValue) const;
-	FLOW_API virtual bool PopulateResult(const UObject& PropertyOwnerObject, const UFlowNode& Node, const FFlowPin& Pin, FFlowDataPinResult& OutResult) const;
+	FLOW_API virtual bool PopulateResult(const UObject& PropertyOwnerObject, const UFlowNode& Node, const FName& PropertyName, FFlowDataPinResult& OutResult) const;
 
 #if WITH_EDITOR
 	// Editor visualization

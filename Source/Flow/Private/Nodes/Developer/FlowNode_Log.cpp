@@ -33,7 +33,7 @@ void UFlowNode_Log::ExecuteInput(const FName& PinName)
 	const EFlowDataPinResolveResult MessageResult = TryResolveDataPinValue<FFlowPinType_String>(GET_MEMBER_NAME_CHECKED(ThisClass, Message), ResolvedMessage);
 
 	// #FlowDataPinLegacy - retire this backward compatibility when we remove legacy data pin support?  
-	FLOW_ASSERT_ENUM_MAX(EFlowDataPinResolveResult, 8);
+	FLOW_ASSERT_ENUM_MAX(EFlowDataPinResolveResult, 9);
 	if (MessageResult == EFlowDataPinResolveResult::FailedUnknownPin)
 	{
 		// Handle lookup of a FlowNode_Log that predated DataPins
@@ -82,19 +82,8 @@ void UFlowNode_Log::ExecuteInput(const FName& PinName)
 void UFlowNode_Log::PostEditChangeChainProperty(FPropertyChangedChainEvent& PropertyChainEvent)
 {
 	const auto& Property = PropertyChainEvent.PropertyChain.GetActiveMemberNode()->GetValue();
-
-	if (Property->GetFName() == GET_MEMBER_NAME_CHECKED(ThisClass, NamedProperties))
-	{
-		for (FFlowNamedDataPinProperty& NamedProperty : NamedProperties)
-		{
-			const UScriptStruct* ScriptStruct = NamedProperty.DataPinValue.GetScriptStruct();
-			if (IsValid(ScriptStruct) && ScriptStruct->IsChildOf<FFlowDataPinValue>())
-			{
-				FFlowDataPinValue& Value = NamedProperty.DataPinValue.GetMutable<FFlowDataPinValue>();
-				Value.bIsInputPin = true;
-			}
-		}
-	}
+	constexpr bool bIsInput = true;
+	OnPostEditEnsureAllNamedPropertiesPinDirection(*Property, bIsInput);
 
 	Super::PostEditChangeChainProperty(PropertyChainEvent);
 }

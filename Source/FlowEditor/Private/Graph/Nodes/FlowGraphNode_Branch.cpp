@@ -8,7 +8,7 @@
 UFlowGraphNode_Branch::UFlowGraphNode_Branch(const FObjectInitializer& ObjectInitializer)
 	: Super(ObjectInitializer)
 {
-	AssignedNodeClasses = {UFlowNode_Branch::StaticClass()};
+	AssignedNodeClasses = {UFlowNode_Branch::StaticClass() };
 }
 
 FSlateIcon UFlowGraphNode_Branch::GetIconAndTint(FLinearColor& OutColor) const

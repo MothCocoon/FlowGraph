@@ -20,7 +20,7 @@ UFlowNode_FormatText::UFlowNode_FormatText(const FObjectInitializer& ObjectIniti
 	OutputPins.Add(FFlowPin(OUTPIN_TextOutput, FFlowPinType_Text::GetPinTypeNameStatic()));
 }
 
-FFlowDataPinResult UFlowNode_FormatText::TrySupplyDataPin_Implementation(FName PinName) const
+FFlowDataPinResult UFlowNode_FormatText::TrySupplyDataPin(FName PinName) const
 {
 	if (PinName == OUTPIN_TextOutput)
 	{
@@ -37,7 +37,7 @@ FFlowDataPinResult UFlowNode_FormatText::TrySupplyDataPin_Implementation(FName P
 		}
 	}
 
-	return Super::TrySupplyDataPin_Implementation(PinName);
+	return Super::TrySupplyDataPin(PinName);
 }
 
 EFlowDataPinResolveResult UFlowNode_FormatText::TryResolveFormatText(const FName& PinName, FText& OutFormattedText) const
@@ -55,6 +55,14 @@ EFlowDataPinResolveResult UFlowNode_FormatText::TryResolveFormatText(const FName
 }
 
 #if WITH_EDITOR
+void UFlowNode_FormatText::PostEditChangeChainProperty(FPropertyChangedChainEvent& PropertyChainEvent)
+{
+	const auto& Property = PropertyChainEvent.PropertyChain.GetActiveMemberNode()->GetValue();
+	constexpr bool bIsInput = true;
+	OnPostEditEnsureAllNamedPropertiesPinDirection(*Property, bIsInput);
+
+	Super::PostEditChangeChainProperty(PropertyChainEvent);
+}
 
 void UFlowNode_FormatText::UpdateNodeConfigText_Implementation()
 {

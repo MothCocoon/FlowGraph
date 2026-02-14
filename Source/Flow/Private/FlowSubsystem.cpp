@@ -7,6 +7,7 @@
 #include "FlowLogChannels.h"
 #include "FlowSave.h"
 #include "FlowSettings.h"
+#include "Interfaces/FlowExecutionGate.h"
 #include "Nodes/Graph/FlowNode_SubGraph.h"
 
 #include "Engine/GameInstance.h"
@@ -156,6 +157,63 @@ void UFlowSubsystem::FinishAllRootFlows(UObject* Owner, const EFlowFinishPolicy 
 	{
 		RootInstances.Remove(InstanceToFinish);
 		InstanceToFinish->FinishFlow(FinishPolicy);
+	}
+}
+
+bool UFlowSubsystem::TryFlushAllDeferredTriggerScopes()
+{
+	// Flush deferred triggers on all active runtime instances.
+	// Flush order follows InstancedTemplates iteration + per-template ActiveInstances.
+	// This provides reasonable per-asset FIFO but is not a strict global FIFO across assets.
+	// A more precise global queue could be implemented later if cross-asset ordering becomes critical.
+	const TArray<UFlowAsset*> CapturedInstancedTemplates = InstancedTemplates;
+	for (UFlowAsset* Template : CapturedInstancedTemplates)
+	{
+		if (!IsValid(Template))
+		{
+			continue;
+		}
+
+		for (UFlowAsset* Instance : Template->GetActiveInstances())
+		{
+			if (FFlowExecutionGate::IsHalted())
+			{
+				break;
+			}
+
+			if (IsValid(Instance))
+			{
+				const bool bFlushed = Instance->TryFlushAllDeferredTriggerScopes();
+
+				// The only case where we allow a flush to stop before completing
+				// is if we hit an execution gate halt
+				check(bFlushed || FFlowExecutionGate::IsHalted());
+			}
+		}
+	}
+
+	// The only case where we allow a flush to stop before completing
+	// is if we hit an execution gate halt
+	const bool bCompletedFlushAll = !FFlowExecutionGate::IsHalted();
+	return bCompletedFlushAll;
+}
+
+void UFlowSubsystem::ClearAllDeferredTriggerScopes()
+{
+	for (UFlowAsset* Template : InstancedTemplates)
+	{
+		if (!IsValid(Template))
+		{
+			continue;
+		}
+
+		for (UFlowAsset* Instance : Template->GetActiveInstances())
+		{
+			if (IsValid(Instance))
+			{
+				Instance->ClearAllDeferredTriggerScopes();
+			}
+		}
 	}
 }
 

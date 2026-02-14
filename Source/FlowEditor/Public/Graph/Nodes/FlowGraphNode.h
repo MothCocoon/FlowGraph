@@ -31,7 +31,7 @@ class FLOWEDITOR_API UFlowGraphNode : public UEdGraphNode
 //////////////////////////////////////////////////////////////////////////
 // Flow node
 
-private:
+protected:
 	// The FlowNode or FlowNodeAddOn runtime instance that is being edited by this UFlowGraphNode
 	UPROPERTY(Instanced)
 	TObjectPtr<UFlowNodeBase> NodeInstance;

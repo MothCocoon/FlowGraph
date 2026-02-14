@@ -88,6 +88,9 @@ enum class EFlowDataPinResolveResult : uint8
 	// Tried to extract with a null FlowNodeBase
 	FailedNullFlowNodeBase,
 
+	// The pin is not connected to a node (used in reroutes)
+	FailedNotConnected,
+
 	// Failed with an error message (see the error log)
 	FailedWithError,
 

@@ -417,7 +417,7 @@ void UFlowNode::SetAutoOutputDataPins(const TArray<FFlowPin>& AutoOutputPins)
 
 #endif // WITH_EDITOR
 
-FFlowDataPinResult UFlowNode::TrySupplyDataPin_Implementation(FName PinName) const
+FFlowDataPinResult UFlowNode::TrySupplyDataPin(FName PinName) const
 {
 	const FFlowPin* FlowPin = FindOutputPinByName(PinName);
 	if (!FlowPin)
@@ -483,9 +483,20 @@ bool UFlowNode::TryFindPropertyByPinName_Static(
 
 void UFlowNode::GatherPotentialPropertyOwnersForDataPins(TArray<const UObject*>& InOutOwners) const
 {
-	// TODO (gtaylor) Also add any AddOns that can supply data pins, when/if we want to add AddOn data pin supply support
+	check(!InOutOwners.Contains(this));
 
-	InOutOwners.AddUnique(this);
+	InOutOwners.Add(this);
+
+	// Give all of the AddOns a chance to supply data pins as well
+	(void) ForEachAddOnConst(
+		[&](const UFlowNodeAddOn& AddOn)
+		{
+			check(!InOutOwners.Contains(&AddOn));
+
+			InOutOwners.Add(&AddOn);
+
+			return EFlowForEachAddOnFunctionReturnValue::Continue;
+		});
 }
 
 bool UFlowNode::TryGatherPropertyOwnersAndPopulateResult(
@@ -494,21 +505,65 @@ bool UFlowNode::TryGatherPropertyOwnersAndPopulateResult(
 	const FFlowPin& FlowPin,
 	FFlowDataPinResult& OutSuppliedResult) const
 {
-	// Gather all of the potential providers for this DataPin
+	// Gather all potential UObject instances that might own properties
+	// mapped to data pins on this node (usually the node itself + any referenced objects)
 	TArray<const UObject*> PropertyOwnerObjects;
 	GatherPotentialPropertyOwnersForDataPins(PropertyOwnerObjects);
 
-	// Look through all of the potential providers
-	for (const UObject* PropertyOwnerObject : PropertyOwnerObjects)
+	// Early out if we have no possible owners at all
+	if (PropertyOwnerObjects.IsEmpty())
 	{
-		const UFlowNode& FlowNodeThis = *this;
+		LogError(FString::Printf(TEXT("No property owners available for data pin '%s' on node %s"),
+			*PinName.ToString(), *GetName()), EFlowOnScreenMessageType::Temporary);
 
-		checkf(IsValid(PropertyOwnerObject), TEXT("Every UObject provided by GatherPotentialPropertyOwnersForDataPins must be valid"));
+		return false;
+	}
 
-		if (DataPinType.PopulateResult(*PropertyOwnerObject, FlowNodeThis, FlowPin, OutSuppliedResult))
+	const UObject* PropertyOwnerObject = nullptr;
+	FName PropertyNameToLookup;
+
+	// Look up explicit mapping (used for non-default owners or disambiguated pins)
+	if (const FFlowPinPropertySource* FlowPropertySource = MapDataPinNameToPropertySource.Find(PinName))
+	{
+		const int32 OwnerIndex = FlowPropertySource->PropertyOwnerIndex;
+
+		if (PropertyOwnerObjects.IsValidIndex(OwnerIndex))
 		{
-			return true;
+			PropertyOwnerObject = PropertyOwnerObjects[OwnerIndex];
+			PropertyNameToLookup = FlowPropertySource->PropertyName;
 		}
+		else
+		{
+			// Critical: mapped index is out of bounds → configuration or generation bug
+			LogError(FString::Printf(TEXT("Invalid property owner index %d for pin '%s' on node %s (max %d owners)"),
+				OwnerIndex, *PinName.ToString(), *GetName(), PropertyOwnerObjects.Num() - 1),
+				EFlowOnScreenMessageType::Temporary);
+
+			return false;
+		}
+	}
+	else 
+	{
+		check(!PropertyOwnerObjects.IsEmpty());
+
+		// Fallback for unmapped pins → assume default owner (index 0) + pin name == property name
+		PropertyOwnerObject = PropertyOwnerObjects[0];
+		PropertyNameToLookup = PinName;
+	}
+
+	if (!PropertyOwnerObject)
+	{
+		LogError(FString::Printf(TEXT("Failed to resolve property owner for data pin '%s' on node %s"),
+			*PinName.ToString(), *GetName()), EFlowOnScreenMessageType::Temporary);
+
+		return false;
+	}
+
+	// Populate the value for the pin on the its owner object
+	const UFlowNode& FlowNodeThis = *this;
+	if (DataPinType.PopulateResult(*PropertyOwnerObject, FlowNodeThis, PropertyNameToLookup, OutSuppliedResult))
+	{
+		return true;
 	}
 
 	return false;
@@ -530,15 +585,10 @@ bool UFlowNode::TryGetFlowDataPinSupplierDatasForPinName(const FName& PinName, T
 
 	// Potentially add this current node as a default value supplier
 	// (this will be pushed down the priority queue as higher priority suppliers are found)
-	if (ThisAsPinValueSupplier && IFlowDataPinValueSupplierInterface::Execute_CanSupplyDataPinValues(this))
-	{
-		FFlowPinValueSupplierData NewPinValueSupplier;
-		NewPinValueSupplier.PinValueSupplier = ThisAsPinValueSupplier;
-		NewPinValueSupplier.SupplierPinName = PinName;
-
-		// Put this node as the backup supplier
-		InOutPinValueSupplierDatas.Add(NewPinValueSupplier);
-	}
+	FFlowPinValueSupplierData NewPinValueSupplier;
+	NewPinValueSupplier.PinValueSupplier = ThisAsPinValueSupplier;
+	NewPinValueSupplier.SupplierPinName = PinName;
+	TryAddSupplierDataToArray(NewPinValueSupplier, InOutPinValueSupplierDatas);
 
 	// If the pin is connected, try to add the connected node as the priority supplier
 	FFlowPinValueSupplierData ConnectedPinValueSupplier;
@@ -550,28 +600,36 @@ bool UFlowNode::TryGetFlowDataPinSupplierDatasForPinName(const FName& PinName, T
 		{
 			const UFlowNode* SupplierFlowNode = FlowAsset->GetNode(ConnectedNodeGuid);
 
-			// If the connected node can supply data pin values, insert it into the top of the priority queue
-			const IFlowDataPinValueSupplierInterface* SupplierFlowNodeAsInterface = Cast<IFlowDataPinValueSupplierInterface>(SupplierFlowNode);
-			if (SupplierFlowNodeAsInterface && IFlowDataPinValueSupplierInterface::Execute_CanSupplyDataPinValues(SupplierFlowNode))
+			if (IsValid(SupplierFlowNode))
 			{
-				ConnectedPinValueSupplier.PinValueSupplier = SupplierFlowNodeAsInterface;
+				ConnectedPinValueSupplier.PinValueSupplier = Cast<IFlowDataPinValueSupplierInterface>(SupplierFlowNode);
 
-				InOutPinValueSupplierDatas.Add(ConnectedPinValueSupplier);
-			}
-
-			// Exception case for nodes with external suppliers, recurse here to crawl further 
-			// to the external supplier's connected pin as our most preferred source (see block comment above).
-			if (const IFlowNodeWithExternalDataPinSupplierInterface* HasExternalPinSupplierInterface = Cast<IFlowNodeWithExternalDataPinSupplierInterface>(SupplierFlowNode))
-			{
-				if (const UFlowNode* ExternalDataPinSupplierFlowNode = Cast<UFlowNode>(HasExternalPinSupplierInterface->GetExternalDataPinSupplier()))
-				{
-					return ExternalDataPinSupplierFlowNode->TryGetFlowDataPinSupplierDatasForPinName(ConnectedPinValueSupplier.SupplierPinName, InOutPinValueSupplierDatas);
-				}
+				TryAddSupplierDataToArray(ConnectedPinValueSupplier, InOutPinValueSupplierDatas);
 			}
 		}
 	}
 
 	return !InOutPinValueSupplierDatas.IsEmpty();
+}
+
+void UFlowNode::TryAddSupplierDataToArray(FFlowPinValueSupplierData& InOutSupplierData, TFlowPinValueSupplierDataArray& InOutPinValueSupplierDatas) const
+{
+	// If the connected node can supply data pin values, insert it into the top of the priority queue
+	const UFlowNode* SupplierFlowNode = CastChecked<UFlowNode>(InOutSupplierData.PinValueSupplier);
+	if (InOutSupplierData.PinValueSupplier && SupplierFlowNode->CanSupplyDataPinValues())
+	{
+		InOutPinValueSupplierDatas.Add(InOutSupplierData);
+	}
+
+	// Exception case for nodes with external suppliers, recurse here to crawl further 
+	// to the external supplier's connected pin as our most preferred source (see block comment above).
+	if (const IFlowNodeWithExternalDataPinSupplierInterface* HasExternalPinSupplierInterface = Cast<IFlowNodeWithExternalDataPinSupplierInterface>(SupplierFlowNode))
+	{
+		if (const UFlowNode* ExternalDataPinSupplierFlowNode = Cast<UFlowNode>(HasExternalPinSupplierInterface->GetExternalDataPinSupplier()))
+		{
+			ExternalDataPinSupplierFlowNode->TryGetFlowDataPinSupplierDatasForPinName(InOutSupplierData.SupplierPinName, InOutPinValueSupplierDatas);
+		}
+	}
 }
 
 #if WITH_EDITOR
@@ -582,11 +640,13 @@ void UFlowNode::AutoGenerateDataPins(FFlowAutoDataPinsWorkingData& InOutWorkingD
 	GatherPotentialPropertyOwnersForDataPins(PropertyOwnerObjects);
 
 	// GenerateDataPins for all of the potential providers
-	for (const UObject* PropertyOwnerObject : PropertyOwnerObjects)
+	for (int32 PropertyOwnerIndex = 0; PropertyOwnerIndex < PropertyOwnerObjects.Num(); ++PropertyOwnerIndex)
 	{
+		const UObject* PropertyOwnerObject = PropertyOwnerObjects[PropertyOwnerIndex];
+
 		checkf(IsValid(PropertyOwnerObject), TEXT("Every UObject provided by GatherPotentialPropertyOwnersForDataPins must be valid"));
 
-		InOutWorkingData.AddFlowDataPinsForClassProperties(*PropertyOwnerObject);
+		InOutWorkingData.AddFlowDataPinsForClassProperties(*PropertyOwnerObject, PropertyOwnerIndex);
 	}
 }
 #endif
@@ -712,7 +772,7 @@ FFlowPin* UFlowNode::FindOutputPinByName(const FName& PinName)
 	return nullptr;
 }
 
-bool UFlowNode::IsInputConnected(const FFlowPin& FlowPin) const
+bool UFlowNode::IsInputConnected(const FFlowPin& FlowPin, FGuid* FoundGuid, FName* OutConnectedPinName) const
 {
 	if (!InputPins.Contains(FlowPin.PinName))
 	{
@@ -723,15 +783,15 @@ bool UFlowNode::IsInputConnected(const FFlowPin& FlowPin) const
 	{
 		// We don't cache the input exec pins for fast lookup in Connections, so use the slow path for them:
 
-		return FindConnectedNodeForPinSlow(FlowPin.PinName);
+		return FindConnectedNodeForPinSlow(FlowPin.PinName, FoundGuid, OutConnectedPinName);
 	}
 	else
 	{
-		return FindConnectedNodeForPinFast(FlowPin.PinName);
+		return FindConnectedNodeForPinFast(FlowPin.PinName, FoundGuid, OutConnectedPinName);
 	}
 }
 
-bool UFlowNode::IsOutputConnected(const FFlowPin& FlowPin) const
+bool UFlowNode::IsOutputConnected(const FFlowPin& FlowPin, FGuid* FirstFoundGuid, FName* OutFirstConnectedPinName) const
 {
 	if (!OutputPins.Contains(FlowPin.PinName))
 	{
@@ -740,13 +800,13 @@ bool UFlowNode::IsOutputConnected(const FFlowPin& FlowPin) const
 
 	if (FlowPin.IsExecPin())
 	{
-		return FindConnectedNodeForPinFast(FlowPin.PinName);
+		return FindConnectedNodeForPinFast(FlowPin.PinName, FirstFoundGuid, OutFirstConnectedPinName);
 	}
 	else
 	{
 		// We don't cache the input data pins for fast lookup in Connections, so use the slow path for them:
 
-		return FindConnectedNodeForPinSlow(FlowPin.PinName);
+		return FindConnectedNodeForPinSlow(FlowPin.PinName, FirstFoundGuid, OutFirstConnectedPinName);
 	}
 }
 

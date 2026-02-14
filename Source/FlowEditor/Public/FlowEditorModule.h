@@ -30,6 +30,7 @@ private:
 	TArray<TSharedRef<IAssetTypeActions>> RegisteredAssetActions;
 	TSet<FName> CustomClassLayouts;
 	TSet<FName> CustomStructLayouts;
+
 	bool bIsRegisteredForAssetChanges = false;
 
 public:

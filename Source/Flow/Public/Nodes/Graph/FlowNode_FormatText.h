@@ -22,18 +22,22 @@ private:
 	UPROPERTY(EditAnywhere, Category = "Flow", meta = (DefaultForInputFlowPin, FlowPinType = Text))
 	FText FormatText;
 
-protected:
-
 #if WITH_EDITOR
 public:
+	// UObject
+	virtual void PostEditChangeChainProperty(FPropertyChangedChainEvent& PropertyChangedEvent) override;
+	// --
+
 	virtual void UpdateNodeConfigText_Implementation() override;
 #endif
+
+protected:
 
 	EFlowDataPinResolveResult TryResolveFormatText(const FName& PinName, FText& OutFormattedText) const;
 
 public:
 	// IFlowDataPinValueSupplierInterface
-	virtual FFlowDataPinResult TrySupplyDataPin_Implementation(FName PinName) const override;
+	virtual FFlowDataPinResult TrySupplyDataPin(FName PinName) const override;
 	// --
 
 	static const FName OUTPIN_TextOutput;

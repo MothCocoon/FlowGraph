@@ -16,10 +16,30 @@
 #include UE_INLINE_GENERATED_CPP_BY_NAME(FlowDebuggerSubsystem)
 
 UFlowDebuggerSubsystem::UFlowDebuggerSubsystem()
-	: bPausedAtFlowBreakpoint(false)
 {
 	UFlowSubsystem::OnInstancedTemplateAdded.BindUObject(this, &ThisClass::OnInstancedTemplateAdded);
 	UFlowSubsystem::OnInstancedTemplateRemoved.BindUObject(this, &ThisClass::OnInstancedTemplateRemoved);
+}
+
+void UFlowDebuggerSubsystem::Initialize(FSubsystemCollectionBase& Collection)
+{
+	Super::Initialize(Collection);
+
+	FFlowExecutionGate::SetGate(this);
+
+	SetFlowDebuggerState(EFlowDebuggerState::InitialRunning, nullptr);
+}
+
+void UFlowDebuggerSubsystem::Deinitialize()
+{
+	if (FFlowExecutionGate::GetGate() == this)
+	{
+		FFlowExecutionGate::SetGate(nullptr);
+	}
+
+	SetFlowDebuggerState(EFlowDebuggerState::Invalid, nullptr);
+
+	Super::Deinitialize();
 }
 
 bool UFlowDebuggerSubsystem::ShouldCreateSubsystem(UObject* Outer) const
@@ -37,26 +57,29 @@ bool UFlowDebuggerSubsystem::ShouldCreateSubsystem(UObject* Outer) const
 
 void UFlowDebuggerSubsystem::OnInstancedTemplateAdded(UFlowAsset* AssetTemplate)
 {
+	check(IsValid(AssetTemplate));
+
 	AssetTemplate->OnPinTriggered.BindUObject(this, &ThisClass::OnPinTriggered);
 }
 
-void UFlowDebuggerSubsystem::OnInstancedTemplateRemoved(UFlowAsset* AssetTemplate) const
+void UFlowDebuggerSubsystem::OnInstancedTemplateRemoved(UFlowAsset* AssetTemplate)
 {
+	check(IsValid(AssetTemplate));
+
 	AssetTemplate->OnPinTriggered.Unbind();
+
+	OnDebuggerFlowAssetTemplateRemoved.Broadcast(*AssetTemplate);
 }
 
-void UFlowDebuggerSubsystem::OnPinTriggered(const UFlowNode* Node, const FName& PinName)
+void UFlowDebuggerSubsystem::OnPinTriggered(UFlowNode* FlowNode, const FName& PinName)
 {
-	if (bPausedAtFlowBreakpoint)
+	if (FindBreakpoint(FlowNode->NodeGuid, PinName))
 	{
-		return;
+		MarkAsHit(FlowNode, PinName);
 	}
 
-	if (!TryMarkAsHit(Node, PinName))
-	{
-		// Node breakpoints waits on any pin triggered, but check it only if there is no hit pin breakpoint
-		TryMarkAsHit(Node);
-	}
+	// Node breakpoints waits on any pin triggered
+	MarkAsHit(FlowNode);
 }
 
 void UFlowDebuggerSubsystem::AddBreakpoint(const FGuid& NodeGuid)
@@ -158,13 +181,21 @@ void UFlowDebuggerSubsystem::RemoveObsoletePinBreakpoints(const UEdGraphNode* No
 			PinNames.Emplace(Pin->PinName);
 		}
 
-		for (TPair<FName, FFlowBreakpoint>& PinBreakpoint : NodeBreakpoint->PinBreakpoints)
+		TArray<FName> PinsToRemove;
+		PinsToRemove.Reserve(NodeBreakpoint->PinBreakpoints.Num());
+
+		for (const TPair<FName, FFlowBreakpoint>& PinBreakpoint : NodeBreakpoint->PinBreakpoints)
 		{
 			if (!PinNames.Contains(PinBreakpoint.Key))
 			{
-				NodeBreakpoint->PinBreakpoints.Remove(PinBreakpoint.Key);
-				bAnythingRemoved = true;
+				PinsToRemove.Add(PinBreakpoint.Key);
 			}
+		}
+
+		for (const FName& PinName : PinsToRemove)
+		{
+			NodeBreakpoint->PinBreakpoints.Remove(PinName);
+			bAnythingRemoved = true;
 		}
 
 		if (NodeBreakpoint->IsEmpty())
@@ -298,21 +329,44 @@ bool UFlowDebuggerSubsystem::IsBreakpointEnabled(const FGuid& NodeGuid, const FN
 	return false;
 }
 
-bool UFlowDebuggerSubsystem::HasAnyBreakpointsEnabled(const TWeakObjectPtr<UFlowAsset> FlowAsset)
+bool UFlowDebuggerSubsystem::HasAnyBreakpointsEnabled(const TWeakObjectPtr<UFlowAsset>& FlowAsset)
 {
-	UFlowDebuggerSettings* Settings = GetMutableDefault<UFlowDebuggerSettings>();
-	for (const TPair<FGuid, UFlowNode*>& Node : FlowAsset->GetNodes())
+	return HasAnyBreakpointsMatching(FlowAsset, true);
+}
+
+bool UFlowDebuggerSubsystem::HasAnyBreakpointsDisabled(const TWeakObjectPtr<UFlowAsset>& FlowAsset)
+{
+	return HasAnyBreakpointsMatching(FlowAsset, false);
+}
+
+bool UFlowDebuggerSubsystem::HasAnyBreakpointsMatching(const TWeakObjectPtr<UFlowAsset>& FlowAsset, bool bDesiresEnabled)
+{
+	if (!FlowAsset.IsValid())
 	{
-		if (FNodeBreakpoint* NodeBreakpoint = Settings->NodeBreakpoints.Find(Node.Key))
+		return false;
+	}
+
+	const UFlowDebuggerSettings* Settings = GetDefault<UFlowDebuggerSettings>();
+	if (!Settings)
+	{
+		return false;
+	}
+
+	for (const TPair<FGuid, UFlowNode*>& NodePair : FlowAsset->GetNodes())
+	{
+		if (const FNodeBreakpoint* NodeBreakpoint = Settings->NodeBreakpoints.Find(NodePair.Key))
 		{
-			if (NodeBreakpoint->Breakpoint.IsActive() && NodeBreakpoint->Breakpoint.IsEnabled())
+			// Node-level breakpoint must be active to count (matches original behavior)
+			if (NodeBreakpoint->Breakpoint.IsActive() &&
+				(NodeBreakpoint->Breakpoint.IsEnabled() == bDesiresEnabled))
 			{
 				return true;
 			}
 
-			for (auto& [Name, PinBreakpoint] : NodeBreakpoint->PinBreakpoints)
+			// Pin-level breakpoints
+			for (const auto& PinPair : NodeBreakpoint->PinBreakpoints)
 			{
-				if (PinBreakpoint.IsEnabled())
+				if (PinPair.Value.IsEnabled() == bDesiresEnabled)
 				{
 					return true;
 				}
@@ -323,111 +377,94 @@ bool UFlowDebuggerSubsystem::HasAnyBreakpointsEnabled(const TWeakObjectPtr<UFlow
 	return false;
 }
 
-bool UFlowDebuggerSubsystem::HasAnyBreakpointsDisabled(const TWeakObjectPtr<UFlowAsset> FlowAsset)
+void UFlowDebuggerSubsystem::ClearLastHitBreakpoint()
 {
-	UFlowDebuggerSettings* Settings = GetMutableDefault<UFlowDebuggerSettings>();
-	for (const TPair<FGuid, UFlowNode*>& Node : FlowAsset->GetNodes())
+	if (!LastHitNodeGuid.IsValid())
 	{
-		if (FNodeBreakpoint* NodeBreakpoint = Settings->NodeBreakpoints.Find(Node.Key))
-		{
-			if (NodeBreakpoint->Breakpoint.IsActive() && !NodeBreakpoint->Breakpoint.IsEnabled())
-			{
-				return true;
-			}
+		return;
+	}
 
-			for (auto& [Name, PinBreakpoint] : NodeBreakpoint->PinBreakpoints)
-			{
-				if (!PinBreakpoint.IsEnabled())
-				{
-					return true;
-				}
-			}
+	// Pin breakpoint "hit" state lives in the PinBreakpoints map, node breakpoint "hit" lives on NodeBreakpoint.Breakpoint.
+	if (!LastHitPinName.IsNone())
+	{
+		if (FFlowBreakpoint* PinBreakpoint = FindBreakpoint(LastHitNodeGuid, LastHitPinName))
+		{
+			PinBreakpoint->MarkAsHit(false);
+		}
+	}
+	else
+	{
+		if (FFlowBreakpoint* NodeBreakpoint = FindBreakpoint(LastHitNodeGuid))
+		{
+			NodeBreakpoint->MarkAsHit(false);
 		}
 	}
 
-	return false;
+	LastHitNodeGuid.Invalidate();
+	LastHitPinName = NAME_None;
 }
 
-bool UFlowDebuggerSubsystem::TryMarkAsHit(const UFlowNode* Node)
+void UFlowDebuggerSubsystem::MarkAsHit(const UFlowNode* FlowNode)
 {
-	if (FFlowBreakpoint* NodeBreakpoint = FindBreakpoint(Node->NodeGuid))
+	if (FFlowBreakpoint* NodeBreakpoint = FindBreakpoint(FlowNode->NodeGuid))
 	{
 		if (NodeBreakpoint->IsEnabled())
 		{
+			// Ensure only one breakpoint location is "hit" at a time.
+			ClearLastHitBreakpoint();
+
 			NodeBreakpoint->MarkAsHit(true);
-			PauseSession(Node);
-			return true;
+
+			LastHitNodeGuid = FlowNode->NodeGuid;
+			LastHitPinName = NAME_None;
+
+			OnDebuggerBreakpointHit.Broadcast(FlowNode);
+
+			PauseSession(*FlowNode->GetFlowAsset());
 		}
 	}
-
-	return false;
 }
 
-bool UFlowDebuggerSubsystem::TryMarkAsHit(const UFlowNode* Node, const FName& PinName)
+void UFlowDebuggerSubsystem::MarkAsHit(const UFlowNode* FlowNode, const FName& PinName)
 {
-	if (FFlowBreakpoint* PinBreakpoint = FindBreakpoint(Node->NodeGuid, PinName))
+	if (FFlowBreakpoint* PinBreakpoint = FindBreakpoint(FlowNode->NodeGuid, PinName))
 	{
 		if (PinBreakpoint->IsEnabled())
 		{
+			// Ensure only one breakpoint location is "hit" at a time.
+			ClearLastHitBreakpoint();
+
 			PinBreakpoint->MarkAsHit(true);
-			PauseSession(Node);
-			return true;
+
+			LastHitNodeGuid = FlowNode->NodeGuid;
+			LastHitPinName = PinName;
+
+			OnDebuggerBreakpointHit.Broadcast(FlowNode);
+
+			PauseSession(*FlowNode->GetFlowAsset());
 		}
 	}
-
-	return false;
 }
 
-void UFlowDebuggerSubsystem::PauseSession(const UFlowNode* Node)
+void UFlowDebuggerSubsystem::PauseSession(UFlowAsset& FlowAssetInstance)
 {
-	SetPause(true);
+	SetFlowDebuggerState(EFlowDebuggerState::Paused, &FlowAssetInstance);
 }
 
-void UFlowDebuggerSubsystem::ResumeSession()
+void UFlowDebuggerSubsystem::ResumeSession(UFlowAsset& FlowAssetInstance)
 {
-	SetPause(false);
+	SetFlowDebuggerState(EFlowDebuggerState::Resumed, &FlowAssetInstance);
 }
 
-void UFlowDebuggerSubsystem::SetPause(const bool bPause)
+void UFlowDebuggerSubsystem::StopSession()
 {
-	// experimental implementation, untested, shows intent for future development
-	// here be dragons: same as APlayerController::SetPause, but we allow debugger to pause on clients
-	if (const UWorld* World = GEngine->GetWorldFromContextObject(this, EGetWorldErrorMode::LogAndReturnNull))
-	{
-		if (const UGameInstance* GameInstance = World->GetGameInstance())
-		{
-			if (APlayerController* PlayerController = GameInstance->GetFirstLocalPlayerController())
-			{
-				if (AGameModeBase* const GameMode = GetWorld()->GetAuthGameMode())
-				{
-					const bool bCurrentPauseState = PlayerController->IsPaused();
-					if (bPause && !bCurrentPauseState)
-					{
-						GameMode->SetPause(PlayerController);
-
-						if (AWorldSettings* WorldSettings = PlayerController->GetWorldSettings())
-						{
-							WorldSettings->ForceNetUpdate();
-						}
-					}
-					else if (!bPause && bCurrentPauseState)
-					{
-						if (GameMode->ClearPause())
-						{
-							ClearHitBreakpoints();
-						}
-					}
-				}
-			}
-		}
-	}
+	SetFlowDebuggerState(EFlowDebuggerState::Invalid, nullptr);
 }
 
 void UFlowDebuggerSubsystem::ClearHitBreakpoints()
 {
-	bPausedAtFlowBreakpoint = false;
-
 	UFlowDebuggerSettings* Settings = GetMutableDefault<UFlowDebuggerSettings>();
+
 	for (TPair<FGuid, FNodeBreakpoint>& NodeBreakpoint : Settings->NodeBreakpoints)
 	{
 		NodeBreakpoint.Value.Breakpoint.MarkAsHit(false);
@@ -437,6 +474,8 @@ void UFlowDebuggerSubsystem::ClearHitBreakpoints()
 			PinBreakpoint.Value.MarkAsHit(false);
 		}
 	}
+
+	ClearLastHitBreakpoint();
 }
 
 bool UFlowDebuggerSubsystem::IsBreakpointHit(const FGuid& NodeGuid)
@@ -463,4 +502,78 @@ void UFlowDebuggerSubsystem::SaveSettings()
 {
 	UFlowDebuggerSettings* Settings = GetMutableDefault<UFlowDebuggerSettings>();
 	Settings->SaveConfig();
+}
+
+void UFlowDebuggerSubsystem::SetFlowDebuggerState(EFlowDebuggerState NextState, UFlowAsset* FlowAssetInstance)
+{
+	if (FlowDebuggerState == NextState)
+	{
+		return;
+	}
+
+	const EFlowDebuggerState PrevState = FlowDebuggerState;
+	FlowDebuggerState = NextState;
+
+	ManageGameModePaused(PrevState, NextState, FlowAssetInstance);
+
+	// OnFlowDebuggerStateChanged MUST be the final operation in SetFlowDebuggerState
+	// as it could potentially cause a new FlowDebuggerState entered
+	{
+		OnFlowDebuggerStateChanged(PrevState, NextState, FlowAssetInstance);
+		return;
+	}
+}
+
+void UFlowDebuggerSubsystem::ManageGameModePaused(EFlowDebuggerState PrevState, EFlowDebuggerState NextState, UFlowAsset* FlowAssetInstance)
+{
+	if (!IsValid(FlowAssetInstance))
+	{
+		return;
+	}
+
+	const UWorld* World = FlowAssetInstance->GetWorld();
+	AGameModeBase* GameMode = World->GetAuthGameMode();
+	if (!IsValid(GameMode))
+	{
+		// No game mode on non-server instances
+		return;
+	}
+
+	using namespace EFlowDebuggerState_Classifiers;
+
+	const bool bIsPauseGameModeStatePrev = IsPausedGameState(PrevState);
+	const bool bIsPauseGameModeStateNext = IsPausedGameState(NextState);
+
+	if (bIsPauseGameModeStatePrev == bIsPauseGameModeStateNext)
+	{
+		return;
+	}
+
+	// Gather some pointers
+	const UGameInstance* GameInstance = World->GetGameInstance();
+	APlayerController* FirstLocalPlayerController = nullptr;
+	if (IsValid(GameInstance))
+	{
+		FirstLocalPlayerController = GameInstance->GetFirstLocalPlayerController();
+	}
+
+	// Change the GameMode pause state
+	if (bIsPauseGameModeStateNext)
+	{
+		if (FirstLocalPlayerController)
+		{
+			GameMode->SetPause(FirstLocalPlayerController);
+
+			if (AWorldSettings* WorldSettings = World->GetWorldSettings())
+			{
+				WorldSettings->ForceNetUpdate();
+			}
+		}
+	}
+	else
+	{
+		// Intentionally do NOT clear hit flags here. The editor-specific resume path will clear the last-hit
+		// breakpoint safely (without racing against immediate breakpoint hits during flush).
+		(void)GameMode->ClearPause();
+	}
 }

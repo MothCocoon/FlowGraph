@@ -6,6 +6,8 @@
 
 #include "FlowNode_SubGraph.generated.h"
 
+class UFlowAssetParams;
+
 /**
  * Creates instance of provided Flow Asset and starts its execution
  */
@@ -26,12 +28,12 @@ private:
 	UPROPERTY(EditAnywhere, Category = "Graph")
 	TSoftObjectPtr<UFlowAsset> Asset;
 
-	// TODO (gtaylor) Create FlowAssetParams option for the Subgraph & reconcile with connected input pins' values
+	/* Flow Asset Params to use as the data pin value supplier for the Asset */
+	UPROPERTY(EditAnywhere, Category = "Graph", meta = (DefaultForInputFlowPin, FlowPinType = "Object"))
+	TSoftObjectPtr<UFlowAssetParams> AssetParams;
 
-	/*
-	 * Allow to create instance of the same Flow Asset as the asset containing this node
-	 * Enabling it may cause an infinite loop, if graph would keep creating copies of itself
-	 */
+	/* Allow to create instance of the same Flow Asset as the asset containing this node.
+	 * Enabling it may cause an infinite loop, if graph would keep creating copies of itself. */
 	UPROPERTY(EditAnywhere, Category = "Graph")
 	bool bCanInstanceIdenticalAsset;
 
@@ -53,15 +55,14 @@ public:
 protected:
 	virtual void OnLoad_Implementation() override;
 
-
 #if WITH_EDITORONLY_DATA
 
 protected:
-	// All the classes allowed to be used as assets on this subgraph node
+	/* All the classes allowed to be used as assets on this subgraph node. */
 	UPROPERTY()
 	TArray<TSubclassOf<UFlowAsset>> AllowedAssignedAssetClasses;
 
-	// All the classes disallowed to be used as assets on this subgraph node
+	/* All the classes disallowed to be used as assets on this subgraph node. */
 	UPROPERTY()
 	TArray<TSubclassOf<UFlowAsset>> DeniedAssignedAssetClasses;
 #endif
@@ -87,7 +88,7 @@ public:
 	// --
 
 	// IFlowDataPinValueSupplierInterface
-	virtual bool CanSupplyDataPinValues_Implementation() const override;
+	virtual FFlowDataPinResult TrySupplyDataPin(FName PinName) const override;
 	// --
 
 	// IFlowDataPinGeneratorInterface
@@ -97,4 +98,6 @@ public:
 private:
 	void SubscribeToAssetChanges();
 #endif
+
+	static const FName AssetParams_MemberName;
 };
