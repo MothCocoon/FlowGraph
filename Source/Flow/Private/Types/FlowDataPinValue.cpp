@@ -8,7 +8,7 @@
 
 #include UE_INLINE_GENERATED_CPP_BY_NAME(FlowDataPinValue)
 
-const FString FFlowDataPinValue::StringArraySeparator = TEXT(",");
+const FString FFlowDataPinValue::StringArraySeparator = TEXT(", ");
 
 const FFlowPinType* FFlowDataPinValue::LookupPinType() const
 {

@@ -31,7 +31,7 @@ TSharedPtr<SGraphPin> FFlowGraphPinFactory::CreatePin(UEdGraphPin* InPin) const
 
 		const UFlowNode* FlowNode = Cast<UFlowNode>(FlowGraphNode->GetFlowNodeBase());
 
-		if (!UFlowGraphSettings::Get()->bShowDefaultPinNames && IsValid(FlowNode))
+		if (!GetDefault<UFlowGraphSettings>()->bShowDefaultPinNames && IsValid(FlowNode))
 		{
 			if (InPin->Direction == EGPD_Input)
 			{

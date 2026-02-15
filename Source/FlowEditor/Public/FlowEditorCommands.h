@@ -18,8 +18,6 @@ public:
 	TSharedPtr<FUICommandInfo> SearchInAsset;
 	TSharedPtr<FUICommandInfo> EditAssetDefaults;
 
-	TSharedPtr<FUICommandInfo> GoToParentInstance;
-
 	virtual void RegisterCommands() override;
 };
 

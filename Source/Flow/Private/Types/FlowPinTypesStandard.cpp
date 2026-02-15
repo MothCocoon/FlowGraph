@@ -36,32 +36,32 @@ const FFlowPinTypeName FFlowPinType_InstancedStruct::PinTypeNameInstancedStruct 
 const FFlowPinTypeName FFlowPinType_Object::PinTypeNameObject = FFlowPinTypeName(FFlowPinTypeNamesStandard::PinTypeNameObject);
 const FFlowPinTypeName FFlowPinType_Class::PinTypeNameClass = FFlowPinTypeName(FFlowPinTypeNamesStandard::PinTypeNameClass);
 
-bool FFlowPinType_Bool::PopulateResult(const UObject& PropertyOwnerObject, const UFlowNode& Node, const FFlowPin& Pin, FFlowDataPinResult& OutResult) const
+bool FFlowPinType_Bool::PopulateResult(const UObject& PropertyOwnerObject, const UFlowNode& Node, const FName& PropertyName, FFlowDataPinResult& OutResult) const
 {
-	return FlowPinType::PopulateResultTemplate<FFlowPinType_Bool>(PropertyOwnerObject, Node, Pin, OutResult);
+	return FlowPinType::PopulateResultTemplate<FFlowPinType_Bool>(PropertyOwnerObject, Node, PropertyName, OutResult);
 }
 
-bool FFlowPinType_Int::PopulateResult(const UObject& PropertyOwnerObject, const UFlowNode& Node, const FFlowPin& Pin, FFlowDataPinResult& OutResult) const
+bool FFlowPinType_Int::PopulateResult(const UObject& PropertyOwnerObject, const UFlowNode& Node, const FName& PropertyName, FFlowDataPinResult& OutResult) const
 {
-	return FlowPinType::PopulateResultTemplate<FFlowPinType_Int>(PropertyOwnerObject, Node, Pin, OutResult);
+	return FlowPinType::PopulateResultTemplate<FFlowPinType_Int>(PropertyOwnerObject, Node, PropertyName, OutResult);
 }
 
-bool FFlowPinType_Int64::PopulateResult(const UObject& PropertyOwnerObject, const UFlowNode& Node, const FFlowPin& Pin, FFlowDataPinResult& OutResult) const
+bool FFlowPinType_Int64::PopulateResult(const UObject& PropertyOwnerObject, const UFlowNode& Node, const FName& PropertyName, FFlowDataPinResult& OutResult) const
 {
-	return FlowPinType::PopulateResultTemplate<FFlowPinType_Int64>(PropertyOwnerObject, Node, Pin, OutResult);
+	return FlowPinType::PopulateResultTemplate<FFlowPinType_Int64>(PropertyOwnerObject, Node, PropertyName, OutResult);
 }
 
-bool FFlowPinType_Float::PopulateResult(const UObject& PropertyOwnerObject, const UFlowNode& Node, const FFlowPin& Pin, FFlowDataPinResult& OutResult) const
+bool FFlowPinType_Float::PopulateResult(const UObject& PropertyOwnerObject, const UFlowNode& Node, const FName& PropertyName, FFlowDataPinResult& OutResult) const
 {
-	return FlowPinType::PopulateResultTemplate<FFlowPinType_Float>(PropertyOwnerObject, Node, Pin, OutResult);
+	return FlowPinType::PopulateResultTemplate<FFlowPinType_Float>(PropertyOwnerObject, Node, PropertyName, OutResult);
 }
 
-bool FFlowPinType_Double::PopulateResult(const UObject& PropertyOwnerObject, const UFlowNode& Node, const FFlowPin& Pin, FFlowDataPinResult& OutResult) const
+bool FFlowPinType_Double::PopulateResult(const UObject& PropertyOwnerObject, const UFlowNode& Node, const FName& PropertyName, FFlowDataPinResult& OutResult) const
 {
-	return FlowPinType::PopulateResultTemplate<FFlowPinType_Double>(PropertyOwnerObject, Node, Pin, OutResult);
+	return FlowPinType::PopulateResultTemplate<FFlowPinType_Double>(PropertyOwnerObject, Node, PropertyName, OutResult);
 }
 
-bool FFlowPinType_Enum::PopulateResult(const UObject& PropertyOwnerObject, const UFlowNode& Node, const FFlowPin& Pin, FFlowDataPinResult& OutResult) const
+bool FFlowPinType_Enum::PopulateResult(const UObject& PropertyOwnerObject, const UFlowNode& Node, const FName& PropertyName, FFlowDataPinResult& OutResult) const
 {
 	using TFlowPinType = FFlowPinType_Enum;
 	using TValue = TFlowPinType::ValueType;
@@ -71,7 +71,7 @@ bool FFlowPinType_Enum::PopulateResult(const UObject& PropertyOwnerObject, const
 	TInstancedStruct<FFlowDataPinValue> ValueStruct;
 	const FProperty* FoundProperty = nullptr;
 
-	if (!Node.TryFindPropertyByPinName(PropertyOwnerObject, Pin.PinName, FoundProperty, ValueStruct))
+	if (!Node.TryFindPropertyByPinName(PropertyOwnerObject, PropertyName, FoundProperty, ValueStruct))
 	{
 		OutResult.Result = EFlowDataPinResolveResult::FailedUnknownPin;
 		return false;
@@ -97,59 +97,59 @@ bool FFlowPinType_Enum::PopulateResult(const UObject& PropertyOwnerObject, const
 	return false;
 }
 
-bool FFlowPinType_Name::PopulateResult(const UObject& PropertyOwnerObject, const UFlowNode& Node, const FFlowPin& Pin, FFlowDataPinResult& OutResult) const
+bool FFlowPinType_Name::PopulateResult(const UObject& PropertyOwnerObject, const UFlowNode& Node, const FName& PropertyName, FFlowDataPinResult& OutResult) const
 {
-	return FlowPinType::PopulateResultTemplate<FFlowPinType_Name>(PropertyOwnerObject, Node, Pin, OutResult);
+	return FlowPinType::PopulateResultTemplate<FFlowPinType_Name>(PropertyOwnerObject, Node, PropertyName, OutResult);
 }
 
-bool FFlowPinType_String::PopulateResult(const UObject& PropertyOwnerObject, const UFlowNode& Node, const FFlowPin& Pin, FFlowDataPinResult& OutResult) const
+bool FFlowPinType_String::PopulateResult(const UObject& PropertyOwnerObject, const UFlowNode& Node, const FName& PropertyName, FFlowDataPinResult& OutResult) const
 {
-	return FlowPinType::PopulateResultTemplate<FFlowPinType_String>(PropertyOwnerObject, Node, Pin, OutResult);
+	return FlowPinType::PopulateResultTemplate<FFlowPinType_String>(PropertyOwnerObject, Node, PropertyName, OutResult);
 }
 
-bool FFlowPinType_Text::PopulateResult(const UObject& PropertyOwnerObject, const UFlowNode& Node, const FFlowPin& Pin, FFlowDataPinResult& OutResult) const
+bool FFlowPinType_Text::PopulateResult(const UObject& PropertyOwnerObject, const UFlowNode& Node, const FName& PropertyName, FFlowDataPinResult& OutResult) const
 {
-	return FlowPinType::PopulateResultTemplate<FFlowPinType_Text>(PropertyOwnerObject, Node, Pin, OutResult);
+	return FlowPinType::PopulateResultTemplate<FFlowPinType_Text>(PropertyOwnerObject, Node, PropertyName, OutResult);
 }
 
-bool FFlowPinType_Vector::PopulateResult(const UObject& PropertyOwnerObject, const UFlowNode& Node, const FFlowPin& Pin, FFlowDataPinResult& OutResult) const
+bool FFlowPinType_Vector::PopulateResult(const UObject& PropertyOwnerObject, const UFlowNode& Node, const FName& PropertyName, FFlowDataPinResult& OutResult) const
 {
-	return FlowPinType::PopulateResultTemplate<FFlowPinType_Vector>(PropertyOwnerObject, Node, Pin, OutResult);
+	return FlowPinType::PopulateResultTemplate<FFlowPinType_Vector>(PropertyOwnerObject, Node, PropertyName, OutResult);
 }
 
-bool FFlowPinType_Rotator::PopulateResult(const UObject& PropertyOwnerObject, const UFlowNode& Node, const FFlowPin& Pin, FFlowDataPinResult& OutResult) const
+bool FFlowPinType_Rotator::PopulateResult(const UObject& PropertyOwnerObject, const UFlowNode& Node, const FName& PropertyName, FFlowDataPinResult& OutResult) const
 {
-	return FlowPinType::PopulateResultTemplate<FFlowPinType_Rotator>(PropertyOwnerObject, Node, Pin, OutResult);
+	return FlowPinType::PopulateResultTemplate<FFlowPinType_Rotator>(PropertyOwnerObject, Node, PropertyName, OutResult);
 }
 
-bool FFlowPinType_Transform::PopulateResult(const UObject& PropertyOwnerObject, const UFlowNode& Node, const FFlowPin& Pin, FFlowDataPinResult& OutResult) const
+bool FFlowPinType_Transform::PopulateResult(const UObject& PropertyOwnerObject, const UFlowNode& Node, const FName& PropertyName, FFlowDataPinResult& OutResult) const
 {
-	return FlowPinType::PopulateResultTemplate<FFlowPinType_Transform>(PropertyOwnerObject, Node, Pin, OutResult);
+	return FlowPinType::PopulateResultTemplate<FFlowPinType_Transform>(PropertyOwnerObject, Node, PropertyName, OutResult);
 }
 
-bool FFlowPinType_GameplayTag::PopulateResult(const UObject& PropertyOwnerObject, const UFlowNode& Node, const FFlowPin& Pin, FFlowDataPinResult& OutResult) const
+bool FFlowPinType_GameplayTag::PopulateResult(const UObject& PropertyOwnerObject, const UFlowNode& Node, const FName& PropertyName, FFlowDataPinResult& OutResult) const
 {
-	return FlowPinType::PopulateResultTemplate<FFlowPinType_GameplayTag>(PropertyOwnerObject, Node, Pin, OutResult);
+	return FlowPinType::PopulateResultTemplate<FFlowPinType_GameplayTag>(PropertyOwnerObject, Node, PropertyName, OutResult);
 }
 
-bool FFlowPinType_GameplayTagContainer::PopulateResult(const UObject& PropertyOwnerObject, const UFlowNode& Node, const FFlowPin& Pin, FFlowDataPinResult& OutResult) const
+bool FFlowPinType_GameplayTagContainer::PopulateResult(const UObject& PropertyOwnerObject, const UFlowNode& Node, const FName& PropertyName, FFlowDataPinResult& OutResult) const
 {
-	return FlowPinType::PopulateResultTemplate<FFlowPinType_GameplayTagContainer>(PropertyOwnerObject, Node, Pin, OutResult);
+	return FlowPinType::PopulateResultTemplate<FFlowPinType_GameplayTagContainer>(PropertyOwnerObject, Node, PropertyName, OutResult);
 }
 
-bool FFlowPinType_InstancedStruct::PopulateResult(const UObject& PropertyOwnerObject, const UFlowNode& Node, const FFlowPin& Pin, FFlowDataPinResult& OutResult) const
+bool FFlowPinType_InstancedStruct::PopulateResult(const UObject& PropertyOwnerObject, const UFlowNode& Node, const FName& PropertyName, FFlowDataPinResult& OutResult) const
 {
-	return FlowPinType::PopulateResultTemplate<FFlowPinType_InstancedStruct>(PropertyOwnerObject, Node, Pin, OutResult);
+	return FlowPinType::PopulateResultTemplate<FFlowPinType_InstancedStruct>(PropertyOwnerObject, Node, PropertyName, OutResult);
 }
 
-bool FFlowPinType_Object::PopulateResult(const UObject& PropertyOwnerObject, const UFlowNode& Node, const FFlowPin& Pin, FFlowDataPinResult& OutResult) const
+bool FFlowPinType_Object::PopulateResult(const UObject& PropertyOwnerObject, const UFlowNode& Node, const FName& PropertyName, FFlowDataPinResult& OutResult) const
 {
-	return FlowPinType::PopulateResultTemplate<FFlowPinType_Object>(PropertyOwnerObject, Node, Pin, OutResult);
+	return FlowPinType::PopulateResultTemplate<FFlowPinType_Object>(PropertyOwnerObject, Node, PropertyName, OutResult);
 }
 
-bool FFlowPinType_Class::PopulateResult(const UObject& PropertyOwnerObject, const UFlowNode& Node, const FFlowPin& Pin, FFlowDataPinResult& OutResult) const
+bool FFlowPinType_Class::PopulateResult(const UObject& PropertyOwnerObject, const UFlowNode& Node, const FName& PropertyName, FFlowDataPinResult& OutResult) const
 {
-	return FlowPinType::PopulateResultTemplate<FFlowPinType_Class>(PropertyOwnerObject, Node, Pin, OutResult);
+	return FlowPinType::PopulateResultTemplate<FFlowPinType_Class>(PropertyOwnerObject, Node, PropertyName, OutResult);
 }
 
 #if WITH_EDITOR

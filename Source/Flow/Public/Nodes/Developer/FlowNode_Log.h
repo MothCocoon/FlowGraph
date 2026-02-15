@@ -57,4 +57,7 @@ public:
 
 	virtual void UpdateNodeConfigText_Implementation() override;
 #endif
+
+public:
+	EFlowLogVerbosity GetVerbosity() const { return Verbosity; }
 };

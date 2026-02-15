@@ -53,4 +53,10 @@ protected:
 		const FName& PinName,
 		const FProperty*& OutFoundProperty,
 		TInstancedStruct<FFlowDataPinValue>& OutFoundInstancedStruct) const override;
+
+#if WITH_EDITOR
+	// Utility function for subclasses, if they want to force a named property to be a Input or Output
+	// (unused in this class)
+	void OnPostEditEnsureAllNamedPropertiesPinDirection(const FProperty& Property, bool bIsInput);
+#endif
 };

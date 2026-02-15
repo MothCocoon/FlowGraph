@@ -271,7 +271,7 @@ void UFlowComponent::OnRep_IdentityTags(const FGameplayTagContainer& PreviousTag
 
 void UFlowComponent::VerifyIdentityTags() const
 {
-	if (IdentityTags.IsEmpty() && UFlowSettings::Get()->bWarnAboutMissingIdentityTags)
+	if (IdentityTags.IsEmpty() && GetDefault<UFlowSettings>()->bWarnAboutMissingIdentityTags)
 	{
 		FString Message = TEXT("Missing Identity Tags on the Flow Component creating Flow Asset instance! This gonna break loading SaveGame for this component!");
 		Message.Append(LINE_TERMINATOR).Append(TEXT("If you're not using SaveSystem, you can silence this warning by unchecking bWarnAboutMissingIdentityTags flag in Flow Settings."));
@@ -616,7 +616,7 @@ bool UFlowComponent::IsFlowNetMode(const EFlowNetMode NetMode) const
 		case EFlowNetMode::Authority:
 			return GetOwner()->HasAuthority();
 		case EFlowNetMode::ClientOnly:
-			return IsNetMode(NM_Client) && UFlowSettings::Get()->bCreateFlowSubsystemOnClients;
+			return IsNetMode(NM_Client) && GetDefault<UFlowSettings>()->bCreateFlowSubsystemOnClients;
 		case EFlowNetMode::ServerOnly:
 			return IsNetMode(NM_DedicatedServer) || IsNetMode(NM_ListenServer);
 		case EFlowNetMode::SinglePlayerOnly:

@@ -54,8 +54,8 @@ public:
 	// --
 
 	// IFlowDataPinValueSupplierInterface
-	virtual bool CanSupplyDataPinValues_Implementation() const override;
-	virtual FFlowDataPinResult TrySupplyDataPin_Implementation(FName PinName) const override;
+	virtual bool CanSupplyDataPinValues() const override;
+	virtual FFlowDataPinResult TrySupplyDataPin(FName PinName) const override;
 	// --
 
 	// IFlowAssetProviderInterface
@@ -72,6 +72,9 @@ public:
 		const FDateTime& FlowAssetLastSaveTimeStamp,
 		const TSoftObjectPtr<UFlowAsset>& InOwnerFlowAsset,
 		TArray<FFlowNamedDataPinProperty>& MutablePropertiesFromStartNode);
+
+	// Updates properties from ParentParams, handling inheritance and name enforcement.
+	EFlowReconcilePropertiesResult ReconcilePropertiesWithParentParams();
 
 	void ConfigureFlowAssetParams(TSoftObjectPtr<UFlowAsset> OwnerAsset, TSoftObjectPtr<UFlowAssetParams> InParentParams, const TArray<FFlowNamedDataPinProperty>& InProperties);
 
@@ -98,9 +101,6 @@ private:
 	// --
 
 protected:
-
-	// Updates properties from ParentParams, handling inheritance and name enforcement.
-	EFlowReconcilePropertiesResult ReconcilePropertiesWithParentParams();
 
 	EFlowReconcilePropertiesResult CheckForParentCycle() const;
 

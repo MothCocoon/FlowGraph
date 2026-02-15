@@ -60,6 +60,7 @@ class FLOWEDITOR_API UFlowGraphSettings : public UDeveloperSettings
 {
 	GENERATED_UCLASS_BODY()
 
+	UE_DEPRECATED(5.5, "Call GetDefault<UFlowGraphSettings>() instead.")
 	static UFlowGraphSettings* Get() { return StaticClass()->GetDefaultObject<UFlowGraphSettings>(); }
 
 	virtual void PostInitProperties() override;
@@ -194,7 +195,7 @@ public:
 
 #if WITH_EDITOR
 	const TMap<FGameplayTag, FFlowNodeDisplayStyleConfig>& EnsureNodeDisplayStylesMap();
-	bool TryAddDefaultNodeDisplayStyle(const FFlowNodeDisplayStyleConfig& StyleConfig);
+	void TryAddDefaultNodeDisplayStyle(const FFlowNodeDisplayStyleConfig& StyleConfig);
 	const FLinearColor* LookupNodeTitleColorForNode(const UFlowNodeBase& FlowNodeBase);
 #endif
 };

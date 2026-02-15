@@ -11,6 +11,7 @@
 #include "FlowAsset.h"
 #include "Nodes/Graph/FlowNode_SubGraph.h"
 
+#include "Brushes/SlateRoundedBoxBrush.h"
 #include "Kismet2/DebuggerCommands.h"
 #include "Misc/Attribute.h"
 #include "Misc/MessageDialog.h"
@@ -338,7 +339,7 @@ void SFlowAssetBreadcrumb::OnCrumbClicked(const FFlowBreadcrumb& Item) const
 			ClickedTemplateAsset->SetInspectedInstance(ClickedInstance);
 			if (const TSharedPtr<FFlowAssetEditor> FlowAssetEditor = FFlowGraphUtils::GetFlowAssetEditor(ClickedTemplateAsset))
 			{
-				if (!Item.ChildInstance.IsExplicitlyNull())
+				if (Item.ChildInstance.IsValid())
 				{
 					FlowAssetEditor->JumpToNode(Item.ChildInstance->GetNodeOwningThisAssetInstance()->GetGraphNode());
 				}

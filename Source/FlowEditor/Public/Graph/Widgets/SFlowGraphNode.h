@@ -42,7 +42,8 @@ protected:
 	virtual void GetOverlayBrushes(bool bSelected, const FVector2f& WidgetSize, TArray<FOverlayBrushInfo>& Brushes) const override;
 #endif
 	// --
-
+	const FSlateBrush* GetSlateBrush(const FName BrushName, const FName StyleSetName) const;
+	
 	// SGraphNode
 	virtual void GetPinBrush(const bool bLeftSide, const float WidgetWidth, const int32 PinIndex, const struct FFlowBreakpoint* Breakpoint, TArray<FOverlayBrushInfo>& Brushes) const;
 

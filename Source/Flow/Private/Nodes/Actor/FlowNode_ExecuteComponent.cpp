@@ -593,7 +593,7 @@ TSubclassOf<AActor> UFlowNode_ExecuteComponent::TryGetExpectedActorOwnerClass() 
 
 FText UFlowNode_ExecuteComponent::K2_GetNodeTitle_Implementation() const
 {
-	if (UFlowSettings::Get()->bUseAdaptiveNodeTitles)
+	if (GetDefault<UFlowSettings>()->bUseAdaptiveNodeTitles)
 	{
 		FLOW_ASSERT_ENUM_MAX(EExecuteComponentSource, 4);
 
@@ -653,7 +653,7 @@ void UFlowNode_ExecuteComponent::UpdateNodeConfigText_Implementation()
 #if WITH_EDITOR
 	FText ComponentNameText;
 
-	const bool bUseAdaptiveNodeTitles = UFlowSettings::Get()->bUseAdaptiveNodeTitles;
+	const bool bUseAdaptiveNodeTitles = GetDefault<UFlowSettings>()->bUseAdaptiveNodeTitles;
 	if (!bUseAdaptiveNodeTitles)
 	{
 		FLOW_ASSERT_ENUM_MAX(EExecuteComponentSource, 4);

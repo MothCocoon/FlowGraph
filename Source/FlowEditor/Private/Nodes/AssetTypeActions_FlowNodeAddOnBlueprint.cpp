@@ -16,7 +16,7 @@ FText FAssetTypeActions_FlowNodeAddOnBlueprint::GetName() const
 
 uint32 FAssetTypeActions_FlowNodeAddOnBlueprint::GetCategories()
 {
-	return UFlowGraphSettings::Get()->bExposeFlowNodeCreation ? FFlowEditorModule::FlowAssetCategory : 0;
+	return GetDefault<UFlowGraphSettings>()->bExposeFlowNodeCreation ? FFlowEditorModule::FlowAssetCategory : 0;
 }
 
 UClass* FAssetTypeActions_FlowNodeAddOnBlueprint::GetSupportedClass() const

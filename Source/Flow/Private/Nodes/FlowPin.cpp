@@ -18,7 +18,6 @@
 // Pin Record
 
 #if !UE_BUILD_SHIPPING
-FString FPinRecord::NoActivations = TEXT("No activations");
 FString FPinRecord::PinActivations = TEXT("Pin activations");
 FString FPinRecord::ForcedActivation = TEXT(" (forced activation)");
 FString FPinRecord::PassThroughActivation = TEXT(" (pass-through activation)");
@@ -150,6 +149,13 @@ FEdGraphPinType FFlowPin::BuildEdGraphPinType() const
 
 	return EdGraphPinType;
 }
+
+void FFlowPin::ConfigureFromEdGraphPin(const FEdGraphPinType& EdGraphPinType)
+{
+	PinTypeName.Name = EdGraphPinType.PinCategory;
+	PinSubCategoryObject = EdGraphPinType.PinSubCategoryObject;
+	ContainerType = EdGraphPinType.ContainerType;
+}
 #endif
 
 const FFlowPinType* FFlowPin::ResolveFlowPinType() const
@@ -200,42 +206,9 @@ FFlowPinTypeName FFlowPin::GetPinTypeNameForLegacyPinType(EFlowPinType PinType)
 		return FFlowPinTypeName();
 	}
 }
+// --
 
 #if WITH_EDITOR
-void FFlowPin::PostEditChangedPinTypeOrSubCategorySource()
-{
-	// PinTypes with PinSubCategoryObjects will need to update this function
-
-	// Must be called from PostEditChangeProperty() by an owning UObject <sigh>
-
-	if (PinTypeName == FFlowPinType_Class::GetPinTypeNameStatic())
-	{
-		PinSubCategoryObject = SubCategoryClassFilter;
-	}
-	else if (PinTypeName == FFlowPinType_Object::GetPinTypeNameStatic())
-	{
-		PinSubCategoryObject = SubCategoryObjectFilter;
-	}
-	else if (PinTypeName == FFlowPinType_Enum::GetPinTypeNameStatic())
-	{
-		if (!SubCategoryEnumName.IsEmpty())
-		{
-			SubCategoryEnumClass = UClass::TryFindTypeSlow<UEnum>(SubCategoryEnumName, EFindFirstObjectOptions::ExactClass);
-			if (SubCategoryEnumClass != nullptr && !FFlowPin::ValidateEnum(*SubCategoryEnumClass))
-			{
-				SubCategoryEnumClass = nullptr;
-			}
-		}
-
-		PinSubCategoryObject = SubCategoryEnumClass;
-	}
-	else
-	{
-		TrySetStructSubCategoryObjectFromPinType();
-	}
-}
-
-// --
 
 FText FFlowPin::BuildHeaderText() const
 {

@@ -33,7 +33,7 @@ void UFlowNode_CustomEventBase::SetEventName(const FName& InEventName)
 
 FString UFlowNode_CustomEventBase::GetNodeDescription() const
 {
-	if (UFlowSettings::Get()->bUseAdaptiveNodeTitles)
+	if (GetDefault<UFlowSettings>()->bUseAdaptiveNodeTitles)
 	{
 		return Super::GetNodeDescription();
 	}

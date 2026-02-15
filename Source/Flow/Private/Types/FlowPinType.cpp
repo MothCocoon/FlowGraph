@@ -33,7 +33,7 @@ bool FFlowPinType::ResolveAndFormatPinValue(const UFlowNodeBase& Node, const FNa
 	return false;
 }
 
-bool FFlowPinType::PopulateResult(const UObject& PropertyOwnerObject, const UFlowNode& Node, const FFlowPin& Pin, FFlowDataPinResult& OutResult) const
+bool FFlowPinType::PopulateResult(const UObject& PropertyOwnerObject, const UFlowNode& Node, const FName& PropertyName, FFlowDataPinResult& OutResult) const
 {
 	OutResult.Result = EFlowDataPinResolveResult::FailedMismatchedType;
 	return false;

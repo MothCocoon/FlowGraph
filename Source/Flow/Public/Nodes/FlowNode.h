@@ -16,6 +16,22 @@
 
 #include "FlowNode.generated.h"
 
+// Entry in MapDataPinNameToPropertySource for how to source a non-trivial pin mapping in TryGatherPropertyOwnersAndPopulateResult
+USTRUCT()
+struct FFlowPinPropertySource
+{
+	GENERATED_BODY()
+
+	FFlowPinPropertySource() = default;
+	FFlowPinPropertySource(const FName& InPropertyName, int32 InPropertyOwnerIndex)
+		: PropertyName(InPropertyName)
+		, PropertyOwnerIndex(InPropertyOwnerIndex)
+	{ }
+
+	FName PropertyName;
+	int32 PropertyOwnerIndex = INDEX_NONE;
+};
+
 /**
  * A Flow Node is UObject-based node designed to handle entire gameplay feature within single node.
  */
@@ -26,6 +42,7 @@ class FLOW_API UFlowNode : public UFlowNodeBase
 						 , public IVisualLoggerDebugSnapshotInterface
 {
 	GENERATED_UCLASS_BODY()
+
 	friend class SFlowGraphNode;
 	friend class UFlowAsset;
 	friend class UFlowGraphNode;
@@ -85,7 +102,7 @@ public:
 	}
 
 public:
-	virtual bool CanFinishGraph() const { return false; }
+	virtual bool CanFinishGraph() const { return K2_CanFinishGraph(); }
 
 protected:
 	UPROPERTY(EditDefaultsOnly, Category = "FlowNode")
@@ -154,6 +171,9 @@ public:
 #endif
 
 protected:
+	UFUNCTION(BlueprintImplementableEvent, Category = "FlowNode", meta = (DisplayName = "Can Finish Graph"))
+	bool K2_CanFinishGraph() const;
+	
 	UFUNCTION(BlueprintImplementableEvent, Category = "FlowNode", meta = (DisplayName = "Can User Add Input"))
 	bool K2_CanUserAddInput() const;
 
@@ -190,8 +210,8 @@ public:
 	UFUNCTION(BlueprintPure, Category= "FlowNode")
 	bool IsOutputConnected(const FName& PinName, bool bErrorIfPinNotFound = true) const;
 
-	bool IsInputConnected(const FFlowPin& FlowPin) const;
-	bool IsOutputConnected(const FFlowPin& FlowPin) const;
+	bool IsInputConnected(const FFlowPin& FlowPin, FGuid* FoundGuid = nullptr, FName* OutConnectedPinName = nullptr) const;
+	bool IsOutputConnected(const FFlowPin& FlowPin, FGuid* FirstFoundGuid = nullptr, FName* OutFirstConnectedPinName = nullptr) const;
 
 	FFlowPin* FindInputPinByName(const FName& PinName);
 	FFlowPin* FindOutputPinByName(const FName& PinName);
@@ -216,6 +236,8 @@ protected:
 // Data Pins
 
 public:
+	using TFlowPinValueSupplierDataArray = FlowArray::TInlineArray<FFlowPinValueSupplierData, 4>;
+
 #if WITH_EDITORONLY_DATA
 	UPROPERTY(VisibleDefaultsOnly, AdvancedDisplay, Category = "FlowNode", meta = (GetByRef))
 	TArray<FFlowPin> AutoInputDataPins;
@@ -223,6 +245,12 @@ public:
 	UPROPERTY(VisibleDefaultsOnly, AdvancedDisplay, Category = "FlowNode", meta = (GetByRef))
 	TArray<FFlowPin> AutoOutputDataPins;
 #endif // WITH_EDITORONLY_DATA	
+
+	// Map for PinName to Property supplier for non-trivial data pin property lookups
+	// (non-trivial means a different pin name from its property source, or a non-zero property owner object index)
+	// see TryGatherPropertyOwnersAndPopulateResult()
+	UPROPERTY()
+	TMap<FName, FFlowPinPropertySource> MapDataPinNameToPropertySource;
 
 #if WITH_EDITOR
 	void SetAutoInputDataPins(const TArray<FFlowPin>& AutoInputPins);
@@ -236,7 +264,7 @@ public:
 
 	// IFlowDataPinValueSupplierInterface
 public:
-	virtual FFlowDataPinResult TrySupplyDataPin_Implementation(FName PinName) const override;
+	virtual FFlowDataPinResult TrySupplyDataPin(FName PinName) const override;
 
 	// Advanced helper for TrySupplyDataPin, which can be overridden in subclasses to provide alternate sourcing for properties.
 	// If returns true, either OutFoundProperty or OutFoundInstancedStruct is expected to carry the property value.
@@ -248,6 +276,9 @@ public:
 		TInstancedStruct<FFlowDataPinValue>& OutFoundInstancedStruct) const;
 
 protected:
+	// Helper for TryGetFlowDataPinSupplierDatasForPinName()
+	void TryAddSupplierDataToArray(FFlowPinValueSupplierData& InOutSupplierData, TFlowPinValueSupplierDataArray& InOutPinValueSupplierDatas) const;
+
 	// Static implementation of the default TryFindPropertyByPinName (which subclasses can incorporate into overrides)
 	static bool TryFindPropertyByPinName_Static(
 		const UObject& PropertyOwnerObject,
@@ -267,7 +298,6 @@ public:
 		const FFlowPin& FlowPin,
 		FFlowDataPinResult& OutSuppliedResult) const;
 
-	using TFlowPinValueSupplierDataArray = FlowArray::TInlineArray<FFlowPinValueSupplierData, 4>;
 	bool TryGetFlowDataPinSupplierDatasForPinName(const FName& PinName, TFlowPinValueSupplierDataArray& InOutPinValueSupplierDatas) const;
 
 	// IFlowDataPinGeneratorInterface

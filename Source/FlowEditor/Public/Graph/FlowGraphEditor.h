@@ -10,7 +10,9 @@
 
 class FFlowAssetEditor;
 class IDetailsView;
+class UEdGraphPin;
 class UFlowDebuggerSubsystem;
+struct FFlowBreakpoint;
 
 /**
  *
@@ -108,6 +110,12 @@ protected:
 
 	virtual void ReconstructNode() const;
 	virtual bool CanReconstructNode() const;
+
+	// ---- Pin breakpoint helpers ----
+	static bool GetValidExecBreakpointPinContext(const UEdGraphPin* Pin, FGuid& OutNodeGuid, FName& OutPinName);
+	static const FFlowBreakpoint* FindPinBreakpoint(UFlowDebuggerSubsystem* InDebuggerSubsystem, const UEdGraphPin* Pin);
+	static bool HasPinBreakpoint(UFlowDebuggerSubsystem* InDebuggerSubsystem, const UEdGraphPin* Pin);
+	static bool HasEnabledPinBreakpoint(UFlowDebuggerSubsystem* InDebuggerSubsystem, const UEdGraphPin* Pin);
 
 private:
 	void AddInput() const;

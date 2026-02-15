@@ -15,6 +15,8 @@
 #include "Graph/FlowGraphSettings.h"
 #include "Graph/Widgets/SFlowGraphNode.h"
 #include "Graph/Widgets/SGraphEditorActionMenuFlow.h"
+#include "Interfaces/FlowDataPinValueSupplierInterface.h"
+#include "Types/FlowDataPinValue.h"
 
 #include "BlueprintNodeHelpers.h"
 #include "Developer/ToolMenus/Public/ToolMenus.h"
@@ -667,7 +669,7 @@ FText UFlowGraphNode::GetNodeTitle(ENodeTitleType::Type TitleType) const
 {
 	if (NodeInstance)
 	{
-		if (UFlowGraphEditorSettings::Get()->bShowNodeClass)
+		if (GetDefault<UFlowGraphEditorSettings>()->bShowNodeClass)
 		{
 			FString CleanAssetName;
 			if (NodeInstance->GetClass()->ClassGeneratedBy)
@@ -703,7 +705,7 @@ FLinearColor UFlowGraphNode::GetNodeTitleColor() const
 			return DynamicColor;
 		}
 
-		if (const FLinearColor* StyleColor = UFlowGraphSettings::Get()->LookupNodeTitleColorForNode(*NodeInstance))
+		if (const FLinearColor* StyleColor = GetMutableDefault<UFlowGraphSettings>()->LookupNodeTitleColorForNode(*NodeInstance))
 		{
 			return *StyleColor;
 		}
@@ -733,7 +735,7 @@ FText UFlowGraphNode::GetTooltipText() const
 
 FString UFlowGraphNode::GetNodeDescription() const
 {
-	if (NodeInstance)
+	if (NodeInstance && (GEditor->PlayWorld == nullptr || GetDefault<UFlowGraphEditorSettings>()->bShowNodeDescriptionWhilePlaying))
 	{
 		const UFlowGraphEditorSettings* GraphEditorSettings = GetDefault<UFlowGraphEditorSettings>();
 		if (GEditor->PlayWorld == nullptr || GraphEditorSettings->bShowNodeDescriptionWhilePlaying)
@@ -802,7 +804,7 @@ FLinearColor UFlowGraphNode::GetStatusBackgroundColor() const
 		}
 	}
 
-	return UFlowGraphSettings::Get()->NodeStatusBackground;
+	return GetDefault<UFlowGraphSettings>()->NodeStatusBackground;
 }
 
 bool UFlowGraphNode::IsContentPreloaded() const
@@ -873,7 +875,8 @@ void UFlowGraphNode::OnNodeDoubleClicked() const
 	UFlowNodeBase* FlowNodeBase = GetFlowNodeBase();
 	if (IsValid(FlowNodeBase))
 	{
-		if (UFlowGraphEditorSettings::Get()->NodeDoubleClickTarget == EFlowNodeDoubleClickTarget::NodeDefinition)
+		const EFlowNodeDoubleClickTarget DoubleClickTarget = GetDefault<UFlowGraphEditorSettings>()->NodeDoubleClickTarget;
+		if (DoubleClickTarget == EFlowNodeDoubleClickTarget::NodeDefinition)
 		{
 			JumpToDefinition();
 		}
@@ -900,7 +903,7 @@ void UFlowGraphNode::OnNodeDoubleClicked() const
 					OnNodeDoubleClickedInPIE();
 				}
 			}
-			else if (UFlowGraphEditorSettings::Get()->NodeDoubleClickTarget == EFlowNodeDoubleClickTarget::PrimaryAssetOrNodeDefinition)
+			else if (DoubleClickTarget == EFlowNodeDoubleClickTarget::PrimaryAssetOrNodeDefinition)
 			{
 				JumpToDefinition();
 			}
@@ -1097,8 +1100,10 @@ void UFlowGraphNode::GetPinHoverText(const UEdGraphPin& Pin, FString& HoverTextO
 	// start with the default hover text (from the pin's tool-tip)
 	Super::GetPinHoverText(Pin, HoverTextOut);
 
+	const bool bHasValidPlayWorld = IsValid(GEditor->PlayWorld);
+
 	// add information on pin activations
-	if (GEditor->PlayWorld)
+	if (bHasValidPlayWorld)
 	{
 		if (const UFlowNode* InspectedNodeInstance = GetInspectedNodeInstance())
 		{
@@ -1108,11 +1113,7 @@ void UFlowGraphNode::GetPinHoverText(const UEdGraphPin& Pin, FString& HoverTextO
 			}
 
 			const TArray<FPinRecord>& PinRecords = InspectedNodeInstance->GetPinRecords(Pin.PinName, Pin.Direction);
-			if (PinRecords.Num() == 0)
-			{
-				HoverTextOut.Append(FPinRecord::NoActivations);
-			}
-			else
+			if (PinRecords.Num() > 0)
 			{
 				HoverTextOut.Append(FPinRecord::PinActivations);
 				for (int32 i = 0; i < PinRecords.Num(); i++)
@@ -1122,22 +1123,65 @@ void UFlowGraphNode::GetPinHoverText(const UEdGraphPin& Pin, FString& HoverTextO
 
 					switch (PinRecords[i].ActivationType)
 					{
-						case EFlowPinActivationType::Default:
-							break;
-						case EFlowPinActivationType::Forced:
-							HoverTextOut.Append(FPinRecord::ForcedActivation);
-							break;
-						case EFlowPinActivationType::PassThrough:
-							HoverTextOut.Append(FPinRecord::PassThroughActivation);
-							break;
-						default: ;
+					case EFlowPinActivationType::Default:
+						break;
+					case EFlowPinActivationType::Forced:
+						HoverTextOut.Append(FPinRecord::ForcedActivation);
+						break;
+					case EFlowPinActivationType::PassThrough:
+						HoverTextOut.Append(FPinRecord::PassThroughActivation);
+						break;
+					default:;
 					}
 				}
 			}
 		}
 	}
-}
 
+	// add information on data pin values (only for data pins)
+	const bool bIsDataPinCategory = !FFlowPin::IsExecPinCategory(Pin.PinType.PinCategory);
+	if (bIsDataPinCategory)
+	{
+		const UEdGraphPin* GraphPinObj = &Pin;
+
+		// Prefer showing runtime values when PIE (consistent with activation history)
+		const UFlowNodeBase* FlowNodeBase = GetFlowNodeBase();
+
+		if (bHasValidPlayWorld)
+		{
+			FlowNodeBase = GetInspectedNodeInstance();
+		}
+
+		FFlowDataPinResult DataResult(EFlowDataPinResolveResult::FailedNullFlowNodeBase);
+
+		if (IsValid(FlowNodeBase))
+		{
+			DataResult = FlowNodeBase->TryResolveDataPin(GraphPinObj->PinName);
+		}
+
+		FString ValueString;
+
+		if (FlowPinType::IsSuccess(DataResult.Result) && DataResult.ResultValue.IsValid())
+		{
+			const FFlowDataPinValue& Value = DataResult.ResultValue.Get<FFlowDataPinValue>();
+			if (!Value.TryConvertValuesToString(ValueString))
+			{
+				ValueString = TEXT("<unformattable>");
+			}
+		}
+		else
+		{
+			ValueString = TEXT("<unresolved>");
+		}
+
+		if (!HoverTextOut.IsEmpty())
+		{
+			HoverTextOut.Append(LINE_TERMINATOR).Append(LINE_TERMINATOR);
+		}
+
+		HoverTextOut.Appendf(TEXT("Value: %s"), *ValueString);
+	}
+}
 
 void UFlowGraphNode::ForcePinActivation(const FEdGraphPinReference PinReference) const
 {

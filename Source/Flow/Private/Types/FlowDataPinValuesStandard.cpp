@@ -495,6 +495,44 @@ FFlowDataPinValue_InstancedStruct::FFlowDataPinValue_InstancedStruct(const TArra
 #endif
 }
 
+bool FFlowDataPinValue_InstancedStruct::TryConvertValuesToString(FString& OutString) const
+{
+	const FInstancedStruct DefaultValue;
+
+	OutString = FlowArray::FormatArrayString<FInstancedStruct>(
+		Values,
+		[&DefaultValue](const FInstancedStruct& InstancedStruct)
+		{
+			FString ExportedString;
+
+			constexpr UObject* ParentObject = nullptr;
+			constexpr UObject* ExportRootScope = nullptr;
+
+			const bool bExported = InstancedStruct.ExportTextItem(
+				ExportedString,
+				DefaultValue,
+				ParentObject,
+				PPF_None,
+				ExportRootScope);
+
+			if (!bExported)
+			{
+				// Fallback: just show the contained struct type name (or None)
+				if (const UScriptStruct* ScriptStruct = InstancedStruct.GetScriptStruct())
+				{
+					return ScriptStruct->GetName();
+				}
+
+				return FString();
+			}
+
+			return ExportedString;
+		},
+		StringArraySeparator);
+
+	return true;
+}
+
 //======================================================================
 // Object
 //======================================================================

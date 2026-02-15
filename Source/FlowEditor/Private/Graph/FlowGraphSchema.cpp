@@ -15,6 +15,7 @@
 #include "FlowPinSubsystem.h"
 #include "FlowSettings.h"
 #include "AddOns/FlowNodeAddOn.h"
+#include "Graph/Nodes/FlowGraphNode_Reroute.h"
 #include "Nodes/FlowNode.h"
 #include "Nodes/FlowNodeAddOnBlueprint.h"
 #include "Nodes/FlowNodeBlueprint.h"
@@ -876,24 +877,25 @@ TSharedPtr<FEdGraphSchemaAction> UFlowGraphSchema::GetCreateCommentAction() cons
 PRAGMA_DISABLE_DEPRECATION_WARNINGS
 void UFlowGraphSchema::OnPinConnectionDoubleCicked(UEdGraphPin* PinA, UEdGraphPin* PinB, const FVector2D& GraphPosition) const
 {
-	if (!FFlowPin::IsExecPinCategory(PinA->PinType.PinCategory) || !FFlowPin::IsExecPinCategory(PinB->PinType.PinCategory))
-	{
-		// Disallowing Reroute node creation for non-exec connections (until we have a good solution for it)
-
-		return;
-	}
-
 	const FScopedTransaction Transaction(LOCTEXT("CreateFlowRerouteNodeOnWire", "Create Flow Reroute Node"));
 
 	const FVector2D NodeSpacerSize(42.0f, 24.0f);
 	const FVector2D KnotTopLeft = GraphPosition - (NodeSpacerSize * 0.5f);
 
 	UEdGraph* ParentGraph = PinA->GetOwningNode()->GetGraph();
-	UFlowGraphNode* NewReroute = FFlowGraphSchemaAction_NewNode::CreateNode(ParentGraph, nullptr, UFlowNode_Reroute::StaticClass(), KnotTopLeft, false);
+	UFlowGraphNode* NewEdNode = FFlowGraphSchemaAction_NewNode::CreateNode(ParentGraph, nullptr, UFlowNode_Reroute::StaticClass(), KnotTopLeft, false);
+	UFlowGraphNode_Reroute* NewRerouteEdNode = Cast<UFlowGraphNode_Reroute>(NewEdNode);
 
-	PinA->BreakLinkTo(PinB);
-	PinA->MakeLinkTo((PinA->Direction == EGPD_Output) ? NewReroute->InputPins[0] : NewReroute->OutputPins[0]);
-	PinB->MakeLinkTo((PinB->Direction == EGPD_Output) ? NewReroute->InputPins[0] : NewReroute->OutputPins[0]);
+	if (PinA->Direction == EGPD_Output)
+	{
+		check(PinB->Direction == EGPD_Input && PinA->Direction == EGPD_Output);
+		NewRerouteEdNode->ConfigureRerouteNodeFromPinConnections(*PinB, *PinA);
+	}
+	else
+	{
+		check(PinA->Direction == EGPD_Input && PinB->Direction == EGPD_Output);
+		NewRerouteEdNode->ConfigureRerouteNodeFromPinConnections(*PinA, *PinB);
+	}
 }
 PRAGMA_ENABLE_DEPRECATION_WARNINGS
 
@@ -1104,16 +1106,14 @@ void UFlowGraphSchema::ApplyNodeOrAddOnFilter(const UFlowAsset* EditedFlowAsset,
 		return;
 	}
 
-	const UFlowGraphSettings& FlowGraphSettings = *UFlowGraphSettings::Get();
-	const bool bIsHiddenFromPaletteByNodeClass = FlowGraphSettings.NodesHiddenFromPalette.Contains(FlowNodeClass);
-	if (bIsHiddenFromPaletteByNodeClass)
+	const UFlowGraphSettings* GraphSettings = GetDefault<UFlowGraphSettings>();
+	if (GraphSettings->NodesHiddenFromPalette.Contains(FlowNodeClass))
 	{
 		return;
 	}
 
 	UFlowNodeBase* FlowNodeBaseCDO = FlowNodeClass->GetDefaultObject<UFlowNodeBase>();
-	const FFlowGraphNodesPolicy* FlowAssetPolicy = FlowGraphSettings.PerAssetSubclassFlowNodePolicies.Find(FSoftClassPath(EditedFlowAsset->GetClass()));
-	if (FlowAssetPolicy)
+	if (const FFlowGraphNodesPolicy* FlowAssetPolicy = GraphSettings->PerAssetSubclassFlowNodePolicies.Find(FSoftClassPath(EditedFlowAsset->GetClass())))
 	{
 		const bool bIsAllowedByPolicy = FlowAssetPolicy->IsNodeAllowedByPolicy(FlowNodeBaseCDO);
 		if (!bIsAllowedByPolicy)
@@ -1129,7 +1129,7 @@ void UFlowGraphSchema::GetFlowNodeActions(FGraphActionMenuBuilder& ActionMenuBui
 {
 	const TArray<UFlowNodeBase*> FilteredNodes = GetFilteredPlaceableNodesOrAddOns(EditedFlowAsset, NativeFlowNodes, BlueprintFlowNodes);
 
-	const UFlowGraphSettings& FlowGraphSettings = *UFlowGraphSettings::Get();
+	const UFlowGraphSettings& GraphSettings = *GetDefault<UFlowGraphSettings>();
 	for (const UFlowNodeBase* FlowNodeBase : FilteredNodes)
 	{
 		// TODO (gtaylor) This should really be integrated into GetFilteredPlaceableNodesOrAddOns, 
@@ -1141,7 +1141,7 @@ void UFlowGraphSchema::GetFlowNodeActions(FGraphActionMenuBuilder& ActionMenuBui
 			continue;
 		}
 
-		TSharedPtr<FFlowGraphSchemaAction_NewNode> NewNodeAction(new FFlowGraphSchemaAction_NewNode(FlowNodeBase, FlowGraphSettings));
+		TSharedPtr<FFlowGraphSchemaAction_NewNode> NewNodeAction(new FFlowGraphSchemaAction_NewNode(FlowNodeBase, GraphSettings));
 		ActionMenuBuilder.AddAction(NewNodeAction);
 	}
 }

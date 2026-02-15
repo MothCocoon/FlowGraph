@@ -76,7 +76,7 @@ bool UFlowAssetFactory::ConfigureProperties()
 
 bool UFlowAssetFactory::ConfigurePropertiesInternal(const FText& TitleText)
 {
-	AssetClass = UFlowGraphSettings::Get()->DefaultFlowAssetClass;
+	AssetClass = GetDefault<UFlowGraphSettings>()->DefaultFlowAssetClass;
 	if (AssetClass) // Class was set in settings
 	{
 		return true;

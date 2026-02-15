@@ -27,7 +27,7 @@ void UFlowNode_CustomInput::PostEditImport()
 #if WITH_EDITOR
 FText UFlowNode_CustomInput::K2_GetNodeTitle_Implementation() const
 {
-	if (!EventName.IsNone() && UFlowSettings::Get()->bUseAdaptiveNodeTitles)
+	if (!EventName.IsNone() && GetDefault<UFlowSettings>()->bUseAdaptiveNodeTitles)
 	{
 		return FText::Format(LOCTEXT("CustomInputTitle", "{0} Input"), {FText::FromString(EventName.ToString())});
 	}

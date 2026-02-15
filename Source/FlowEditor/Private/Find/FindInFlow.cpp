@@ -3,7 +3,6 @@
 #include "Find/FindInFlow.h"
 #include "Asset/FlowAssetEditor.h"
 #include "Find/SFindInFlowFilterPopup.h"
-#include "Graph/FlowGraphEditor.h"
 #include "Graph/FlowGraphEditorSettings.h"
 #include "Graph/FlowGraphUtils.h"
 #include "Graph/Nodes/FlowGraphNode.h"
@@ -255,7 +254,7 @@ void SFindInFlow::Construct(const FArguments& InArgs, TSharedPtr<class FFlowAsse
 	SearchResults.Setup();
 
 	// Load INI settings
-	const UFlowGraphEditorSettings* Settings = UFlowGraphEditorSettings::Get();
+	const UFlowGraphEditorSettings* Settings = GetDefault<UFlowGraphEditorSettings>();
 	if (ensure(Settings))
 	{
 		MaxSearchDepth = Settings->DefaultMaxSearchDepth;
@@ -332,20 +331,19 @@ void SFindInFlow::Construct(const FArguments& InArgs, TSharedPtr<class FFlowAsse
 								.ToolTipText(LOCTEXT("EditFiltersTooltip", "Edit search filters"))
 								.OnClicked_Lambda([this]()
 									{
-										FFindInFlowApplyDelegate OnSaveAsDefault = FFindInFlowApplyDelegate::CreateLambda([this](EFlowSearchFlags Flags)
+										const FFindInFlowApplyDelegate OnSaveAsDefault = FFindInFlowApplyDelegate::CreateLambda([this](EFlowSearchFlags Flags)
 											{
-												if (UFlowGraphEditorSettings* Settings = UFlowGraphEditorSettings::Get())
+												if (UFlowGraphEditorSettings* GraphEditorSettings = GetMutableDefault<UFlowGraphEditorSettings>())
 												{
-													Settings->DefaultSearchFlags = static_cast<uint32>(Flags);
-													Settings->SaveConfig();
+													GraphEditorSettings->DefaultSearchFlags = static_cast<uint32>(Flags);
+													GraphEditorSettings->SaveConfig();
 												}
 											});
 
-										TSharedRef<SFindInFlowFilterPopup> FilterPopup = SNew(SFindInFlowFilterPopup)
-											.OnApply(FFindInFlowApplyDelegate::CreateLambda([this](EFlowSearchFlags NewSearchFlags)
+										const TSharedRef<SFindInFlowFilterPopup> FilterPopup = SNew(SFindInFlowFilterPopup)
+											.OnApply(FFindInFlowApplyDelegate::CreateLambda([this](const EFlowSearchFlags NewSearchFlags)
 												{
 													SearchFlags = NewSearchFlags;
-
 													InitiateSearch();
 												}))
 											.OnSaveAsDefault(OnSaveAsDefault)
@@ -447,10 +445,10 @@ void SFindInFlow::OnMaxDepthChanged(int32 NewDepth)
 	MaxSearchDepth = NewDepth;
 
 	// Save to INI
-	if (UFlowGraphEditorSettings* Settings = UFlowGraphEditorSettings::Get())
+	if (UFlowGraphEditorSettings* GraphEditorSettings = GetMutableDefault<UFlowGraphEditorSettings>())
 	{
-		Settings->DefaultMaxSearchDepth = NewDepth;
-		Settings->SaveConfig();
+		GraphEditorSettings->DefaultMaxSearchDepth = NewDepth;
+		GraphEditorSettings->SaveConfig();
 	}
 }
 
@@ -502,10 +500,7 @@ void SFindInFlow::InitiateSearch()
 		return;
 	}
 
-	const TSubclassOf<UFlowAsset> CurrentAssetClass = CurrentAsset->GetClass();
-
 	constexpr int32 Depth = 0;
-
 	switch (SearchScope)
 	{
 	case EFlowSearchScope::ThisAssetOnly:
@@ -781,9 +776,7 @@ void SFindInFlow::UpdateSearchFlagToStringMapForFlowNodeBase(const UFlowNodeBase
 	// AddOns
 	if (EnumHasAnyFlags(SearchFlags, EFlowSearchFlags::AddOns))
 	{
-		TSet<FString>& AddOnsSet = SearchFlagToStringMap.FindOrAdd(EFlowSearchFlags::AddOns);
-
-		FlowNodeBase.ForEachAddOnConst([AddOnsSet, this, &SearchFlagToStringMap, &Depth](const UFlowNodeAddOn& AddOn)
+		FlowNodeBase.ForEachAddOnConst([this, &SearchFlagToStringMap, &Depth](const UFlowNodeAddOn& AddOn)
 			{
 				// No depth penalty for AddOns
 				UpdateSearchFlagToStringMapForFlowNodeBase(AddOn, SearchFlagToStringMap, Depth);
@@ -796,7 +789,7 @@ void SFindInFlow::UpdateSearchFlagToStringMapForFlowNodeBase(const UFlowNodeBase
 void SFindInFlow::AppendPropertyValues(const void* Container, const UStruct* Struct, const UObject* ParentObject, TMap<EFlowSearchFlags, TSet<FString>>& SearchFlagToStringMap, int32 Depth) const
 {
 	int32 MaxDepth = 1;
-	if (const UFlowGraphEditorSettings* Settings = UFlowGraphEditorSettings::Get())
+	if (const UFlowGraphEditorSettings* Settings = GetDefault<UFlowGraphEditorSettings>())
 	{
 		MaxDepth = Settings->DefaultMaxSearchDepth;
 	}

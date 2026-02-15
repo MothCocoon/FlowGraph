@@ -12,7 +12,7 @@
 namespace FlowPinType
 {
 	template <typename TPinType>
-	static bool PopulateResultTemplate(const UObject& PropertyOwnerObject, const UFlowNode& FlowNode, const FFlowPin& Pin, FFlowDataPinResult& OutResult)
+	static bool PopulateResultTemplate(const UObject& PropertyOwnerObject, const UFlowNode& FlowNode, const FName& PropertyName, FFlowDataPinResult& OutResult)
 	{
 		using TValue = typename TPinType::ValueType;
 		using TWrapper = typename TPinType::WrapperType;
@@ -21,7 +21,7 @@ namespace FlowPinType
 		TInstancedStruct<FFlowDataPinValue> ValueStruct;
 		const FProperty* FoundProperty = nullptr;
 
-		if (!FlowNode.TryFindPropertyByPinName(PropertyOwnerObject, Pin.PinName, FoundProperty, ValueStruct))
+		if (!FlowNode.TryFindPropertyByPinName(PropertyOwnerObject, PropertyName, FoundProperty, ValueStruct))
 		{
 			OutResult.Result = EFlowDataPinResolveResult::FailedUnknownPin;
 			return false;

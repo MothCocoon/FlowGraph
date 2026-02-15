@@ -100,8 +100,7 @@ void UFlowGraphSettings::PostEditChangeProperty(FPropertyChangedEvent& PropertyC
 
 FString UFlowGraphSettings::GetNodeCategoryForNode(const UFlowNodeBase& FlowNodeBase)
 {
-	const UFlowGraphSettings* GraphSettings = UFlowGraphSettings::Get();
-
+	const UFlowGraphSettings* GraphSettings = GetDefault<UFlowGraphSettings>();
 	if (const FString* CategoryOverridenByUser = GraphSettings->OverridenNodeCategories.Find(FlowNodeBase.GetClass()))
 	{
 		return *CategoryOverridenByUser;
@@ -134,7 +133,7 @@ const TMap<FGameplayTag, FFlowNodeDisplayStyleConfig>& UFlowGraphSettings::Ensur
 	return NodeDisplayStylesMap;
 }
 
-bool UFlowGraphSettings::TryAddDefaultNodeDisplayStyle(const FFlowNodeDisplayStyleConfig& StyleConfig)
+void UFlowGraphSettings::TryAddDefaultNodeDisplayStyle(const FFlowNodeDisplayStyleConfig& StyleConfig)
 {
 	const int32 FoundIndex = 
 		NodeDisplayStyles.FindLastByPredicate(
@@ -151,13 +150,11 @@ bool UFlowGraphSettings::TryAddDefaultNodeDisplayStyle(const FFlowNodeDisplaySty
 	if (FoundIndex != INDEX_NONE)
 	{
 		// Keep the existing config
-
-		return false;
+		return;
 	}
 
 	NodeDisplayStyles.Add(StyleConfig);
-
-	return true;
+	return;
 }
 
 const FLinearColor* UFlowGraphSettings::LookupNodeTitleColorForNode(const UFlowNodeBase& FlowNodeBase)
