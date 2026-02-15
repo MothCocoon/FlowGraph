@@ -15,7 +15,10 @@ class FLOW_API UFlowNode_Checkpoint final : public UFlowNode
 	GENERATED_UCLASS_BODY()
 
 protected:
-	UPROPERTY(Config)
+	/* Change setting by editing DefaultGame.ini, add section
+	 * [/Script/Flow.FlowNode_Checkpoint]
+	 * bUseAsyncSave=True */
+	UPROPERTY(VisibleAnywhere, Config)
 	bool bUseAsyncSave;
 
 	virtual void ExecuteInput(const FName& PinName) override;
