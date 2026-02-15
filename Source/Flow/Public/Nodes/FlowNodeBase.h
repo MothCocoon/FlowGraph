@@ -458,7 +458,7 @@ public:
 	virtual FString GetNodeDescription() const;
 
 	// Complex summary of node's content including its addons
-	FString GetNodeDescriptionWithAddons() const;
+	FString GetAddOnDescriptions() const;
 #endif
 
 protected:	

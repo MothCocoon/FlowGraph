@@ -44,7 +44,11 @@ public:
 	UPROPERTY(config, EditAnywhere, Category = "Nodes")
 	bool bShowNodeDescriptionWhilePlaying;
 
-	// Pin names will will be displayed in a format that is easier to read, even if PinFriendlyName wasn't set
+	// Display descriptions from attached addons in node descriptions
+	UPROPERTY(EditAnywhere, config, Category = "Nodes")
+	bool bShowAddonDescriptions;
+
+	// Pin names will be displayed in a format that is easier to read, even if PinFriendlyName wasn't set
 	UPROPERTY(EditAnywhere, config, Category = "Nodes")
 	bool bEnforceFriendlyPinNames;
 
@@ -57,10 +61,6 @@ public:
 	
 	UPROPERTY(config, EditAnywhere, Category = "Nodes", meta = (EditCondition = "bShowSubGraphPreview"))
 	FVector2D SubGraphPreviewSize;
-	
-	// Display descriptions from attached addons in node descriptions
-	UPROPERTY(EditAnywhere, config, Category = "Nodes")
-	bool bShowAddonNodeDescriptions = true;
 
 	/** Enable hot reload for native flow nodes?
 	 * WARNING: hot reload can easily crash the editor and you can lose progress */

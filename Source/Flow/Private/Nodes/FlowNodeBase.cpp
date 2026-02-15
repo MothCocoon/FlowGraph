@@ -730,18 +730,12 @@ FString UFlowNodeBase::GetNodeDescription() const
 	return K2_GetNodeDescription();
 }
 
-FString UFlowNodeBase::GetNodeDescriptionWithAddons() const
+FString UFlowNodeBase::GetAddOnDescriptions() const
 {
-	FString Description = GetNodeDescription();
-	FString AddonDescriptions = FString::JoinBy(AddOns,
-		LINE_TERMINATOR,
-		[](const UFlowNodeBase* Addon) { return Addon->GetNodeDescriptionWithAddons(); });
-	if (!AddonDescriptions.IsEmpty())
+	return FString::JoinBy(AddOns, LINE_TERMINATOR, [](const UFlowNodeBase* Addon)
 	{
-		return Description.Append(LINE_TERMINATOR).Append(AddonDescriptions);
-	}
-
-	return Description;
+		return Addon->GetNodeDescription();
+	});
 }
 
 bool UFlowNodeBase::CanModifyFlowDataPinType() const
@@ -976,7 +970,7 @@ bool UFlowNodeBase::BuildMessage(FString& Message) const
 EDataValidationResult UFlowNodeBase::ValidateNode()
 {
 	EDataValidationResult ValidationResult = EDataValidationResult::NotValidated;
-	
+
 	if (GetClass()->IsFunctionImplementedInScript(GET_FUNCTION_NAME_CHECKED(UFlowNodeBase, K2_ValidateNode)))
 	{
 		ValidationResult = K2_ValidateNode();
