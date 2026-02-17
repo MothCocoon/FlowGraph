@@ -2,6 +2,7 @@
 #pragma once
 
 #include "IAssetIndexer.h"
+#include "UObject/Object.h"
 
 class UFlowAsset;
 class FSearchSerializer;
