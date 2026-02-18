@@ -98,6 +98,19 @@ void UFlowNode::ValidateFlowPinArrayIsUnique(const TArray<FFlowPin>& FlowPins, T
 		}
 	}
 }
+
+void UFlowNode::EnsureSetFlowNodeForEditorForAllAddOns() const
+{
+	UFlowNode* MutableThis = const_cast<UFlowNode*>(this);
+
+	MutableThis->ForEachAddOn(
+		[MutableThis](UFlowNodeAddOn& AddOn) -> EFlowForEachAddOnFunctionReturnValue
+		{
+			AddOn.SetFlowNodeForEditor(MutableThis);
+			return EFlowForEachAddOnFunctionReturnValue::Continue;
+		});
+}
+
 #endif
 
 void UFlowNode::PostLoad()
@@ -315,6 +328,8 @@ bool UFlowNode::SupportsContextPins() const
 
 TArray<FFlowPin> UFlowNode::GetContextInputs() const
 {
+	EnsureSetFlowNodeForEditorForAllAddOns();
+
 	TArray<FFlowPin> ContextOutputs = Super::GetContextInputs();
 
 	// Add the Auto-Generated DataPins as GetContextInputs
@@ -328,6 +343,8 @@ TArray<FFlowPin> UFlowNode::GetContextInputs() const
 
 TArray<FFlowPin> UFlowNode::GetContextOutputs() const
 {
+	EnsureSetFlowNodeForEditorForAllAddOns();
+
 	TArray<FFlowPin> ContextOutputs = Super::GetContextOutputs();
 
 	// Add the Auto-Generated DataPins as ContextOutputs

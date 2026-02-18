@@ -73,7 +73,7 @@ void UFlowNode_Switch::ExecuteInput(const FName& PinName)
 
 FText UFlowNode_Switch::K2_GetNodeTitle_Implementation() const
 {
-	if (!bOnlyTriggerFirstPassingCase && UFlowSettings::Get()->bUseAdaptiveNodeTitles)
+	if (!bOnlyTriggerFirstPassingCase && GetDefault<UFlowSettings>()->bUseAdaptiveNodeTitles)
 	{
 		return FText::Format(LOCTEXT("SwitchTitle", "{0} (All Passing)"), { Super::K2_GetNodeTitle_Implementation() });
 	}

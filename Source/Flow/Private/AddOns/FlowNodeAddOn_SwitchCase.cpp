@@ -130,7 +130,7 @@ bool UFlowNodeAddOn_SwitchCase::TryTriggerForCase_Implementation() const
 
 FText UFlowNodeAddOn_SwitchCase::K2_GetNodeTitle_Implementation() const
 {
-	if (UFlowSettings::Get()->bUseAdaptiveNodeTitles)
+	if (GetDefault<UFlowSettings>()->bUseAdaptiveNodeTitles)
 	{
 		FLOW_ASSERT_ENUM_MAX(EFlowPredicateCombinationRule, 2);
 		if (BranchCombinationRule != EFlowPredicateCombinationRule::AND)

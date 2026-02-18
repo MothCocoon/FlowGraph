@@ -85,6 +85,10 @@ public:
 	// --
 
 	FLOW_API void RequestReconstructionOnOwningFlowNode() const;
+
+	// Editor-only method to set the FlowNode for any follow-up operations 
+	// that the addon will need a reliable FlowNode pointer at editor-time
+	void SetFlowNodeForEditor(UFlowNode* FlowNodeOwner) { FlowNode = FlowNodeOwner; }
 #endif // WITH_EDITOR
 
 protected:

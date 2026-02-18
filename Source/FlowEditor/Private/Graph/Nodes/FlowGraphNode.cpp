@@ -1846,6 +1846,9 @@ bool UFlowGraphNode::TryUpdateNodePins() const
 		return true;
 	}
 
+	// Ensure the AddOns for this FlowNode have their FlowNode pointer set
+	FlowNodeInstance->EnsureSetFlowNodeForEditorForAllAddOns();
+
 	// Attempt to update auto-generated pins
 	// This must be called first, it updates the underlying data for data pins of the Flow Node 
 	const bool bAutoDataPinsChanged = FlowNodeInstance->TryUpdateAutoDataPins();
@@ -1873,7 +1876,8 @@ bool UFlowGraphNode::TryUpdateNodePins() const
 	check(IsValid(FlowNodeCDO));
 
 	// Fix up old pins on the CDO
-	UFlowNode* MutableCDO = const_cast<UFlowNode*>(FlowNodeCDO);
+	UFlowNode* MutableCDO = const_cast<UFlowNode*>(FlowNodeCDO);	
+	MutableCDO->EnsureSetFlowNodeForEditorForAllAddOns();
 	MutableCDO->FixupDataPinTypes();
 
 	// We grab basic built-in input/output pins from the CDO
