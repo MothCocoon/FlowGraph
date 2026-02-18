@@ -732,10 +732,18 @@ FString UFlowNodeBase::GetNodeDescription() const
 
 FString UFlowNodeBase::GetAddOnDescriptions() const
 {
-	return FString::JoinBy(AddOns, LINE_TERMINATOR, [](const UFlowNodeBase* Addon)
+	FString Result;
+
+	for (const UFlowNodeBase* Addon : AddOns)
 	{
-		return Addon->GetNodeDescription();
-	});
+		const FString& Description = Addon->GetNodeDescription();
+		if (!Description.IsEmpty())
+		{
+			Result.Append(Description).Append(LINE_TERMINATOR);
+		}
+	}
+
+	return Result;
 }
 
 bool UFlowNodeBase::CanModifyFlowDataPinType() const

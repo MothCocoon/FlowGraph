@@ -1,0 +1,123 @@
+<style>
+  .wrapper {
+    display: flex;
+    align-items: flex-start;
+    gap: 0;
+    max-width: 960px;
+  }
+
+  #header nav {
+    float: none;
+    width: 100%;
+    height: 100%;
+    display: flex;
+    align-items: center;
+    padding: 0;
+    background: none;
+  }
+
+  #header nav ul {
+    display: flex;
+    align-items: center;
+    max-width: 960px;
+    width: 100%;
+    margin: 0 auto;
+    padding: 0 16px;
+    height: 100%;
+  }
+
+  #header nav ul li.fork {
+    float: none;
+    margin: 0 8px 0 0;
+    padding: 0;
+  }
+
+  #header nav ul li.discord {
+    float: none;
+    margin-left: auto;
+    padding: 0;
+  }
+
+  section {
+    max-width: none;
+    float: none;
+    width: auto;
+  }
+
+  aside.sidebar {
+    width: 200px;
+    flex-shrink: 0;
+    padding: 20px 15px 20px 0;
+    border-right: 1px solid #333;
+    margin-right: 30px;
+    margin-top: 70px;
+  }
+
+  aside.sidebar h3 {
+    font-size: 0.7rem;
+    text-transform: uppercase;
+    letter-spacing: 0.1em;
+    color: #666;
+    margin: 1.2em 0 0.4em;
+  }
+
+  aside.sidebar h3:first-child {
+    margin-top: 0;
+  }
+
+  aside.sidebar ul {
+    list-style: none;
+    padding: 0;
+    margin: 0 0 0.6em;
+  }
+
+  aside.sidebar ul li a {
+    display: block;
+    padding: 3px 6px;
+    border-radius: 3px;
+    font-size: 0.85rem;
+    color: #9ddcff;
+    text-decoration: none;
+  }
+
+  aside.sidebar ul li a:hover {
+    background: rgba(255,255,255,0.08);
+    color: #fff;
+  }
+
+  section {
+    flex: 1;
+    min-width: 0;
+  }
+
+  .title-bar {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 16px;
+  }
+
+  a.discord-link {
+    display: flex;
+    align-items: center;
+    gap: 7px;
+    padding: 7px 14px;
+    border-radius: 4px;
+    background: #5865F2;
+    color: #fff;
+    text-decoration: none;
+    font-size: 0.85rem;
+    font-weight: bold;
+    white-space: nowrap;
+    flex-shrink: 0;
+    fill: currentColor;
+  }
+
+  a.discord-link:hover {
+    background: #4752c4;
+  }
+
+  a.discord-link svg {
+    fill: currentColor;
+  }
+</style>
