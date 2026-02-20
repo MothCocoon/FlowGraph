@@ -1,3 +1,4 @@
+// FlowGraph.h
 // Copyright https://github.com/MothCocoon/FlowGraph/graphs/contributors
 #pragma once
 
@@ -8,6 +9,7 @@
 
 class SFlowGraphEditor;
 class UFlowGraphNode;
+class UFlowGraphNode_Reroute;
 class UFlowGraphSchema;
 
 /**
@@ -33,7 +35,11 @@ protected:
 	uint32 bIsLoadingGraph : 1;
 
 	bool bIsSavingGraph = false;
-	
+
+	// Reroute nodes that requested a post-unlock type fixup (avoids reconstruct storms on paste)
+	UPROPERTY(Transient)
+	TSet<TObjectPtr<UFlowGraphNode_Reroute>> PendingRerouteTypeFixups;
+
 public:
 	static void CreateGraph(UFlowAsset* InFlowAsset);
 	static void CreateGraph(UFlowAsset* InFlowAsset, TSubclassOf<UFlowGraphSchema> FlowSchema);
@@ -44,6 +50,13 @@ protected:
 
 	void RecursivelyRefreshAddOns(UFlowGraphNode& FromFlowGraphNode);
 	static void RecursivelySetupAllFlowGraphNodesForEditing(UFlowGraphNode& FromFlowGraphNode);
+
+	// Run deferred reroute retyping after unlocking updates
+	void ProcessPendingRerouteTypeFixups();
+
+public:
+	// Called by reroute nodes when graph is locked and type changes should be deferred
+	void EnqueueRerouteTypeFixup(UFlowGraphNode_Reroute* RerouteNode);
 
 public:	
 	// UEdGraph

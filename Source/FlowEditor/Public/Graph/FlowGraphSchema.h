@@ -14,6 +14,7 @@ class UFlowNodeAddOn;
 class UFlowNodeBase;
 class UFlowGraphNode;
 struct FFlowPinType;
+class UFlowGraphNode_Reroute;
 
 DECLARE_MULTICAST_DELEGATE(FFlowGraphSchemaRefresh);
 
@@ -134,6 +135,13 @@ protected:
 	virtual void InitializedPinTypes();
 
 	static UFlowGraphNode* CreateDefaultNode(UEdGraph& Graph, const TSubclassOf<UFlowNode>& NodeClass, const FVector2D& Offset, bool bPlacedAsGhostNode);
+
+	// Helper to break incompatible connections on a set of pins
+	template <bool bIsInputPins>
+	void BreakIncompatibleConnections(UFlowGraphNode_Reroute* RerouteNode, const TArray<UEdGraphPin*>& Pins, FEdGraphPinType NewType) const;
+
+	// Handles post-connection notifications for affected nodes
+	void NotifyNodesChanged(UFlowGraphNode* NodeA, UFlowGraphNode* NodeB, UEdGraph* Graph) const;
 
 private:
 	static void ApplyNodeOrAddOnFilter(const UFlowAsset* AssetClassDefaults, const UClass* FlowNodeClass, TArray<UFlowNodeBase*>& FilteredNodes);

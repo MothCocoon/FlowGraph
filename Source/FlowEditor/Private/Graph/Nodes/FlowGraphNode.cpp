@@ -13,6 +13,7 @@
 #include "Graph/FlowGraphEditorSettings.h"
 #include "Graph/FlowGraphSchema.h"
 #include "Graph/FlowGraphSettings.h"
+#include "Graph/Nodes/FlowGraphNode_Reroute.h"
 #include "Graph/Widgets/SFlowGraphNode.h"
 #include "Graph/Widgets/SGraphEditorActionMenuFlow.h"
 #include "Interfaces/FlowDataPinValueSupplierInterface.h"
@@ -1876,13 +1877,16 @@ bool UFlowGraphNode::TryUpdateNodePins() const
 	UFlowNode* MutableCDO = const_cast<UFlowNode*>(FlowNodeCDO);
 	MutableCDO->FixupDataPinTypes();
 
-	// We grab basic built-in input/output pins from the CDO
-	// We grab extra required pins from the actual node as generated context pins (this includes both data pins and other context exec pins) 
-	TArray<FFlowPin> RequiredNodeInputPins = FlowNodeCDO->GetInputPins();
+	const bool bIsRerouteGraphNode = (Cast<UFlowGraphNode_Reroute>(this) != nullptr);
+
+	// We grab basic built-in input/output pins from:
+	// - CDO for regular nodes
+	// - INSTANCE for reroute nodes (reroute pins are adaptive and may legitimately differ from CDO defaults)
+	TArray<FFlowPin> RequiredNodeInputPins = bIsRerouteGraphNode ? FlowNodeInstance->GetInputPins() : FlowNodeCDO->GetInputPins();
 	RequiredNodeInputPins.Append(FlowNodeInstance->GetContextInputs());
 	CleanInvalidPins(RequiredNodeInputPins);
 
-	TArray<FFlowPin> RequiredNodeOutputPins = FlowNodeCDO->GetOutputPins();
+	TArray<FFlowPin> RequiredNodeOutputPins = bIsRerouteGraphNode ? FlowNodeInstance->GetOutputPins() : FlowNodeCDO->GetOutputPins();
 	RequiredNodeOutputPins.Append(FlowNodeInstance->GetContextOutputs());
 	CleanInvalidPins(RequiredNodeOutputPins);
 

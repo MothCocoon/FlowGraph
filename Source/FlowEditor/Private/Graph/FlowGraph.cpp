@@ -4,6 +4,7 @@
 #include "Graph/FlowGraphSchema.h"
 #include "Graph/FlowGraphSchema_Actions.h"
 #include "Graph/Nodes/FlowGraphNode.h"
+#include "Graph/Nodes/FlowGraphNode_Reroute.h"
 #include "AddOns/FlowNodeAddOn.h"
 #include "Nodes/FlowNode.h"
 #include "FlowEditorLogChannels.h"
@@ -472,7 +473,50 @@ void UFlowGraph::LockUpdates()
 void UFlowGraph::UnlockUpdates()
 {
 	bLockUpdates = false;
+
+	// Apply any deferred reroute type updates first, while we're in a stable post-paste state.
+	ProcessPendingRerouteTypeFixups();
+
+	// Existing behavior
 	UpdateAsset();
+}
+
+void UFlowGraph::EnqueueRerouteTypeFixup(UFlowGraphNode_Reroute* RerouteNode)
+{
+	if (!IsValid(RerouteNode))
+	{
+		return;
+	}
+
+	// If not locked, run immediately (keeps behavior responsive outside paste/locked updates)
+	if (!IsLocked())
+	{
+		RerouteNode->NodeConnectionListChanged();
+		return;
+	}
+
+	PendingRerouteTypeFixups.Add(RerouteNode);
+}
+
+void UFlowGraph::ProcessPendingRerouteTypeFixups()
+{
+	if (PendingRerouteTypeFixups.Num() == 0)
+	{
+		return;
+	}
+
+	// Move aside so re-entrancy (or new enqueue) doesn't invalidate iteration
+	TSet<TObjectPtr<UFlowGraphNode_Reroute>> Local = MoveTemp(PendingRerouteTypeFixups);
+	PendingRerouteTypeFixups.Reset();
+
+	for (UFlowGraphNode_Reroute* RerouteNode : Local)
+	{
+		if (IsValid(RerouteNode))
+		{
+			// This will call into reroute's centralized retype path via ReconfigureFromConnections()
+			RerouteNode->NodeConnectionListChanged();
+		}
+	}
 }
 
 void UFlowGraph::RecursivelySetupAllFlowGraphNodesForEditing(UFlowGraphNode& FromFlowGraphNode)
