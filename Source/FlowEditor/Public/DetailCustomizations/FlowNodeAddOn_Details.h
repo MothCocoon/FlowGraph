@@ -18,4 +18,7 @@ public:
 	// IDetailCustomization
 	virtual void CustomizeDetails(IDetailLayoutBuilder& DetailLayout) override;
 	// --
+
+private:
+	TWeakObjectPtr<UFlowNodeAddOn> EditedAddOn = nullptr;
 };

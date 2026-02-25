@@ -320,8 +320,14 @@ void UFlowGraphNode::ReconstructNode()
 		return;
 	}
 
-	bIsReconstructingNode = true;
+	TGuardValue<bool> GuardIsResonstructingNode(bIsReconstructingNode, true);
+
 	FScopedTransaction Transaction(LOCTEXT("ReconstructNode", "Reconstruct Node"), !GUndo);
+
+	if (UFlowNode* FlowNode = Cast<UFlowNode>(NodeInstance))
+	{
+		FlowNode->SetupForEditing(*this);
+	}
 
 	const bool bAnyPinsUpdated = TryUpdateNodePins(); // Updates all pins of the Flow Node (native pins, meta auto pins, and context pins which include data pins for now)
 	const bool bAreGraphPinsMismatched = !CheckGraphPinsMatchNodePins(); // This must be called last since it checks the existing graph node against the cleaned up Flow Node instance
@@ -357,16 +363,9 @@ void UFlowGraphNode::ReconstructNode()
 		bNeedsFullReconstruction = false;
 	}
 
-	if (UFlowNode* FlowNode = Cast<UFlowNode>(NodeInstance))
-	{
-		FlowNode->UpdateNodeConfigText();
-	}
-
 	// This ensures the graph editor 'Refresh' button still rebuilds all the graph widgets even if the FlowGraphNode has nothing to update
 	// Ideally we could get rid of the 'Refresh' button, but I think it will keep being useful, esp. for users making rough custom widgets
 	(void)OnReconstructNodeCompleted.ExecuteIfBound();
-
-	bIsReconstructingNode = false;
 }
 
 void UFlowGraphNode::AllocateDefaultPins()
@@ -533,6 +532,7 @@ void UFlowGraphNode::GetNodeContextMenuActions(class UToolMenu* Menu, class UGra
 			Section.AddMenuEntry(GenericCommands.Cut);
 			Section.AddMenuEntry(GenericCommands.Copy);
 			Section.AddMenuEntry(GenericCommands.Duplicate);
+			Section.AddMenuEntry(GenericCommands.Paste);
 
 			Section.AddMenuEntry(GraphCommands.BreakNodeLinks);
 
@@ -1848,7 +1848,7 @@ bool UFlowGraphNode::TryUpdateNodePins() const
 	}
 
 	// Ensure the AddOns for this FlowNode have their FlowNode pointer set
-	FlowNodeInstance->EnsureSetFlowNodeForEditorForAllAddOns();
+	FlowNodeInstance->EnsureAddOnFlowNodePointersForEditor();
 
 	// Attempt to update auto-generated pins
 	// This must be called first, it updates the underlying data for data pins of the Flow Node 
@@ -1878,7 +1878,7 @@ bool UFlowGraphNode::TryUpdateNodePins() const
 
 	// Fix up old pins on the CDO
 	UFlowNode* MutableCDO = const_cast<UFlowNode*>(FlowNodeCDO);	
-	MutableCDO->EnsureSetFlowNodeForEditorForAllAddOns();
+	MutableCDO->EnsureAddOnFlowNodePointersForEditor();
 	MutableCDO->FixupDataPinTypes();
 
 	const bool bIsRerouteGraphNode = (Cast<UFlowGraphNode_Reroute>(this) != nullptr);

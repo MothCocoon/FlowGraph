@@ -18,6 +18,7 @@ public class Flow : ModuleRules
 			"CoreUObject",
 			"DeveloperSettings",
 			"Engine",
+			"GameplayAbilities", // for FGameplayTagRequirements
 			"GameplayTags",
 			"MovieScene",
 			"MovieSceneTracks",

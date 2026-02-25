@@ -1170,17 +1170,36 @@ void UFlowGraphSchema::ApplyNodeOrAddOnFilter(const UFlowAsset* EditedFlowAsset,
 		return;
 	}
 
+	using namespace EFlowGraphPolicyResult_Classifiers;
+
 	UFlowNodeBase* FlowNodeBaseCDO = FlowNodeClass->GetDefaultObject<UFlowNodeBase>();
-	if (const FFlowGraphNodesPolicy* FlowAssetPolicy = GraphSettings->PerAssetSubclassFlowNodePolicies.Find(FSoftClassPath(EditedFlowAsset->GetClass())))
+	UClass* CurFlowAssetClass = EditedFlowAsset->GetClass();
+
+	// Crawl up the superclass parentage until we find a strict result, otherwise accept the best tentative result
+	EFlowGraphPolicyResult BestResult = EFlowGraphPolicyResult::Invalid;
+	while (IsValid(CurFlowAssetClass) && CurFlowAssetClass->IsChildOf<UFlowAsset>())
 	{
-		const bool bIsAllowedByPolicy = FlowAssetPolicy->IsNodeAllowedByPolicy(FlowNodeBaseCDO);
-		if (!bIsAllowedByPolicy)
+		if (const FFlowGraphNodesPolicy* FlowAssetPolicy = GraphSettings->PerAssetSubclassFlowNodePolicies.Find(FSoftClassPath(CurFlowAssetClass)))
 		{
-			return;
+			const EFlowGraphPolicyResult CurPolicyResult = FlowAssetPolicy->IsNodeAllowedByPolicy(FlowNodeBaseCDO);
+
+			// Choose the most applicable result for this class
+			BestResult = MergePolicyResult(BestResult, CurPolicyResult);
+
+			if (IsStrictPolicyResult(BestResult))
+			{
+				// A strict policy stops the crawl up the superclass parentage
+				break;
+			}
 		}
+
+		CurFlowAssetClass = CurFlowAssetClass->GetSuperClass();
 	}
 
-	FilteredNodes.Emplace(FlowNodeBaseCDO);
+	if (IsAnyAllowedPolicyResult(BestResult))
+	{
+		FilteredNodes.Emplace(FlowNodeBaseCDO);
+	}
 }
 
 void UFlowGraphSchema::GetFlowNodeActions(FGraphActionMenuBuilder& ActionMenuBuilder, const UFlowAsset* EditedFlowAsset, const FString& CategoryName)

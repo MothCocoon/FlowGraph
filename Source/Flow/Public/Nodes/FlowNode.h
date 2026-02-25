@@ -11,6 +11,7 @@
 #include "Interfaces/FlowDataPinValueSupplierInterface.h"
 #include "Nodes/FlowPin.h"
 #include "Types/FlowArray.h"
+#include "Types/FlowPinConnectionChange.h"
 #include "FlowNode.generated.h"
 
 struct FFlowAutoDataPinsWorkingData;
@@ -70,9 +71,15 @@ public:
 	// --
 
 #if WITH_EDITOR
-	/* Called before operations on AddOns in the editor 
-	 * where we need the AddOns to have a value FlowNode pointer to use. */
-	void EnsureSetFlowNodeForEditorForAllAddOns() const;
+	/* Set up UFlowNodeBase when being opened for edit in the editor. */
+	virtual void SetupForEditing(UEdGraphNode& EdGraphNode) override;
+
+	/**
+	* Editor-only: ensure any editor-time parent pointers are correctly set for this node and any child AddOns.
+	* Goal: AddOns always have a valid FlowNode pointer while being edited (creation/paste/undo/reconstruct/open).
+	* Safe to call repeatedly.
+	*/
+	virtual void EnsureAddOnFlowNodePointersForEditor();
 #endif
 
 public:
@@ -143,7 +150,7 @@ protected:
 	 * returns true if the InOutPins array was rebuilt. */
 	bool RebuildPinArray(const TArray<FName>& NewPinNames, TArray<FFlowPin>& InOutPins, const FFlowPin& DefaultPin);
 	bool RebuildPinArray(const TArray<FFlowPin>& NewPins, TArray<FFlowPin>& InOutPins, const FFlowPin& DefaultPin);
-#endif // WITH_EDITOR;
+#endif
 
 	/* Always use default range for nodes with user-created outputs i.e. Execution Sequence. */
 	void SetNumberedInputPins(const uint8 FirstNumber = 0, const uint8 LastNumber = 1);
@@ -197,7 +204,6 @@ protected:
 public:
 #if WITH_EDITOR
 	void SetConnections(const TMap<FName, FConnectedPin>& InConnections);
-	virtual void OnConnectionsChanged(const TMap<FName, FConnectedPin>& OldConnections) {}
 #endif
 
 	FConnectedPin GetConnection(const FName OutputName) const { return Connections.FindRef(OutputName); }
@@ -216,8 +222,24 @@ public:
 	UFUNCTION(BlueprintPure, Category= "FlowNode")
 	bool IsOutputConnected(const FName& PinName, bool bErrorIfPinNotFound = true) const;
 
-	bool IsInputConnected(const FFlowPin& FlowPin, FGuid* FoundGuid = nullptr, FName* OutConnectedPinName = nullptr) const;
-	bool IsOutputConnected(const FFlowPin& FlowPin, FGuid* FirstFoundGuid = nullptr, FName* OutFirstConnectedPinName = nullptr) const;
+	// Preferred signatures for:
+	// - exec output pins
+	// - data input pins
+	// ... otherwise use the array signatures below
+	bool FindFirstInputPinConnection(const FName& PinName, bool bErrorIfPinNotFound, FConnectedPin& FirstConnectedPin) const;
+	bool FindFirstOutputPinConnection(const FName& PinName, bool bErrorIfPinNotFound, FConnectedPin& FirstConnectedPin) const;
+	bool FindFirstInputPinConnection(const FFlowPin& FlowPin, FConnectedPin& FirstConnectedPin) const;
+	bool FindFirstOutputPinConnection(const FFlowPin& FlowPin, FConnectedPin& FirstConnectedPin) const;
+
+	// Preferred signatures for:
+	// - exec input pins
+	// - data output pins
+	// - cases where you do not need the connection info (with ConnectedPins == nullptr)
+	// ... otherwise use the non-array signatures above
+	bool FindInputPinConnections(const FName& PinName, bool bErrorIfPinNotFound, TArray<FConnectedPin>* ConnectedPins = nullptr) const;
+	bool FindOutputPinConnections(const FName& PinName, bool bErrorIfPinNotFound, TArray<FConnectedPin>* ConnectedPins = nullptr) const;
+	bool FindInputPinConnections(const FFlowPin& FlowPin, TArray<FConnectedPin>* ConnectedPins = nullptr) const;
+	bool FindOutputPinConnections(const FFlowPin& FlowPin, TArray<FConnectedPin>* ConnectedPins = nullptr) const;
 
 	FFlowPin* FindInputPinByName(const FName& PinName);
 	FFlowPin* FindOutputPinByName(const FName& PinName);
@@ -229,14 +251,31 @@ public:
 protected:
 	/* Slow and fast lookup functions, based on whether we are proactively caching the connections for quick lookup
 	 * in the Connections array (by PinCategory). */
-	bool FindConnectedNodeForPinFast(const FName& FlowPinName, FGuid* FoundGuid = nullptr, FName* OutConnectedPinName = nullptr) const;
-	bool FindConnectedNodeForPinSlow(const FName& FlowPinName, FGuid* FoundGuid = nullptr, FName* OutConnectedPinName = nullptr) const;
+	bool FindConnectedNodeForPinCached(const FName& FlowPinName, FConnectedPin& ConnectedPin) const;
+	bool FindConnectedNodeForPinUncached(const FName& FlowPinName, TArray<FConnectedPin>* ConnectedPins = nullptr) const;
+
+	/* Helper templates for Find*PinConnection* functions */
+	template <bool bExecIsCached>
+	bool FindFirstPinConnection(const FFlowPin& FlowPin, const TArray<FFlowPin>& FlowPinArray, FConnectedPin& FirstConnectedPin) const;		
+	template <bool bExecIsCached>
+	bool FindPinConnections(const FFlowPin& FlowPin, const TArray<FFlowPin>& FlowPinArray, TArray<FConnectedPin>* ConnectedPins) const;
 
 	/* Return all connections to a Pin this Node knows about.
 	 * Connections are only stored on one of the Nodes they connect depending on pin type.
 	 * As such, this function may not return anything even if the Node is connected to the Pin.
 	 * Use UFlowAsset::GetAllPinsConnectedToPin() to do a guaranteed find of all Connections. */
 	TArray<FConnectedPin> GetKnownConnectionsToPin(const FConnectedPin& Pin) const;
+
+#if WITH_EDITOR
+	static void BuildConnectionChangeList(
+		const UFlowAsset& FlowAsset,
+		const TMap<FName, FConnectedPin>& OldConnections,
+		const TMap<FName, FConnectedPin>& NewConnections,
+		TArray<FFlowPinConnectionChange>& OutChanges);
+
+	/* Broadcasts OnEditorPinConnectionsChanged to this node and all AddOns */
+	void BroadcastEditorPinConnectionsChanged(const TArray<FFlowPinConnectionChange>& Changes);
+#endif
 
 //////////////////////////////////////////////////////////////////////////
 // Data Pins

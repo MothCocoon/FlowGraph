@@ -56,6 +56,10 @@ public:
 	virtual void PostEditChangeChainProperty(FPropertyChangedChainEvent& PropertyChangedEvent) override;
 	// --
 
+	// UFlowNodeBase
+	virtual void OnEditorPinConnectionsChanged(const TArray<FFlowPinConnectionChange>& Changes) override;
+	// --
+
 	virtual void UpdateNodeConfigText_Implementation() override;
 #endif
 

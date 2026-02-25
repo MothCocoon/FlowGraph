@@ -11,6 +11,7 @@
 #include "FlowTags.h" // used by subclasses
 #include "FlowTypes.h"
 #include "Types/FlowDataPinResults.h"
+#include "Types/FlowPinConnectionChange.h"
 #include "Types/FlowPinTypeTemplates.h"
 
 #include "FlowNodeBase.generated.h"
@@ -157,7 +158,12 @@ public:
 	virtual TArray<FFlowPin> GetContextOutputs() const override;
 	// --
 #endif
-	
+
+	/** Called in the editor when this node's pin connections change. */
+	UFUNCTION(BlueprintImplementableEvent, Category = "FlowNode", DisplayName = "On Editor Pin Connections Changed")	
+	void K2_OnEditorPinConnectionsChanged(const TArray<FFlowPinConnectionChange>& Changes);
+	virtual void OnEditorPinConnectionsChanged(const TArray<FFlowPinConnectionChange>& Changes) { K2_OnEditorPinConnectionsChanged(Changes); }
+
 //////////////////////////////////////////////////////////////////////////
 // Owners
 

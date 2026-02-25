@@ -66,10 +66,13 @@ void UFlowNode_FormatText::PostEditChangeChainProperty(FPropertyChangedChainEven
 
 void UFlowNode_FormatText::UpdateNodeConfigText_Implementation()
 {
-	constexpr bool bErrorIfInputPinNotFound = false;
-	if (IsInputConnected(GET_MEMBER_NAME_CHECKED(ThisClass, FormatText), bErrorIfInputPinNotFound))
+	constexpr bool bErrorIfInputPinNotFound = true;
+	FConnectedPin ConnectedPin;
+	const bool bIsInputConnected = FindFirstInputPinConnection(GET_MEMBER_NAME_CHECKED(ThisClass, FormatText), bErrorIfInputPinNotFound, ConnectedPin);
+
+	if (bIsInputConnected)
 	{
-		SetNodeConfigText(FText());
+		SetNodeConfigText(FText::Format(LOCTEXT("FormatTextFromPin", "Format from: {0}"), { FText::FromString(ConnectedPin.PinName.ToString()) }));
 	}
 	else
 	{
