@@ -31,7 +31,7 @@ public:
 
 protected:
 
-	EFlowDataPinResolveResult TryResolveFormatText(const FName& PinName, FText& OutFormattedText) const;
+	EFlowDataPinResolveResult TryResolveFormattedText(const FName& PinName, FText& OutFormattedText) const;
 
 public:
 	// IFlowDataPinValueSupplierInterface
