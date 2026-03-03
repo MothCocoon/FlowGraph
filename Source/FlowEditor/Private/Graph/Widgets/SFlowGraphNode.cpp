@@ -125,11 +125,7 @@ const FSlateBrush* SFlowGraphNode::GetShadowBrush(bool bSelected) const
 	return SGraphNode::GetShadowBrush(bSelected);
 }
 
-#if ENGINE_MAJOR_VERSION == 5 && ENGINE_MINOR_VERSION < 6
-void SFlowGraphNode::GetOverlayBrushes(bool bSelected, const FVector2D WidgetSize, TArray<FOverlayBrushInfo>& Brushes) const
-#else
 void SFlowGraphNode::GetOverlayBrushes(bool bSelected, const FVector2f& WidgetSize, TArray<FOverlayBrushInfo>& Brushes) const
-#endif
 {
 	check(DebuggerSubsystem.IsValid());
 	
@@ -450,13 +446,8 @@ void SFlowGraphNode::UpdateGraphNode()
 			.IsGraphNodeHovered(this, &SGraphNode::IsHovered);
 
 		GetOrAddSlot(ENodeZone::TopCenter)
-#if ENGINE_MAJOR_VERSION == 5 && ENGINE_MINOR_VERSION < 6		
-			.SlotOffset(TAttribute<FVector2D>(CommentBubble.Get(), &SCommentBubble::GetOffset))
-			.SlotSize(TAttribute<FVector2D>(CommentBubble.Get(), &SCommentBubble::GetSize))
-#else
 			.SlotOffset2f(TAttribute<FVector2f>(CommentBubble.Get(), &SCommentBubble::GetOffset2f))
-			.SlotSize2f(TAttribute<FVector2f>(CommentBubble.Get(), &SCommentBubble::GetSize2f))
-#endif		
+			.SlotSize2f(TAttribute<FVector2f>(CommentBubble.Get(), &SCommentBubble::GetSize2f))	
 			.AllowScaling(TAttribute<bool>(CommentBubble.Get(), &SCommentBubble::IsScalingAllowed))
 			.VAlign(VAlign_Top)
 			[

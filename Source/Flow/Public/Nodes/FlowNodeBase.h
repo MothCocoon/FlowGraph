@@ -1,7 +1,6 @@
 // Copyright https://github.com/MothCocoon/FlowGraph/graphs/contributors
 #pragma once
 
-#include "Runtime/Launch/Resources/Version.h"
 #include "Templates/SubclassOf.h"
 
 #include "Interfaces/FlowCoreExecutableInterface.h"
@@ -467,11 +466,7 @@ public:
 	 * @param OutOverlayIcons Brush and positioning details of each icon to overlay on the node.
 	 * @param WidgetSize The size of the Node in the editor. Useful for determining offset position values for each overlay icon.
 	 */
-#if ENGINE_MAJOR_VERSION == 5 && ENGINE_MINOR_VERSION < 6	
-	virtual void GetOverlayIcons(TArray<FFlowNodeOverlayIcon>& OutOverlayIcons, const FVector2D WidgetSize) const {};
-#else
 	virtual void GetOverlayIcons(TArray<FFlowNodeOverlayIcon>& OutOverlayIcons, const FVector2f& WidgetSize) const {};
-#endif
 
 	/**
 	 * Gets details to draw an optional corner icon on the node.

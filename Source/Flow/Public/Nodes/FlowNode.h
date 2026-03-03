@@ -190,9 +190,6 @@ public:
 
 	FConnectedPin GetConnection(const FName OutputName) const { return Connections.FindRef(OutputName); }
 
-	UE_DEPRECATED(5.5, "Please use GatherConnectedNodes instead.")
-	TSet<UFlowNode*> GetConnectedNodes() const { return GatherConnectedNodes(); }
-
 	UFUNCTION(BlueprintPure, Category= "FlowNode")
 	TSet<UFlowNode*> GatherConnectedNodes() const;
 
