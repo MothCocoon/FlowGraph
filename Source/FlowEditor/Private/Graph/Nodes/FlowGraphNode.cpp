@@ -1394,9 +1394,50 @@ void UFlowGraphNode::SetParentNodeForSubNode(UFlowGraphNode* InParentNode)
 	ParentNode = InParentNode;
 }
 
-void UFlowGraphNode::RebuildRuntimeAddOnsFromEditorSubNodes()
+UFlowGraphNode* UFlowGraphNode::GetRootFlowGraphNode() const
 {
-	// Whenever we change the SubNodes array, we need to mirror the changes 
+	UFlowGraphNode* Root = const_cast<UFlowGraphNode*>(this);
+	while (IsValid(Root) && Root->ParentNode)
+	{
+		Root = Root->ParentNode;
+	}
+	
+	return Root;
+}
+
+void UFlowGraphNode::RequestReconstructOnRootFlowNode() const
+{
+	// Preferred path: ask the runtime AddOn to request reconstruction on its owning FlowNode.
+	// This is important because it resolves the correct owning FlowNode even for AddOn-inside-AddOn.
+	if (const UFlowNodeAddOn* ThisAsAddOn = Cast<UFlowNodeAddOn>(NodeInstance))
+	{
+		ThisAsAddOn->RequestReconstructionOnOwningFlowNode();
+
+		return;
+	}
+
+	// Fallback: if we're already a root FlowNode, reconstruct directly.
+	UFlowGraphNode* RootGraphNode = GetRootFlowGraphNode();
+	if (!IsValid(RootGraphNode))
+	{
+		return;
+	}
+
+	if (Cast<UFlowNode>(RootGraphNode->NodeInstance))
+	{
+		RootGraphNode->MarkNeedsFullReconstruction();
+		RootGraphNode->ReconstructNode();
+
+		if (UEdGraph* Graph = RootGraphNode->GetGraph())
+		{
+			Graph->NotifyNodeChanged(RootGraphNode);
+		}
+	}
+}
+
+void UFlowGraphNode::RebuildRuntimeAddOnsFromEditorSubNodes(bool bForceReconstructNode)
+{
+	// Whenever we change the SubNodes array, we need to mirror the changes
 	// across to the AddOns array in the runtime instance data
 
 	if (IsValid(NodeInstance))
@@ -1439,7 +1480,20 @@ void UFlowGraphNode::RebuildRuntimeAddOnsFromEditorSubNodes()
 	// Reconstruct the context pins for all flow nodes after their AddOns have been processed
 	if (IsValid(NodeInstance) && NodeInstance->IsA<UFlowNode>())
 	{
-		ReconstructNode();
+		static thread_local bool bIsRebuildingForThisThread = false;
+
+		if (!bIsRebuildingForThisThread)
+		{
+			TGuardValue<bool> GuardIsRebuilding(bIsRebuildingForThisThread, true);
+
+			if (bForceReconstructNode)
+			{
+				MarkNeedsFullReconstruction();
+			}
+
+			// Now rebuild the EdGraphNode pins to match the updated FlowNode state.
+			ReconstructNode();
+		}
 	}
 }
 
@@ -1569,6 +1623,16 @@ void UFlowGraphNode::AddSubNode(UFlowGraphNode* SubNode, class UEdGraph* ParentG
 	ParentGraph->NotifyGraphChanged();
 	GetFlowGraph()->UpdateAsset();
 
+	// Ensure pin rebuild bubbles to the owning FlowNode (important for AddOn-inside-AddOn).
+	// Avoid doing extra work while pasting/locked updates; UnlockUpdates will reconcile and rebuild.
+	if (const UFlowGraph* FlowGraph = GetFlowGraph())
+	{
+		if (!FlowGraph->IsLocked())
+		{
+			RequestReconstructOnRootFlowNode();
+		}
+	}
+
 	// NOTE - We do not need to RebuildRuntimeAddOnsFromEditorSubNodes here, because UpdateAsset() will do it
 }
 
@@ -1581,7 +1645,7 @@ void UFlowGraphNode::RemoveSubNode(UFlowGraphNode* SubNode)
 {
 	Modify();
 
-	if (SubNode->NodeInstance)
+	if (SubNode && SubNode->NodeInstance)
 	{
 		SubNode->NodeInstance->OnAddOnRequestedParentReconstruction.Unbind();
 	}
@@ -1590,6 +1654,9 @@ void UFlowGraphNode::RemoveSubNode(UFlowGraphNode* SubNode)
 
 	RebuildRuntimeAddOnsFromEditorSubNodes();
 
+	// Critical for nested AddOn trees: removing an AddOn can change the root FlowNode's auto/context pins.
+	RequestReconstructOnRootFlowNode();
+
 	OnSubNodeRemoved(SubNode);
 }
 
@@ -1597,7 +1664,7 @@ void UFlowGraphNode::RemoveAllSubNodes()
 {
 	for (UFlowGraphNode* SubNode : SubNodes)
 	{
-		if (SubNode->NodeInstance)
+		if (SubNode && SubNode->NodeInstance)
 		{
 			SubNode->NodeInstance->OnAddOnRequestedParentReconstruction.Unbind();
 		}
@@ -1606,6 +1673,9 @@ void UFlowGraphNode::RemoveAllSubNodes()
 	SubNodes.Reset();
 
 	RebuildRuntimeAddOnsFromEditorSubNodes();
+
+	// Critical for nested AddOn trees: structural changes can change the root FlowNode's auto/context pins.
+	RequestReconstructOnRootFlowNode();
 }
 
 void UFlowGraphNode::OnSubNodeRemoved(UFlowGraphNode* SubNode)
@@ -1631,6 +1701,9 @@ void UFlowGraphNode::InsertSubNodeAt(UFlowGraphNode* SubNode, const int32 DropIn
 	}
 
 	RebuildRuntimeAddOnsFromEditorSubNodes();
+
+	// Reparent/reorder can change the owning FlowNode's auto/context pins (esp. cross-parent drag/drop).
+	RequestReconstructOnRootFlowNode();
 }
 
 void UFlowGraphNode::DestroyNode()

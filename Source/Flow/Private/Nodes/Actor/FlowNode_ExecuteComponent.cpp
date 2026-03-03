@@ -7,6 +7,7 @@
 #include "FlowAsset.h"
 #include "FlowLogChannels.h"
 #include "FlowSettings.h"
+#include "Types/FlowAutoDataPinsWorkingData.h"
 #include "Types/FlowInjectComponentsHelper.h"
 #include "Types/FlowInjectComponentsManager.h"
 #include "GameFramework/Actor.h"
@@ -281,15 +282,18 @@ TArray<FFlowPin> UFlowNode_ExecuteComponent::GetContextOutputs() const
 
 #endif // WITH_EDITOR
 
-void UFlowNode_ExecuteComponent::GatherPotentialPropertyOwnersForDataPins(TArray<const UObject*>& InOutOwners) const
+void UFlowNode_ExecuteComponent::GatherDataPinValueOwnerCollection(FFlowDataPinValueOwnerCollection& ValueOwnerCollection) const
 {
-	Super::GatherPotentialPropertyOwnersForDataPins(InOutOwners);
+	Super::GatherDataPinValueOwnerCollection(ValueOwnerCollection);
 
 	// Can also source properties from the resolved component (runtime) or expected component (in-editor)
-	const UActorComponent* ResolvedComp = GetResolvedOrExpectedComponent();
-	if (IsValid(ResolvedComp))
+
+	// TODO (gtaylor) Eliminate this const_cast (ie, need rework GetResolvedOrExpectedComponent to have a mutable version)
+	UActorComponent* ResolvedComp = const_cast<UActorComponent*>(GetResolvedOrExpectedComponent());
+	IFlowDataPinValueOwnerInterface* ValueOwnerInterface = Cast<IFlowDataPinValueOwnerInterface>(ResolvedComp);
+	if (IsValid(ResolvedComp) && ValueOwnerInterface)
 	{
-		InOutOwners.AddUnique(ResolvedComp);
+		ValueOwnerCollection.AddValueOwner(*ValueOwnerInterface);
 	}
 }
 
