@@ -76,7 +76,7 @@ bool UFlowAssetFactory::ConfigureProperties()
 
 bool UFlowAssetFactory::ConfigurePropertiesInternal(const FText& TitleText)
 {
-	AssetClass = GetDefault<UFlowGraphSettings>()->DefaultFlowAssetClass;
+	AssetClass = GetDefault<UFlowGraphSettings>()->DefaultFlowAssetClass.LoadSynchronous();
 	if (AssetClass) // Class was set in settings
 	{
 		return true;
