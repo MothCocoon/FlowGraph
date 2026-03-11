@@ -111,7 +111,8 @@ UENUM(BlueprintType)
 enum class EFlowOnScreenMessageType : uint8
 {
 	Temporary,
-	Permanent
+	Permanent,
+	Disabled
 };
 
 UENUM(BlueprintType)

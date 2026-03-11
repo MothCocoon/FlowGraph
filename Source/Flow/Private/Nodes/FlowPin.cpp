@@ -18,7 +18,6 @@
 // Pin Record
 
 #if !UE_BUILD_SHIPPING
-FString FPinRecord::NoActivations = TEXT("No activations");
 FString FPinRecord::PinActivations = TEXT("Pin activations");
 FString FPinRecord::ForcedActivation = TEXT(" (forced activation)");
 FString FPinRecord::PassThroughActivation = TEXT(" (pass-through activation)");

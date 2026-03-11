@@ -26,7 +26,7 @@ class UFlowAssetParams;
 
 #if !UE_BUILD_SHIPPING
 DECLARE_DELEGATE(FFlowGraphEvent);
-DECLARE_DELEGATE_TwoParams(FFlowSignalEvent, const FGuid& /*NodeGuid*/, const FName& /*PinName*/);
+DECLARE_DELEGATE_TwoParams(FFlowSignalEvent, UFlowNode* /*FlowNode*/, const FName& /*PinName*/);
 #endif
 
 /**
@@ -75,7 +75,9 @@ public:
 	FSimpleDelegate OnDetailsRefreshRequested;
 
 	static FString ValidationError_NodeClassNotAllowed;
+	static FString ValidationError_AddOnNodeClassNotAllowed;
 	static FString ValidationError_NullNodeInstance;
+	static FString ValidationError_NullAddOnNodeInstance;
 
 private:
 	UPROPERTY()
@@ -100,6 +102,10 @@ protected:
 
 	bool IsFlowNodeClassInAllowedClasses(const UClass& FlowNodeClass, const TSubclassOf<UFlowNodeBase>& RequiredAncestor = nullptr) const;
 	bool IsFlowNodeClassInDeniedClasses(const UClass& FlowNodeClass) const;
+
+private:
+	// Recursively validates the given addon and its children.
+	void ValidateAddOnTree(UFlowNodeAddOn& AddOn, FFlowMessageLog& MessageLog);
 #endif
 
 //////////////////////////////////////////////////////////////////////////
@@ -244,7 +250,7 @@ private:
 	TArray<TObjectPtr<UFlowAsset>> ActiveInstances;
 
 #if WITH_EDITORONLY_DATA
-	TWeakObjectPtr<UFlowAsset> InspectedInstance;
+	TWeakObjectPtr<const UFlowAsset> InspectedInstance;
 
 	// Message log for storing runtime errors/notes/warnings that will only last until the next game run
 	// Log lives in the asset template, so it can be inspected after ending the PIE
@@ -254,15 +260,14 @@ private:
 public:
 	void AddInstance(UFlowAsset* Instance);
 	int32 RemoveInstance(UFlowAsset* Instance);
+	TConstArrayView<TObjectPtr<UFlowAsset>> GetActiveInstances() const { return ActiveInstances; }
 
 	void ClearInstances();
 	int32 GetInstancesNum() const { return ActiveInstances.Num(); }
 
 #if WITH_EDITOR
-	void GetInstanceDisplayNames(TArray<TSharedPtr<FName>>& OutDisplayNames) const;
-
-	void SetInspectedInstance(const FName& NewInspectedInstanceName);
-	UFlowAsset* GetInspectedInstance() const { return InspectedInstance.IsValid() ? InspectedInstance.Get() : nullptr; }
+	void SetInspectedInstance(TWeakObjectPtr<const UFlowAsset> NewInspectedInstance);
+	const UFlowAsset* GetInspectedInstance() const { return InspectedInstance.IsValid() ? InspectedInstance.Get() : nullptr; }
 
 	DECLARE_EVENT(UFlowAsset, FRefreshDebuggerEvent);
 
@@ -353,6 +358,10 @@ public:
 	// Get Flow Asset instance created by the given SubGraph node
 	TWeakObjectPtr<UFlowAsset> GetFlowInstance(UFlowNode_SubGraph* SubGraphNode) const;
 
+	// Public trigger input signature for the FFlowExecutionGate mechanism in the Flow Debugger
+	FORCEINLINE void TriggerDeferredInputFromDebugger(const FGuid& NodeGuid, const FName& PinName, const FConnectedPin& FromPin)
+		{ TriggerInput(NodeGuid, PinName, FromPin); }
+
 protected:
 	void TriggerCustomInput_FromSubGraph(UFlowNode_SubGraph* Node, const FName& EventName) const;
 	void TriggerCustomOutput(const FName& EventName);
@@ -388,10 +397,7 @@ public:
 	const TArray<UFlowNode*>& GetRecordedNodes() const { return RecordedNodes; }
 
 //////////////////////////////////////////////////////////////////////////
-// Expected Owner Class support (for use with CallOwnerFunction nodes)
-
-public:
-	UClass* GetExpectedOwnerClass() const { return ExpectedOwnerClass; }
+// Expected Owner Class support
 
 protected:
 	// Expects to be owned (at runtime) by an object with this class (or one of its subclasses)
@@ -399,6 +405,9 @@ protected:
 	//        it will consider the component's owner for the AActor
 	UPROPERTY(EditAnywhere, Category = "Flow")
 	TSubclassOf<UObject> ExpectedOwnerClass;
+	
+public:
+	UClass* GetExpectedOwnerClass() const { return ExpectedOwnerClass; }
 
 //////////////////////////////////////////////////////////////////////////
 // SaveGame support

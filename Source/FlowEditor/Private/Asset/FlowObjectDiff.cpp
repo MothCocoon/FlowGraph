@@ -72,7 +72,7 @@ void FFlowObjectDiff::DiffProperties(TArray<FSingleObjectDiffEntry>& OutProperty
 	if (OldDetailsView.IsValid() && NewDetailsView.IsValid())
 	{
 		static constexpr bool bSortByDisplayOrder = true;
-		//OldDetailsView->DiffAgainst(*NewDetailsView.Get(), OutPropertyDiffsArray, bSortByDisplayOrder);
+		OldDetailsView->DiffAgainst(*NewDetailsView.Get(), OutPropertyDiffsArray, bSortByDisplayOrder);
 	}
 }
 

@@ -43,14 +43,14 @@ class FLOW_API UFlowSettings : public UDeveloperSettings
 	// by incorporating data that would otherwise go in the Description
 	UPROPERTY(EditAnywhere, config, Category = "Nodes")
 	bool bUseAdaptiveNodeTitles;
-
+	
 #if WITH_EDITOR
 	DECLARE_DELEGATE(FFlowSettingsEvent);
 	FFlowSettingsEvent OnAdaptiveNodeTitlesChanged;
 #endif
 	
-	// Default class to use as a FlowAsset's "ExpectedOwnerClass" 
-	UPROPERTY(EditAnywhere, Config, Category = "Nodes", meta = (MustImplement = "/Script/Flow.FlowOwnerInterface"))
+	// Default class to use as a FlowAsset's "ExpectedOwnerClass"
+	UPROPERTY(EditAnywhere, Config, Category = "Nodes")
 	FSoftClassPath DefaultExpectedOwnerClass;
 
 public:

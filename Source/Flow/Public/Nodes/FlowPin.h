@@ -388,7 +388,6 @@ struct FLOW_API FPinRecord
 	FString HumanReadableTime;
 	EFlowPinActivationType ActivationType;
 
-	static FString NoActivations;
 	static FString PinActivations;
 	static FString ForcedActivation;
 	static FString PassThroughActivation;

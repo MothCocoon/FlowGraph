@@ -12,7 +12,7 @@
 #define LOCTEXT_NAMESPACE "FlowGraphCommands"
 
 FFlowToolbarCommands::FFlowToolbarCommands()
-	: TCommands<FFlowToolbarCommands>("FlowToolbar", LOCTEXT("FlowToolbar", "Flow Toobar"), NAME_None, FFlowEditorStyle::GetStyleSetName())
+	: TCommands<FFlowToolbarCommands>("FlowToolbar", LOCTEXT("FlowToolbar", "Flow Toolbar"), NAME_None, FFlowEditorStyle::GetStyleSetName())
 {
 }
 
@@ -23,8 +23,6 @@ void FFlowToolbarCommands::RegisterCommands()
 
 	UI_COMMAND(SearchInAsset, "Search", "Search in the current Flow Graph", EUserInterfaceActionType::Button, FInputChord(EModifierKey::Control | EModifierKey::Shift, EKeys::F));
 	UI_COMMAND(EditAssetDefaults, "Asset Defaults", "Edit the FlowAsset default properties", EUserInterfaceActionType::Button, FInputChord());
-
-	UI_COMMAND(GoToParentInstance, "Go To Parent", "Open editor for the Flow Asset that created this Flow instance", EUserInterfaceActionType::Button, FInputChord());
 }
 
 FFlowGraphCommands::FFlowGraphCommands()
@@ -46,6 +44,10 @@ void FFlowGraphCommands::RegisterCommands()
 	UI_COMMAND(DisablePinBreakpoint, "Disable Pin Breakpoint", "Disables a breakpoint on the pin", EUserInterfaceActionType::Button, FInputChord());
 	UI_COMMAND(TogglePinBreakpoint, "Toggle Pin Breakpoint", "Toggles a breakpoint on the pin", EUserInterfaceActionType::Button, FInputChord());
 
+	UI_COMMAND(EnableAllBreakpoints,"Enable All Breakpoints", "Enable all breakpoints", EUserInterfaceActionType::Button, FInputChord());
+	UI_COMMAND(DisableAllBreakpoints, "Disable All Breakpoints", "Disable all breakpoints", EUserInterfaceActionType::Button, FInputChord());
+	UI_COMMAND(RemoveAllBreakpoints, "Delete All Breakpoints", "Delete all breakpoints", EUserInterfaceActionType::Button, FInputChord(EModifierKey::Control | EModifierKey::Shift, EKeys::F9));
+	
 	UI_COMMAND(EnableNode, "Enable Node", "Default state, node is fully executed.", EUserInterfaceActionType::Button, FInputChord());
 	UI_COMMAND(DisableNode, "Disable Node", "No logic executed, any Input Pin activation is ignored. Node instantly enters a deactivated state.", EUserInterfaceActionType::Button, FInputChord());
 	UI_COMMAND(SetPassThrough, "Set Pass Through", "Internal node logic not executed. All connected outputs are triggered, node finishes its work.", EUserInterfaceActionType::Button, FInputChord());

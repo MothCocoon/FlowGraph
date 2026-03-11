@@ -8,6 +8,7 @@
 #include "AddOns/FlowNodeAddOn.h"
 #include "Asset/FlowAssetParams.h"
 #include "Asset/FlowAssetParamsUtils.h"
+#include "Interfaces/FlowExecutionGate.h"
 #include "Nodes/FlowNodeBase.h"
 #include "Nodes/Graph/FlowNode_CustomInput.h"
 #include "Nodes/Graph/FlowNode_CustomOutput.h"
@@ -20,6 +21,7 @@
 #include "Engine/World.h"
 #include "Serialization/MemoryReader.h"
 #include "Serialization/MemoryWriter.h"
+#include "Algo/AnyOf.h"
 
 #if WITH_EDITOR
 #include "AssetRegistry/AssetRegistryModule.h"
@@ -34,7 +36,9 @@
 #include "UObject/Package.h"
 
 FString UFlowAsset::ValidationError_NodeClassNotAllowed = TEXT("Node class {0} is not allowed in this asset.");
+FString UFlowAsset::ValidationError_AddOnNodeClassNotAllowed = TEXT("AddOn Node class {0} is not allowed in this asset.");
 FString UFlowAsset::ValidationError_NullNodeInstance = TEXT("Node with GUID {0} is NULL");
+FString UFlowAsset::ValidationError_NullAddOnNodeInstance = TEXT("Node with GUID {0} has NULL AddOn(s)");
 #endif
 
 #include UE_INLINE_GENERATED_CPP_BY_NAME(FlowAsset)
@@ -115,7 +119,7 @@ void UFlowAsset::PostLoad()
 		{
 			UnregisterNode(Guid);
 		}
-	
+
 		ReconcileBaseAssetParams(FFlowAssetParamsUtils::GetLastSavedTimestampForObject(this));
 	}
 }
@@ -153,7 +157,7 @@ void UFlowAsset::ReconcileBaseAssetParams(const FDateTime& AssetLastSavedTimesta
 	if (EFlowReconcilePropertiesResult_Classifiers::IsErrorResult(ReconcileResult))
 	{
 		UE_LOG(LogFlow, Error, TEXT("Failed to reconcile BaseAssetParams for %s: %s"),
-			*BaseAssetParamsPtr->GetPathName(), *UEnum::GetDisplayValueAsText(ReconcileResult).ToString());
+		       *BaseAssetParamsPtr->GetPathName(), *UEnum::GetDisplayValueAsText(ReconcileResult).ToString());
 	}
 }
 
@@ -213,9 +217,9 @@ UFlowAssetParams* UFlowAsset::GenerateParamsFromStartNode()
 
 	FAssetRegistryModule& AssetRegistryModule = FModuleManager::LoadModuleChecked<FAssetRegistryModule>("AssetRegistry");
 	AssetRegistryModule.Get().AssetCreated(NewParams);
-	
+
 	FContentBrowserModule& ContentBrowserModule = FModuleManager::LoadModuleChecked<FContentBrowserModule>("ContentBrowser");
-	TArray<UObject*> AssetsToSync = { NewParams };
+	TArray<UObject*> AssetsToSync = {NewParams};
 	ContentBrowserModule.Get().SyncBrowserToAssets(AssetsToSync, true);
 
 	return NewParams;
@@ -258,9 +262,21 @@ EDataValidationResult UFlowAsset::ValidateAsset(FFlowMessageLog& MessageLog)
 			}
 
 			Node.Value->ValidationLog.Messages.Empty();
-			if (Node.Value->ValidateNode() == EDataValidationResult::Invalid)
+			Node.Value->ValidateNode();
+			MessageLog.Messages.Append(Node.Value->ValidationLog.Messages);
+
+			// Validate AddOns
+			for (UFlowNodeAddOn* AddOn : Node.Value->GetFlowNodeAddOnChildren())
 			{
-				MessageLog.Messages.Append(Node.Value->ValidationLog.Messages);
+				if (IsValid(AddOn))
+				{
+					ValidateAddOnTree(*AddOn, MessageLog);
+				}
+				else
+				{
+					const FString ErrorMsg = FString::Format(*ValidationError_NullAddOnNodeInstance, { *Node.Key.ToString() });
+					MessageLog.Error(*ErrorMsg, this);
+				}
 			}
 		}
 		else
@@ -270,7 +286,17 @@ EDataValidationResult UFlowAsset::ValidateAsset(FFlowMessageLog& MessageLog)
 		}
 	}
 
-	return MessageLog.Messages.Num() > 0 ? EDataValidationResult::Invalid : EDataValidationResult::Valid;
+	// if at least one error has been has been logged : mark the asset as invalid
+	for (const TSharedRef<FTokenizedMessage>& Msg : MessageLog.Messages)
+	{
+		if (Msg->GetSeverity() == EMessageSeverity::Error)
+		{
+			return EDataValidationResult::Invalid;
+		}
+	}
+
+	// otherwise, the asset is considered valid (even with warnings or notes)
+	return EDataValidationResult::Valid;
 }
 
 bool UFlowAsset::IsNodeOrAddOnClassAllowed(const UClass* FlowNodeOrAddOnClass, FText* OutOptionalFailureReason) const
@@ -375,6 +401,35 @@ bool UFlowAsset::IsFlowNodeClassInDeniedClasses(const UClass& FlowNodeClass) con
 	return false;
 }
 
+void UFlowAsset::ValidateAddOnTree(UFlowNodeAddOn& AddOn, FFlowMessageLog& MessageLog)
+{
+	// Filter unauthorized addon nodes
+	FText FailureReason;
+	if (!IsNodeOrAddOnClassAllowed(AddOn.GetClass(), &FailureReason))
+	{
+		const FString ErrorMsg =
+			FailureReason.IsEmpty()
+			? FString::Format(*ValidationError_AddOnNodeClassNotAllowed, { *AddOn.GetClass()->GetName() })
+			: FailureReason.ToString();
+
+		MessageLog.Error(*ErrorMsg, AddOn.GetFlowNodeSelfOrOwner());
+	}
+
+	// Validate AddOn
+	AddOn.ValidationLog.Messages.Empty();
+	AddOn.ValidateNode();
+	MessageLog.Messages.Append(AddOn.ValidationLog.Messages);
+
+	// Validate Children
+	for (UFlowNodeAddOn* Child : AddOn.GetFlowNodeAddOnChildren())
+	{
+		if (IsValid(Child))
+		{
+			ValidateAddOnTree(*Child, MessageLog);
+		}
+	}
+}
+
 bool UFlowAsset::IsFlowNodeClassInAllowedClasses(const UClass& FlowNodeClass,
                                                  const TSubclassOf<UFlowNodeBase>& RequiredAncestor) const
 {
@@ -442,7 +497,7 @@ void UFlowAsset::RegisterNode(const FGuid& NewGuid, UFlowNode* NewNode)
 
 	if (TryUpdateManagedFlowPinsForNode(*NewNode))
 	{
-		(void) NewNode->OnReconstructionRequested.ExecuteIfBound();
+		(void)NewNode->OnReconstructionRequested.ExecuteIfBound();
 	}
 }
 
@@ -557,7 +612,7 @@ void UFlowAsset::HarvestNodeConnections(UFlowNode* TargetNode)
 		}
 	}
 }
-	
+
 bool UFlowAsset::TryGetDefaultForInputPinName(const FStructProperty& StructProperty, const void* Container, FString& OutString)
 {
 	// We also look in the USTRUCT for DefaultForInputFlowPin
@@ -802,7 +857,7 @@ TArray<FConnectedPin> UFlowAsset::GatherPinsConnectedToPin(const FConnectedPin& 
 			ConnectedPins.Append(GuidNodePair.Value->GetKnownConnectionsToPin(Pin));
 		}
 	}
-	
+
 	return ConnectedPins;
 }
 
@@ -825,7 +880,7 @@ int32 UFlowAsset::RemoveInstance(UFlowAsset* Instance)
 #if WITH_EDITOR
 	if (InspectedInstance.IsValid() && InspectedInstance.Get() == Instance)
 	{
-		SetInspectedInstance(NAME_None);
+		SetInspectedInstance(nullptr);
 	}
 #endif
 
@@ -838,7 +893,7 @@ void UFlowAsset::ClearInstances()
 #if WITH_EDITOR
 	if (InspectedInstance.IsValid())
 	{
-		SetInspectedInstance(NAME_None);
+		SetInspectedInstance(nullptr);
 	}
 #endif
 
@@ -854,35 +909,28 @@ void UFlowAsset::ClearInstances()
 }
 
 #if WITH_EDITOR
-void UFlowAsset::GetInstanceDisplayNames(TArray<TSharedPtr<FName>>& OutDisplayNames) const
+void UFlowAsset::SetInspectedInstance(TWeakObjectPtr<const UFlowAsset> NewInspectedInstance)
 {
-	for (const UFlowAsset* Instance : ActiveInstances)
+	if (NewInspectedInstance.IsValid())
 	{
-		OutDisplayNames.Emplace(MakeShareable(new FName(Instance->GetDisplayName())));
-	}
-}
-
-void UFlowAsset::SetInspectedInstance(const FName& NewInspectedInstanceName)
-{
-	if (NewInspectedInstanceName.IsNone())
-	{
-		InspectedInstance = nullptr;
-	}
-	else
-	{
-		for (UFlowAsset* ActiveInstance : ActiveInstances)
+		if (InspectedInstance == NewInspectedInstance)
 		{
-			if (ActiveInstance && ActiveInstance->GetDisplayName() == NewInspectedInstanceName)
-			{
-				if (!InspectedInstance.IsValid() || InspectedInstance != ActiveInstance)
-				{
-					InspectedInstance = ActiveInstance;
-				}
-				break;
-			}
+			// Nothing changed
+			return;
+		}
+
+		bool bIsNewInstancePresent = Algo::AnyOf(ActiveInstances, [NewInspectedInstance](const UFlowAsset* ActiveInstance)
+		{
+			return ActiveInstance && ActiveInstance == NewInspectedInstance;
+		});
+
+		if (!ensureMsgf(bIsNewInstancePresent, TEXT("Trying to set %s as InspectedInstance, but it is not one of the ActiveInstances"), *NewInspectedInstance->GetName()))
+		{
+			NewInspectedInstance = nullptr;
 		}
 	}
 
+	InspectedInstance = NewInspectedInstance;
 	BroadcastDebuggerRefresh();
 }
 
@@ -953,7 +1001,7 @@ void UFlowAsset::PreStartFlow()
 	if (TemplateAsset->ActiveInstances.Num() == 1)
 	{
 		// this instance is the only active one, set it directly as Inspected Instance
-		TemplateAsset->SetInspectedInstance(GetDisplayName());
+		TemplateAsset->SetInspectedInstance(this);
 	}
 	else
 	{
@@ -965,6 +1013,11 @@ void UFlowAsset::PreStartFlow()
 
 void UFlowAsset::StartFlow(IFlowDataPinValueSupplierInterface* DataPinValueSupplier)
 {
+	if (FFlowExecutionGate::IsHalted())
+	{
+		return;
+	}
+
 	PreStartFlow();
 
 	if (UFlowNode* ConnectedEntryNode = GetDefaultEntryNode())
@@ -1028,6 +1081,11 @@ TWeakObjectPtr<UFlowAsset> UFlowAsset::GetFlowInstance(UFlowNode_SubGraph* SubGr
 
 void UFlowAsset::TriggerCustomInput_FromSubGraph(UFlowNode_SubGraph* SubGraphNode, const FName& EventName) const
 {
+	if (FFlowExecutionGate::IsHalted())
+	{
+		return;
+	}
+
 	// NOTE (gtaylor) Custom Input nodes cannot currently add data pins (like Start or DefineProperties nodes can)
 	// but we may want to allow them to source parameters, so I am providing the subgraph node as the 
 	// IFlowDataPinValueSupplierInterface when triggering the node (even though it's not used at this time).
@@ -1041,6 +1099,11 @@ void UFlowAsset::TriggerCustomInput_FromSubGraph(UFlowNode_SubGraph* SubGraphNod
 
 void UFlowAsset::TriggerCustomInput(const FName& EventName, IFlowDataPinValueSupplierInterface* DataPinValueSupplier)
 {
+	if (FFlowExecutionGate::IsHalted())
+	{
+		return;
+	}
+
 	for (UFlowNode_CustomInput* CustomInputNode : CustomInputNodes)
 	{
 		if (CustomInputNode->EventName == EventName)
@@ -1080,6 +1143,11 @@ void UFlowAsset::TriggerCustomOutput(const FName& EventName)
 
 void UFlowAsset::TriggerInput(const FGuid& NodeGuid, const FName& PinName, const FConnectedPin& FromPin)
 {
+	if (FFlowExecutionGate::EnqueueDeferredTriggerInput(this, NodeGuid, PinName, FromPin))
+	{
+		return;
+	}
+
 	if (UFlowNode* Node = Nodes.FindRef(NodeGuid))
 	{
 		if (!ActiveNodes.Contains(Node))
@@ -1169,7 +1237,7 @@ FFlowAssetSaveData UFlowAsset::SaveInstance(TArray<FFlowAssetSaveData>& SavedFlo
 	GetNodesInExecutionOrder<UFlowNode>(GetDefaultEntryNode(), NodesInExecutionOrder);
 	for (UFlowNode* Node : NodesInExecutionOrder)
 	{
-		if (Node && Node->ActivationState == EFlowNodeState::Active)
+		if (Node && Node->ShouldSave())
 		{
 			// iterate SubGraphs
 			if (UFlowNode_SubGraph* SubGraphNode = Cast<UFlowNode_SubGraph>(Node))

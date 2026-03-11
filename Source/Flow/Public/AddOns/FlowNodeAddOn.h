@@ -17,6 +17,9 @@ class UFlowNodeAddOn : public UFlowNodeBase
 {
 	GENERATED_BODY()
 
+public:
+	FLOW_API UFlowNodeAddOn();
+	
 protected:
 	// The FlowNode that contains this AddOn
 	// (accessible only when initialized, runtime only)
@@ -33,14 +36,9 @@ protected:
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "FlowNodeAddOn")
 	TArray<FFlowPin> OutputPins;
 #endif
-	
+
 public:
-
-	FLOW_API UFlowNodeAddOn();
-
-	// UFlowNodeBase
-
-	// AddOns may opt in to be eligible for a given parent
+  // AddOns may opt in to be eligible for a given parent
 	// - ParentTemplate - the template of the FlowNode or FlowNodeAddOn that is being considered as a potential parent
 	// - AdditionalAddOnsToAssumeAreChildren - other AddOns to assume that are already child AddOns for the purposes of this test.
 	//   This list will be populated with the 'other' AddOns in a multi-paste operation in the editor,

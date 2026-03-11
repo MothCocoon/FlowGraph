@@ -303,7 +303,7 @@ void UFlowComponent::LogError(FString Message, const EFlowOnScreenMessageType On
 			}
 		}
 	}
-	else
+	else if (OnScreenMessageType == EFlowOnScreenMessageType::Temporary)
 	{
 		GEngine->AddOnScreenDebugMessage(-1, 2.0f, FColor::Red, Message);
 	}

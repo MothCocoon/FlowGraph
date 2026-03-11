@@ -2,13 +2,16 @@
 
 #include "Asset/FlowAssetToolbar.h"
 
+#include "Graph/FlowGraphUtils.h"
 #include "Asset/FlowAssetEditor.h"
 #include "Asset/FlowAssetEditorContext.h"
 #include "Asset/SAssetRevisionMenu.h"
 #include "FlowEditorCommands.h"
 
 #include "FlowAsset.h"
+#include "Nodes/Graph/FlowNode_SubGraph.h"
 
+#include "Brushes/SlateRoundedBoxBrush.h"
 #include "Kismet2/DebuggerCommands.h"
 #include "Misc/Attribute.h"
 #include "Misc/MessageDialog.h"
@@ -30,22 +33,34 @@
 // Flow Asset Instance List
 
 FText SFlowAssetInstanceList::NoInstanceSelectedText = LOCTEXT("NoInstanceSelected", "No instance selected");
+FText SFlowAssetInstanceList::AllContextsText = LOCTEXT("All", "All");
 
 void SFlowAssetInstanceList::Construct(const FArguments& InArgs, const TWeakObjectPtr<UFlowAsset> InTemplateAsset)
 {
 	TemplateAsset = InTemplateAsset;
+
 	if (TemplateAsset.IsValid())
 	{
 		TemplateAsset->OnDebuggerRefresh().AddSP(this, &SFlowAssetInstanceList::RefreshInstances);
 		RefreshInstances();
 	}
 
-	// create dropdown
-	SAssignNew(Dropdown, SComboBox<TSharedPtr<FName>>)
-		.OptionsSource(&InstanceNames)
-		.Visibility_Static(&SFlowAssetInstanceList::GetDebuggerVisibility)
-		.OnGenerateWidget(this, &SFlowAssetInstanceList::OnGenerateWidget)
-		.OnSelectionChanged(this, &SFlowAssetInstanceList::OnSelectionChanged)
+	ContextComboBox = SNew(SComboBox<TSharedPtr<FObjectKey>>)
+		.OptionsSource(&Contexts)
+		.Visibility(this, &SFlowAssetInstanceList::GetContextVisibility)
+		.OnGenerateWidget(this, &SFlowAssetInstanceList::OnGenerateContextWidget)
+		.OnSelectionChanged(this, &SFlowAssetInstanceList::OnContextSelectionChanged)
+		.ContentPadding(FMargin(0.f, 2.f))
+		[
+			SNew(STextBlock)
+			.Text(this, &SFlowAssetInstanceList::GetSelectedContextName)
+		];
+
+	InstanceComboBox = SNew(SComboBox<TSharedPtr<FObjectKey>>)
+		.OptionsSource(&Instances)
+		.OnGenerateWidget(this, &SFlowAssetInstanceList::OnGenerateInstanceWidget)
+		.OnSelectionChanged(this, &SFlowAssetInstanceList::OnInstanceSelectionChanged)
+		.ContentPadding(FMargin(0.f, 2.f))
 		[
 			SNew(STextBlock)
 			.Text(this, &SFlowAssetInstanceList::GetSelectedInstanceName)
@@ -53,7 +68,20 @@ void SFlowAssetInstanceList::Construct(const FArguments& InArgs, const TWeakObje
 
 	ChildSlot
 	[
-		Dropdown.ToSharedRef()
+		SNew(SHorizontalBox)
+		.Visibility_Static(&SFlowAssetInstanceList::GetDebuggerVisibility)
+		+ SHorizontalBox::Slot()
+		.AutoWidth()
+		.Padding(0.0f, 0.0f, 8.0f, 0.0f)
+		[
+			ContextComboBox.ToSharedRef()
+		]
+		+ SHorizontalBox::Slot()
+		.AutoWidth()
+		.Padding(0.0f, 0.0f, 4.0f, 0.0f)
+		[
+			InstanceComboBox.ToSharedRef()
+		]
 	];
 }
 
@@ -65,59 +93,172 @@ SFlowAssetInstanceList::~SFlowAssetInstanceList()
 	}
 }
 
-void SFlowAssetInstanceList::RefreshInstances()
-{
-	// collect instance names of this Flow Asset
-	InstanceNames = {MakeShareable(new FName(*NoInstanceSelectedText.ToString()))};
-	TemplateAsset->GetInstanceDisplayNames(InstanceNames);
-
-	// select instance
-	if (const UFlowAsset* InspectedInstance = TemplateAsset->GetInspectedInstance())
-	{
-		const FName& InspectedInstanceName = InspectedInstance->GetDisplayName();
-		for (const TSharedPtr<FName>& Instance : InstanceNames)
-		{
-			if (*Instance == InspectedInstanceName)
-			{
-				SelectedInstance = Instance;
-				break;
-			}
-		}
-	}
-	else
-	{
-		// default object is always available
-		SelectedInstance = InstanceNames[0];
-	}
-}
-
 EVisibility SFlowAssetInstanceList::GetDebuggerVisibility()
 {
 	return GEditor->PlayWorld ? EVisibility::Visible : EVisibility::Collapsed;
 }
 
-TSharedRef<SWidget> SFlowAssetInstanceList::OnGenerateWidget(const TSharedPtr<FName> Item) const
+void SFlowAssetInstanceList::RefreshInstances()
 {
-	return SNew(STextBlock).Text(FText::FromName(*Item.Get()));
+	Contexts.Empty();
+	Instances.Empty();
+	InstancesPerContext.Empty();
+
+	if (GEditor->ShouldEndPlayMap())
+	{
+		// prevent redundant refreshing list for every asset instance being destroyed
+		return;
+	}
+
+	// add empty context, users sees this as the default "All" option 
+	NoContext = MakeShareable(new FObjectKey(nullptr));
+	Contexts.Add(NoContext);
+
+	// add empty instance as default
+	Instances.Add(MakeShareable(new FObjectKey(nullptr)));
+
+	// gather all instances of given UFlowAsset
+	for (const UFlowAsset* ActiveInstance : TemplateAsset->GetActiveInstances())
+	{
+		Instances.Add(MakeShareable(new FObjectKey(ActiveInstance)));
+
+		// support World context in case of online multiplayer
+		{
+			const UWorld* World = ActiveInstance->GetWorld();
+			if (World && !InstancesPerContext.Contains(World))
+			{
+				FText WorldName = FText::FromString(GetDebugStringForWorld(World));
+				Contexts.Add(MakeShareable(new FObjectKey(World)));
+				InstancesPerContext.Add(World, FFlowAssetInstanceContext(WorldName));
+			}
+
+			if (FFlowAssetInstanceContext* FoundContext = InstancesPerContext.Find(World))
+			{
+				FoundContext->AssetInstances.Add(Instances.Last());
+			}
+		}
+
+		// todo: support Local Player context in case of split-screen
+	}
+
+	// set empty context by default, user must choose a specific context
+	if (!SelectedContext.IsValid() || !Contexts.Contains(SelectedContext))
+	{
+		SelectedContext = NoContext;
+	}
+
+	// pre-select instance if current one does no longer exists
+	if (!SelectedInstance.IsValid() || !Instances.Contains(SelectedInstance))
+	{
+		if (Instances.Num() > 1)
+		{
+			if (SelectedContext->ResolveObjectPtr())
+			{
+				// try to set first Instance for a selected context
+				const FFlowAssetInstanceContext* InstanceContext = InstancesPerContext.Find(*SelectedContext.Get());
+				if (InstanceContext && InstanceContext->AssetInstances.Num() > 0)
+				{
+					SelectedInstance = InstanceContext->AssetInstances[0];
+				}
+			}
+			else
+			{
+				// set first active instance for any context
+				SelectedInstance = Instances[1];
+			}
+		}
+		else
+		{
+			// set empty instance if there's no active instances
+			SelectedInstance = Instances[0];
+		}
+	}
 }
 
-void SFlowAssetInstanceList::OnSelectionChanged(const TSharedPtr<FName> SelectedItem, const ESelectInfo::Type SelectionType)
+EVisibility SFlowAssetInstanceList::GetContextVisibility() const
+{
+	// switching makes sense only if we have at least 1 specific context
+	return InstancesPerContext.Num() > 1 ? EVisibility::Visible : EVisibility::Collapsed;
+}
+
+TSharedRef<SWidget> SFlowAssetInstanceList::OnGenerateContextWidget(TSharedPtr<FObjectKey> Item)
+{
+	const FFlowAssetInstanceContext* Context = InstancesPerContext.Find(Item->ResolveObjectPtr());
+	return SNew(STextBlock).Text(Context ? Context->DisplayText : AllContextsText);
+}
+
+void SFlowAssetInstanceList::OnContextSelectionChanged(TSharedPtr<FObjectKey> SelectedItem, ESelectInfo::Type SelectionType)
+{
+	if (SelectionType != ESelectInfo::Direct)
+	{
+		SelectedContext = SelectedItem;
+
+		if (TemplateAsset.IsValid())
+		{
+			TemplateAsset->SetInspectedInstance(nullptr);
+		}
+	}
+}
+
+FText SFlowAssetInstanceList::GetSelectedContextName() const
+{
+	if (SelectedContext.IsValid())
+	{
+		const UObject* Context = SelectedContext->ResolveObjectPtr();
+		if (const FFlowAssetInstanceContext* InstanceContext = InstancesPerContext.Find(Context))
+		{
+			return InstanceContext->DisplayText;
+		}
+	}
+
+	return AllContextsText;
+}
+
+TSharedRef<SWidget> SFlowAssetInstanceList::OnGenerateInstanceWidget(const TSharedPtr<FObjectKey> Item) const
+{
+	return SNew(STextBlock).Text(JoinInstanceAndContextTexts(*Item.Get()));
+}
+
+void SFlowAssetInstanceList::OnInstanceSelectionChanged(const TSharedPtr<FObjectKey> SelectedItem, const ESelectInfo::Type SelectionType)
 {
 	if (SelectionType != ESelectInfo::Direct)
 	{
 		SelectedInstance = SelectedItem;
 
+		const UFlowAsset* Instance = Cast<UFlowAsset>(SelectedInstance->ResolveObjectPtr());
 		if (TemplateAsset.IsValid())
 		{
-			const FName NewSelectedInstanceName = (SelectedInstance.IsValid() && *SelectedInstance != *InstanceNames[0]) ? *SelectedInstance : NAME_None;
-			TemplateAsset->SetInspectedInstance(NewSelectedInstanceName);
+			TemplateAsset->SetInspectedInstance(Instance);
 		}
 	}
 }
 
 FText SFlowAssetInstanceList::GetSelectedInstanceName() const
 {
-	return SelectedInstance.IsValid() ? FText::FromName(*SelectedInstance) : NoInstanceSelectedText;
+	return SelectedInstance.IsValid() ? JoinInstanceAndContextTexts(*SelectedInstance.Get()) : NoInstanceSelectedText;
+}
+
+FText SFlowAssetInstanceList::JoinInstanceAndContextTexts(const FObjectKey& AssetInstance) const
+{
+	if (const UFlowAsset* Instance = Cast<UFlowAsset>(AssetInstance.ResolveObjectPtr()))
+	{
+		FText Result = FText::FromName(Instance->GetDisplayName());
+
+		// add context name if there are multiple contexts present 
+		if (InstancesPerContext.Num() > 1)
+		{
+			if (const FFlowAssetInstanceContext* Context = InstancesPerContext.Find(Instance->GetWorld()))
+			{
+				static const FText OpeningBracket = FText::AsCultureInvariant(TEXT("("));
+				static const FText ClosingBracket = FText::AsCultureInvariant(TEXT(")"));
+				Result = FText::Format(Result, OpeningBracket, Context->DisplayText, ClosingBracket);
+			}
+		}
+
+		return Result;
+	}
+
+	return NoInstanceSelectedText;
 }
 
 //////////////////////////////////////////////////////////////////////////
@@ -129,31 +270,44 @@ void SFlowAssetBreadcrumb::Construct(const FArguments& InArgs, const TWeakObject
 
 	// create breadcrumb
 	SAssignNew(BreadcrumbTrail, SBreadcrumbTrail<FFlowBreadcrumb>)
-		.OnCrumbClicked(this, &SFlowAssetBreadcrumb::OnCrumbClicked)
-		.Visibility_Static(&SFlowAssetInstanceList::GetDebuggerVisibility)
-		.ButtonStyle(FAppStyle::Get(), "FlatButton")
-		.DelimiterImage(FAppStyle::GetBrush("Sequencer.BreadcrumbIcon"))
-		.PersistentBreadcrumbs(true)
-		.TextStyle(FAppStyle::Get(), "Sequencer.BreadcrumbText");
+	.Visibility_Static(&SFlowAssetInstanceList::GetDebuggerVisibility)
+	.OnCrumbClicked(this, &SFlowAssetBreadcrumb::OnCrumbClicked)
+	.ButtonStyle(FAppStyle::Get(), "SimpleButton")
+	.TextStyle(FAppStyle::Get(), "NormalText")
+	.ButtonContentPadding(FMargin(2.0f, 4.0f))
+	.DelimiterImage(FAppStyle::GetBrush("Icons.ChevronRight"))
+	.ShowLeadingDelimiter(true)
+	.PersistentBreadcrumbs(true);
 
 	ChildSlot
 	[
-		SNew(SVerticalBox)
-		+ SVerticalBox::Slot()
-		  .HAlign(HAlign_Right)
-		  .VAlign(VAlign_Center)
-		  .AutoHeight()
-		  .Padding(25.0f, 10.0f)
+		SNew(SBorder)
+		.Visibility(this, &SFlowAssetBreadcrumb::GetBreadcrumbVisibility)
+		.BorderImage(new FSlateRoundedBoxBrush(FStyleColors::Transparent, 4, FStyleColors::InputOutline, 1))
 		[
-			BreadcrumbTrail.ToSharedRef()
+			SNew(SBox)
+			.MaxDesiredWidth(500.f)
+			[
+				BreadcrumbTrail.ToSharedRef()
+			]
 		]
 	];
 
-	// fill breadcrumb
+	TemplateAsset->OnDebuggerRefresh().AddSP(this, &SFlowAssetBreadcrumb::FillBreadcrumb);
+	FillBreadcrumb();
+}
+
+EVisibility SFlowAssetBreadcrumb::GetBreadcrumbVisibility() const
+{
+	return GEditor->PlayWorld && TemplateAsset->GetInspectedInstance() ? EVisibility::Visible : EVisibility::Collapsed;
+}
+
+void SFlowAssetBreadcrumb::FillBreadcrumb() const
+{
 	BreadcrumbTrail->ClearCrumbs();
-	if (UFlowAsset* InspectedInstance = TemplateAsset->GetInspectedInstance())
+	if (const UFlowAsset* InspectedInstance = TemplateAsset->GetInspectedInstance())
 	{
-		TArray<TWeakObjectPtr<UFlowAsset>> InstancesFromRoot = {InspectedInstance};
+		TArray<TWeakObjectPtr<const UFlowAsset>> InstancesFromRoot = {InspectedInstance};
 
 		const UFlowAsset* CheckedInstance = InspectedInstance;
 		while (UFlowAsset* ParentInstance = CheckedInstance->GetParentInstance())
@@ -162,13 +316,12 @@ void SFlowAssetBreadcrumb::Construct(const FArguments& InArgs, const TWeakObject
 			CheckedInstance = ParentInstance;
 		}
 
-		for (TWeakObjectPtr<UFlowAsset> Instance : InstancesFromRoot)
+		for (int32 Index = 0; Index < InstancesFromRoot.Num(); Index++)
 		{
-			if (Instance.IsValid())
-			{
-				const FFlowBreadcrumb NewBreadcrumb = FFlowBreadcrumb(Instance);
-				BreadcrumbTrail->PushCrumb(FText::FromName(NewBreadcrumb.InstanceName), FFlowBreadcrumb(Instance));
-			}
+			TWeakObjectPtr<const UFlowAsset> Instance = InstancesFromRoot[Index];
+			TWeakObjectPtr<const UFlowAsset> ChildInstance = Index < InstancesFromRoot.Num() - 1 ? InstancesFromRoot[Index + 1] : nullptr;
+
+			BreadcrumbTrail->PushCrumb(FText::FromName(Instance->GetDisplayName()), FFlowBreadcrumb(Instance, ChildInstance));
 		}
 	}
 }
@@ -176,9 +329,22 @@ void SFlowAssetBreadcrumb::Construct(const FArguments& InArgs, const TWeakObject
 void SFlowAssetBreadcrumb::OnCrumbClicked(const FFlowBreadcrumb& Item) const
 {
 	const UFlowAsset* InspectedInstance = TemplateAsset->GetInspectedInstance();
-	if (InspectedInstance == nullptr || Item.InstanceName != InspectedInstance->GetDisplayName())
+	if (InspectedInstance == nullptr || Item.CurrentInstance != TemplateAsset)
 	{
-		GEditor->GetEditorSubsystem<UAssetEditorSubsystem>()->OpenEditorForAsset(Item.AssetPathName);
+		const TWeakObjectPtr<const UFlowAsset> ClickedInstance = Item.CurrentInstance;
+		UFlowAsset* ClickedTemplateAsset = ClickedInstance->GetTemplateAsset();
+
+		if (GEditor->GetEditorSubsystem<UAssetEditorSubsystem>()->OpenEditorForAsset(ClickedTemplateAsset))
+		{
+			ClickedTemplateAsset->SetInspectedInstance(ClickedInstance);
+			if (const TSharedPtr<FFlowAssetEditor> FlowAssetEditor = FFlowGraphUtils::GetFlowAssetEditor(ClickedTemplateAsset))
+			{
+				if (Item.ChildInstance.IsValid())
+				{
+					FlowAssetEditor->JumpToNode(Item.ChildInstance->GetNodeOwningThisAssetInstance()->GetGraphNode());
+				}
+			}
+		}
 	}
 }
 
@@ -203,7 +369,7 @@ void FFlowAssetToolbar::BuildAssetToolbar(UToolMenu* ToolbarMenu) const
 		Section.AddEntry(FToolMenuEntry::InitToolBarButton(FFlowToolbarCommands::Get().ValidateAsset));
 		Section.AddEntry(FToolMenuEntry::InitToolBarButton(FFlowToolbarCommands::Get().EditAssetDefaults));
 	}
-	
+
 	{
 		FToolMenuSection& Section = ToolbarMenu->AddSection("View");
 		Section.InsertPosition = FToolMenuInsert("FlowAsset", EToolMenuInsertType::After);
@@ -227,7 +393,7 @@ void FFlowAssetToolbar::BuildAssetToolbar(UToolMenu* ToolbarMenu) const
 				InSection.AddEntry(DiffEntry);
 			}
 		}));
-		
+
 		Section.AddEntry(FToolMenuEntry::InitToolBarButton(
 			FFlowToolbarCommands::Get().SearchInAsset,
 			TAttribute<FText>(),
@@ -324,8 +490,6 @@ void FFlowAssetToolbar::BuildDebuggerToolbar(UToolMenu* ToolbarMenu) const
 			FPlayWorldCommands::BuildToolbar(InSection);
 
 			InSection.AddEntry(FToolMenuEntry::InitWidget("AssetInstances", SNew(SFlowAssetInstanceList, Context->GetFlowAsset()), FText(), true));
-
-			InSection.AddEntry(FToolMenuEntry::InitToolBarButton(FFlowToolbarCommands::Get().GoToParentInstance));
 			InSection.AddEntry(FToolMenuEntry::InitWidget("AssetBreadcrumb", SNew(SFlowAssetBreadcrumb, Context->GetFlowAsset()), FText(), true));
 		}
 	}));

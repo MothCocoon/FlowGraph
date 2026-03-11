@@ -267,6 +267,22 @@ FFlowDataPinValue_Enum::FFlowDataPinValue_Enum(const TSoftObjectPtr<UEnum>& InEn
 #endif
 }
 
+FFlowDataPinValue_Enum::FFlowDataPinValue_Enum(UEnum& InEnumClass, const TArray<uint8>& InValues)
+{
+#if WITH_EDITOR
+	MultiType = EFlowDataMultiType::Array;
+#endif
+
+	EnumClass = &InEnumClass;
+	Values.Reserve(InValues.Num());
+
+	for (uint8 RawValue : InValues)
+	{
+		const FName EnumValueName = InEnumClass.GetNameByValue(RawValue);
+		Values.Add(EnumValueName);
+	}
+}
+
 #if WITH_EDITOR
 void FFlowDataPinValue_Enum::OnEnumNameChanged()
 {
@@ -479,6 +495,44 @@ FFlowDataPinValue_InstancedStruct::FFlowDataPinValue_InstancedStruct(const TArra
 #endif
 }
 
+bool FFlowDataPinValue_InstancedStruct::TryConvertValuesToString(FString& OutString) const
+{
+	const FInstancedStruct DefaultValue;
+
+	OutString = FlowArray::FormatArrayString<FInstancedStruct>(
+		Values,
+		[&DefaultValue](const FInstancedStruct& InstancedStruct)
+		{
+			FString ExportedString;
+
+			constexpr UObject* ParentObject = nullptr;
+			constexpr UObject* ExportRootScope = nullptr;
+
+			const bool bExported = InstancedStruct.ExportTextItem(
+				ExportedString,
+				DefaultValue,
+				ParentObject,
+				PPF_None,
+				ExportRootScope);
+
+			if (!bExported)
+			{
+				// Fallback: just show the contained struct type name (or None)
+				if (const UScriptStruct* ScriptStruct = InstancedStruct.GetScriptStruct())
+				{
+					return ScriptStruct->GetName();
+				}
+
+				return FString();
+			}
+
+			return ExportedString;
+		},
+		StringArraySeparator);
+
+	return true;
+}
+
 //======================================================================
 // Object
 //======================================================================
@@ -530,6 +584,14 @@ FFlowDataPinValue_Object::FFlowDataPinValue_Object(const TArray<AActor*>& InActo
 	{
 		Values.Add(Cast<UObject>(Actor));
 	}
+}
+
+FFlowDataPinValue_Object::FFlowDataPinValue_Object(const TArray<UObject*>& InObjects, UClass* InClassFilter)
+{
+#if WITH_EDITOR
+	MultiType = EFlowDataMultiType::Array;
+#endif
+	Values = InObjects;
 }
 
 bool FFlowDataPinValue_Object::TryConvertValuesToString(FString& OutString) const

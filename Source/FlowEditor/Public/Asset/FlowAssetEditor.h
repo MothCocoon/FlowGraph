@@ -121,12 +121,11 @@ private:
 
 public:
 	/** Edits the specified FlowAsset object */
-	void InitFlowAssetEditor(const EToolkitMode::Type Mode, const TSharedPtr<class IToolkitHost>& InitToolkitHost, UObject* ObjectToEdit);
+	virtual void InitFlowAssetEditor(const EToolkitMode::Type Mode, const TSharedPtr<class IToolkitHost>& InitToolkitHost, UObject* ObjectToEdit);
 
 protected:
 	virtual void CreateToolbar();
 	virtual void BindToolbarCommands();
-	virtual void InitalizeExtenders();
 	
 	virtual void RefreshAsset();
 	virtual void RefreshDetails();
@@ -139,9 +138,6 @@ protected:
 	virtual void SearchInAsset();
 
 	void EditAssetDefaults_Clicked() const;
-
-	virtual void GoToParentInstance();
-	virtual bool CanGoToParentInstance();
 
 	virtual void CreateWidgets();
 	virtual void CreateGraphWidget();
