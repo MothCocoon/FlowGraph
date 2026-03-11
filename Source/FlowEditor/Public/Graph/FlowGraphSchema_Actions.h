@@ -1,5 +1,4 @@
 // Copyright https://github.com/MothCocoon/FlowGraph/graphs/contributors
-
 #pragma once
 
 #include "EdGraph/EdGraphSchema.h"
@@ -10,7 +9,9 @@
 
 class UFlowGraphSettings;
 
-/** Action to add a node to the graph */
+/**
+ * Action to add a node to the graph.
+ */
 USTRUCT()
 struct FLOWEDITOR_API FFlowGraphSchemaAction_NewNode : public FEdGraphSchemaAction
 {
@@ -44,10 +45,10 @@ struct FLOWEDITOR_API FFlowGraphSchemaAction_NewNode : public FEdGraphSchemaActi
 	}
 
 	// FEdGraphSchemaAction
-	virtual UEdGraphNode* PerformAction(class UEdGraph* ParentGraph, UEdGraphPin* FromPin, const FVector2D Location, bool bSelectNewNode = true) override;
+	virtual UEdGraphNode* PerformAction(class UEdGraph* ParentGraph, UEdGraphPin* FromPin, const FVector2f& Location, bool bSelectNewNode = true) override;
 	// --
 
-	static UFlowGraphNode* CreateNode(class UEdGraph* ParentGraph, UEdGraphPin* FromPin, const UClass* NodeClass, const FVector2D Location, const bool bSelectNewNode = true);
+	static UFlowGraphNode* CreateNode(class UEdGraph* ParentGraph, UEdGraphPin* FromPin, const UClass* NodeClass, const FVector2f Location, const bool bSelectNewNode = true);
 	static UFlowGraphNode* RecreateNode(UEdGraph* ParentGraph, UEdGraphNode* OldInstance, UFlowNode* FlowNode);
 	static UFlowGraphNode* ImportNode(class UEdGraph* ParentGraph, UEdGraphPin* FromPin, const UClass* NodeClass, const FGuid& NodeGuid, const FVector2D Location);
 
@@ -55,17 +56,19 @@ private:
 	static FText GetNodeCategory(const UFlowNodeBase* Node, const UFlowGraphSettings& GraphSettings);
 };
 
-/** Action to add a subnode to the selected node */
+/**
+ * Action to add a subnode to the selected node.
+ */
 USTRUCT()
 struct FLOWEDITOR_API FFlowSchemaAction_NewSubNode : public FEdGraphSchemaAction
 {
 	GENERATED_USTRUCT_BODY();
 
-	/** Template of node we want to create */
+	/* Template of node we want to create. */
 	UPROPERTY()
 	TObjectPtr<UFlowGraphNode> NodeTemplate;
 
-	/** parent node */
+	/* Parent node. */
 	UPROPERTY()
 	TObjectPtr<UFlowGraphNode> ParentNode;
 
@@ -94,7 +97,9 @@ struct FLOWEDITOR_API FFlowSchemaAction_NewSubNode : public FEdGraphSchemaAction
 	static TSharedPtr<FFlowSchemaAction_NewSubNode> AddNewSubNodeAction(FGraphActionListBuilderBase& ContextMenuBuilder, const FText& Category, const FText& MenuDesc, const FText& Tooltip);
 };
 
-/** Action to paste clipboard contents into the graph */
+/**
+ * Action to paste clipboard contents into the graph.
+ */
 USTRUCT()
 struct FLOWEDITOR_API FFlowGraphSchemaAction_Paste : public FEdGraphSchemaAction
 {
@@ -115,13 +120,14 @@ struct FLOWEDITOR_API FFlowGraphSchemaAction_Paste : public FEdGraphSchemaAction
 	// --
 };
 
-/** Action to create new comment */
+/**
+ * Action to create new comment.
+ */
 USTRUCT()
 struct FLOWEDITOR_API FFlowGraphSchemaAction_NewComment : public FEdGraphSchemaAction
 {
 	GENERATED_USTRUCT_BODY()
 
-	// Simple type info
 	static FName StaticGetTypeId()
 	{
 		static FName Type("FFlowGraphSchemaAction_NewComment");

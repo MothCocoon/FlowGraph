@@ -1,5 +1,4 @@
 // Copyright https://github.com/MothCocoon/FlowGraph/graphs/contributors
-
 #pragma once
 
 #include "Components/ActorComponent.h"
@@ -99,20 +98,20 @@ public:
 // Component sending Notify Tags to Flow Graph, or any other listener
 
 private:
-	// Stores only recently sent tags
+	/* Stores only recently sent tags. */
 	UPROPERTY(ReplicatedUsing = OnRep_SentNotifyTags)
 	FGameplayTagContainer RecentlySentNotifyTags;
 
 public:
 	const FGameplayTagContainer& GetRecentlySentNotifyTags() const { return RecentlySentNotifyTags; }
 
-	// Send single notification from the actor to Flow graphs
-	// If set on server, it's always going to be replicated to clients
+	/* Send single notification from the actor to Flow graphs.
+	 * If set on server, it's always going to be replicated to clients. */
 	UFUNCTION(BlueprintCallable, Category = "Flow")
 	void NotifyGraph(const FGameplayTag NotifyTag, const EFlowNetMode NetMode = EFlowNetMode::Authority);
 
-	// Send multiple notifications at once - from the actor to Flow graphs
-	// If set on server, it's always going to be replicated to clients
+	/* Send multiple notifications at once - from the actor to Flow graphs.
+	 * If set on server, it's always going to be replicated to clients. */
 	UFUNCTION(BlueprintCallable, Category = "Flow")
 	void BulkNotifyGraph(const FGameplayTagContainer NotifyTags, const EFlowNetMode NetMode = EFlowNetMode::Authority);
 
@@ -127,11 +126,12 @@ public:
 // Component receiving Notify Tags from Flow Graph
 
 private:
-	// Stores only recently replicated tags
+	/* Stores only recently replicated tags. */
 	UPROPERTY(ReplicatedUsing = OnRep_NotifyTagsFromGraph)
 	FGameplayTagContainer NotifyTagsFromGraph;
 
 public:
+	UFUNCTION(BlueprintCallable, Category = "Flow")
 	virtual void NotifyFromGraph(const FGameplayTagContainer& NotifyTags, const EFlowNetMode NetMode = EFlowNetMode::Authority);
 
 private:
@@ -139,7 +139,7 @@ private:
 	void OnRep_NotifyTagsFromGraph();
 
 public:
-	// Receive notification from Flow graph or another Flow Component
+	/* Receive notification from Flow graph or another Flow Component. */
 	UPROPERTY(BlueprintAssignable, Category = "Flow")
 	FFlowComponentDynamicNotify ReceiveNotify;
 
@@ -147,12 +147,12 @@ public:
 // Sending Notify Tags between Flow components
 
 private:
-	// Stores only recently replicated tags
+	/* Stores only recently replicated tags. */
 	UPROPERTY(ReplicatedUsing = OnRep_NotifyTagsFromAnotherComponent)
 	TArray<FNotifyTagReplication> NotifyTagsFromAnotherComponent;
 
 public:
-	// Send notification to another actor containing Flow Component
+	/* Send notification to another actor containing Flow Component. */
 	UFUNCTION(BlueprintCallable, Category = "Flow")
 	virtual void NotifyActor(const FGameplayTag ActorTag, const FGameplayTag NotifyTag, const EFlowNetMode NetMode = EFlowNetMode::Authority);
 
@@ -164,31 +164,31 @@ private:
 // Root Flow
 
 public:
-	// Asset that might instantiated as "Root Flow" 
+	/* Asset that might be instantiated as "Root Flow". */ 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "RootFlow")
 	TObjectPtr<UFlowAsset> RootFlow;
 
-	// Flow Asset Params to use as the data pin value supplier for the Root Flow
+	/* Flow Asset Params to use as the data pin value supplier for the Root Flow.*/
 	UPROPERTY(EditAnywhere, Category = "RootFlow")
 	FFlowAssetParamsPtr RootFlowParams;
 
-	// If true, component will start Root Flow on Begin Play
+	/* If true, component will start Root Flow on Begin Play. */
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "RootFlow")
 	bool bAutoStartRootFlow;
 
-	// Networking mode for creating this Root Flow
+	/* Networking mode for creating this Root Flow. */
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "RootFlow")
 	EFlowNetMode RootFlowMode;
 
-	// If false, another Root Flow instance won't be created from this component, if this Flow Asset is already instantiated
+	/* If false, another Root Flow instance won't be created from this component, if this Flow Asset is already instantiated. */
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "RootFlow")
 	bool bAllowMultipleInstances;
 
 	UPROPERTY(SaveGame)
 	FString SavedAssetInstanceName;
 
-	// This will instantiate Flow Asset assigned on this component.
-	// Created Flow Asset instance will be a "root flow", as additional Flow Assets can be instantiated via Sub Graph node
+	/* This will instantiate Flow Asset assigned on this component.
+	 * Created Flow Asset instance will be a "root flow", as additional Flow Assets can be instantiated via Sub Graph node. */
 	UFUNCTION(BlueprintCallable, Category = "RootFlow")
 	virtual void StartRootFlow();
 
@@ -210,11 +210,11 @@ public:
 // Custom Input and Output events
 
 public:
-	// This will trigger a specific CustomInput on this components root flow
+	/* This will trigger a specific CustomInput on this component's root flow. */
 	UFUNCTION(BlueprintCallable, Category = "RootFlow")
 	void TriggerRootFlowCustomInput(const FName& EventName) const;
 
-	// Called when a Root flow asset triggers a CustomOutput
+	/* Called when a Root flow asset triggers a CustomOutput. */
 	UFUNCTION(BlueprintImplementableEvent, DisplayName = "OnRootFlowCustomEvent")
 	void BP_OnRootFlowCustomEvent(UFlowAsset* RootFlowInstance, const FName& EventName);
 
@@ -223,15 +223,6 @@ public:
 	// UFlowAsset-only access
 	void DispatchRootFlowCustomEvent(UFlowAsset* RootFlowInstance, const FName& EventName);
 	// ---
-
-	UE_DEPRECATED(5.5, "Please use OnRootFlowCustomEvent instead.")
-	void BP_OnTriggerRootFlowOutputEvent(UFlowAsset* RootFlowInstance, const FName& EventName);
-	
-	UE_DEPRECATED(5.5, "Please use OnRootFlowCustomEvent instead.")
-	virtual void OnTriggerRootFlowOutputEvent(UFlowAsset* RootFlowInstance, const FName& EventName);
-	
-	UE_DEPRECATED(5.5, "Please use OnTriggerRootFlowCustomOutputDispatcher instead.")
-	void OnTriggerRootFlowOutputEventDispatcher(UFlowAsset* RootFlowInstance, const FName& EventName);
 
 //////////////////////////////////////////////////////////////////////////
 // SaveGame

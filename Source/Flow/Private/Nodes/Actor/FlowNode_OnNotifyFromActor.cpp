@@ -5,9 +5,8 @@
 
 #include UE_INLINE_GENERATED_CPP_BY_NAME(FlowNode_OnNotifyFromActor)
 
-UFlowNode_OnNotifyFromActor::UFlowNode_OnNotifyFromActor(const FObjectInitializer& ObjectInitializer)
-	: Super(ObjectInitializer)
-	, bRetroactive(false)
+UFlowNode_OnNotifyFromActor::UFlowNode_OnNotifyFromActor()
+	: bRetroactive(false)
 {
 #if WITH_EDITOR
 	NodeDisplayStyle = FlowNodeStyle::Condition;

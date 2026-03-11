@@ -1,5 +1,4 @@
 // Copyright https://github.com/MothCocoon/FlowGraph/graphs/contributors
-
 #pragma once
 
 #include "UObject/Field.h"
@@ -77,7 +76,7 @@ namespace FlowStructUtils
 		return static_cast<TStruct*>(ValueMem);
 	}
 
-	// Pointer overload (const)
+	/* Pointer overload (const). */
 	template<typename TStruct>
 	FORCEINLINE const TStruct* CastStructValue(const FProperty* Prop, const void* Container)
 	{
@@ -86,7 +85,7 @@ namespace FlowStructUtils
 			const_cast<void*>(Container));
 	}
 
-	// Reference overloads for convenience
+	/* Reference overloads for convenience. */
 	template<typename TStruct>
 	FORCEINLINE TStruct* CastStructValue(FProperty& Prop, void* Container)
 	{

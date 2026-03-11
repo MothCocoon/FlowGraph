@@ -1,5 +1,4 @@
 // Copyright https://github.com/MothCocoon/FlowGraph/graphs/contributors
-
 #pragma once
 
 #include "NativeGameplayTags.h"
@@ -24,4 +23,5 @@ namespace FlowNodeStyle
 	FLOW_API UE_DECLARE_GAMEPLAY_TAG_EXTERN(AddOn_PerSpawnedActor);
 	FLOW_API UE_DECLARE_GAMEPLAY_TAG_EXTERN(AddOn_Predicate);
 	FLOW_API UE_DECLARE_GAMEPLAY_TAG_EXTERN(AddOn_Predicate_Composite);
+	FLOW_API UE_DECLARE_GAMEPLAY_TAG_EXTERN(AddOn_SwitchCase);
 }

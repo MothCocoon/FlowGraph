@@ -1,5 +1,4 @@
 // Copyright https://github.com/MothCocoon/FlowGraph/graphs/contributors
-
 #pragma once
 
 #include "Channels/MovieSceneStringChannel.h"
@@ -22,7 +21,7 @@ public:
 	virtual TArrayView<FString> GetAllEntryPoints() override { return StringChannel.GetData().GetValues(); }
 #endif
 
-	/** The channel that defines this section's timed events */
+	/* The channel that defines this section's timed. */
 	UPROPERTY()
 	FMovieSceneStringChannel StringChannel;
 };

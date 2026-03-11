@@ -1,12 +1,12 @@
 ﻿// Copyright https://github.com/MothCocoon/FlowGraph/graphs/contributors
-
 #pragma once
 
 #include "Types/FlowEnumUtils.h"
-
 #include "FindInFlowEnums.generated.h"
 
-/** Bitflags controlling what parts of a Flow node are included in search */
+/**
+ * Bitflags controlling what parts of a Flow node are included in search.
+ */
 UENUM(Meta = (Bitflags, UseEnumValuesAsMaskValuesInEditor = "true"))
 enum class EFlowSearchFlags : uint32
 {
@@ -33,7 +33,9 @@ enum class EFlowSearchFlags : uint32
 };
 ENUM_CLASS_FLAGS(EFlowSearchFlags);
 
-/** Search scope — intentionally minimal */
+/**
+ * Search scope — intentionally minimal.
+ */
 UENUM()
 enum class EFlowSearchScope : uint8
 {

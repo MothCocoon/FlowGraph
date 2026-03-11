@@ -1,5 +1,4 @@
 // Copyright https://github.com/MothCocoon/FlowGraph/graphs/contributors
-
 #pragma once
 
 #include "LevelSequenceActor.h"
@@ -8,7 +7,7 @@
 class ULevelSequence;
 
 /**
- * Custom ALevelSequenceActor is needed to override ULevelSequencePlayer class
+ * Custom ALevelSequenceActor is needed to override ULevelSequencePlayer class.
  */
 UCLASS(hideCategories=(Rendering, Physics, LOD, Activation, Input))
 class FLOW_API AFlowLevelSequenceActor : public ALevelSequenceActor

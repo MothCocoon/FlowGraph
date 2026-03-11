@@ -1,24 +1,26 @@
 // Copyright https://github.com/MothCocoon/FlowGraph/graphs/contributors
-
 #pragma once
 
 #include "Nodes/Actor/FlowNode_ComponentObserver.h"
 #include "FlowNode_OnNotifyFromActor.generated.h"
 
 /**
- * Triggers output when Flow Component with matching Identity Tag calls NotifyGraph function with matching Notify Tag
+ * Triggers output when Flow Component with matching Identity Tag calls NotifyGraph function with matching Notify Tag.
  */
 UCLASS(NotBlueprintable, meta = (DisplayName = "On Notify From Actor"))
 class FLOW_API UFlowNode_OnNotifyFromActor : public UFlowNode_ComponentObserver
 {
-	GENERATED_UCLASS_BODY()
+	GENERATED_BODY()
+
+public:
+	UFlowNode_OnNotifyFromActor();
 
 protected:
 	UPROPERTY(EditAnywhere, Category = "Notify")
 	FGameplayTagContainer NotifyTags;
 
-	// If true, node will check given Notify Tag is present in the Recently Sent Notify Tags
-	// This might be helpful in multiplayer, if client-side Flow Node started work after server sent the notify
+	/* If true, node will check given Notify Tag is present in the Recently Sent Notify Tags.
+	 * This might be helpful in multiplayer, if client-side Flow Node started work after server sent the Notify. */
 	UPROPERTY(EditAnywhere, Category = "Notify")
 	bool bRetroactive;
 

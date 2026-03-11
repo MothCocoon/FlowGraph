@@ -1,5 +1,4 @@
 // Copyright https://github.com/MothCocoon/FlowGraph/graphs/contributors
-
 #pragma once
 
 #include "UObject/NameTypes.h"
@@ -92,7 +91,7 @@ namespace FlowPinType
 	// Array Conversion Helper
 	// -----------------------------------------------------------------------
 
-	// Converts array with logging and clamping
+	/** Converts array with logging and clamping. */
 	template <typename TValue, typename TSource, typename TConverter>
 	void ConvertArray(const TArray<TSource>& Source, TArray<TValue>& OutValues, TConverter Converter)
 	{
@@ -142,6 +141,7 @@ namespace FlowPinType
 	// -----------------------------------------------------------------------
 	// Internal helper – applies the single-from-array policy after extraction
 	// -----------------------------------------------------------------------
+
 	template<typename T>
 	FORCEINLINE EFlowDataPinResolveResult ApplySinglePolicy(
 		const TArray<T>& Source,
@@ -295,7 +295,7 @@ namespace FlowPinType
 	// Property Traits
 	// -----------------------------------------------------------------------
 
-	// Base for simple scalar types
+	/* Base for simple scalar types. */
 	template <typename TPinType>
 	struct FFlowSimplePropertyTraitsBase
 	{
@@ -369,7 +369,7 @@ namespace FlowPinType
 		}
 	};
 
-	// Numeric cross-conversion
+	/* Numeric cross-conversion. */
 	template <typename TPinType>
 	struct FFlowNumericTraitsBase : public FFlowSimplePropertyTraitsBase<TPinType>
 	{
@@ -433,7 +433,7 @@ namespace FlowPinType
 		}
 	};
 
-	// String cross-conversion
+	/* String cross-conversion. */
 	template <typename TPinType>
 	struct FFlowStringTraitsBase : public FFlowSimplePropertyTraitsBase<TPinType>
 	{
@@ -507,7 +507,7 @@ namespace FlowPinType
 		}
 	};
 
-	// Struct types (Vector, Rotator, etc.)
+	/* Struct types: Vector, Rotator, etc. */
 	template <typename TPinType>
 	struct FFlowStructTraitsBase : public FFlowSimplePropertyTraitsBase<TPinType>
 	{
@@ -653,7 +653,7 @@ namespace FlowPinType
 		}
 	};
 
-	// GameplayTag
+	/* GameplayTag. */
 	template <>
 	struct FFlowDataPinValueTraits<FFlowPinType_GameplayTag> : public FFlowStructTraitsBase<FFlowPinType_GameplayTag>
 	{
@@ -688,7 +688,7 @@ namespace FlowPinType
 		}
 	};
 
-	// GameplayTagContainer
+	/* GameplayTagContainer. */
 	template <>
 	struct FFlowDataPinValueTraits<FFlowPinType_GameplayTagContainer> : public FFlowStructTraitsBase<FFlowPinType_GameplayTagContainer>
 	{
@@ -772,7 +772,7 @@ namespace FlowPinType
 		}
 	};
 
-	// Base for Object, Class
+	/* Base for Object, Class. */
 	template <typename TPinType, typename TProperty, typename TSoftProperty, typename TValueObjectType>
 	struct FFlowObjectTraitsBase
 	{
@@ -834,7 +834,7 @@ namespace FlowPinType
 					for (int32 i = 0; i < Num; ++i)
 					{
 						const FSoftObjectPath Path = InnerSoftProp->GetPropertyValue(ArrHelper.GetRawPtr(i)).ToSoftObjectPath();
-						OutValues.Add(Cast<TValueObjectType>(Path.ResolveObject()));
+						OutValues.Add(Cast<TValueObjectType>(Path.TryLoad()));
 					}
 					return EFlowDataPinResolveResult::Success;
 				}
@@ -859,7 +859,7 @@ namespace FlowPinType
 			else if (const TSoftProperty* SoftObjProp = CastField<TSoftProperty>(Property))
 			{
 				const FSoftObjectPath Path = SoftObjProp->GetPropertyValue_InContainer(Container).ToSoftObjectPath();
-				OutValues = { Cast<TValueObjectType>(Path.ResolveObject()) };
+				OutValues = { Cast<TValueObjectType>(Path.TryLoad()) };
 				return EFlowDataPinResolveResult::Success;
 			}
 			else if (const FWeakObjectProperty* WeakProp = CastField<FWeakObjectProperty>(Property))
@@ -969,7 +969,7 @@ namespace FlowPinType
 		return FFlowDataPinValueTraits<TPinType>::ExtractValues(DataPinResult, OutValues, EFlowSingleFromArray::EntireArray);
 	}
 
-	// Special-case single-value extractor for enums (FName + EnumClass)
+	/* Special-case single-value extractor for enums (FName + EnumClass). */
 	template <typename TPinType = FFlowPinType_Enum>
 	static EFlowDataPinResolveResult TryExtractValue(const FFlowDataPinResult& DataPinResult, typename TPinType::ValueType& OutValue, typename TPinType::FieldType*& OutField, EFlowSingleFromArray SingleFromArray)
 	{
@@ -983,7 +983,7 @@ namespace FlowPinType
 		return TryExtractValue<TPinType>(DataPinResult, OutValue, SingleFromArray);
 	}
 
-	// Special-case array-value extractor for enums (TArray<FName> + EnumClass)
+	/* Special-case array-value extractor for enums (TArray<FName> + EnumClass). */
 	template <typename TPinType = FFlowPinType_Enum>
 	static EFlowDataPinResolveResult TryExtractValues(const FFlowDataPinResult& DataPinResult, TArray<typename TPinType::ValueType>& OutValues, typename TPinType::FieldType*& OutField)
 	{
@@ -997,7 +997,7 @@ namespace FlowPinType
 		return TryExtractValues<TPinType>(DataPinResult, OutValues);
 	}
 
-	// Special-case single-value extractor for enums (Native enum value)
+	/* Special-case single-value extractor for enums (Native enum value). */
 	template <typename TEnumType> requires std::is_enum_v<TEnumType>
 	static EFlowDataPinResolveResult TryExtractValue(const FFlowDataPinResult& DataPinResult, TEnumType& OutValue, EFlowSingleFromArray SingleFromArray)
 	{
@@ -1010,7 +1010,7 @@ namespace FlowPinType
 		return Wrapper.TryGetSingleEnumValue(OutValue, SingleFromArray);
 	}
 
-	// Special-case array-value extractor for enums (Native enum values)
+	/* Special-case array-value extractor for enums (Native enum values). */
 	template <typename TEnumType> requires std::is_enum_v<TEnumType>
 	static EFlowDataPinResolveResult TryExtractValues(const FFlowDataPinResult& DataPinResult, TArray<TEnumType>& OutValues)
 	{

@@ -1,5 +1,4 @@
 // Copyright https://github.com/MothCocoon/FlowGraph/graphs/contributors
-
 #pragma once
 
 #include "EngineDefines.h"
@@ -24,7 +23,11 @@ DECLARE_MULTICAST_DELEGATE(FFlowNodeLevelSequenceEvent);
 UCLASS(NotBlueprintable, meta = (DisplayName = "Play Level Sequence"))
 class FLOW_API UFlowNode_PlayLevelSequence : public UFlowNode
 {
-	GENERATED_UCLASS_BODY()
+	GENERATED_BODY()
+	
+public:
+	UFlowNode_PlayLevelSequence();
+	
 	friend struct FFlowTrackExecutionToken;
 
 public:	
@@ -43,22 +46,22 @@ public:
 	UPROPERTY(EditAnywhere, Category = "Sequence")
 	FLevelSequenceCameraSettings CameraSettings;
 	
-	// Level Sequence playback can be moved to any place in the world by applying Transform Origin
-	// Enabling this option will use actor that created Root Flow instance, i.e. World Settings or Player Controller
-	// https://docs.unrealengine.com/5.0/en-US/creating-level-sequences-with-dynamic-transforms-in-unreal-engine/
+	/* Level Sequence playback can be moved to any place in the world by applying Transform Origin.
+	 * Enabling this option will use actor that created Root Flow instance, i.e. World Settings or Player Controller/
+	 * See https://docs.unrealengine.com/5.0/en-US/creating-level-sequences-with-dynamic-transforms-in-unreal-engine/ */
 	UPROPERTY(EditAnywhere, Category = "Sequence")
 	bool bUseGraphOwnerAsTransformOrigin;
 
-	// If true, playback of this level sequence on the server will be synchronized across other clients
+	/* If true, playback of this level sequence on the server will be synchronized across other clients. */
 	UPROPERTY(EditAnywhere, Category = "Sequence")
 	bool bReplicates;
 
-	// Always relevant for network (overrides bOnlyRelevantToOwner)
+	/* Always relevant for network (overrides bOnlyRelevantToOwner). */
 	UPROPERTY(EditAnywhere, Category = "Sequence")
 	bool bAlwaysRelevant;
 
-	// If True, Play Rate will by multiplied by Custom Time Dilation
-	// Enabling this option will use Custom Time Dilation from actor that created Root Flow instance, i.e. World Settings or Player Controller
+	/* If True, Play Rate will by multiplied by Custom Time Dilation.
+	 * Enabling this option will use Custom Time Dilation from actor that created Root Flow instance, i.e. World Settings or Player Controller. */
 	UPROPERTY(EditAnywhere, Category = "Sequence")
 	bool bApplyOwnerTimeDilation;
 	
@@ -69,7 +72,7 @@ protected:
 	UPROPERTY()
 	TObjectPtr<UFlowLevelSequencePlayer> SequencePlayer;
 
-	// Play Rate set by the user in PlaybackSettings
+	/* Play Rate set by the user in PlaybackSettings. */
 	float CachedPlayRate;
 
 	UPROPERTY(SaveGame)

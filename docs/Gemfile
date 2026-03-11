@@ -1,0 +1,5 @@
+source "https://rubygems.org"
+
+gem "jekyll", "~> 4.3"
+gem "jekyll-theme-midnight"
+gem 'wdm', '>= 0.1.0'

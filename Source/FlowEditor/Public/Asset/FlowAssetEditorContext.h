@@ -1,8 +1,7 @@
 // Copyright https://github.com/MothCocoon/FlowGraph/graphs/contributors
-
 #pragma once
 
-#include "CoreMinimal.h"
+#include "UObject/Object.h"
 
 #include "FlowAssetEditorContext.generated.h"
 

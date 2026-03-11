@@ -1,14 +1,17 @@
 // Copyright https://github.com/MothCocoon/FlowGraph/graphs/contributors
-
-// NOTE (gtaylor) This class is planned for submission to Epic to include in baseline UE.
-// If/when that happens, we will want to remove this version and update to the latest one in the PropertyModule
-
 #pragma once
 
 #include "IFlowExtendedPropertyTypeCustomization.h"
 #include "Widgets/Input/SComboBox.h"
 
-// A base-class to do property Customization for a struct that presents a curated list of FNames for selection
+/**
+ * NOTE (gtaylor) This class is planned for submission to Epic to include in baseline UE.
+ * If/when that happens, we will want to remove this version and update to the latest one in the PropertyModule.
+ */
+
+/**
+ * A base-class to do property Customization for a struct that presents a curated list of FNames for selection.
+ */
 class FLOWEDITOR_API IFlowCuratedNamePropertyCustomization : public IFlowExtendedPropertyTypeCustomization
 {
 protected:
@@ -18,8 +21,7 @@ protected:
 
 	void Initialize();
 
-	// Helper function to set the property to a specified value
-	//  (and handle all of the side-effects)
+	/* Helper function to set the property to a specified value, and handle all the side effects. */
 	bool TrySetCuratedNameWithSideEffects(const FName& NewName);
 
 	// Callbacks for the TextListWidget (see CreateHeaderRowWidget)
@@ -50,19 +52,15 @@ protected:
 	// ---
 
 public:
-	// Cached property handle for the Curated Name property that is being customized
 	TSharedPtr<IPropertyHandle> CachedNameHandle;
-
-	// Cached PropertyUtils
 	TSharedPtr<IPropertyUtilities> CachedPropertyUtils;
 
-	// Cache FTexts for the ComboBox dropdown & current selected
+	/* Cache FTexts for the ComboBox dropdown & current selected. */
 	TArray<TSharedPtr<FText>> CachedTextList;
 	TSharedPtr<FText> CachedTextSelected;
 
-	// Preallocated NAME_None as FText
 	static TSharedPtr<FText> NoneAsText;
 
-	// Combo Box widget for displaying the curated list of Names
+	/* Combo Box widget for displaying the curated list of Names */
 	TSharedPtr<SComboBox<TSharedPtr<FText>>> TextListWidget;
 };

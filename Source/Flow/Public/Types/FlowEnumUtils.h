@@ -1,9 +1,7 @@
 // Copyright https://github.com/MothCocoon/FlowGraph/graphs/contributors
-
 #pragma once
 
 #include "Misc/EnumRange.h"
-
 #include <type_traits>
 
 // Extensions to EnumRange.h
@@ -13,14 +11,14 @@ namespace FlowEnum
 	template<class T> constexpr auto MinOf() { return 0; }
 	template<class T> constexpr auto MaxOf() { return 0; }
 
-	// NOTE (gtaylor) In this context, a "Valid" enum value is one that is within ::Min to ::Max - 1
-	//  Invalid values (like ::Invalid) should fall outside of this range
+	/* NOTE (gtaylor) In this context, a "Valid" enum value is one that is within ::Min to ::Max - 1.
+	 * Invalid values (like ::Invalid) should fall outside of this range. */
 	template<class TEnum> constexpr bool IsValidEnumValue(const TEnum EnumValue) { return false; }
 
-	// NOTE (gtaylor) In this context, a subrange is First..Last (where last is an inclusive bound)
+	/* NOTE (gtaylor) In this context, a subrange is First..Last (where last is an inclusive bound). */
 	template<class TEnum> constexpr bool IsEnumValueInSubrange(const TEnum EnumValue, const TEnum SubrangeFirst, const TEnum SubrangeLast) { return false; }
 
-	// Utility templates for Enums
+	/* Utility templates for Enums. */
 	template <typename T, typename = typename std::is_enum<T>::type>
 	struct safe_underlying_type {
 		using type = void;

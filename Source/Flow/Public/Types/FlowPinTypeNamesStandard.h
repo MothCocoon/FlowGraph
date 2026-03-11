@@ -1,5 +1,4 @@
 // Copyright https://github.com/MothCocoon/FlowGraph/graphs/contributors
-
 #pragma once
 
 #include "UObject/NameTypes.h"
@@ -7,11 +6,11 @@
 
 struct FFlowPinTypeNamesStandard
 {
-	// Other Standard Pin Types
+	/* Other Standard Pin Types. */
 	FLOW_API static constexpr const TCHAR* PinTypeNameUnknown = TEXT("Unknown");
 	FLOW_API static constexpr const TCHAR* PinTypeNameExec = TEXT("Exec");
 
-	// "Standard" Data Pin Types
+	/* "Standard" Data Pin Types. */
 	FLOW_API static constexpr const TCHAR* PinTypeNameBool = TEXT("Bool");
 	FLOW_API static constexpr const TCHAR* PinTypeNameInt = TEXT("Int");
 	FLOW_API static constexpr const TCHAR* PinTypeNameInt64 = TEXT("Int64");
@@ -31,8 +30,8 @@ struct FFlowPinTypeNamesStandard
 	FLOW_API static constexpr const TCHAR* PinTypeNameClass = TEXT("Class");
 
 #if WITH_EDITOR
-	// These are the default pin match policies for input pin connections
-	// in the UFlowGraphSchema.  Schema subclasses can modify this map 
+	/* These are the default pin match policies for input pin connections in the UFlowGraphSchema. 
+	 * Schema subclasses can modify this map. . */
 	FLOW_API static const TMap<FName, FFlowPinTypeMatchPolicy> PinTypeMatchPolicies;
 #endif
 };

@@ -1,5 +1,4 @@
 // Copyright https://github.com/MothCocoon/FlowGraph/graphs/contributors
-
 #pragma once
 
 #include "Kismet/BlueprintFunctionLibrary.h"
@@ -8,7 +7,9 @@
 #include "Nodes/FlowPin.h"
 #include "FlowImportUtils.generated.h"
 
-// Helper structure allowing to recreate blueprint graph as Flow Graph
+/**
+ * Helper structure allowing to recreate blueprint graph as Flow Graph.
+ */
 USTRUCT()
 struct FLOWEDITOR_API FImportedGraphNode
 {
@@ -26,7 +27,9 @@ struct FLOWEDITOR_API FImportedGraphNode
 	}
 };
 
-// Helper structure allowing to copy properties from blueprint function pin to the Flow Node property of different name
+/**
+ * Helper structure allowing to copy properties from blueprint function pin to the Flow Node property of different name.
+ */
 USTRUCT(BlueprintType)
 struct FLOWEDITOR_API FBlueprintToFlowPinName
 {
@@ -45,8 +48,8 @@ struct FLOWEDITOR_API FBlueprintToFlowPinName
 /**
  * Groundwork for converting blueprint graphs to Flow Graph.
  * It's NOT meant to be universal, out-of-box solution as complexity of blueprint graphs conflicts with simplicity of Flow Graph.
- * However, it might useful to provide this basic utility to anyone who would like to batch-convert their custom blueprint-based event system to Flow Graph.
- * Pull requests are welcome if you able to improve this utility w/o with minimal amount of code.
+ * However, it might be useful to provide this basic utility to anyone who would like to batch-convert their custom blueprint-based event system to Flow Graph.
+ * Pull requests are welcome if you are able to improve this utility w/o with minimal amount of code.
  */
 UCLASS(meta = (ScriptName = "FlowImportUtils"))
 class FLOWEDITOR_API UFlowImportUtils : public UBlueprintFunctionLibrary

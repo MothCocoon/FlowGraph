@@ -1,5 +1,4 @@
 ﻿// Copyright https://github.com/MothCocoon/FlowGraph/graphs/contributors
-
 #pragma once
 
 #include "FlowDebuggerTypes.generated.h"
@@ -10,8 +9,8 @@ struct FLOWDEBUGGER_API FFlowBreakpoint
 	GENERATED_BODY()
 
 protected:
-	// Applies only to node breakpoint
-	// Pin breakpoints are deactivated by removing element from FNodeBreakpoint::PinBreakpoints
+	/* Applies only to node breakpoint.
+	 * Pin breakpoints are deactivated by removing element from FNodeBreakpoint::PinBreakpoints. */
 	UPROPERTY()
 	bool bActive;
 

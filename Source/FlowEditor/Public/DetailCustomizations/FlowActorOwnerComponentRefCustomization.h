@@ -1,18 +1,17 @@
 // Copyright https://github.com/MothCocoon/FlowGraph/graphs/contributors
-
 #pragma once
 
 #include "UnrealExtensions/IFlowCuratedNamePropertyCustomization.h"
-
 #include "Types/FlowActorOwnerComponentRef.h"
 
-// Forward Declaration
 class UFlowAsset;
 class UFlowNode;
 class UObject;
 class UClass;
 
-// Details customization for FFlowActorOwnerComponentRef
+/**
+ * Details customization for FFlowActorOwnerComponentRef.
+ */
 class FFlowActorOwnerComponentRefCustomization : public IFlowCuratedNamePropertyCustomization
 {
 private:
@@ -34,7 +33,7 @@ protected:
 	virtual TArray<FName> GetCuratedNameOptions() const override;
 	// --
 
-	// Accessor to return the actual struct being edited
+	/* Accessor to return the actual struct being edited. */
 	FORCEINLINE FFlowActorOwnerComponentRef* GetFlowActorOwnerComponentRef() const
 		{ return IFlowExtendedPropertyTypeCustomization::TryGetTypedStructValue<FFlowActorOwnerComponentRef>(StructPropertyHandle); }
 

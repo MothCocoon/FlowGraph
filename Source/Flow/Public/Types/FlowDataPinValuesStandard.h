@@ -1,5 +1,4 @@
 // Copyright https://github.com/MothCocoon/FlowGraph/graphs/contributors
-
 #pragma once
 
 #include "Types/FlowDataPinValue.h"
@@ -32,8 +31,8 @@ public:
 	TArray<bool> Values{ false };
 
 	FLOW_API FFlowDataPinValue_Bool() = default;
-	FLOW_API FFlowDataPinValue_Bool(ValueType InValue);
-	FLOW_API FFlowDataPinValue_Bool(const TArray<ValueType>& InValues);
+	FLOW_API explicit FFlowDataPinValue_Bool(ValueType InValue);
+	FLOW_API explicit FFlowDataPinValue_Bool(const TArray<ValueType>& InValues);
 
 	FLOW_API virtual const FFlowPinTypeName& GetPinTypeName() const override { return PinType::GetPinTypeNameStatic(); }
 	FLOW_API virtual bool TryConvertValuesToString(FString& OutString) const override;
@@ -55,8 +54,8 @@ public:
 	TArray<int32> Values{ 0 };
 
 	FLOW_API FFlowDataPinValue_Int() = default;
-	FLOW_API FFlowDataPinValue_Int(ValueType InValue);
-	FLOW_API FFlowDataPinValue_Int(const TArray<ValueType>& InValues);
+	FLOW_API explicit FFlowDataPinValue_Int(ValueType InValue);
+	FLOW_API explicit FFlowDataPinValue_Int(const TArray<ValueType>& InValues);
 
 	FLOW_API virtual const FFlowPinTypeName& GetPinTypeName() const override { return PinType::GetPinTypeNameStatic(); }
 	FLOW_API virtual bool TryConvertValuesToString(FString& OutString) const override;
@@ -78,8 +77,8 @@ public:
 	TArray<int64> Values{ 0 };
 
 	FLOW_API FFlowDataPinValue_Int64() = default;
-	FLOW_API FFlowDataPinValue_Int64(ValueType InValue);
-	FLOW_API FFlowDataPinValue_Int64(const TArray<ValueType>& InValues);
+	FLOW_API explicit FFlowDataPinValue_Int64(ValueType InValue);
+	FLOW_API explicit FFlowDataPinValue_Int64(const TArray<ValueType>& InValues);
 
 	FLOW_API virtual const FFlowPinTypeName& GetPinTypeName() const override { return PinType::GetPinTypeNameStatic(); }
 	FLOW_API virtual bool TryConvertValuesToString(FString& OutString) const override;
@@ -101,8 +100,8 @@ public:
 	TArray<float> Values{ 0.0f };
 
 	FLOW_API FFlowDataPinValue_Float() = default;
-	FLOW_API FFlowDataPinValue_Float(ValueType InValue);
-	FLOW_API FFlowDataPinValue_Float(const TArray<ValueType>& InValues);
+	FLOW_API explicit FFlowDataPinValue_Float(ValueType InValue);
+	FLOW_API explicit FFlowDataPinValue_Float(const TArray<ValueType>& InValues);
 
 	FLOW_API virtual const FFlowPinTypeName& GetPinTypeName() const override { return PinType::GetPinTypeNameStatic(); }
 	FLOW_API virtual bool TryConvertValuesToString(FString& OutString) const override;
@@ -124,8 +123,8 @@ public:
 	TArray<double> Values{ 0.0 };
 
 	FLOW_API FFlowDataPinValue_Double() = default;
-	FLOW_API FFlowDataPinValue_Double(ValueType InValue);
-	FLOW_API FFlowDataPinValue_Double(const TArray<ValueType>& InValues);
+	FLOW_API explicit FFlowDataPinValue_Double(ValueType InValue);
+	FLOW_API explicit FFlowDataPinValue_Double(const TArray<ValueType>& InValues);
 
 	FLOW_API virtual const FFlowPinTypeName& GetPinTypeName() const override { return PinType::GetPinTypeNameStatic(); }
 	FLOW_API virtual bool TryConvertValuesToString(FString& OutString) const override;
@@ -147,8 +146,8 @@ public:
 	TArray<FName> Values{ NAME_None };
 
 	FLOW_API FFlowDataPinValue_Name() = default;
-	FLOW_API FFlowDataPinValue_Name(const ValueType& InValue);
-	FLOW_API FFlowDataPinValue_Name(const TArray<ValueType>& InValues);
+	FLOW_API explicit FFlowDataPinValue_Name(const ValueType& InValue);
+	FLOW_API explicit FFlowDataPinValue_Name(const TArray<ValueType>& InValues);
 
 	FLOW_API virtual const FFlowPinTypeName& GetPinTypeName() const override { return PinType::GetPinTypeNameStatic(); }
 	FLOW_API virtual bool TryConvertValuesToString(FString& OutString) const override;
@@ -170,8 +169,8 @@ public:
 	TArray<FString> Values;
 
 	FLOW_API FFlowDataPinValue_String() = default;
-	FLOW_API FFlowDataPinValue_String(const ValueType& InValue);
-	FLOW_API FFlowDataPinValue_String(const TArray<ValueType>& InValues);
+	FLOW_API explicit FFlowDataPinValue_String(const ValueType& InValue);
+	FLOW_API explicit FFlowDataPinValue_String(const TArray<ValueType>& InValues);
 
 	FLOW_API virtual const FFlowPinTypeName& GetPinTypeName() const override { return PinType::GetPinTypeNameStatic(); }
 	FLOW_API virtual bool TryConvertValuesToString(FString& OutString) const override;
@@ -193,8 +192,8 @@ public:
 	TArray<FText> Values;
 
 	FLOW_API FFlowDataPinValue_Text() = default;
-	FLOW_API FFlowDataPinValue_Text(const ValueType& InValue);
-	FLOW_API FFlowDataPinValue_Text(const TArray<ValueType>& InValues);
+	FLOW_API explicit FFlowDataPinValue_Text(const ValueType& InValue);
+	FLOW_API explicit FFlowDataPinValue_Text(const TArray<ValueType>& InValues);
 
 	FLOW_API virtual const FFlowPinTypeName& GetPinTypeName() const override { return PinType::GetPinTypeNameStatic(); }
 	FLOW_API virtual bool TryConvertValuesToString(FString& OutString) const override;
@@ -230,7 +229,6 @@ public:
 	FLOW_API FFlowDataPinValue_Enum(const TSoftObjectPtr<UEnum>& InEnumClass, const TArray<ValueType>& InValues);
 	FLOW_API FFlowDataPinValue_Enum(UEnum& InEnumClass, const TArray<uint8>& InValues);
 
-
 #if WITH_EDITOR
 	FLOW_API void OnEnumNameChanged();
 #endif
@@ -241,7 +239,7 @@ public:
 
 	// Helper templates
 	template <typename TUnrealNativeEnumType>
-	static bool TryGetEnumValueByName(const UEnum* EnumClass, const FName& EnumValueName, TUnrealNativeEnumType& OutValue, EGetByNameFlags GetByNameFlags = EGetByNameFlags::ErrorIfNotFound)
+	static bool TryGetEnumValueByName(const UEnum* EnumClass, const FName& EnumValueName, TUnrealNativeEnumType& OutValue, const EGetByNameFlags GetByNameFlags = EGetByNameFlags::ErrorIfNotFound)
 	{
 		if (!IsValid(EnumClass))
 		{
@@ -258,7 +256,7 @@ public:
 	}
 
 	template <typename TUnrealNativeEnumType>
-	EFlowDataPinResolveResult TryGetSingleEnumValue(TUnrealNativeEnumType& OutEnumValue, EFlowSingleFromArray SingleFromArray, EGetByNameFlags GetByNameFlags = EGetByNameFlags::ErrorIfNotFound) const
+	EFlowDataPinResolveResult TryGetSingleEnumValue(TUnrealNativeEnumType& OutEnumValue, const EFlowSingleFromArray SingleFromArray, EGetByNameFlags GetByNameFlags = EGetByNameFlags::ErrorIfNotFound) const
 	{
 		const int32 Index = EFlowSingleFromArray_Classifiers::ConvertToIndex(SingleFromArray, Values.Num());
 		if (!Values.IsValidIndex(Index))
@@ -314,8 +312,8 @@ public:
 	TArray<FVector> Values{ FVector::ZeroVector };
 
 	FLOW_API FFlowDataPinValue_Vector() = default;
-	FLOW_API FFlowDataPinValue_Vector(const ValueType& InValue);
-	FLOW_API FFlowDataPinValue_Vector(const TArray<ValueType>& InValues);
+	FLOW_API explicit FFlowDataPinValue_Vector(const ValueType& InValue);
+	FLOW_API explicit FFlowDataPinValue_Vector(const TArray<ValueType>& InValues);
 
 	FLOW_API virtual const FFlowPinTypeName& GetPinTypeName() const override { return PinType::GetPinTypeNameStatic(); }
 	FLOW_API virtual bool TryConvertValuesToString(FString& OutString) const override;
@@ -337,8 +335,8 @@ public:
 	TArray<FRotator> Values{ FRotator::ZeroRotator };
 
 	FLOW_API FFlowDataPinValue_Rotator() = default;
-	FLOW_API FFlowDataPinValue_Rotator(const ValueType& InValue);
-	FLOW_API FFlowDataPinValue_Rotator(const TArray<ValueType>& InValues);
+	FLOW_API explicit FFlowDataPinValue_Rotator(const ValueType& InValue);
+	FLOW_API explicit FFlowDataPinValue_Rotator(const TArray<ValueType>& InValues);
 
 	FLOW_API virtual const FFlowPinTypeName& GetPinTypeName() const override { return PinType::GetPinTypeNameStatic(); }
 	FLOW_API virtual bool TryConvertValuesToString(FString& OutString) const override;
@@ -360,8 +358,8 @@ public:
 	TArray<FTransform> Values{ FTransform::Identity };
 
 	FLOW_API FFlowDataPinValue_Transform() = default;
-	FLOW_API FFlowDataPinValue_Transform(const ValueType& InValue);
-	FLOW_API FFlowDataPinValue_Transform(const TArray<ValueType>& InValues);
+	FLOW_API explicit FFlowDataPinValue_Transform(const ValueType& InValue);
+	FLOW_API explicit FFlowDataPinValue_Transform(const TArray<ValueType>& InValues);
 
 	FLOW_API virtual const FFlowPinTypeName& GetPinTypeName() const override { return PinType::GetPinTypeNameStatic(); }
 	FLOW_API virtual bool TryConvertValuesToString(FString& OutString) const override;
@@ -383,8 +381,8 @@ public:
 	TArray<FGameplayTag> Values;
 
 	FLOW_API FFlowDataPinValue_GameplayTag() = default;
-	FLOW_API FFlowDataPinValue_GameplayTag(const ValueType& InValue);
-	FLOW_API FFlowDataPinValue_GameplayTag(const TArray<ValueType>& InValues);
+	FLOW_API explicit FFlowDataPinValue_GameplayTag(const ValueType& InValue);
+	FLOW_API explicit FFlowDataPinValue_GameplayTag(const TArray<ValueType>& InValues);
 
 	FLOW_API virtual const FFlowPinTypeName& GetPinTypeName() const override { return PinType::GetPinTypeNameStatic(); }
 	FLOW_API virtual bool TryConvertValuesToString(FString& OutString) const override;
@@ -406,10 +404,10 @@ public:
 	FGameplayTagContainer Values;
 
 	FLOW_API FFlowDataPinValue_GameplayTagContainer() = default;
-	FLOW_API FFlowDataPinValue_GameplayTagContainer(const FGameplayTag& InValue);
-	FLOW_API FFlowDataPinValue_GameplayTagContainer(const FGameplayTagContainer& InValues);
-	FLOW_API FFlowDataPinValue_GameplayTagContainer(const TArray<FGameplayTag>& InValues);
-	FLOW_API FFlowDataPinValue_GameplayTagContainer(const TArray<FGameplayTagContainer>& InValues);
+	FLOW_API explicit FFlowDataPinValue_GameplayTagContainer(const FGameplayTag& InValue);
+	FLOW_API explicit FFlowDataPinValue_GameplayTagContainer(const FGameplayTagContainer& InValues);
+	FLOW_API explicit FFlowDataPinValue_GameplayTagContainer(const TArray<FGameplayTag>& InValues);
+	FLOW_API explicit FFlowDataPinValue_GameplayTagContainer(const TArray<FGameplayTagContainer>& InValues);
 
 	FLOW_API virtual const FFlowPinTypeName& GetPinTypeName() const override { return PinType::GetPinTypeNameStatic(); }
 	FLOW_API virtual bool TryConvertValuesToString(FString& OutString) const override;
@@ -431,8 +429,8 @@ public:
 	TArray<FInstancedStruct> Values;
 
 	FLOW_API FFlowDataPinValue_InstancedStruct() = default;
-	FLOW_API FFlowDataPinValue_InstancedStruct(const ValueType& InValue);
-	FLOW_API FFlowDataPinValue_InstancedStruct(const TArray<ValueType>& InValues);
+	FLOW_API explicit FFlowDataPinValue_InstancedStruct(const ValueType& InValue);
+	FLOW_API explicit FFlowDataPinValue_InstancedStruct(const TArray<ValueType>& InValues);
 
 	FLOW_API virtual const FFlowPinTypeName& GetPinTypeName() const override { return PinType::GetPinTypeNameStatic(); }
 	FLOW_API virtual bool TryConvertValuesToString(FString& OutString) const override;
@@ -459,11 +457,11 @@ public:
 #endif
 
 	FLOW_API FFlowDataPinValue_Object() = default;
-	FLOW_API FFlowDataPinValue_Object(TObjectPtr<UObject> InObject, UClass* InClassFilter = UObject::StaticClass());
-	FLOW_API FFlowDataPinValue_Object(const TArray<TObjectPtr<UObject>>& InObjects, UClass* InClassFilter = UObject::StaticClass());
-	FLOW_API FFlowDataPinValue_Object(const TArray<UObject*>& InObjects, UClass* InClassFilter = UObject::StaticClass());
-	FLOW_API FFlowDataPinValue_Object(AActor* InActor, UClass* InClassFilter = nullptr /* nullptr here defaults to AActor::StaticClass() */ );
-	FLOW_API FFlowDataPinValue_Object(const TArray<AActor*>& InActors, UClass* InClassFilter = nullptr /* nullptr here defaults to AActor::StaticClass() */);
+	FLOW_API explicit FFlowDataPinValue_Object(TObjectPtr<UObject> InObject, UClass* InClassFilter = UObject::StaticClass());
+	FLOW_API explicit FFlowDataPinValue_Object(const TArray<TObjectPtr<UObject>>& InObjects, UClass* InClassFilter = UObject::StaticClass());
+	FLOW_API explicit FFlowDataPinValue_Object(const TArray<UObject*>& InObjects, UClass* InClassFilter = UObject::StaticClass());
+	FLOW_API explicit FFlowDataPinValue_Object(AActor* InActor, UClass* InClassFilter = nullptr /* nullptr here defaults to AActor::StaticClass() */ );
+	FLOW_API explicit FFlowDataPinValue_Object(const TArray<AActor*>& InActors, UClass* InClassFilter = nullptr /* nullptr here defaults to AActor::StaticClass() */);
 
 	FLOW_API virtual const FFlowPinTypeName& GetPinTypeName() const override { return PinType::GetPinTypeNameStatic(); }
 	FLOW_API virtual bool TryConvertValuesToString(FString& OutString) const override;
@@ -490,10 +488,10 @@ public:
 #endif
 
 	FLOW_API FFlowDataPinValue_Class() = default;
-	FLOW_API FFlowDataPinValue_Class(const FSoftClassPath& InPath, UClass* InClassFilter = UObject::StaticClass());
-	FLOW_API FFlowDataPinValue_Class(const TArray<FSoftClassPath>& InPaths, UClass* InClassFilter = UObject::StaticClass());
-	FLOW_API FFlowDataPinValue_Class(const UClass* InClass, UClass* InClassFilter = UObject::StaticClass());
-	FLOW_API FFlowDataPinValue_Class(const TArray<UClass*>& InClasses, UClass* InClassFilter = UObject::StaticClass());
+	FLOW_API explicit FFlowDataPinValue_Class(const FSoftClassPath& InPath, UClass* InClassFilter = UObject::StaticClass());
+	FLOW_API explicit FFlowDataPinValue_Class(const TArray<FSoftClassPath>& InPaths, UClass* InClassFilter = UObject::StaticClass());
+	FLOW_API explicit FFlowDataPinValue_Class(const UClass* InClass, UClass* InClassFilter = UObject::StaticClass());
+	FLOW_API explicit FFlowDataPinValue_Class(const TArray<UClass*>& InClasses, UClass* InClassFilter = UObject::StaticClass());
 
 	FLOW_API virtual const FFlowPinTypeName& GetPinTypeName() const override { return PinType::GetPinTypeNameStatic(); }
 	FLOW_API virtual bool TryConvertValuesToString(FString& OutString) const override;

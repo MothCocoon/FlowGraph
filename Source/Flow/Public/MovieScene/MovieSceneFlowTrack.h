@@ -1,5 +1,4 @@
 // Copyright https://github.com/MothCocoon/FlowGraph/graphs/contributors
-
 #pragma once
 
 #include "Tracks/MovieSceneEventTrack.h"
@@ -42,25 +41,26 @@ public:
 	virtual void PostCompile(FMovieSceneEvaluationTrack& Track, const FMovieSceneTrackCompilerArgs& Args) const override;
 	virtual bool SupportsMultipleRows() const override { return true; }
 	virtual FMovieSceneTrackSegmentBlenderPtr GetTrackSegmentBlender() const override;
+	// --
 
 #if WITH_EDITOR
 	virtual FText GetDefaultDisplayName() const override;
 #endif
 
-	/** If events should be fired when passed playing the sequence forwards. */
+	/* If events should be fired when passed playing the sequence forwards. */
 	UPROPERTY(EditAnywhere, Category=TrackEvent)
 	uint32 bFireEventsWhenForwards:1;
 
-	/** If events should be fired when passed playing the sequence backwards. */
+	/* If events should be fired when passed playing the sequence backwards. */
 	UPROPERTY(EditAnywhere, Category=TrackEvent)
 	uint32 bFireEventsWhenBackwards:1;
 
-	/** Defines where in the evaluation to trigger events */
+	/* Defines where in the evaluation to trigger events. */
 	UPROPERTY(EditAnywhere, Category=TrackEvent)
 	EFireEventsAtPosition EventPosition;
 
 private:
-	/** The track's sections. */
+	/* The track's sections. */
 	UPROPERTY()
 	TArray<TObjectPtr<UMovieSceneSection>> Sections;
 };

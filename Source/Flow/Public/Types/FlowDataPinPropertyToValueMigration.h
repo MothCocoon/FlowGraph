@@ -1,16 +1,12 @@
 // Copyright https://github.com/MothCocoon/FlowGraph/graphs/contributors
-
 #pragma once
 
+// #FlowDataPinLegacy
+
 #include "Types/FlowDataPinValuesStandard.h"
-
-// #FlowDataPinLegacy
 #include "Types/FlowDataPinProperties.h"
-// --
 
-// #FlowDataPinLegacy
-
-// Templated helper to migrate simple types (scalar Value to TArray<Scalar> Values)
+/* Templated helper to migrate simple types (scalar Value to TArray<Scalar> Values). */
 template <typename SourceType, typename TargetType, typename ValueType>
 static bool MigrateSimpleType(const TInstancedStruct<FFlowDataPinProperty>& Source, TInstancedStruct<FFlowDataPinValue>& Target)
 {
@@ -30,9 +26,9 @@ static bool MigrateSimpleType(const TInstancedStruct<FFlowDataPinProperty>& Sour
 	return false;
 }
 
-// Specialization for FGameplayTagContainer
+/* Specialization for FGameplayTagContainer. */
 template <>
-bool MigrateSimpleType<FFlowDataPinOutputProperty_GameplayTagContainer, FFlowDataPinValue_GameplayTagContainer, FGameplayTagContainer>(const TInstancedStruct<FFlowDataPinProperty>& Source, TInstancedStruct<FFlowDataPinValue>& Target)
+inline bool MigrateSimpleType<FFlowDataPinOutputProperty_GameplayTagContainer, FFlowDataPinValue_GameplayTagContainer, FGameplayTagContainer>(const TInstancedStruct<FFlowDataPinProperty>& Source, TInstancedStruct<FFlowDataPinValue>& Target)
 {
 	if (!Source.IsValid() || !Source.GetPtr<FFlowDataPinOutputProperty_GameplayTagContainer>())
 	{
@@ -50,14 +46,9 @@ bool MigrateSimpleType<FFlowDataPinOutputProperty_GameplayTagContainer, FFlowDat
 	return false;
 }
 
-// Specialization for FGameplayTagContainer (Input)
+/* Specialization for FGameplayTagContainer (Input). */
 template <>
-bool MigrateSimpleType<
-	FFlowDataPinInputProperty_GameplayTagContainer,
-	FFlowDataPinValue_GameplayTagContainer,
-	FGameplayTagContainer>(
-		const TInstancedStruct<FFlowDataPinProperty>& Source,
-		TInstancedStruct<FFlowDataPinValue>& Target)
+inline bool MigrateSimpleType<FFlowDataPinInputProperty_GameplayTagContainer, FFlowDataPinValue_GameplayTagContainer, FGameplayTagContainer>(const TInstancedStruct<FFlowDataPinProperty>& Source, TInstancedStruct<FFlowDataPinValue>& Target)
 {
 	if (!Source.IsValid() || !Source.GetPtr<FFlowDataPinInputProperty_GameplayTagContainer>())
 	{
@@ -79,9 +70,9 @@ bool MigrateSimpleType<
 	return false;
 }
 
-// Specialization for Enum (handles Value and EnumClass)
+/* Specialization for Enum (handles Value and EnumClass). */
 template <>
-bool MigrateSimpleType<FFlowDataPinOutputProperty_Enum, FFlowDataPinValue_Enum, FName>(const TInstancedStruct<FFlowDataPinProperty>& Source, TInstancedStruct<FFlowDataPinValue>& Target)
+inline bool MigrateSimpleType<FFlowDataPinOutputProperty_Enum, FFlowDataPinValue_Enum, FName>(const TInstancedStruct<FFlowDataPinProperty>& Source, TInstancedStruct<FFlowDataPinValue>& Target)
 {
 	if (!Source.IsValid() || !Source.GetPtr<FFlowDataPinOutputProperty_Enum>())
 	{
@@ -103,9 +94,9 @@ bool MigrateSimpleType<FFlowDataPinOutputProperty_Enum, FFlowDataPinValue_Enum, 
 	return false;
 }
 
-// Specialization for Enum (Input)
+/* Specialization for Enum (Input). */
 template <>
-bool MigrateSimpleType<FFlowDataPinInputProperty_Enum, FFlowDataPinValue_Enum, FName>(const TInstancedStruct<FFlowDataPinProperty>& Source, TInstancedStruct<FFlowDataPinValue>& Target)
+inline bool MigrateSimpleType<FFlowDataPinInputProperty_Enum, FFlowDataPinValue_Enum, FName>(const TInstancedStruct<FFlowDataPinProperty>& Source, TInstancedStruct<FFlowDataPinValue>& Target)
 {
 	if (!Source.IsValid() || !Source.GetPtr<FFlowDataPinInputProperty_Enum>())
 	{
@@ -127,9 +118,9 @@ bool MigrateSimpleType<FFlowDataPinInputProperty_Enum, FFlowDataPinValue_Enum, F
 	return false;
 }
 
-// Specialization for Object (handles ReferenceValue/InlineValue and ClassFilter)
+/* Specialization for Object (handles ReferenceValue/InlineValue and ClassFilter). */
 template <>
-bool MigrateSimpleType<FFlowDataPinOutputProperty_Object, FFlowDataPinValue_Object, UObject*>(const TInstancedStruct<FFlowDataPinProperty>& Source, TInstancedStruct<FFlowDataPinValue>& Target)
+inline bool MigrateSimpleType<FFlowDataPinOutputProperty_Object, FFlowDataPinValue_Object, UObject*>(const TInstancedStruct<FFlowDataPinProperty>& Source, TInstancedStruct<FFlowDataPinValue>& Target)
 {
 	if (!Source.IsValid() || !Source.GetPtr<FFlowDataPinOutputProperty_Object>())
 	{
@@ -154,9 +145,9 @@ bool MigrateSimpleType<FFlowDataPinOutputProperty_Object, FFlowDataPinValue_Obje
 	return false;
 }
 
-// Specialization for Object (Input)
+/* Specialization for Object (Input). */
 template <>
-bool MigrateSimpleType<FFlowDataPinInputProperty_Object, FFlowDataPinValue_Object, UObject*>(const TInstancedStruct<FFlowDataPinProperty>& Source, TInstancedStruct<FFlowDataPinValue>& Target)
+inline bool MigrateSimpleType<FFlowDataPinInputProperty_Object, FFlowDataPinValue_Object, UObject*>(const TInstancedStruct<FFlowDataPinProperty>& Source, TInstancedStruct<FFlowDataPinValue>& Target)
 {
 	if (!Source.IsValid() || !Source.GetPtr<FFlowDataPinInputProperty_Object>())
 	{
@@ -181,9 +172,9 @@ bool MigrateSimpleType<FFlowDataPinInputProperty_Object, FFlowDataPinValue_Objec
 	return false;
 }
 
-// Specialization for Class (handles Value and ClassFilter)
+/* Specialization for Class (handles Value and ClassFilter). */
 template <>
-bool MigrateSimpleType<FFlowDataPinOutputProperty_Class, FFlowDataPinValue_Class, FSoftClassPath>(const TInstancedStruct<FFlowDataPinProperty>& Source, TInstancedStruct<FFlowDataPinValue>& Target)
+inline bool MigrateSimpleType<FFlowDataPinOutputProperty_Class, FFlowDataPinValue_Class, FSoftClassPath>(const TInstancedStruct<FFlowDataPinProperty>& Source, TInstancedStruct<FFlowDataPinValue>& Target)
 {
 	if (!Source.IsValid() || !Source.GetPtr<FFlowDataPinOutputProperty_Class>())
 	{
@@ -204,9 +195,9 @@ bool MigrateSimpleType<FFlowDataPinOutputProperty_Class, FFlowDataPinValue_Class
 	return false;
 }
 
-// Specialization for Class (Input)
+/* Specialization for Class (Input). */
 template <>
-bool MigrateSimpleType<FFlowDataPinInputProperty_Class, FFlowDataPinValue_Class, FSoftClassPath>(const TInstancedStruct<FFlowDataPinProperty>& Source, TInstancedStruct<FFlowDataPinValue>& Target)
+inline bool MigrateSimpleType<FFlowDataPinInputProperty_Class, FFlowDataPinValue_Class, FSoftClassPath>(const TInstancedStruct<FFlowDataPinProperty>& Source, TInstancedStruct<FFlowDataPinValue>& Target)
 {
 	if (!Source.IsValid() || !Source.GetPtr<FFlowDataPinInputProperty_Class>())
 	{
@@ -406,4 +397,5 @@ bool FFlowNamedDataPinProperty::FixupDataPinProperty()
 
 	return bSuccess;
 }
+
 // --

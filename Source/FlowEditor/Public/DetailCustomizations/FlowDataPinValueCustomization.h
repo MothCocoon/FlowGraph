@@ -1,5 +1,4 @@
 // Copyright https://github.com/MothCocoon/FlowGraph/graphs/contributors
-
 #pragma once
 
 #include "Types/FlowPinType.h"
@@ -46,7 +45,7 @@ protected:
 	TSharedPtr<int32>                        SelectedMultiType;
 	TSharedPtr<SComboBox<TSharedPtr<int32>>> MultiTypeComboBox;
 
-	// Cached flag whether this pin type supports Array mode
+	/* Cached flag whether this pin type supports Array mode. */
 	bool bArraySupported = true;
 
 public:
@@ -126,7 +125,7 @@ protected:
 	static FText GetInputPinTooltip();
 };
 
-// Template customization for simple scalar value structs
+/* Template customization for simple scalar value structs. */
 template <class T>
 class TFlowDataPinValueCustomization : public FFlowDataPinValueCustomization
 {

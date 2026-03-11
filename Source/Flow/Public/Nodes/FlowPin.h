@@ -1,5 +1,4 @@
 // Copyright https://github.com/MothCocoon/FlowGraph/graphs/contributors
-
 #pragma once
 
 #include "Types/FlowPinEnums.h"
@@ -23,65 +22,44 @@ struct FLOW_API FFlowPin
 {
 	GENERATED_BODY()
 
-	// A logical name, used during execution of pin
-	UPROPERTY(EditDefaultsOnly, Category = DataPins)
+	/* A logical name, used during execution of pin. */
+	UPROPERTY(EditDefaultsOnly, Category = FlowPin)
 	FName PinName;
 
-	// An optional Display Name, you can use it to override PinName without the need to update graph connections
-	UPROPERTY(EditDefaultsOnly, Category = DataPins)
+	/* An optional Display Name, you can use it to override PinName without the need to update graph connections. */
+	UPROPERTY(EditDefaultsOnly, Category = FlowPin)
 	FText PinFriendlyName;
 
-	UPROPERTY(EditDefaultsOnly, Category = DataPins)
+	UPROPERTY(EditDefaultsOnly, Category = FlowPin)
 	FString PinToolTip;
 
-	// PinType (implies PinCategory)
+	/* Deprecated PinType, use PinTypeName instead (all standard names are defined in FFlowPinTypeNamesStandard). */
 	UPROPERTY(Meta = (DeprecatedProperty, DeprecationMessage = "Use PinTypeName instead"))
 	EFlowPinType PinType = EFlowPinType::Invalid;
 
-	// Only supporting None (Single) or Array for now(tm) for data pins via EFlowMultiType
+	/* Only supporting None (Single) or Array for now(tm) for data pins via EFlowMultiType. */
 	UPROPERTY()
 	EPinContainerType ContainerType = EPinContainerType::None;
 
 protected:
-	UPROPERTY(EditDefaultsOnly, Category = DataPins)
+	UPROPERTY()
 	FFlowPinTypeName PinTypeName = FFlowPinTypeName(FFlowPinTypeNamesStandard::PinTypeNameExec);
 
-	// Sub-category object
-	// (used to identify the struct or class type for some PinCategories)
-	UPROPERTY(VisibleAnywhere, Category = DataPins)
+	/* Sub-category object
+	 * Used to identify the struct or class type for some PinCategories. */
+	UPROPERTY()
 	TWeakObjectPtr<UObject> PinSubCategoryObject;
 
-#if WITH_EDITORONLY_DATA
-	// Filter for limiting the compatible classes for this data pin.
-	// This property is editor-only, but it is automatically copied into PinSubCategoryObject if the PinTypeName matches (for runtime use).
-	UPROPERTY(EditAnywhere, Category = DataPins, meta = (EditCondition = "PinTypeName == Class", EditConditionHides))
-	TSubclassOf<UClass> SubCategoryClassFilter = UClass::StaticClass();
-
-	// Filter for limiting the compatible object types for this data pin.
-	// This property is editor-only, but it is automatically copied into PinSubCategoryObject if the PinTypeName matches (for runtime use).
-	UPROPERTY(EditAnywhere, Category = DataPins, meta = (EditCondition = "PinTypeName == Object", EditConditionHides))
-	TSubclassOf<UObject> SubCategoryObjectFilter = UObject::StaticClass();
-
-	// Configuration option for setting the EnumClass to a Blueprint Enum
-	// (C++ enums must bind by name using SubCategoryEnumName, due to a limitation with UE's UEnum discovery).
-	// This property is editor-only, but it is automatically copied into PinSubCategoryObject if the PinType matches (for runtime use).
-	UPROPERTY(EditAnywhere, Category = DataPins, meta = (EditCondition = "PinTypeName == Enum", EditConditionHides))
-	TObjectPtr<UEnum> SubCategoryEnumClass = nullptr;
-
-	// name of enum defined in c++ code, will take priority over asset from EnumType property
-	// (this is a work-around because EnumClass cannot find C++ Enums,
-	// so you need to type the name of the enum in here, manually)
-	// See also: FFlowPin::PostEditChangedEnumName()
-	UPROPERTY(EditAnywhere, Category = DataPins, meta = (EditCondition = "PinTypeName == Enum", EditConditionHides))
-	FString SubCategoryEnumName;
-#endif
-
 public:
-
 	FFlowPin()
 		: PinName(NAME_None)
 	{
 	}
+
+	FFlowPin(const FFlowPin& InFlowPin) = default;
+	FFlowPin(FFlowPin&& InFlowPin) = default;
+	FFlowPin& operator =(FFlowPin&& InFlowPin) = default;
+	FFlowPin& operator =(const FFlowPin& InFlowPin) = default;
 
 	explicit FFlowPin(const FName& InPinName)
 		: PinName(InPinName)
@@ -205,13 +183,13 @@ public:
 public:
 
 #if WITH_EDITOR
-	// Must be called from PostEditChangeProperty() by an owning UObject <sigh>
-	// whenever PinType, 
-	void PostEditChangedPinTypeOrSubCategorySource();
 	FText BuildHeaderText() const;
 
 	static bool ValidateEnum(const UEnum& EnumType);
-#endif // WITH_EDITOR
+		
+	FEdGraphPinType BuildEdGraphPinType() const;
+	void ConfigureFromEdGraphPin(const FEdGraphPinType& EdGraphPinType);
+#endif
 
 	void SetPinTypeName(const FFlowPinTypeName& InTypeName);
 	const FFlowPinTypeName& GetPinTypeName() const { return PinTypeName; }
@@ -219,57 +197,56 @@ public:
 	void SetPinSubCategoryObject(UObject* Object) { PinSubCategoryObject = Object; }
 	static FFlowPinTypeName GetPinTypeNameForLegacyPinType(EFlowPinType PinType);
 
-#if WITH_EDITOR
-	FEdGraphPinType BuildEdGraphPinType() const;
-#endif
-
 	const TWeakObjectPtr<UObject>& GetPinSubCategoryObject() const { return PinSubCategoryObject; }
-
-	FORCEINLINE_DEBUGGABLE static bool DeepArePinArraysMatching(const TArray<FFlowPin>& Left, const TArray<FFlowPin>& Right);
 
 	// FFlowPin instance signatures for "trait" functions
 	bool IsExecPin() const;
 	static bool IsExecPinCategory(const FName& PC);
+	FORCEINLINE bool IsDataPin() const { return !IsExecPin(); }
 	// --
 
-	// Metadata keys for properties that bind and auto-generate Data Pins:
+	// 
+	
+	/**
+	 * Metadata keys for properties that bind and auto-generate Data Pins.
+     */
 
-	// SourceForOutputFlowPin
-	//   May be used on a non-FFlowDataPinProperty within a UFlowNode to bind the
-	//   output data pin to use the property as its source.
-	//
-	//   If a string value is given, it is interpreted as the Data Pin's name,
-	//   otherwise, the property's DisplayName (or lacking that, its authored name)
-	//   will be assumed to also be the Pin's name.
+	/* SourceForOutputFlowPin
+	 * May be used on a non-FFlowDataPinProperty within a UFlowNode to bind the
+	 * output data pin to use the property as its source.
+	 * 
+	 * If a string value is given, it is interpreted as the Data Pin's name,
+	 * otherwise, the property's DisplayName (or lacking that, its authored name)
+	 * will be assumed to also be the Pin's name. */
 	static const FName MetadataKey_SourceForOutputFlowPin;
 
-	// DefaultForInputFlowPin
-	//   May be used on a non-FFlowDataPinProperty within a UFlowNode to bind the
-	//   input data pin to use the property as its default value.
-	//
-	//   If the input pin IS NOT connected to another node, then the bound property
-	//   value will be supplied as a default.
-	// 
-	//   If the input pin IS connected to another node, then the connected node's supplied
-	//   value will be used instead of the default from the bound property.
-	// 
-	//   If a string value is given, it is interpreted as the Data Pin's name,
-	//   otherwise, the property's DisplayName (or lacking that, its authored name)
-	//   will be assumed to also be the Pin's name.
+	/* DefaultForInputFlowPin
+	 * May be used on a non-FFlowDataPinProperty within a UFlowNode to bind the
+	 * Input data pin to use the property as its default value.
+	 * 
+	 * If the input pin IS NOT connected to another node, then the bound property
+	 * value will be supplied as a default.
+	 * 
+	 * If the input pin IS connected to another node, then the connected node's supplied
+	 * value will be used instead of the default from the bound property.
+	 * 
+	 * If a string value is given, it is interpreted as the Data Pin's name,
+	 * otherwise, the property's DisplayName (or lacking that, its authored name)
+	 * will be assumed to also be the Pin's name. */
 	static const FName MetadataKey_DefaultForInputFlowPin;
 
-	// FlowPinType
-	//   May be used on either a property (within a UFlowNode) or a USTRUCT declaration for
-	//   a FFlowDataPinProperty subclass.
-	//   
-	//   If used on a property, then it indicates that a data pin of the given type should be auto-generated,
-	//   and bound to the property.  May be used in conjunction with SourceForOutputFlowPin or DefaultForInputFlowPin
-	//   (but not both) to determine how the property binding is to be applied (as input default or output supply source)
-	//
-	//   If used on a FFlowDataPinProperty struct declaration, then it defines the type of pin
-	//   that should be auto-generated when the struct is used as a property in a UFlowNode.
-	//
-	//   The string value of the metadata should exactly match a value in EFlowPinType
+	/* FlowPinType
+	 * May be used on either a property (within a UFlowNode) or a USTRUCT declaration for
+	 * a FFlowDataPinProperty subclass.
+	 * 
+	 * If used on a property, then it indicates that a data pin of the given type should be auto-generated,
+	 * and bound to the property.  May be used in conjunction with SourceForOutputFlowPin or DefaultForInputFlowPin
+	 * (but not both) to determine how the property binding is to be applied (as input default or output supply source)
+	 * 
+	 * If used on a FFlowDataPinProperty struct declaration, then it defines the type of pin
+	 * that should be auto-generated when the struct is used as a property in a UFlowNode.
+	 * 
+	 * The string value of the metadata should exactly match a value in EFlowPinType. */
 	static const FName MetadataKey_FlowPinType;
 	// --
 
@@ -278,31 +255,12 @@ protected:
 	void TrySetStructSubCategoryObjectFromPinType();
 };
 
-// Inline implementations
-bool FFlowPin::DeepArePinArraysMatching(const TArray<FFlowPin>& Left, const TArray<FFlowPin>& Right)
-{
-	if (Left.Num() != Right.Num())
-	{
-		return false;
-	}
-
-	for (int32 Index = 0; Index < Left.Num(); ++Index)
-	{
-		if (!Left[Index].DeepIsEqual(Right[Index]))
-		{
-			return false;
-		}
-	}
-
-	return true;
-}
-
 USTRUCT()
 struct FLOW_API FFlowPinHandle
 {
 	GENERATED_BODY()
 
-	// Update SFlowPinHandleBase code if this property name would be ever changed
+	/* Update SFlowPinHandleBase code if this property name would be ever changed. */
 	UPROPERTY()
 	FName PinName;
 
@@ -332,7 +290,9 @@ struct FLOW_API FFlowOutputPinHandle : public FFlowPinHandle
 	}
 };
 
-// Processing Flow Nodes creates map of connected pins
+/**
+ * Processing Flow Nodes creates map of connected pins.
+ */
 USTRUCT()
 struct FLOW_API FConnectedPin
 {
@@ -380,7 +340,9 @@ enum class EFlowPinActivationType : uint8
 	PassThrough
 };
 
-// Every time pin is activated, we record it and display this data while user hovers mouse over pin
+/**
+ * Every time pin is activated, we record it and display this data while user hovers mouse over pin.
+ */
 #if !UE_BUILD_SHIPPING
 struct FLOW_API FPinRecord
 {

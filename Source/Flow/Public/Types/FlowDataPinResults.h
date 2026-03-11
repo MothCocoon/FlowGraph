@@ -1,5 +1,4 @@
 // Copyright https://github.com/MothCocoon/FlowGraph/graphs/contributors
-
 #pragma once
 
 #include "GameplayTagContainer.h"
@@ -22,8 +21,7 @@ struct FFlowDataPinResult
 	GENERATED_BODY()
 
 public:
-
-	// Result for the DataPin resolve attempt
+	/* Result for the DataPin resolve attempt. */
 	UPROPERTY(BlueprintReadWrite, Category = DataPins)
 	EFlowDataPinResolveResult Result = EFlowDataPinResolveResult::FailedUnimplemented;
 
@@ -47,15 +45,13 @@ struct FFlowDataPinResult_Bool : public FFlowDataPinResult
 	GENERATED_BODY()
 
 public:
-
 	UPROPERTY(BlueprintReadWrite, Category = DataPins)
 	bool Value = false;
 
 public:
-
 	FLOW_API FFlowDataPinResult_Bool() { }
-	FLOW_API FFlowDataPinResult_Bool(EFlowDataPinResolveResult InResult) : Super(InResult) { }
-	FLOW_API FFlowDataPinResult_Bool(bool InValue)
+	FLOW_API explicit FFlowDataPinResult_Bool(const EFlowDataPinResolveResult InResult) : Super(InResult) { }
+	FLOW_API explicit FFlowDataPinResult_Bool(const bool InValue)
 		: Super(EFlowDataPinResolveResult::Success)
 		, Value(InValue)
 		{ }
@@ -74,8 +70,8 @@ public:
 public:
 
 	FLOW_API FFlowDataPinResult_Int() { }
-	FLOW_API FFlowDataPinResult_Int(EFlowDataPinResolveResult InResult) : Super(InResult) { }
-	FLOW_API FFlowDataPinResult_Int(int64 InValue)
+	FLOW_API explicit FFlowDataPinResult_Int(const EFlowDataPinResolveResult InResult) : Super(InResult) { }
+	FLOW_API explicit FFlowDataPinResult_Int(const int64 InValue)
 		: Super(EFlowDataPinResolveResult::Success)
 		, Value(InValue)
 		{ }
@@ -94,8 +90,8 @@ public:
 public:
 
 	FLOW_API FFlowDataPinResult_Float() { }
-	FLOW_API FFlowDataPinResult_Float(EFlowDataPinResolveResult InResult) : Super(InResult) { }
-	FLOW_API FFlowDataPinResult_Float(double InValue)
+	FLOW_API explicit FFlowDataPinResult_Float(const EFlowDataPinResolveResult InResult) : Super(InResult) { }
+	FLOW_API explicit FFlowDataPinResult_Float(const double InValue)
 		: Super(EFlowDataPinResolveResult::Success)
 		, Value(InValue)
 	{ }
@@ -107,15 +103,13 @@ struct FFlowDataPinResult_Name : public FFlowDataPinResult
 	GENERATED_BODY()
 
 public:
-
 	UPROPERTY(BlueprintReadWrite, Category = DataPins)
 	FName Value = NAME_None;
 
 public:
-
 	FLOW_API FFlowDataPinResult_Name() { }
-	FLOW_API FFlowDataPinResult_Name(EFlowDataPinResolveResult InResult) : Super(InResult) { }
-	FLOW_API FFlowDataPinResult_Name(const FName& InValue)
+	FLOW_API explicit FFlowDataPinResult_Name(const EFlowDataPinResolveResult InResult) : Super(InResult) { }
+	FLOW_API explicit FFlowDataPinResult_Name(const FName& InValue)
 		: Super(EFlowDataPinResolveResult::Success)
 		, Value(InValue)
 		{ }
@@ -131,15 +125,13 @@ struct FFlowDataPinResult_String : public FFlowDataPinResult
 	GENERATED_BODY()
 
 public:
-
 	UPROPERTY(BlueprintReadWrite, Category = DataPins)
 	FString Value;
 
 public:
-
 	FLOW_API FFlowDataPinResult_String() { }
-	FLOW_API FFlowDataPinResult_String(EFlowDataPinResolveResult InResult) : Super(InResult) { }
-	FLOW_API FFlowDataPinResult_String(const FString& InValue)
+	FLOW_API explicit FFlowDataPinResult_String(const EFlowDataPinResolveResult InResult) : Super(InResult) { }
+	FLOW_API explicit FFlowDataPinResult_String(const FString& InValue)
 		: Super(EFlowDataPinResolveResult::Success)
 		, Value(InValue)
 		{ }
@@ -155,15 +147,13 @@ struct FFlowDataPinResult_Text : public FFlowDataPinResult
 	GENERATED_BODY()
 
 public:
-
 	UPROPERTY(BlueprintReadWrite, Category = DataPins)
 	FText Value;
 
 public:
-
 	FLOW_API FFlowDataPinResult_Text() { }
-	FLOW_API FFlowDataPinResult_Text(EFlowDataPinResolveResult InResult) : Super(InResult) { }
-	FLOW_API FFlowDataPinResult_Text(const FText& InValue)
+	FLOW_API explicit FFlowDataPinResult_Text(const EFlowDataPinResolveResult InResult) : Super(InResult) { }
+	FLOW_API explicit FFlowDataPinResult_Text(const FText& InValue)
 		: Super(EFlowDataPinResolveResult::Success)
 		, Value(InValue)
 		{ }
@@ -179,25 +169,23 @@ struct FFlowDataPinResult_Enum : public FFlowDataPinResult
 	GENERATED_BODY()
 
 public:
-
-	// The selected enum Value
+	/* The selected enum Value. */
 	UPROPERTY(BlueprintReadWrite, Category = DataPins)
 	FName Value = NAME_None;
 
-	// Class for this enum
+	/* Class for this enum. */
 	UPROPERTY(BlueprintReadWrite, Category = DataPins)
 	TObjectPtr<UEnum> EnumClass = nullptr;
 
 public:
-
 	FLOW_API FFlowDataPinResult_Enum() { }
-	FLOW_API FFlowDataPinResult_Enum(EFlowDataPinResolveResult InResult) : Super(InResult) { }
+	FLOW_API explicit FFlowDataPinResult_Enum(const EFlowDataPinResolveResult InResult) : Super(InResult) { }
 	FLOW_API FFlowDataPinResult_Enum(const FName& InValue, UEnum* InEnumClass)
 		: Super(EFlowDataPinResolveResult::Success)
 		, Value(InValue)
 		, EnumClass(InEnumClass)
 		{ }
-	FLOW_API explicit FFlowDataPinResult_Enum(uint8 InEnumAsIntValue, UEnum& InEnumClass)
+	FLOW_API explicit FFlowDataPinResult_Enum(const uint8 InEnumAsIntValue, UEnum& InEnumClass)
 		: Super(EFlowDataPinResolveResult::Success)
 		, Value()
 		, EnumClass(&InEnumClass)
@@ -231,7 +219,7 @@ public:
 	}
 
 	template <typename TUnrealNativeEnumType, TUnrealNativeEnumType InvalidValue>
-	TUnrealNativeEnumType GetNativeEnumValue(EGetByNameFlags GetByNameFlags = EGetByNameFlags::None) const
+	TUnrealNativeEnumType GetNativeEnumValue(const EGetByNameFlags GetByNameFlags = EGetByNameFlags::None) const
 	{
 		if (!IsValid(EnumClass))
 		{
@@ -261,8 +249,8 @@ public:
 public:
 
 	FLOW_API FFlowDataPinResult_Vector() { }
-	FLOW_API FFlowDataPinResult_Vector(EFlowDataPinResolveResult InResult) : Super(InResult) { }
-	FLOW_API FFlowDataPinResult_Vector(const FVector& InValue)
+	FLOW_API explicit FFlowDataPinResult_Vector(const EFlowDataPinResolveResult InResult) : Super(InResult) { }
+	FLOW_API explicit FFlowDataPinResult_Vector(const FVector& InValue)
 		: Super(EFlowDataPinResolveResult::Success)
 		, Value(InValue)
 		{ }
@@ -274,15 +262,13 @@ struct FFlowDataPinResult_Rotator : public FFlowDataPinResult
 	GENERATED_BODY()
 
 public:
-
 	UPROPERTY(BlueprintReadWrite, Category = DataPins)
 	FRotator Value = FRotator::ZeroRotator;
 
 public:
-
 	FLOW_API FFlowDataPinResult_Rotator() { }
-	FLOW_API FFlowDataPinResult_Rotator(EFlowDataPinResolveResult InResult) : Super(InResult) { }
-	FLOW_API FFlowDataPinResult_Rotator(const FRotator& InValue)
+	FLOW_API explicit FFlowDataPinResult_Rotator(const EFlowDataPinResolveResult InResult) : Super(InResult) { }
+	FLOW_API explicit FFlowDataPinResult_Rotator(const FRotator& InValue)
 		: Super(EFlowDataPinResolveResult::Success)
 		, Value(InValue)
 	{ }
@@ -294,15 +280,13 @@ struct FFlowDataPinResult_Transform : public FFlowDataPinResult
 	GENERATED_BODY()
 
 public:
-
 	UPROPERTY(BlueprintReadWrite, Category = DataPins)
 	FTransform Value;
 
 public:
-
 	FLOW_API FFlowDataPinResult_Transform() { }
-	FLOW_API FFlowDataPinResult_Transform(EFlowDataPinResolveResult InResult) : Super(InResult) { }
-	FLOW_API FFlowDataPinResult_Transform(const FTransform& InValue)
+	FLOW_API explicit FFlowDataPinResult_Transform(const EFlowDataPinResolveResult InResult) : Super(InResult) { }
+	FLOW_API explicit FFlowDataPinResult_Transform(const FTransform& InValue)
 		: Super(EFlowDataPinResolveResult::Success)
 		, Value(InValue)
 	{ }
@@ -314,15 +298,13 @@ struct FFlowDataPinResult_GameplayTag : public FFlowDataPinResult
 	GENERATED_BODY()
 
 public:
-
 	UPROPERTY(BlueprintReadWrite, Category = DataPins)
 	FGameplayTag Value;
 
 public:
-
 	FLOW_API FFlowDataPinResult_GameplayTag() { }
-	FLOW_API FFlowDataPinResult_GameplayTag(EFlowDataPinResolveResult InResult) : Super(InResult) { }
-	FLOW_API FFlowDataPinResult_GameplayTag(const FGameplayTag& InValue)
+	FLOW_API explicit FFlowDataPinResult_GameplayTag(const EFlowDataPinResolveResult InResult) : Super(InResult) { }
+	FLOW_API explicit FFlowDataPinResult_GameplayTag(const FGameplayTag& InValue)
 		: Super(EFlowDataPinResolveResult::Success)
 		, Value(InValue)
 		{ }
@@ -334,15 +316,13 @@ struct FFlowDataPinResult_GameplayTagContainer : public FFlowDataPinResult
 	GENERATED_BODY()
 
 public:
-
 	UPROPERTY(BlueprintReadWrite, Category = DataPins)
 	FGameplayTagContainer Value;
 
 public:
-
 	FLOW_API FFlowDataPinResult_GameplayTagContainer() { }
-	FLOW_API FFlowDataPinResult_GameplayTagContainer(EFlowDataPinResolveResult InResult) : Super(InResult) { }
-	FLOW_API FFlowDataPinResult_GameplayTagContainer(const FGameplayTagContainer& InValue)
+	FLOW_API explicit FFlowDataPinResult_GameplayTagContainer(const EFlowDataPinResolveResult InResult) : Super(InResult) { }
+	FLOW_API explicit FFlowDataPinResult_GameplayTagContainer(const FGameplayTagContainer& InValue)
 		: Super(EFlowDataPinResolveResult::Success)
 		, Value(InValue)
 		{ }
@@ -354,15 +334,13 @@ struct FFlowDataPinResult_InstancedStruct : public FFlowDataPinResult
 	GENERATED_BODY()
 
 public:
-
 	UPROPERTY(BlueprintReadWrite, Category = DataPins)
 	FInstancedStruct Value;
 
 public:
-
 	FLOW_API FFlowDataPinResult_InstancedStruct() { }
-	FLOW_API FFlowDataPinResult_InstancedStruct(EFlowDataPinResolveResult InResult) : Super(InResult) { }
-	FLOW_API FFlowDataPinResult_InstancedStruct(const FInstancedStruct& InValue)
+	FLOW_API explicit FFlowDataPinResult_InstancedStruct(const EFlowDataPinResolveResult InResult) : Super(InResult) { }
+	FLOW_API explicit FFlowDataPinResult_InstancedStruct(const FInstancedStruct& InValue)
 		: Super(EFlowDataPinResolveResult::Success)
 		, Value(InValue)
 	{ }
@@ -374,15 +352,13 @@ struct FFlowDataPinResult_Object : public FFlowDataPinResult
 	GENERATED_BODY()
 
 public:
-
 	UPROPERTY(BlueprintReadWrite, Category = DataPins)
 	TObjectPtr<UObject> Value;
 
 public:
-
 	FLOW_API FFlowDataPinResult_Object() { }
-	FLOW_API FFlowDataPinResult_Object(EFlowDataPinResolveResult InResult) : Super(InResult) { }
-	FLOW_API FFlowDataPinResult_Object(UObject* InValue);
+	FLOW_API explicit FFlowDataPinResult_Object(const EFlowDataPinResolveResult InResult) : Super(InResult) { }
+	FLOW_API explicit FFlowDataPinResult_Object(UObject* InValue);
 
 	FLOW_API FORCEINLINE void SetValueFromSoftPath(const FSoftObjectPath& SoftPath) { Value = SoftPath.ResolveObject(); }
 	FLOW_API FORCEINLINE void SetValueFromObjectPtr(UObject* ObjectPtr) { Value = ObjectPtr; }
@@ -394,23 +370,21 @@ struct FFlowDataPinResult_Class : public FFlowDataPinResult
 	GENERATED_BODY()
 
 protected:
-
-	// SoftClassPath version of the result
-	// (both the SoftClassPath and the UClass (if available) will be set for the result)
+	/* SoftClassPath version of the result.
+	 * Both the SoftClassPath and the UClass (if available) will be set for the result. */
 	UPROPERTY(BlueprintReadWrite, Category = DataPins)
 	FSoftClassPath ValuePath;
 
-	// UClass version of the result
-	// (both the SoftClassPath and the UClass (if available) will be set for the result)
+	/* UClass version of the result.
+	 * Both the SoftClassPath and the UClass (if available) will be set for the result. */
 	UPROPERTY(BlueprintReadWrite, Category = DataPins)
 	TObjectPtr<UClass> ValueClass = nullptr;
 
 public:
-
 	FLOW_API FFlowDataPinResult_Class() { }
-	FLOW_API FFlowDataPinResult_Class(EFlowDataPinResolveResult InResult) : Super(InResult) { }
-	FLOW_API FFlowDataPinResult_Class(const FSoftClassPath& InValuePath);
-	FLOW_API FFlowDataPinResult_Class(UClass* InValueClass);
+	FLOW_API explicit FFlowDataPinResult_Class(const EFlowDataPinResolveResult InResult) : Super(InResult) { }
+	FLOW_API explicit FFlowDataPinResult_Class(const FSoftClassPath& InValuePath);
+	FLOW_API explicit FFlowDataPinResult_Class(UClass* InValueClass);
 
 	FLOW_API void SetValueSoftClassAndClassPtr(const FSoftClassPath& SoftPath, UClass* ObjectPtr);
 	FLOW_API void SetValueFromSoftPath(const FSoftObjectPath& SoftObjectPath);

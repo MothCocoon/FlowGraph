@@ -26,6 +26,8 @@ void UFlowDebuggerSubsystem::Initialize(FSubsystemCollectionBase& Collection)
 	Super::Initialize(Collection);
 
 	FFlowExecutionGate::SetGate(this);
+
+	SetFlowDebuggerState(EFlowDebuggerState::InitialRunning, nullptr);
 }
 
 void UFlowDebuggerSubsystem::Deinitialize()
@@ -34,6 +36,8 @@ void UFlowDebuggerSubsystem::Deinitialize()
 	{
 		FFlowExecutionGate::SetGate(nullptr);
 	}
+
+	SetFlowDebuggerState(EFlowDebuggerState::Invalid, nullptr);
 
 	Super::Deinitialize();
 }
@@ -373,20 +377,6 @@ bool UFlowDebuggerSubsystem::HasAnyBreakpointsMatching(const TWeakObjectPtr<UFlo
 	return false;
 }
 
-void UFlowDebuggerSubsystem::RequestHaltFlowExecution(const UFlowNode* Node)
-{
-	bHaltFlowExecution = true;
-	HaltedOnFlowAssetInstance = Node->GetFlowAsset();
-	HaltedOnNodeGuid = Node->NodeGuid;
-}
-
-void UFlowDebuggerSubsystem::ClearHaltFlowExecution()
-{
-	bHaltFlowExecution = false;
-	HaltedOnFlowAssetInstance.Reset();
-	HaltedOnNodeGuid.Invalidate();
-}
-
 void UFlowDebuggerSubsystem::ClearLastHitBreakpoint()
 {
 	if (!LastHitNodeGuid.IsValid())
@@ -428,11 +418,9 @@ void UFlowDebuggerSubsystem::MarkAsHit(const UFlowNode* FlowNode)
 			LastHitNodeGuid = FlowNode->NodeGuid;
 			LastHitPinName = NAME_None;
 
-			RequestHaltFlowExecution(FlowNode);
-
 			OnDebuggerBreakpointHit.Broadcast(FlowNode);
 
-			PauseSession();
+			PauseSession(*FlowNode->GetFlowAsset());
 		}
 	}
 }
@@ -451,98 +439,26 @@ void UFlowDebuggerSubsystem::MarkAsHit(const UFlowNode* FlowNode, const FName& P
 			LastHitNodeGuid = FlowNode->NodeGuid;
 			LastHitPinName = PinName;
 
-			RequestHaltFlowExecution(FlowNode);
-
 			OnDebuggerBreakpointHit.Broadcast(FlowNode);
 
-			PauseSession();
+			PauseSession(*FlowNode->GetFlowAsset());
 		}
 	}
 }
 
-void UFlowDebuggerSubsystem::PauseSession()
+void UFlowDebuggerSubsystem::PauseSession(UFlowAsset& FlowAssetInstance)
 {
-	SetPause(true);
+	SetFlowDebuggerState(EFlowDebuggerState::Paused, &FlowAssetInstance);
 }
 
-void UFlowDebuggerSubsystem::ResumeSession()
+void UFlowDebuggerSubsystem::ResumeSession(UFlowAsset& FlowAssetInstance)
 {
-	SetPause(false);
+	SetFlowDebuggerState(EFlowDebuggerState::Resumed, &FlowAssetInstance);
 }
 
-void UFlowDebuggerSubsystem::SetPause(const bool bPause)
+void UFlowDebuggerSubsystem::StopSession()
 {
-	// experimental implementation, won't work yet, shows intent for future development
-	// here be dragons: same as APlayerController::SetPause, but we allow debugger to pause on clients
-
-	// Default bWasPaused to opposite of bPause
-	// (which we hope to get a better measure if we can get access to what we need)
-	bool bWasPaused = !bPause;
-
-	AGameModeBase* GameMode = nullptr;
-	APlayerController* PlayerController = nullptr;
-
-	if (HaltedOnFlowAssetInstance.IsValid())
-	{
-		if (const UWorld* World = HaltedOnFlowAssetInstance->GetWorld())
-		{
-			GameMode = World->GetAuthGameMode();
-
-			if (IsValid(GameMode))
-			{
-				bWasPaused = GameMode->IsPaused();
-			}
-
-			const UGameInstance* GameInstance = World->GetGameInstance();
-			if (IsValid(GameInstance))
-			{
-				PlayerController = GameInstance->GetFirstLocalPlayerController();
-			}
-		}
-	}
-
-	if (bWasPaused != bPause)
-	{
-		if (bPause)
-		{
-			// Pausing (from an unpaused state)
-
-			if (IsValid(PlayerController))
-			{
-				if (IsValid(GameMode))
-				{
-					GameMode->SetPause(PlayerController);
-				}
-
-				if (AWorldSettings* WorldSettings = PlayerController->GetWorldSettings())
-				{
-					WorldSettings->ForceNetUpdate();
-				}
-			}
-
-			// Broadcast the Pause event
-			OnDebuggerPaused.Broadcast(*HaltedOnFlowAssetInstance.Get());
-		}
-		else
-		{
-			// Resuming (from a paused state)
-
-			ClearHaltFlowExecution();
-
-			// Replay any Flow propagation that was deferred while execution was halted.
-			FFlowExecutionGate::FlushDeferredTriggerInputs();
-
-			// Intentionally do NOT clear hit flags here. The editor-specific resume path will clear the last-hit
-			// breakpoint safely (without racing against immediate breakpoint hits during flush).
-			if (IsValid(GameMode))
-			{
-				(void)GameMode->ClearPause();
-			}
-
-			// Broadcast the Resume event
-			OnDebuggerResumed.Broadcast(*HaltedOnFlowAssetInstance.Get());
-		}
-	}
+	SetFlowDebuggerState(EFlowDebuggerState::Invalid, nullptr);
 }
 
 void UFlowDebuggerSubsystem::ClearHitBreakpoints()
@@ -559,8 +475,7 @@ void UFlowDebuggerSubsystem::ClearHitBreakpoints()
 		}
 	}
 
-	LastHitNodeGuid.Invalidate();
-	LastHitPinName = NAME_None;
+	ClearLastHitBreakpoint();
 }
 
 bool UFlowDebuggerSubsystem::IsBreakpointHit(const FGuid& NodeGuid)
@@ -587,4 +502,78 @@ void UFlowDebuggerSubsystem::SaveSettings()
 {
 	UFlowDebuggerSettings* Settings = GetMutableDefault<UFlowDebuggerSettings>();
 	Settings->SaveConfig();
+}
+
+void UFlowDebuggerSubsystem::SetFlowDebuggerState(EFlowDebuggerState NextState, UFlowAsset* FlowAssetInstance)
+{
+	if (FlowDebuggerState == NextState)
+	{
+		return;
+	}
+
+	const EFlowDebuggerState PrevState = FlowDebuggerState;
+	FlowDebuggerState = NextState;
+
+	ManageGameModePaused(PrevState, NextState, FlowAssetInstance);
+
+	// OnFlowDebuggerStateChanged MUST be the final operation in SetFlowDebuggerState
+	// as it could potentially cause a new FlowDebuggerState entered
+	{
+		OnFlowDebuggerStateChanged(PrevState, NextState, FlowAssetInstance);
+		return;
+	}
+}
+
+void UFlowDebuggerSubsystem::ManageGameModePaused(EFlowDebuggerState PrevState, EFlowDebuggerState NextState, UFlowAsset* FlowAssetInstance)
+{
+	if (!IsValid(FlowAssetInstance))
+	{
+		return;
+	}
+
+	const UWorld* World = FlowAssetInstance->GetWorld();
+	AGameModeBase* GameMode = World->GetAuthGameMode();
+	if (!IsValid(GameMode))
+	{
+		// No game mode on non-server instances
+		return;
+	}
+
+	using namespace EFlowDebuggerState_Classifiers;
+
+	const bool bIsPauseGameModeStatePrev = IsPausedGameState(PrevState);
+	const bool bIsPauseGameModeStateNext = IsPausedGameState(NextState);
+
+	if (bIsPauseGameModeStatePrev == bIsPauseGameModeStateNext)
+	{
+		return;
+	}
+
+	// Gather some pointers
+	const UGameInstance* GameInstance = World->GetGameInstance();
+	APlayerController* FirstLocalPlayerController = nullptr;
+	if (IsValid(GameInstance))
+	{
+		FirstLocalPlayerController = GameInstance->GetFirstLocalPlayerController();
+	}
+
+	// Change the GameMode pause state
+	if (bIsPauseGameModeStateNext)
+	{
+		if (FirstLocalPlayerController)
+		{
+			GameMode->SetPause(FirstLocalPlayerController);
+
+			if (AWorldSettings* WorldSettings = World->GetWorldSettings())
+			{
+				WorldSettings->ForceNetUpdate();
+			}
+		}
+	}
+	else
+	{
+		// Intentionally do NOT clear hit flags here. The editor-specific resume path will clear the last-hit
+		// breakpoint safely (without racing against immediate breakpoint hits during flush).
+		(void)GameMode->ClearPause();
+	}
 }

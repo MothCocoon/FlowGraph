@@ -1,5 +1,4 @@
 // Copyright https://github.com/MothCocoon/FlowGraph/graphs/contributors
-
 #pragma once
 
 #include "EdGraph/EdGraphNode.h"
@@ -21,7 +20,7 @@ class FFlowMessageLog;
 DECLARE_DELEGATE(FFlowGraphNodeEvent);
 
 /**
- * Graph representation of the Flow Node
+ * Graph representation of the Flow Node.
  */
 UCLASS()
 class FLOWEDITOR_API UFlowGraphNode : public UEdGraphNode
@@ -31,8 +30,8 @@ class FLOWEDITOR_API UFlowGraphNode : public UEdGraphNode
 //////////////////////////////////////////////////////////////////////////
 // Flow node
 
-private:
-	// The FlowNode or FlowNodeAddOn runtime instance that is being edited by this UFlowGraphNode
+protected:
+	/* The FlowNode or FlowNodeAddOn runtime instance that is being edited by this UFlowGraphNode. */
 	UPROPERTY(Instanced)
 	TObjectPtr<UFlowNodeBase> NodeInstance;
 
@@ -43,8 +42,8 @@ private:
 	static bool bFlowAssetsLoaded;
 
 public:
-	// It would be intuitive to assign a custom Graph Node class in Flow Node class
-	// However, we shouldn't assign class from editor module to runtime module class
+	/* It would be intuitive to assign a custom Graph Node class in Flow Node class.
+	 * However, we shouldn't assign class from editor module to runtime module class. */
 	UPROPERTY()
 	TArray<TSubclassOf<UFlowNodeBase>> AssignedNodeClasses;
 	
@@ -129,27 +128,27 @@ protected:
 // Utils
 
 public:
-	// Short summary of node's content
+	/* Short summary of node's content. */
 	FString GetNodeDescription() const;
 
-	// Get flow node for the inspected asset instance
+	/* Get flow node for the inspected asset instance. */
 	UFlowNode* GetInspectedNodeInstance() const;
 
 	UFlowAsset* GetFlowAsset() const;
 
-	// Used for highlighting active nodes of the inspected asset instance
+	/* Used for highlighting active nodes of the inspected asset instance. */
 	EFlowNodeState GetActivationState() const;
 
-	// Information displayed while node is active
+	/* Information displayed while node is active. */
 	FString GetStatusString() const;
 	FLinearColor GetStatusBackgroundColor() const;
 
-	// Check this to display information while node is preloaded
+	/* Check this to display information while node is preloaded. */
 	bool IsContentPreloaded() const;
 
 	bool CanFocusViewport() const;
 
-	// Index properties that are not indexed by default
+	/* Index properties that are not indexed by default. */
 	virtual void AdditionalNodeIndexing(FSearchSerializer& Serializer) const {}
 
 	// UEdGraphNode
@@ -161,7 +160,7 @@ public:
 	virtual void OnNodeDoubleClicked() const;
 	virtual void OnNodeDoubleClickedInPIE() const {}
 
-	/** check if node has any errors, used for assigning colors on graph */
+	/* Check if node has any errors, used for assigning colors on graph. */
 	virtual bool HasErrors() const;
 
 	void ValidateGraphNode(FFlowMessageLog& MessageLog) const;
@@ -170,7 +169,6 @@ protected:
 	bool CanReconstructNode() const;
 	
 	bool TryUpdateNodePins() const;
-	bool TryUpdateAutoDataPins() const;
 	bool CheckGraphPinsMatchNodePins() const;
 	
 //////////////////////////////////////////////////////////////////////////
@@ -196,10 +194,10 @@ public:
 	void AddUserInput();
 	void AddUserOutput();
 
-	// Add pin only on this instance of node, under default pins
+	/* Add pin only on this instance of node, under default pins. */
 	void AddInstancePin(const EEdGraphPinDirection Direction, const uint8 NumberedPinsAmount);
 
-	// Call node and graph updates manually, if using bBatchRemoval
+	/* Call node and graph updates manually, if using bBatchRemoval. */
 	void RemoveInstancePin(UEdGraphPin* Pin);
 
 public:
@@ -207,7 +205,7 @@ public:
 	virtual void GetPinHoverText(const UEdGraphPin& Pin, FString& HoverTextOut) const override;
 	// --
 
-	// @return true, if pins cannot be connected due to node's inner logic, put message for user in OutReason
+	/* Returns true, if pins cannot be connected due to node's inner logic, put message for user in OutReason. */
 	virtual bool IsConnectionDisallowed(const UEdGraphPin* MyPin, const UEdGraphPin* OtherPin, FString& OutReason) const { return false; }
 
 //////////////////////////////////////////////////////////////////////////
@@ -217,10 +215,10 @@ public:
 	FFlowGraphNodeEvent OnSignalModeChanged;
 	FFlowGraphNodeEvent OnReconstructNodeCompleted;
 	
-	// Pin activation forced by user during PIE
+	/* Pin activation forced by user during PIE. */
 	virtual void ForcePinActivation(const FEdGraphPinReference PinReference) const;
 
-	// Pass-through forced by designer, set per node instance
+	/* Pass-through forced by designer, set per node instance. */
 	virtual void SetSignalMode(const EFlowSignalMode Mode);
 
 	virtual EFlowSignalMode GetSignalMode() const;
@@ -229,27 +227,36 @@ public:
 //////////////////////////////////////////////////////////////////////////
 // SubNode Support
 
-	//~ Begin UEdGraphNode Interface
+	// UEdGraphNode
 	UFlowGraph* GetFlowGraph() const;
 	virtual void DestroyNode() override;
 	virtual void NodeConnectionListChanged() override;
 	virtual void FindDiffs(class UEdGraphNode* OtherNode, struct FDiffResults& Results) override;
 	virtual FString GetPropertyNameAndValueForDiff(const FProperty* Prop, const uint8* PropertyAddr) const override;
-	//~ End UEdGraphNode Interface
+	// --
 
 	void SetParentNodeForSubNode(UFlowGraphNode* InParentNode);
 	UFlowGraphNode* GetParentNode() const { return ParentNode; }
 
-	void OnUpdateAsset(int32 UpdateFlags) { RebuildRuntimeAddOnsFromEditorSubNodes(); }
-	void RebuildRuntimeAddOnsFromEditorSubNodes();
+	/** Returns the top-most ancestor (root) node in the subnode tree (could be this). */
+	UFlowGraphNode* GetRootFlowGraphNode() const;
+
+	/**
+	 * Request a reconstruction on the owning root FlowNode.
+	 * Needed for nested AddOn trees (AddOn inside AddOn) where removing/reparenting a subnode
+	 * should cause the root FlowNode to refresh its context/data pins and update visuals.
+	 */
+	void RequestReconstructOnRootFlowNode() const;
+
+	void RebuildRuntimeAddOnsFromEditorSubNodes(bool bForceReconstructNode = true);
 
 	static void DiffSubNodes(const FText& NodeTypeDisplayName, const TArray<UFlowGraphNode*>& LhsSubNodes,	const TArray<UFlowGraphNode*>& RhsSubNodes,	FDiffResults& Results);
 
-	//~ Begin UObject Interface
+	// UObject
 #if WITH_EDITOR
 	virtual void PostEditUndo() override;
 #endif
-	// End UObject
+	// --
 
 	virtual UEdGraphPin* GetInputPin(int32 InputIndex = 0) const;
 	virtual UEdGraphPin* GetOutputPin(int32 InputIndex = 0) const;
@@ -265,20 +272,14 @@ public:
 
 	virtual int32 FindSubNodeDropIndex(UFlowGraphNode* SubNode) const;
 	virtual void InsertSubNodeAt(UFlowGraphNode* SubNode, const int32 DropIndex);
-
-	/** check if node is subnode */
+	
 	virtual bool IsSubNode() const;
-
-	/** initialize instance object  */
+	
 	virtual void InitializeInstance();
-
-	/** reinitialize node instance */
 	virtual bool RefreshNodeClass();
-
-	/** updates ClassData from node instance */
 	virtual void UpdateNodeClassData();
 
-	/** Check if node instance uses blueprint for its implementation */
+	/* Check if node instance uses blueprint for its implementation. */
 	bool UsesBlueprint() const;
 
 protected:
@@ -287,34 +288,32 @@ protected:
 	void LogError(const FString& MessageToLog, const UFlowNodeBase* FlowNodeBase) const;
 
 public:
-	/** instance class */
 	UPROPERTY()
 	TSoftClassPtr<UFlowNodeBase> NodeInstanceClass;
 
-	/** SubNodes that are owned by this UFlowGraphNode */
+	/* SubNodes that are owned by this UFlowGraphNode. */
 	UPROPERTY()
 	TArray<TObjectPtr<UFlowGraphNode>> SubNodes;
 
-	/** subnode's parent index assigned during copy operation to connect nodes again on paste */
+	/* Subnode's parent index assigned during copy operation to connect nodes again on paste. */
 	UPROPERTY()
 	int32 CopySubNodeParentIndex = INDEX_NONE;
 
-	/** subnode index assigned during copy operation to connect nodes again on paste */
+	/* Subnode index assigned during copy operation to connect nodes again on paste. */
 	UPROPERTY()
 	int32 CopySubNodeIndex = INDEX_NONE;
 
-	/** if set, this node will be always considered as subnode */
+	/* If set, this node will always be considered as subnode. */
 	UPROPERTY()
 	bool bIsSubNode = false;
 
-	/** error message for node */
 	UPROPERTY()
 	FString ErrorMessage;
 
 private:
-	/** parent UFlowGraphNode for this node, 
-	  * note, this is not saved, and is restored in when the graph is opened in the editor via 
-	  * UFlowGraph::RecursivelySetParentNodeForAllSubNodes */
+	/* Parent UFlowGraphNode for this node
+	 * Note: this is not saved, and is restored in when the graph is opened in the editor via 
+	 * UFlowGraph::RecursivelySetParentNodeForAllSubNodes. */
 	UPROPERTY(Transient)
 	TObjectPtr<UFlowGraphNode> ParentNode;
 };

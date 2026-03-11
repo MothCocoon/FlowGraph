@@ -9,6 +9,7 @@
 #include "Graph/Nodes/FlowGraphNode.h"
 #include "Interfaces/FlowExecutionGate.h"
 #include "FlowAsset.h"
+#include "FlowSubsystem.h"
 
 #include "Editor/UnrealEdEngine.h"
 #include "Engine/Engine.h"
@@ -71,16 +72,14 @@ void UFlowDebugEditorSubsystem::OnBeginPIE(const bool bIsSimulating)
 
 void UFlowDebugEditorSubsystem::OnResumePIE(const bool bIsSimulating)
 {
-	// Clear only the last-hit breakpoint to return to enabled/disabled visuals without racing against
-	// a newly hit breakpoint during FlushDeferredTriggerInputs().
-	ClearHaltFlowExecution();
-	ClearLastHitBreakpoint();
-
 	// Editor-level resume event (also used by Advance Single Frame).
 	// This does not necessarily flow through AGameModeBase::ClearPause(), so we must unhalt Flow here.
-	ResumeSession();
+	ClearLastHitBreakpoint();
 
-	FFlowExecutionGate::FlushDeferredTriggerInputs();
+	if (HaltedOnFlowAssetInstance.IsValid())
+	{
+		ResumeSession(*HaltedOnFlowAssetInstance.Get());
+	}
 }
 
 void UFlowDebugEditorSubsystem::OnEndPIE(const bool bIsSimulating)
@@ -88,8 +87,7 @@ void UFlowDebugEditorSubsystem::OnEndPIE(const bool bIsSimulating)
 	// Ensure we don't carry over a halted state between PIE sessions.
 	ClearHitBreakpoints();
 
-	ClearHaltFlowExecution();
-	FFlowExecutionGate::FlushDeferredTriggerInputs();
+	StopSession();
 
 	for (const TPair<TWeakObjectPtr<UFlowAsset>, TSharedPtr<class IMessageLogListing>>& Log : RuntimeLogs)
 	{
@@ -117,27 +115,86 @@ void UFlowDebugEditorSubsystem::OnEndPIE(const bool bIsSimulating)
 	}
 }
 
-void UFlowDebugEditorSubsystem::PauseSession()
+void UFlowDebugEditorSubsystem::PauseSession(UFlowAsset& FlowAssetInstance)
 {
-	// do not call Super, non-PIE world has its only Pause/Resume logic
+	HaltedOnFlowAssetInstance = &FlowAssetInstance;
 
-	constexpr bool bShouldBePaused = true;
-	const bool bWasPaused = GUnrealEd->SetPIEWorldsPaused(bShouldBePaused);
-	if (!bWasPaused)
-	{
-		GUnrealEd->PlaySessionPaused();
-	}
+	Super::PauseSession(FlowAssetInstance);
 }
 
-void UFlowDebugEditorSubsystem::ResumeSession()
+void UFlowDebugEditorSubsystem::ResumeSession(UFlowAsset& FlowAssetInstance)
 {
-	// do not call Super, non-PIE world has its only Pause/Resume logic
+	HaltedOnFlowAssetInstance = &FlowAssetInstance;
 
-	constexpr bool bShouldBePaused = false;
-	const bool bWasPaused = GUnrealEd->SetPIEWorldsPaused(bShouldBePaused);
-	if (bWasPaused)
+	Super::ResumeSession(FlowAssetInstance);
+}
+
+void UFlowDebugEditorSubsystem::StopSession()
+{
+	// Drop any pending deferred triggers — we are stopping the session entirely
+	if (HaltedOnFlowAssetInstance.IsValid())
 	{
-		GUnrealEd->PlaySessionResumed();
+		UFlowSubsystem* FlowSubsystem = HaltedOnFlowAssetInstance->GetFlowSubsystem();
+
+		if (IsValid(FlowSubsystem))
+		{
+			FlowSubsystem->ClearAllDeferredTriggerScopes();
+		}
+	}
+
+	HaltedOnFlowAssetInstance.Reset();
+
+	Super::StopSession();
+}
+
+void UFlowDebugEditorSubsystem::OnFlowDebuggerStateChanged(EFlowDebuggerState PrevState, EFlowDebuggerState NextState, UFlowAsset* FlowAssetInstance)
+{
+	check(PrevState != NextState);
+
+	using namespace EFlowDebuggerState_Classifiers;
+
+	const bool bIsPausedGameStatePrev = IsPausedGameState(PrevState);
+	const bool bIsPausedGameStateNext = IsPausedGameState(NextState);
+
+	// Handle Pause/Unpause of the game & pie systems
+	if (bIsPausedGameStatePrev != bIsPausedGameStateNext)
+	{
+		const bool bWasPaused = GUnrealEd->SetPIEWorldsPaused(bIsPausedGameStateNext);
+
+		if (bIsPausedGameStateNext && !bWasPaused)
+		{
+			GUnrealEd->PlaySessionPaused();
+		}
+		else if (!bIsPausedGameStateNext && bWasPaused)
+		{
+			GUnrealEd->PlaySessionResumed();
+		}
+	}
+
+	// Issue the broadcasts for specific state entry
+	FLOW_ASSERT_ENUM_MAX(EFlowDebuggerState, 3);
+	if (NextState == EFlowDebuggerState::Paused)
+	{
+		OnDebuggerPaused.Broadcast(*FlowAssetInstance);
+	}
+	else if (NextState == EFlowDebuggerState::Resumed)
+	{
+		OnDebuggerResumed.Broadcast(*FlowAssetInstance);
+	}
+
+	UFlowSubsystem* FlowSubsystem =
+		IsValid(FlowAssetInstance) ?
+			FlowAssetInstance->GetFlowSubsystem() :
+			nullptr;
+
+	if (FlowSubsystem && IsFlushDeferredTriggersState(NextState))
+	{
+		// Flush any deferred triggers now that halt is cleared.
+		FlowSubsystem->TryFlushAllDeferredTriggerScopes();
+
+		// NOTE (gtaylor) this flush needs to be the last thing we do in this function 
+		// (thus the explicit return to emphasize it), as this flush can be interrupted by another breakpoint
+		return;
 	}
 }
 

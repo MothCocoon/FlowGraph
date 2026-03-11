@@ -1,10 +1,11 @@
 // Copyright https://github.com/MothCocoon/FlowGraph/graphs/contributors
-
 #pragma once
 
 #include "ConnectionDrawingPolicy.h"
 #include "EdGraphUtilities.h"
-#include "Runtime/Launch/Resources/Version.h"
+
+class FSlateWindowElementList;
+class UEdGraph;
 
 UENUM()
 enum class EFlowConnectionDrawType : uint8
@@ -22,10 +23,9 @@ struct FLOWEDITOR_API FFlowGraphConnectionDrawingPolicyFactory : public FGraphPa
 	virtual class FConnectionDrawingPolicy* CreateConnectionPolicy(const class UEdGraphSchema* Schema, int32 InBackLayerID, int32 InFrontLayerID, float ZoomFactor, const class FSlateRect& InClippingRect, class FSlateWindowElementList& InDrawElements, class UEdGraph* InGraphObj) const override;
 };
 
-class FSlateWindowElementList;
-class UEdGraph;
-
-// This class draws the connections between nodes
+/**
+ * This class draws the connections between nodes.
+ */
 class FLOWEDITOR_API FFlowGraphConnectionDrawingPolicy : public FConnectionDrawingPolicy
 {
 	float RecentWireDuration;
@@ -40,13 +40,13 @@ class FLOWEDITOR_API FFlowGraphConnectionDrawingPolicy : public FConnectionDrawi
 	float RecordedWireThickness;
 	float SelectedWireThickness;
 
-	// runtime values
+	// Runtime values
 	UEdGraph* GraphObj;
 	TMap<UEdGraphPin*, UEdGraphPin*> RecentPaths;
 	TMap<UEdGraphPin*, UEdGraphPin*> RecordedPaths;
 	TMap<UEdGraphPin*, UEdGraphPin*> SelectedPaths;
 
-	//Used to help reversing pins on nodes that go backwards
+	/* Used to help reversing pins on nodes that go backwards. */
 	TMap<class UFlowGraphNode_Reroute*, bool> RerouteToReversedDirectionMap;
 
 public:
@@ -54,15 +54,11 @@ public:
 
 	void BuildPaths();
 
-	// FConnectionDrawingPolicy interface
-#if ENGINE_MAJOR_VERSION == 5 && ENGINE_MINOR_VERSION < 6
-	virtual void DrawConnection(int32 LayerId, const FVector2D& Start, const FVector2D& End, const FConnectionParams& Params) override;
-#else
+	// FConnectionDrawingPolicy
 	virtual void DrawConnection(int32 LayerId, const FVector2f& Start, const FVector2f& End, const FConnectionParams& Params);
-#endif
 	virtual void DetermineWiringStyle(UEdGraphPin* OutputPin, UEdGraphPin* InputPin, FConnectionParams& Params) override;
 	virtual void Draw(TMap<TSharedRef<SWidget>, FArrangedWidget>& PinGeometries, FArrangedChildren& ArrangedNodes) override;
-	// End of FConnectionDrawingPolicy interface
+	// --
 
 protected:
 	void DrawCircuitSpline(const int32& LayerId, const FVector2f& Start, const FVector2f& End, const FConnectionParams& Params) const;

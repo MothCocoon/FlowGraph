@@ -9,9 +9,8 @@
 
 #include UE_INLINE_GENERATED_CPP_BY_NAME(FlowNode_NotifyActor)
 
-UFlowNode_NotifyActor::UFlowNode_NotifyActor(const FObjectInitializer& ObjectInitializer)
-	: Super(ObjectInitializer)
-	, MatchType(EGameplayContainerMatchType::All)
+UFlowNode_NotifyActor::UFlowNode_NotifyActor()
+	: MatchType(EGameplayContainerMatchType::All)
 	, bExactMatch(true)
 	, NetMode(EFlowNetMode::Authority)
 {

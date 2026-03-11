@@ -1,5 +1,4 @@
 // Copyright https://github.com/MothCocoon/FlowGraph/graphs/contributors
-
 #pragma once
 
 #include "GameplayTagContainer.h"
@@ -8,11 +7,13 @@
 #include "Types/FlowEnumUtils.h"
 #include "Types/FlowArray.h"
 
-// NOTE (gtaylor) The choice of which EFlowGameplayTagMapExpandPolicy to use will be informed by the map's tolerance
-//  for memory vs. lookup performance.  If speed is not a concern, then fully expanding with AllSubtags can
-//  make for a single-tech lookup.  If memory is more of a concern, then NoExpand will store the minimal information
-//  in the map keys (potentially requiring multiple parent searches in TryLookupGameplayTagKey).  If only the leaf tags
-//  will be used for lookup, then LeafSubtags expansion policy is a good option.
+/**
+ * NOTE (gtaylor) The choice of which EFlowGameplayTagMapExpandPolicy to use will be informed by the map's tolerance
+ * for memory vs. lookup performance. If speed is not a concern, then fully expanding with AllSubtags can
+ * make for a single-tech lookup. If memory is more of a concern, then NoExpand will store the minimal information
+ * in the map keys (potentially requiring multiple parent searches in TryLookupGameplayTagKey). If only the leaf tags
+ * will be used for lookup, then LeafSubtags expansion policy is a good option.
+ */
 
 UENUM()
 enum class EFlowGameplayTagMapExpandPolicy : int8
@@ -30,8 +31,10 @@ FLOW_ENUM_RANGE_VALUES(EFlowGameplayTagMapExpandPolicy);
 
 namespace FlowMap
 {
-	// Utility functions for utilizing FGameplayTags as a key in a TMap.
-	//  Expected to be wrapped by the client code to hide some of the details in these function signatures.
+	/**
+	 * Utility functions for utilizing FGameplayTags as a key in a TMap.
+	 * Expected to be wrapped by the client code to hide some of the details in these function signatures.
+	 */
 
 	template <EFlowGameplayTagMapExpandPolicy ExpandPolicy, typename TPayload, int32 ExpectedSourceKeyCountMax = 32>
 	void PatchGameplayTagMap(
@@ -110,8 +113,8 @@ namespace FlowMap
 		}
 	}
 
-	// (const) Lookup function, which works on a gameplaytag-keyed map
-	// it can crawl up the tag ancestry chain to allow general keys to apply to sub-tags
+	/* (const) Lookup function, which works on a GameplayTag-keyed map.
+	 * It can crawl up the tag ancestry chain to allow general keys to apply to sub-tags. */
 	template <typename TPayload>
 	const TPayload* TryLookupGameplayTagKey(
 		const FGameplayTag& KeyTag,
@@ -142,8 +145,8 @@ namespace FlowMap
 		return FoundPayload;
 	}
 
-	// (mutable) Lookup function, which works on a gameplaytag-keyed map
-	// it can crawl up the tag ancestry chain to allow general keys to apply to sub-tags
+	/* (mutable) Lookup function, which works on a GameplayTag-keyed map.
+	 * It can crawl up the tag ancestry chain to allow general keys to apply to sub-tags. */
 	template <typename TPayload>
 	TPayload* TryLookupGameplayTagKey(
 		const FGameplayTag& KeyTag,
@@ -162,7 +165,7 @@ namespace FlowMap
 					ParentTagSearchDepthMax));
 	}
 
-	// Extracts the key/value pairs from a gameplaytag-keyed map into a sorted array
+	/* Extracts the key/value pairs from a GameplayTag-keyed map into a sorted array. */
 	template <typename TPayload, int32 ExpectedSourceKeyCountMax = 32>
 	TArray<TPair<FGameplayTag, TPayload>> BuildSortedGameplayTagMapPairs(const TMap<FGameplayTag, TPayload>& GameplayTagToPayloadMap)
 	{

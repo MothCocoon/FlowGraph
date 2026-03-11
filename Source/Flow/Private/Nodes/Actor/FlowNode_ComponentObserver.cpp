@@ -5,9 +5,8 @@
 
 #include UE_INLINE_GENERATED_CPP_BY_NAME(FlowNode_ComponentObserver)
 
-UFlowNode_ComponentObserver::UFlowNode_ComponentObserver(const FObjectInitializer& ObjectInitializer)
-	: Super(ObjectInitializer)
-	, IdentityMatchType(EFlowTagContainerMatchType::HasAnyExact)
+UFlowNode_ComponentObserver::UFlowNode_ComponentObserver()
+	: IdentityMatchType(EFlowTagContainerMatchType::HasAnyExact)
 	, SuccessLimit(1)
 	, SuccessCount(0)
 {

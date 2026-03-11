@@ -1,5 +1,4 @@
 // Copyright https://github.com/MothCocoon/FlowGraph/graphs/contributors
-
 #pragma once
 
 #include "IPropertyTypeCustomization.h"
@@ -7,7 +6,9 @@
 
 class IPropertyHandle;
 
-// Customizes the FFlowAssetParamsPtr property in the Details panel.
+/**
+ * Customizes the FFlowAssetParamsPtr property in the Details panel.
+ */
 class FFlowAssetParamsPtrCustomization : public IPropertyTypeCustomization
 {
 public:

@@ -4,9 +4,8 @@
 
 #include UE_INLINE_GENERATED_CPP_BY_NAME(FlowNode_ExecutionSequence)
 
-UFlowNode_ExecutionSequence::UFlowNode_ExecutionSequence(const FObjectInitializer& ObjectInitializer)
-	: Super(ObjectInitializer)
-	, bSavePinExecutionState(true)
+UFlowNode_ExecutionSequence::UFlowNode_ExecutionSequence()
+	: bSavePinExecutionState(true)
 {
 #if WITH_EDITOR
 	Category = TEXT("Route");

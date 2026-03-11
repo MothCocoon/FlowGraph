@@ -1,5 +1,4 @@
 // Copyright https://github.com/MothCocoon/FlowGraph/graphs/contributors
-
 #pragma once
 
 #include "Types/FlowPinType.h"
@@ -17,7 +16,6 @@
 
 #include "FlowPinTypesStandard.generated.h"
 
-// Forward declarations
 struct FFlowDataPinValue_Bool;
 struct FFlowDataPinValue_Int;
 struct FFlowDataPinValue_Int64;
@@ -56,7 +54,9 @@ struct FFlowDataPinOutputProperty_Object;
 struct FFlowDataPinOutputProperty_Class;
 // --
 
-// Exec
+/**
+ * Exec
+ */
 USTRUCT(BlueprintType)
 struct FLOW_API FFlowPinType_Exec : public FFlowPinType
 {
@@ -79,7 +79,9 @@ public:
 #endif
 };
 
-// Bool
+/**
+ * Bool
+ */
 USTRUCT(BlueprintType)
 struct FLOW_API FFlowPinType_Bool : public FFlowPinType
 {
@@ -101,10 +103,12 @@ public:
 	virtual bool ResolveAndFormatPinValue(const UFlowNodeBase& Node, const FName& PinName, FFormatArgumentValue& OutValue) const override;
 #endif
 
-	virtual bool PopulateResult(const UObject& PropertyOwnerObject, const UFlowNode& Node, const FFlowPin& Pin, FFlowDataPinResult& OutResult) const override;
+	virtual bool PopulateResult(const UObject& PropertyOwnerObject, const UFlowNode& Node, const FName& PropertyName, FFlowDataPinResult& OutResult) const override;
 };
 
-// Int
+/**
+ * Int
+ */
 USTRUCT(BlueprintType)
 struct FLOW_API FFlowPinType_Int : public FFlowPinType
 {
@@ -126,10 +130,12 @@ public:
 	virtual bool ResolveAndFormatPinValue(const UFlowNodeBase& Node, const FName& PinName, FFormatArgumentValue& OutValue) const override;
 #endif
 
-	virtual bool PopulateResult(const UObject& PropertyOwnerObject, const UFlowNode& Node, const FFlowPin& Pin, FFlowDataPinResult& OutResult) const override;
+	virtual bool PopulateResult(const UObject& PropertyOwnerObject, const UFlowNode& Node, const FName& PropertyName, FFlowDataPinResult& OutResult) const override;
 };
 
-// Int64
+/**
+ * Int64
+ */
 USTRUCT(BlueprintType)
 struct FLOW_API FFlowPinType_Int64 : public FFlowPinType
 {
@@ -151,10 +157,12 @@ public:
 	virtual bool ResolveAndFormatPinValue(const UFlowNodeBase& Node, const FName& PinName, FFormatArgumentValue& OutValue) const override;
 #endif
 
-	virtual bool PopulateResult(const UObject& PropertyOwnerObject, const UFlowNode& Node, const FFlowPin& Pin, FFlowDataPinResult& OutResult) const override;
+	virtual bool PopulateResult(const UObject& PropertyOwnerObject, const UFlowNode& Node, const FName& PropertyName, FFlowDataPinResult& OutResult) const override;
 };
 
-// Float
+/**
+ * Float
+ */
 USTRUCT(BlueprintType)
 struct FLOW_API FFlowPinType_Float : public FFlowPinType
 {
@@ -176,10 +184,12 @@ public:
 	virtual bool ResolveAndFormatPinValue(const UFlowNodeBase& Node, const FName& PinName, FFormatArgumentValue& OutValue) const override;
 #endif
 
-	virtual bool PopulateResult(const UObject& PropertyOwnerObject, const UFlowNode& Node, const FFlowPin& Pin, FFlowDataPinResult& OutResult) const override;
+	virtual bool PopulateResult(const UObject& PropertyOwnerObject, const UFlowNode& Node, const FName& PropertyName, FFlowDataPinResult& OutResult) const override;
 };
 
-// Double
+/**
+ * Double
+ */
 USTRUCT(BlueprintType)
 struct FLOW_API FFlowPinType_Double : public FFlowPinType
 {
@@ -201,10 +211,12 @@ public:
 	virtual bool ResolveAndFormatPinValue(const UFlowNodeBase& Node, const FName& PinName, FFormatArgumentValue& OutValue) const override;
 #endif
 
-	virtual bool PopulateResult(const UObject& PropertyOwnerObject, const UFlowNode& Node, const FFlowPin& Pin, FFlowDataPinResult& OutResult) const override;
+	virtual bool PopulateResult(const UObject& PropertyOwnerObject, const UFlowNode& Node, const FName& PropertyName, FFlowDataPinResult& OutResult) const override;
 };
 
-// Name
+/**
+ * Name
+ */
 USTRUCT(BlueprintType)
 struct FLOW_API FFlowPinType_Name : public FFlowPinType
 {
@@ -226,10 +238,12 @@ public:
 	virtual bool ResolveAndFormatPinValue(const UFlowNodeBase& Node, const FName& PinName, FFormatArgumentValue& OutValue) const override;
 #endif
 
-	virtual bool PopulateResult(const UObject& PropertyOwnerObject, const UFlowNode& Node, const FFlowPin& Pin, FFlowDataPinResult& OutResult) const override;
+	virtual bool PopulateResult(const UObject& PropertyOwnerObject, const UFlowNode& Node, const FName& PropertyName, FFlowDataPinResult& OutResult) const override;
 };
 
-// String
+/**
+ * String
+ */
 USTRUCT(BlueprintType)
 struct FLOW_API FFlowPinType_String : public FFlowPinType
 {
@@ -251,10 +265,12 @@ public:
 	virtual bool ResolveAndFormatPinValue(const UFlowNodeBase& Node, const FName& PinName, FFormatArgumentValue& OutValue) const override;
 #endif
 
-	virtual bool PopulateResult(const UObject& PropertyOwnerObject, const UFlowNode& Node, const FFlowPin& Pin, FFlowDataPinResult& OutResult) const override;
+	virtual bool PopulateResult(const UObject& PropertyOwnerObject, const UFlowNode& Node, const FName& PropertyName, FFlowDataPinResult& OutResult) const override;
 };
 
-// Text
+/**
+ * Text
+ */
 USTRUCT(BlueprintType)
 struct FLOW_API FFlowPinType_Text : public FFlowPinType
 {
@@ -276,10 +292,12 @@ public:
 	virtual bool ResolveAndFormatPinValue(const UFlowNodeBase& Node, const FName& PinName, FFormatArgumentValue& OutValue) const override;
 #endif
 
-	virtual bool PopulateResult(const UObject& PropertyOwnerObject, const UFlowNode& Node, const FFlowPin& Pin, FFlowDataPinResult& OutResult) const override;
+	virtual bool PopulateResult(const UObject& PropertyOwnerObject, const UFlowNode& Node, const FName& PropertyName, FFlowDataPinResult& OutResult) const override;
 };
 
-// Enum
+/**
+ * Enum
+ */
 USTRUCT(BlueprintType)
 struct FLOW_API FFlowPinType_Enum : public FFlowPinType
 {
@@ -303,10 +321,12 @@ public:
 	virtual UObject* GetPinSubCategoryObjectFromProperty(const FProperty* Property, void const* InContainer, const FFlowDataPinValue* Wrapper) const override;
 #endif
 
-	virtual bool PopulateResult(const UObject& PropertyOwnerObject, const UFlowNode& Node, const FFlowPin& Pin, FFlowDataPinResult& OutResult) const override;
+	virtual bool PopulateResult(const UObject& PropertyOwnerObject, const UFlowNode& Node, const FName& PropertyName, FFlowDataPinResult& OutResult) const override;
 };
 
-// Vector
+/**
+ * Vector
+ */
 USTRUCT(BlueprintType)
 struct FLOW_API FFlowPinType_Vector : public FFlowPinType
 {
@@ -324,15 +344,17 @@ public:
 	virtual const FFlowPinTypeName& GetPinTypeName() const override { return PinTypeNameVector; }
 
 #if WITH_EDITOR
-	virtual FLinearColor GetPinColor() const override { return GetDefault<UGraphEditorSettings>()->StructPinTypeColor; }
+	virtual FLinearColor GetPinColor() const override { return GetDefault<UGraphEditorSettings>()->VectorPinTypeColor; }
 	virtual bool ResolveAndFormatPinValue(const UFlowNodeBase& Node, const FName& PinName, FFormatArgumentValue& OutValue) const override;
 	virtual UObject* GetPinSubCategoryObjectFromProperty(const FProperty* Property, void const* InContainer, const FFlowDataPinValue* Wrapper) const override;
 #endif
 
-	virtual bool PopulateResult(const UObject& PropertyOwnerObject, const UFlowNode& Node, const FFlowPin& Pin, FFlowDataPinResult& OutResult) const override;
+	virtual bool PopulateResult(const UObject& PropertyOwnerObject, const UFlowNode& Node, const FName& PropertyName, FFlowDataPinResult& OutResult) const override;
 };
 
-// Rotator
+/**
+ * Rotator
+ */
 USTRUCT(BlueprintType)
 struct FLOW_API FFlowPinType_Rotator : public FFlowPinType
 {
@@ -350,15 +372,17 @@ public:
 	virtual const FFlowPinTypeName& GetPinTypeName() const override { return PinTypeNameRotator; }
 
 #if WITH_EDITOR
-	virtual FLinearColor GetPinColor() const override { return GetDefault<UGraphEditorSettings>()->StructPinTypeColor; }
+	virtual FLinearColor GetPinColor() const override { return GetDefault<UGraphEditorSettings>()->RotatorPinTypeColor; }
 	virtual bool ResolveAndFormatPinValue(const UFlowNodeBase& Node, const FName& PinName, FFormatArgumentValue& OutValue) const override;
 	virtual UObject* GetPinSubCategoryObjectFromProperty(const FProperty* Property, void const* InContainer, const FFlowDataPinValue* Wrapper) const override;
 #endif
 
-	virtual bool PopulateResult(const UObject& PropertyOwnerObject, const UFlowNode& Node, const FFlowPin& Pin, FFlowDataPinResult& OutResult) const override;
+	virtual bool PopulateResult(const UObject& PropertyOwnerObject, const UFlowNode& Node, const FName& PropertyName, FFlowDataPinResult& OutResult) const override;
 };
 
-// Transform
+/**
+ * Transform
+ */
 USTRUCT(BlueprintType)
 struct FLOW_API FFlowPinType_Transform : public FFlowPinType
 {
@@ -376,15 +400,17 @@ public:
 	virtual const FFlowPinTypeName& GetPinTypeName() const override { return PinTypeNameTransform; }
 
 #if WITH_EDITOR
-	virtual FLinearColor GetPinColor() const override { return GetDefault<UGraphEditorSettings>()->StructPinTypeColor; }
+	virtual FLinearColor GetPinColor() const override { return GetDefault<UGraphEditorSettings>()->TransformPinTypeColor; }
 	virtual bool ResolveAndFormatPinValue(const UFlowNodeBase& Node, const FName& PinName, FFormatArgumentValue& OutValue) const override;
 	virtual UObject* GetPinSubCategoryObjectFromProperty(const FProperty* Property, void const* InContainer, const FFlowDataPinValue* Wrapper) const override;
 #endif
 
-	virtual bool PopulateResult(const UObject& PropertyOwnerObject, const UFlowNode& Node, const FFlowPin& Pin, FFlowDataPinResult& OutResult) const override;
+	virtual bool PopulateResult(const UObject& PropertyOwnerObject, const UFlowNode& Node, const FName& PropertyName, FFlowDataPinResult& OutResult) const override;
 };
 
-// GameplayTag
+/**
+ * GameplayTag
+ */
 USTRUCT(BlueprintType)
 struct FLOW_API FFlowPinType_GameplayTag : public FFlowPinType
 {
@@ -407,10 +433,12 @@ public:
 	virtual UObject* GetPinSubCategoryObjectFromProperty(const FProperty* Property, void const* InContainer, const FFlowDataPinValue* Wrapper) const override;
 #endif
 
-	virtual bool PopulateResult(const UObject& PropertyOwnerObject, const UFlowNode& Node, const FFlowPin& Pin, FFlowDataPinResult& OutResult) const override;
+	virtual bool PopulateResult(const UObject& PropertyOwnerObject, const UFlowNode& Node, const FName& PropertyName, FFlowDataPinResult& OutResult) const override;
 };
 
-// GameplayTagContainer
+/**
+ * GameplayTagContainer
+ */
 USTRUCT(BlueprintType)
 struct FLOW_API FFlowPinType_GameplayTagContainer : public FFlowPinType
 {
@@ -429,15 +457,17 @@ public:
 
 #if WITH_EDITOR
 	virtual FLinearColor GetPinColor() const override { return GetDefault<UGraphEditorSettings>()->DefaultPinTypeColor; }
-	virtual bool SupportsMultiType(EFlowDataMultiType Mode) const { FLOW_ASSERT_ENUM_MAX(EFlowDataMultiType, 2); return (Mode == EFlowDataMultiType::Single); }
+	virtual bool SupportsMultiType(EFlowDataMultiType Mode) const override { FLOW_ASSERT_ENUM_MAX(EFlowDataMultiType, 2); return (Mode == EFlowDataMultiType::Single); }
 	virtual bool ResolveAndFormatPinValue(const UFlowNodeBase& Node, const FName& PinName, FFormatArgumentValue& OutValue) const override;
 	virtual UObject* GetPinSubCategoryObjectFromProperty(const FProperty* Property, void const* InContainer, const FFlowDataPinValue* Wrapper) const override;
 #endif
 
-	virtual bool PopulateResult(const UObject& PropertyOwnerObject, const UFlowNode& Node, const FFlowPin& Pin, FFlowDataPinResult& OutResult) const override;
+	virtual bool PopulateResult(const UObject& PropertyOwnerObject, const UFlowNode& Node, const FName& PropertyName, FFlowDataPinResult& OutResult) const override;
 };
 
-// InstancedStruct
+/**
+ * InstancedStruct
+ */
 USTRUCT(BlueprintType)
 struct FLOW_API FFlowPinType_InstancedStruct : public FFlowPinType
 {
@@ -460,10 +490,12 @@ public:
 	virtual UObject* GetPinSubCategoryObjectFromProperty(const FProperty* Property, void const* InContainer, const FFlowDataPinValue* Wrapper) const override;
 #endif
 
-	virtual bool PopulateResult(const UObject& PropertyOwnerObject, const UFlowNode& Node, const FFlowPin& Pin, FFlowDataPinResult& OutResult) const override;
+	virtual bool PopulateResult(const UObject& PropertyOwnerObject, const UFlowNode& Node, const FName& PropertyName, FFlowDataPinResult& OutResult) const override;
 };
 
-// Object
+/**
+ * Object
+ */
 USTRUCT(BlueprintType)
 struct FLOW_API FFlowPinType_Object : public FFlowPinType
 {
@@ -489,10 +521,12 @@ public:
 	static UClass* TryGetMetaClassFromProperty(const FProperty& MetaDataProperty);
 #endif
 
-	virtual bool PopulateResult(const UObject& PropertyOwnerObject, const UFlowNode& Node, const FFlowPin& Pin, FFlowDataPinResult& OutResult) const override;
+	virtual bool PopulateResult(const UObject& PropertyOwnerObject, const UFlowNode& Node, const FName& PropertyName, FFlowDataPinResult& OutResult) const override;
 };
 
-// Class
+/**
+ * Class
+ */
 USTRUCT(BlueprintType)
 struct FLOW_API FFlowPinType_Class : public FFlowPinType
 {
@@ -515,5 +549,5 @@ public:
 	virtual UObject* GetPinSubCategoryObjectFromProperty(const FProperty* Property, void const* InContainer, const FFlowDataPinValue* Wrapper) const override;
 #endif
 
-	virtual bool PopulateResult(const UObject& PropertyOwnerObject, const UFlowNode& Node, const FFlowPin& Pin, FFlowDataPinResult& OutResult) const override;
+	virtual bool PopulateResult(const UObject& PropertyOwnerObject, const UFlowNode& Node, const FName& PropertyName, FFlowDataPinResult& OutResult) const override;
 };

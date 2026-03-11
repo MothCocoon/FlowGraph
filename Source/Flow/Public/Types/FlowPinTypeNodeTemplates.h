@@ -1,5 +1,4 @@
 // Copyright https://github.com/MothCocoon/FlowGraph/graphs/contributors
-
 #pragma once
 
 #include "Types/FlowDataPinResults.h"
@@ -8,11 +7,13 @@
 #include "Types/FlowArray.h"
 #include "Nodes/FlowNode.h"
 
-// Additional FlowPinType templates that require FlowNode.h include
+/**
+ * Additional FlowPinType templates that require FlowNode.h include
+ */
 namespace FlowPinType
 {
 	template <typename TPinType>
-	static bool PopulateResultTemplate(const UObject& PropertyOwnerObject, const UFlowNode& FlowNode, const FFlowPin& Pin, FFlowDataPinResult& OutResult)
+	static bool PopulateResultTemplate(const UObject& PropertyOwnerObject, const UFlowNode& FlowNode, const FName& PropertyName, FFlowDataPinResult& OutResult)
 	{
 		using TValue = typename TPinType::ValueType;
 		using TWrapper = typename TPinType::WrapperType;
@@ -20,8 +21,8 @@ namespace FlowPinType
 
 		TInstancedStruct<FFlowDataPinValue> ValueStruct;
 		const FProperty* FoundProperty = nullptr;
-
-		if (!FlowNode.TryFindPropertyByPinName(PropertyOwnerObject, Pin.PinName, FoundProperty, ValueStruct))
+		const IFlowDataPinValueOwnerInterface* PropertyOwnerInterface = CastChecked<IFlowDataPinValueOwnerInterface>(&PropertyOwnerObject);
+		if (!PropertyOwnerInterface->TryFindPropertyByPinName(PropertyName, FoundProperty, ValueStruct))
 		{
 			OutResult.Result = EFlowDataPinResolveResult::FailedUnknownPin;
 			return false;
@@ -46,7 +47,6 @@ namespace FlowPinType
 		return false;
 	}
 
-	// ResolveAndFormatArray
 	template <typename TPinType>
 	bool ResolveAndFormatArray(
 		const UFlowNodeBase& Node,

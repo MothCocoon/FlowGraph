@@ -1,11 +1,11 @@
 // Copyright https://github.com/MothCocoon/FlowGraph/graphs/contributors
-
 #pragma once
 
 #include "Subsystems/EngineSubsystem.h"
 
 #include "Debugger/FlowDebuggerTypes.h"
 #include "Interfaces/FlowExecutionGate.h"
+#include "Types/FlowEnumUtils.h"
 
 #include "FlowDebuggerSubsystem.generated.h"
 
@@ -13,6 +13,37 @@ class UEdGraphNode;
 
 class UFlowAsset;
 class UFlowNode;
+
+UENUM()
+enum class EFlowDebuggerState
+{
+	// Initialized, running, but never halted
+	InitialRunning,
+
+	// Running after being pausing
+	Resumed,
+	
+	// Currently paused at a breakpoint
+	Paused,
+
+	Max UMETA(Hidden),
+	Invalid = -1 UMETA(Hidden),
+	Min = 0 UMETA(Hidden),
+
+	// Subranges for classifier checks
+	PausedGameFirst = Paused UMETA(Hidden),
+	PausedGameLast = Paused UMETA(Hidden),
+
+	FlushDeferredTriggersFirst = Resumed UMETA(Hidden),
+	FlushDeferredTriggersLast = Resumed UMETA(Hidden),
+};
+FLOW_ENUM_RANGE_VALUES(EFlowDebuggerState);
+
+namespace EFlowDebuggerState_Classifiers
+{
+	FORCEINLINE bool IsPausedGameState(EFlowDebuggerState State) { return FLOW_IS_ENUM_IN_SUBRANGE(State, EFlowDebuggerState::PausedGame); }
+	FORCEINLINE bool IsFlushDeferredTriggersState(EFlowDebuggerState State) { return FLOW_IS_ENUM_IN_SUBRANGE(State, EFlowDebuggerState::FlushDeferredTriggers); }
+}
 
 DECLARE_MULTICAST_DELEGATE_OneParam(FFlowAssetDebuggerEvent, const UFlowAsset& /*FlowAsset*/);
 DECLARE_MULTICAST_DELEGATE_OneParam(FFlowAssetDebuggerBreakpointHitEvent, const UFlowNode* /*FlowNode*/);
@@ -42,7 +73,7 @@ protected:
 
 public:
 	// IFlowExecutionGate
-	virtual bool IsFlowExecutionHalted() const override { return bHaltFlowExecution; }
+	virtual bool IsFlowExecutionHalted() const override { return EFlowDebuggerState_Classifiers::IsPausedGameState(FlowDebuggerState); }
 	// --
 
 	virtual void AddBreakpoint(const FGuid& NodeGuid);
@@ -54,7 +85,7 @@ public:
 	virtual void RemovePinBreakpoint(const FGuid& NodeGuid, const FName& PinName);
 
 #if WITH_EDITOR
-	/** Removes obsolete pin breakpoints for provided. Pin list can be changed during node reconstruction. */
+	/* Removes obsolete pin breakpoints for provided. Pin list can be changed during node reconstruction. */
 	virtual void RemoveObsoletePinBreakpoints(const UEdGraphNode* Node);
 #endif
 
@@ -79,22 +110,23 @@ protected:
 	virtual void MarkAsHit(const UFlowNode* FlowNode);
 	virtual void MarkAsHit(const UFlowNode* FlowNode, const FName& PinName);
 
-	virtual void PauseSession();
-	virtual void ResumeSession();
-	void SetPause(const bool bPause);
+	virtual void PauseSession(UFlowAsset& FlowAssetInstance);
+	virtual void ResumeSession(UFlowAsset& FlowAssetInstance);
+	virtual void StopSession();
 
-	/**
-	 * Clears the "currently hit" breakpoint only (node or pin).
-	 * This avoids races where blanket-clearing all hit flags can erase a newly-hit breakpoint during resume/flush.
-	 */
+	/* Clears the "currently hit" breakpoint only (node or pin).
+	 * This avoids races where blanket-clearing all hit flags can erase a newly-hit breakpoint during resume/flush. */
 	void ClearLastHitBreakpoint();
 
-	/** Clears hit state for all breakpoints. Prefer ClearLastHitBreakpoint() for resume/step logic. */
+	/* Clears hit state for all breakpoints. Prefer ClearLastHitBreakpoint() for resume/step logic. */
 	virtual void ClearHitBreakpoints();
 
+private:
+	void SetFlowDebuggerState(EFlowDebuggerState NextState, UFlowAsset* FlowAssetInstance);
+	void ManageGameModePaused(EFlowDebuggerState PrevState, EFlowDebuggerState NextState, UFlowAsset* FlowAssetInstance);
+
 protected:
-	void RequestHaltFlowExecution(const UFlowNode* Node);
-	void ClearHaltFlowExecution();
+	virtual void OnFlowDebuggerStateChanged(EFlowDebuggerState PrevState, EFlowDebuggerState NextState, UFlowAsset* FlowAssetInstance) {}
 
 public:
 	virtual bool IsBreakpointHit(const FGuid& NodeGuid);
@@ -106,15 +138,13 @@ public:
 	FFlowAssetDebuggerBreakpointHitEvent OnDebuggerBreakpointHit;
 	FFlowAssetDebuggerEvent OnDebuggerFlowAssetTemplateRemoved;
 
-private:
-	bool bHaltFlowExecution = false;
-	TWeakObjectPtr<const UFlowAsset> HaltedOnFlowAssetInstance;
-	FGuid HaltedOnNodeGuid;
+protected:
+	EFlowDebuggerState FlowDebuggerState = EFlowDebuggerState::Invalid;
 
 	// Track the single breakpoint location that is currently "hit" (node or pin).
 	FGuid LastHitNodeGuid;
 	FName LastHitPinName;
 
-	/** Saves any modifications made to breakpoints */
+	/* Saves any modifications made to breakpoints. */
 	virtual void SaveSettings();
 };

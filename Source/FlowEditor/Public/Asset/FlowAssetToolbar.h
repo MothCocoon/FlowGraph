@@ -1,5 +1,4 @@
 // Copyright https://github.com/MothCocoon/FlowGraph/graphs/contributors
-
 #pragma once
 
 #include "Widgets/Input/SComboBox.h"
@@ -11,9 +10,10 @@ class FFlowAssetEditor;
 class UFlowAssetEditorContext;
 class UToolMenu;
 
-//////////////////////////////////////////////////////////////////////////
-// Flow Asset Instance Context
-
+/**
+ * Gathers all instances of given Flow Asset per given context.
+ * Example: all instances for given client in the multiplayer game.
+ */
 struct FFlowAssetInstanceContext
 {
 	FText DisplayText;
@@ -29,9 +29,9 @@ struct FFlowAssetInstanceContext
 	}
 };
 
-//////////////////////////////////////////////////////////////////////////
-// Flow Asset Instance List
-
+/**
+ * List of all instances of given Flow Asset.
+ */
 class FLOWEDITOR_API SFlowAssetInstanceList : public SCompoundWidget
 {
 public:
@@ -76,11 +76,8 @@ protected:
 	static FText NoInstanceSelectedText;
 };
 
-//////////////////////////////////////////////////////////////////////////
-// Flow Asset Breadcrumb
-
 /**
- * The kind of breadcrumbs that Flow Debugger uses
+ * The kind of breadcrumbs that Flow Debugger uses.
  */
 struct FLOWEDITOR_API FFlowBreadcrumb
 {
@@ -100,6 +97,9 @@ struct FLOWEDITOR_API FFlowBreadcrumb
 	}
 };
 
+/**
+ * Widget displaying chain of breadcrumbs.
+ */
 class FLOWEDITOR_API SFlowAssetBreadcrumb : public SCompoundWidget
 {
 public:
@@ -120,9 +120,9 @@ private:
 	TSharedPtr<SBreadcrumbTrail<FFlowBreadcrumb>> BreadcrumbTrail;
 };
 
-//////////////////////////////////////////////////////////////////////////
-// Flow Asset Toolbar
-
+/**
+ * Flow-specific implementation of the asset editor toolbar.
+ */
 class FLOWEDITOR_API FFlowAssetToolbar : public TSharedFromThis<FFlowAssetToolbar>
 {
 public:

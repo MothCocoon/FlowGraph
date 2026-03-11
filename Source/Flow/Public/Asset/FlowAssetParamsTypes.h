@@ -1,5 +1,4 @@
 // Copyright https://github.com/MothCocoon/FlowGraph/graphs/contributors
-
 #pragma once
 
 #include "Types/FlowEnumUtils.h"
@@ -9,7 +8,9 @@
 
 class UFlowAssetParams;
 
-// Result of reconciling Flow Asset Params with Start node or SuperParams.
+/**
+ * Result of reconciling Flow Asset Params with Start node or SuperParams.
+ */
 UENUM(BlueprintType)
 enum class EFlowReconcilePropertiesResult : uint8
 {
@@ -41,27 +42,29 @@ FLOW_ENUM_RANGE_VALUES(EFlowReconcilePropertiesResult)
 
 namespace EFlowReconcilePropertiesResult_Classifiers
 {
-	FORCEINLINE bool IsSuccessResult(EFlowReconcilePropertiesResult Result) { return FLOW_IS_ENUM_IN_SUBRANGE(Result, EFlowReconcilePropertiesResult::Success); }
-	FORCEINLINE bool IsModifiedResult(EFlowReconcilePropertiesResult Result) { return FLOW_IS_ENUM_IN_SUBRANGE(Result, EFlowReconcilePropertiesResult::Modified); }
-	FORCEINLINE bool IsErrorResult(EFlowReconcilePropertiesResult Result) { return FLOW_IS_ENUM_IN_SUBRANGE(Result, EFlowReconcilePropertiesResult::Error); }
+	FORCEINLINE bool IsSuccessResult(const EFlowReconcilePropertiesResult Result) { return FLOW_IS_ENUM_IN_SUBRANGE(Result, EFlowReconcilePropertiesResult::Success); }
+	FORCEINLINE bool IsModifiedResult(const EFlowReconcilePropertiesResult Result) { return FLOW_IS_ENUM_IN_SUBRANGE(Result, EFlowReconcilePropertiesResult::Modified); }
+	FORCEINLINE bool IsErrorResult(const EFlowReconcilePropertiesResult Result) { return FLOW_IS_ENUM_IN_SUBRANGE(Result, EFlowReconcilePropertiesResult::Error); }
 }
 
-// Wrapper for TSoftObjectPtr<UFlowAssetParams> to enable editor customization.
-//
-// Supported metadata tags:
-// - ShowCreateNew - Should we show the "Create New" button?
-// - HideChildParams - When showing a chooser, should we hide "Child" params or not? (Child params have a non-null ParentParams)
+/**
+ *  Wrapper for TSoftObjectPtr<UFlowAssetParams> to enable editor customization.
+ *  
+ *  Supported metadata tags
+ *  ShowCreateNew: Should we show the "Create New" button?
+ *  HideChildParams: When showing a chooser, should we hide "Child" params or not? (Child params have a non-null ParentParams)
+ */
 USTRUCT(BlueprintType)
 struct FLOW_API FFlowAssetParamsPtr
 {
 	GENERATED_BODY()
 
 	FFlowAssetParamsPtr() = default;
-	FFlowAssetParamsPtr(TSoftObjectPtr<UFlowAssetParams> InAssetParamsPtr) : AssetPtr(InAssetParamsPtr) { }
+	explicit FFlowAssetParamsPtr(const TSoftObjectPtr<UFlowAssetParams> InAssetParamsPtr) : AssetPtr(InAssetParamsPtr) { }
 
 	UFlowAssetParams* ResolveFlowAssetParams() const;
 
-	// Reference to the Flow Asset Params.
+	/* Reference to the Flow Asset Params. */
 	UPROPERTY(EditAnywhere, Category = FlowAssetParams, meta = (EditAssetInline))
 	TSoftObjectPtr<UFlowAssetParams> AssetPtr;
 };

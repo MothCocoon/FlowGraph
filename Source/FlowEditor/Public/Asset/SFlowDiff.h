@@ -1,5 +1,4 @@
 // Copyright https://github.com/MothCocoon/FlowGraph/graphs/contributors
-
 #pragma once
 
 #include "IDetailsView.h"
@@ -24,64 +23,66 @@ namespace FlowDiffUtils
 	FLOWEDITOR_API bool HasPrevDifference(const SListView<TSharedPtr<struct FDiffSingleResult>>& ListView, const TArray<TSharedPtr<struct FDiffSingleResult>>& ListViewSource);
 }
 
-/** Panel used to display the asset */
+/**
+ * Panel used to display the asset.
+ */
 struct FLOWEDITOR_API FFlowDiffPanel
 {
 	FFlowDiffPanel();
 
-	/** Generate a panel for NewGraph diffed against OldGraph */
+	/* Generate a panel for NewGraph diffed against OldGraph. */
 	void GeneratePanel(UEdGraph* NewGraph, UEdGraph* OldGraph);
 
-	/** Generate a panel that displays the Graph and reflects the items in the DiffResults */
+	/* Generate a panel that displays the Graph and reflects the items in the DiffResults. */
 	void GeneratePanel(UEdGraph* Graph, TSharedPtr<TArray<FDiffSingleResult>> DiffResults, TAttribute<int32> FocusedDiffResult);
 
-	/** Called when user hits keyboard shortcut to copy nodes */
+	/* Called when user hits keyboard shortcut to copy nodes. */
 	void CopySelectedNodes() const;
 
-	/** Gets whatever nodes are selected in the Graph Editor */
+	/* Gets whatever nodes are selected in the Graph Editor. */
 	FGraphPanelSelectionSet GetSelectedNodes() const;
 
-	/** Can user copy any of the selected nodes? */
+	/* Can user copy any of the selected nodes?. */
 	bool CanCopyNodes() const;
 
-	/** Functions used to focus/find a particular change in a diff result */
+	/* Functions used to focus/find a particular change in a diff result. */
 	void FocusDiff(const UEdGraphPin& Pin) const;
 	void FocusDiff(const UEdGraphNode& Node) const;
 
 	void OnNodeClicked(UObject* ClickedNode );
 
-	/** The Flow Asset that owns the graph we are showing */
+	/* The Flow Asset that owns the graph we are showing. */
 	const UFlowAsset* FlowAsset;
 
-	/** The box around the graph editor, used to change the content when new graphs are set */
+	/* The box around the graph editor, used to change the content when new graphs are set. */
 	TSharedPtr<SBox> GraphEditorBox;
 
-	/** using SNullWidget::NullNullWidget can only work for a single widget, since widget instances can only be
+	/* using SNullWidget::NullNullWidget can only work for a single widget, since widget instances can only be
 	 * used one at a time. PanelDefaultDetailsView is used for displaying an empty details panel instead, as well
 	 * as if the user selects a node in the graph view. */
 	TSharedPtr<IDetailsView> PanelDefaultDetailsView;
 
-	/** The graph editor which does the work of displaying the graph */
+	/* The graph editor which does the work of displaying the graph. */
 	TWeakPtr<class SGraphEditor> GraphEditor;
 
-	/** Revision information for this asset */
+	/* Revision information for this asset. */
 	FRevisionInfo RevisionInfo;
 
-	/** True if we should show a name identifying which asset this panel is displaying */
+	/* True if we should show a name identifying which asset this panel is displaying. */
 	bool bShowAssetName;
 
-	/** The widget that contains the revision info in graph mode */
+	/* The widget that contains the revision info in graph mode. */
 	TSharedPtr<SWidget> OverlayGraphRevisionInfo;
 
 	TWeakPtr<SSplitter2x2> GraphDiffSplitter = nullptr;
 	bool bIsOldPanel = false;
 	
 private:
-	/** Command list for this diff panel */
+	/* Command list for this diff panel. */
 	TSharedPtr<FUICommandList> GraphEditorCommands;
 };
 
-/* Visual Diff between two Flow Assets */
+/* Visual Diff between two Flow Assets. */
 class FLOWEDITOR_API SFlowDiff : public SCompoundWidget
 {
 public:
@@ -102,66 +103,66 @@ public:
 	void Construct(const FArguments& InArgs);
 	virtual ~SFlowDiff() override;
 
-	/** Called when a new Graph is clicked on by user */
+	/* Called when a new Graph is clicked on by user. */
 	void OnGraphChanged(const FFlowGraphToDiff* Diff);
 
-	/** Called when user clicks on a new graph list item */
+	/* Called when user clicks on a new graph list item. */
 	void OnGraphSelectionChanged(const TSharedPtr<FFlowGraphToDiff> Item, ESelectInfo::Type SelectionType);
 
-	/** Called when user clicks on an entry in the listview of differences */
+	/* Called when user clicks on an entry in the listview of differences. */
 	void OnDiffListSelectionChanged(TSharedPtr<FFlowObjectDiffArgs> FlowObjectDiffArgs);
 
-	/** Helper function for generating an empty widget */
+	/* Helper function for generating an empty widget. */
 	static TSharedRef<SWidget> DefaultEmptyPanel();
 
-	/** Helper function to create a window that holds a diff widget */
+	/* Helper function to create a window that holds a diff widget. */
 	static TSharedPtr<SWindow> CreateDiffWindow(const FText WindowTitle, const UFlowAsset* OldFlow, const UFlowAsset* NewFlow, const struct FRevisionInfo& OldRevision, const struct FRevisionInfo& NewRevision);
 
 protected:
-	/** Called when user clicks button to go to next difference */
+	/* Called when user clicks button to go to next difference. */
 	void NextDiff() const;
 
-	/** Called when user clicks button to go to prev difference */
+	/* Called when user clicks button to go to prev difference. */
 	void PrevDiff() const;
 
-	/** Called to determine whether we have a list of differences to cycle through */
+	/* Called to determine whether we have a list of differences to cycle through. */
 	bool HasNextDiff() const;
 	bool HasPrevDiff() const;
 
-	/** Find the FGraphToDiff that displays the graph with GraphPath relative path */
+	/* Find the FGraphToDiff that displays the graph with GraphPath relative path. */
 	FFlowGraphToDiff* FindGraphToDiffEntry(const FString& GraphPath) const;
 
-	/** Bring these revisions of graph into focus on main display*/
+	/* Bring these revisions of graph into focus on main display*/
 	void FocusOnGraphRevisions(const FFlowGraphToDiff* Diff);
 
-	/** User toggles the option to lock the views between the two assets */
+	/* User toggles the option to lock the views between the two assets. */
 	void OnToggleLockView();
 
-	/** User toggles the option to change the split view mode between vertical and horizontal */
+	/* User toggles the option to change the split view mode between vertical and horizontal. */
 	void OnToggleSplitViewMode();
 
-	/** Reset the graph editor, called when user switches graphs to display*/
+	/* Reset the graph editor, called when user switches graphs to display*/
 	void ResetGraphEditors() const;
 
-	/** Get the image to show for the toggle lock option*/
+	/* Get the image to show for the toggle lock option*/
 	FSlateIcon GetLockViewImage() const;
 
-	/** Get the image to show for the toggle split view mode option*/
+	/* Get the image to show for the toggle split view mode option*/
 	FSlateIcon GetSplitViewModeImage() const;
 
-	/** List of graphs to diff, are added to panel last */
+	/* List of graphs to diff, are added to panel last. */
 	TSharedPtr<FFlowGraphToDiff> GraphToDiff;
 
-	/** Get Graph editor associated with this Graph */
+	/* Get Graph editor associated with this Graph. */
 	FFlowDiffPanel& GetDiffPanelForNode(const UEdGraphNode& Node);
 
-	/** Event handler that updates the graph view when user selects a new graph */
+	/* Event handler that updates the graph view when user selects a new graph. */
 	void HandleGraphChanged(const FString& GraphPath);
 
-	/** Function used to generate the list of differences and the widgets needed to calculate that list */
+	/* Function used to generate the list of differences and the widgets needed to calculate that list. */
 	void GenerateDifferencesList();
 
-	/** Called when editor may need to be closed */
+	/* Called when editor may need to be closed. */
 	void OnCloseAssetEditor(UObject* Asset, const EAssetEditorCloseReason CloseReason);
 
 	struct FDiffControl
@@ -182,7 +183,7 @@ protected:
 	TSharedRef<SWidget> GenerateGraphWidgetForPanel(FFlowDiffPanel& OutDiffPanel) const;
 	TSharedRef<SBox> GenerateRevisionInfoWidgetForPanel(TSharedPtr<SWidget>& OutGeneratedWidget, const FText& InRevisionText) const;
 
-	/** Accessor and event handler for toggling between diff view modes (defaults, components, graph view, interface, macro): */
+	/* Accessor and event handler for toggling between diff view modes (defaults, components, graph view, interface, macro). */
 	void SetCurrentMode(FName NewMode);
 	FName GetCurrentMode() const { return CurrentMode; }
 	void OnModeChanged(const FName& InNewViewMode) const;
@@ -191,16 +192,16 @@ protected:
 
 	FName CurrentMode;
 
-	/*The two panels used to show the old & new revision*/
+	/* The two panels used to show the old & new revision. */
 	FFlowDiffPanel PanelOld, PanelNew;
 
-	/** If the two views should be locked */
+	/* If the two views should be locked. */
 	bool bLockViews;
 
-	/** If the view on Graph Mode should be divided vertically */
+	/* If the view on Graph Mode should be divided vertically. */
 	bool bVerticalSplitGraphMode = true;
 
-	/** Contents widget that we swap when mode changes (defaults, components, etc) */
+	/* Contents widget that we swap when mode changes (defaults, components, etc). */
 	TSharedPtr<SBox> ModeContents;
 
 	TSharedPtr<SSplitter> TopRevisionInfoWidget;
@@ -209,22 +210,22 @@ protected:
 
 	friend struct FListItemGraphToDiff;
 
-	/** We can't use the global tab manager because we need to instance the diff control, so we have our own tab manager: */
+	/* We can't use the global tab manager because we need to instance the diff control, so we have our own tab manager. */
 	TSharedPtr<FTabManager> TabManager;
 
-	/** Tree of differences collected across all panels: */
+	/* Tree of differences collected across all panels. */
 	TArray<TSharedPtr<class FBlueprintDifferenceTreeEntry>> PrimaryDifferencesList;
 
-	/** List of all differences, cached so that we can iterate only the differences and not labels, etc: */
+	/* List of all differences, cached so that we can iterate only the differences and not labels, etc. */
 	TArray<TSharedPtr<class FBlueprintDifferenceTreeEntry>> RealDifferences;
 
-	/** Tree view that displays the differences, cached for the buttons that iterate the differences: */
+	/* Tree view that displays the differences, cached for the buttons that iterate the differences. */
 	TSharedPtr<STreeView<TSharedPtr<FBlueprintDifferenceTreeEntry>>> DifferencesTreeView;
 
-	/** Stored references to widgets used to display various parts of asset, from the mode name */
+	/* Stored references to widgets used to display various parts of asset, from the mode name. */
 	TMap<FName, FDiffControl> ModePanels;
 
-	/** A pointer to the window holding this */
+	/* A pointer to the window holding this. */
 	TWeakPtr<SWindow> WeakParentWindow;
 
 	TSharedPtr<SSplitter2x2> GraphDiffSplitter = nullptr;

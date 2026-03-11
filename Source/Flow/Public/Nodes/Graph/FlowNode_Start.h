@@ -1,5 +1,4 @@
 // Copyright https://github.com/MothCocoon/FlowGraph/graphs/contributors
-
 #pragma once
 
 #include "Nodes/Graph/FlowNode_DefineProperties.h"
@@ -7,26 +6,27 @@
 #include "FlowNode_Start.generated.h"
 
 /**
- * Execution of the graph always starts from this node
+ * Execution of the graph always starts from this node.
  */
 UCLASS(NotBlueprintable, NotPlaceable, meta = (DisplayName = "Start"))
 class FLOW_API UFlowNode_Start
 	: public UFlowNode_DefineProperties
 	, public IFlowNodeWithExternalDataPinSupplierInterface
 {
-	GENERATED_UCLASS_BODY()
+	GENERATED_BODY()
+
+public:
+	UFlowNode_Start();
 
 	friend class UFlowAsset;
 
 protected:
-
-	// External DataPin Value Supplier
-	// (eg, the UFlowNode_SubGraph that instanced this Start node's flow asset)
+	/* External DataPin Value Supplier.
+	 * Example: the UFlowNode_SubGraph that instanced this Start node's flow asset. */
 	UPROPERTY(Transient)
 	TScriptInterface<IFlowDataPinValueSupplierInterface> FlowDataPinValueSupplierInterface;
 
 public:
-
 	// IFlowCoreExecutableInterface
 	virtual void ExecuteInput(const FName& PinName) override;
 	// --
@@ -40,6 +40,6 @@ public:
 	// --
 
 	// IFlowDataPinValueSupplierInterface
-	virtual FFlowDataPinResult TrySupplyDataPin_Implementation(FName PinName) const override;
+	virtual FFlowDataPinResult TrySupplyDataPin(FName PinName) const override;
 	// --
 };

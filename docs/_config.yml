@@ -1,0 +1,12 @@
+theme: jekyll-theme-midnight
+title: Flow Graph
+description: Design-agnostic node system for scripting game’s flow in Unreal Engine.
+
+defaults:
+  - scope:
+      path: ""
+    values:
+      layout: default
+
+sass:
+  silence_deprecations: [import]

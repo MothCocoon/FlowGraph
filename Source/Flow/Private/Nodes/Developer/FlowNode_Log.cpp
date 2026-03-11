@@ -9,9 +9,8 @@
 
 #define LOCTEXT_NAMESPACE "FlowNode_Log"
 
-UFlowNode_Log::UFlowNode_Log(const FObjectInitializer& ObjectInitializer)
-	: Super(ObjectInitializer)
-	, Message()
+UFlowNode_Log::UFlowNode_Log()
+	: Message()
 	, Verbosity(EFlowLogVerbosity::Warning)
 	, bPrintToScreen(true)
 	, Duration(5.0f)
@@ -33,7 +32,7 @@ void UFlowNode_Log::ExecuteInput(const FName& PinName)
 	const EFlowDataPinResolveResult MessageResult = TryResolveDataPinValue<FFlowPinType_String>(GET_MEMBER_NAME_CHECKED(ThisClass, Message), ResolvedMessage);
 
 	// #FlowDataPinLegacy - retire this backward compatibility when we remove legacy data pin support?  
-	FLOW_ASSERT_ENUM_MAX(EFlowDataPinResolveResult, 8);
+	FLOW_ASSERT_ENUM_MAX(EFlowDataPinResolveResult, 9);
 	if (MessageResult == EFlowDataPinResolveResult::FailedUnknownPin)
 	{
 		// Handle lookup of a FlowNode_Log that predated DataPins
@@ -82,31 +81,29 @@ void UFlowNode_Log::ExecuteInput(const FName& PinName)
 void UFlowNode_Log::PostEditChangeChainProperty(FPropertyChangedChainEvent& PropertyChainEvent)
 {
 	const auto& Property = PropertyChainEvent.PropertyChain.GetActiveMemberNode()->GetValue();
-
-	if (Property->GetFName() == GET_MEMBER_NAME_CHECKED(ThisClass, NamedProperties))
-	{
-		for (FFlowNamedDataPinProperty& NamedProperty : NamedProperties)
-		{
-			const UScriptStruct* ScriptStruct = NamedProperty.DataPinValue.GetScriptStruct();
-			if (IsValid(ScriptStruct) && ScriptStruct->IsChildOf<FFlowDataPinValue>())
-			{
-				FFlowDataPinValue& Value = NamedProperty.DataPinValue.GetMutable<FFlowDataPinValue>();
-				Value.bIsInputPin = true;
-			}
-		}
-	}
+	constexpr bool bIsInput = true;
+	OnPostEditEnsureAllNamedPropertiesPinDirection(*Property, bIsInput);
 
 	Super::PostEditChangeChainProperty(PropertyChainEvent);
 }
 
+void UFlowNode_Log::OnEditorPinConnectionsChanged(const TArray<FFlowPinConnectionChange>& Changes)
+{
+	Super::OnEditorPinConnectionsChanged(Changes);
+
+	UpdateNodeConfigText();
+}
+
 void UFlowNode_Log::UpdateNodeConfigText_Implementation()
 {
-	constexpr bool bErrorIfInputPinNotFound = false;
-	const bool bIsInputConnected = IsInputConnected(GET_MEMBER_NAME_CHECKED(ThisClass, Message), bErrorIfInputPinNotFound);
+	constexpr bool bErrorIfInputPinNotFound = true;
+
+	FConnectedPin ConnectedPin;
+	const bool bIsInputConnected = FindFirstInputPinConnection(GET_MEMBER_NAME_CHECKED(ThisClass, Message), bErrorIfInputPinNotFound, ConnectedPin);
 
 	if (bIsInputConnected)
 	{
-		SetNodeConfigText(FText());
+		SetNodeConfigText(FText::Format(LOCTEXT("LogFromPin", "Message from: {0}"), { FText::FromString(ConnectedPin.PinName.ToString()) }));
 	}
 	else
 	{

@@ -1,5 +1,4 @@
 // Copyright https://github.com/MothCocoon/FlowGraph/graphs/contributors
-
 #pragma once
 
 #include "ISequencerSection.h"
@@ -10,7 +9,7 @@ class FSequencerSectionPainter;
 class FLOWEDITOR_API FFlowSectionBase : public FSequencerSection
 {
 public:
-	FFlowSectionBase(UMovieSceneSection& InSectionObject, TWeakPtr<ISequencer> InSequencer)
+	FFlowSectionBase(UMovieSceneSection& InSectionObject, const TWeakPtr<ISequencer>& InSequencer)
 		: FSequencerSection(InSectionObject)
 		, Sequencer(InSequencer)
 	{
@@ -29,7 +28,7 @@ protected:
 class FLOWEDITOR_API FFlowSection : public FFlowSectionBase
 {
 public:
-	FFlowSection(UMovieSceneSection& InSectionObject, TWeakPtr<ISequencer> InSequencer)
+	FFlowSection(UMovieSceneSection& InSectionObject, const TWeakPtr<ISequencer>& InSequencer)
 		: FFlowSectionBase(InSectionObject, InSequencer)
 	{
 	}
@@ -40,7 +39,7 @@ public:
 class FLOWEDITOR_API FFlowTriggerSection : public FFlowSectionBase
 {
 public:
-	FFlowTriggerSection(UMovieSceneSection& InSectionObject, TWeakPtr<ISequencer> InSequencer)
+	FFlowTriggerSection(UMovieSceneSection& InSectionObject, const TWeakPtr<ISequencer>& InSequencer)
 		: FFlowSectionBase(InSectionObject, InSequencer)
 	{
 	}
@@ -51,7 +50,7 @@ public:
 class FLOWEDITOR_API FFlowRepeaterSection : public FFlowSectionBase
 {
 public:
-	FFlowRepeaterSection(UMovieSceneSection& InSectionObject, TWeakPtr<ISequencer> InSequencer)
+	FFlowRepeaterSection(UMovieSceneSection& InSectionObject, const TWeakPtr<ISequencer>& InSequencer)
 		: FFlowSectionBase(InSectionObject, InSequencer)
 	{
 	}

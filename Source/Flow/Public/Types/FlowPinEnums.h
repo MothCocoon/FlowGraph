@@ -1,5 +1,4 @@
 // Copyright https://github.com/MothCocoon/FlowGraph/graphs/contributors
-
 #pragma once
 
 #include "Types/FlowEnumUtils.h"
@@ -63,7 +62,9 @@ enum class EFlowPinType : uint8
 };
 FLOW_ENUM_RANGE_VALUES(EFlowPinType)
 
-// Result enum for TryResolveDataPin()
+/**
+ * Result enum for TryResolveDataPin()
+ */
 UENUM(BlueprintType)
 enum class EFlowDataPinResolveResult : uint8
 {
@@ -88,6 +89,9 @@ enum class EFlowDataPinResolveResult : uint8
 	// Tried to extract with a null FlowNodeBase
 	FailedNullFlowNodeBase,
 
+	// The pin is not connected to a node (used in reroutes)
+	FailedNotConnected,
+
 	// Failed with an error message (see the error log)
 	FailedWithError,
 
@@ -111,7 +115,7 @@ FLOW_ENUM_RANGE_VALUES(EFlowDataPinResolveSimpleResult)
 
 namespace EFlowDataPinResolveResult_Classifiers
 {
-	FORCEINLINE bool IsSuccess(EFlowDataPinResolveResult Result) { return Result == EFlowDataPinResolveResult::Success; }
+	FORCEINLINE bool IsSuccess(const EFlowDataPinResolveResult Result) { return Result == EFlowDataPinResolveResult::Success; }
 	FORCEINLINE EFlowDataPinResolveSimpleResult ConvertToSimpleResult(EFlowDataPinResolveResult ResultEnum)
 		{ return IsSuccess(ResultEnum) ? EFlowDataPinResolveSimpleResult::Succeeded : EFlowDataPinResolveSimpleResult::Failed; }
 };

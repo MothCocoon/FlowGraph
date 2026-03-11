@@ -35,18 +35,20 @@ FFlowGraphConnectionDrawingPolicy::FFlowGraphConnectionDrawingPolicy(int32 InBac
 	: FConnectionDrawingPolicy(InBackLayerID, InFrontLayerID, ZoomFactor, InClippingRect, InDrawElements)
 	, GraphObj(InGraphObj)
 {
+	const UFlowGraphSettings* GraphSettings = GetDefault<UFlowGraphSettings>();
+	
 	// Cache off the editor options
-	RecentWireDuration = UFlowGraphSettings::Get()->RecentWireDuration;
+	RecentWireDuration = GraphSettings->RecentWireDuration;
 
-	InactiveColor = UFlowGraphSettings::Get()->InactiveWireColor;
-	RecentColor = UFlowGraphSettings::Get()->RecentWireColor;
-	RecordedColor = UFlowGraphSettings::Get()->RecordedWireColor;
-	SelectedColor = UFlowGraphSettings::Get()->SelectedWireColor;
+	InactiveColor = GraphSettings->InactiveWireColor;
+	RecentColor = GraphSettings->RecentWireColor;
+	RecordedColor = GraphSettings->RecordedWireColor;
+	SelectedColor = GraphSettings->SelectedWireColor;
 
-	InactiveWireThickness = UFlowGraphSettings::Get()->InactiveWireThickness;
-	RecentWireThickness = UFlowGraphSettings::Get()->RecentWireThickness;
-	RecordedWireThickness = UFlowGraphSettings::Get()->RecordedWireThickness;
-	SelectedWireThickness = UFlowGraphSettings::Get()->SelectedWireThickness;
+	InactiveWireThickness = GraphSettings->InactiveWireThickness;
+	RecentWireThickness = GraphSettings->RecentWireThickness;
+	RecordedWireThickness = GraphSettings->RecordedWireThickness;
+	SelectedWireThickness = GraphSettings->SelectedWireThickness;
 
 	// Don't want to draw ending arrowheads
 	ArrowImage = nullptr;
@@ -89,7 +91,8 @@ void FFlowGraphConnectionDrawingPolicy::BuildPaths()
 		}
 	}
 
-	if (GraphObj && (UFlowGraphEditorSettings::Get()->bHighlightInputWiresOfSelectedNodes || UFlowGraphEditorSettings::Get()->bHighlightOutputWiresOfSelectedNodes))
+	const UFlowGraphEditorSettings* GraphEditorSettings = GetDefault<UFlowGraphEditorSettings>();
+	if (GraphObj && (GraphEditorSettings->bHighlightInputWiresOfSelectedNodes || GraphEditorSettings->bHighlightOutputWiresOfSelectedNodes))
 	{
 		const TSharedPtr<SFlowGraphEditor> FlowGraphEditor = FFlowGraphUtils::GetFlowGraphEditor(GraphObj);
 		if (FlowGraphEditor.IsValid())
@@ -98,8 +101,8 @@ void FFlowGraphConnectionDrawingPolicy::BuildPaths()
 			{
 				for (UEdGraphPin* Pin : SelectedNode->Pins)
 				{
-					if ((Pin->Direction == EGPD_Input && UFlowGraphEditorSettings::Get()->bHighlightInputWiresOfSelectedNodes)
-						|| (Pin->Direction == EGPD_Output && UFlowGraphEditorSettings::Get()->bHighlightOutputWiresOfSelectedNodes))
+					if ((Pin->Direction == EGPD_Input && GraphEditorSettings->bHighlightInputWiresOfSelectedNodes)
+						|| (Pin->Direction == EGPD_Output && GraphEditorSettings->bHighlightOutputWiresOfSelectedNodes))
 					{
 						for (UEdGraphPin* LinkedPin : Pin->LinkedTo)
 						{
@@ -112,23 +115,15 @@ void FFlowGraphConnectionDrawingPolicy::BuildPaths()
 	}
 }
 
-#if ENGINE_MAJOR_VERSION == 5 && ENGINE_MINOR_VERSION < 6
-void FFlowGraphConnectionDrawingPolicy::DrawConnection(int32 LayerId, const FVector2D& Start, const FVector2D& End, const FConnectionParams& Params)
-#else
 void FFlowGraphConnectionDrawingPolicy::DrawConnection(int32 LayerId, const FVector2f& Start, const FVector2f& End, const FConnectionParams& Params)
-#endif
 {
-	switch (UFlowGraphSettings::Get()->ConnectionDrawType)
+	switch (GetDefault<UFlowGraphSettings>()->ConnectionDrawType)
 	{
 		case EFlowConnectionDrawType::Default:
 			FConnectionDrawingPolicy::DrawConnection(LayerId, Start, End, Params);
 			break;
 		case EFlowConnectionDrawType::Circuit:
-#if ENGINE_MAJOR_VERSION == 5 && ENGINE_MINOR_VERSION < 6
-			DrawCircuitSpline(LayerId, FVector2f(Start), FVector2f(End), Params);
-#else
-			DrawCircuitSpline(LayerId, Start, End, Params);
-#endif		
+			DrawCircuitSpline(LayerId, Start, End, Params);	
 			break;
 		default: ;
 	}
@@ -229,8 +224,8 @@ void FFlowGraphConnectionDrawingPolicy::Draw(TMap<TSharedRef<SWidget>, FArranged
 
 void FFlowGraphConnectionDrawingPolicy::DrawCircuitSpline(const int32& LayerId, const FVector2f& Start, const FVector2f& End, const FConnectionParams& Params) const
 {
-	const FVector2f StartingPoint = FVector2f(Start.X + UFlowGraphSettings::Get()->CircuitConnectionSpacing.X, Start.Y);
-	const FVector2f EndPoint = FVector2f(End.X - UFlowGraphSettings::Get()->CircuitConnectionSpacing.Y, End.Y);
+	const FVector2f StartingPoint = FVector2f(Start.X + GetDefault<UFlowGraphSettings>()->CircuitConnectionSpacing.X, Start.Y);
+	const FVector2f EndPoint = FVector2f(End.X - GetDefault<UFlowGraphSettings>()->CircuitConnectionSpacing.Y, End.Y);
 	const FVector2f ControlPoint = GetControlPoint(StartingPoint, EndPoint);
 
 	const FVector2f StartDirection = (Params.StartDirection == EGPD_Output) ? FVector2f(1.0f, 0.0f) : FVector2f(-1.0f, 0.0f);
@@ -250,11 +245,7 @@ void FFlowGraphConnectionDrawingPolicy::DrawCircuitConnection(const int32& Layer
 	{
 		// This table maps distance along curve to alpha
 		FInterpCurve<float> SplineReparamTable;
-#if ENGINE_MAJOR_VERSION == 5 && ENGINE_MINOR_VERSION < 6
-		const float SplineLength = MakeSplineReparamTable(FVector2D(Start), FVector2D(StartDirection), FVector2D(End), FVector2D(EndDirection), SplineReparamTable);
-#else
 		const float SplineLength = MakeSplineReparamTable(Start, StartDirection, End, EndDirection, SplineReparamTable);
-#endif
 
 		// Draw bubbles on the spline
 		if (Params.bDrawBubbles)
@@ -285,7 +276,7 @@ void FFlowGraphConnectionDrawingPolicy::DrawCircuitConnection(const int32& Layer
 FVector2f FFlowGraphConnectionDrawingPolicy::GetControlPoint(const FVector2f& Source, const FVector2f& Target)
 {
 	const FVector2f Delta = Target - Source;
-	const float Tangent = FMath::Tan(UFlowGraphSettings::Get()->CircuitConnectionAngle * (PI / 180.f));
+	const float Tangent = FMath::Tan(GetDefault<UFlowGraphSettings>()->CircuitConnectionAngle * (PI / 180.f));
 
 	const float DeltaX = FMath::Abs(Delta.X);
 	const float DeltaY = FMath::Abs(Delta.Y);

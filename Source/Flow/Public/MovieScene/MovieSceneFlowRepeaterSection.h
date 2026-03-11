@@ -1,5 +1,4 @@
 // Copyright https://github.com/MothCocoon/FlowGraph/graphs/contributors
-
 #pragma once
 
 #include "MovieSceneFlowSectionBase.h"
@@ -18,7 +17,7 @@ public:
 	virtual TArrayView<FString> GetAllEntryPoints() override { return MakeArrayView(&EventName, 1); }
 #endif
 
-	/** The event that should be triggered each time this section is evaluated */
+	/* The event that should be triggered each time this section is evaluated. */
 	UPROPERTY(EditAnywhere, Category = "Flow")
 	FString EventName;
 };

@@ -1,5 +1,4 @@
 // Copyright https://github.com/MothCocoon/FlowGraph/graphs/contributors
-
 #pragma once
 
 #include "IMessageLogListing.h"
@@ -14,8 +13,8 @@ enum class EFlowLogType : uint8
 };
 
 /**
- * Scope wrapper for the message log. Ensures we don't leak logs that we dont need (i.e. those that have no messages)
- * Replicated after FScopedBlueprintMessageLog
+ * Scope wrapper for the message log. Ensures we don't leak logs that we don't need (i.e. those that have no messages).
+ * Replicated after FScopedBlueprintMessageLog.
  */
 class FLOWEDITOR_API FFlowMessageLogListing
 {

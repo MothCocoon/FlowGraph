@@ -1,5 +1,4 @@
 // Copyright https://github.com/MothCocoon/FlowGraph/graphs/contributors
-
 #pragma once
 
 #include "Editor/Sequencer/Public/ISequencer.h"
@@ -29,23 +28,24 @@ public:
 	 *
 	 * @param InSequencer The sequencer instance to be used by this tool.
 	 */
-	FFlowTrackEditor(TSharedRef<ISequencer> InSequencer);
+	explicit FFlowTrackEditor(TSharedRef<ISequencer> InSequencer);
 
-	// ISequencerTrackEditor interface
-
+	// ISequencerTrackEditor
 	virtual void BuildAddTrackMenu(FMenuBuilder& MenuBuilder) override;
 	virtual bool SupportsType(TSubclassOf<UMovieSceneTrack> Type) const override;
 	virtual bool SupportsSequence(UMovieSceneSequence* InSequence) const override;
 	virtual const FSlateBrush* GetIconBrush() const override;
 	virtual TSharedPtr<SWidget> BuildOutlinerEditWidget(const FGuid& ObjectBinding, UMovieSceneTrack* Track, const FBuildEditWidgetParams& Params) override;
+	// --
 
-	//~ FPropertyTrackEditor interface
+	// FPropertyTrackEditor
 	virtual TSharedRef<ISequencerSection> MakeSectionInterface(UMovieSceneSection& SectionObject, UMovieSceneTrack& Track, FGuid ObjectBinding) override;
+	// --
 
 private:
 	void AddFlowSubMenu(FMenuBuilder& MenuBuilder);
 
-	/** Callback for executing the "Add Event Track" menu entry. */
+	/* Callback for executing the "Add Event Track" menu entry. */
 	void HandleAddFlowTrackMenuEntryExecute(UClass* SectionType) const;
 
 	void CreateNewSection(UMovieSceneTrack* Track, int32 RowIndex, UClass* SectionType, bool bSelect) const;

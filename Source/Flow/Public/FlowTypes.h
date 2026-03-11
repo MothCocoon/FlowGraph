@@ -1,5 +1,4 @@
 // Copyright https://github.com/MothCocoon/FlowGraph/graphs/contributors
-
 #pragma once
 
 #include "GameplayTagContainer.h"
@@ -50,9 +49,9 @@ namespace EFlowNodeState_Classifiers
 	FORCEINLINE bool IsFinishedState(EFlowNodeState State) { return FLOW_IS_ENUM_IN_SUBRANGE(State, EFlowNodeState::Finished); }
 }
 
-// Finish Policy value is read by Flow Node
-// Nodes have opportunity to terminate themselves differently if Flow Graph has been aborted
-// Example: Spawn node might despawn all actors if Flow Graph is aborted, not completed
+/* Finish Policy value is read by Flow Node
+ * Nodes have opportunity to terminate themselves differently if Flow Graph has been aborted
+ * Example: Spawn node might despawn all actors if Flow Graph is aborted, not completed */
 UENUM(BlueprintType)
 enum class EFlowFinishPolicy : uint8
 {

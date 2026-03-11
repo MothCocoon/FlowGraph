@@ -4,9 +4,8 @@
 
 #include UE_INLINE_GENERATED_CPP_BY_NAME(FlowNode_LogicalOR)
 
-UFlowNode_LogicalOR::UFlowNode_LogicalOR(const FObjectInitializer& ObjectInitializer)
-	: Super(ObjectInitializer)
-	, bEnabled(true)
+UFlowNode_LogicalOR::UFlowNode_LogicalOR()
+	: bEnabled(true)
 	, ExecutionLimit(1)
 	, ExecutionCount(0)
 {

@@ -1,5 +1,4 @@
 // Copyright https://github.com/MothCocoon/FlowGraph/graphs/contributors
-
 #pragma once
 
 #include "EditorUndoClient.h"
@@ -24,10 +23,13 @@ struct FSlateBrush;
 struct FPropertyChangedEvent;
 struct Rect;
 
+/**
+ * Based class for toolkits used to edit assets built around the Flow Graph. 
+ */
 class FLOWEDITOR_API FFlowAssetEditor : public FAssetEditorToolkit, public FEditorUndoClient, public FGCObject, public FNotifyHook
 {
 public:
-	/**	The tab ids for all the tabs used */
+	/* The tab ids for all the tabs used. */
 	static const FName DetailsTab;
 	static const FName GraphTab;
 	static const FName PaletteTab;
@@ -36,7 +38,7 @@ public:
 	static const FName ValidationLogTab;
 	
 protected:
-	/** The Flow Asset being edited */
+	/* The Flow Asset being edited. */
 	TObjectPtr<UFlowAsset> FlowAsset;
 
 	TSharedPtr<class FFlowAssetToolbar> AssetToolbar;
@@ -51,16 +53,16 @@ protected:
 	TSharedPtr<class SFindInFlow> SearchBrowser;
 #endif
 
-	/** Runtime message log, with the log listing that it reflects */
+	/* Runtime message log, with the log listing that it reflects. */
 	TSharedPtr<class SWidget> RuntimeLog;
 	TSharedPtr<class IMessageLogListing> RuntimeLogListing;
 
-	/** Asset Validation message log, with the log listing that it reflects */
+	/* Asset Validation message log, with the log listing that it reflects. */
 	TSharedPtr<class SWidget> ValidationLog;
 	TSharedPtr<class IMessageLogListing> ValidationLogListing;
 
 private:
-	/** The current UI selection state of this editor */
+	/* The current UI selection state of this editor. */
 	FName CurrentUISelection;
 
 public:
@@ -120,7 +122,7 @@ private:
 	void DoPresaveAssetUpdate();
 
 public:
-	/** Edits the specified FlowAsset object */
+	/* Edits the specified FlowAsset object. */
 	virtual void InitFlowAssetEditor(const EToolkitMode::Type Mode, const TSharedPtr<class IToolkitHost>& InitToolkitHost, UObject* ObjectToEdit);
 
 protected:
@@ -161,6 +163,6 @@ protected:
 	void OnLogTokenClicked(const TSharedRef<class IMessageToken>& Token) const;
 
 public:
-	// Find in flow
+	/* Find in flow */
 	void JumpToNode(const UEdGraphNode* Node) const;
 };

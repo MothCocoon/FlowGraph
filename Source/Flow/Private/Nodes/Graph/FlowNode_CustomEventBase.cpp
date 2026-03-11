@@ -5,8 +5,7 @@
 
 #include UE_INLINE_GENERATED_CPP_BY_NAME(FlowNode_CustomEventBase)
 
-UFlowNode_CustomEventBase::UFlowNode_CustomEventBase(const FObjectInitializer& ObjectInitializer)
-	: Super(ObjectInitializer)
+UFlowNode_CustomEventBase::UFlowNode_CustomEventBase()
 {
 #if WITH_EDITOR
 	Category = TEXT("Graph");
@@ -33,7 +32,7 @@ void UFlowNode_CustomEventBase::SetEventName(const FName& InEventName)
 
 FString UFlowNode_CustomEventBase::GetNodeDescription() const
 {
-	if (UFlowSettings::Get()->bUseAdaptiveNodeTitles)
+	if (GetDefault<UFlowSettings>()->bUseAdaptiveNodeTitles)
 	{
 		return Super::GetNodeDescription();
 	}

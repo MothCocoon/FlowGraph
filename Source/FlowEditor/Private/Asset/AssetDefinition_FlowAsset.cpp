@@ -28,7 +28,7 @@ TSoftClassPtr<UObject> UAssetDefinition_FlowAsset::GetAssetClass() const
 
 TConstArrayView<FAssetCategoryPath> UAssetDefinition_FlowAsset::GetAssetCategories() const
 {
-	if (UFlowGraphSettings::Get()->bExposeFlowAssetCreation)
+	if (GetDefault<UFlowGraphSettings>()->bExposeFlowAssetCreation)
 	{
 		static const auto Categories = {FFlowAssetCategoryPaths::Flow};
 		return Categories;

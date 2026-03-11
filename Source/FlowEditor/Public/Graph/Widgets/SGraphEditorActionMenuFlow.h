@@ -1,7 +1,4 @@
 // Copyright https://github.com/MothCocoon/FlowGraph/graphs/contributors
-
-// Adapted from SGraphEditorActionMenuAI, changing UAIGraphNode to UEdGraphNode, and using UFlowGraphSchema
-
 #pragma once
 
 #include "Containers/Array.h"
@@ -23,8 +20,9 @@ class UEdGraphPin;
 struct FEdGraphSchemaAction;
 struct FGraphActionListBuilderBase;
 
-/////////////////////////////////////////////////////////////////////////////////////////////////
-
+/**
+ * Adapted from SGraphEditorActionMenuAI, changing UAIGraphNode to UEdGraphNode, and using UFlowGraphSchema.
+ */
 class FLOWEDITOR_API SGraphEditorActionMenuFlow : public SBorder
 {
 public:
@@ -48,23 +46,23 @@ public:
 
 	void Construct(const FArguments& InArgs);
 
-	~SGraphEditorActionMenuFlow();
+	virtual ~SGraphEditorActionMenuFlow() override;
 
 	TSharedRef<SEditableTextBox> GetFilterTextBox();
 
 protected:
-	UEdGraph* GraphObj;
-	UEdGraphNode* GraphNode;
+	UEdGraph* GraphObj = nullptr;
+	UEdGraphNode* GraphNode = nullptr;
 	TArray<UEdGraphPin*> DraggedFromPins;
 	FVector2f NewNodePosition;
-	bool AutoExpandActionMenu;
-	int32 SubNodeFlags;
+	bool AutoExpandActionMenu = false;
+	int32 SubNodeFlags = 0;
 
 	SGraphEditor::FActionMenuClosed OnClosedCallback;
 	TSharedPtr<SGraphActionMenu> GraphActionMenu;
 
 	void OnActionSelected(const TArray<TSharedPtr<FEdGraphSchemaAction>>& SelectedAction, ESelectInfo::Type InSelectionType);
 
-	/** Callback used to populate all actions list in SGraphActionMenu */
+	/* Callback used to populate all actions list in SGraphActionMenu. */
 	void CollectAllActions(FGraphActionListBuilderBase& OutAllActions);
 };

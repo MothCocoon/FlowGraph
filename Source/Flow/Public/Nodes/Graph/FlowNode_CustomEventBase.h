@@ -1,17 +1,19 @@
 // Copyright https://github.com/MothCocoon/FlowGraph/graphs/contributors
-
 #pragma once
 
 #include "Nodes/FlowNode.h"
 #include "FlowNode_CustomEventBase.generated.h"
 
 /**
- * Base class for nodes used to receive/send events between graphs
+ * Base class for nodes used to receive/send events between graphs.
  */
 UCLASS(Abstract, NotBlueprintable)
 class FLOW_API UFlowNode_CustomEventBase : public UFlowNode
 {
-	GENERATED_UCLASS_BODY()
+	GENERATED_BODY()
+	
+public:
+	UFlowNode_CustomEventBase();
 
 protected:
 	UPROPERTY()

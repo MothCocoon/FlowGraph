@@ -9,6 +9,7 @@
 #include "AddOns/FlowNodeAddOn.h"
 #include "Interfaces/FlowDataPinValueSupplierInterface.h"
 #include "Interfaces/FlowNamedPropertiesSupplierInterface.h"
+#include "Nodes/FlowNode.h"
 #include "Types/FlowArray.h"
 #include "Types/FlowDataPinResults.h"
 #include "Types/FlowPinTypesStandard.h"
@@ -33,10 +34,9 @@
 
 using namespace EFlowForEachAddOnFunctionReturnValue_Classifiers;
 
-UFlowNodeBase::UFlowNodeBase(const FObjectInitializer& ObjectInitializer)
-	: Super(ObjectInitializer)
+UFlowNodeBase::UFlowNodeBase()
 #if WITH_EDITORONLY_DATA
-	, GraphNode(nullptr)
+	: GraphNode(nullptr)
 	, bDisplayNodeTitleWithoutPrefix(true)
 	, bCanDelete(true)
 	, bCanDuplicate(true)
@@ -137,23 +137,6 @@ void UFlowNodeBase::OnActivate()
 	}
 }
 
-void UFlowNodeBase::ExecuteInputForSelfAndAddOns(const FName& PinName)
-{
-	// AddOns can introduce input pins to Nodes without the Node being aware of the addition.
-	// To ensure that Nodes and AddOns only get the input pins signaled that they expect,
-	// we are filtering the PinName vs. the expected InputPins before carrying on with the ExecuteInput
-
-	if (IsSupportedInputPinName(PinName))
-	{
-		ExecuteInput(PinName);
-	}
-
-	for (UFlowNodeAddOn* AddOn : AddOns)
-	{
-		AddOn->ExecuteInputForSelfAndAddOns(PinName);
-	}
-}
-
 void UFlowNodeBase::ExecuteInput(const FName& PinName)
 {
 	IFlowCoreExecutableInterface::ExecuteInput(PinName);
@@ -177,6 +160,23 @@ void UFlowNodeBase::Cleanup()
 	}
 
 	IFlowCoreExecutableInterface::Cleanup();
+}
+
+void UFlowNodeBase::ExecuteInputForSelfAndAddOns(const FName& PinName)
+{
+	// AddOns can introduce input pins to Nodes without the Node being aware of the addition.
+	// To ensure that Nodes and AddOns only get the input pins signaled that they expect,
+	// we are filtering the PinName vs. the expected InputPins before carrying on with the ExecuteInput
+
+	if (IsSupportedInputPinName(PinName))
+	{
+		ExecuteInput(PinName);
+	}
+
+	for (UFlowNodeAddOn* AddOn : AddOns)
+	{
+		AddOn->ExecuteInputForSelfAndAddOns(PinName);
+	}
 }
 
 void UFlowNodeBase::TriggerOutputPin(const FFlowOutputPinHandle Pin, const bool bFinish, const EFlowPinActivationType ActivationType)
@@ -264,7 +264,7 @@ TArray<FFlowPin> UFlowNodeBase::GetContextOutputs() const
 	return ContextOutputs;
 }
 
-#endif // WITH_EDITOR
+#endif
 
 void UFlowNodeBase::LogValidationError(const FString& Message)
 {
@@ -409,7 +409,7 @@ EFlowAddOnAcceptResult UFlowNodeBase::CheckAcceptFlowNodeAddOnChild(
 
 	return CombinedResult;
 }
-#endif // WITH_EDITOR
+#endif
 
 EFlowForEachAddOnFunctionReturnValue UFlowNodeBase::ForEachAddOnConst(
 	const FConstFlowNodeAddOnFunction& Function,
@@ -622,7 +622,7 @@ void UFlowNodeBase::PostEditChangeProperty(FPropertyChangedEvent& PropertyChange
 
 	UpdateNodeConfigText();
 }
-#endif // WITH_EDITOR
+#endif
 
 FString UFlowNodeBase::GetStatusString() const
 {
@@ -730,6 +730,22 @@ FString UFlowNodeBase::GetNodeDescription() const
 	return K2_GetNodeDescription();
 }
 
+FString UFlowNodeBase::GetAddOnDescriptions() const
+{
+	FString Result;
+
+	for (const UFlowNodeBase* Addon : AddOns)
+	{
+		const FString& Description = Addon->GetNodeDescription();
+		if (!Description.IsEmpty())
+		{
+			Result.Append(Description).Append(LINE_TERMINATOR);
+		}
+	}
+
+	return Result;
+}
+
 bool UFlowNodeBase::CanModifyFlowDataPinType() const
 {
 	return !IsPlacedInFlowAsset() || IsFlowNamedPropertiesSupplier();
@@ -830,7 +846,7 @@ FText UFlowNodeBase::GetNodeConfigText() const
 	return DevNodeConfigText;
 #else
 	return FText::GetEmpty();
-#endif // WITH_EDITORONLY_DATA
+#endif
 }
 
 void UFlowNodeBase::SetNodeConfigText(const FText& NodeConfigText)
@@ -840,7 +856,7 @@ void UFlowNodeBase::SetNodeConfigText(const FText& NodeConfigText)
 	{
 		DevNodeConfigText = NodeConfigText;
 	}
-#endif // WITH_EDITOR
+#endif
 }
 
 void UFlowNodeBase::UpdateNodeConfigText_Implementation()
@@ -962,7 +978,7 @@ bool UFlowNodeBase::BuildMessage(FString& Message) const
 EDataValidationResult UFlowNodeBase::ValidateNode()
 {
 	EDataValidationResult ValidationResult = EDataValidationResult::NotValidated;
-	
+
 	if (GetClass()->IsFunctionImplementedInScript(GET_FUNCTION_NAME_CHECKED(UFlowNodeBase, K2_ValidateNode)))
 	{
 		ValidationResult = K2_ValidateNode();
@@ -1020,7 +1036,7 @@ FFlowDataPinResult UFlowNodeBase::TryResolveDataPin(FName PinName) const
 	{
 		const FFlowPinValueSupplierData& SupplierData = PinValueSupplierDatas[Index];
 
-		DataPinResult = IFlowDataPinValueSupplierInterface::Execute_TrySupplyDataPin(CastChecked<UObject>(SupplierData.PinValueSupplier), SupplierData.SupplierPinName);
+		DataPinResult = SupplierData.PinValueSupplier->TrySupplyDataPin(SupplierData.SupplierPinName);
 
 		if (FlowPinType::IsSuccess(DataPinResult.Result))
 		{

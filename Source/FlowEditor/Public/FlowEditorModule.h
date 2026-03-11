@@ -1,5 +1,4 @@
 // Copyright https://github.com/MothCocoon/FlowGraph/graphs/contributors
-
 #pragma once
 
 #include "AssetTypeCategories.h"
@@ -21,7 +20,7 @@ struct FLOWEDITOR_API FFlowAssetCategoryPaths : EAssetCategoryPaths
 	static FAssetCategoryPath Flow;
 };
 
-class FLOWEDITOR_API FFlowEditorModule : public IModuleInterface, public IHasMenuExtensibility, public IHasToolBarExtensibility
+class FLOWEDITOR_API FFlowEditorModule : public IModuleInterface
 {
 public:
 	static EAssetTypeCategories::Type FlowAssetCategory;
@@ -36,12 +35,6 @@ private:
 public:
 	virtual void StartupModule() override;
 	virtual void ShutdownModule() override;
-
-	UE_DEPRECATED(5.5, "The old method has been removed. Please use UToolMenus::Get()->ExtendMenu() instead. You can find example in SFlowGraphEditor::CreateDebugMenu().")
-	virtual TSharedPtr<FExtensibilityManager> GetMenuExtensibilityManager() override { return nullptr; }
-	
-	UE_DEPRECATED(5.5, "The old method has been removed. Please use UToolMenus::Get()->ExtendMenu() instead. You can find example in SFlowGraphEditor::CreateDebugMenu().")
-	virtual TSharedPtr<FExtensibilityManager> GetToolBarExtensibilityManager() override { return nullptr; }
 
 	void RegisterForAssetChanges();
 

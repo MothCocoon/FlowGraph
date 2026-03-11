@@ -1,5 +1,4 @@
 // Copyright https://github.com/MothCocoon/FlowGraph/graphs/contributors
-
 #pragma once
 
 #include "Nodes/FlowNodeBase.h"
@@ -21,30 +20,32 @@ public:
 	FLOW_API UFlowNodeAddOn();
 	
 protected:
-	// The FlowNode that contains this AddOn
-	// (accessible only when initialized, runtime only)
+	/* The Flow Node that contains this AddOn.
+	 * Accessible only when initialized, runtime only. */
 	UPROPERTY(Transient)
 	TObjectPtr<UFlowNode> FlowNode;
 
-	// Input pins to add to the owning flow node
-	// If defined, ExecuteInput will only be executed for these inputs
+	/* Input pins to add to the owning Flow Node.
+	 * If defined, ExecuteInput will only be executed for these inputs. */
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "FlowNodeAddOn")
 	TArray<FFlowPin> InputPins;
 
 #if WITH_EDITORONLY_DATA
-	// Output pins to add to the owning flow node
+	/* Output pins to add to the owning Flow Node. */
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "FlowNodeAddOn")
 	TArray<FFlowPin> OutputPins;
 #endif
 
 public:
-  // AddOns may opt in to be eligible for a given parent
-	// - ParentTemplate - the template of the FlowNode or FlowNodeAddOn that is being considered as a potential parent
-	// - AdditionalAddOnsToAssumeAreChildren - other AddOns to assume that are already child AddOns for the purposes of this test.
-	//   This list will be populated with the 'other' AddOns in a multi-paste operation in the editor,
-	//   because some paste-targets can only accept a certain mix of addons, so we must know the rest of the set being pasted
-	//   to make the correct decision about whether to allow AddOnTemplate to be added.
-	// https://forums.unrealengine.com/t/default-parameters-with-tarrays/330225 for details on AutoCreateRefTerm
+	// UFlowNodeBase
+
+	/* AddOns may opt in to be eligible for a given parent.
+	 * - ParentTemplate - the template of the FlowNode or FlowNodeAddOn that is being considered as a potential parent.
+	 * - AdditionalAddOnsToAssumeAreChildren - other AddOns to assume that are already child AddOns for the purposes of this test.
+	 * This list will be populated with the 'other' AddOns in a multi-paste operation in the editor,
+	 * because some paste-targets can only accept a certain mix of addons, so we must know the rest of the set being pasted
+	 * to make the correct decision about whether to allow AddOnTemplate to be added.
+	 * See: https://forums.unrealengine.com/t/default-parameters-with-tarrays/330225 for details on AutoCreateRefTerm. */
 	UFUNCTION(BlueprintNativeEvent, BlueprintPure, Category = "FlowNodeAddOn", meta = (AutoCreateRefTerm = AdditionalAddOnsToAssumeAreChildren))
 	FLOW_API EFlowAddOnAcceptResult AcceptFlowNodeAddOnParent(const UFlowNodeBase* ParentTemplate, const TArray<UFlowNodeAddOn*>& AdditionalAddOnsToAssumeAreChildren) const;
 
@@ -63,17 +64,17 @@ public:
 
 	// UFlowNodeAddOn
 
-	// The FlowNode that contains this AddOn
-	// (accessible only when initialized, runtime only)
+	/* The FlowNode that contains this AddOn.
+	 * Accessible only when initialized, runtime only. */
 	UFUNCTION(BlueprintCallable, BlueprintPure, Category = "FlowNodeAddon", DisplayName = "Get Flow Node")
 	FLOW_API UFlowNode* GetFlowNode() const;
 
-	// Will crawl the hierarchy until it finds a flow node (addons can be attached to other add-ons). 
+	/* Will crawl the hierarchy until it finds a flow node (addons can be attached to other add-ons). */
 	FLOW_API UFlowNode* FindOwningFlowNode() const;
 	// --
 
-	// Returns a random seed suitable for this flow node addon
-	// by default, uses the seed for the Flow Node that this addon is attached to.
+	/* Returns a random seed suitable for this AddOn.
+	 * By default, uses the seed for the Flow Node that this addon is attached to. */
 	FLOW_API virtual int32 GetRandomSeed() const override;
 
 #if WITH_EDITOR
@@ -84,6 +85,10 @@ public:
 	// --
 
 	FLOW_API void RequestReconstructionOnOwningFlowNode() const;
+
+	/* Editor-only method to set the FlowNode for any follow-up operations 
+	 * that the addon will need a reliable FlowNode pointer at editor-time */
+	void SetFlowNodeForEditor(UFlowNode* FlowNodeOwner) { FlowNode = FlowNodeOwner; }
 #endif // WITH_EDITOR
 
 protected:

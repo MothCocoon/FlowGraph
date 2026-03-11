@@ -1,5 +1,4 @@
 // Copyright https://github.com/MothCocoon/FlowGraph/graphs/contributors
-
 #pragma once
 
 #include "FlowDataPinValueOwnerCustomization.h"
@@ -19,4 +18,7 @@ public:
 	// IDetailCustomization
 	virtual void CustomizeDetails(IDetailLayoutBuilder& DetailLayout) override;
 	// --
+
+private:
+	TWeakObjectPtr<UFlowNodeAddOn> EditedAddOn = nullptr;
 };

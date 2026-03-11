@@ -1,3 +1,4 @@
+// Copyright https://github.com/MothCocoon/FlowGraph/graphs/contributors
 #pragma once
 
 #include "Logging/LogMacros.h"

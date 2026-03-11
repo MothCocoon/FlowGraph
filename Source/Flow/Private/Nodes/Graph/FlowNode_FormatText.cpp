@@ -9,8 +9,7 @@
 
 const FName UFlowNode_FormatText::OUTPIN_TextOutput("Formatted Text");
 
-UFlowNode_FormatText::UFlowNode_FormatText(const FObjectInitializer& ObjectInitializer)
-	: Super(ObjectInitializer)
+UFlowNode_FormatText::UFlowNode_FormatText()
 {
 #if WITH_EDITOR
 	Category = TEXT("Graph");
@@ -20,7 +19,7 @@ UFlowNode_FormatText::UFlowNode_FormatText(const FObjectInitializer& ObjectIniti
 	OutputPins.Add(FFlowPin(OUTPIN_TextOutput, FFlowPinType_Text::GetPinTypeNameStatic()));
 }
 
-FFlowDataPinResult UFlowNode_FormatText::TrySupplyDataPin_Implementation(FName PinName) const
+FFlowDataPinResult UFlowNode_FormatText::TrySupplyDataPin(FName PinName) const
 {
 	if (PinName == OUTPIN_TextOutput)
 	{
@@ -37,7 +36,7 @@ FFlowDataPinResult UFlowNode_FormatText::TrySupplyDataPin_Implementation(FName P
 		}
 	}
 
-	return Super::TrySupplyDataPin_Implementation(PinName);
+	return Super::TrySupplyDataPin(PinName);
 }
 
 EFlowDataPinResolveResult UFlowNode_FormatText::TryResolveFormatText(const FName& PinName, FText& OutFormattedText) const
@@ -55,13 +54,24 @@ EFlowDataPinResolveResult UFlowNode_FormatText::TryResolveFormatText(const FName
 }
 
 #if WITH_EDITOR
+void UFlowNode_FormatText::PostEditChangeChainProperty(FPropertyChangedChainEvent& PropertyChainEvent)
+{
+	const auto& Property = PropertyChainEvent.PropertyChain.GetActiveMemberNode()->GetValue();
+	constexpr bool bIsInput = true;
+	OnPostEditEnsureAllNamedPropertiesPinDirection(*Property, bIsInput);
+
+	Super::PostEditChangeChainProperty(PropertyChainEvent);
+}
 
 void UFlowNode_FormatText::UpdateNodeConfigText_Implementation()
 {
-	constexpr bool bErrorIfInputPinNotFound = false;
-	if (IsInputConnected(GET_MEMBER_NAME_CHECKED(ThisClass, FormatText), bErrorIfInputPinNotFound))
+	constexpr bool bErrorIfInputPinNotFound = true;
+	FConnectedPin ConnectedPin;
+	const bool bIsInputConnected = FindFirstInputPinConnection(GET_MEMBER_NAME_CHECKED(ThisClass, FormatText), bErrorIfInputPinNotFound, ConnectedPin);
+
+	if (bIsInputConnected)
 	{
-		SetNodeConfigText(FText());
+		SetNodeConfigText(FText::Format(LOCTEXT("FormatTextFromPin", "Format from: {0}"), { FText::FromString(ConnectedPin.PinName.ToString()) }));
 	}
 	else
 	{

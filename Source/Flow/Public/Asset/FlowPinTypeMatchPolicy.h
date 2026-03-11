@@ -1,5 +1,4 @@
 // Copyright https://github.com/MothCocoon/FlowGraph/graphs/contributors
-
 #pragma once
 
 #include "FlowPinTypeMatchPolicy.generated.h"
@@ -37,7 +36,7 @@ struct FFlowPinTypeMatchPolicy
 	UPROPERTY()
 	EFlowPinTypeMatchRules PinTypeMatchRules = EFlowPinTypeMatchRules::StandardPinTypeMatchRulesMask;
 
-	// Pin categories to allow beyond an exact match
+	/* Pin categories to allow beyond an exact match. */
 	UPROPERTY()
 	TSet<FName> PinCategories;
 };

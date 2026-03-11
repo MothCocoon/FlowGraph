@@ -1,5 +1,4 @@
 // Copyright https://github.com/MothCocoon/FlowGraph/graphs/contributors
-
 #pragma once
 
 #include "GameFramework/SaveGame.h"
@@ -86,7 +85,7 @@ struct FLOW_API FFlowSaveData
 
 struct FLOW_API FFlowArchive : public FObjectAndNameAsStringProxyArchive
 {
-	FFlowArchive(FArchive& InInnerArchive) : FObjectAndNameAsStringProxyArchive(InInnerArchive, true)
+	explicit FFlowArchive(FArchive& InInnerArchive) : FObjectAndNameAsStringProxyArchive(InInnerArchive, true)
 	{
 		ArIsSaveGame = true;
 	}

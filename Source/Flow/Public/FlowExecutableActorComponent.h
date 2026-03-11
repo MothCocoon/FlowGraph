@@ -1,5 +1,4 @@
 // Copyright https://github.com/MothCocoon/FlowGraph/graphs/contributors
-
 #pragma once
 
 #include "Components/ActorComponent.h"
@@ -29,7 +28,7 @@ private:
 	FSimpleDelegate FlowDataPinValuesRebuildDelegate;
 
 protected:
-	// FlowNodeBase that will execute this component in the FlowGraph on our behalf
+	/* FlowNodeBase that will execute this component in the FlowGraph on our behalf. */
 	UPROPERTY(Transient, BlueprintReadOnly, Category = DataPins)
 	TObjectPtr<UFlowNodeBase> FlowNodeProxy;
 

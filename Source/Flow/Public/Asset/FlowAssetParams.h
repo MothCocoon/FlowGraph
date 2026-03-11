@@ -1,5 +1,4 @@
 // Copyright https://github.com/MothCocoon/FlowGraph/graphs/contributors
-
 #pragma once
 
 #include "Engine/DataAsset.h"
@@ -28,15 +27,15 @@ class FLOW_API UFlowAssetParams
 
 public:
 #if WITH_EDITORONLY_DATA
-	// Reference to the associated Flow Asset.
+	/* Reference to the associated Flow Asset. */
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = FlowAssetParams)
 	TSoftObjectPtr<UFlowAsset> OwnerFlowAsset;
 
-	// Reference to the "Parent" params object to inherit from (if any).
+	/* Reference to the "Parent" params object to inherit from (if any). */
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = FlowAssetParams)
 	FFlowAssetParamsPtr ParentParams;
 
-	// Array of properties synchronized with the Start node (local adds/overrides; effective flattened via ReconcilePropertiesWithParentParams).
+	/* Array of properties synchronized with the Start node (local adds/overrides; effective flattened via ReconcilePropertiesWithParentParams). */
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = FlowAssetParams, meta = (EditFixedSize))
 	TArray<FFlowNamedDataPinProperty> Properties;
 #endif
@@ -54,8 +53,8 @@ public:
 	// --
 
 	// IFlowDataPinValueSupplierInterface
-	virtual bool CanSupplyDataPinValues_Implementation() const override;
-	virtual FFlowDataPinResult TrySupplyDataPin_Implementation(FName PinName) const override;
+	virtual bool CanSupplyDataPinValues() const override;
+	virtual FFlowDataPinResult TrySupplyDataPin(FName PinName) const override;
 	// --
 
 	// IFlowAssetProviderInterface
@@ -67,11 +66,14 @@ public:
 	virtual EDataValidationResult IsDataValid(FDataValidationContext& Context) const override;
 	// --
 
-	// Generates properties from the associated Start node or updates Start node from params.
+	/* Generates properties from the associated Start node or updates Start node from params. */
 	EFlowReconcilePropertiesResult ReconcilePropertiesWithStartNode(
 		const FDateTime& FlowAssetLastSaveTimeStamp,
 		const TSoftObjectPtr<UFlowAsset>& InOwnerFlowAsset,
 		TArray<FFlowNamedDataPinProperty>& MutablePropertiesFromStartNode);
+
+	/* Updates properties from ParentParams, handling inheritance and name enforcement. */
+	EFlowReconcilePropertiesResult ReconcilePropertiesWithParentParams();
 
 	void ConfigureFlowAssetParams(TSoftObjectPtr<UFlowAsset> OwnerAsset, TSoftObjectPtr<UFlowAssetParams> InParentParams, const TArray<FFlowNamedDataPinProperty>& InProperties);
 
@@ -99,13 +101,9 @@ private:
 
 protected:
 
-	// Updates properties from ParentParams, handling inheritance and name enforcement.
-	EFlowReconcilePropertiesResult ReconcilePropertiesWithParentParams();
-
 	EFlowReconcilePropertiesResult CheckForParentCycle() const;
 
 	void ModifyAndRebuildPropertiesMap();
-
 	void RebuildPropertiesMap();
 #endif
 };

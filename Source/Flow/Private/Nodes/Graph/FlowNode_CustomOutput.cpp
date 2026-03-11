@@ -8,8 +8,7 @@
 
 #define LOCTEXT_NAMESPACE "FlowNode_CustomOutput"
 
-UFlowNode_CustomOutput::UFlowNode_CustomOutput(const FObjectInitializer& ObjectInitializer)
-	: Super(ObjectInitializer)
+UFlowNode_CustomOutput::UFlowNode_CustomOutput()
 {
 	OutputPins.Empty();
 }
@@ -55,7 +54,7 @@ void UFlowNode_CustomOutput::ExecuteInput(const FName& PinName)
 #if WITH_EDITOR
 FText UFlowNode_CustomOutput::K2_GetNodeTitle_Implementation() const
 {
-	if (!EventName.IsNone() && UFlowSettings::Get()->bUseAdaptiveNodeTitles)
+	if (!EventName.IsNone() && GetDefault<UFlowSettings>()->bUseAdaptiveNodeTitles)
 	{
 		return FText::Format(LOCTEXT("CustomOutputTitle", "{0} Output"), {FText::FromString(EventName.ToString())});
 	}

@@ -4,6 +4,7 @@
 #include "Graph/FlowGraphSchema.h"
 #include "Graph/FlowGraphSchema_Actions.h"
 #include "Graph/Nodes/FlowGraphNode.h"
+#include "Graph/Nodes/FlowGraphNode_Reroute.h"
 #include "AddOns/FlowNodeAddOn.h"
 #include "Nodes/FlowNode.h"
 #include "FlowEditorLogChannels.h"
@@ -243,8 +244,7 @@ void UFlowGraph::UpgradeAllFlowNodePins()
 			if (IsValid(FlowNode))
 			{
 				FlowNode->FixupDataPinTypes();
-
-				FlowAsset->TryUpdateManagedFlowPinsForNode(*FlowNode);
+				FlowNode->TryUpdateAutoDataPins();
 			}
 		}
 	}
@@ -290,17 +290,21 @@ void UFlowGraph::UpdateAsset(const int32 UpdateFlags)
 		return;
 	}
 
-	// UpdateAsset is called to do any reconciliation from the editor-version of the 
-	//  graph to the runtime version of the graph data.
-	// In our case, it will copy the AddOns from their editor-side UFlowGraphNode containers to
-	//  their runtime UFlowNode and/or UFlowNodeAddOn ::AddOn array entry (via OnUpdateAsset)
+	/* UpdateAsset is called to do any reconciliation from the editor-version of the 
+	 * graph to the runtime version of the graph data.
+	 * In our case, it will copy the AddOns from their editor-side UFlowGraphNode containers to
+	 * their runtime UFlowNode and/or UFlowNodeAddOn ::AddOn array entry. */
 	for (UEdGraphNode* Node : Nodes)
 	{
 		if (UFlowGraphNode* FlowGraphNode = Cast<UFlowGraphNode>(Node))
 		{
-			FlowGraphNode->OnUpdateAsset(UpdateFlags);
+			constexpr bool bForceReconstructNode = false;
+			FlowGraphNode->RebuildRuntimeAddOnsFromEditorSubNodes(bForceReconstructNode);
 		}
 	}
+
+	// Apply any node reconstructs that were requested while locked or transacting
+	ProcessPendingNodeReconstructs();
 }
 
 bool UFlowGraph::UpdateUnknownNodeClasses()
@@ -392,7 +396,11 @@ FString UFlowGraph::GetDeprecationMessage(const UClass* Class)
 
 void UFlowGraph::OnSubNodeDropped()
 {
+	// Historically this only harvested connections.
+	// Keep behavior, but ensure pending reconstructs are processed as well.
 	NotifyGraphChanged();
+
+	ProcessPendingNodeReconstructs();
 }
 
 void UFlowGraph::RemoveOrphanedNodes()
@@ -473,7 +481,92 @@ void UFlowGraph::LockUpdates()
 void UFlowGraph::UnlockUpdates()
 {
 	bLockUpdates = false;
+
+	// Apply any deferred reroute type updates first, while we're in a stable post-paste state.
+	ProcessPendingRerouteTypeFixups();
+
+	// Apply any deferred node reconstructs next (e.g. subnode changes during paste/transactions).
+	ProcessPendingNodeReconstructs();
+
+	// Existing behavior
 	UpdateAsset();
+}
+
+void UFlowGraph::EnqueueRerouteTypeFixup(UFlowGraphNode_Reroute* RerouteNode)
+{
+	if (!IsValid(RerouteNode))
+	{
+		return;
+	}
+
+	// If not locked, run immediately (keeps behavior responsive outside paste/locked updates)
+	if (!IsLocked())
+	{
+		RerouteNode->NodeConnectionListChanged();
+		return;
+	}
+
+	PendingRerouteTypeFixups.Add(RerouteNode);
+}
+
+void UFlowGraph::ProcessPendingRerouteTypeFixups()
+{
+	if (PendingRerouteTypeFixups.Num() == 0)
+	{
+		return;
+	}
+
+	// Move aside so re-entrancy (or new enqueue) doesn't invalidate iteration
+	TSet<TObjectPtr<UFlowGraphNode_Reroute>> Local = MoveTemp(PendingRerouteTypeFixups);
+	PendingRerouteTypeFixups.Reset();
+
+	for (UFlowGraphNode_Reroute* RerouteNode : Local)
+	{
+		if (IsValid(RerouteNode))
+		{
+			// This will call into reroute's centralized retype path via ReconfigureFromConnections()
+			RerouteNode->NodeConnectionListChanged();
+		}
+	}
+}
+
+void UFlowGraph::EnqueueNodeReconstruct(UFlowGraphNode* Node)
+{
+	if (!IsValid(Node))
+	{
+		return;
+	}
+
+	// If updates are locked OR we're in a transaction OR saving/loading, defer.
+	if (IsLocked() || GIsTransacting || IsSavingGraph() || IsLoadingGraph())
+	{
+		PendingNodeReconstructs.Add(Node);
+		return;
+	}
+
+	// Otherwise do it now.
+	Node->MarkNeedsFullReconstruction();
+	Node->ReconstructNode();
+}
+
+void UFlowGraph::ProcessPendingNodeReconstructs()
+{
+	if (PendingNodeReconstructs.IsEmpty())
+	{
+		return;
+	}
+
+	TSet<TObjectPtr<UFlowGraphNode>> Local = MoveTemp(PendingNodeReconstructs);
+	PendingNodeReconstructs.Reset();
+
+	for (UFlowGraphNode* Node : Local)
+	{
+		if (IsValid(Node))
+		{
+			Node->MarkNeedsFullReconstruction();
+			Node->ReconstructNode();
+		}
+	}
 }
 
 void UFlowGraph::RecursivelySetupAllFlowGraphNodesForEditing(UFlowGraphNode& FromFlowGraphNode)

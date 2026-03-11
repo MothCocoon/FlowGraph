@@ -1,15 +1,9 @@
 // Copyright https://github.com/MothCocoon/FlowGraph/graphs/contributors
-
-// NOTE (gtaylor) This class is planned for submission to Epic to include in baseline UE.
-// If/when that happens, we will want to remove this version and update to the latest one in the PropertyModule
-
 #pragma once
 
 #include "IPropertyTypeCustomization.h"
 #include "PropertyHandle.h"
 #include "Templates/SharedPointer.h"
-
-#include "IPropertyTypeCustomization.h"
 
 class STextBlock;
 class FDetailWidgetRow;
@@ -18,8 +12,14 @@ class IPropertyTypeCustomizationUtils;
 class IDetailPropertyRow;
 class IPropertyHandle;
 
-// An extension of IPropertyTypeCustomization 
-//  which adds some quality-of-life improvements for subclasses
+/**
+ * NOTE (gtaylor) This class is planned for submission to Epic to include in baseline UE.
+ * If/when that happens, we will want to remove this version and update to the latest one in the PropertyModule.
+ */
+
+/**
+ * An extension of IPropertyTypeCustomization which adds some quality-of-life improvements for subclasses.
+ */
 class FLOWEDITOR_API IFlowExtendedPropertyTypeCustomization : public IPropertyTypeCustomization
 {
 public:
@@ -43,14 +43,14 @@ protected:
 	virtual void CreateHeaderRowWidget(FDetailWidgetRow& HeaderRow, IPropertyTypeCustomizationUtils& StructCustomizationUtils);
 	virtual FText BuildHeaderText() const;
 
-	// Callbacks for property editor delegates
+	/* Callbacks for property editor delegates. */
 	void OnAnyChildPropertyChanged() const;
 
 protected:
-	// Cached struct property
+	/* Cached struct property. */
 	TSharedPtr<IPropertyHandle> StructPropertyHandle;
 
-	// Header property text block, (re-)built in RefreshHeader
+	/* Header property text block, (re-)built in RefreshHeader. */
 	TSharedPtr<STextBlock> HeaderTextBlock;
 };
 

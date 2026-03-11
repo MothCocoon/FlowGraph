@@ -4,8 +4,7 @@
 
 #include UE_INLINE_GENERATED_CPP_BY_NAME(FlowNode_Start)
 
-UFlowNode_Start::UFlowNode_Start(const FObjectInitializer& ObjectInitializer)
-	: Super(ObjectInitializer)
+UFlowNode_Start::UFlowNode_Start()
 {
 #if WITH_EDITOR
 	Category = TEXT("Graph");
@@ -44,11 +43,11 @@ bool UFlowNode_Start::TryAppendExternalInputPins(TArray<FFlowPin>& InOutPins) co
 
 #endif // WITH_EDITOR
 
-FFlowDataPinResult UFlowNode_Start::TrySupplyDataPin_Implementation(FName PinName) const
+FFlowDataPinResult UFlowNode_Start::TrySupplyDataPin(FName PinName) const
 {
 	if (FlowDataPinValueSupplierInterface)
 	{
-		FFlowDataPinResult SuppliedResult = IFlowDataPinValueSupplierInterface::Execute_TrySupplyDataPin(FlowDataPinValueSupplierInterface.GetObject(), PinName);
+		FFlowDataPinResult SuppliedResult = FlowDataPinValueSupplierInterface->TrySupplyDataPin(PinName);
 
 		if (FlowPinType::IsSuccess(SuppliedResult.Result))
 		{
@@ -56,6 +55,6 @@ FFlowDataPinResult UFlowNode_Start::TrySupplyDataPin_Implementation(FName PinNam
 		}
 	}
 
-	return Super::TrySupplyDataPin_Implementation(PinName);
+	return Super::TrySupplyDataPin(PinName);
 }
 

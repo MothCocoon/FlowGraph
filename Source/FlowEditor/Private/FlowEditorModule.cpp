@@ -75,7 +75,7 @@ void FFlowEditorModule::StartupModule()
 	FEdGraphUtilities::RegisterVisualPinFactory(MakeShareable(new FFlowOutputPinHandleFactory()));
 
 	// add Flow Toolbar
-	if (UFlowGraphSettings::Get()->bShowAssetToolbarAboveLevelEditor)
+	if (GetDefault<UFlowGraphSettings>()->bShowAssetToolbarAboveLevelEditor)
 	{
 		if (FLevelEditorModule* LevelEditorModule = FModuleManager::GetModulePtr<FLevelEditorModule>(TEXT("LevelEditor")))
 		{
@@ -145,21 +145,21 @@ void FFlowEditorModule::TrySetFlowNodeDisplayStyleDefaults() const
 	// Force the Flow module to be loaded before we try to access the Settings
 	FModuleManager::LoadModuleChecked<FFlowModule>("Flow");
 
-	UFlowGraphSettings& Settings = *UFlowGraphSettings::Get();
-	(void) Settings.TryAddDefaultNodeDisplayStyle(FFlowNodeDisplayStyleConfig(FlowNodeStyle::Node, FLinearColor(0.0f, 0.581f, 1.0f, 1.0f)));
-	(void) Settings.TryAddDefaultNodeDisplayStyle(FFlowNodeDisplayStyleConfig(FlowNodeStyle::Condition, FLinearColor(1.0f, 0.62f, 0.016f, 1.0f)));
-	(void) Settings.TryAddDefaultNodeDisplayStyle(FFlowNodeDisplayStyleConfig(FlowNodeStyle::Deprecated, FLinearColor(1.0f, 1.0f, 0.0f, 1.0f)));
-	(void) Settings.TryAddDefaultNodeDisplayStyle(FFlowNodeDisplayStyleConfig(FlowNodeStyle::Developer, FLinearColor(0.7f, 0.2f, 1.0f, 1.0f)));
-	(void) Settings.TryAddDefaultNodeDisplayStyle(FFlowNodeDisplayStyleConfig(FlowNodeStyle::InOut, FLinearColor(1.0f, 0.0f, 0.008f, 1.0f)));
-	(void) Settings.TryAddDefaultNodeDisplayStyle(FFlowNodeDisplayStyleConfig(FlowNodeStyle::Latent, FLinearColor(0.0f, 0.770f, 0.375f, 1.0f)));
-	(void) Settings.TryAddDefaultNodeDisplayStyle(FFlowNodeDisplayStyleConfig(FlowNodeStyle::Logic, FLinearColor(1.0f, 1.0f, 1.0f, 1.0f)));
-	(void) Settings.TryAddDefaultNodeDisplayStyle(FFlowNodeDisplayStyleConfig(FlowNodeStyle::SubGraph, FLinearColor(1.0f, 0.128f, 0.0f, 1.0f)));
-	(void) Settings.TryAddDefaultNodeDisplayStyle(FFlowNodeDisplayStyleConfig(FlowNodeStyle::Terminal, FLinearColor(1.0f, 0.0f, 0.008f, 1.0f)));
+	UFlowGraphSettings* GraphSettings = GetMutableDefault<UFlowGraphSettings>();
+	GraphSettings->TryAddDefaultNodeDisplayStyle(FFlowNodeDisplayStyleConfig(FlowNodeStyle::Node, FLinearColor(0.0f, 0.581f, 1.0f, 1.0f)));
+	GraphSettings->TryAddDefaultNodeDisplayStyle(FFlowNodeDisplayStyleConfig(FlowNodeStyle::Condition, FLinearColor(1.0f, 0.62f, 0.016f, 1.0f)));
+	GraphSettings->TryAddDefaultNodeDisplayStyle(FFlowNodeDisplayStyleConfig(FlowNodeStyle::Deprecated, FLinearColor(1.0f, 1.0f, 0.0f, 1.0f)));
+	GraphSettings->TryAddDefaultNodeDisplayStyle(FFlowNodeDisplayStyleConfig(FlowNodeStyle::Developer, FLinearColor(0.7f, 0.2f, 1.0f, 1.0f)));
+	GraphSettings->TryAddDefaultNodeDisplayStyle(FFlowNodeDisplayStyleConfig(FlowNodeStyle::InOut, FLinearColor(1.0f, 0.0f, 0.008f, 1.0f)));
+	GraphSettings->TryAddDefaultNodeDisplayStyle(FFlowNodeDisplayStyleConfig(FlowNodeStyle::Latent, FLinearColor(0.0f, 0.770f, 0.375f, 1.0f)));
+	GraphSettings->TryAddDefaultNodeDisplayStyle(FFlowNodeDisplayStyleConfig(FlowNodeStyle::Logic, FLinearColor(1.0f, 1.0f, 1.0f, 1.0f)));
+	GraphSettings->TryAddDefaultNodeDisplayStyle(FFlowNodeDisplayStyleConfig(FlowNodeStyle::SubGraph, FLinearColor(1.0f, 0.128f, 0.0f, 1.0f)));
+	GraphSettings->TryAddDefaultNodeDisplayStyle(FFlowNodeDisplayStyleConfig(FlowNodeStyle::Terminal, FLinearColor(1.0f, 0.0f, 0.008f, 1.0f)));
 
-	(void) Settings.TryAddDefaultNodeDisplayStyle(FFlowNodeDisplayStyleConfig(FlowNodeStyle::AddOn, FLinearColor(0.0f, 0.581f, 1.0f, 1.0f)));
-	(void) Settings.TryAddDefaultNodeDisplayStyle(FFlowNodeDisplayStyleConfig(FlowNodeStyle::AddOn_PerSpawnedActor, FLinearColor(0.3f, 0.3f, 1.0f, 1.0f)));
-	(void) Settings.TryAddDefaultNodeDisplayStyle(FFlowNodeDisplayStyleConfig(FlowNodeStyle::AddOn_Predicate, FLinearColor(1.0f, 1.0f, 1.0f, 1.0f)));
-	(void) Settings.TryAddDefaultNodeDisplayStyle(FFlowNodeDisplayStyleConfig(FlowNodeStyle::AddOn_Predicate_Composite, FLinearColor(1.0f, 1.0f, 1.0f, 1.0f)));
+	GraphSettings->TryAddDefaultNodeDisplayStyle(FFlowNodeDisplayStyleConfig(FlowNodeStyle::AddOn, FLinearColor(0.0f, 0.581f, 1.0f, 1.0f)));
+	GraphSettings->TryAddDefaultNodeDisplayStyle(FFlowNodeDisplayStyleConfig(FlowNodeStyle::AddOn_PerSpawnedActor, FLinearColor(0.3f, 0.3f, 1.0f, 1.0f)));
+	GraphSettings->TryAddDefaultNodeDisplayStyle(FFlowNodeDisplayStyleConfig(FlowNodeStyle::AddOn_Predicate, FLinearColor(1.0f, 1.0f, 1.0f, 1.0f)));
+	GraphSettings->TryAddDefaultNodeDisplayStyle(FFlowNodeDisplayStyleConfig(FlowNodeStyle::AddOn_Predicate_Composite, FLinearColor(1.0f, 1.0f, 1.0f, 1.0f)));
 }
 
 void FFlowEditorModule::RegisterAssets()
@@ -168,7 +168,7 @@ void FFlowEditorModule::RegisterAssets()
 
 	// try to merge asset category with a built-in one
 	{
-		const FText AssetCategoryText = UFlowGraphSettings::Get()->FlowAssetCategoryName;
+		const FText AssetCategoryText = GetDefault<UFlowGraphSettings>()->FlowAssetCategoryName;
 
 		// Find matching built-in category
 		if (!AssetCategoryText.IsEmpty())

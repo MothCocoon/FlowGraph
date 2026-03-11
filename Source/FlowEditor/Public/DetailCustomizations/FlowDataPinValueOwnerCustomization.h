@@ -1,6 +1,5 @@
+// Copyright https://github.com/MothCocoon/FlowGraph/graphs/contributors
 #pragma once
-
-#if WITH_EDITOR
 
 #include "IDetailCustomization.h"
 #include "DetailLayoutBuilder.h"
@@ -58,5 +57,3 @@ private:
 		}
 	}
 };
-
-#endif // WITH_EDITOR

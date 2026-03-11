@@ -1,10 +1,11 @@
 // Copyright https://github.com/MothCocoon/FlowGraph/graphs/contributors
-
 #pragma once
 
 #include "UnrealExtensions/IFlowExtendedPropertyTypeCustomization.h"
 
-// Details customization for FFlowPin
+/**
+ * Details customization for FFlowPin.
+ */
 class FFlowNamedDataPinPropertyCustomization : public IFlowExtendedPropertyTypeCustomization
 {
 	typedef IFlowExtendedPropertyTypeCustomization Super;

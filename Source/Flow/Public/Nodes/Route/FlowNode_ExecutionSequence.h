@@ -1,24 +1,26 @@
 // Copyright https://github.com/MothCocoon/FlowGraph/graphs/contributors
-
 #pragma once
 
 #include "Nodes/FlowNode.h"
 #include "FlowNode_ExecutionSequence.generated.h"
 
 /**
- * Executes all outputs sequentially
+ * Executes all outputs sequentially.
  */
 UCLASS(NotBlueprintable, meta = (DisplayName = "Sequence"))
 class FLOW_API UFlowNode_ExecutionSequence final : public UFlowNode
 {
-	GENERATED_UCLASS_BODY()
+	GENERATED_BODY()
+	
+public:
+	UFlowNode_ExecutionSequence();
 
 protected:
 	/**
 	 * If enabled and the graph is saved during gameplay, this node
 	 * tracks and saves which pins it has executed.
 	 *
-	 * If you add new connections or replace old connections with with
+	 * If you add new connections or replace old connections with
 	 * different nodes, this node will detect the changes. If during gameplay
 	 * you load an old save game which had different connections, this node
 	 * will automatically execute the updated connections you created.

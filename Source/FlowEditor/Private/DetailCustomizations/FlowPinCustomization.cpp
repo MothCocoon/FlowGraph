@@ -26,8 +26,6 @@ void FFlowPinCustomization::OnChildPropertyValueChanged()
 {
 	if (FFlowPin* FlowPin = GetFlowPin())
 	{
-		FlowPin->PostEditChangedPinTypeOrSubCategorySource();
-
 		IFlowExtendedPropertyTypeCustomization::OnAnyChildPropertyChanged();
 	}
 }

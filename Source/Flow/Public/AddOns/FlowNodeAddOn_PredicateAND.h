@@ -1,5 +1,4 @@
 // Copyright https://github.com/MothCocoon/FlowGraph/graphs/contributors
-
 #pragma once
 
 #include "AddOns/FlowNodeAddOn.h"
@@ -7,7 +6,6 @@
 
 #include "FlowNodeAddOn_PredicateAND.generated.h"
 
-// Forward Declarations
 class UFlowNode;
 
 UCLASS(MinimalApi, NotBlueprintable, meta = (DisplayName = "AND"))

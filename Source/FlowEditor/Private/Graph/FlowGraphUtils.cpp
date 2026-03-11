@@ -50,7 +50,7 @@ TSharedPtr<SFlowGraphEditor> FFlowGraphUtils::GetFlowGraphEditor(const UEdGraph*
 FString FFlowGraphUtils::RemovePrefixFromNodeText(const FText& Source)
 {
 	FString SourceString = Source.ToString();
-	TArray<FString> NodePrefixes = UFlowGraphSettings::Get()->NodePrefixesToRemove;
+	TArray<FString> NodePrefixes = GetDefault<UFlowGraphSettings>()->NodePrefixesToRemove;
 	
 	for (FString Prefix : NodePrefixes)
 	{

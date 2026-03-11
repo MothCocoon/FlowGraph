@@ -1,5 +1,4 @@
 // Copyright https://github.com/MothCocoon/FlowGraph/graphs/contributors
-
 #pragma once
 
 #include "GameplayTagContainer.h"
@@ -10,13 +9,16 @@
 class UFlowComponent;
 
 /**
- * Base class for nodes operating on actors with the Flow Component
- * Such nodes usually wait until a specific action occurs in the actor
+ * Base class for nodes operating on actors with the Flow Component.
+ * Such nodes usually wait until a specific action occurs in the actor.
  */
 UCLASS(Abstract, NotBlueprintable)
 class FLOW_API UFlowNode_ComponentObserver : public UFlowNode
 {
-	GENERATED_UCLASS_BODY()
+	GENERATED_BODY()
+
+public:
+	UFlowNode_ComponentObserver();
 	
 	friend class FFlowNode_ComponentObserverDetails;
 
@@ -24,17 +26,17 @@ protected:
 	UPROPERTY(EditAnywhere, Category = "ObservedComponent")
 	FGameplayTagContainer IdentityTags;
 
-	// Container A: Identity Tags in Flow Component
-	// Container B: Identity Tags listed above
+	/* Container A: Identity Tags in Flow Component.
+	 * Container B: Identity Tags listed above. */
 	UPROPERTY(EditAnywhere, Category = "ObservedComponent")
 	EFlowTagContainerMatchType IdentityMatchType;
 
-	// This node will become Completed, if Success Limit > 0 and Success Count reaches this limit
-	// Set this to zero, if you'd like receive events indefinitely (node would finish work only if explicitly Stopped)
+	/* This node will become Completed, if Success Limit > 0 and Success Count reaches this limit.
+	 * Set this to zero, if you'd like receive events indefinitely (node would finish work only if explicitly Stopped). */
 	UPROPERTY(EditAnywhere, Category = "Lifetime", meta = (ClampMin = 0))
 	int32 SuccessLimit;
 
-	// This node will become Completed, if Success Limit > 0 and Success Count reaches this limit
+	/* This node will become Completed, if Success Limit > 0 and Success Count reaches this limit. */
 	UPROPERTY(VisibleAnywhere, Category = "Lifetime", SaveGame)
 	int32 SuccessCount;
 

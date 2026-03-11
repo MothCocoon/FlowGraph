@@ -1,5 +1,4 @@
 // Copyright https://github.com/MothCocoon/FlowGraph/graphs/contributors
-
 #pragma once
 
 #include "EdGraph/EdGraphNode.h"
@@ -9,23 +8,27 @@
 
 #include "FlowNodeBase.h"
 #include "FlowTypes.h"
-#include "Interfaces/FlowDataPinGeneratorInterface.h"
 #include "Interfaces/FlowDataPinValueSupplierInterface.h"
 #include "Nodes/FlowPin.h"
 #include "Types/FlowArray.h"
-
+#include "Types/FlowAutoDataPinsWorkingData.h"
+#include "Types/FlowPinConnectionChange.h"
 #include "FlowNode.generated.h"
+
 
 /**
  * A Flow Node is UObject-based node designed to handle entire gameplay feature within single node.
  */
 UCLASS(Abstract, Blueprintable, HideCategories = Object)
 class FLOW_API UFlowNode : public UFlowNodeBase
-						 , public IFlowDataPinGeneratorInterface
 						 , public IFlowDataPinValueSupplierInterface
 						 , public IVisualLoggerDebugSnapshotInterface
 {
-	GENERATED_UCLASS_BODY()
+	GENERATED_BODY()
+
+public:
+	UFlowNode();
+
 	friend class SFlowGraphNode;
 	friend class UFlowAsset;
 	friend class UFlowGraphNode;
@@ -52,6 +55,18 @@ public:
 	virtual bool IsSupportedInputPinName(const FName& PinName) const override;
 	// --
 
+#if WITH_EDITOR
+	/* Set up UFlowNodeBase when being opened for edit in the editor. */
+	virtual void SetupForEditing(UEdGraphNode& EdGraphNode) override;
+
+	/**
+	* Editor-only: ensure any editor-time parent pointers are correctly set for this node and any child AddOns.
+	* Goal: AddOns always have a valid FlowNode pointer while being edited (creation/paste/undo/reconstruct/open).
+	* Safe to call repeatedly.
+	*/
+	virtual void EnsureAddOnFlowNodePointersForEditor();
+#endif
+
 public:
 	// UObject	
 	virtual void PostLoad() override;
@@ -63,7 +78,7 @@ public:
 	// --
 #endif
 
-	// Inherits Guid after graph node
+	/* Inherits Guid after graph node. */
 	UPROPERTY()
 	FGuid NodeGuid;
 
@@ -74,9 +89,9 @@ public:
 	UFUNCTION(BlueprintPure, Category = "FlowNode")
 	const FGuid& GetGuid() const { return NodeGuid; }
 
-	// Returns a random seed suitable for this flow node,
-	// by default based on the node Guid, 
-	// but may be overridden in subclasses to supply some other value.
+	/* Returns a random seed suitable for this flow node,
+	 * by default based on the node Guid,
+	 * but may be overridden in subclasses to supply some other value. */
 	virtual int32 GetRandomSeed() const override { return GetTypeHash(NodeGuid); }
 
 	virtual const UFlowNode* GetParentNode() const override
@@ -85,14 +100,14 @@ public:
 	}
 
 public:
-	virtual bool CanFinishGraph() const { return false; }
+	virtual bool CanFinishGraph() const { return K2_CanFinishGraph(); }
 
 protected:
 	UPROPERTY(EditDefaultsOnly, Category = "FlowNode")
 	TArray<EFlowSignalMode> AllowedSignalModes;
 
-	// If enabled, signal will pass through node without calling ExecuteInput()
-	// Designed to handle patching
+	/* If enabled, signal will pass through node without calling ExecuteInput().
+	 * Designed to handle patching already released games. */
 	UPROPERTY()
 	EFlowSignalMode SignalMode;
 
@@ -104,11 +119,11 @@ public:
 	static FFlowPin DefaultOutputPin;
 
 protected:
-	// Class-specific and user-added inputs
+	/* Class-specific and user-added inputs. */
 	UPROPERTY(EditDefaultsOnly, Category = "FlowNode")
 	TArray<FFlowPin> InputPins;
 
-	// Class-specific and user-added outputs
+	/* Class-specific and user-added outputs. */
 	UPROPERTY(EditDefaultsOnly, Category = "FlowNode")
 	TArray<FFlowPin> OutputPins;
 
@@ -116,13 +131,13 @@ protected:
 	void AddOutputPins(const TArray<FFlowPin>& Pins);
 
 #if WITH_EDITOR
-	// Utility function to rebuild a pin array in editor (either InputPins or OutputPins, passed as InOutPins)
-	// returns true if the InOutPins array was rebuilt
+	/* Utility function to rebuild a pin array in editor (either InputPins or OutputPins, passed as InOutPins)
+	 * returns true if the InOutPins array was rebuilt. */
 	bool RebuildPinArray(const TArray<FName>& NewPinNames, TArray<FFlowPin>& InOutPins, const FFlowPin& DefaultPin);
 	bool RebuildPinArray(const TArray<FFlowPin>& NewPins, TArray<FFlowPin>& InOutPins, const FFlowPin& DefaultPin);
-#endif // WITH_EDITOR;
+#endif
 
-	// always use default range for nodes with user-created outputs i.e. Execution Sequence
+	/* Always use default range for nodes with user-created outputs i.e. Execution Sequence. */
 	void SetNumberedInputPins(const uint8 FirstNumber = 0, const uint8 LastNumber = 1);
 	void SetNumberedOutputPins(const uint8 FirstNumber = 0, const uint8 LastNumber = 1);
 
@@ -154,6 +169,9 @@ public:
 #endif
 
 protected:
+	UFUNCTION(BlueprintImplementableEvent, Category = "FlowNode", meta = (DisplayName = "Can Finish Graph"))
+	bool K2_CanFinishGraph() const;
+	
 	UFUNCTION(BlueprintImplementableEvent, Category = "FlowNode", meta = (DisplayName = "Can User Add Input"))
 	bool K2_CanUserAddInput() const;
 
@@ -164,20 +182,16 @@ protected:
 // Connections to other nodes
 
 protected:
-	// Map input/outputs to the connected node and input pin
+	/* Map input/outputs to the connected node and input pin. */
 	UPROPERTY()
 	TMap<FName, FConnectedPin> Connections;
 
 public:
 #if WITH_EDITOR
 	void SetConnections(const TMap<FName, FConnectedPin>& InConnections);
-	virtual void OnConnectionsChanged(const TMap<FName, FConnectedPin>& OldConnections) {}
 #endif
 
 	FConnectedPin GetConnection(const FName OutputName) const { return Connections.FindRef(OutputName); }
-
-	UE_DEPRECATED(5.5, "Please use GatherConnectedNodes instead.")
-	TSet<UFlowNode*> GetConnectedNodes() const { return GatherConnectedNodes(); }
 
 	UFUNCTION(BlueprintPure, Category= "FlowNode")
 	TSet<UFlowNode*> GatherConnectedNodes() const;
@@ -190,8 +204,24 @@ public:
 	UFUNCTION(BlueprintPure, Category= "FlowNode")
 	bool IsOutputConnected(const FName& PinName, bool bErrorIfPinNotFound = true) const;
 
-	bool IsInputConnected(const FFlowPin& FlowPin) const;
-	bool IsOutputConnected(const FFlowPin& FlowPin) const;
+	// Preferred signatures for:
+	// - exec output pins
+	// - data input pins
+	// ... otherwise use the array signatures below
+	bool FindFirstInputPinConnection(const FName& PinName, bool bErrorIfPinNotFound, FConnectedPin& FirstConnectedPin) const;
+	bool FindFirstOutputPinConnection(const FName& PinName, bool bErrorIfPinNotFound, FConnectedPin& FirstConnectedPin) const;
+	bool FindFirstInputPinConnection(const FFlowPin& FlowPin, FConnectedPin& FirstConnectedPin) const;
+	bool FindFirstOutputPinConnection(const FFlowPin& FlowPin, FConnectedPin& FirstConnectedPin) const;
+
+	// Preferred signatures for:
+	// - exec input pins
+	// - data output pins
+	// - cases where you do not need the connection info (with ConnectedPins == nullptr)
+	// ... otherwise use the non-array signatures above
+	bool FindInputPinConnections(const FName& PinName, bool bErrorIfPinNotFound, TArray<FConnectedPin>* ConnectedPins = nullptr) const;
+	bool FindOutputPinConnections(const FName& PinName, bool bErrorIfPinNotFound, TArray<FConnectedPin>* ConnectedPins = nullptr) const;
+	bool FindInputPinConnections(const FFlowPin& FlowPin, TArray<FConnectedPin>* ConnectedPins = nullptr) const;
+	bool FindOutputPinConnections(const FFlowPin& FlowPin, TArray<FConnectedPin>* ConnectedPins = nullptr) const;
 
 	FFlowPin* FindInputPinByName(const FName& PinName);
 	FFlowPin* FindOutputPinByName(const FName& PinName);
@@ -201,65 +231,73 @@ public:
 	static void RecursiveFindNodesByClass(UFlowNode* Node, const TSubclassOf<UFlowNode> Class, uint8 Depth, TArray<UFlowNode*>& OutNodes);
 
 protected:
-	// Slow and fast lookup functions, based on whether we are proactively caching the connections for quick lookup 
-	// in the Connections array (by PinCategory)
-	bool FindConnectedNodeForPinFast(const FName& FlowPinName, FGuid* FoundGuid = nullptr, FName* OutConnectedPinName = nullptr) const;
-	bool FindConnectedNodeForPinSlow(const FName& FlowPinName, FGuid* FoundGuid = nullptr, FName* OutConnectedPinName = nullptr) const;
+	/* Slow and fast lookup functions, based on whether we are proactively caching the connections for quick lookup
+	 * in the Connections array (by PinCategory). */
+	bool FindConnectedNodeForPinCached(const FName& FlowPinName, FConnectedPin& ConnectedPin) const;
+	bool FindConnectedNodeForPinUncached(const FName& FlowPinName, TArray<FConnectedPin>* ConnectedPins = nullptr) const;
 
-	// Return all connections to a Pin this Node knows about.
-	// Connections are only stored on one of the Nodes they connect depending on pin type.
-	// As such, this function may not return anything even if the Node is connected to the Pin.
-	// Use UFlowAsset::GetAllPinsConnectedToPin() to do a guaranteed find of all Connections.
+	/* Helper templates for Find*PinConnection* functions */
+	template <bool bExecIsCached>
+	bool FindFirstPinConnection(const FFlowPin& FlowPin, const TArray<FFlowPin>& FlowPinArray, FConnectedPin& FirstConnectedPin) const;		
+	template <bool bExecIsCached>
+	bool FindPinConnections(const FFlowPin& FlowPin, const TArray<FFlowPin>& FlowPinArray, TArray<FConnectedPin>* ConnectedPins) const;
+
+	/* Return all connections to a Pin this Node knows about.
+	 * Connections are only stored on one of the Nodes they connect depending on pin type.
+	 * As such, this function may not return anything even if the Node is connected to the Pin.
+	 * Use UFlowAsset::GetAllPinsConnectedToPin() to do a guaranteed find of all Connections. */
 	TArray<FConnectedPin> GetKnownConnectionsToPin(const FConnectedPin& Pin) const;
+
+#if WITH_EDITOR
+	static void BuildConnectionChangeList(
+		const UFlowAsset& FlowAsset,
+		const TMap<FName, FConnectedPin>& OldConnections,
+		const TMap<FName, FConnectedPin>& NewConnections,
+		TArray<FFlowPinConnectionChange>& OutChanges);
+
+	/* Broadcasts OnEditorPinConnectionsChanged to this node and all AddOns */
+	void BroadcastEditorPinConnectionsChanged(const TArray<FFlowPinConnectionChange>& Changes);
+#endif
 
 //////////////////////////////////////////////////////////////////////////
 // Data Pins
 
 public:
+	using TFlowPinValueSupplierDataArray = FlowArray::TInlineArray<FFlowPinValueSupplierData, 4>;
+
+	/* Map for PinName to Property supplier for non-trivial data pin property lookups.
+	 * Non-trivial means a different pin name from its property source, or a non-zero property owner object index.
+	 * See TryGatherPropertyOwnersAndPopulateResult(). */
+	UPROPERTY()
+	TMap<FName, FFlowPinPropertySource> MapDataPinNameToPropertySource;
+
 #if WITH_EDITORONLY_DATA
+protected:	
 	UPROPERTY(VisibleDefaultsOnly, AdvancedDisplay, Category = "FlowNode", meta = (GetByRef))
 	TArray<FFlowPin> AutoInputDataPins;
 
 	UPROPERTY(VisibleDefaultsOnly, AdvancedDisplay, Category = "FlowNode", meta = (GetByRef))
 	TArray<FFlowPin> AutoOutputDataPins;
-#endif // WITH_EDITORONLY_DATA	
+#endif
 
 #if WITH_EDITOR
-	void SetAutoInputDataPins(const TArray<FFlowPin>& AutoInputPins);
-	void SetAutoOutputDataPins(const TArray<FFlowPin>& AutoOutputPins);
-	const TArray<FFlowPin>& GetAutoInputDataPins() const { return AutoInputDataPins; }
-	const TArray<FFlowPin>& GetAutoOutputDataPins() const { return AutoOutputDataPins; }
-
-	TArray<FFlowPin>& GetMutableAutoInputDataPins() { return AutoInputDataPins; }
-	TArray<FFlowPin>& GetMutableAutoOutputDataPins() { return AutoOutputDataPins; }
-#endif // WITH_EDITOR
+public:
+	bool TryUpdateAutoDataPins();
+#endif
 
 	// IFlowDataPinValueSupplierInterface
 public:
-	virtual FFlowDataPinResult TrySupplyDataPin_Implementation(FName PinName) const override;
-
-	// Advanced helper for TrySupplyDataPin, which can be overridden in subclasses to provide alternate sourcing for properties.
-	// If returns true, either OutFoundProperty or OutFoundInstancedStruct is expected to carry the property value.
-	// (this function is used for cases like DefineProperties, Start, and blackboard lookup nodes)
-	virtual bool TryFindPropertyByPinName(
-		const UObject& PropertyOwnerObject,
-		const FName& PinName,
-		const FProperty*& OutFoundProperty,
-		TInstancedStruct<FFlowDataPinValue>& OutFoundInstancedStruct) const;
+	virtual FFlowDataPinResult TrySupplyDataPin(FName PinName) const override;
 
 protected:
-	// Static implementation of the default TryFindPropertyByPinName (which subclasses can incorporate into overrides)
-	static bool TryFindPropertyByPinName_Static(
-		const UObject& PropertyOwnerObject,
-		const FName& PinName,
-		const FProperty*& OutFoundProperty,
-		TInstancedStruct<FFlowDataPinValue>& OutFoundInstancedStruct);
+	/* Helper for TryGetFlowDataPinSupplierDatasForPinName(). */
+	void TryAddSupplierDataToArray(FFlowPinValueSupplierData& InOutSupplierData, TFlowPinValueSupplierDataArray& InOutPinValueSupplierDatas) const;
 
 public:
-	// Advanced helper for TrySupplyDataPin, which can be overridden in subclasses to provide additional or replacement object(s)
-	// for sourcing the properties for the given pin name. These objects will have PopulateResult called on them.
-	// (this function is used for cases like ExecuteComponent)
-	virtual void GatherPotentialPropertyOwnersForDataPins(TArray<const UObject*>& InOutOwners) const;
+	/* Advanced helper for TrySupplyDataPin, which can be overridden in subclasses to provide additional or replacement object(s)
+	 * for sourcing the properties for the given pin name. These objects will have PopulateResult called on them.
+	 * This function is used for cases like ExecuteComponent. */
+	virtual void GatherDataPinValueOwnerCollection(FFlowDataPinValueOwnerCollection& ValueOwnerCollection) const;
 
 	bool TryGatherPropertyOwnersAndPopulateResult(
 		const FName& PinName,
@@ -267,15 +305,7 @@ public:
 		const FFlowPin& FlowPin,
 		FFlowDataPinResult& OutSuppliedResult) const;
 
-	using TFlowPinValueSupplierDataArray = FlowArray::TInlineArray<FFlowPinValueSupplierData, 4>;
 	bool TryGetFlowDataPinSupplierDatasForPinName(const FName& PinName, TFlowPinValueSupplierDataArray& InOutPinValueSupplierDatas) const;
-
-	// IFlowDataPinGeneratorInterface
-#if WITH_EDITOR
-public:
-	virtual void AutoGenerateDataPins(FFlowAutoDataPinsWorkingData& InOutWorkingData) const override;
-#endif
-	// --
 
 	// #FlowDataPinLegacy
 public:
@@ -328,7 +358,7 @@ public:
 	void TriggerFlush();
 
 protected:
-	// Trigger execution of input pin
+	/* Trigger execution of input pin. */
 	void TriggerInput(const FName& PinName, const EFlowPinActivationType ActivationType = EFlowPinActivationType::Default);
 
 protected:
@@ -376,7 +406,7 @@ public:
 	TArray<FPinRecord> GetPinRecords(const FName& PinName, const EEdGraphPinDirection PinDirection) const;
 #endif
 
-	// Information displayed while node is working - displayed over node as NodeInfoPopup
+	/* Information displayed while node is working - displayed over node as NodeInfoPopup. */
 	FString GetStatusStringForNodeAndAddOns() const;
 
 #if WITH_EDITOR

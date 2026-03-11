@@ -7,8 +7,8 @@
 
 #include UE_INLINE_GENERATED_CPP_BY_NAME(FlowNode_Checkpoint)
 
-UFlowNode_Checkpoint::UFlowNode_Checkpoint(const FObjectInitializer& ObjectInitializer)
-	: Super(ObjectInitializer)
+UFlowNode_Checkpoint::UFlowNode_Checkpoint()
+	: bUseAsyncSave(false)
 {
 #if WITH_EDITOR
 	Category = TEXT("Graph");
@@ -22,7 +22,14 @@ void UFlowNode_Checkpoint::ExecuteInput(const FName& PinName)
 		UFlowSaveGame* NewSaveGame = Cast<UFlowSaveGame>(UGameplayStatics::CreateSaveGameObject(UFlowSaveGame::StaticClass()));
 		GetFlowSubsystem()->SaveFlowDataTo(NewSaveGame);
 
-		UGameplayStatics::SaveGameToSlot(NewSaveGame, NewSaveGame->SaveSlotName, 0);
+		if (bUseAsyncSave)
+		{
+			UGameplayStatics::AsyncSaveGameToSlot(NewSaveGame, NewSaveGame->SaveSlotName, 0);
+		}
+		else
+		{
+			UGameplayStatics::SaveGameToSlot(NewSaveGame, NewSaveGame->SaveSlotName, 0);
+		}
 	}
 
 	TriggerFirstOutput(true);

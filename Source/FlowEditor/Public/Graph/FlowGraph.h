@@ -1,5 +1,4 @@
 // Copyright https://github.com/MothCocoon/FlowGraph/graphs/contributors
-
 #pragma once
 
 #include "EdGraph/EdGraph.h"
@@ -9,30 +8,41 @@
 
 class SFlowGraphEditor;
 class UFlowGraphNode;
+class UFlowGraphNode_Reroute;
 class UFlowGraphSchema;
 
+/**
+ * Flow-specific implementation of engine's EdGraph.
+ */
 UCLASS()
 class FLOWEDITOR_API UFlowGraph : public UEdGraph
 {
 	GENERATED_UCLASS_BODY()
 
 protected:
-	/** Graph version number */
+	/* Graph version number. */
 	UPROPERTY()
 	int32 GraphVersion;
 
 	static constexpr int32 CurrentGraphVersion = 2;
 
-	/** if set, graph modifications won't cause updates in internal tree structure
-	 *  flag allows freezing update during heavy changes like pasting new nodes 
-	 */
+	/* If set, graph modifications won't cause updates in internal tree structure.
+	 * Flag allows freezing update during heavy changes like pasting new nodes. */
 	uint32 bLockUpdates : 1;
 
-	// is currently loading the Flow Graph (used to suppress some work during load)
+	/* Is currently loading the Flow Graph (used to suppress some work during load)? */
 	uint32 bIsLoadingGraph : 1;
 
 	bool bIsSavingGraph = false;
-	
+
+	/* Reroute nodes that requested a post-unlock type fixup (avoids reconstruct storms on paste). */
+	UPROPERTY(Transient)
+	TSet<TObjectPtr<UFlowGraphNode_Reroute>> PendingRerouteTypeFixups;
+
+	/* Nodes that requested a post-unlock reconstruct (avoids reconstruct storms + avoids reconstruct while transacting). */
+	UPROPERTY(Transient)
+	TSet<TObjectPtr<UFlowGraphNode>> PendingNodeReconstructs;
+
 public:
 	static void CreateGraph(UFlowAsset* InFlowAsset);
 	static void CreateGraph(UFlowAsset* InFlowAsset, TSubclassOf<UFlowGraphSchema> FlowSchema);
@@ -43,6 +53,19 @@ protected:
 
 	void RecursivelyRefreshAddOns(UFlowGraphNode& FromFlowGraphNode);
 	static void RecursivelySetupAllFlowGraphNodesForEditing(UFlowGraphNode& FromFlowGraphNode);
+
+	/* Run deferred reroute retyping after unlocking updates. */
+	void ProcessPendingRerouteTypeFixups();
+
+	/* Run deferred node reconstructs after unlocking updates. */
+	void ProcessPendingNodeReconstructs();
+
+public:
+	/* Called by reroute nodes when graph is locked and type changes should be deferred. */
+	void EnqueueRerouteTypeFixup(UFlowGraphNode_Reroute* RerouteNode);
+
+	/* Called by nodes when a reconstruct should occur, but must be deferred (transaction/lock). */
+	void EnqueueNodeReconstruct(UFlowGraphNode* Node);
 
 public:	
 	// UEdGraph
@@ -90,6 +113,5 @@ public:
 	void UnlockUpdates();
 
 	bool IsLoadingGraph() const { return bIsLoadingGraph; }
-
 	bool IsSavingGraph() const { return bIsSavingGraph; }
 };
