@@ -1456,7 +1456,7 @@ void UFlowAsset::LogRuntimeMessage(EMessageSeverity::Type Severity, const FStrin
 
 	if (RuntimeLog.Get())
 	{
-		TSharedRef<FTokenizedMessage> TokenizedMessage;
+		TSharedPtr<FTokenizedMessage> TokenizedMessage = nullptr;
 		switch (Severity)
 		{
 		case EMessageSeverity::Error:
@@ -1466,12 +1466,13 @@ void UFlowAsset::LogRuntimeMessage(EMessageSeverity::Type Severity, const FStrin
 		case EMessageSeverity::Warning:
 			TokenizedMessage = RuntimeLog.Get()->Warning(*MessageToLog, Node);
 			break;
+
 		default:
 			TokenizedMessage = RuntimeLog.Get()->Note(*MessageToLog, Node);
 			break;
 		}
 
-		BroadcastRuntimeMessageAdded(TokenizedMessage);
+		BroadcastRuntimeMessageAdded(TokenizedMessage.ToSharedRef());
 	}
 }
 #endif
