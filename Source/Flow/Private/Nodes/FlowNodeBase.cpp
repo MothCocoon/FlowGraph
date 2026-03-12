@@ -990,6 +990,11 @@ EDataValidationResult UFlowNodeBase::ValidateNode()
 
 bool UFlowNodeBase::TryAddValueToFormatNamedArguments(const FFlowNamedDataPinProperty& NamedDataPinProperty, FFormatNamedArguments& InOutArguments) const
 {
+	if (NamedDataPinProperty.Name.IsNone() || !NamedDataPinProperty.DataPinValue.IsValid())
+	{
+		return false;
+	}
+
 	const FFlowDataPinValue& DataPinValue = NamedDataPinProperty.DataPinValue.Get();
 
 	const FFlowPinTypeName PinTypeName = DataPinValue.GetPinTypeName();
