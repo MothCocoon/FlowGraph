@@ -484,5 +484,9 @@ public:
 	void LogError(const FString& MessageToLog, const UFlowNodeBase* Node) const;
 	void LogWarning(const FString& MessageToLog, const UFlowNodeBase* Node) const;
 	void LogNote(const FString& MessageToLog, const UFlowNodeBase* Node) const;
+
+private:
+	/* Shared implementation for LogError/LogWarning/LogNote to avoid code duplication. */
+	void LogRuntimeMessage(EMessageSeverity::Type Severity, const FString& MessageToLog, const UFlowNodeBase* Node) const;
 #endif
 };
