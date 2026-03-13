@@ -12,9 +12,8 @@
 
 FName UFlowNode_Timer::INPIN_CompletionTime;
 
-UFlowNode_Timer::UFlowNode_Timer(const FObjectInitializer& ObjectInitializer)
-	: Super(ObjectInitializer)
-	, CompletionTime(1.0f)
+UFlowNode_Timer::UFlowNode_Timer()
+	: CompletionTime(1.0f)
 	, StepTime(0.0f)
 	, ResolvedCompletionTime(0.0f)
 	, SumOfSteps(0.0f)

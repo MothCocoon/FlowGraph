@@ -11,7 +11,10 @@
 UCLASS(NotBlueprintable, meta = (DisplayName = "Custom Output"))
 class FLOW_API UFlowNode_CustomOutput final : public UFlowNode_CustomEventBase
 {
-	GENERATED_UCLASS_BODY()
+	GENERATED_BODY()
+	
+public:
+	UFlowNode_CustomOutput();
 
 protected:
 	virtual void ExecuteInput(const FName& PinName) override;

@@ -12,8 +12,7 @@
 const FName UFlowNode_Switch::INPIN_Evaluate = TEXT("Evaluate");
 const FName UFlowNode_Switch::OUTPIN_DefaultCase = TEXT("None Passed");
 
-UFlowNode_Switch::UFlowNode_Switch(const FObjectInitializer& ObjectInitializer)
-	: Super(ObjectInitializer)
+UFlowNode_Switch::UFlowNode_Switch()
 {
 #if WITH_EDITOR
 	Category = TEXT("Route|Logic");

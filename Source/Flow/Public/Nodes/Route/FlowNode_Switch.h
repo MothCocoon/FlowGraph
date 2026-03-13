@@ -12,9 +12,11 @@
 UCLASS(MinimalApi, NotBlueprintable, meta = (DisplayName = "Switch"))
 class UFlowNode_Switch : public UFlowNode
 {
-	GENERATED_UCLASS_BODY()
+	GENERATED_BODY()
 
 public:
+	UFlowNode_Switch();
+
 	/* Only trigger the switch output for the first passing case during a single Evaluate
 	 * (if false, all passing cases will trigger) */
 	UPROPERTY(EditAnywhere, Category = "Switch")

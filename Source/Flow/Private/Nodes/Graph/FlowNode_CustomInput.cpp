@@ -7,8 +7,7 @@
 
 #define LOCTEXT_NAMESPACE "FlowNode_CustomInput"
 
-UFlowNode_CustomInput::UFlowNode_CustomInput(const FObjectInitializer& ObjectInitializer)
-	: Super(ObjectInitializer)
+UFlowNode_CustomInput::UFlowNode_CustomInput()
 {
 	InputPins.Empty();
 }

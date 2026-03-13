@@ -21,8 +21,8 @@ namespace FlowPinType
 
 		TInstancedStruct<FFlowDataPinValue> ValueStruct;
 		const FProperty* FoundProperty = nullptr;
-
-		if (!FlowNode.TryFindPropertyByPinName(PropertyOwnerObject, PropertyName, FoundProperty, ValueStruct))
+		const IFlowDataPinValueOwnerInterface* PropertyOwnerInterface = CastChecked<IFlowDataPinValueOwnerInterface>(&PropertyOwnerObject);
+		if (!PropertyOwnerInterface->TryFindPropertyByPinName(PropertyName, FoundProperty, ValueStruct))
 		{
 			OutResult.Result = EFlowDataPinResolveResult::FailedUnknownPin;
 			return false;

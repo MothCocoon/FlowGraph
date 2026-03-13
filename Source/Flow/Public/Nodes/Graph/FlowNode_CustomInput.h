@@ -10,7 +10,10 @@
 UCLASS(NotBlueprintable, meta = (DisplayName = "Custom Input"))
 class FLOW_API UFlowNode_CustomInput : public UFlowNode_CustomEventBase
 {
-	GENERATED_UCLASS_BODY()
+	GENERATED_BODY()
+
+public:
+	UFlowNode_CustomInput();
 
 	friend class UFlowAsset;
 

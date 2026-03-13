@@ -22,8 +22,8 @@ class FLOW_API IFlowNamedPropertiesSupplierInterface
 
 public:
 
-#if WITH_EDITOR
 	/* Returns the array of named properties defined by this node. */
 	virtual TArray<FFlowNamedDataPinProperty>& GetMutableNamedProperties() = 0;
-#endif
+	const TArray<FFlowNamedDataPinProperty>& GetNamedProperties() const 
+		{ return const_cast<IFlowNamedPropertiesSupplierInterface*>(this)->GetMutableNamedProperties(); }
 };

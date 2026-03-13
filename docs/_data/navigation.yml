@@ -4,6 +4,8 @@
       url: /Overview/Concept
     - title: Getting Started
       url: /Overview/GettingStarted
+    - title: How To Contribute
+      url: /Overview/HowToContribute 
     - title: FAQ
       url: /Overview/FAQ
 
@@ -27,9 +29,18 @@
     - title: Comparison to GAS
       url: /Guides/ComparisonToGAS  
 
+- title: Flow-based
+  docs:
+    - title: Games
+      url: /FlowBased/Games
+    - title: Plugins
+      url: /FlowBased/Plugins
+
 - title: Releases
   docs:
-    - title: Version 2.2 (in works)
+    - title: Version 2.3 (in works)
+      url: /Releases/Version23
+    - title: Version 2.2
       url: /Releases/Version22
     - title: Version 2.1
       url: /Releases/Version21
@@ -49,3 +60,8 @@
       url: /Releases/Version11
     - title: Version 1.0
       url: /Releases/Version10
+
+- title: Forks
+  docs:
+    - title: Notable Pull Requests
+      url: /Forks/NotablePullRequests

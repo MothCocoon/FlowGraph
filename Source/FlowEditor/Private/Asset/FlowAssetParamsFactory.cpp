@@ -78,6 +78,12 @@ bool UFlowAssetParamsFactory::ShowParentPickerDialog()
 					+ SVerticalBox::Slot()
 					.AutoHeight()
 					[
+						SNew(STextBlock)
+							.Text(LOCTEXT("CreateChildParamsHelp", "Choose Parent Flow Asset Params:\n"))
+					]
+					+ SVerticalBox::Slot()
+					.FillHeight(1.0f)
+					[
 						ParamsPicker
 					]
 			]

@@ -2,7 +2,6 @@
 #pragma once
 
 #include "EdGraph/EdGraphSchema.h"
-#include "Runtime/Launch/Resources/Version.h"
 #include "Templates/SubclassOf.h"
 
 #include "Asset/FlowPinTypeMatchPolicy.h"
@@ -56,12 +55,7 @@ public:
 	virtual int32 GetNodeSelectionCount(const UEdGraph* Graph) const override;
 	virtual TSharedPtr<FEdGraphSchemaAction> GetCreateCommentAction() const override;
 
-	PRAGMA_DISABLE_DEPRECATION_WARNINGS
-	virtual void OnPinConnectionDoubleCicked(UEdGraphPin* PinA, UEdGraphPin* PinB, const FVector2D& GraphPosition) const override;
-	PRAGMA_ENABLE_DEPRECATION_WARNINGS
-#if ENGINE_MAJOR_VERSION == 5 && ENGINE_MINOR_VERSION >= 6
 	virtual void OnPinConnectionDoubleCicked(UEdGraphPin* PinA, UEdGraphPin* PinB, const FVector2f& GraphPosition) const override;
-#endif
 	
 	virtual bool IsCacheVisualizationOutOfDate(int32 InVisualizationCacheID) const override;
 	virtual int32 GetCurrentVisualizationCacheID() const override;
@@ -134,7 +128,7 @@ protected:
 	 * I am going with a simple virtual method on schema For Now(tm) but expect a revision in how this is done, in the future. */
 	virtual void InitializedPinTypes();
 
-	static UFlowGraphNode* CreateDefaultNode(UEdGraph& Graph, const TSubclassOf<UFlowNode>& NodeClass, const FVector2D& Offset, bool bPlacedAsGhostNode);
+	static UFlowGraphNode* CreateDefaultNode(UEdGraph& Graph, const TSubclassOf<UFlowNode>& NodeClass, const FVector2f& Offset, bool bPlacedAsGhostNode);
 
 	/* Helper to break incompatible connections on a set of pins. */
 	template <bool bIsInputPins>
@@ -144,7 +138,7 @@ protected:
 	void NotifyNodesChanged(UFlowGraphNode* NodeA, UFlowGraphNode* NodeB, UEdGraph* Graph) const;
 
 private:
-	static void ApplyNodeOrAddOnFilter(const UFlowAsset* AssetClassDefaults, const UClass* FlowNodeClass, TArray<UFlowNodeBase*>& FilteredNodes);
+	static void ApplyNodeOrAddOnFilter(const UFlowAsset* EditedFlowAsset, const UClass* FlowNodeClass, TArray<UFlowNodeBase*>& FilteredNodes);
 	static void GetFlowNodeActions(FGraphActionMenuBuilder& ActionMenuBuilder, const UFlowAsset* EditedFlowAsset, const FString& CategoryName);
 	static TArray<UFlowNodeBase*> GetFilteredPlaceableNodesOrAddOns(const UFlowAsset* EditedFlowAsset, const TArray<UClass*>& InNativeNodesOrAddOns, const TMap<FName, FAssetData>& InBlueprintNodesOrAddOns);
 

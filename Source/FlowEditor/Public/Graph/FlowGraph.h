@@ -39,6 +39,10 @@ protected:
 	UPROPERTY(Transient)
 	TSet<TObjectPtr<UFlowGraphNode_Reroute>> PendingRerouteTypeFixups;
 
+	/* Nodes that requested a post-unlock reconstruct (avoids reconstruct storms + avoids reconstruct while transacting). */
+	UPROPERTY(Transient)
+	TSet<TObjectPtr<UFlowGraphNode>> PendingNodeReconstructs;
+
 public:
 	static void CreateGraph(UFlowAsset* InFlowAsset);
 	static void CreateGraph(UFlowAsset* InFlowAsset, TSubclassOf<UFlowGraphSchema> FlowSchema);
@@ -53,9 +57,15 @@ protected:
 	/* Run deferred reroute retyping after unlocking updates. */
 	void ProcessPendingRerouteTypeFixups();
 
+	/* Run deferred node reconstructs after unlocking updates. */
+	void ProcessPendingNodeReconstructs();
+
 public:
 	/* Called by reroute nodes when graph is locked and type changes should be deferred. */
 	void EnqueueRerouteTypeFixup(UFlowGraphNode_Reroute* RerouteNode);
+
+	/* Called by nodes when a reconstruct should occur, but must be deferred (transaction/lock). */
+	void EnqueueNodeReconstruct(UFlowGraphNode* Node);
 
 public:	
 	// UEdGraph

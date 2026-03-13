@@ -11,7 +11,10 @@
 UCLASS(NotBlueprintable, Config = Game, defaultconfig, meta = (DisplayName = "Checkpoint", Keywords = "autosave, save"))
 class FLOW_API UFlowNode_Checkpoint final : public UFlowNode
 {
-	GENERATED_UCLASS_BODY()
+	GENERATED_BODY()
+	
+public:
+	UFlowNode_Checkpoint();
 
 protected:
 	/* Change setting by editing DefaultGame.ini, add section.

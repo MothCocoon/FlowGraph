@@ -298,9 +298,13 @@ void UFlowGraph::UpdateAsset(const int32 UpdateFlags)
 	{
 		if (UFlowGraphNode* FlowGraphNode = Cast<UFlowGraphNode>(Node))
 		{
-			FlowGraphNode->RebuildRuntimeAddOnsFromEditorSubNodes();
+			constexpr bool bForceReconstructNode = false;
+			FlowGraphNode->RebuildRuntimeAddOnsFromEditorSubNodes(bForceReconstructNode);
 		}
 	}
+
+	// Apply any node reconstructs that were requested while locked or transacting
+	ProcessPendingNodeReconstructs();
 }
 
 bool UFlowGraph::UpdateUnknownNodeClasses()
@@ -392,7 +396,11 @@ FString UFlowGraph::GetDeprecationMessage(const UClass* Class)
 
 void UFlowGraph::OnSubNodeDropped()
 {
+	// Historically this only harvested connections.
+	// Keep behavior, but ensure pending reconstructs are processed as well.
 	NotifyGraphChanged();
+
+	ProcessPendingNodeReconstructs();
 }
 
 void UFlowGraph::RemoveOrphanedNodes()
@@ -477,6 +485,9 @@ void UFlowGraph::UnlockUpdates()
 	// Apply any deferred reroute type updates first, while we're in a stable post-paste state.
 	ProcessPendingRerouteTypeFixups();
 
+	// Apply any deferred node reconstructs next (e.g. subnode changes during paste/transactions).
+	ProcessPendingNodeReconstructs();
+
 	// Existing behavior
 	UpdateAsset();
 }
@@ -515,6 +526,45 @@ void UFlowGraph::ProcessPendingRerouteTypeFixups()
 		{
 			// This will call into reroute's centralized retype path via ReconfigureFromConnections()
 			RerouteNode->NodeConnectionListChanged();
+		}
+	}
+}
+
+void UFlowGraph::EnqueueNodeReconstruct(UFlowGraphNode* Node)
+{
+	if (!IsValid(Node))
+	{
+		return;
+	}
+
+	// If updates are locked OR we're in a transaction OR saving/loading, defer.
+	if (IsLocked() || GIsTransacting || IsSavingGraph() || IsLoadingGraph())
+	{
+		PendingNodeReconstructs.Add(Node);
+		return;
+	}
+
+	// Otherwise do it now.
+	Node->MarkNeedsFullReconstruction();
+	Node->ReconstructNode();
+}
+
+void UFlowGraph::ProcessPendingNodeReconstructs()
+{
+	if (PendingNodeReconstructs.IsEmpty())
+	{
+		return;
+	}
+
+	TSet<TObjectPtr<UFlowGraphNode>> Local = MoveTemp(PendingNodeReconstructs);
+	PendingNodeReconstructs.Reset();
+
+	for (UFlowGraphNode* Node : Local)
+	{
+		if (IsValid(Node))
+		{
+			Node->MarkNeedsFullReconstruction();
+			Node->ReconstructNode();
 		}
 	}
 }

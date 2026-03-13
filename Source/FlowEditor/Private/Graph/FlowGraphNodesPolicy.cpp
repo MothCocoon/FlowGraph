@@ -7,11 +7,11 @@
 #include UE_INLINE_GENERATED_CPP_BY_NAME(FlowGraphNodesPolicy)
 
 #if WITH_EDITOR
-bool FFlowGraphNodesPolicy::IsNodeAllowedByPolicy(const UFlowNodeBase* FlowNodeBase) const
+EFlowGraphPolicyResult FFlowGraphNodesPolicy::IsNodeAllowedByPolicy(const UFlowNodeBase* FlowNodeBase) const
 {
 	if (!IsValid(FlowNodeBase))
 	{
-		return false;
+		return EFlowGraphPolicyResult::TentativeForbidden;
 	}
 
 	const FString NodeCategoryString = UFlowGraphSettings::GetNodeCategoryForNode(*FlowNodeBase);
@@ -19,23 +19,23 @@ bool FFlowGraphNodesPolicy::IsNodeAllowedByPolicy(const UFlowNodeBase* FlowNodeB
 	const bool bIsInAllowedCategory = !AllowedCategories.IsEmpty() && IsAnySubcategory(NodeCategoryString, AllowedCategories);
 	if (bIsInAllowedCategory)
 	{
-		return true;
+		return EFlowGraphPolicyResult::Allowed;
 	}
 
 	const bool bIsInDisallowedCategory = !DisallowedCategories.IsEmpty() && IsAnySubcategory(NodeCategoryString, DisallowedCategories);
 	if (bIsInDisallowedCategory)
 	{
-		return false;
+		return EFlowGraphPolicyResult::Forbidden;
 	}
 
 	if (AllowedCategories.IsEmpty())
 	{
 		// If the AllowedCategories is empty, then we consider any node that isn't disallowed, as allowed
-		return true;
+		return EFlowGraphPolicyResult::TentativeAllowed;
 	}
 	else
 	{
-		return false;
+		return EFlowGraphPolicyResult::TentativeForbidden;
 	}
 }
 

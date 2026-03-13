@@ -125,11 +125,7 @@ const FSlateBrush* SFlowGraphNode::GetShadowBrush(bool bSelected) const
 	return SGraphNode::GetShadowBrush(bSelected);
 }
 
-#if ENGINE_MAJOR_VERSION == 5 && ENGINE_MINOR_VERSION < 6
-void SFlowGraphNode::GetOverlayBrushes(bool bSelected, const FVector2D WidgetSize, TArray<FOverlayBrushInfo>& Brushes) const
-#else
 void SFlowGraphNode::GetOverlayBrushes(bool bSelected, const FVector2f& WidgetSize, TArray<FOverlayBrushInfo>& Brushes) const
-#endif
 {
 	check(DebuggerSubsystem.IsValid());
 	
@@ -450,13 +446,8 @@ void SFlowGraphNode::UpdateGraphNode()
 			.IsGraphNodeHovered(this, &SGraphNode::IsHovered);
 
 		GetOrAddSlot(ENodeZone::TopCenter)
-#if ENGINE_MAJOR_VERSION == 5 && ENGINE_MINOR_VERSION < 6		
-			.SlotOffset(TAttribute<FVector2D>(CommentBubble.Get(), &SCommentBubble::GetOffset))
-			.SlotSize(TAttribute<FVector2D>(CommentBubble.Get(), &SCommentBubble::GetSize))
-#else
 			.SlotOffset2f(TAttribute<FVector2f>(CommentBubble.Get(), &SCommentBubble::GetOffset2f))
-			.SlotSize2f(TAttribute<FVector2f>(CommentBubble.Get(), &SCommentBubble::GetSize2f))
-#endif		
+			.SlotSize2f(TAttribute<FVector2f>(CommentBubble.Get(), &SCommentBubble::GetSize2f))	
 			.AllowScaling(TAttribute<bool>(CommentBubble.Get(), &SCommentBubble::IsScalingAllowed))
 			.VAlign(VAlign_Top)
 			[
@@ -1155,75 +1146,118 @@ FReply SFlowGraphNode::OnDrop(const FGeometry& MyGeometry, const FDragDropEvent&
 	SetDragMarker(false);
 
 	const TSharedPtr<FDragFlowGraphNode> DragNodeOp = DragDropEvent.GetOperationAs<FDragFlowGraphNode>();
-	if (DragNodeOp.IsValid())
+	if (!DragNodeOp.IsValid())
 	{
-		if (!DragNodeOp->IsValidOperation())
+		return SGraphNode::OnDrop(MyGeometry, DragDropEvent);
+	}
+
+	if (!DragNodeOp->IsValidOperation())
+	{
+		return FReply::Handled();
+	}
+
+	const float DragTime = static_cast<float>(FPlatformTime::Seconds() - DragNodeOp->StartTime);
+	if (DragTime < 0.5f)
+	{
+		return FReply::Handled();
+	}
+
+	if (FlowGraphNode == nullptr)
+	{
+		return FReply::Unhandled();
+	}
+
+	const FScopedTransaction Transaction(LOCTEXT("GraphEd_DragDropNode", "Drag&Drop Node"));
+
+	UFlowGraphNode* DropTargetNode = DragNodeOp->GetDropTargetNode();
+	check(DropTargetNode);
+
+	const TArray<TSharedRef<SGraphNode>>& DraggedNodes = DragNodeOp->GetNodes();
+
+	// Track the set of parents that must be refreshed/reconstructed as a result of this operation
+	TSet<UFlowGraphNode*> AffectedParents;
+
+	// Remove dragged subnodes from their old parents, and report whether this is purely a reorder.
+	bool bReorderOperation = true;
+
+	// Inline the parent tracking that RemoveDraggedSubNodes previously couldn't do
+	for (int32 Idx = 0; Idx < DraggedNodes.Num(); Idx++)
+	{
+		UFlowGraphNode* DraggedNode = Cast<UFlowGraphNode>(DraggedNodes[Idx]->GetNodeObj());
+		if (DraggedNode && DraggedNode->GetParentNode())
 		{
-			return FReply::Handled();
-		}
+			UFlowGraphNode* OldParent = DraggedNode->GetParentNode();
+			AffectedParents.Add(OldParent);
 
-		const float DragTime = static_cast<float>(FPlatformTime::Seconds() - DragNodeOp->StartTime);
-		if (DragTime < 0.5f)
-		{
-			return FReply::Handled();
-		}
-
-		if (FlowGraphNode == nullptr)
-		{
-			return FReply::Unhandled();
-		}
-
-		const FScopedTransaction Transaction(LOCTEXT("GraphEd_DragDropNode", "Drag&Drop Node"));
-
-		UFlowGraphNode* DropTargetNode = DragNodeOp->GetDropTargetNode();
-		check(DropTargetNode);
-
-		bool bReorderOperation = true;
-		const TArray< TSharedRef<SGraphNode> >& DraggedNodes = DragNodeOp->GetNodes();
-		RemoveDraggedSubNodes(DraggedNodes, bReorderOperation);
-
-		const bool bShouldDropAsSubNodesOfDropTargetNode = bReorderOperation || ShouldDropDraggedNodesAsSubNodes(DraggedNodes, DropTargetNode);
-
-		// Set up the DropTarget pointers based on the type of drop we've decided to do:
-		UFlowGraphNode* DropTargetParentNode;
-		if (bShouldDropAsSubNodesOfDropTargetNode)
-		{
-			DropTargetParentNode = DropTargetNode;
-			DropTargetNode = nullptr;
-		}
-		else
-		{
-			DropTargetParentNode = DropTargetNode->GetParentNode();
-		}
-
-		check(DropTargetParentNode);
-
-		const int32 InsertIndex = DropTargetParentNode->FindSubNodeDropIndex(DropTargetNode);
-
-		for (int32 Idx = 0; Idx < DraggedNodes.Num(); Idx++)
-		{
-			UFlowGraphNode* DraggedTestNode = Cast<UFlowGraphNode>(DraggedNodes[Idx]->GetNodeObj());
-			DraggedTestNode->Modify();
-			DraggedTestNode->SetParentNodeForSubNode(DropTargetParentNode);
-
-			DropTargetParentNode->Modify();
-			DropTargetParentNode->InsertSubNodeAt(DraggedTestNode, InsertIndex);
-
-			DropTargetParentNode->OnSubNodeAdded(DraggedTestNode);
-		}
-
-		if (bReorderOperation)
-		{
-			UpdateGraphNode();
-		}
-		else
-		{
-			UFlowGraph* MyGraph = DropTargetParentNode->GetFlowGraph();
-			if (DropTargetParentNode)
+			if (OldParent != GraphNode)
 			{
-				MyGraph->OnSubNodeDropped();
+				bReorderOperation = false;
+			}
+
+			OldParent->RemoveSubNode(DraggedNode);
+		}
+	}
+
+	const bool bShouldDropAsSubNodesOfDropTargetNode = bReorderOperation || ShouldDropDraggedNodesAsSubNodes(DraggedNodes, DropTargetNode);
+
+	// Decide the new parent insertion target (either the hovered node, or its parent for sibling insert)
+	UFlowGraphNode* DropTargetParentNode = nullptr;
+	UFlowGraphNode* SiblingInsertBeforeNode = nullptr;
+
+	if (bShouldDropAsSubNodesOfDropTargetNode)
+	{
+		DropTargetParentNode = DropTargetNode;
+		SiblingInsertBeforeNode = nullptr;
+	}
+	else
+	{
+		DropTargetParentNode = DropTargetNode->GetParentNode();
+		SiblingInsertBeforeNode = DropTargetNode;
+	}
+
+	check(DropTargetParentNode);
+	AffectedParents.Add(DropTargetParentNode);
+
+	const int32 InsertIndex = DropTargetParentNode->FindSubNodeDropIndex(SiblingInsertBeforeNode);
+
+	// Insert dragged nodes under the new parent
+	for (int32 Idx = 0; Idx < DraggedNodes.Num(); Idx++)
+	{
+		UFlowGraphNode* DraggedFlowNode = Cast<UFlowGraphNode>(DraggedNodes[Idx]->GetNodeObj());
+		if (!IsValid(DraggedFlowNode))
+		{
+			continue;
+		}
+
+		DraggedFlowNode->Modify();
+		DraggedFlowNode->SetParentNodeForSubNode(DropTargetParentNode);
+
+		DropTargetParentNode->Modify();
+		DropTargetParentNode->InsertSubNodeAt(DraggedFlowNode, InsertIndex);
+		DropTargetParentNode->OnSubNodeAdded(DraggedFlowNode);
+	}
+
+	// One consistent refresh path for both reorder and reparent:
+	// - NotifyGraphChanged keeps connection harvesting consistent.
+	// - Queue reconstruct ensures we don't lose reconstruction due to GIsTransacting.
+	UFlowGraph* MyGraph = DropTargetParentNode->GetFlowGraph();
+	if (IsValid(MyGraph))
+	{
+		MyGraph->OnSubNodeDropped();
+
+		for (UFlowGraphNode* Parent : AffectedParents)
+		{
+			if (IsValid(Parent))
+			{
+				MyGraph->EnqueueNodeReconstruct(Parent);
 			}
 		}
+	}
+
+	// UI refresh: reorder wants an immediate widget refresh for the current node tree
+	if (bReorderOperation)
+	{
+		UpdateGraphNode();
 	}
 
 	return SGraphNode::OnDrop(MyGeometry, DragDropEvent);

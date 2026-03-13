@@ -4,8 +4,7 @@
 
 #include UE_INLINE_GENERATED_CPP_BY_NAME(FlowNode_BlueprintDataPinSupplierBase)
 
-UFlowNode_BlueprintDataPinSupplierBase::UFlowNode_BlueprintDataPinSupplierBase(const FObjectInitializer& ObjectInitializer)
-	: Super(ObjectInitializer)
+UFlowNode_BlueprintDataPinSupplierBase::UFlowNode_BlueprintDataPinSupplierBase()
 {
 #if WITH_EDITOR
 	NodeDisplayStyle = FlowNodeStyle::Default;

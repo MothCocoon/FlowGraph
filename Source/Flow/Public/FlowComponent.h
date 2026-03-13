@@ -224,15 +224,6 @@ public:
 	void DispatchRootFlowCustomEvent(UFlowAsset* RootFlowInstance, const FName& EventName);
 	// ---
 
-	UE_DEPRECATED(5.5, "Please use OnRootFlowCustomEvent instead.")
-	void BP_OnTriggerRootFlowOutputEvent(UFlowAsset* RootFlowInstance, const FName& EventName);
-	
-	UE_DEPRECATED(5.5, "Please use OnRootFlowCustomEvent instead.")
-	virtual void OnTriggerRootFlowOutputEvent(UFlowAsset* RootFlowInstance, const FName& EventName);
-	
-	UE_DEPRECATED(5.5, "Please use OnTriggerRootFlowCustomOutputDispatcher instead.")
-	void OnTriggerRootFlowOutputEventDispatcher(UFlowAsset* RootFlowInstance, const FName& EventName);
-
 //////////////////////////////////////////////////////////////////////////
 // SaveGame
 

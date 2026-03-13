@@ -48,11 +48,7 @@ void SFlowGraphEditor::Construct(const FArguments& InArgs, const TSharedPtr<FFlo
 	Arguments._GraphEvents.OnSelectionChanged = FOnSelectionChanged::CreateSP(this, &SFlowGraphEditor::OnSelectedNodesChanged);
 	Arguments._GraphEvents.OnNodeDoubleClicked = FSingleNodeEvent::CreateSP(this, &SFlowGraphEditor::OnNodeDoubleClicked);
 	Arguments._GraphEvents.OnTextCommitted = FOnNodeTextCommitted::CreateSP(this, &SFlowGraphEditor::OnNodeTitleCommitted);
-#if ENGINE_MAJOR_VERSION == 5 && ENGINE_MINOR_VERSION < 6
-	Arguments._GraphEvents.OnSpawnNodeByShortcut = FOnSpawnNodeByShortcut::CreateStatic(&SFlowGraphEditor::OnSpawnGraphNodeByShortcut, static_cast<UEdGraph*>(FlowAsset->GetGraph()));
-#else
 	Arguments._GraphEvents.OnSpawnNodeByShortcutAtLocation = FOnSpawnNodeByShortcutAtLocation::CreateStatic(&SFlowGraphEditor::OnSpawnGraphNodeByShortcut, static_cast<UEdGraph*>(FlowAsset->GetGraph()));
-#endif
 
 	SGraphEditor::Construct(Arguments);
 }
@@ -398,11 +394,7 @@ void SFlowGraphEditor::RedoGraphAction()
 	GEditor->RedoTransaction();
 }
 
-#if ENGINE_MAJOR_VERSION == 5 && ENGINE_MINOR_VERSION < 6
-FReply SFlowGraphEditor::OnSpawnGraphNodeByShortcut(FInputChord InChord, const FVector2D& InPosition, UEdGraph* InGraph)
-#else
 FReply SFlowGraphEditor::OnSpawnGraphNodeByShortcut(FInputChord InChord, const FVector2f& InPosition, UEdGraph* InGraph)
-#endif
 {
 	UEdGraph* Graph = InGraph;
 
@@ -424,11 +416,7 @@ FReply SFlowGraphEditor::OnSpawnGraphNodeByShortcut(FInputChord InChord, const F
 void SFlowGraphEditor::OnCreateComment() const
 {
 	FFlowGraphSchemaAction_NewComment CommentAction;
-#if ENGINE_MAJOR_VERSION == 5 && ENGINE_MINOR_VERSION < 6
-	CommentAction.PerformAction(FlowAsset->GetGraph(), nullptr, GetPasteLocation());
-#else
 	CommentAction.PerformAction(FlowAsset->GetGraph(), nullptr, GetPasteLocation2f());
-#endif
 }
 
 bool SFlowGraphEditor::IsTabFocused() const
@@ -778,11 +766,7 @@ bool SFlowGraphEditor::CanCopyNodes() const
 
 void SFlowGraphEditor::PasteNodes()
 {
-#if ENGINE_MAJOR_VERSION == 5 && ENGINE_MINOR_VERSION < 6
-	PasteNodesHere(GetPasteLocation());
-#else
 	PasteNodesHere(GetPasteLocation2f());
-#endif
 }
 
 void SFlowGraphEditor::PasteNodesHere(const FVector2D& Location)

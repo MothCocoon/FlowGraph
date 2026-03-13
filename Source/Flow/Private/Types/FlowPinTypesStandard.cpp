@@ -71,7 +71,8 @@ bool FFlowPinType_Enum::PopulateResult(const UObject& PropertyOwnerObject, const
 	TInstancedStruct<FFlowDataPinValue> ValueStruct;
 	const FProperty* FoundProperty = nullptr;
 
-	if (!Node.TryFindPropertyByPinName(PropertyOwnerObject, PropertyName, FoundProperty, ValueStruct))
+	const IFlowDataPinValueOwnerInterface* PropertyOwnerInterface = CastChecked<IFlowDataPinValueOwnerInterface>(&PropertyOwnerObject);
+	if (!PropertyOwnerInterface->TryFindPropertyByPinName(PropertyName, FoundProperty, ValueStruct))
 	{
 		OutResult.Result = EFlowDataPinResolveResult::FailedUnknownPin;
 		return false;

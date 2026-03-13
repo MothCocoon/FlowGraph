@@ -75,6 +75,7 @@ FFlowPin FFlowPinType::CreateFlowPinFromProperty(const FProperty& Property, void
 FFlowPin FFlowPinType::CreateFlowPinFromValueWrapper(const FName& PinName, const FFlowDataPinValue& Wrapper) const
 {
 	FFlowPin NewFlowPin(PinName);
+	NewFlowPin.PinFriendlyName = FText::FromName(PinName);
 
 	FLOW_ASSERT_ENUM_MAX(EFlowDataMultiType, 2);
 	if (Wrapper.IsArray())

@@ -11,7 +11,10 @@
 UCLASS(NotBlueprintable, meta = (DisplayName = "AND", Keywords = "&"))
 class FLOW_API UFlowNode_LogicalAND final : public UFlowNode
 {
-	GENERATED_UCLASS_BODY()
+	GENERATED_BODY()
+	
+public:
+	UFlowNode_LogicalAND();
 
 private:
 	UPROPERTY(SaveGame)

@@ -10,7 +10,10 @@
 UCLASS(NotBlueprintable, meta = (DisplayName = "Sequence"))
 class FLOW_API UFlowNode_ExecutionSequence final : public UFlowNode
 {
-	GENERATED_UCLASS_BODY()
+	GENERATED_BODY()
+	
+public:
+	UFlowNode_ExecutionSequence();
 
 protected:
 	/**

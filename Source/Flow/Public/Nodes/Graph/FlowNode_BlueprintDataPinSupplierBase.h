@@ -10,9 +10,11 @@
 UCLASS(Abstract, Blueprintable, meta = (DisplayName = "Blueprint Data-Pin Supplier base"))
 class FLOW_API UFlowNode_BlueprintDataPinSupplierBase : public UFlowNode
 {
-	GENERATED_UCLASS_BODY()
+	GENERATED_BODY()
 
 public:
+	UFlowNode_BlueprintDataPinSupplierBase();
+
 	// IFlowDataPinValueSupplierInterface
 	virtual FFlowDataPinResult TrySupplyDataPin(FName PinName) const override;
 	// --

@@ -11,7 +11,10 @@
 UCLASS(NotBlueprintable, meta = (DisplayName = "Timer", Keywords = "delay, step, tick"))
 class FLOW_API UFlowNode_Timer : public UFlowNode
 {
-	GENERATED_UCLASS_BODY()
+	GENERATED_BODY()
+	
+public:
+	UFlowNode_Timer();
 
 protected:
 	/* If the value is closer to 0, Timer will complete in next tick. */

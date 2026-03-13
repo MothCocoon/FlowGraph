@@ -25,9 +25,6 @@ class FLOWEDITOR_API UFlowGraphEditorSettings : public UDeveloperSettings
 public:
 	UFlowGraphEditorSettings();
 
-	UE_DEPRECATED(5.5, "Call GetDefault<UFlowGraphEditorSettings>() instead.")
-	static UFlowGraphEditorSettings* Get() { return StaticClass()->GetDefaultObject<UFlowGraphEditorSettings>(); }
-
 #if WITH_EDITOR
 	virtual void PostEditChangeProperty(FPropertyChangedEvent& PropertyChangedEvent) override;
 #endif

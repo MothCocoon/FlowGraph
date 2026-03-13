@@ -11,9 +11,11 @@
 UCLASS(MinimalApi, NotBlueprintable, meta = (DisplayName = "Branch"))
 class UFlowNode_Branch : public UFlowNode
 {
-	GENERATED_UCLASS_BODY()
+	GENERATED_BODY()
 
 public:
+	UFlowNode_Branch();
+
 	/* For root-level predicates on this branch, do we treat them as an "AND" (all must pass) or an "OR" (at least one must pass)? */
 	UPROPERTY(EditAnywhere, Category = "Branch", DisplayName = "Root Combination Rule")
 	EFlowPredicateCombinationRule BranchCombinationRule = EFlowPredicateCombinationRule::AND;

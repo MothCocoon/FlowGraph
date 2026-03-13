@@ -10,7 +10,10 @@
 UCLASS(NotBlueprintable, meta = (DisplayName = "Counter"))
 class FLOW_API UFlowNode_Counter final : public UFlowNode
 {
-	GENERATED_UCLASS_BODY()
+	GENERATED_BODY()
+
+public:
+	UFlowNode_Counter();
 
 protected:
 	UPROPERTY(EditAnywhere, Category = "Counter", meta = (ClampMin = 2))

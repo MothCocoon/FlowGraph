@@ -21,9 +21,8 @@
 FFlowNodeLevelSequenceEvent UFlowNode_PlayLevelSequence::OnPlaybackStarted;
 FFlowNodeLevelSequenceEvent UFlowNode_PlayLevelSequence::OnPlaybackCompleted;
 
-UFlowNode_PlayLevelSequence::UFlowNode_PlayLevelSequence(const FObjectInitializer& ObjectInitializer)
-	: Super(ObjectInitializer)
-	, bPlayReverse(false)
+UFlowNode_PlayLevelSequence::UFlowNode_PlayLevelSequence()
+	: bPlayReverse(false)
 	, bUseGraphOwnerAsTransformOrigin(false)
 	, bReplicates(false)
 	, bAlwaysRelevant(false)

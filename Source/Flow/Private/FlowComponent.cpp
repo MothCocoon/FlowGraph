@@ -512,21 +512,6 @@ void UFlowComponent::DispatchRootFlowCustomEvent(UFlowAsset* RootFlowInstance, c
 	OnRootFlowCustomEvent(RootFlowInstance, EventName);
 }
 
-void UFlowComponent::BP_OnTriggerRootFlowOutputEvent(UFlowAsset* RootFlowInstance, const FName& EventName)
-{
-	BP_OnRootFlowCustomEvent(RootFlowInstance, EventName);
-}
-
-void UFlowComponent::OnTriggerRootFlowOutputEvent(UFlowAsset* RootFlowInstance, const FName& EventName)
-{
-	OnRootFlowCustomEvent(RootFlowInstance, EventName);
-}
-
-void UFlowComponent::OnTriggerRootFlowOutputEventDispatcher(UFlowAsset* RootFlowInstance, const FName& EventName)
-{
-	DispatchRootFlowCustomEvent(RootFlowInstance, EventName);
-}
-
 void UFlowComponent::SaveRootFlow(TArray<FFlowAssetSaveData>& SavedFlowInstances)
 {
 	if (UFlowAsset* FlowAssetInstance = GetRootFlowInstance())

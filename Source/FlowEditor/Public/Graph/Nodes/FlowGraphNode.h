@@ -238,7 +238,17 @@ public:
 	void SetParentNodeForSubNode(UFlowGraphNode* InParentNode);
 	UFlowGraphNode* GetParentNode() const { return ParentNode; }
 
-	void RebuildRuntimeAddOnsFromEditorSubNodes();
+	/** Returns the top-most ancestor (root) node in the subnode tree (could be this). */
+	UFlowGraphNode* GetRootFlowGraphNode() const;
+
+	/**
+	 * Request a reconstruction on the owning root FlowNode.
+	 * Needed for nested AddOn trees (AddOn inside AddOn) where removing/reparenting a subnode
+	 * should cause the root FlowNode to refresh its context/data pins and update visuals.
+	 */
+	void RequestReconstructOnRootFlowNode() const;
+
+	void RebuildRuntimeAddOnsFromEditorSubNodes(bool bForceReconstructNode = true);
 
 	static void DiffSubNodes(const FText& NodeTypeDisplayName, const TArray<UFlowGraphNode*>& LhsSubNodes,	const TArray<UFlowGraphNode*>& RhsSubNodes,	FDiffResults& Results);
 

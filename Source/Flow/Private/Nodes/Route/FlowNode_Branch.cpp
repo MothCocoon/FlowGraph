@@ -13,8 +13,7 @@ const FName UFlowNode_Branch::INPIN_Evaluate = TEXT("Evaluate");
 const FName UFlowNode_Branch::OUTPIN_True = TEXT("True");
 const FName UFlowNode_Branch::OUTPIN_False = TEXT("False");
 
-UFlowNode_Branch::UFlowNode_Branch(const FObjectInitializer& ObjectInitializer)
-	: Super(ObjectInitializer)
+UFlowNode_Branch::UFlowNode_Branch()
 {
 #if WITH_EDITOR
 	Category = TEXT("Route|Logic");

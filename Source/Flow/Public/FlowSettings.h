@@ -14,9 +14,6 @@ class FLOW_API UFlowSettings : public UDeveloperSettings
 {
 	GENERATED_UCLASS_BODY()
 
-	UE_DEPRECATED(5.5, "Call GetDefault<UFlowSettings>() instead.")
-	static UFlowSettings* Get() { return CastChecked<UFlowSettings>(UFlowSettings::StaticClass()->GetDefaultObject()); }
-
 #if WITH_EDITOR
 	virtual void PostEditChangeProperty(FPropertyChangedEvent& PropertyChangedEvent) override;
 #endif

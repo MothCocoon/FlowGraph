@@ -9,9 +9,8 @@
 
 #define LOCTEXT_NAMESPACE "FlowNode_Log"
 
-UFlowNode_Log::UFlowNode_Log(const FObjectInitializer& ObjectInitializer)
-	: Super(ObjectInitializer)
-	, Message()
+UFlowNode_Log::UFlowNode_Log()
+	: Message()
 	, Verbosity(EFlowLogVerbosity::Warning)
 	, bPrintToScreen(true)
 	, Duration(5.0f)
@@ -88,14 +87,23 @@ void UFlowNode_Log::PostEditChangeChainProperty(FPropertyChangedChainEvent& Prop
 	Super::PostEditChangeChainProperty(PropertyChainEvent);
 }
 
+void UFlowNode_Log::OnEditorPinConnectionsChanged(const TArray<FFlowPinConnectionChange>& Changes)
+{
+	Super::OnEditorPinConnectionsChanged(Changes);
+
+	UpdateNodeConfigText();
+}
+
 void UFlowNode_Log::UpdateNodeConfigText_Implementation()
 {
-	constexpr bool bErrorIfInputPinNotFound = false;
-	const bool bIsInputConnected = IsInputConnected(GET_MEMBER_NAME_CHECKED(ThisClass, Message), bErrorIfInputPinNotFound);
+	constexpr bool bErrorIfInputPinNotFound = true;
+
+	FConnectedPin ConnectedPin;
+	const bool bIsInputConnected = FindFirstInputPinConnection(GET_MEMBER_NAME_CHECKED(ThisClass, Message), bErrorIfInputPinNotFound, ConnectedPin);
 
 	if (bIsInputConnected)
 	{
-		SetNodeConfigText(FText());
+		SetNodeConfigText(FText::Format(LOCTEXT("LogFromPin", "Message from: {0}"), { FText::FromString(ConnectedPin.PinName.ToString()) }));
 	}
 	else
 	{

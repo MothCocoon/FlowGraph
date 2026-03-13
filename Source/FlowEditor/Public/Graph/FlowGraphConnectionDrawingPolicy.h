@@ -3,7 +3,6 @@
 
 #include "ConnectionDrawingPolicy.h"
 #include "EdGraphUtilities.h"
-#include "Runtime/Launch/Resources/Version.h"
 
 class FSlateWindowElementList;
 class UEdGraph;
@@ -56,11 +55,7 @@ public:
 	void BuildPaths();
 
 	// FConnectionDrawingPolicy
-#if ENGINE_MAJOR_VERSION == 5 && ENGINE_MINOR_VERSION < 6
-	virtual void DrawConnection(int32 LayerId, const FVector2D& Start, const FVector2D& End, const FConnectionParams& Params) override;
-#else
 	virtual void DrawConnection(int32 LayerId, const FVector2f& Start, const FVector2f& End, const FConnectionParams& Params);
-#endif
 	virtual void DetermineWiringStyle(UEdGraphPin* OutputPin, UEdGraphPin* InputPin, FConnectionParams& Params) override;
 	virtual void Draw(TMap<TSharedRef<SWidget>, FArrangedWidget>& PinGeometries, FArrangedChildren& ArrangedNodes) override;
 	// --

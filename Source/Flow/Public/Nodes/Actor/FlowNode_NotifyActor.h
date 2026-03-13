@@ -12,7 +12,10 @@
 UCLASS(NotBlueprintable, meta = (DisplayName = "Notify Actor", Keywords = "event"))
 class FLOW_API UFlowNode_NotifyActor : public UFlowNode
 {
-	GENERATED_UCLASS_BODY()
+	GENERATED_BODY()
+
+public:
+	UFlowNode_NotifyActor();
 
 protected:
 	UPROPERTY(EditAnywhere, Category = "Notify")

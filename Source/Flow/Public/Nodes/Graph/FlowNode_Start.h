@@ -13,7 +13,10 @@ class FLOW_API UFlowNode_Start
 	: public UFlowNode_DefineProperties
 	, public IFlowNodeWithExternalDataPinSupplierInterface
 {
-	GENERATED_UCLASS_BODY()
+	GENERATED_BODY()
+
+public:
+	UFlowNode_Start();
 
 	friend class UFlowAsset;
 

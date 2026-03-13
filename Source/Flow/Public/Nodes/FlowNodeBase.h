@@ -1,7 +1,6 @@
 // Copyright https://github.com/MothCocoon/FlowGraph/graphs/contributors
 #pragma once
 
-#include "Runtime/Launch/Resources/Version.h"
 #include "Templates/SubclassOf.h"
 
 #include "Interfaces/FlowCoreExecutableInterface.h"
@@ -11,6 +10,7 @@
 #include "FlowTags.h" // used by subclasses
 #include "FlowTypes.h"
 #include "Types/FlowDataPinResults.h"
+#include "Types/FlowPinConnectionChange.h"
 #include "Types/FlowPinTypeTemplates.h"
 
 #include "FlowNodeBase.generated.h"
@@ -21,8 +21,9 @@ class UFlowNodeAddOn;
 class UFlowSubsystem;
 class UEdGraphNode;
 class IFlowDataPinValueSupplierInterface;
-struct FFlowPin;
+struct FFlowAutoDataPinsWorkingData;
 struct FFlowNamedDataPinProperty;
+struct FFlowPin;
 struct FFlowPinType;
 
 #if WITH_EDITORONLY_DATA
@@ -81,7 +82,10 @@ class FLOW_API UFlowNodeBase
 	, public IFlowContextPinSupplierInterface
 	, public IFlowDataPinValueOwnerInterface
 {
-	GENERATED_UCLASS_BODY()
+	GENERATED_BODY()
+
+public:
+	UFlowNodeBase();
 
 	friend class SFlowGraphNode;
 	friend class UFlowAsset;
@@ -157,7 +161,12 @@ public:
 	virtual TArray<FFlowPin> GetContextOutputs() const override;
 	// --
 #endif
-	
+
+	/** Called in the editor when this node's pin connections change. */
+	UFUNCTION(BlueprintImplementableEvent, Category = "FlowNode", DisplayName = "On Editor Pin Connections Changed")	
+	void K2_OnEditorPinConnectionsChanged(const TArray<FFlowPinConnectionChange>& Changes);
+	virtual void OnEditorPinConnectionsChanged(const TArray<FFlowPinConnectionChange>& Changes) { K2_OnEditorPinConnectionsChanged(Changes); }
+
 //////////////////////////////////////////////////////////////////////////
 // Owners
 
@@ -460,11 +469,7 @@ public:
 	 * @param OutOverlayIcons Brush and positioning details of each icon to overlay on the node.
 	 * @param WidgetSize The size of the Node in the editor. Useful for determining offset position values for each overlay icon.
 	 */
-#if ENGINE_MAJOR_VERSION == 5 && ENGINE_MINOR_VERSION < 6	
-	virtual void GetOverlayIcons(TArray<FFlowNodeOverlayIcon>& OutOverlayIcons, const FVector2D WidgetSize) const {};
-#else
 	virtual void GetOverlayIcons(TArray<FFlowNodeOverlayIcon>& OutOverlayIcons, const FVector2f& WidgetSize) const {};
-#endif
 
 	/**
 	 * Gets details to draw an optional corner icon on the node.

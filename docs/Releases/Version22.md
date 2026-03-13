@@ -1,12 +1,21 @@
 ---
-title: Flow 2.2 (in works)
+title: Flow 2.2
 ---
 
-This is the upcoming release. This page is updated regularly after changes are pushed to the repository.
+February 28, 2026.
 
 This release includes pull requests from the community: ameaninglessname, bohdon (Bohdon Sayre), Danamarik, DemonViglu, GreggoryAddison-AntiHeroGameStudio (Greggory Addison), gregorhcs (Gregor Sönnichsen), j0tt (Jeff Ott), LindyHopperGT, Maksym Kapelianovych, Numblaze, Rhillion, SilentGodot (Mor Ohana).
 
 This is the first release for UE 5.7, and the last for UE 5.5.
+
+* [Flow 5.7](https://github.com/MothCocoon/FlowGraph/releases/tag/v2.2-5.7)
+* [Flow 5.6](https://github.com/MothCocoon/FlowGraph/releases/tag/v2.2-5.6)
+* [Flow 5.5](https://github.com/MothCocoon/FlowGraph/releases/tag/v2.2-5.5)
+
+Flow Game (sample project) releases
+* [Flow Game 5.7](https://github.com/MothCocoon/FlowGame/releases/tag/v2.2-5.7)
+* [Flow Game 5.6](https://github.com/MothCocoon/FlowGame/releases/tag/v2.2-5.6)
+* [Flow Game 5.5](https://github.com/MothCocoon/FlowGame/releases/tag/v2.2-5.5)
 
 ## Post-update actions
 ### Flow plugin is now DISABLED by default
@@ -27,7 +36,7 @@ If you're using Data Pins, please:
 * Read about related changes below.
 * Smoke test if all data has been properly updated.
 
-# Flow Asset
+## Flow Asset
 * Added `UFlowAsset::GatherNodesConnectedToAllInputs` helper function. (contributed by Riot Games)
 * Fixed the issue with the unwanted multiplication of the Comment node while copy-pasting it.
 * Made `UFlowAsset::IsBoundToWorld()` const. (contributed by gregorhcs)
@@ -36,7 +45,7 @@ If you're using Data Pins, please:
 ## Flow Subsystem
 * Exposed `UFlowSubsystem` runtime state fields to subclasses. (contributed by gregorhcs)
 
-# Flow Node
+## Flow Node
 * Trigger Outputs deferred while processing an Input Trigger (contributed by Riot Games: LindyHopperGT)
     * This is a change to the core Flow input triggering logic to fix a category of sequencing bugs from the previous behavior. It would immediately fully process a triggered input and so on down the chain of Flow Nodes, without allowing the current Flow Node to finish executing, this caused a whole category of problems where the node wasn't able to finish its execution before being interrupted by a retirgger (from downstream) and AddOns wouldn't execute at the same time as their owning flow node reliably.
     * Now, Flow Asset will queue any triggers generated while processing a trigger, and flush them when ending the processing of that trigger.

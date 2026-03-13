@@ -11,7 +11,10 @@
 UCLASS(NotBlueprintable, meta = (DisplayName = "OR", Keywords = "|"))
 class FLOW_API UFlowNode_LogicalOR final : public UFlowNode
 {
-	GENERATED_UCLASS_BODY()
+	GENERATED_BODY()
+	
+public:
+	UFlowNode_LogicalOR();
 
 protected:
 	UPROPERTY(EditAnywhere, Category = "Lifetime", SaveGame)

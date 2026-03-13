@@ -15,7 +15,10 @@ class UFlowComponent;
 UCLASS(Abstract, NotBlueprintable)
 class FLOW_API UFlowNode_ComponentObserver : public UFlowNode
 {
-	GENERATED_UCLASS_BODY()
+	GENERATED_BODY()
+
+public:
+	UFlowNode_ComponentObserver();
 	
 	friend class FFlowNode_ComponentObserverDetails;
 

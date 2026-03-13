@@ -8,8 +8,7 @@
 
 #define LOCTEXT_NAMESPACE "FlowNode_CustomOutput"
 
-UFlowNode_CustomOutput::UFlowNode_CustomOutput(const FObjectInitializer& ObjectInitializer)
-	: Super(ObjectInitializer)
+UFlowNode_CustomOutput::UFlowNode_CustomOutput()
 {
 	OutputPins.Empty();
 }

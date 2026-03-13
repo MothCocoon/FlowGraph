@@ -115,11 +115,7 @@ void FFlowGraphConnectionDrawingPolicy::BuildPaths()
 	}
 }
 
-#if ENGINE_MAJOR_VERSION == 5 && ENGINE_MINOR_VERSION < 6
-void FFlowGraphConnectionDrawingPolicy::DrawConnection(int32 LayerId, const FVector2D& Start, const FVector2D& End, const FConnectionParams& Params)
-#else
 void FFlowGraphConnectionDrawingPolicy::DrawConnection(int32 LayerId, const FVector2f& Start, const FVector2f& End, const FConnectionParams& Params)
-#endif
 {
 	switch (GetDefault<UFlowGraphSettings>()->ConnectionDrawType)
 	{
@@ -127,11 +123,7 @@ void FFlowGraphConnectionDrawingPolicy::DrawConnection(int32 LayerId, const FVec
 			FConnectionDrawingPolicy::DrawConnection(LayerId, Start, End, Params);
 			break;
 		case EFlowConnectionDrawType::Circuit:
-#if ENGINE_MAJOR_VERSION == 5 && ENGINE_MINOR_VERSION < 6
-			DrawCircuitSpline(LayerId, FVector2f(Start), FVector2f(End), Params);
-#else
-			DrawCircuitSpline(LayerId, Start, End, Params);
-#endif		
+			DrawCircuitSpline(LayerId, Start, End, Params);	
 			break;
 		default: ;
 	}
@@ -253,11 +245,7 @@ void FFlowGraphConnectionDrawingPolicy::DrawCircuitConnection(const int32& Layer
 	{
 		// This table maps distance along curve to alpha
 		FInterpCurve<float> SplineReparamTable;
-#if ENGINE_MAJOR_VERSION == 5 && ENGINE_MINOR_VERSION < 6
-		const float SplineLength = MakeSplineReparamTable(FVector2D(Start), FVector2D(StartDirection), FVector2D(End), FVector2D(EndDirection), SplineReparamTable);
-#else
 		const float SplineLength = MakeSplineReparamTable(Start, StartDirection, End, EndDirection, SplineReparamTable);
-#endif
 
 		// Draw bubbles on the spline
 		if (Params.bDrawBubbles)

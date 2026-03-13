@@ -59,7 +59,7 @@ public:
 	// --
 
 	// UFlowNode
-	virtual void GatherPotentialPropertyOwnersForDataPins(TArray<const UObject*>& InOutOwners) const override;
+	virtual void GatherDataPinValueOwnerCollection(FFlowDataPinValueOwnerCollection& ValueOwnerCollection) const override;
 	// --
 
 #if WITH_EDITOR

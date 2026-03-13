@@ -4,8 +4,7 @@
 
 #include UE_INLINE_GENERATED_CPP_BY_NAME(FlowNode_Finish)
 
-UFlowNode_Finish::UFlowNode_Finish(const FObjectInitializer& ObjectInitializer)
-	: Super(ObjectInitializer)
+UFlowNode_Finish::UFlowNode_Finish()
 {
 #if WITH_EDITOR
 	Category = TEXT("Graph");

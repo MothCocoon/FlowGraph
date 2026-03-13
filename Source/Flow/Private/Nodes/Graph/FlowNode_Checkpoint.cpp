@@ -7,9 +7,8 @@
 
 #include UE_INLINE_GENERATED_CPP_BY_NAME(FlowNode_Checkpoint)
 
-UFlowNode_Checkpoint::UFlowNode_Checkpoint(const FObjectInitializer& ObjectInitializer)
-	: Super(ObjectInitializer)
-	, bUseAsyncSave(false)
+UFlowNode_Checkpoint::UFlowNode_Checkpoint()
+	: bUseAsyncSave(false)
 {
 #if WITH_EDITOR
 	Category = TEXT("Graph");

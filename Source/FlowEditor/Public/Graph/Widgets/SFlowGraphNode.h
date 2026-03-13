@@ -3,7 +3,6 @@
 
 #include "SGraphNode.h"
 #include "KismetPins/SGraphPinExec.h"
-#include "Runtime/Launch/Resources/Version.h"
 
 #include "Graph/Nodes/FlowGraphNode.h"
 
@@ -34,13 +33,9 @@ protected:
 	// SNodePanel::SNode
 	virtual void GetNodeInfoPopups(FNodeInfoContext* Context, TArray<FGraphInformationPopupInfo>& Popups) const override;
 	virtual const FSlateBrush* GetShadowBrush(bool bSelected) const override;
-
-#if ENGINE_MAJOR_VERSION == 5 && ENGINE_MINOR_VERSION < 6
-	virtual void GetOverlayBrushes(bool bSelected, const FVector2D WidgetSize, TArray<FOverlayBrushInfo>& Brushes) const override;
-#else
 	virtual void GetOverlayBrushes(bool bSelected, const FVector2f& WidgetSize, TArray<FOverlayBrushInfo>& Brushes) const override;
-#endif
 	// --
+
 	const FSlateBrush* GetSlateBrush(const FName BrushName, const FName StyleSetName) const;
 	
 	// SGraphNode

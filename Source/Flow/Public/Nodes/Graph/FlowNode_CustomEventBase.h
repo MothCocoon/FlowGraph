@@ -10,7 +10,10 @@
 UCLASS(Abstract, NotBlueprintable)
 class FLOW_API UFlowNode_CustomEventBase : public UFlowNode
 {
-	GENERATED_UCLASS_BODY()
+	GENERATED_BODY()
+	
+public:
+	UFlowNode_CustomEventBase();
 
 protected:
 	UPROPERTY()

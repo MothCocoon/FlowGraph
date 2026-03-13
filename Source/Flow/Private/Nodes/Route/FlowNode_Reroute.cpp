@@ -5,8 +5,7 @@
 
 #include UE_INLINE_GENERATED_CPP_BY_NAME(FlowNode_Reroute)
 
-UFlowNode_Reroute::UFlowNode_Reroute(const FObjectInitializer& ObjectInitializer)
-	: Super(ObjectInitializer)
+UFlowNode_Reroute::UFlowNode_Reroute()
 {
 #if WITH_EDITOR
 	Category = TEXT("Route");
@@ -46,14 +45,13 @@ FFlowDataPinResult UFlowNode_Reroute::TrySupplyDataPin(FName PinName) const
 		return FFlowDataPinResult(EFlowDataPinResolveResult::FailedUnknownPin);
 	}
 
-	FGuid FoundGuid;
-	FName ConnectedPinName;
-	if (!IsInputConnected(*InputPin, &FoundGuid, &ConnectedPinName))
+	FConnectedPin ConnectedPin;
+	if (!FindFirstInputPinConnection(*InputPin, ConnectedPin))
 	{
 		return FFlowDataPinResult(EFlowDataPinResolveResult::FailedNotConnected);
 	}
 
-	const UFlowNode* ConnectedFlowNodeSupplier = GetFlowAsset()->GetNode(FoundGuid);
+	const UFlowNode* ConnectedFlowNodeSupplier = GetFlowAsset()->GetNode(ConnectedPin.NodeGuid);
 	if (!IsValid(ConnectedFlowNodeSupplier))
 	{
 		checkf(IsValid(ConnectedFlowNodeSupplier), TEXT("This node should be valid if IsInputConnected returned true"));
@@ -62,5 +60,5 @@ FFlowDataPinResult UFlowNode_Reroute::TrySupplyDataPin(FName PinName) const
 	}
 
 	// Hand-off to the connected flow node to supply the value
-	return ConnectedFlowNodeSupplier->TrySupplyDataPin(ConnectedPinName);
+	return ConnectedFlowNodeSupplier->TrySupplyDataPin(ConnectedPin.PinName);
 }

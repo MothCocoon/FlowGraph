@@ -4,9 +4,8 @@
 
 #include UE_INLINE_GENERATED_CPP_BY_NAME(FlowNode_Counter)
 
-UFlowNode_Counter::UFlowNode_Counter(const FObjectInitializer& ObjectInitializer)
-	: Super(ObjectInitializer)
-	, Goal(2)
+UFlowNode_Counter::UFlowNode_Counter()
+	: Goal(2)
 	, CurrentSum(0)
 {
 #if WITH_EDITOR

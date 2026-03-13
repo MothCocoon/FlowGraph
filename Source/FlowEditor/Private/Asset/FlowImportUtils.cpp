@@ -163,7 +163,7 @@ void UFlowImportUtils::ImportBlueprintGraph(UBlueprint* Blueprint, UFlowAsset* F
 	TMap<FGuid, UFlowGraphNode*> TargetNodes;
 
 	// recreated UFlowNode_Start, assign it a blueprint node FGuid
-	UFlowGraphNode* StartGraphNode = FFlowGraphSchemaAction_NewNode::CreateNode(FlowGraph, nullptr, UFlowNode_Start::StaticClass(), FVector2D::ZeroVector);
+	UFlowGraphNode* StartGraphNode = FFlowGraphSchemaAction_NewNode::CreateNode(FlowGraph, nullptr, UFlowNode_Start::StaticClass(), FVector2f::ZeroVector);
 	FlowGraph->GetSchema()->SetNodeMetaData(StartGraphNode, FNodeMetadata::DefaultGraphNode);
 	StartGraphNode->NodeGuid = StartNode->NodeGuid;
 	UFlowNode* StartFlowNode = Cast<UFlowNode>(StartGraphNode->GetFlowNodeBase());

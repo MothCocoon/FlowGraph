@@ -10,7 +10,10 @@
 UCLASS(NotBlueprintable, meta = (DisplayName = "Reroute"))
 class FLOW_API UFlowNode_Reroute final : public UFlowNode
 {
-	GENERATED_UCLASS_BODY()
+	GENERATED_BODY()
+	
+public:
+	UFlowNode_Reroute();
 
 protected:
 	// IFlowCoreExecutableInterface

@@ -11,8 +11,11 @@
 UCLASS(NotBlueprintable, meta = (DisplayName = "Format Text", Keywords = "print"))
 class FLOW_API UFlowNode_FormatText : public UFlowNode_DefineProperties
 {
-	GENERATED_UCLASS_BODY()
-	
+	GENERATED_BODY()
+
+public:
+	UFlowNode_FormatText();
+
 private:
 	/* Format text string.
 	 * Uses standard Unreal "FText" formatting: eg, {PinName} will refer to input called PinName.
@@ -30,7 +33,6 @@ public:
 #endif
 
 protected:
-
 	EFlowDataPinResolveResult TryResolveFormattedText(const FName& PinName, FText& OutFormattedText) const;
 
 public:

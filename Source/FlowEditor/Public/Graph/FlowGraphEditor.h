@@ -2,7 +2,6 @@
 #pragma once
 
 #include "GraphEditor.h"
-#include "Runtime/Launch/Resources/Version.h"
 #include "Widgets/DeclarativeSyntaxSupport.h"
 
 #include "FlowGraph.h"
@@ -50,11 +49,7 @@ private:
 	static void UndoGraphAction();
 	static void RedoGraphAction();
 
-#if ENGINE_MAJOR_VERSION == 5 && ENGINE_MINOR_VERSION < 6
-	static FReply OnSpawnGraphNodeByShortcut(FInputChord InChord, const FVector2D& InPosition, UEdGraph* InGraph);
-#else
 	static FReply OnSpawnGraphNodeByShortcut(FInputChord InChord, const FVector2f& InPosition, UEdGraph* InGraph);
-#endif
 
 	void OnCreateComment() const;
 

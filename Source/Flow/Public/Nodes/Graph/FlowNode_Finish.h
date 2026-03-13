@@ -11,7 +11,10 @@
 UCLASS(NotBlueprintable, meta = (DisplayName = "Finish"))
 class FLOW_API UFlowNode_Finish : public UFlowNode
 {
-	GENERATED_UCLASS_BODY()
+	GENERATED_BODY()
+	
+public:
+	UFlowNode_Finish();
 
 protected:
 	virtual bool CanFinishGraph() const override { return true; }

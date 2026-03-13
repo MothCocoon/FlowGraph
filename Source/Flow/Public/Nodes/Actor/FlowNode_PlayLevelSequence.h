@@ -23,7 +23,11 @@ DECLARE_MULTICAST_DELEGATE(FFlowNodeLevelSequenceEvent);
 UCLASS(NotBlueprintable, meta = (DisplayName = "Play Level Sequence"))
 class FLOW_API UFlowNode_PlayLevelSequence : public UFlowNode
 {
-	GENERATED_UCLASS_BODY()
+	GENERATED_BODY()
+	
+public:
+	UFlowNode_PlayLevelSequence();
+	
 	friend struct FFlowTrackExecutionToken;
 
 public:	

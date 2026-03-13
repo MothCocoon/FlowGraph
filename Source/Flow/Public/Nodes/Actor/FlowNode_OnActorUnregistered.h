@@ -10,7 +10,10 @@
 UCLASS(NotBlueprintable, meta = (DisplayName = "On Actor Unregistered", Keywords = "unbind"))
 class FLOW_API UFlowNode_OnActorUnregistered : public UFlowNode_ComponentObserver
 {
-	GENERATED_UCLASS_BODY()
+	GENERATED_BODY()
+
+public:
+	UFlowNode_OnActorUnregistered();
 
 protected:
 	virtual void ObserveActor(TWeakObjectPtr<AActor> Actor, TWeakObjectPtr<UFlowComponent> Component) override;
