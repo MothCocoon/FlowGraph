@@ -1,10 +1,9 @@
 // Copyright https://github.com/MothCocoon/FlowGraph/graphs/contributors
 #pragma once
 
-#include "GameplayEffectTypes.h"
-
 #include "AddOns/FlowNodeAddOn.h"
 #include "Interfaces/FlowPredicateInterface.h"
+#include "Types/FlowGameplayTagUtils.h"
 
 #include "FlowNodeAddOn_PredicateRequireGameplayTags.generated.h"
 
@@ -47,5 +46,5 @@ public:
 
 	/* Requirements to evaluate the Test Tags with. */
 	UPROPERTY(EditAnywhere, Category = Configuration)
-	FGameplayTagRequirements Requirements;
+	FFlowGameplayTagRequirements Requirements;
 };

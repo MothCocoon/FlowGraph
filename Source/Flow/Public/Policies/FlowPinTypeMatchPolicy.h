@@ -33,10 +33,10 @@ struct FFlowPinTypeMatchPolicy
 {
 	GENERATED_BODY()
 
-	UPROPERTY()
+	UPROPERTY(EditAnywhere, Category = PinConnection, meta = (Bitmask, BitmaskEnum = "/Script/Flow.EFlowPinTypeMatchRules"))
 	EFlowPinTypeMatchRules PinTypeMatchRules = EFlowPinTypeMatchRules::StandardPinTypeMatchRulesMask;
 
 	/* Pin categories to allow beyond an exact match. */
-	UPROPERTY()
+	UPROPERTY(EditAnywhere, Category = PinConnection)
 	TSet<FName> PinCategories;
 };

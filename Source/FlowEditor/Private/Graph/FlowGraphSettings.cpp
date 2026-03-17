@@ -57,8 +57,10 @@ void UFlowGraphSettings::PostInitProperties()
 void UFlowGraphSettings::PostEditChangeProperty(FPropertyChangedEvent& PropertyChangedEvent)
 {
 	Super::PostEditChangeProperty(PropertyChangedEvent);
+
+	const FName MemberPropertyName = PropertyChangedEvent.GetMemberPropertyName();
 	
-	if (PropertyChangedEvent.GetMemberPropertyName() == GET_MEMBER_NAME_CHECKED( UFlowGraphSettings, NodePrefixesToRemove ))
+	if (MemberPropertyName == GET_MEMBER_NAME_CHECKED( UFlowGraphSettings, NodePrefixesToRemove ))
 	{
 		//
 		// We need to sort items in array, because unsorted array can cause only partial prefix removal.
@@ -86,7 +88,7 @@ void UFlowGraphSettings::PostEditChangeProperty(FPropertyChangedEvent& PropertyC
 			UFlowGraphSchema::UpdateGeneratedDisplayNames();
 		}
 	}
-	else if (PropertyChangedEvent.GetMemberPropertyName() == GET_MEMBER_NAME_CHECKED(UFlowGraphSettings, NodeDisplayStyles))
+	else if (MemberPropertyName == GET_MEMBER_NAME_CHECKED(UFlowGraphSettings, NodeDisplayStyles))
 	{
 		if (FlowArray::TrySortAndRemoveDuplicatesFromArrayInPlace(NodeDisplayStyles))
 		{

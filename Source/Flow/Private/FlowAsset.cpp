@@ -14,6 +14,7 @@
 #include "Nodes/Graph/FlowNode_CustomOutput.h"
 #include "Nodes/Graph/FlowNode_Start.h"
 #include "Nodes/Graph/FlowNode_SubGraph.h"
+#include "Policies/FlowPinConnectionPolicy.h"
 #include "Types/FlowAutoDataPinsWorkingData.h"
 #include "Types/FlowDataPinValue.h"
 #include "Types/FlowStructUtils.h"
@@ -54,6 +55,7 @@ UFlowAsset::UFlowAsset(const FObjectInitializer& ObjectInitializer)
 	, bStartNodePlacedAsGhostNode(false)
 	, TemplateAsset(nullptr)
 	, FinishPolicy(EFlowFinishPolicy::Keep)
+	, FlowPinConnectionPolicy()
 {
 	if (!AssetGuid.IsValid())
 	{
@@ -61,6 +63,15 @@ UFlowAsset::UFlowAsset(const FObjectInitializer& ObjectInitializer)
 	}
 
 	ExpectedOwnerClass = GetDefault<UFlowSettings>()->GetDefaultExpectedOwnerClass();
+}
+
+void UFlowAsset::PostInitProperties()
+{
+	Super::PostInitProperties();
+
+#if WITH_EDITOR
+	InitializeFlowPinConnectionPolicy();
+#endif
 }
 
 #if WITH_EDITOR
@@ -1430,7 +1441,25 @@ bool UFlowAsset::IsBoundToWorld_Implementation() const
 	return bWorldBound;
 }
 
+const FFlowPinConnectionPolicy& UFlowAsset::GetFlowPinConnectionPolicy() const
+{
+	// Runtime instances delegate to their template, which holds the serialized policy
+	if (!FlowPinConnectionPolicy.IsValid() && IsValid(TemplateAsset))
+	{
+		return TemplateAsset->GetFlowPinConnectionPolicy();
+	}
+
+	check(FlowPinConnectionPolicy.IsValid());
+	return FlowPinConnectionPolicy.Get();
+}
+
 #if WITH_EDITOR
+
+void UFlowAsset::InitializeFlowPinConnectionPolicy()
+{
+	GetDefault<UFlowSettings>()->GetFlowPinConnectionPolicy(FlowPinConnectionPolicy);
+}
+
 void UFlowAsset::LogError(const FString& MessageToLog, const UFlowNodeBase* Node) const
 {
 	LogRuntimeMessage(EMessageSeverity::Error, MessageToLog, Node);

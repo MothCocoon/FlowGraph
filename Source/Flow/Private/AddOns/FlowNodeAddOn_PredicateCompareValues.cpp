@@ -6,6 +6,8 @@
 #include "Types/FlowPinTypeNamesStandard.h"
 #include "Types/FlowPinTypesStandard.h"
 #include "Types/FlowDataPinValuesStandard.h"
+#include "FlowAsset.h"
+#include "Policies/FlowPinConnectionPolicy.h"
 
 #define LOCTEXT_NAMESPACE "FlowNodeAddOn_PredicateCompareValues"
 
@@ -93,25 +95,27 @@ bool UFlowNodeAddOn_PredicateCompareValues::IsArithmeticOp() const
 	return EFlowPredicateCompareOperatorType_Classifiers::IsArithmeticOperation(OperatorType);
 }
 
-bool UFlowNodeAddOn_PredicateCompareValues::IsNumericTypeName(const FName& TypeName)
+bool UFlowNodeAddOn_PredicateCompareValues::IsNumericTypeName(
+	const FFlowPinConnectionPolicy& PinConnectionPolicy,
+	const FName& TypeName)
 {
-	return
-		IsFloatingPointType(TypeName) ||
-		IsIntegerType(TypeName);
+	return 
+		PinConnectionPolicy.GetAllSupportedIntegerTypes().Contains(TypeName) ||
+		PinConnectionPolicy.GetAllSupportedFloatTypes().Contains(TypeName);
 }
 
-bool UFlowNodeAddOn_PredicateCompareValues::IsFloatingPointType(const FName& TypeName)
+bool UFlowNodeAddOn_PredicateCompareValues::IsFloatingPointType(
+	const FFlowPinConnectionPolicy& PinConnectionPolicy,
+	const FName& TypeName)
 {
-	return
-		TypeName == FFlowPinTypeNamesStandard::PinTypeNameFloat ||
-		TypeName == FFlowPinTypeNamesStandard::PinTypeNameDouble;
+	return PinConnectionPolicy.GetAllSupportedFloatTypes().Contains(TypeName);
 }
 
-bool UFlowNodeAddOn_PredicateCompareValues::IsIntegerType(const FName& TypeName)
+bool UFlowNodeAddOn_PredicateCompareValues::IsIntegerType(
+	const FFlowPinConnectionPolicy& PinConnectionPolicy,
+	const FName& TypeName)
 {
-	return
-		TypeName == FFlowPinTypeNamesStandard::PinTypeNameInt ||
-		TypeName == FFlowPinTypeNamesStandard::PinTypeNameInt64;
+	return PinConnectionPolicy.GetAllSupportedIntegerTypes().Contains(TypeName);
 }
 
 bool UFlowNodeAddOn_PredicateCompareValues::IsTextType(const FName& TypeName)
@@ -132,24 +136,56 @@ bool UFlowNodeAddOn_PredicateCompareValues::IsNameLikeType(const FName& TypeName
 		TypeName == FFlowPinTypeNamesStandard::PinTypeNameEnum;
 }
 
-bool UFlowNodeAddOn_PredicateCompareValues::IsEnumTypeName(const FName& TypeName)
+bool UFlowNodeAddOn_PredicateCompareValues::IsAnyStringLikeTypeName(
+	const FFlowPinConnectionPolicy& PinConnectionPolicy,
+	const FName& TypeName)
 {
-	return TypeName == FFlowPinTypeNamesStandard::PinTypeNameEnum;
-}
-
-bool UFlowNodeAddOn_PredicateCompareValues::IsAnyStringLikeTypeName(const FName& TypeName)
-{
-	return
+	// Special-casing NameLike, since the CompareValues predicate counts Enums as Names
+	return 
 		IsNameLikeType(TypeName) ||
-		IsTextType(TypeName) ||
-		IsStringType(TypeName);
+		PinConnectionPolicy.GetAllSupportedStringLikeTypes().Contains(TypeName);
 }
 
-bool UFlowNodeAddOn_PredicateCompareValues::IsGameplayTagLikeTypeName(const FName& TypeName)
+bool UFlowNodeAddOn_PredicateCompareValues::IsGameplayTagLikeTypeName(
+	const FFlowPinConnectionPolicy& PinConnectionPolicy,
+	const FName& TypeName)
 {
-	return
-		TypeName == FFlowPinTypeNamesStandard::PinTypeNameGameplayTag ||
-		TypeName == FFlowPinTypeNamesStandard::PinTypeNameGameplayTagContainer;
+	return PinConnectionPolicy.GetAllSupportedGameplayTagTypes().Contains(TypeName);
+}
+
+bool UFlowNodeAddOn_PredicateCompareValues::IsBoolTypeName(const FName& TypeName)
+{
+	return TypeName == FFlowPinTypeNamesStandard::PinTypeNameBool;
+}
+
+bool UFlowNodeAddOn_PredicateCompareValues::IsVectorTypeName(const FName& TypeName)
+{
+	return TypeName == FFlowPinTypeNamesStandard::PinTypeNameVector;
+}
+
+bool UFlowNodeAddOn_PredicateCompareValues::IsRotatorTypeName(const FName& TypeName)
+{
+	return TypeName == FFlowPinTypeNamesStandard::PinTypeNameRotator;
+}
+
+bool UFlowNodeAddOn_PredicateCompareValues::IsTransformTypeName(const FName& TypeName)
+{
+	return TypeName == FFlowPinTypeNamesStandard::PinTypeNameTransform;
+}
+
+bool UFlowNodeAddOn_PredicateCompareValues::IsObjectTypeName(const FName& TypeName)
+{
+	return TypeName == FFlowPinTypeNamesStandard::PinTypeNameObject;
+}
+
+bool UFlowNodeAddOn_PredicateCompareValues::IsClassTypeName(const FName& TypeName)
+{
+	return TypeName == FFlowPinTypeNamesStandard::PinTypeNameClass;
+}
+
+bool UFlowNodeAddOn_PredicateCompareValues::IsInstancedStructTypeName(const FName& TypeName)
+{
+	return TypeName == FFlowPinTypeNamesStandard::PinTypeNameInstancedStruct;
 }
 
 #if WITH_EDITOR
@@ -177,13 +213,105 @@ void UFlowNodeAddOn_PredicateCompareValues::OnPostEditEnsureAllNamedPropertiesPi
 	}
 }
 
+EDataValidationResult UFlowNodeAddOn_PredicateCompareValues::ValidateNode()
+{
+	EDataValidationResult Result = Super::ValidateNode();
+
+	// Validate that both values are configured
+	if (!LeftValue.IsValid())
+	{
+		LogValidationError(TEXT("LeftValue is not configured (missing name or pin type)."));
+		Result = EDataValidationResult::Invalid;
+	}
+
+	if (!RightValue.IsValid())
+	{
+		LogValidationError(TEXT("RightValue is not configured (missing name or pin type)."));
+		Result = EDataValidationResult::Invalid;
+	}
+
+	// Remaining checks require both values to be valid
+	if (!LeftValue.IsValid() || !RightValue.IsValid())
+	{
+		return Result;
+	}
+
+	const FFlowPinTypeName LeftPinTypeName = LeftValue.DataPinValue.Get().GetPinTypeName();
+	const FFlowPinTypeName RightPinTypeName = RightValue.DataPinValue.Get().GetPinTypeName();
+
+	// Validate pin type names are set
+	if (LeftPinTypeName.IsNone())
+	{
+		LogValidationError(TEXT("LeftValue has an unknown or unset pin type."));
+		Result = EDataValidationResult::Invalid;
+	}
+
+	if (RightPinTypeName.IsNone())
+	{
+		LogValidationError(TEXT("RightValue has an unknown or unset pin type."));
+		Result = EDataValidationResult::Invalid;
+	}
+
+	if (LeftPinTypeName.IsNone() || RightPinTypeName.IsNone())
+	{
+		return Result;
+	}
+
+	// Check type compatibility
+
+	const UFlowAsset* FlowAsset = GetFlowAsset();
+	check(IsValid(FlowAsset));
+	const FFlowPinConnectionPolicy& PinConnectionPolicy = FlowAsset->GetFlowPinConnectionPolicy();
+
+	const FName LeftTypeName = LeftPinTypeName.Name;
+	const FName RightTypeName = RightPinTypeName.Name;
+
+	const bool bSameType = (LeftTypeName == RightTypeName);
+
+	if (!bSameType && !AreComparablePinTypes(PinConnectionPolicy, LeftTypeName, RightTypeName))
+	{
+		LogValidationError(FString::Printf(
+			TEXT("Pin types are not comparable: '%s' vs '%s'."),
+			*LeftTypeName.ToString(),
+			*RightTypeName.ToString()));
+		Result = EDataValidationResult::Invalid;
+	}
+
+	// Validate arithmetic operators are only used with numeric types
+	if (IsArithmeticOp() && 
+		!(IsNumericTypeName(PinConnectionPolicy, LeftTypeName) && IsNumericTypeName(PinConnectionPolicy, RightTypeName)))
+	{
+		LogValidationError(FString::Printf(
+			TEXT("Arithmetic operator '%s' is only supported for numeric pin types (Int/Int64/Float/Double). Current types: '%s' vs '%s'."),
+			*EFlowPredicateCompareOperatorType_Classifiers::GetOperatorSymbolString(OperatorType),
+			*LeftTypeName.ToString(),
+			*RightTypeName.ToString()));
+		Result = EDataValidationResult::Invalid;
+	}
+
+	// Warn if both sides have the same authored name (potential user confusion)
+	if (GetAuthoredValueName(LeftValue) == GetAuthoredValueName(RightValue))
+	{
+		LogValidationWarning(FString::Printf(
+			TEXT("LeftValue and RightValue have the same name '%s'. This may cause confusion with pin disambiguation."),
+			*GetAuthoredValueName(LeftValue).ToString()));
+	}
+
+	if (Result == EDataValidationResult::NotValidated)
+	{
+		Result = EDataValidationResult::Valid;
+	}
+
+	return Result;
+}
+
 FText UFlowNodeAddOn_PredicateCompareValues::K2_GetNodeTitle_Implementation() const
 {
 	using namespace EFlowPredicateCompareOperatorType_Classifiers;
 
 	const bool bIsClassDefault = HasAnyFlags(RF_ArchetypeObject | RF_ClassDefaultObject);
 
-	if (!bIsClassDefault && 
+	if (!bIsClassDefault &&
 		GetDefault<UFlowSettings>()->bUseAdaptiveNodeTitles)
 	{
 		const FText LeftDisplayName = FText::FromName(GetAuthoredValueName(LeftValue));
@@ -200,37 +328,26 @@ FText UFlowNodeAddOn_PredicateCompareValues::K2_GetNodeTitle_Implementation() co
 
 #endif // WITH_EDITOR
 
-bool UFlowNodeAddOn_PredicateCompareValues::AreComparableStandardPinTypes(const FName& LeftPinTypeName, const FName& RightPinTypeName)
+bool UFlowNodeAddOn_PredicateCompareValues::AreComparablePinTypes(const FFlowPinConnectionPolicy& PinConnectionPolicy, const FName& LeftPinTypeName, const FName& RightPinTypeName)
 {
-	// TODO (gtaylor) We should update this function to respect the authored pin type compatibility settings.
-	// We can't at this time, because they are known only to the editor flow code (UFlowGraphSchema::ArePinTypesCompatible),
-	// but we can conceivably move that information to UFlowAsset (or similar) for runtime and editor-time code to use.
+	return PinConnectionPolicy.CanConnectPinTypeNames(LeftPinTypeName, RightPinTypeName);
+}
 
-	if (LeftPinTypeName == RightPinTypeName)
+bool UFlowNodeAddOn_PredicateCompareValues::CacheTypeNames(FCachedTypeNames& OutCache) const
+{
+	OutCache.Reset();
+
+	if (!LeftValue.IsValid() || !RightValue.IsValid())
 	{
-		return true;
+		LogError(TEXT("Compare Values requires both LeftValue and RightValue to be configured."));
+		return false;
 	}
 
-	// Numeric: allow int/int64/float/double interchange
-	if (IsNumericTypeName(LeftPinTypeName) && IsNumericTypeName(RightPinTypeName))
-	{
-		return true;
-	}
+	OutCache.LeftTypeName = LeftValue.DataPinValue.Get().GetPinTypeName().Name;
+	OutCache.RightTypeName = RightValue.DataPinValue.Get().GetPinTypeName().Name;
+	OutCache.bIsValid = true;
 
-	// String-like: allow Name/String/Text/Enum interchange
-	// (we include Enums as they have FName values for the purposes of comparison)
-	if (IsAnyStringLikeTypeName(LeftPinTypeName) && IsAnyStringLikeTypeName(RightPinTypeName))
-	{
-		return true;
-	}
-
-	// GameplayTag / Container: allow interchange (type templates can upscale tag -> container)
-	if (IsGameplayTagLikeTypeName(LeftPinTypeName) && IsGameplayTagLikeTypeName(RightPinTypeName))
-	{
-		return true;
-	}
-
-	return false;
+	return true;
 }
 
 bool UFlowNodeAddOn_PredicateCompareValues::TryCheckGameplayTagsEqual(bool& bOutIsEqual) const
@@ -264,99 +381,35 @@ bool UFlowNodeAddOn_PredicateCompareValues::TryCheckGameplayTagsEqual(bool& bOut
 	return true;
 }
 
-bool UFlowNodeAddOn_PredicateCompareValues::TryCheckTextEqual(bool& bOutIsEqual) const
+bool UFlowNodeAddOn_PredicateCompareValues::TryCheckFallbackStringEqual(bool& bOutIsEqual) const
 {
-	// Compare both sides as Text; pin type templates should allow Name/String/Enum -> Text conversion.
-	FText LeftText;
-	{
-		const EFlowDataPinResolveResult ResolveResult =
-			TryResolveDataPinValue<FFlowPinType_Text>(GetDisambiguatedValueName(LeftValue), LeftText, SingleFromArray);
+	// Fallback path: try to convert both sides to string via their FFlowDataPinValue::TryConvertValuesToString.
+	// This enables user-added pin types (from other plugins) to participate in equality comparisons
+	// as long as they implement TryConvertValuesToString on their FFlowDataPinValue subclass.
 
-		if (!FlowPinType::IsSuccess(ResolveResult))
-		{
-			LogError(TEXT("Failed to resolve LeftValue as Text."));
-			return false;
-		}
+	const FFlowDataPinValue* LeftDataPinValue = LeftValue.DataPinValue.GetPtr<FFlowDataPinValue>();
+	const FFlowDataPinValue* RightDataPinValue = RightValue.DataPinValue.GetPtr<FFlowDataPinValue>();
+
+	if (!LeftDataPinValue || !RightDataPinValue)
+	{
+		return false;
 	}
 
-	FText RightText;
-	{
-		const EFlowDataPinResolveResult ResolveResult =
-			TryResolveDataPinValue<FFlowPinType_Text>(GetDisambiguatedValueName(RightValue), RightText, SingleFromArray);
-
-		if (!FlowPinType::IsSuccess(ResolveResult))
-		{
-			LogError(TEXT("Failed to resolve RightValue as Text."));
-			return false;
-		}
-	}
-
-	bOutIsEqual = LeftText.EqualTo(RightText);
-	return true;
-}
-
-bool UFlowNodeAddOn_PredicateCompareValues::TryCheckStringEqual(bool& bOutIsEqual) const
-{
-	// Compare both sides as String; templates can handle Name/Text/Enum -> String if allowed.
 	FString LeftString;
+	if (!LeftDataPinValue->TryConvertValuesToString(LeftString))
 	{
-		const EFlowDataPinResolveResult ResolveResult =
-			TryResolveDataPinValue<FFlowPinType_String>(GetDisambiguatedValueName(LeftValue), LeftString, SingleFromArray);
-
-		if (!FlowPinType::IsSuccess(ResolveResult))
-		{
-			LogError(TEXT("Failed to resolve LeftValue as String."));
-			return false;
-		}
+		LogError(TEXT("Failed to convert LeftValue to String for fallback comparison."));
+		return false;
 	}
 
 	FString RightString;
+	if (!RightDataPinValue->TryConvertValuesToString(RightString))
 	{
-		const EFlowDataPinResolveResult ResolveResult =
-			TryResolveDataPinValue<FFlowPinType_String>(GetDisambiguatedValueName(RightValue), RightString, SingleFromArray);
-
-		if (!FlowPinType::IsSuccess(ResolveResult))
-		{
-			LogError(TEXT("Failed to resolve RightValue as String."));
-			return false;
-		}
+		LogError(TEXT("Failed to convert RightValue to String for fallback comparison."));
+		return false;
 	}
 
 	bOutIsEqual = (LeftString == RightString);
-	return true;
-}
-
-bool UFlowNodeAddOn_PredicateCompareValues::TryCheckNameEqual(bool& bOutIsEqual) const
-{
-	// Compare case-insensitively if either side is Name-like.
-	// We resolve both sides as String and compare IgnoreCase, because:
-	// - FName itself is case-sensitive in operator==, but your requirement is case-insensitive for Name-like.
-	// - FlowPinType templates can source Enum values (FName) into string as needed.
-	FString LeftString;
-	{
-		const EFlowDataPinResolveResult ResolveResult =
-			TryResolveDataPinValue<FFlowPinType_String>(GetDisambiguatedValueName(LeftValue), LeftString, SingleFromArray);
-
-		if (!FlowPinType::IsSuccess(ResolveResult))
-		{
-			LogError(TEXT("Failed to resolve LeftValue for Name-like comparison."));
-			return false;
-		}
-	}
-
-	FString RightString;
-	{
-		const EFlowDataPinResolveResult ResolveResult =
-			TryResolveDataPinValue<FFlowPinType_String>(GetDisambiguatedValueName(RightValue), RightString, SingleFromArray);
-
-		if (!FlowPinType::IsSuccess(ResolveResult))
-		{
-			LogError(TEXT("Failed to resolve RightValue for Name-like comparison."));
-			return false;
-		}
-	}
-
-	bOutIsEqual = LeftString.Equals(RightString, ESearchCase::IgnoreCase);
 	return true;
 }
 
@@ -490,19 +543,44 @@ bool UFlowNodeAddOn_PredicateCompareValues::TryCompareAsInt64() const
 	return CompareInt64UsingOperator(LeftInt64, RightInt64);
 }
 
-bool UFlowNodeAddOn_PredicateCompareValues::EvaluatePredicate_Implementation() const
+bool UFlowNodeAddOn_PredicateCompareValues::EvaluateEqualityBlock(const TCHAR* TypeLabel, const TFunctionRef<bool(bool& /*bOutIsEqual*/)> CompareFunc) const
 {
-	// All failures are errors and return false.
-	if (!LeftValue.IsValid() || !RightValue.IsValid())
+	if (!IsEqualityOp())
 	{
-		LogError(TEXT("Compare Values requires both LeftValue and RightValue to be configured."));
+		LogError(FString::Printf(TEXT("Arithmetic operators are not supported for %s comparisons."), TypeLabel));
 		return false;
 	}
 
-	const FName LeftTypeName = LeftValue.DataPinValue.Get().GetPinTypeName().Name;
-	const FName RightTypeName = RightValue.DataPinValue.Get().GetPinTypeName().Name;
+	bool bIsEqual = false;
+	if (!CompareFunc(bIsEqual))
+	{
+		return false;
+	}
 
-	if (!AreComparableStandardPinTypes(LeftTypeName, RightTypeName))
+	return (OperatorType == EFlowPredicateCompareOperatorType::Equal) == bIsEqual;
+}
+
+bool UFlowNodeAddOn_PredicateCompareValues::EvaluatePredicate_Implementation() const
+{
+	// Cache type names once to avoid repeated TInstancedStruct::Get() virtual dispatch.
+	FCachedTypeNames Cache;
+	if (!CacheTypeNames(Cache))
+	{
+		return false;
+	}
+
+	const UFlowAsset* FlowAsset = GetFlowAsset();
+	check(IsValid(FlowAsset));
+	const FFlowPinConnectionPolicy& PinConnectionPolicy = FlowAsset->GetFlowPinConnectionPolicy();
+
+	const FName& LeftTypeName = Cache.LeftTypeName;
+	const FName& RightTypeName = Cache.RightTypeName;
+
+	const bool bSameType = (LeftTypeName == RightTypeName);
+
+	// Type compatibility gate.
+	// Same-type unknowns are allowed through for the fallback path at the bottom.
+	if (!bSameType && !AreComparablePinTypes(PinConnectionPolicy, LeftTypeName, RightTypeName))
 	{
 		LogError(FString::Printf(
 			TEXT("Compare Values pin types are not comparable: '%s' vs '%s'."),
@@ -512,22 +590,17 @@ bool UFlowNodeAddOn_PredicateCompareValues::EvaluatePredicate_Implementation() c
 		return false;
 	}
 
-	// Arithmetic operators: numeric only
-	if (IsArithmeticOp())
+	// Arithmetic operators: numeric only (fast reject before the cascade)
+	if (IsArithmeticOp() && !(IsNumericTypeName(PinConnectionPolicy, LeftTypeName) && IsNumericTypeName(PinConnectionPolicy, RightTypeName)))
 	{
-		if (!(IsNumericTypeName(LeftTypeName) && IsNumericTypeName(RightTypeName)))
-		{
-			LogError(TEXT("Arithmetic operators are only supported for numeric pin types (Int/Int64/Float/Double)."));
-			return false;
-		}
+		LogError(TEXT("Arithmetic operators are only supported for numeric pin types (Int/Int64/Float/Double)."));
+		return false;
 	}
 
-	// Numeric
-	if (IsNumericTypeName(LeftTypeName) && IsNumericTypeName(RightTypeName))
+	// Numeric (full operator set)
+	if (IsNumericTypeName(PinConnectionPolicy, LeftTypeName) && IsNumericTypeName(PinConnectionPolicy, RightTypeName))
 	{
-		// Prefer Int64 if both are integer types (or can be upscaled to int64 precisely).
-		// Use Double if either side is floating point.
-		if (IsFloatingPointType(LeftTypeName) || IsFloatingPointType(RightTypeName))
+		if (IsFloatingPointType(PinConnectionPolicy, LeftTypeName) || IsFloatingPointType(PinConnectionPolicy, RightTypeName))
 		{
 			return TryCompareAsDouble();
 		}
@@ -535,67 +608,111 @@ bool UFlowNodeAddOn_PredicateCompareValues::EvaluatePredicate_Implementation() c
 		return TryCompareAsInt64();
 	}
 
-	// Gameplay tags: compare as container (superset). Equality ops only (as per enum).
-	if (IsGameplayTagLikeTypeName(LeftTypeName) || IsGameplayTagLikeTypeName(RightTypeName))
+	// Gameplay tags: compare as container (superset). Equality ops only.
+	if (IsGameplayTagLikeTypeName(PinConnectionPolicy, LeftTypeName) || IsGameplayTagLikeTypeName(PinConnectionPolicy, RightTypeName))
 	{
-		if (!IsEqualityOp())
-		{
-			LogError(TEXT("Arithmetic operators are not supported for Gameplay Tags."));
-			return false;
-		}
-
-		bool bIsEqual = false;
-		if (!TryCheckGameplayTagsEqual(bIsEqual))
-		{
-			return false;
-		}
-
-		return (OperatorType == EFlowPredicateCompareOperatorType::Equal) == bIsEqual;
+		return EvaluateEqualityBlock(TEXT("Gameplay Tag"),
+			[this](bool& bIsEqual) { return TryCheckGameplayTagsEqual(bIsEqual); });
 	}
 
 	// String-like (including enums-as-names). Equality ops only.
-	if (IsAnyStringLikeTypeName(LeftTypeName) || IsAnyStringLikeTypeName(RightTypeName))
+	if (IsAnyStringLikeTypeName(PinConnectionPolicy, LeftTypeName) || IsAnyStringLikeTypeName(PinConnectionPolicy, RightTypeName))
 	{
-		if (!IsEqualityOp())
-		{
-			LogError(TEXT("Arithmetic operators are not supported for Name/Text/String/Enum comparisons."));
-			return false;
-		}
-
-		// Order is significant:
-		// 1) Name-like (Name OR Enum) => case-insensitive compare
-		// 2) Text => FText equality (localized)
-		// 3) String => FString equality
-		bool bIsEqual = false;
-
+		// Dispatch order is significant:
+		// 1) Name-like (Name OR Enum) => case-insensitive compare via FString
+		// 2) Text => FText::EqualTo (culture-aware)
+		// 3) String => exact FString equality
 		if (IsNameLikeType(LeftTypeName) || IsNameLikeType(RightTypeName))
 		{
-			if (!TryCheckNameEqual(bIsEqual))
-			{
-				return false;
-			}
-		}
-		else if (IsTextType(LeftTypeName) || IsTextType(RightTypeName))
-		{
-			if (!TryCheckTextEqual(bIsEqual))
-			{
-				return false;
-			}
-		}
-		else
-		{
-			if (!TryCheckStringEqual(bIsEqual))
-			{
-				return false;
-			}
+			return EvaluateEqualityBlock(TEXT("Name/Enum"),
+				[this](bool& bIsEqual)
+				{
+					return TryCheckResolvedValuesEqual<FFlowPinType_String>(bIsEqual, TEXT("String (Name-like)"),
+						[](const FString& L, const FString& R) { return L.Equals(R, ESearchCase::IgnoreCase); });
+				});
 		}
 
-		return (OperatorType == EFlowPredicateCompareOperatorType::Equal) == bIsEqual;
+		if (IsTextType(LeftTypeName) || IsTextType(RightTypeName))
+		{
+			return EvaluateEqualityBlock(TEXT("Text"),
+				[this](bool& bIsEqual)
+				{
+					return TryCheckResolvedValuesEqual<FFlowPinType_Text>(bIsEqual, TEXT("Text"),
+						[](const FText& L, const FText& R) { return L.EqualTo(R); });
+				});
+		}
+
+		return EvaluateEqualityBlock(TEXT("String"),
+			[this](bool& bIsEqual)
+			{
+				return TryCheckResolvedValuesEqual<FFlowPinType_String>(bIsEqual, TEXT("String"));
+			});
 	}
 
-	// TODO (gtaylor) Add Object, Class, InstancedStruct, Vector... etc. support
+	// Bool. Equality ops only.
+	if (IsBoolTypeName(LeftTypeName) && IsBoolTypeName(RightTypeName))
+	{
+		return EvaluateEqualityBlock(TEXT("Bool"),
+			[this](bool& bIsEqual) { return TryCheckResolvedValuesEqual<FFlowPinType_Bool>(bIsEqual, TEXT("Bool")); });
+	}
+
+	// Vector. Equality ops only, strict comparison (no tolerance).
+	if (IsVectorTypeName(LeftTypeName) && IsVectorTypeName(RightTypeName))
+	{
+		return EvaluateEqualityBlock(TEXT("Vector"),
+			[this](bool& bIsEqual) { return TryCheckResolvedValuesEqual<FFlowPinType_Vector>(bIsEqual, TEXT("Vector")); });
+	}
+
+	// Rotator. Equality ops only, strict comparison (no tolerance).
+	if (IsRotatorTypeName(LeftTypeName) && IsRotatorTypeName(RightTypeName))
+	{
+		return EvaluateEqualityBlock(TEXT("Rotator"),
+			[this](bool& bIsEqual) { return TryCheckResolvedValuesEqual<FFlowPinType_Rotator>(bIsEqual, TEXT("Rotator")); });
+	}
+
+	// Transform. Equality ops only, strict comparison (zero tolerance).
+	if (IsTransformTypeName(LeftTypeName) && IsTransformTypeName(RightTypeName))
+	{
+		return EvaluateEqualityBlock(TEXT("Transform"),
+			[this](bool& bIsEqual)
+			{
+				return TryCheckResolvedValuesEqual<FFlowPinType_Transform>(bIsEqual, TEXT("Transform"),
+					[](const FTransform& L, const FTransform& R) { return L.Equals(R, 0.0); });
+			});
+	}
+
+	// Object. Equality ops only, pointer identity.
+	if (IsObjectTypeName(LeftTypeName) && IsObjectTypeName(RightTypeName))
+	{
+		return EvaluateEqualityBlock(TEXT("Object"),
+			[this](bool& bIsEqual) { return TryCheckResolvedValuesEqual<FFlowPinType_Object>(bIsEqual, TEXT("Object")); });
+	}
+
+	// Class. Equality ops only, strict class identity (not "is derived from").
+	if (IsClassTypeName(LeftTypeName) && IsClassTypeName(RightTypeName))
+	{
+		return EvaluateEqualityBlock(TEXT("Class"),
+			[this](bool& bIsEqual) { return TryCheckResolvedValuesEqual<FFlowPinType_Class>(bIsEqual, TEXT("Class")); });
+	}
+
+	// InstancedStruct. Equality ops only, struct type + data equality.
+	if (IsInstancedStructTypeName(LeftTypeName) && IsInstancedStructTypeName(RightTypeName))
+	{
+		return EvaluateEqualityBlock(TEXT("InstancedStruct"),
+			[this](bool& bIsEqual) { return TryCheckResolvedValuesEqual<FFlowPinType_InstancedStruct>(bIsEqual, TEXT("InstancedStruct")); });
+	}
+
+	// Fallback: same-type comparison via string conversion.
+	// This supports user-added types from other plugins as long as they
+	// implement TryConvertValuesToString on their FFlowDataPinValue subclass.
+	if (bSameType)
+	{
+		return EvaluateEqualityBlock(*LeftTypeName.ToString(),
+			[this](bool& bIsEqual) { return TryCheckFallbackStringEqual(bIsEqual); });
+	}
+
 	LogError(FString::Printf(
-		TEXT("Compare Values does not support comparing pin types '%s' and '%s' yet."),
+		TEXT("Compare Values does not support comparing pin types '%s' and '%s'."),
 		*LeftTypeName.ToString(),
 		*RightTypeName.ToString()));
 

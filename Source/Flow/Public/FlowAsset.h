@@ -19,6 +19,7 @@ class UFlowNode_CustomOutput;
 class UFlowNode_CustomInput;
 class UFlowNode_SubGraph;
 class UFlowSubsystem;
+struct FFlowPinConnectionPolicy;
 
 class UEdGraph;
 class UEdGraphNode;
@@ -59,6 +60,9 @@ public:
 
 //////////////////////////////////////////////////////////////////////////
 // Graph (editor-only)
+
+public:
+	virtual void PostInitProperties() override;
 
 #if WITH_EDITOR
 public:	
@@ -312,6 +316,7 @@ protected:
 	UPROPERTY()
 	TArray<TObjectPtr<UFlowNode>> RecordedNodes;
 
+	UPROPERTY(Transient)
 	EFlowFinishPolicy FinishPolicy;
 
 public:
@@ -383,6 +388,24 @@ public:
 	/* Returns nodes active in the past, done their work. */
 	UFUNCTION(BlueprintPure, Category = "Flow")
 	const TArray<UFlowNode*>& GetRecordedNodes() const { return RecordedNodes; }
+
+//////////////////////////////////////////////////////////////////////////
+// FFlowPolicy subclass access
+
+protected:
+	/* Policy for UFlowGraphSchema (and others) to use to enforce pin connectivity.
+	 * Also used at runtime by predicates (e.g., CompareValues) for type classification queries. */
+	UPROPERTY(VisibleAnywhere, AdvancedDisplay, Category = PinConnection)
+	TInstancedStruct<FFlowPinConnectionPolicy> FlowPinConnectionPolicy;
+
+#if WITH_EDITOR
+	/* Override this function to set up a unique policy for a UFlowAsset subclass */
+	virtual void InitializeFlowPinConnectionPolicy();
+#endif
+
+public:
+	/* FFlowPolicy accessors */
+	const FFlowPinConnectionPolicy& GetFlowPinConnectionPolicy() const;
 
 //////////////////////////////////////////////////////////////////////////
 // Deferred trigger support
