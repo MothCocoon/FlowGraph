@@ -6,6 +6,7 @@
 #include "Asset/FlowAssetParamsTypes.h"
 #include "Asset/FlowDeferredTransitionScope.h"
 #include "Nodes/FlowNode.h"
+#include "StructUtils/InstancedStruct.h"
 
 #if WITH_EDITOR
 #include "FlowMessageLog.h"
@@ -19,6 +20,7 @@ class UFlowNode_CustomOutput;
 class UFlowNode_CustomInput;
 class UFlowNode_SubGraph;
 class UFlowSubsystem;
+struct FFlowPreloadPolicy;
 struct FFlowPinConnectionPolicy;
 
 class UEdGraph;
@@ -305,9 +307,6 @@ protected:
 	UPROPERTY()
 	TSet<TObjectPtr<UFlowNode_CustomInput>> CustomInputNodes;
 
-	UPROPERTY()
-	TSet<TObjectPtr<UFlowNode>> PreloadedNodes;
-
 	/* Nodes that have any work left, not marked as Finished yet. */
 	UPROPERTY()
 	TArray<TObjectPtr<UFlowNode>> ActiveNodes;
@@ -340,9 +339,6 @@ public:
 	/* Returns the Owner as an Actor, or if Owner is a Component, return its Owner as an Actor. */
 	UFUNCTION(BlueprintPure, Category = "Flow")
 	AActor* TryFindActorOwner() const;
-
-	/* Opportunity to preload content of project-specific nodes. */
-	virtual void PreloadNodes() {}
 
 	virtual void PreStartFlow();
 	virtual void StartFlow(IFlowDataPinValueSupplierInterface* DataPinValueSupplier = nullptr);
@@ -396,16 +392,23 @@ protected:
 	/* Policy for UFlowGraphSchema (and others) to use to enforce pin connectivity.
 	 * Also used at runtime by predicates (e.g., CompareValues) for type classification queries. */
 	UPROPERTY(VisibleAnywhere, AdvancedDisplay, Category = PinConnection)
-	TInstancedStruct<FFlowPinConnectionPolicy> FlowPinConnectionPolicy;
+	TInstancedStruct<FFlowPinConnectionPolicy> PinConnectionPolicy;
+
+	/* Policy controlling when nodes implementing IFlowPreloadableInterface preload and flush their content.
+	 * Initialized from UFlowSettings defaults. Override InitializePreloadPolicy() in a subclass to set a unique policy. */
+	UPROPERTY(VisibleAnywhere, AdvancedDisplay, Category = Preload)
+	TInstancedStruct<FFlowPreloadPolicy> PreloadPolicy;
 
 #if WITH_EDITOR
-	/* Override this function to set up a unique policy for a UFlowAsset subclass */
-	virtual void InitializeFlowPinConnectionPolicy();
+	/* Override these functions to set up unique policy(ies) for a UFlowAsset subclass */
+	virtual void InitializePinConnectionPolicy();
+	virtual void InitializePreloadPolicy();
 #endif
 
 public:
 	/* FFlowPolicy accessors */
-	const FFlowPinConnectionPolicy& GetFlowPinConnectionPolicy() const;
+	const FFlowPinConnectionPolicy& GetPinConnectionPolicy() const;
+	const FFlowPreloadPolicy& GetPreloadPolicy() const;
 
 //////////////////////////////////////////////////////////////////////////
 // Deferred trigger support

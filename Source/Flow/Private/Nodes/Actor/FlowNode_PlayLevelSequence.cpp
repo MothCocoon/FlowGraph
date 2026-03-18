@@ -100,16 +100,28 @@ void UFlowNode_PlayLevelSequence::PostEditChangeProperty(FPropertyChangedEvent& 
 }
 #endif
 
-void UFlowNode_PlayLevelSequence::PreloadContent()
+EFlowPreloadResult UFlowNode_PlayLevelSequence::PreloadContent()
 {
 #if ENABLE_VISUAL_LOG
 	UE_VLOG(this, LogFlow, Log, TEXT("Preloading"));
 #endif
 
-	if (!Sequence.IsNull())
+	if (Sequence.IsNull())
 	{
-		StreamableManager.RequestAsyncLoad({Sequence.ToSoftObjectPath()}, FStreamableDelegate());
+		return EFlowPreloadResult::Completed;
 	}
+
+	// Bind a weak delegate so NotifyPreloadComplete() is called when streaming finishes.
+	// If the asset is already cached, RequestAsyncLoad fires the delegate synchronously
+	// (safe — PendingPreloadCount is already set by TriggerPreload before this call).
+	PreloadHandle = StreamableManager.RequestAsyncLoad(
+		Sequence.ToSoftObjectPath(),
+		FStreamableDelegate::CreateWeakLambda(this, [this]()
+		{
+			NotifyPreloadComplete();
+		}));
+
+	return EFlowPreloadResult::PreloadInProgress;
 }
 
 void UFlowNode_PlayLevelSequence::FlushContent()
@@ -117,6 +129,12 @@ void UFlowNode_PlayLevelSequence::FlushContent()
 #if ENABLE_VISUAL_LOG
 	UE_VLOG(this, LogFlow, Log, TEXT("Flushing preload"));
 #endif
+
+	if (PreloadHandle.IsValid())
+	{
+		PreloadHandle->CancelHandle();
+		PreloadHandle.Reset();
+	}
 
 	if (!Sequence.IsNull())
 	{
@@ -166,6 +184,11 @@ void UFlowNode_PlayLevelSequence::CreatePlayer()
 
 void UFlowNode_PlayLevelSequence::ExecuteInput(const FName& PinName)
 {
+	if (DispatchExecuteInputToPreloadHelper(PinName))
+	{
+		return;
+	}
+
 	if (PinName == TEXT("Start"))
 	{
 		LoadedSequence = Sequence.LoadSynchronous();
