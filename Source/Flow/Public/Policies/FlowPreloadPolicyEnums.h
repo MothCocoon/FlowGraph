@@ -15,11 +15,8 @@ enum class EFlowPreloadTiming : uint8
 	// Preload content when the node activates (just-in-time before execution).
 	OnActivate,
 
-	// Do not automatically preload; content is only preloaded when the Preload exec pin is triggered.
+	// Do not automatically preload; content is ONLY preloaded when the Preload exec pin is triggered.
 	ManualOnly,
-
-	// Never preload content for this node.
-	Never,
 
 	Max     UMETA(Hidden),
 	Invalid UMETA(Hidden),
@@ -37,11 +34,8 @@ enum class EFlowFlushTiming : uint8
 	// Flush content when the node finishes execution.
 	OnNodeFinish,
 
-	// Do not automatically flush; content is only flushed when the Flush exec pin is triggered.
+	// Do not automatically flush; content is ONLY flushed when the Flush exec pin is triggered.
 	ManualOnly,
-
-	// Never flush content for this node.
-	Never,
 
 	Max     UMETA(Hidden),
 	Invalid UMETA(Hidden),
@@ -67,23 +61,6 @@ enum class EFlowPreloadResult : uint8
 	Min = 0 UMETA(Hidden),
 };
 FLOW_ENUM_RANGE_VALUES(EFlowPreloadResult);
-
-// Return value of FFlowPreloadHelper::OnPreloadComplete().
-// Indicates whether all preload participants have finished.
-UENUM()
-enum class EFlowPreloadCompleteResult : uint8
-{
-	// All participants have finished; the AllPreloadsComplete output pin should fire.
-	AllComplete,
-
-	// One or more participants are still in progress; do not fire AllPreloadsComplete yet.
-	Pending,
-
-	Max     UMETA(Hidden),
-	Invalid UMETA(Hidden),
-	Min = 0 UMETA(Hidden),
-};
-FLOW_ENUM_RANGE_VALUES(EFlowPreloadCompleteResult);
 
 // Return value of FFlowPreloadHelper::OnNodeExecuteInput().
 // Indicates whether the helper consumed the input pin or it should pass through to the node.

@@ -103,8 +103,10 @@ void UFlowNode_PlayLevelSequence::PostEditChangeProperty(FPropertyChangedEvent& 
 EFlowPreloadResult UFlowNode_PlayLevelSequence::PreloadContent()
 {
 #if ENABLE_VISUAL_LOG
-	UE_VLOG(this, LogFlow, Log, TEXT("Preloading"));
+	UE_VLOG(this, LogFlow, Log, TEXT("Preloading Content"));
 #endif
+
+	FLOW_ASSERT_ENUM_MAX(EFlowPreloadResult, 2);
 
 	if (Sequence.IsNull())
 	{
@@ -127,7 +129,7 @@ EFlowPreloadResult UFlowNode_PlayLevelSequence::PreloadContent()
 void UFlowNode_PlayLevelSequence::FlushContent()
 {
 #if ENABLE_VISUAL_LOG
-	UE_VLOG(this, LogFlow, Log, TEXT("Flushing preload"));
+	UE_VLOG(this, LogFlow, Log, TEXT("Flushing Preloaded Content"));
 #endif
 
 	if (PreloadHandle.IsValid())
@@ -184,6 +186,8 @@ void UFlowNode_PlayLevelSequence::CreatePlayer()
 
 void UFlowNode_PlayLevelSequence::ExecuteInput(const FName& PinName)
 {
+	// Since this node implements IFlowPreloadableInterface,
+	// we need to call this to allow the PreloadHelper to intercept preload-specific PinNames
 	if (DispatchExecuteInputToPreloadHelper(PinName))
 	{
 		return;

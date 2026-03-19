@@ -37,13 +37,13 @@ public:
 	 * Completed, so Blueprint nodes and existing sync C++ overrides work unchanged.
 	 * Async C++ nodes override PreloadContent(); async Blueprint nodes override
 	 * K2_PreloadContent and return PreloadInProgress, then call NotifyPreloadComplete() when done. */
-	UFUNCTION(BlueprintNativeEvent, Category = "Preload", DisplayName = "Preload Content")
+	UFUNCTION(BlueprintNativeEvent, Category = FlowPreloadableInterface, DisplayName = "Preload Content")
 	EFlowPreloadResult K2_PreloadContent();
 	virtual EFlowPreloadResult K2_PreloadContent_Implementation() { return EFlowPreloadResult::Completed; }
 	virtual EFlowPreloadResult PreloadContent() { return Execute_K2_PreloadContent(Cast<UObject>(this)); }
 
 	/* Called by the preload helper to release this node's preloaded content. */
-	UFUNCTION(BlueprintImplementableEvent, Category = "Preload", DisplayName = "Flush Content")
+	UFUNCTION(BlueprintImplementableEvent, Category = FlowPreloadableInterface, DisplayName = "Flush Content")
 	void K2_FlushContent();
 	virtual void FlushContent() { Execute_K2_FlushContent(Cast<UObject>(this)); }
 

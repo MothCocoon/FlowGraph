@@ -1445,6 +1445,18 @@ const FFlowPinConnectionPolicy& UFlowAsset::GetPinConnectionPolicy() const
 		return TemplateAsset->GetPinConnectionPolicy();
 	}
 
+	// Graceful fallback: if PinConnectionPolicy was never initialized (asset predates this feature,
+	// or was never opened in editor), read directly from project settings at runtime.
+	if (!PinConnectionPolicy.IsValid())
+	{
+		const FFlowPinConnectionPolicy* SettingsPolicy = GetDefault<UFlowSettings>()->GetPinConnectionPolicy();
+		ensureAlways(SettingsPolicy);
+		if (SettingsPolicy)
+		{
+			return *SettingsPolicy;
+		}
+	}
+
 	check(PinConnectionPolicy.IsValid());
 	return PinConnectionPolicy.Get();
 }

@@ -378,7 +378,7 @@ private:
 	void ResetRecords();
 
 //////////////////////////////////////////////////////////////////////////
-// Preload
+// Preload Content (subclasses must implement IFlowPreloadableInterface to use this code)
 
 public:
 	// Called by FFlowPreloadHelper at policy-determined lifecycle points, and directly by callers for ManualOnly timing.
@@ -386,13 +386,13 @@ public:
 	void TriggerFlush();
 
 	// Returns true if this node's content is currently preloaded.
-	bool IsPreloaded() const;
+	bool IsContentPreloaded() const;
 
 	// Called when async preloading finishes (i.e. PreloadContent returned PreloadInProgress). Updates helper state and fires OUTPIN_AllPreloadsComplete.
 	// Async C++ nodes call this from their completion delegate; async Blueprint nodes call it on self.
 	// Safe to call from within PreloadContent() (e.g. if FStreamableManager fires synchronously).
 	// Must be called on the game thread. No-op if called after TriggerFlush (cancellation guard).
-	UFUNCTION(BlueprintCallable, Category = "Preload")
+	UFUNCTION(BlueprintCallable, Category = "Preload Content")
 	void NotifyPreloadComplete();
 
 protected:

@@ -17,7 +17,7 @@ public:
 	EFlowPreloadTiming DefaultPreloadTiming = EFlowPreloadTiming::OnGraphInitialize;
 
 	// Default flush timing applied to all preloadable nodes in the graph.
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Flush")
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Preload")
 	EFlowFlushTiming DefaultFlushTiming = EFlowFlushTiming::OnGraphDeinitialize;
 
 	// Per-node-class preload timing overrides (key = GetFName(), e.g. "FlowNode_SubGraph").
@@ -25,7 +25,7 @@ public:
 	TMap<FName, EFlowPreloadTiming> NodePreloadTimingOverrides;
 
 	// Per-node-class flush timing overrides (key = GetFName(), e.g. "FlowNode_SubGraph").
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Flush")
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Preload")
 	TMap<FName, EFlowFlushTiming> NodeFlushTimingOverrides;
 
 public:

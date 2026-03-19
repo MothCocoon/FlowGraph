@@ -79,14 +79,17 @@ EFlowPreloadResult UFlowNode_ExecuteComponent::PreloadContent()
 {
 	if (UActorComponent* ResolvedComp = TryResolveComponent())
 	{
-		if (IFlowPreloadableInterface* Preloadable = Cast<IFlowPreloadableInterface>(ResolvedComp))
+		if (IFlowPreloadableInterface* PreloadableComponent = Cast<IFlowPreloadableInterface>(ResolvedComp))
 		{
-			const EFlowPreloadResult Result = Preloadable->PreloadContent();
+			FLOW_ASSERT_ENUM_MAX(EFlowPreloadResult, 2);
 
+			const EFlowPreloadResult PreloadableComponentResult = PreloadableComponent->PreloadContent();
+
+			// TODO (gtaylor) Consider adding a mechanism for components to do an async preload.
 			// Components have no back-reference to this node and cannot call NotifyPreloadComplete().
-			// Async (PreloadInProgress) component preloads are therefore unsupported: if a component
-			// returns PreloadInProgress the PendingPreloadCount would never reach zero.
-			ensureAlwaysMsgf(Result == EFlowPreloadResult::Completed,
+			// Async (PreloadInProgress) component preloads are therefore unsupported (For Now(tm)):
+			// if a component returns PreloadInProgress the PendingPreloadCount would never reach zero.
+			ensureAlwaysMsgf(PreloadableComponentResult == EFlowPreloadResult::Completed,
 				TEXT("Component '%s' returned PreloadInProgress from PreloadContent(), but UFlowNode_ExecuteComponent has no mechanism to receive the async completion callback. Treating as Completed."),
 				*ResolvedComp->GetName());
 
@@ -180,6 +183,8 @@ void UFlowNode_ExecuteComponent::ForceFinishNode()
 
 void UFlowNode_ExecuteComponent::ExecuteInput(const FName& PinName)
 {
+	// Since this node implements IFlowPreloadableInterface,
+	// we need to call this to allow the PreloadHelper to intercept preload-specific PinNames
 	if (DispatchExecuteInputToPreloadHelper(PinName))
 	{
 		return;
