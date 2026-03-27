@@ -71,10 +71,10 @@ struct FLOW_API FFlowSaveData
 {
 	GENERATED_USTRUCT_BODY()
 
-	UPROPERTY(VisibleAnywhere, Category = "Flow")
+	UPROPERTY(SaveGame, VisibleAnywhere, Category = "Flow")
 	TArray<FFlowComponentSaveData> FlowComponents;
 
-	UPROPERTY(VisibleAnywhere, Category = "Flow")
+	UPROPERTY(SaveGame, VisibleAnywhere, Category = "Flow")
 	TArray<FFlowAssetSaveData> FlowInstances;
 
 	friend FArchive& operator<<(FArchive& Ar, FFlowSaveData& InData)
