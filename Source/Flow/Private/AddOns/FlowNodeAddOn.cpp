@@ -63,6 +63,14 @@ EFlowAddOnAcceptResult UFlowNodeAddOn::AcceptFlowNodeAddOnParent_Implementation(
 	return EFlowAddOnAcceptResult::Undetermined;
 }
 
+void UFlowNodeAddOn::NotifyPreloadComplete()
+{
+	if (ensure(FlowNode))
+	{
+		FlowNode->NotifyPreloadComplete();
+	}
+}
+
 UFlowNode* UFlowNodeAddOn::GetFlowNode() const
 {
 	// We are making the assumption that this would always be known during runtime 

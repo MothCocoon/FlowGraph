@@ -174,11 +174,6 @@ UFlowAsset* UFlowSubsystem::CreateSubFlow(UFlowNode_SubGraph* SubGraphNode, cons
 		if (NewInstance)
 		{
 			InstancedSubFlows.Add(SubGraphNode, NewInstance);
-
-			if (bPreloading)
-			{
-				NewInstance->PreloadNodes();
-			}
 		}
 	}
 

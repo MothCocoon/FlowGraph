@@ -14,6 +14,8 @@
 #include "Nodes/Graph/FlowNode_CustomOutput.h"
 #include "Nodes/Graph/FlowNode_Start.h"
 #include "Nodes/Graph/FlowNode_SubGraph.h"
+#include "Policies/FlowPinConnectionPolicy.h"
+#include "Policies/FlowPreloadPolicy.h"
 #include "Types/FlowAutoDataPinsWorkingData.h"
 #include "Types/FlowDataPinValue.h"
 #include "Types/FlowStructUtils.h"
@@ -54,6 +56,8 @@ UFlowAsset::UFlowAsset(const FObjectInitializer& ObjectInitializer)
 	, bStartNodePlacedAsGhostNode(false)
 	, TemplateAsset(nullptr)
 	, FinishPolicy(EFlowFinishPolicy::Keep)
+	, PinConnectionPolicy()
+	, PreloadPolicy()
 {
 	if (!AssetGuid.IsValid())
 	{
@@ -61,6 +65,16 @@ UFlowAsset::UFlowAsset(const FObjectInitializer& ObjectInitializer)
 	}
 
 	ExpectedOwnerClass = GetDefault<UFlowSettings>()->GetDefaultExpectedOwnerClass();
+}
+
+void UFlowAsset::PostInitProperties()
+{
+	Super::PostInitProperties();
+
+#if WITH_EDITOR
+	InitializePinConnectionPolicy();
+	InitializePreloadPolicy();
+#endif
 }
 
 #if WITH_EDITOR
@@ -1002,13 +1016,6 @@ void UFlowAsset::FinishFlow(const EFlowFinishPolicy InFinishPolicy, const bool b
 	}
 	ActiveNodes.Empty();
 
-	// flush preloaded content
-	for (UFlowNode* PreloadedNode : PreloadedNodes)
-	{
-		PreloadedNode->TriggerFlush();
-	}
-	PreloadedNodes.Empty();
-
 	// provides option to finish game-specific logic prior to removing asset instance 
 	if (bRemoveInstance)
 	{
@@ -1041,8 +1048,8 @@ void UFlowAsset::CancelAndWarnForUnflushedDeferredTriggers()
 			if (TotalDroppedTriggers == 0 && !Triggers.IsEmpty())
 			{
 				UE_LOG(LogFlow, Warning, TEXT("FlowAsset '%s' is finishing with %d lingering deferred transition scope(s) — dropping them. "
-					       "This is usually unexpected and may indicate a bug or abnormal termination."),
-				       *GetName(), DeferredTransitionScopes.Num());
+					"This is usually unexpected and may indicate a bug or abnormal termination."),
+					*GetName(), DeferredTransitionScopes.Num());
 			}
 
 			TotalDroppedTriggers += Triggers.Num();
@@ -1052,18 +1059,21 @@ void UFlowAsset::CancelAndWarnForUnflushedDeferredTriggers()
 				const UFlowNode* ToNode = GetNode(Trigger.NodeGuid);
 				const UFlowNode* FromNode = Trigger.FromPin.NodeGuid.IsValid() ? GetNode(Trigger.FromPin.NodeGuid) : nullptr;
 
+				const FString ToNodeName = ToNode ? ToNode->GetName() : TEXT("<null/destroyed>");
+				const FString FromNodeName = FromNode ? FromNode->GetName() : TEXT("<null/destroyed>");
+
 				UE_LOG(LogFlow, Error,
-				       TEXT("  → Dropped deferred trigger:\n")
-				       TEXT("      To Node: %s (%s)\n")
-				       TEXT("      To Pin:  %s\n")
-				       TEXT("      From Node: %s (%s)\n")
-				       TEXT("      From Pin:  %s"),
-				       *ToNode->GetName(),
-				       *Trigger.NodeGuid.ToString(),
-				       *Trigger.PinName.ToString(),
-				       *FromNode->GetName(),
-				       *Trigger.FromPin.NodeGuid.ToString(),
-				       *Trigger.FromPin.PinName.ToString()
+					TEXT("  → Dropped deferred trigger:\n")
+					TEXT("      To Node: %s (%s)\n")
+					TEXT("      To Pin:  %s\n")
+					TEXT("      From Node: %s (%s)\n")
+					TEXT("      From Pin:  %s"),
+					*ToNodeName,
+					*Trigger.NodeGuid.ToString(),
+					*Trigger.PinName.ToString(),
+					*FromNodeName,
+					*Trigger.FromPin.NodeGuid.ToString(),
+					*Trigger.FromPin.PinName.ToString()
 				);
 			}
 		}
@@ -1079,10 +1089,22 @@ bool UFlowAsset::HasStartedFlow() const
 
 AActor* UFlowAsset::TryFindActorOwner() const
 {
-	const UActorComponent* OwnerAsComponent = Cast<UActorComponent>(GetOwner());
-	if (IsValid(OwnerAsComponent))
+	UObject* OwnerObject = GetOwner();
+	if (!IsValid(OwnerObject))
 	{
-		return Cast<AActor>(OwnerAsComponent->GetOwner());
+		return nullptr;
+	}
+
+	// If the owner is already an Actor, return it directly
+	if (AActor* OwnerAsActor = Cast<AActor>(OwnerObject))
+	{
+		return OwnerAsActor;
+	}
+
+	// If the owner is a Component, return its owning Actor
+	if (const UActorComponent* OwnerAsComponent = Cast<UActorComponent>(OwnerObject))
+	{
+		return OwnerAsComponent->GetOwner();
 	}
 
 	return nullptr;
@@ -1415,40 +1437,92 @@ bool UFlowAsset::IsBoundToWorld_Implementation() const
 	return bWorldBound;
 }
 
-#if WITH_EDITOR
-void UFlowAsset::LogError(const FString& MessageToLog, const UFlowNodeBase* Node) const
+const FFlowPinConnectionPolicy& UFlowAsset::GetPinConnectionPolicy() const
 {
-	// this is runtime log which is should be only called on runtime instances of asset
-	if (TemplateAsset)
+	// Runtime instances delegate to their template, which holds the serialized policy
+	if (!PinConnectionPolicy.IsValid() && IsValid(TemplateAsset))
 	{
-		UE_LOG(LogFlow, Log, TEXT("Attempted to use Runtime Log on asset instance %s"), *MessageToLog);
+		return TemplateAsset->GetPinConnectionPolicy();
 	}
 
-	if (RuntimeLog.Get())
+	// Graceful fallback: if PinConnectionPolicy was never initialized (asset predates this feature,
+	// or was never opened in editor), read directly from project settings at runtime.
+	if (!PinConnectionPolicy.IsValid())
 	{
-		const TSharedRef<FTokenizedMessage> TokenizedMessage = RuntimeLog.Get()->Error(*MessageToLog, Node);
-		BroadcastRuntimeMessageAdded(TokenizedMessage);
+		const FFlowPinConnectionPolicy* SettingsPolicy = GetDefault<UFlowSettings>()->GetPinConnectionPolicy();
+		ensureAlways(SettingsPolicy);
+		if (SettingsPolicy)
+		{
+			return *SettingsPolicy;
+		}
 	}
+
+	check(PinConnectionPolicy.IsValid());
+	return PinConnectionPolicy.Get();
+}
+
+const FFlowPreloadPolicy& UFlowAsset::GetPreloadPolicy() const
+{
+	// Runtime instances delegate to their template, which holds the serialized policy.
+	if (!PreloadPolicy.IsValid() && IsValid(TemplateAsset))
+	{
+		return TemplateAsset->GetPreloadPolicy();
+	}
+
+	// Graceful fallback: if PreloadPolicy was never initialized (asset predates this feature,
+	// or was never opened in editor), read directly from project settings at runtime.
+	if (!PreloadPolicy.IsValid())
+	{
+		const FFlowPreloadPolicy* SettingsPolicy = GetDefault<UFlowSettings>()->GetPreloadPolicy();
+		ensureAlways(SettingsPolicy);
+		if (SettingsPolicy)
+		{
+			return *SettingsPolicy;
+		}
+	}
+
+	check(PreloadPolicy.IsValid());
+	return PreloadPolicy.Get();
+}
+
+#if WITH_EDITOR
+
+void UFlowAsset::InitializePinConnectionPolicy()
+{
+	const FInstancedStruct& SourceStruct = GetDefault<UFlowSettings>()->PinConnectionPolicy;
+	if (ensure(SourceStruct.IsValid()))
+	{
+		PinConnectionPolicy.InitializeAsScriptStruct(SourceStruct.GetScriptStruct(), SourceStruct.GetMemory());
+	}
+}
+
+void UFlowAsset::InitializePreloadPolicy()
+{
+	const FInstancedStruct& SourceStruct = GetDefault<UFlowSettings>()->PreloadPolicy;
+	if (ensure(SourceStruct.IsValid()))
+	{
+		PreloadPolicy.InitializeAsScriptStruct(SourceStruct.GetScriptStruct(), SourceStruct.GetMemory());
+	}
+}
+
+void UFlowAsset::LogError(const FString& MessageToLog, const UFlowNodeBase* Node) const
+{
+	LogRuntimeMessage(EMessageSeverity::Error, MessageToLog, Node);
 }
 
 void UFlowAsset::LogWarning(const FString& MessageToLog, const UFlowNodeBase* Node) const
 {
-	// this is runtime log which is should be only called on runtime instances of asset
-	if (TemplateAsset)
-	{
-		UE_LOG(LogFlow, Log, TEXT("Attempted to use Runtime Log on asset instance %s"), *MessageToLog);
-	}
-
-	if (RuntimeLog.Get())
-	{
-		const TSharedRef<FTokenizedMessage> TokenizedMessage = RuntimeLog.Get()->Warning(*MessageToLog, Node);
-		BroadcastRuntimeMessageAdded(TokenizedMessage);
-	}
+	LogRuntimeMessage(EMessageSeverity::Warning, MessageToLog, Node);
 }
 
 void UFlowAsset::LogNote(const FString& MessageToLog, const UFlowNodeBase* Node) const
 {
-	// this is runtime log which is should be only called on runtime instances of asset
+	LogRuntimeMessage(EMessageSeverity::Info, MessageToLog, Node);
+}
+
+void UFlowAsset::LogRuntimeMessage(EMessageSeverity::Type Severity, const FString& MessageToLog, const UFlowNodeBase* Node) const
+{
+	// this is runtime log which should only be called on runtime instances of asset
 	if (TemplateAsset)
 	{
 		UE_LOG(LogFlow, Log, TEXT("Attempted to use Runtime Log on asset instance %s"), *MessageToLog);
@@ -1456,8 +1530,23 @@ void UFlowAsset::LogNote(const FString& MessageToLog, const UFlowNodeBase* Node)
 
 	if (RuntimeLog.Get())
 	{
-		const TSharedRef<FTokenizedMessage> TokenizedMessage = RuntimeLog.Get()->Note(*MessageToLog, Node);
-		BroadcastRuntimeMessageAdded(TokenizedMessage);
+		TSharedPtr<FTokenizedMessage> TokenizedMessage = nullptr;
+		switch (Severity)
+		{
+		case EMessageSeverity::Error:
+			TokenizedMessage = RuntimeLog.Get()->Error(*MessageToLog, Node);
+			break;
+
+		case EMessageSeverity::Warning:
+			TokenizedMessage = RuntimeLog.Get()->Warning(*MessageToLog, Node);
+			break;
+
+		default:
+			TokenizedMessage = RuntimeLog.Get()->Note(*MessageToLog, Node);
+			break;
+		}
+
+		BroadcastRuntimeMessageAdded(TokenizedMessage.ToSharedRef());
 	}
 }
 #endif

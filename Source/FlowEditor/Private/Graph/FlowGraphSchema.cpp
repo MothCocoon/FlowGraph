@@ -22,6 +22,7 @@
 #include "Nodes/Graph/FlowNode_CustomInput.h"
 #include "Nodes/Graph/FlowNode_Start.h"
 #include "Nodes/Route/FlowNode_Reroute.h"
+#include "Policies/FlowPinConnectionPolicy.h"
 #include "Types/FlowPinType.h"
 
 #include "AssetRegistry/AssetRegistryModule.h"
@@ -199,19 +200,6 @@ UFlowGraphSchema::UFlowGraphSchema(const FObjectInitializer& ObjectInitializer)
 	}
 }
 
-void UFlowGraphSchema::EnsurePinTypesInitialized()
-{
-	if (PinTypeMatchPolicies.IsEmpty())
-	{
-		InitializedPinTypes();
-	}
-}
-
-void UFlowGraphSchema::InitializedPinTypes()
-{
-	PinTypeMatchPolicies = FFlowPinTypeNamesStandard::PinTypeMatchPolicies;
-}
-
 void UFlowGraphSchema::SubscribeToAssetChanges()
 {
 	const FAssetRegistryModule& AssetRegistry = FModuleManager::LoadModuleChecked<FAssetRegistryModule>(AssetRegistryConstants::ModuleName);
@@ -318,15 +306,17 @@ bool UFlowGraphSchema::ArePinsCompatible(const UEdGraphPin* PinA, const UEdGraph
 		}
 	}
 
-	return ArePinTypesCompatible(OutputPin->PinType, InputPin->PinType, CallingContext, bIgnoreArray);
+	return ArePinTypesCompatible(*OutputPin, *InputPin, CallingContext, bIgnoreArray);
 }
 
 bool UFlowGraphSchema::ArePinTypesCompatible(
-	const FEdGraphPinType& OutputPinType,
-	const FEdGraphPinType& InputPinType,
+	const UEdGraphPin& OutputPin,
+	const UEdGraphPin& InputPin,
 	const UClass* CallingContext,
 	bool bIgnoreArray) const
 {
+	const FEdGraphPinType& InputPinType = InputPin.PinType;
+	const FEdGraphPinType& OutputPinType = OutputPin.PinType;
 	const bool bIsInputExecPin = FFlowPin::IsExecPinCategory(InputPinType.PinCategory);
 	const bool bIsOutputExecPin = FFlowPin::IsExecPinCategory(OutputPinType.PinCategory);
 	if (bIsInputExecPin || bIsOutputExecPin)
@@ -335,27 +325,23 @@ bool UFlowGraphSchema::ArePinTypesCompatible(
 		return (bIsInputExecPin && bIsOutputExecPin);
 	}
 
-	UFlowGraphSchema* MutableThis = const_cast<UFlowGraphSchema*>(this);
-	MutableThis->EnsurePinTypesInitialized();
-
-	const FFlowPinTypeMatchPolicy* FoundPinTypeMatchPolicy = PinTypeMatchPolicies.Find(InputPinType.PinCategory);
-	if (!FoundPinTypeMatchPolicy)
+	const UFlowAsset* FlowAsset = GetFlowAssetForPin(OutputPin);
+	if (!IsValid(FlowAsset))
 	{
-		// Could not find PinTypeMatchPolicy for InputPinType.PinCategory.
+		UE_LOG(LogFlowEditor, Error, TEXT("Could not find the FlowAsset when trying to check ArePinTypesCompatible!"));
 		return false;
 	}
 
-	// PinCategories must match exactly or be in the map of compatible PinCategories for the input pin type
-	const bool bRequirePinCategoryMatch =
-		EnumHasAnyFlags(FoundPinTypeMatchPolicy->PinTypeMatchRules, EFlowPinTypeMatchRules::RequirePinCategoryMatch);
-
-	if (bRequirePinCategoryMatch &&
-		OutputPinType.PinCategory != InputPinType.PinCategory &&
-		!FoundPinTypeMatchPolicy->PinCategories.Contains(OutputPinType.PinCategory))
+	// Get the PinConnectionPolicy from the FlowAsset
+	const FFlowPinConnectionPolicy& PinConnectionPolicy = FlowAsset->GetPinConnectionPolicy();
+	if (!PinConnectionPolicy.CanConnectPinTypeNames(OutputPinType.PinCategory, InputPinType.PinCategory))
 	{
-		// Pin type mismatch OutputPinType.PinCategory != InputPinType.PinCategory (and not in compatible categories list).
+		// Type-name based check failed
 		return false;
 	}
+
+	const FFlowPinTypeMatchPolicy* FoundPinTypeMatchPolicy = PinConnectionPolicy.TryFindPinTypeMatchPolicy(InputPinType.PinCategory);
+	checkf(FoundPinTypeMatchPolicy, TEXT("Should fail CanConnectPinTypeNames, if no MatchPolicy"));
 
 	// RequirePinCategoryMemberReference
 	const bool bRequirePinCategoryMemberReferenceMatch =
@@ -627,6 +613,29 @@ bool UFlowGraphSchema::IsPIESimulating()
 	return GEditor->bIsSimulatingInEditor || (GEditor->PlayWorld != nullptr);
 }
 
+const UFlowNodeBase* UFlowGraphSchema::GetFlowNodeBaseForPin(const UEdGraphPin& EdGraphPin)
+{
+	if (const UFlowGraphNode* OwningFlowGraphNode = CastChecked<UFlowGraphNode>(EdGraphPin.GetOwningNode(), ECastCheckedType::NullAllowed))
+	{
+		return OwningFlowGraphNode->GetFlowNodeBase();
+	}
+
+	return nullptr;
+}
+
+const UFlowAsset* UFlowGraphSchema::GetFlowAssetForPin(const UEdGraphPin& EdGraphPin)
+{
+	if (const UEdGraphNode* OwningEdGraphNode = EdGraphPin.GetOwningNode())
+	{
+		if (const UFlowGraph* FlowGraph = CastChecked<UFlowGraph>(OwningEdGraphNode->GetGraph(), ECastCheckedType::NullAllowed))
+		{
+			return FlowGraph->GetFlowAsset();
+		}
+	}
+
+	return nullptr;
+}
+
 const FPinConnectionResponse UFlowGraphSchema::CanMergeNodes(const UEdGraphNode* NodeA, const UEdGraphNode* NodeB) const
 {
 	if (IsPIESimulating())
@@ -689,13 +698,11 @@ bool UFlowGraphSchema::TryCreateConnection(UEdGraphPin* PinA, UEdGraphPin* PinB)
 
 			RerouteNode->ApplyTypeFromConnectedPin(*OtherPin);
 
-			const FEdGraphPinType NewType = OtherPin->PinType;
-
 			constexpr bool bForInputPins = true;
-			BreakIncompatibleConnections<bForInputPins>(RerouteNode, RerouteNode->InputPins, NewType);
+			BreakIncompatibleConnections<bForInputPins>(RerouteNode, RerouteNode->InputPins, *OtherPin);
 
 			constexpr bool bForOutputPins = false;
-			BreakIncompatibleConnections<bForOutputPins>(RerouteNode, RerouteNode->OutputPins, NewType);
+			BreakIncompatibleConnections<bForOutputPins>(RerouteNode, RerouteNode->OutputPins, *OtherPin);
 		}
 
 		if (EdGraph)
@@ -708,7 +715,7 @@ bool UFlowGraphSchema::TryCreateConnection(UEdGraphPin* PinA, UEdGraphPin* PinB)
 }
 
 template <bool bIsInputPins>
-void UFlowGraphSchema::BreakIncompatibleConnections(UFlowGraphNode_Reroute* RerouteNode, const TArray<UEdGraphPin*>& Pins, FEdGraphPinType NewType) const
+void UFlowGraphSchema::BreakIncompatibleConnections(UFlowGraphNode_Reroute* RerouteNode, const TArray<UEdGraphPin*>& Pins, const UEdGraphPin& TypeFromPin) const
 {
 	// Helper function to break incompatible connections on a set of pins
 	for (UEdGraphPin* Pin : Pins)
@@ -721,12 +728,12 @@ void UFlowGraphSchema::BreakIncompatibleConnections(UFlowGraphNode_Reroute* Rero
 			if constexpr (bIsInputPins)
 			{
 				// LinkedPin (output) to NewType (input)
-				bIsCompatible = ArePinTypesCompatible(LinkedPin->PinType, NewType, nullptr);
+				bIsCompatible = ArePinTypesCompatible(*LinkedPin, TypeFromPin, nullptr);
 			}
 			else
 			{
 				// NewType (output) to LinkedPin (input)
-				bIsCompatible = ArePinTypesCompatible(NewType, LinkedPin->PinType, nullptr);
+				bIsCompatible = ArePinTypesCompatible(TypeFromPin, *LinkedPin, nullptr);
 			}
 
 			if (!bIsCompatible)

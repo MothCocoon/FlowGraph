@@ -3,6 +3,7 @@
 
 #include "EdGraph/EdGraphNode.h"
 #include "GameplayTagContainer.h"
+#include "StructUtils/InstancedStruct.h"
 #include "UObject/TextProperty.h"
 #include "VisualLogger/VisualLoggerDebugSnapshotInterface.h"
 
@@ -15,6 +16,7 @@
 #include "Types/FlowPinConnectionChange.h"
 #include "FlowNode.generated.h"
 
+struct FFlowPreloadHelper;
 
 /**
  * A Flow Node is UObject-based node designed to handle entire gameplay feature within single node.
@@ -336,7 +338,14 @@ protected:
 // Executing node instance
 
 public:
-	bool bPreloaded;
+	// IFlowCoreExecutableInterface
+	virtual void InitializeInstance() override;
+	virtual void DeinitializeInstance() override;
+
+	virtual void OnActivate() override;
+	virtual void Cleanup() override;
+	virtual void ExecuteInput(const FName& PinName) override;
+	// --
 
 protected:
 	UPROPERTY(SaveGame)
@@ -353,10 +362,6 @@ protected:
 	TMap<FName, TArray<FPinRecord>> OutputRecords;
 #endif
 
-public:
-	void TriggerPreload();
-	void TriggerFlush();
-
 protected:
 	/* Trigger execution of input pin. */
 	void TriggerInput(const FName& PinName, const EFlowPinActivationType ActivationType = EFlowPinActivationType::Default);
@@ -371,6 +376,36 @@ public:
 
 private:
 	void ResetRecords();
+
+//////////////////////////////////////////////////////////////////////////
+// Preload Content (subclasses must implement IFlowPreloadableInterface to use this code)
+
+public:
+	// Called by FFlowPreloadHelper at policy-determined lifecycle points, and directly by callers for ManualOnly timing.
+	void TriggerPreload();
+	void TriggerFlush();
+
+	// Returns true if this node's content is currently preloaded.
+	bool IsContentPreloaded() const;
+
+	// Called when async preloading finishes (i.e. PreloadContent returned PreloadInProgress). Updates helper state and fires OUTPIN_AllPreloadsComplete.
+	// Async C++ nodes call this from their completion delegate; async Blueprint nodes call it on self.
+	// Safe to call from within PreloadContent() (e.g. if FStreamableManager fires synchronously).
+	// Must be called on the game thread. No-op if called after TriggerFlush (cancellation guard).
+	UFUNCTION(BlueprintCallable, Category = "Preload Content")
+	void NotifyPreloadComplete();
+
+protected:
+	// Instanced preload helper allocated at InitializeInstance for nodes implementing IFlowPreloadableInterface.
+	// Remains uninitialized (invalid) for non-preloadable nodes.
+	UPROPERTY(Transient)
+	TInstancedStruct<FFlowPreloadHelper> PreloadHelper;
+
+	bool TryInitializePreloadHelper();
+	void DeinitializePreloadHelper();
+
+	// Forwards PinName to the PreloadHelper if one exists. Returns true if the helper consumed the pin.
+	bool DispatchExecuteInputToPreloadHelper(const FName& PinName);
 
 //////////////////////////////////////////////////////////////////////////
 // SaveGame support
@@ -394,7 +429,7 @@ protected:
 
 	UFUNCTION(BlueprintNativeEvent, Category = "FlowNode")
 	bool ShouldSave();
-	
+
 //////////////////////////////////////////////////////////////////////////
 // Utils
 
