@@ -34,7 +34,7 @@ This is BREAKING CHANGE. It requires updating constructors for C++ Flow Nodes. I
     * This change allows nodes to be more reactive to pin connections changing (like changing their Config Text), which was possible before, but not smooth.
     * Updated some Flow Nodes (Log, FormatText) to update their config text on pin connection changes.
 
-# Specific Flow Nodes
+## Specific Flow Nodes
 * Reroute updates/fixes. (contributed by Riot Games: LindyHopperGT)
     * Reroute nodes can now retype themselves if connected to a new type (and in doing so, break incompatible connections).
     * Copy/paste for data pin reroutes preserves the type of the reroute (was being lost).
@@ -42,3 +42,8 @@ This is BREAKING CHANGE. It requires updating constructors for C++ Flow Nodes. I
 * Added `CompareValues` predicate (for data pins) and auto-generate data pins refactor. (contributed by Riot Games: LindyHopperGT)
     *  Refactored the auto-generate data pins code so that the CompareValues predicate can get its pins generated, duplicates disambiguated and the results queried.
     * Created CompareValues predicate, which is analogous to the Compare Blackboard Values predicate, but for data pins.
+
+## SaveGame support
+* Refactored SaveGame integration to allow for arbitrary save data container objects. (inspired by gregorhcs)
+    * Added variants of `OnGameSaved` and `OnGameLoaded`: accepting `TArray<FFlowComponentSaveData>` and `TArray<FFlowAssetSaveData>` as input parameters.
+    * Added creating a transient `UFlowSaveGame` object in the new `OnGameLoaded` variant. This way, the plugin can keep operating on `UFlowSaveGame` as a container for these 2 arrays, but projects can store these arrays whenever they want.

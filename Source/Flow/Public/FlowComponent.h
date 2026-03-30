@@ -238,7 +238,7 @@ public:
 	FFlowComponentSaveData SaveInstance();
 
 	UFUNCTION(BlueprintCallable, Category = "SaveGame")
-	bool LoadInstance();
+	bool LoadInstance(const UFlowSubsystem* FlowSubsystem);
 
 protected:
 	UFUNCTION(BlueprintNativeEvent, Category = "SaveGame")

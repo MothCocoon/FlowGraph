@@ -96,9 +96,9 @@ protected:
 	// -----------------------------------------------------------------------
 
 	/* Generic equality check: resolve both sides as TFlowPinType, compare with Comparator.
-	* Works for any pin type whose ValueType is supported by the comparator.
-	* ErrorLabel is used in LogError messages (e.g. "Bool", "Vector", "Object").
-	* ComparatorFn defaults to std::equal_to<> (transparent), which uses operator==. */
+	 * Works for any pin type whose ValueType is supported by the comparator.
+	 * ErrorLabel is used in LogError messages (e.g. "Bool", "Vector", "Object").
+	 * ComparatorFn defaults to std::equal_to<> (transparent), which uses operator==. */
 	template <typename TFlowPinType, typename ComparatorFn = std::equal_to<>>
 	bool TryCheckResolvedValuesEqual(bool& bOutIsEqual, const TCHAR* ErrorLabel, ComparatorFn Comparator = {}) const;
 
@@ -106,7 +106,7 @@ protected:
 	bool TryCheckGameplayTagsEqual(bool& bOutIsEqual) const;
 
 	/* Fallback: both sides convert to string via TryConvertValuesToString.
-	* This supports user-added pin types from other plugins, so long as they implement TryConvertValuesToString. */
+	 * This supports user-added pin types from other plugins, so long as they implement TryConvertValuesToString. */
 	bool TryCheckFallbackStringEqual(bool& bOutIsEqual) const;
 
 	// Numeric comparisons support full operator set

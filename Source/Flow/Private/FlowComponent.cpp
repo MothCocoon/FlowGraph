@@ -65,11 +65,7 @@ void UFlowComponent::RegisterWithFlowSubsystem()
 {
 	if (UFlowSubsystem* FlowSubsystem = GetFlowSubsystem())
 	{
-		bool bComponentLoadedFromSaveGame = false;
-		if (GetFlowSubsystem()->GetLoadedSaveGame())
-		{
-			bComponentLoadedFromSaveGame = LoadInstance();
-		}
+		const bool bComponentLoadedFromSaveGame = LoadInstance(FlowSubsystem);
 
 		FlowSubsystem->RegisterComponent(this);
 
@@ -228,7 +224,6 @@ void UFlowComponent::RemoveIdentityTags(FGameplayTagContainer Tags, const EFlowN
 
 void UFlowComponent::OnRep_IdentityTags(const FGameplayTagContainer& PreviousTags)
 {
-
 	// Any tags that are now in the IdentityTags container but haven't been previously must have been added.
 	FGameplayTagContainer AddedTags;
 	for (const FGameplayTag& Tag : IdentityTags)
@@ -552,22 +547,18 @@ FFlowComponentSaveData UFlowComponent::SaveInstance()
 	return ComponentRecord;
 }
 
-bool UFlowComponent::LoadInstance()
+bool UFlowComponent::LoadInstance(const UFlowSubsystem* FlowSubsystem)
 {
-	const UFlowSaveGame* SaveGame = GetFlowSubsystem()->GetLoadedSaveGame();
-	if (SaveGame->FlowComponents.Num() > 0)
+	if (FlowSubsystem)
 	{
-		for (const FFlowComponentSaveData& ComponentRecord : SaveGame->FlowComponents)
+		if (const FFlowComponentSaveData* Record = FlowSubsystem->GetLoadedComponentRecord(GetWorld()->GetFName(), GetOwner()->GetFName()))
 		{
-			if (ComponentRecord.WorldName == GetWorld()->GetName() && ComponentRecord.ActorInstanceName == GetOwner()->GetName())
-			{
-				FMemoryReader MemoryReader(ComponentRecord.ComponentData, true);
-				FFlowArchive Ar(MemoryReader);
-				Serialize(Ar);
+			FMemoryReader MemoryReader(Record->ComponentData, true);
+			FFlowArchive Ar(MemoryReader);
+			Serialize(Ar);
 
-				OnLoad();
-				return true;
-			}
+			OnLoad();
+			return true;
 		}
 	}
 
