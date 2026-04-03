@@ -14,7 +14,12 @@
 void SLevelEditorFlow::Construct(const FArguments& InArgs)
 {
 	CreateFlowWidget();
-	FEditorDelegates::OnMapOpened.AddRaw(this, &SLevelEditorFlow::OnMapOpened);
+	OnMapOpenedHandle = FEditorDelegates::OnMapOpened.AddRaw(this, &SLevelEditorFlow::OnMapOpened);
+}
+
+SLevelEditorFlow::~SLevelEditorFlow()
+{
+	FEditorDelegates::OnMapOpened.Remove(OnMapOpenedHandle);
 }
 
 void SLevelEditorFlow::OnMapOpened(const FString& Filename, bool bAsTemplate)

@@ -14,6 +14,8 @@ public:
 
 	void Construct(const FArguments& InArgs);
 
+	~SLevelEditorFlow();
+
 protected:
 	void OnMapOpened(const FString& Filename, bool bAsTemplate);
 	void CreateFlowWidget();
@@ -24,4 +26,5 @@ protected:
 	static class UFlowComponent* FindFlowComponent();
 	
 	FString FlowAssetPath;
+	FDelegateHandle OnMapOpenedHandle;
 };
