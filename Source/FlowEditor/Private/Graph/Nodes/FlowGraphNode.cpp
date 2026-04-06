@@ -813,7 +813,7 @@ bool UFlowGraphNode::IsContentPreloaded() const
 	{
 		if (const UFlowNode* InspectedInstance = FlowNode->GetInspectedInstance())
 		{
-			return InspectedInstance->IsContentPreloaded();
+			return InspectedInstance->IsPreloaded();
 		}
 	}
 

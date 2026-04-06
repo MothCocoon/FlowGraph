@@ -9,14 +9,14 @@
 class UFlowNode;
 
 /**
- * Base preload helper struct, which establishes the interface for preload helpers. 
+ * Base preload helper struct. Nodes implementing IFlowPreloadableInterface receive one,
+ * as do nodes whose AddOns implement IFlowPreloadableInterface.
+ * Non-preloadable nodes (with no preloadable addons) leave PreloadHelper uninitialized (invalid).
+ * The base implementation is a no-op: it answers all API calls but performs no preloading.
  *
- * - Nodes and/or Nodes with AddOns that implement IFlowPreloadableInterface allocate SUBCLASS of this struct.
- * - Non-preloadable nodes (with no preloadable addons) leave PreloadHelper uninitialized (invalid).
- * - The base implementation is a pure virtual. *
- * - The concrete instance type is determined by FFlowPreloadPolicy::GetPreloadHelperStructType(),
- *   typically FFlowPreloadHelper_Standard. Projects may supply their own subclass via a custom
- *   FFlowPreloadPolicy subclass.
+ * The concrete instance type is determined by FFlowPreloadPolicy::GetPreloadHelperStructType(),
+ * typically FFlowPreloadHelper_Standard. Projects may supply their own subclass via a custom
+ * FFlowPreloadPolicy subclass.
  */
 USTRUCT()
 struct FLOW_API FFlowPreloadHelper
@@ -30,38 +30,33 @@ struct FLOW_API FFlowPreloadHelper
 	virtual void OnNodeActivate(UFlowNode& Node) PURE_VIRTUAL(OnNodeActivate);
 	virtual void OnNodeCleanup(UFlowNode& Node) PURE_VIRTUAL(OnNodeCleanup);
 	virtual void OnNodeDeinitializeInstance(UFlowNode& Node) PURE_VIRTUAL(OnNodeDeinitializeInstance);
-	virtual EFlowPreloadInputResult OnNodeExecuteInput(UFlowNode& Node, const FName& PinName) PURE_VIRTUAL(OnNodeExecuteInput, return EFlowPreloadInputResult::Invalid; );
+	virtual EFlowPreloadInputResult OnNodeExecuteInput(UFlowNode& Node, const FName& PinName) PURE_VIRTUAL(OnNodeExecuteInput, return EFlowPreloadInputResult::Unhandled; );
 
-	// Returns true if this node's content is fully preloaded (if async, the async load(s) must be complete).
-	virtual bool IsContentPreloaded() const PURE_VIRTUAL(IsContentPreloaded, return false; );
+	// Returns true if this node's content is fully preloaded (async completion has fired).
+	virtual bool IsPreloaded() const PURE_VIRTUAL(IsPreloaded, return false; );
 
-	// These Trigger functions are safe to be called when already preloaded, or already flushed.
+	// Triggers preloading on the given node. The base is a no-op; Standard tracks bPreloaded internally.
 	virtual void TriggerPreload(UFlowNode& Node) PURE_VIRTUAL(TriggerPreload);
 	virtual void TriggerFlush(UFlowNode& Node) PURE_VIRTUAL(TriggerFlush);
 
 	// Called by UFlowNode::NotifyPreloadComplete() when async preloading finishes.
-	// Returns:
-	// - Completed      - all participants finished; AllPreloadsComplete should fire.
-	// - PreloadInProgress - call arrived after flush/cancel, or other participants are still in progress.
-	virtual EFlowPreloadResult OnPreloadComplete(UFlowNode& Node) PURE_VIRTUAL(OnPreloadComplete, return EFlowPreloadResult::Invalid; );
+	// Returns AllComplete if all participants finished and AllPreloadsComplete should fire;
+	// returns Pending if the call arrived after flush/cancel or other participants are still in progress.
+	virtual EFlowPreloadCompleteResult OnPreloadComplete(UFlowNode& Node) PURE_VIRTUAL(OnPreloadComplete, return EFlowPreloadCompleteResult::Pending; );
 
 	// Exec output pin fired when all preloads for this node are complete.
 	static const FFlowPin OUTPIN_AllPreloadsComplete;
 
 #if WITH_EDITOR
-	// Provide Preload-specific pins to the FlowNode
 	virtual void GetContextInputs(TArray<FFlowPin>& OutInputPins) const {}
 	virtual void GetContextOutputs(TArray<FFlowPin>& OutOutputPins) const {}
 #endif
 };
 
 /**
- * Standard preload helper. 
- * 
- * Calls TriggerPreload/TriggerFlush on the owning node at the
- * timing specified by the asset's FFlowPreloadPolicy. 
- * 
- * Also adds the Preload and Flush exec input pins for manual triggering.
+ * Standard preload helper. Calls TriggerPreload/TriggerFlush on the owning node at the
+ * timing specified by the asset's FFlowPreloadPolicy. Also recognises the Preload and Flush
+ * exec input pins for manual (ManualOnly) triggering.
  */
 USTRUCT()
 struct FLOW_API FFlowPreloadHelper_Standard : public FFlowPreloadHelper
@@ -75,17 +70,15 @@ struct FLOW_API FFlowPreloadHelper_Standard : public FFlowPreloadHelper
 	virtual void OnNodeDeinitializeInstance(UFlowNode& Node) override;
 	virtual EFlowPreloadInputResult OnNodeExecuteInput(UFlowNode& Node, const FName& PinName) override;
 
-	virtual bool IsContentPreloaded() const override { return bContentPreloaded; }
-
+	virtual bool IsPreloaded() const override { return bPreloaded; }
 	virtual void TriggerPreload(UFlowNode& Node) override;
 	virtual void TriggerFlush(UFlowNode& Node) override;
 
 	// Called by UFlowNode::NotifyPreloadComplete() to update async state before the output pin fires.
-	virtual EFlowPreloadResult OnPreloadComplete(UFlowNode& Node) override;
+	virtual EFlowPreloadCompleteResult OnPreloadComplete(UFlowNode& Node) override;
 
-protected:
-	// true if the content completed its preload (and hasn't been flushed)
-	bool bContentPreloaded = false;
+private:
+	bool bPreloaded = false;
 
 	// Number of outstanding async completions (node + addons) between TriggerPreload and full completion.
 	// Counts up before any PreloadContent calls so re-entrant NotifyPreloadComplete() is safe.

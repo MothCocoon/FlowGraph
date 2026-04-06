@@ -1221,9 +1221,6 @@ void UFlowNode::Cleanup()
 
 void UFlowNode::ExecuteInput(const FName& PinName)
 {
-	// Often ExecuteInput is replaced rather than extended in subclasses.
-	// So any subclasses that implement the preload interface will want to call this function 
-	// in their ExecuteInput() override.
 	if (DispatchExecuteInputToPreloadHelper(PinName))
 	{
 		return;
@@ -1244,11 +1241,11 @@ bool UFlowNode::DispatchExecuteInputToPreloadHelper(const FName& PinName)
 	return false;
 }
 
-bool UFlowNode::IsContentPreloaded() const
+bool UFlowNode::IsPreloaded() const
 {
 	if (const FFlowPreloadHelper* Helper = PreloadHelper.GetPtr())
 	{
-		return Helper->IsContentPreloaded();
+		return Helper->IsPreloaded();
 	}
 
 	return false;
@@ -1256,11 +1253,11 @@ bool UFlowNode::IsContentPreloaded() const
 
 void UFlowNode::NotifyPreloadComplete()
 {
-	FLOW_ASSERT_ENUM_MAX(EFlowPreloadResult, 2);
+	FLOW_ASSERT_ENUM_MAX(EFlowPreloadCompleteResult, 2);
 
 	if (FFlowPreloadHelper* Helper = PreloadHelper.GetMutablePtr())
 	{
-		if (Helper->OnPreloadComplete(*this) == EFlowPreloadResult::Completed)
+		if (Helper->OnPreloadComplete(*this) == EFlowPreloadCompleteResult::AllComplete)
 		{
 			TriggerOutput(FFlowPreloadHelper::OUTPIN_AllPreloadsComplete.PinName, false);
 		}
@@ -1269,7 +1266,7 @@ void UFlowNode::NotifyPreloadComplete()
 
 void UFlowNode::TriggerPreload()
 {
-	if (!IsContentPreloaded())
+	if (!IsPreloaded())
 	{
 		if (FFlowPreloadHelper* Helper = PreloadHelper.GetMutablePtr())
 		{

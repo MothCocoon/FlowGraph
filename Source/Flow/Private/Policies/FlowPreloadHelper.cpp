@@ -18,7 +18,7 @@ void FFlowPreloadHelper_Standard::TriggerPreload(UFlowNode& Node)
 {
 	FLOW_ASSERT_ENUM_MAX(EFlowPreloadResult, 2);
 
-	if (bContentPreloaded || PendingPreloadCount > 0)
+	if (bPreloaded || PendingPreloadCount > 0)
 	{
 		return;
 	}
@@ -67,13 +67,13 @@ void FFlowPreloadHelper_Standard::TriggerPreload(UFlowNode& Node)
 
 void FFlowPreloadHelper_Standard::TriggerFlush(UFlowNode& Node)
 {
-	// Reset pending count first. Any late-arriving PreloadInProgress NotifyPreloadComplete()
+	// Reset pending count first. Any late-arriving Deferred NotifyPreloadComplete()
 	// will be rejected by the PendingPreloadCount <= 0 guard in OnPreloadComplete.
 	PendingPreloadCount = 0;
 
-	if (bContentPreloaded)
+	if (bPreloaded)
 	{
-		bContentPreloaded = false;
+		bPreloaded = false;
 
 		if (IFlowPreloadableInterface* Preloadable = Cast<IFlowPreloadableInterface>(&Node))
 		{
@@ -88,14 +88,14 @@ void FFlowPreloadHelper_Standard::TriggerFlush(UFlowNode& Node)
 	}
 }
 
-EFlowPreloadResult FFlowPreloadHelper_Standard::OnPreloadComplete(UFlowNode& /*Node*/)
+EFlowPreloadCompleteResult FFlowPreloadHelper_Standard::OnPreloadComplete(UFlowNode& /*Node*/)
 {
-	FLOW_ASSERT_ENUM_MAX(EFlowPreloadResult, 2);
+	FLOW_ASSERT_ENUM_MAX(EFlowPreloadCompleteResult, 2);
 
 	if (PendingPreloadCount <= 0)
 	{
 		// Guard: TriggerFlush was called, or this is a spurious/duplicate call. Discard.
-		return EFlowPreloadResult::PreloadInProgress;
+		return EFlowPreloadCompleteResult::Pending;
 	}
 
 	--PendingPreloadCount;
@@ -103,16 +103,16 @@ EFlowPreloadResult FFlowPreloadHelper_Standard::OnPreloadComplete(UFlowNode& /*N
 	if (PendingPreloadCount > 0)
 	{
 		// Still waiting on other participants (addons or the node itself).
-		return EFlowPreloadResult::PreloadInProgress;
+		return EFlowPreloadCompleteResult::Pending;
 	}
 
-	bContentPreloaded = true;
-	return EFlowPreloadResult::Completed;
+	bPreloaded = true;
+	return EFlowPreloadCompleteResult::AllComplete;
 }
 
 void FFlowPreloadHelper_Standard::OnNodeActivate(UFlowNode& Node)
 {
-	FLOW_ASSERT_ENUM_MAX(EFlowPreloadTiming, 3);
+	FLOW_ASSERT_ENUM_MAX(EFlowPreloadTiming, 4);
 
 	if (const UFlowAsset* FlowAsset = Node.GetFlowAsset())
 	{
@@ -126,7 +126,7 @@ void FFlowPreloadHelper_Standard::OnNodeActivate(UFlowNode& Node)
 
 void FFlowPreloadHelper_Standard::OnNodeInitializeInstance(UFlowNode& Node)
 {
-	FLOW_ASSERT_ENUM_MAX(EFlowPreloadTiming, 3);
+	FLOW_ASSERT_ENUM_MAX(EFlowPreloadTiming, 4);
 
 	if (const UFlowAsset* FlowAsset = Node.GetFlowAsset())
 	{
@@ -140,7 +140,7 @@ void FFlowPreloadHelper_Standard::OnNodeInitializeInstance(UFlowNode& Node)
 
 void FFlowPreloadHelper_Standard::OnNodeCleanup(UFlowNode& Node)
 {
-	FLOW_ASSERT_ENUM_MAX(EFlowFlushTiming, 3);
+	FLOW_ASSERT_ENUM_MAX(EFlowFlushTiming, 4);
 
 	if (const UFlowAsset* FlowAsset = Node.GetFlowAsset())
 	{
@@ -154,14 +154,14 @@ void FFlowPreloadHelper_Standard::OnNodeCleanup(UFlowNode& Node)
 
 void FFlowPreloadHelper_Standard::OnNodeDeinitializeInstance(UFlowNode& Node)
 {
-	FLOW_ASSERT_ENUM_MAX(EFlowFlushTiming, 3);
+	FLOW_ASSERT_ENUM_MAX(EFlowFlushTiming, 4);
 
 	if (const UFlowAsset* FlowAsset = Node.GetFlowAsset())
 	{
 		const FFlowPreloadPolicy& Policy = FlowAsset->GetPreloadPolicy();
-		if (Policy.GetFlushTimingForNode(Node) != EFlowFlushTiming::ManualOnly)
+		if (Policy.GetFlushTimingForNode(Node) != EFlowFlushTiming::Never)
 		{
-			// Flush regardless of specific timing (safety net for OnNodeFinish
+			// Flush regardless of specific timing (safety net for ManualOnly / OnNodeFinish
 			// where content may still be loaded at graph teardown). TriggerFlush is idempotent.
 			TriggerFlush(Node);
 		}
