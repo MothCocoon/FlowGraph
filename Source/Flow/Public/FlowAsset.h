@@ -396,16 +396,16 @@ protected:
 	/* Policy for UFlowGraphSchema (and others) to use to enforce pin connectivity.
 	 * Also used at runtime by predicates (e.g., CompareValues) for type classification queries. */
 	UPROPERTY(VisibleAnywhere, AdvancedDisplay, Category = PinConnection)
-	TInstancedStruct<FFlowPinConnectionPolicy> FlowPinConnectionPolicy;
+	TInstancedStruct<FFlowPinConnectionPolicy> PinConnectionPolicy;
 
 #if WITH_EDITOR
-	/* Override this function to set up a unique policy for a UFlowAsset subclass */
-	virtual void InitializeFlowPinConnectionPolicy();
+	/* Override these functions to set up unique policy(ies) for a UFlowAsset subclass */
+	virtual void InitializePinConnectionPolicy();
 #endif
 
 public:
 	/* FFlowPolicy accessors */
-	const FFlowPinConnectionPolicy& GetFlowPinConnectionPolicy() const;
+	const FFlowPinConnectionPolicy& GetPinConnectionPolicy() const;
 
 //////////////////////////////////////////////////////////////////////////
 // Deferred trigger support

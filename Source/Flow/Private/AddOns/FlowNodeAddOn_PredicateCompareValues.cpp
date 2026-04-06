@@ -5,7 +5,6 @@
 #include "FlowSettings.h"
 #include "Types/FlowPinTypeNamesStandard.h"
 #include "Types/FlowPinTypesStandard.h"
-#include "Types/FlowDataPinValuesStandard.h"
 #include "FlowAsset.h"
 #include "Policies/FlowPinConnectionPolicy.h"
 
@@ -188,41 +187,6 @@ bool UFlowNodeAddOn_PredicateCompareValues::IsInstancedStructTypeName(const FNam
 	return TypeName == FFlowPinTypeNamesStandard::PinTypeNameInstancedStruct;
 }
 
-bool UFlowNodeAddOn_PredicateCompareValues::IsBoolTypeName(const FName& TypeName)
-{
-	return TypeName == FFlowPinTypeNamesStandard::PinTypeNameBool;
-}
-
-bool UFlowNodeAddOn_PredicateCompareValues::IsVectorTypeName(const FName& TypeName)
-{
-	return TypeName == FFlowPinTypeNamesStandard::PinTypeNameVector;
-}
-
-bool UFlowNodeAddOn_PredicateCompareValues::IsRotatorTypeName(const FName& TypeName)
-{
-	return TypeName == FFlowPinTypeNamesStandard::PinTypeNameRotator;
-}
-
-bool UFlowNodeAddOn_PredicateCompareValues::IsTransformTypeName(const FName& TypeName)
-{
-	return TypeName == FFlowPinTypeNamesStandard::PinTypeNameTransform;
-}
-
-bool UFlowNodeAddOn_PredicateCompareValues::IsObjectTypeName(const FName& TypeName)
-{
-	return TypeName == FFlowPinTypeNamesStandard::PinTypeNameObject;
-}
-
-bool UFlowNodeAddOn_PredicateCompareValues::IsClassTypeName(const FName& TypeName)
-{
-	return TypeName == FFlowPinTypeNamesStandard::PinTypeNameClass;
-}
-
-bool UFlowNodeAddOn_PredicateCompareValues::IsInstancedStructTypeName(const FName& TypeName)
-{
-	return TypeName == FFlowPinTypeNamesStandard::PinTypeNameInstancedStruct;
-}
-
 #if WITH_EDITOR
 
 void UFlowNodeAddOn_PredicateCompareValues::PostEditChangeChainProperty(FPropertyChangedChainEvent& PropertyChangedEvent)
@@ -296,7 +260,7 @@ EDataValidationResult UFlowNodeAddOn_PredicateCompareValues::ValidateNode()
 
 	const UFlowAsset* FlowAsset = GetFlowAsset();
 	check(IsValid(FlowAsset));
-	const FFlowPinConnectionPolicy& PinConnectionPolicy = FlowAsset->GetFlowPinConnectionPolicy();
+	const FFlowPinConnectionPolicy& PinConnectionPolicy = FlowAsset->GetPinConnectionPolicy();
 
 	const FName LeftTypeName = LeftPinTypeName.Name;
 	const FName RightTypeName = RightPinTypeName.Name;
@@ -366,40 +330,6 @@ FText UFlowNodeAddOn_PredicateCompareValues::K2_GetNodeTitle_Implementation() co
 bool UFlowNodeAddOn_PredicateCompareValues::AreComparablePinTypes(const FFlowPinConnectionPolicy& PinConnectionPolicy, const FName& LeftPinTypeName, const FName& RightPinTypeName)
 {
 	return PinConnectionPolicy.CanConnectPinTypeNames(LeftPinTypeName, RightPinTypeName);
-}
-
-bool UFlowNodeAddOn_PredicateCompareValues::CacheTypeNames(FCachedTypeNames& OutCache) const
-{
-	OutCache.Reset();
-
-	if (!LeftValue.IsValid() || !RightValue.IsValid())
-	{
-		LogError(TEXT("Compare Values requires both LeftValue and RightValue to be configured."));
-		return false;
-	}
-
-	OutCache.LeftTypeName = LeftValue.DataPinValue.Get().GetPinTypeName().Name;
-	OutCache.RightTypeName = RightValue.DataPinValue.Get().GetPinTypeName().Name;
-	OutCache.bIsValid = true;
-
-	// String-like: allow Name/String/Text/Enum interchange
-	// (we include Enums as they have FName values for the purposes of comparison)
-	if (IsAnyStringLikeTypeName(LeftPinTypeName) && IsAnyStringLikeTypeName(RightPinTypeName))
-	{
-		return true;
-	}
-
-	// GameplayTag / Container: allow interchange (type templates can upscale tag -> container)
-	if (IsGameplayTagLikeTypeName(LeftPinTypeName) && IsGameplayTagLikeTypeName(RightPinTypeName))
-	{
-		return true;
-	}
-
-	// Note: Bool, Vector, Rotator, Transform, Object, Class, InstancedStruct are all
-	// only comparable with themselves (handled by the LeftPinTypeName == RightPinTypeName check above).
-	// Unknown/user types also fall into same-type comparison via the fallback path in EvaluatePredicate.
-
-	return false;
 }
 
 bool UFlowNodeAddOn_PredicateCompareValues::CacheTypeNames(FCachedTypeNames& OutCache) const
@@ -640,7 +570,7 @@ bool UFlowNodeAddOn_PredicateCompareValues::EvaluatePredicate_Implementation() c
 
 	const UFlowAsset* FlowAsset = GetFlowAsset();
 	check(IsValid(FlowAsset));
-	const FFlowPinConnectionPolicy& PinConnectionPolicy = FlowAsset->GetFlowPinConnectionPolicy();
+	const FFlowPinConnectionPolicy& PinConnectionPolicy = FlowAsset->GetPinConnectionPolicy();
 
 	const FName& LeftTypeName = Cache.LeftTypeName;
 	const FName& RightTypeName = Cache.RightTypeName;

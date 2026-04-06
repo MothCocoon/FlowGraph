@@ -15,7 +15,6 @@
 #include "Nodes/Graph/FlowNode_Start.h"
 #include "Nodes/Graph/FlowNode_SubGraph.h"
 #include "Policies/FlowPinConnectionPolicy.h"
-#include "Types/FlowAutoDataPinsWorkingData.h"
 #include "Types/FlowDataPinValue.h"
 #include "Types/FlowStructUtils.h"
 
@@ -55,7 +54,7 @@ UFlowAsset::UFlowAsset(const FObjectInitializer& ObjectInitializer)
 	, bStartNodePlacedAsGhostNode(false)
 	, TemplateAsset(nullptr)
 	, FinishPolicy(EFlowFinishPolicy::Keep)
-	, FlowPinConnectionPolicy()
+	, PinConnectionPolicy()
 {
 	if (!AssetGuid.IsValid())
 	{
@@ -70,7 +69,7 @@ void UFlowAsset::PostInitProperties()
 	Super::PostInitProperties();
 
 #if WITH_EDITOR
-	InitializeFlowPinConnectionPolicy();
+	InitializePinConnectionPolicy();
 #endif
 }
 
@@ -1441,23 +1440,39 @@ bool UFlowAsset::IsBoundToWorld_Implementation() const
 	return bWorldBound;
 }
 
-const FFlowPinConnectionPolicy& UFlowAsset::GetFlowPinConnectionPolicy() const
+const FFlowPinConnectionPolicy& UFlowAsset::GetPinConnectionPolicy() const
 {
 	// Runtime instances delegate to their template, which holds the serialized policy
-	if (!FlowPinConnectionPolicy.IsValid() && IsValid(TemplateAsset))
+	if (!PinConnectionPolicy.IsValid() && IsValid(TemplateAsset))
 	{
-		return TemplateAsset->GetFlowPinConnectionPolicy();
+		return TemplateAsset->GetPinConnectionPolicy();
 	}
 
-	check(FlowPinConnectionPolicy.IsValid());
-	return FlowPinConnectionPolicy.Get();
+	// Graceful fallback: if PinConnectionPolicy was never initialized (asset predates this feature,
+	// or was never opened in editor), read directly from Project Settings at runtime.
+	if (!PinConnectionPolicy.IsValid())
+	{
+		const FFlowPinConnectionPolicy* SettingsPolicy = GetDefault<UFlowSettings>()->GetPinConnectionPolicy();
+		ensureAlways(SettingsPolicy);
+		if (SettingsPolicy)
+		{
+			return *SettingsPolicy;
+		}
+	}
+
+	check(PinConnectionPolicy.IsValid());
+	return PinConnectionPolicy.Get();
 }
 
 #if WITH_EDITOR
 
-void UFlowAsset::InitializeFlowPinConnectionPolicy()
+void UFlowAsset::InitializePinConnectionPolicy()
 {
-	GetDefault<UFlowSettings>()->GetFlowPinConnectionPolicy(FlowPinConnectionPolicy);
+	const FInstancedStruct& SourceStruct = GetDefault<UFlowSettings>()->PinConnectionPolicy;
+	if (ensure(SourceStruct.IsValid()))
+	{
+		PinConnectionPolicy.InitializeAsScriptStruct(SourceStruct.GetScriptStruct(), SourceStruct.GetMemory());
+	}
 }
 
 void UFlowAsset::LogError(const FString& MessageToLog, const UFlowNodeBase* Node) const
