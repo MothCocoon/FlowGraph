@@ -296,7 +296,7 @@ EDataValidationResult UFlowNodeAddOn_PredicateCompareValues::ValidateNode()
 
 	const UFlowAsset* FlowAsset = GetFlowAsset();
 	check(IsValid(FlowAsset));
-	const FFlowPinConnectionPolicy& PinConnectionPolicy = FlowAsset->GetPinConnectionPolicy();
+	const FFlowPinConnectionPolicy& PinConnectionPolicy = FlowAsset->GetFlowPinConnectionPolicy();
 
 	const FName LeftTypeName = LeftPinTypeName.Name;
 	const FName RightTypeName = RightPinTypeName.Name;
@@ -640,7 +640,7 @@ bool UFlowNodeAddOn_PredicateCompareValues::EvaluatePredicate_Implementation() c
 
 	const UFlowAsset* FlowAsset = GetFlowAsset();
 	check(IsValid(FlowAsset));
-	const FFlowPinConnectionPolicy& PinConnectionPolicy = FlowAsset->GetPinConnectionPolicy();
+	const FFlowPinConnectionPolicy& PinConnectionPolicy = FlowAsset->GetFlowPinConnectionPolicy();
 
 	const FName& LeftTypeName = Cache.LeftTypeName;
 	const FName& RightTypeName = Cache.RightTypeName;

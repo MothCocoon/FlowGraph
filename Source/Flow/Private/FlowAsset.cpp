@@ -15,7 +15,6 @@
 #include "Nodes/Graph/FlowNode_Start.h"
 #include "Nodes/Graph/FlowNode_SubGraph.h"
 #include "Policies/FlowPinConnectionPolicy.h"
-#include "Policies/FlowPreloadPolicy.h"
 #include "Types/FlowAutoDataPinsWorkingData.h"
 #include "Types/FlowDataPinValue.h"
 #include "Types/FlowStructUtils.h"
@@ -56,8 +55,7 @@ UFlowAsset::UFlowAsset(const FObjectInitializer& ObjectInitializer)
 	, bStartNodePlacedAsGhostNode(false)
 	, TemplateAsset(nullptr)
 	, FinishPolicy(EFlowFinishPolicy::Keep)
-	, PinConnectionPolicy()
-	, PreloadPolicy()
+	, FlowPinConnectionPolicy()
 {
 	if (!AssetGuid.IsValid())
 	{
@@ -72,8 +70,7 @@ void UFlowAsset::PostInitProperties()
 	Super::PostInitProperties();
 
 #if WITH_EDITOR
-	InitializePinConnectionPolicy();
-	InitializePreloadPolicy();
+	InitializeFlowPinConnectionPolicy();
 #endif
 }
 
@@ -1016,6 +1013,13 @@ void UFlowAsset::FinishFlow(const EFlowFinishPolicy InFinishPolicy, const bool b
 	}
 	ActiveNodes.Empty();
 
+	// flush preloaded content
+	for (UFlowNode* PreloadedNode : PreloadedNodes)
+	{
+		PreloadedNode->TriggerFlush();
+	}
+	PreloadedNodes.Empty();
+
 	// provides option to finish game-specific logic prior to removing asset instance 
 	if (bRemoveInstance)
 	{
@@ -1437,60 +1441,23 @@ bool UFlowAsset::IsBoundToWorld_Implementation() const
 	return bWorldBound;
 }
 
-const FFlowPinConnectionPolicy& UFlowAsset::GetPinConnectionPolicy() const
+const FFlowPinConnectionPolicy& UFlowAsset::GetFlowPinConnectionPolicy() const
 {
 	// Runtime instances delegate to their template, which holds the serialized policy
-	if (!PinConnectionPolicy.IsValid() && IsValid(TemplateAsset))
+	if (!FlowPinConnectionPolicy.IsValid() && IsValid(TemplateAsset))
 	{
-		return TemplateAsset->GetPinConnectionPolicy();
+		return TemplateAsset->GetFlowPinConnectionPolicy();
 	}
 
-	check(PinConnectionPolicy.IsValid());
-	return PinConnectionPolicy.Get();
-}
-
-const FFlowPreloadPolicy& UFlowAsset::GetPreloadPolicy() const
-{
-	// Runtime instances delegate to their template, which holds the serialized policy.
-	if (!PreloadPolicy.IsValid() && IsValid(TemplateAsset))
-	{
-		return TemplateAsset->GetPreloadPolicy();
-	}
-
-	// Graceful fallback: if PreloadPolicy was never initialized (asset predates this feature,
-	// or was never opened in editor), read directly from project settings at runtime.
-	if (!PreloadPolicy.IsValid())
-	{
-		const FFlowPreloadPolicy* SettingsPolicy = GetDefault<UFlowSettings>()->GetPreloadPolicy();
-		ensureAlways(SettingsPolicy);
-		if (SettingsPolicy)
-		{
-			return *SettingsPolicy;
-		}
-	}
-
-	check(PreloadPolicy.IsValid());
-	return PreloadPolicy.Get();
+	check(FlowPinConnectionPolicy.IsValid());
+	return FlowPinConnectionPolicy.Get();
 }
 
 #if WITH_EDITOR
 
-void UFlowAsset::InitializePinConnectionPolicy()
+void UFlowAsset::InitializeFlowPinConnectionPolicy()
 {
-	const FInstancedStruct& SourceStruct = GetDefault<UFlowSettings>()->PinConnectionPolicy;
-	if (ensure(SourceStruct.IsValid()))
-	{
-		PinConnectionPolicy.InitializeAsScriptStruct(SourceStruct.GetScriptStruct(), SourceStruct.GetMemory());
-	}
-}
-
-void UFlowAsset::InitializePreloadPolicy()
-{
-	const FInstancedStruct& SourceStruct = GetDefault<UFlowSettings>()->PreloadPolicy;
-	if (ensure(SourceStruct.IsValid()))
-	{
-		PreloadPolicy.InitializeAsScriptStruct(SourceStruct.GetScriptStruct(), SourceStruct.GetMemory());
-	}
+	GetDefault<UFlowSettings>()->GetFlowPinConnectionPolicy(FlowPinConnectionPolicy);
 }
 
 void UFlowAsset::LogError(const FString& MessageToLog, const UFlowNodeBase* Node) const

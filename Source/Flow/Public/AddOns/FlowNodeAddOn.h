@@ -69,12 +69,6 @@ public:
 	UFUNCTION(BlueprintCallable, BlueprintPure, Category = "FlowNodeAddon", DisplayName = "Get Flow Node")
 	FLOW_API UFlowNode* GetFlowNode() const;
 
-	/* Called when this AddOn's async preloading finishes (i.e. PreloadContent returned PreloadInProgress).
-	 * Async C++ addons call this from their completion delegate; async Blueprint addons call it on self.
-	 * Delegates to the owning FlowNode's NotifyPreloadComplete(). */
-	UFUNCTION(BlueprintCallable, Category = "Preload")
-	FLOW_API void NotifyPreloadComplete();
-
 	/* Will crawl the hierarchy until it finds a flow node (addons can be attached to other add-ons). */
 	FLOW_API UFlowNode* FindOwningFlowNode() const;
 	// --

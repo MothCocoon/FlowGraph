@@ -6,7 +6,6 @@
 #include "LevelSequencePlayer.h"
 #include "MovieSceneSequencePlayer.h"
 
-#include "Interfaces/FlowPreloadableInterface.h"
 #include "Nodes/FlowNode.h"
 #include "FlowNode_PlayLevelSequence.generated.h"
 
@@ -22,9 +21,7 @@ DECLARE_MULTICAST_DELEGATE(FFlowNodeLevelSequenceEvent);
  * - Completed
  */
 UCLASS(NotBlueprintable, meta = (DisplayName = "Play Level Sequence"))
-class FLOW_API UFlowNode_PlayLevelSequence
-	: public UFlowNode
-	, public IFlowPreloadableInterface
+class FLOW_API UFlowNode_PlayLevelSequence : public UFlowNode
 {
 	GENERATED_BODY()
 	
@@ -89,8 +86,6 @@ protected:
 
 	FStreamableManager StreamableManager;
 
-	TSharedPtr<FStreamableHandle> PreloadHandle;
-
 public:
 #if WITH_EDITOR
 	// IFlowContextPinSupplierInterface
@@ -101,10 +96,8 @@ public:
 	virtual void PostEditChangeProperty(FPropertyChangedEvent& PropertyChangedEvent) override;
 #endif
 
-	// IFlowPreloadableInterface
-	virtual EFlowPreloadResult PreloadContent() override;
+	virtual void PreloadContent() override;
 	virtual void FlushContent() override;
-	// --
 
 	virtual void InitializeInstance() override;
 	void CreatePlayer();

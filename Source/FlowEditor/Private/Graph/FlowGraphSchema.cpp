@@ -333,14 +333,14 @@ bool UFlowGraphSchema::ArePinTypesCompatible(
 	}
 
 	// Get the PinConnectionPolicy from the FlowAsset
-	const FFlowPinConnectionPolicy& PinConnectionPolicy = FlowAsset->GetPinConnectionPolicy();
-	if (!PinConnectionPolicy.CanConnectPinTypeNames(OutputPinType.PinCategory, InputPinType.PinCategory))
+	const FFlowPinConnectionPolicy& FlowPinConnectionPolicy = FlowAsset->GetFlowPinConnectionPolicy();
+	if (!FlowPinConnectionPolicy.CanConnectPinTypeNames(OutputPinType.PinCategory, InputPinType.PinCategory))
 	{
 		// Type-name based check failed
 		return false;
 	}
 
-	const FFlowPinTypeMatchPolicy* FoundPinTypeMatchPolicy = PinConnectionPolicy.TryFindPinTypeMatchPolicy(InputPinType.PinCategory);
+	const FFlowPinTypeMatchPolicy* FoundPinTypeMatchPolicy = FlowPinConnectionPolicy.TryFindPinTypeMatchPolicy(InputPinType.PinCategory);
 	checkf(FoundPinTypeMatchPolicy, TEXT("Should fail CanConnectPinTypeNames, if no MatchPolicy"));
 
 	// RequirePinCategoryMemberReference

@@ -104,6 +104,9 @@ public:
 	virtual void InitializeInstance() override;
 	virtual void DeinitializeInstance() override;
 
+	virtual void PreloadContent() override;
+	virtual void FlushContent() override;
+
 	virtual void OnActivate() override;
 	virtual void ExecuteInput(const FName& PinName) override;
 

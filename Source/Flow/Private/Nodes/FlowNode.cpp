@@ -5,9 +5,6 @@
 
 #include "FlowAsset.h"
 #include "FlowSettings.h"
-#include "Interfaces/FlowPreloadableInterface.h"
-#include "Policies/FlowPreloadHelper.h"
-#include "Policies/FlowPreloadPolicy.h"
 #include "Interfaces/FlowNodeWithExternalDataPinSupplierInterface.h"
 #include "Types/FlowAutoDataPinsWorkingData.h"
 #include "Types/FlowDataPinValue.h"
@@ -36,6 +33,7 @@ FString UFlowNode::NoActorsFound = TEXT("No actors found");
 UFlowNode::UFlowNode()
 	: AllowedSignalModes({EFlowSignalMode::Enabled, EFlowSignalMode::Disabled, EFlowSignalMode::PassThrough})
 	, SignalMode(EFlowSignalMode::Enabled)
+	, bPreloaded(false)
 	, ActivationState(EFlowNodeState::NeverActivated)
 {
 #if WITH_EDITOR
@@ -1185,158 +1183,16 @@ void UFlowNode::RecursiveFindNodesByClass(UFlowNode* Node, const TSubclassOf<UFl
 	}
 }
 
-void UFlowNode::InitializeInstance()
-{
-	Super::InitializeInstance();
-
-	TryInitializePreloadHelper();
-}
-
-void UFlowNode::DeinitializeInstance()
-{
-	DeinitializePreloadHelper();
-
-	Super::DeinitializeInstance();
-}
-
-void UFlowNode::OnActivate()
-{
-	Super::OnActivate();
-
-	if (FFlowPreloadHelper* Helper = PreloadHelper.GetMutablePtr())
-	{
-		Helper->OnNodeActivate(*this);
-	}
-}
-
-void UFlowNode::Cleanup()
-{
-	if (FFlowPreloadHelper* Helper = PreloadHelper.GetMutablePtr())
-	{
-		Helper->OnNodeCleanup(*this);
-	}
-
-	Super::Cleanup();
-}
-
-void UFlowNode::ExecuteInput(const FName& PinName)
-{
-	if (DispatchExecuteInputToPreloadHelper(PinName))
-	{
-		return;
-	}
-
-	Super::ExecuteInput(PinName);
-}
-
-bool UFlowNode::DispatchExecuteInputToPreloadHelper(const FName& PinName)
-{
-	FLOW_ASSERT_ENUM_MAX(EFlowPreloadInputResult, 2);
-
-	if (FFlowPreloadHelper* Helper = PreloadHelper.GetMutablePtr())
-	{
-		return Helper->OnNodeExecuteInput(*this, PinName) == EFlowPreloadInputResult::Handled;
-	}
-
-	return false;
-}
-
-bool UFlowNode::IsPreloaded() const
-{
-	if (const FFlowPreloadHelper* Helper = PreloadHelper.GetPtr())
-	{
-		return Helper->IsPreloaded();
-	}
-
-	return false;
-}
-
-void UFlowNode::NotifyPreloadComplete()
-{
-	FLOW_ASSERT_ENUM_MAX(EFlowPreloadCompleteResult, 2);
-
-	if (FFlowPreloadHelper* Helper = PreloadHelper.GetMutablePtr())
-	{
-		if (Helper->OnPreloadComplete(*this) == EFlowPreloadCompleteResult::AllComplete)
-		{
-			TriggerOutput(FFlowPreloadHelper::OUTPIN_AllPreloadsComplete.PinName, false);
-		}
-	}
-}
-
 void UFlowNode::TriggerPreload()
 {
-	if (!IsPreloaded())
-	{
-		if (FFlowPreloadHelper* Helper = PreloadHelper.GetMutablePtr())
-		{
-			Helper->TriggerPreload(*this);
-		}
-	}
+	bPreloaded = true;
+	PreloadContent();
 }
 
 void UFlowNode::TriggerFlush()
 {
-	if (FFlowPreloadHelper* Helper = PreloadHelper.GetMutablePtr())
-	{
-		Helper->TriggerFlush(*this);
-	}
-}
-
-bool UFlowNode::TryInitializePreloadHelper()
-{
-	// Allocate a helper if the node itself or any of its addons implements IFlowPreloadableInterface.
-	bool bIsPreloadable = IFlowPreloadableInterface::ImplementsInterfaceSafe(this);
-
-	if (!bIsPreloadable)
-	{
-		ForEachAddOnForClass<UFlowPreloadableInterface>([&bIsPreloadable](UFlowNodeAddOn& /*AddOn*/)
-		{
-			bIsPreloadable = true;
-			return EFlowForEachAddOnFunctionReturnValue::BreakWithSuccess;
-		});
-	}
-
-	if (!bIsPreloadable)
-	{
-		return false;
-	}
-
-	const UFlowAsset* FlowAsset = GetFlowAsset();
-	if (!IsValid(FlowAsset))
-	{
-		LogError(TEXT("IFlowPreloadableInterface node has no valid FlowAsset during InitializeInstance — PreloadHelper will not be created."));
-		return false;
-	}
-
-	const FFlowPreloadPolicy& PreloadPolicy = FlowAsset->GetPreloadPolicy();
-
-	UScriptStruct* HelperType = PreloadPolicy.GetPreloadHelperStructType(*this);
-	if (!IsValid(HelperType))
-	{
-		LogError(TEXT("FFlowPreloadPolicy::GetPreloadHelperStructType returned null — PreloadHelper will not be created."));
-		return false;
-	}
-
-	PreloadHelper.InitializeAsScriptStruct(HelperType);
-
-	if (FFlowPreloadHelper* Helper = PreloadHelper.GetMutablePtr())
-	{
-		Helper->OnNodeInitializeInstance(*this);
-		return true;
-	}
-
-	return false;
-}
-
-void UFlowNode::DeinitializePreloadHelper()
-{
-	if (FFlowPreloadHelper* Helper = PreloadHelper.GetMutablePtr())
-	{
-		Helper->OnNodeDeinitializeInstance(*this);
-	}
-
-	PreloadHelper.Reset();
+	bPreloaded = false;
+	FlushContent();
 }
 
 void UFlowNode::TriggerInput(const FName& PinName, const EFlowPinActivationType ActivationType /*= Default*/)

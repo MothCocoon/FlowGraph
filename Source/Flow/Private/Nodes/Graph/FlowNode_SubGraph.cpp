@@ -35,14 +35,12 @@ bool UFlowNode_SubGraph::CanBeAssetInstanced() const
 	return !Asset.IsNull() && (bCanInstanceIdenticalAsset || Asset.ToString() != GetFlowAsset()->GetTemplateAsset()->GetPathName());
 }
 
-EFlowPreloadResult UFlowNode_SubGraph::PreloadContent()
+void UFlowNode_SubGraph::PreloadContent()
 {
 	if (CanBeAssetInstanced() && GetFlowSubsystem())
 	{
 		GetFlowSubsystem()->CreateSubFlow(this, FString(), true);
 	}
-
-	return EFlowPreloadResult::Completed;
 }
 
 void UFlowNode_SubGraph::FlushContent()
@@ -55,11 +53,6 @@ void UFlowNode_SubGraph::FlushContent()
 
 void UFlowNode_SubGraph::ExecuteInput(const FName& PinName)
 {
-	if (DispatchExecuteInputToPreloadHelper(PinName))
-	{
-		return;
-	}
-
 	if (CanBeAssetInstanced() == false)
 	{
 		if (Asset.IsNull())
