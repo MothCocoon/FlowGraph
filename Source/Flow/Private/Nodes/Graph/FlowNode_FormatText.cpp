@@ -24,7 +24,7 @@ FFlowDataPinResult UFlowNode_FormatText::TrySupplyDataPin(FName PinName) const
 	if (PinName == OUTPIN_TextOutput)
 	{
 		FText FormattedText;
-		const EFlowDataPinResolveResult FormatResult = TryResolveFormatText(PinName, FormattedText);
+		const EFlowDataPinResolveResult FormatResult = TryResolveFormattedText(PinName, FormattedText);
 	
 		if (FlowPinType::IsSuccess(FormatResult))
 		{
@@ -39,15 +39,18 @@ FFlowDataPinResult UFlowNode_FormatText::TrySupplyDataPin(FName PinName) const
 	return Super::TrySupplyDataPin(PinName);
 }
 
-EFlowDataPinResolveResult UFlowNode_FormatText::TryResolveFormatText(const FName& PinName, FText& OutFormattedText) const
+EFlowDataPinResolveResult UFlowNode_FormatText::TryResolveFormattedText(const FName& PinName, FText& OutFormattedText) const
 {
-	if (TryFormatTextWithNamedPropertiesAsParameters(FormatText, OutFormattedText))
+	FText ResolvedFormatText = FormatText;
+	const EFlowDataPinResolveResult ResolveResult = TryResolveDataPinValue<FFlowPinType_Text>(GET_MEMBER_NAME_CHECKED(ThisClass, FormatText), ResolvedFormatText);
+
+	if (TryFormatTextWithNamedPropertiesAsParameters(ResolvedFormatText, OutFormattedText))
 	{
 		return EFlowDataPinResolveResult::Success;
 	}
 	else
 	{
-		LogError(FString::Printf(TEXT("Could not format text '%s' with properties as parameters"), *FormatText.ToString()), EFlowOnScreenMessageType::Temporary);
+		LogError(FString::Printf(TEXT("Could not format text '%s' with properties as parameters"), *ResolvedFormatText.ToString()), EFlowOnScreenMessageType::Temporary);
 
 		return EFlowDataPinResolveResult::FailedWithError;
 	}

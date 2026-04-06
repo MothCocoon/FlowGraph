@@ -16,7 +16,6 @@
 #include "Nodes/Graph/FlowNode_SubGraph.h"
 #include "Policies/FlowPinConnectionPolicy.h"
 #include "Policies/FlowPreloadPolicy.h"
-#include "Types/FlowAutoDataPinsWorkingData.h"
 #include "Types/FlowDataPinValue.h"
 #include "Types/FlowStructUtils.h"
 
@@ -1104,6 +1103,19 @@ AActor* UFlowAsset::TryFindActorOwner() const
 	// If the owner is a Component, return its owning Actor
 	if (const UActorComponent* OwnerAsComponent = Cast<UActorComponent>(OwnerObject))
 	{
+	{
+		return nullptr;
+	}
+
+	// If the owner is already an Actor, return it directly
+	if (AActor* OwnerAsActor = Cast<AActor>(OwnerObject))
+	{
+		return OwnerAsActor;
+	}
+
+	// If the owner is a Component, return its owning Actor
+	if (const UActorComponent* OwnerAsComponent = Cast<UActorComponent>(OwnerObject))
+	{
 		return OwnerAsComponent->GetOwner();
 	}
 
@@ -1447,6 +1459,7 @@ const FFlowPinConnectionPolicy& UFlowAsset::GetPinConnectionPolicy() const
 
 	// Graceful fallback: if PinConnectionPolicy was never initialized (asset predates this feature,
 	// or was never opened in editor), read directly from project settings at runtime.
+	// or was never opened in editor), read directly from Project Settings at runtime.
 	if (!PinConnectionPolicy.IsValid())
 	{
 		const FFlowPinConnectionPolicy* SettingsPolicy = GetDefault<UFlowSettings>()->GetPinConnectionPolicy();
@@ -1468,6 +1481,7 @@ const FFlowPreloadPolicy& UFlowAsset::GetPreloadPolicy() const
 	{
 		return TemplateAsset->GetPreloadPolicy();
 	}
+}
 
 	// Graceful fallback: if PreloadPolicy was never initialized (asset predates this feature,
 	// or was never opened in editor), read directly from project settings at runtime.

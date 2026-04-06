@@ -14,7 +14,12 @@
 void SLevelEditorFlow::Construct(const FArguments& InArgs)
 {
 	CreateFlowWidget();
-	FEditorDelegates::OnMapOpened.AddRaw(this, &SLevelEditorFlow::OnMapOpened);
+	OnMapOpenedHandle = FEditorDelegates::OnMapOpened.AddRaw(this, &SLevelEditorFlow::OnMapOpened);
+}
+
+SLevelEditorFlow::~SLevelEditorFlow()
+{
+	FEditorDelegates::OnMapOpened.Remove(OnMapOpenedHandle);
 }
 
 void SLevelEditorFlow::OnMapOpened(const FString& Filename, bool bAsTemplate)
@@ -40,7 +45,7 @@ void SLevelEditorFlow::CreateFlowWidget()
 			.AutoWidth()
 			[
 				SNew(SObjectPropertyEntryBox)
-					.AllowedClass(GetDefault<UFlowGraphSettings>()->WorldAssetClass)
+					.AllowedClass(GetDefault<UFlowGraphSettings>()->WorldAssetClass.LoadSynchronous())
 					.DisplayThumbnail(false)
 					.OnObjectChanged(this, &SLevelEditorFlow::OnFlowChanged)
 					.ObjectPath(this, &SLevelEditorFlow::GetFlowAssetPath) // needs function to automatically refresh view upon data change

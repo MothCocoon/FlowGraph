@@ -2,12 +2,11 @@
 
 #include "AddOns/FlowNodeAddOn_PredicateCompareValues.h"
 
+#include "FlowAsset.h"
 #include "FlowSettings.h"
+#include "Policies/FlowPinConnectionPolicy.h"
 #include "Types/FlowPinTypeNamesStandard.h"
 #include "Types/FlowPinTypesStandard.h"
-#include "Types/FlowDataPinValuesStandard.h"
-#include "FlowAsset.h"
-#include "Policies/FlowPinConnectionPolicy.h"
 
 #define LOCTEXT_NAMESPACE "FlowNodeAddOn_PredicateCompareValues"
 

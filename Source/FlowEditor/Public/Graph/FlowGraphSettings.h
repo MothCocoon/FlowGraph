@@ -85,16 +85,16 @@ class FLOWEDITOR_API UFlowGraphSettings : public UDeveloperSettings
 
 	/* Use this class to create new assets. Class picker will show up if None. */
 	UPROPERTY(EditAnywhere, config, Category = "Default UI")
-	TSubclassOf<class UFlowAsset> DefaultFlowAssetClass;
+	TSoftClassPtr<class UFlowAsset> DefaultFlowAssetClass;
 
 	/* Flow Asset class allowed to be assigned via Level Editor toolbar. */
 	UPROPERTY(EditAnywhere, config, Category = "Default UI", meta = (EditCondition = "bShowAssetToolbarAboveLevelEditor"))
-	TSubclassOf<class UFlowAsset> WorldAssetClass;
+	TSoftClassPtr<class UFlowAsset> WorldAssetClass;
 
 	/* Hide specific nodes from the Flow Palette without changing the source code.
 	 * Requires restart after making a change. */
 	UPROPERTY(EditAnywhere, config, Category = "Nodes", meta = (ConfigRestartRequired = true))
-	TArray<TSubclassOf<class UFlowNode>> NodesHiddenFromPalette;
+	TArray<TSoftClassPtr<class UFlowNode>> NodesHiddenFromPalette;
 
 	/* Configurable map of FlowAsset subclasses to the FlowAssetNodePolicy for that subclass. */
 	UPROPERTY(EditAnywhere, Config, Category = "Nodes", meta = (ConfigRestartRequired = true, AllowedClasses = "/Script/Flow.FlowAsset"))
@@ -102,7 +102,7 @@ class FLOWEDITOR_API UFlowGraphSettings : public UDeveloperSettings
 
 	/* Allows anyone to override Flow Palette category for specific nodes without modifying source code. */
 	UPROPERTY(EditAnywhere, config, Category = "Nodes")
-	TMap<TSubclassOf<class UFlowNode>, FString> OverridenNodeCategories;
+	TMap<TSoftClassPtr<class UFlowNode>, FString> OverridenNodeCategories;
 
 	/* Hide default pin names on simple nodes, reduces UI clutter. */
 	UPROPERTY(EditAnywhere, config, Category = "Nodes")
@@ -114,7 +114,7 @@ class FLOWEDITOR_API UFlowGraphSettings : public UDeveloperSettings
 	TArray<FString> NodePrefixesToRemove;
 
 	/* Display Styles for nodes, keyed by Gameplay Tag. */
-	UPROPERTY(EditAnywhere, config, Category = "Nodes", meta = (TitleProperty = "{Tag}}"))
+	UPROPERTY(EditAnywhere, config, Category = "Nodes", meta = (TitleProperty = "{Tag}"))
 	TArray<FFlowNodeDisplayStyleConfig> NodeDisplayStyles;
 
 #if WITH_EDITORONLY_DATA
@@ -131,7 +131,7 @@ class FLOWEDITOR_API UFlowGraphSettings : public UDeveloperSettings
 	TMap<EFlowNodeStyle, FLinearColor> NodeTitleColors;
 
 	UPROPERTY(Config, EditAnywhere, Category = "Nodes")
-	TMap<TSubclassOf<UFlowNode>, FLinearColor> NodeSpecificColors;
+	TMap<TSoftClassPtr<UFlowNode>, FLinearColor> NodeSpecificColors;
 
 	UPROPERTY(EditAnywhere, config, Category = "Nodes")
 	FLinearColor ExecPinColorModifier;
