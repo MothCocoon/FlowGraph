@@ -36,7 +36,10 @@ public:
 
 protected:
 	virtual void ExecuteInput(const FName& PinName) override;
-	virtual void Cleanup() override;
 
 	void ResetCounter();
+	
+#if WITH_EDITOR
+	virtual FString GetStatusString() const override;
+#endif
 };
