@@ -242,7 +242,7 @@ void FFlowGraphToDiff::GenerateTreeEntries(TArray<TSharedPtr<FBlueprintDifferenc
 			continue;
 		}
 
-		FlowNodeDiff->ParentNodeDiff = FindParentNode(Cast<UFlowGraphNode>(Node1));
+		FlowNodeDiff->ParentNodeDiff = FindParentDiff(Cast<UFlowGraphNode>(Node1));
 		if (FlowNodeDiff->ParentNodeDiff.IsValid())
 		{
 			const TSharedPtr<FFlowObjectDiff> ParentNode = FlowNodeDiff->ParentNodeDiff.Pin();
@@ -341,7 +341,7 @@ TSharedPtr<FFlowObjectDiff> FFlowGraphToDiff::GenerateFlowObjectDiff(const TShar
 	return NewFlowObjectDiff;
 }
 
-TSharedPtr<FFlowObjectDiff> FFlowGraphToDiff::FindParentNode(UFlowGraphNode* Node)
+TSharedPtr<FFlowObjectDiff> FFlowGraphToDiff::FindParentDiff(UFlowGraphNode* Node)
 {
 	if (!IsValid(Node))
 	{
@@ -349,36 +349,27 @@ TSharedPtr<FFlowObjectDiff> FFlowGraphToDiff::FindParentNode(UFlowGraphNode* Nod
 	}
 
 	const UFlowGraphNode* ParentNode = Node->GetParentNode();
-	for (auto& FlowNodeDiff : FlowObjectDiffsByNodeName)
+	while ( IsValid( ParentNode ) )
 	{
-		//don't allow a pin diff be the parent of anything.
-		if (FlowNodeDiff.Value->DiffResult->Result.Pin1)
+		for (auto& FlowNodeDiff : FlowObjectDiffsByNodeName)
 		{
-			continue;
-		}
-		//if parent node is set, use that.
-		if (IsValid(ParentNode))
-		{
-			if (FlowNodeDiff.Value->DiffResult->Result.Node1 == ParentNode
-				|| FlowNodeDiff.Value->DiffResult->Result.Node2 == ParentNode)
+			//don't allow a pin diff be the parent of anything.
+			if (FlowNodeDiff.Value->DiffResult->Result.Pin1)
 			{
-				return FlowNodeDiff.Value;
+				continue;
 			}
-		}
-		//if parent node is not set (not set in node removal changes for some reason),
-		//try to find the parent in the SubNodes of known node changes.
-		else
-		{
-			const UFlowGraphNode* NodeToCheck = Cast<UFlowGraphNode>(FlowNodeDiff.Value->DiffResult->Result.Node1);
-			if (IsValid(NodeToCheck))
+			//if parent node is set, use that.
+			if (IsValid(ParentNode))
 			{
-				const int32 Index = NodeToCheck->SubNodes.Find(Node);
-				if (Index != INDEX_NONE)
+				if (FlowNodeDiff.Value->DiffResult->Result.Node1 == ParentNode
+					|| FlowNodeDiff.Value->DiffResult->Result.Node2 == ParentNode)
 				{
 					return FlowNodeDiff.Value;
 				}
 			}
 		}
+
+		ParentNode = ParentNode->GetParentNode();
 	}
 
 	return nullptr;
