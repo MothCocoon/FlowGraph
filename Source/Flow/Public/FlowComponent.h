@@ -228,6 +228,8 @@ public:
 // SaveGame
 
 public:
+	virtual bool CanSave() const { return true; }
+	
 	UFUNCTION(BlueprintCallable, Category = "SaveGame")
 	virtual void SaveRootFlow(TArray<FFlowAssetSaveData>& SavedFlowInstances);
 

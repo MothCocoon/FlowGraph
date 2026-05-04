@@ -3,7 +3,7 @@
 
 #include "AssetTypeCategories.h"
 #include "IAssetTypeActions.h"
-#include "Modules/ModuleInterface.h"
+#include "Modules/ModuleManager.h"
 #include "PropertyEditorDelegates.h"
 #include "Toolkits/AssetEditorToolkit.h"
 #include "Toolkits/IToolkit.h"
@@ -55,14 +55,12 @@ public:
 	FDelegateHandle ModulesChangedHandle;
 
 private:
-	void ModulesChangesCallback(FName ModuleName, EModuleChangeReason ReasonForChange) const;
-	void RegisterAssetIndexers() const;
-
-	void CreateFlowToolbar(FToolBarBuilder& ToolbarBuilder) const;
+	static void ModulesChangesCallback(FName ModuleName, EModuleChangeReason ReasonForChange);
+	static void RegisterAssetIndexers();
 
 public:
 	static TSharedRef<FFlowAssetEditor> CreateFlowAssetEditor(const EToolkitMode::Type Mode, const TSharedPtr<IToolkitHost>& InitToolkitHost, UFlowAsset* FlowAsset);
 
-	void OnAssetUpdated(const FAssetData& AssetData);
-	void OnAssetRenamed(const FAssetData& AssetData, const FString& OldObjectPath);
+	static void OnAssetUpdated(const FAssetData& AssetData);
+	static void OnAssetRenamed(const FAssetData& AssetData, const FString& OldObjectPath);
 };

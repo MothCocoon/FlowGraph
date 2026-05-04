@@ -152,8 +152,8 @@ public:
 	UFUNCTION(BlueprintPure, Category = "FlowSubsystem")
 	UFlowSaveGame* GetLoadedSaveGame() const { return LoadedSaveGame; }
 
-	virtual const FFlowComponentSaveData* GetLoadedComponentRecord(const FName& WorldName, const FName& ActorName) const;
-	virtual const FFlowAssetSaveData* GetLoadedAssetRecord(const FString& SavedAssetInstanceName, const bool bAssetBoundToWorld) const;
+	virtual const FFlowComponentSaveData* GetLoadedComponentRecord(const UFlowComponent* Component) const;
+	virtual const FFlowAssetSaveData* GetLoadedAssetRecord(const UObject* Owner, const UFlowAsset* Asset, const FString& SavedAssetInstanceName) const;
 
 	UFUNCTION(BlueprintCallable, Category = "FlowSubsystem")
 	virtual void ClearLoadedSaveGame();

@@ -397,7 +397,10 @@ void UFlowSubsystem::OnGameSaved(TArray<FFlowComponentSaveData>& FlowComponents,
 		{
 			if (UFlowComponent* FlowComponent = Cast<UFlowComponent>(RootInstance.Value))
 			{
-				FlowComponent->SaveRootFlow(FlowInstances);
+				if (FlowComponent->CanSave())
+				{
+					FlowComponent->SaveRootFlow(FlowInstances);
+				}				
 			}
 			else
 			{
@@ -417,7 +420,10 @@ void UFlowSubsystem::OnGameSaved(TArray<FFlowComponentSaveData>& FlowComponents,
 
 		for (const TWeakObjectPtr<UFlowComponent> RegisteredComponent : RegisteredComponents)
 		{
-			FlowComponents.Emplace(RegisteredComponent->SaveInstance());
+			if (RegisteredComponent->CanSave())
+			{
+				FlowComponents.Emplace(RegisteredComponent->SaveInstance());
+			}		
 		}
 	}
 }
@@ -446,7 +452,7 @@ void UFlowSubsystem::LoadRootFlow(UObject* Owner, UFlowAsset* FlowAsset, const F
 		return;
 	}
 
-	if (const FFlowAssetSaveData* AssetRecord = GetLoadedAssetRecord(SavedAssetInstanceName, FlowAsset->IsBoundToWorld()))
+	if (const FFlowAssetSaveData* AssetRecord = GetLoadedAssetRecord(Owner, FlowAsset, SavedAssetInstanceName))
 	{
 		if (UFlowAsset* LoadedInstance = CreateRootFlow(Owner, FlowAsset, bAllowMultipleInstances))
 		{
@@ -465,7 +471,7 @@ void UFlowSubsystem::LoadSubFlow(UFlowNode_SubGraph* SubGraphNode, const FString
 		return;
 	}
 
-	if (const FFlowAssetSaveData* AssetRecord = GetLoadedAssetRecord(SavedAssetInstanceName, SubGraphAsset->IsBoundToWorld()))
+	if (const FFlowAssetSaveData* AssetRecord = GetLoadedAssetRecord(SubGraphNode, SubGraphAsset, SavedAssetInstanceName))
 	{
 		UFlowAsset* LoadedInstance = CreateSubFlow(SubGraphNode, SavedAssetInstanceName);
 		if (LoadedInstance)
@@ -475,10 +481,13 @@ void UFlowSubsystem::LoadSubFlow(UFlowNode_SubGraph* SubGraphNode, const FString
 	}
 }
 
-const FFlowComponentSaveData* UFlowSubsystem::GetLoadedComponentRecord(const FName& WorldName, const FName& ActorName) const
+const FFlowComponentSaveData* UFlowSubsystem::GetLoadedComponentRecord(const UFlowComponent* Component) const
 {
 	if (LoadedSaveGame)
 	{
+		const FString WorldName = Component->GetWorld()->GetName();
+		const FString ActorName = Component->GetOwner()->GetName();
+		
 		for (const FFlowComponentSaveData& ComponentRecord : LoadedSaveGame->FlowComponents)
 		{
 			if (ComponentRecord.WorldName == WorldName && ComponentRecord.ActorInstanceName == ActorName)
@@ -491,12 +500,13 @@ const FFlowComponentSaveData* UFlowSubsystem::GetLoadedComponentRecord(const FNa
 	return nullptr;
 }
 
-const FFlowAssetSaveData* UFlowSubsystem::GetLoadedAssetRecord(const FString& SavedAssetInstanceName, const bool bAssetBoundToWorld) const
+const FFlowAssetSaveData* UFlowSubsystem::GetLoadedAssetRecord(const UObject* Owner, const UFlowAsset* Asset, const FString& SavedAssetInstanceName) const
 {
 	if (LoadedSaveGame)
 	{
 		const FName& WorldName = GetWorld()->GetFName();
-
+		const bool bAssetBoundToWorld = Asset->IsBoundToWorld();
+		
 		for (const FFlowAssetSaveData& AssetRecord : LoadedSaveGame->FlowInstances)
 		{
 			if (AssetRecord.InstanceName == SavedAssetInstanceName && (!bAssetBoundToWorld || AssetRecord.WorldName == WorldName))
@@ -745,11 +755,13 @@ void UFlowSubsystem::FindComponents(const FGameplayTagContainer& Tags, const EGa
 			TArray<TWeakObjectPtr<UFlowComponent>> ComponentsPerTag;
 			FindComponents(Tag, bExactMatch, ComponentsPerTag);
 			ComponentsWithAnyTag.Append(ComponentsPerTag);
+			break;
 		}
 
 		for (const TWeakObjectPtr<UFlowComponent>& Component : ComponentsWithAnyTag)
 		{
-			if (Component.IsValid() && Component->IdentityTags.HasAllExact(Tags))
+			if (Component.IsValid() && 
+				(bExactMatch ? Component->IdentityTags.HasAllExact(Tags) : Component->IdentityTags.HasAll(Tags)))
 			{
 				OutComponents.Emplace(Component);
 			}

@@ -42,10 +42,6 @@
 		{
 			"Name": "EngineAssetDefinitions",
 			"Enabled": true
-		},
-		{
-			"Name": "GameplayAbilities",
-			"Enabled": true
 		}
 	]
 }

@@ -1,14 +1,14 @@
 ﻿// Copyright https://github.com/MothCocoon/FlowGraph/graphs/contributors
 #pragma once
 
-#include "AssetDefinition.h"
+#include "AssetDefinitionDefault.h"
 #include "AssetDefinition_FlowAsset.generated.h"
 
 /**
  * 
  */
 UCLASS()
-class FLOWEDITOR_API UAssetDefinition_FlowAsset : public UAssetDefinition
+class FLOWEDITOR_API UAssetDefinition_FlowAsset : public UAssetDefinitionDefault
 {
 	GENERATED_BODY()
 
