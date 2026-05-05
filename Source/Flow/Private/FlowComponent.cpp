@@ -266,18 +266,24 @@ void UFlowComponent::OnRep_IdentityTags(const FGameplayTagContainer& PreviousTag
 
 void UFlowComponent::VerifyIdentityTags() const
 {
+#if !NO_LOGGING || UE_ENABLE_DEBUG_DRAWING
 	if (IdentityTags.IsEmpty() && GetDefault<UFlowSettings>()->bWarnAboutMissingIdentityTags)
 	{
 		FString Message = TEXT("Missing Identity Tags on the Flow Component creating Flow Asset instance! This gonna break loading SaveGame for this component!");
 		Message.Append(LINE_TERMINATOR).Append(TEXT("If you're not using SaveSystem, you can silence this warning by unchecking bWarnAboutMissingIdentityTags flag in Flow Settings."));
 		LogError(Message);
 	}
+#endif	
 }
 
 void UFlowComponent::LogError(FString Message, const EFlowOnScreenMessageType OnScreenMessageType) const
 {
+#if !NO_LOGGING || UE_ENABLE_DEBUG_DRAWING
 	Message += TEXT(" --- Flow Component in actor ") + GetOwner()->GetName();
-
+	UE_LOG(LogFlow, Error, TEXT("%s"), *Message);
+#endif
+	
+#if UE_ENABLE_DEBUG_DRAWING
 	if (OnScreenMessageType == EFlowOnScreenMessageType::Permanent)
 	{
 		if (UWorld* World = GetWorld())
@@ -302,8 +308,7 @@ void UFlowComponent::LogError(FString Message, const EFlowOnScreenMessageType On
 	{
 		GEngine->AddOnScreenDebugMessage(-1, 2.0f, FColor::Red, Message);
 	}
-
-	UE_LOG(LogFlow, Error, TEXT("%s"), *Message);
+#endif
 }
 
 void UFlowComponent::NotifyGraph(const FGameplayTag NotifyTag, const EFlowNetMode NetMode /* = EFlowNetMode::Authority*/)

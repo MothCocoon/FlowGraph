@@ -48,7 +48,10 @@ This is BREAKING CHANGE. It requires updating constructors for C++ Flow Nodes. I
     * Created CompareValues predicate, which is analogous to the Compare Blackboard Values predicate, but for data pins.
 
 ## Flow Asset
-* Refactored LogError/LogWarning/LogNote. Extracted shared LogRuntimeMessage() helper. Three identical copy-pasted functions → one implementation with severity parameter. (contributed by LindyHopperGT)
+* Fixed: assets didn't show dirty and version control statuses. (contributed by Bargestt)
+* Fixed dirtying graph on copy. (contributed by Bargestt)
+* Fix invalid instance class when pasting. (contributed by Bargestt)
+* Refactored LogError/LogWarning/LogNote. Extracted shared LogRuntimeMessage() helper. Three identical copy-pasted functions → one implementation with severity parameter. (contributed by LindyHopperGT, improved by Bargestt)
 * Fixed `TryFindActorOwner()` to correctly return the Owner when it is already an AActor, not just when it's a component. Fulfills the documented contract. (contributed by LindyHopperGT)
 * Crash fix in `CancelAndWarnForUnflushedDeferredTriggers()`. Null-guard ToNode and FromNode before dereferencing in UE_LOG. Prevents crash during abnormal termination when nodes are already destroyed. (contributed by LindyHopperGT)
 * Introduced `FFlowPolicy` instanced-struct policy meant to handle various project-specific policies. Refactored Pin Connection policy to use it. (contributed by LindyHopperGT)

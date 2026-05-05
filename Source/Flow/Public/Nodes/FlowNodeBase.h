@@ -1,6 +1,7 @@
 // Copyright https://github.com/MothCocoon/FlowGraph/graphs/contributors
 #pragma once
 
+#include "Runtime/Engine/Public/DrawDebugHelpers.h"
 #include "Templates/SubclassOf.h"
 
 #include "Interfaces/FlowCoreExecutableInterface.h"
@@ -540,7 +541,7 @@ public:
 	UFUNCTION(BlueprintCallable, Category = "FlowNode", meta = (DevelopmentOnly))
 	void LogVerbose(FString Message) const;
 
-#if !UE_BUILD_SHIPPING
+#if !NO_LOGGING || UE_ENABLE_DEBUG_DRAWING
 protected:
 	bool BuildMessage(FString& Message) const;
 #endif

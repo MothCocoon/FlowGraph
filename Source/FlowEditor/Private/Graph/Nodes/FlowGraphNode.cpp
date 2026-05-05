@@ -122,7 +122,7 @@ void UFlowGraphNode::PostEditImport()
 
 	// Reset the owning graph after an edit import
 	ResetNodeOwner();
-
+	UpdateNodeClassData();
 	if (NodeInstance)
 	{
 		InitializeInstance();
@@ -185,7 +185,7 @@ void UFlowGraphNode::PostCopyNode()
 		if (NodeInstance->GetOuter() != FlowAsset)
 		{
 			// Ensures NodeInstance is owned by the FlowAsset
-			NodeInstance->Rename(nullptr, FlowAsset, REN_DontCreateRedirectors);
+			NodeInstance->Rename(nullptr, FlowAsset, REN_DontCreateRedirectors | REN_DoNotDirty);
 		}
 
 		NodeInstance->SetGraphNode(this);
