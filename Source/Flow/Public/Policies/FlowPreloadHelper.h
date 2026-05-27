@@ -51,7 +51,7 @@ struct FLOW_API FFlowPreloadHelper
 #if WITH_EDITOR
 	// Provide Preload-specific pins to the FlowNode
 	virtual void GetContextInputs(TArray<FFlowPin>& OutInputPins) const {}
-	virtual void GetContextOutputs(TArray<FFlowPin>& OutOutputPins) const {}
+	virtual void GetContextOutputs(TArray<FFlowPin>& OutOutputPins) const;
 #endif
 };
 
@@ -94,7 +94,6 @@ protected:
 
 #if WITH_EDITOR
 	virtual void GetContextInputs(TArray<FFlowPin>& OutInputPins) const override;
-	virtual void GetContextOutputs(TArray<FFlowPin>& OutOutputPins) const override;
 #endif
 
 	// Exec input pin triggered to manually preload this node's content.

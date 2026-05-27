@@ -189,12 +189,12 @@ EFlowPreloadInputResult FFlowPreloadHelper_Standard::OnNodeExecuteInput(UFlowNod
 #if WITH_EDITOR
 void FFlowPreloadHelper_Standard::GetContextInputs(TArray<FFlowPin>& OutInputPins) const
 {
-	OutInputPins.Add(INPIN_PreloadContent);
-	OutInputPins.Add(INPIN_FlushContent);
+	OutInputPins.AddUnique(INPIN_PreloadContent);
+	OutInputPins.AddUnique(INPIN_FlushContent);
 }
 
-void FFlowPreloadHelper_Standard::GetContextOutputs(TArray<FFlowPin>& OutOutputPins) const
+void FFlowPreloadHelper::GetContextOutputs(TArray<FFlowPin>& OutOutputPins) const
 {
-	OutOutputPins.Add(OUTPIN_AllPreloadsComplete);
+	OutOutputPins.AddUnique(OUTPIN_AllPreloadsComplete);
 }
 #endif

@@ -54,12 +54,12 @@ UFlowNode_PlayLevelSequence::UFlowNode_PlayLevelSequence()
 #if WITH_EDITOR
 TArray<FFlowPin> UFlowNode_PlayLevelSequence::GetContextOutputs() const
 {
+	TArray<FFlowPin> Pins = Super::GetContextOutputs();
+
 	if (Sequence.IsNull())
 	{
-		return TArray<FFlowPin>();
+		return Pins;
 	}
-
-	TArray<FFlowPin> Pins = {};
 
 	Sequence.LoadSynchronous();
 	if (Sequence && Sequence->GetMovieScene())

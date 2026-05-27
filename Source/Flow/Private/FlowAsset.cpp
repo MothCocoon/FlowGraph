@@ -1103,20 +1103,7 @@ AActor* UFlowAsset::TryFindActorOwner() const
 	// If the owner is a Component, return its owning Actor
 	if (const UActorComponent* OwnerAsComponent = Cast<UActorComponent>(OwnerObject))
 	{
-	{
 		return nullptr;
-	}
-
-	// If the owner is already an Actor, return it directly
-	if (AActor* OwnerAsActor = Cast<AActor>(OwnerObject))
-	{
-		return OwnerAsActor;
-	}
-
-	// If the owner is a Component, return its owning Actor
-	if (const UActorComponent* OwnerAsComponent = Cast<UActorComponent>(OwnerObject))
-	{
-		return OwnerAsComponent->GetOwner();
 	}
 
 	return nullptr;
@@ -1481,7 +1468,6 @@ const FFlowPreloadPolicy& UFlowAsset::GetPreloadPolicy() const
 	{
 		return TemplateAsset->GetPreloadPolicy();
 	}
-}
 
 	// Graceful fallback: if PreloadPolicy was never initialized (asset predates this feature,
 	// or was never opened in editor), read directly from project settings at runtime.
