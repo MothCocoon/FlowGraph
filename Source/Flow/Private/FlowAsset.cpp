@@ -70,7 +70,6 @@ void UFlowAsset::PostInitProperties()
 
 #if WITH_EDITOR
 	InitializePinConnectionPolicy();
-	InitializePreloadPolicy();
 #endif
 }
 
@@ -956,6 +955,9 @@ void UFlowAsset::InitializeInstance(const TWeakObjectPtr<UObject> InOwner, UFlow
 
 	Owner = InOwner;
 	TemplateAsset = &InTemplateAsset;
+	
+	// Initialize any customizable Policies before we instantiate nodes
+	InitializePreloadPolicy();
 
 	for (TPair<FGuid, TObjectPtr<UFlowNode>>& Node : Nodes)
 	{
@@ -1137,49 +1139,39 @@ UFlowNode_SubGraph* UFlowAsset::GetNodeOwningThisAssetInstance() const
 	return NodeOwningThisAssetInstance.Get();
 }
 
-#if WITH_EDITOR
-void UFlowAsset::InitializePreloadPolicy()
-{
-	const FInstancedStruct& SourceStruct = GetDefault<UFlowSettings>()->PreloadPolicy;
-	if (ensure(SourceStruct.IsValid()))
-	{
-		PreloadPolicy.InitializeAsScriptStruct(SourceStruct.GetScriptStruct(), SourceStruct.GetMemory());
-	}
-}
-#endif
-
 UFlowAsset* UFlowAsset::GetParentInstance() const
 {
 	return NodeOwningThisAssetInstance.IsValid() ? NodeOwningThisAssetInstance.Get()->GetFlowAsset() : nullptr;
 }
 
-const FFlowPreloadPolicy& UFlowAsset::GetPreloadPolicy() const
-{
-	// Runtime instances delegate to their template, which holds the serialized policy.
-	if (!PreloadPolicy.IsValid() && IsValid(TemplateAsset))
-	{
-		return TemplateAsset->GetPreloadPolicy();
-	}
-
-	// Graceful fallback: if PreloadPolicy was never initialized (asset predates this feature,
-	// or was never opened in editor), read directly from project settings at runtime.
-	if (!PreloadPolicy.IsValid())
-	{
-		const FFlowPreloadPolicy* SettingsPolicy = GetDefault<UFlowSettings>()->GetPreloadPolicy();
-		ensureAlways(SettingsPolicy);
-		if (SettingsPolicy)
-		{
-			return *SettingsPolicy;
-		}
-	}
-
-	check(PreloadPolicy.IsValid());
-	return PreloadPolicy.Get();
-}
-
 TWeakObjectPtr<UFlowAsset> UFlowAsset::GetFlowInstance(UFlowNode_SubGraph* SubGraphNode) const
 {
 	return ActiveSubGraphs.FindRef(SubGraphNode);
+}
+
+void UFlowAsset::InitializePreloadPolicy()
+{
+	if (PreloadPolicy.IsValid())
+	{
+		// use per-class policy
+		PreloadPolicy.InitializeAsScriptStruct(PreloadPolicy.GetScriptStruct(), PreloadPolicy.GetMemory());
+	}
+	else
+	{
+		// fallback to project's default policy
+		const FInstancedStruct& DefaultPolicy = GetDefault<UFlowSettings>()->PreloadPolicy;
+		if (ensure(DefaultPolicy.IsValid()))
+		{
+			PreloadPolicy.InitializeAsScriptStruct(DefaultPolicy.GetScriptStruct(), DefaultPolicy.GetMemory());
+		}
+	}
+	
+	ensureAlwaysMsgf(PreloadPolicy.IsValid(), TEXT("There's no valid Preload Policy set in the project!"));
+}
+
+const FFlowPreloadPolicy& UFlowAsset::GetPreloadPolicy() const
+{
+	return PreloadPolicy.Get();
 }
 
 void UFlowAsset::TriggerCustomInput(const FName& EventName, IFlowDataPinValueSupplierInterface* DataPinValueSupplier)

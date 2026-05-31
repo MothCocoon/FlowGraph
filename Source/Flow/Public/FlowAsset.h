@@ -420,10 +420,8 @@ protected:
 	UPROPERTY(VisibleAnywhere, AdvancedDisplay, Category = Preload)
 	TInstancedStruct<FFlowPreloadPolicy> PreloadPolicy;
 
-#if WITH_EDITOR
 	/* Override these functions to set up unique policy(ies) for a UFlowAsset subclass. */
 	virtual void InitializePreloadPolicy();
-#endif
 
 public:
 	const FFlowPreloadPolicy& GetPreloadPolicy() const;
