@@ -2,6 +2,7 @@
 #pragma once
 
 #include "Types/FlowEnumUtils.h"
+#include "FlowBranchEnums.generated.h"
 
 UENUM(BlueprintType)
 enum class EFlowPredicateCombinationRule : uint8

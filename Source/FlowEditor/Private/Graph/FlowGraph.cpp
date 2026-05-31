@@ -13,6 +13,7 @@
 #include "Kismet2/BlueprintEditorUtils.h"
 #include "EdGraph/EdGraphPin.h"
 #include "Logging/LogMacros.h"
+#include "Runtime/Launch/Resources/Version.h"
 
 #include UE_INLINE_GENERATED_CPP_BY_NAME(FlowGraph)
 
@@ -413,7 +414,13 @@ void UFlowGraph::RemoveOrphanedNodes()
 	// Obtain a list of all nodes actually in the asset and discard unused nodes
 	TArray<UObject*> AllInners;
 	constexpr bool bIncludeNestedObjects = false;
+	
+#if ENGINE_MAJOR_VERSION == 5 && ENGINE_MINOR_VERSION < 8
 	GetObjectsWithOuter(GetOuter(), AllInners, bIncludeNestedObjects);
+#else
+	GetObjectsWithOuter(GetOuter(), AllInners, EGetObjectsFlags::IncludeNestedObjects);
+#endif	
+
 	for (auto InnerIt = AllInners.CreateConstIterator(); InnerIt; ++InnerIt)
 	{
 		UObject* TestObject = *InnerIt;
@@ -422,7 +429,15 @@ void UFlowGraph::RemoveOrphanedNodes()
 			OnNodeInstanceRemoved(TestObject);
 
 			TestObject->SetFlags(RF_Transient);
+			
+#if ENGINE_MAJOR_VERSION == 5 && ENGINE_MINOR_VERSION < 8
 			TestObject->Rename(nullptr, GetTransientPackage(), REN_DontCreateRedirectors | REN_NonTransactional | REN_ForceNoResetLoaders);
+#else
+			// from compilation warning
+			// "Rename will no longer call ResetLoaders making this flag no longer needed.
+			// Prefer REN_AllowPackageLinkerMismatch if you wish to intentionally allow the linker to contain references to objects whose names no longer match what was loaded from disk."
+			TestObject->Rename(nullptr, GetTransientPackage(), REN_DontCreateRedirectors | REN_NonTransactional);
+#endif
 		}
 	}
 }
