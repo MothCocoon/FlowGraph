@@ -16,6 +16,7 @@
 #include "Types/FlowPinConnectionChange.h"
 #include "FlowNode.generated.h"
 
+struct FFlowNodeSaveData;
 struct FFlowPreloadHelper;
 
 /**
@@ -381,30 +382,30 @@ private:
 // Preload Content (subclasses must implement IFlowPreloadableInterface to use this code)
 
 public:
-	// Called by FFlowPreloadHelper at policy-determined lifecycle points, and directly by callers for ManualOnly timing.
+	/* Called by FFlowPreloadHelper at policy-determined lifecycle points, and directly by callers for ManualOnly timing. */
 	void TriggerPreload();
 	void TriggerFlush();
 
-	// Returns true if this node's content is currently preloaded.
+	/* Returns true if this node's content is currently preloaded. */
 	bool IsContentPreloaded() const;
 
-	// Called when async preloading finishes (i.e. PreloadContent returned PreloadInProgress). Updates helper state and fires OUTPIN_AllPreloadsComplete.
-	// Async C++ nodes call this from their completion delegate; async Blueprint nodes call it on self.
-	// Safe to call from within PreloadContent() (e.g. if FStreamableManager fires synchronously).
-	// Must be called on the game thread. No-op if called after TriggerFlush (cancellation guard).
+	/* Called when async preloading finishes (i.e. PreloadContent returned PreloadInProgress). Updates helper state and fires OUTPIN_AllPreloadsComplete.
+	 * Async C++ nodes call this from their completion delegate; async Blueprint nodes call it on self.
+	 * Safe to call from within PreloadContent() (e.g. if FStreamableManager fires synchronously).
+	 * Must be called on the game thread. No-op if called after TriggerFlush (cancellation guard). */
 	UFUNCTION(BlueprintCallable, Category = "Preload Content")
 	void NotifyPreloadComplete();
 
 protected:
-	// Instanced preload helper allocated at InitializeInstance for nodes implementing IFlowPreloadableInterface.
-	// Remains uninitialized (invalid) for non-preloadable nodes.
+	/* Instanced preload helper allocated at InitializeInstance for nodes implementing IFlowPreloadableInterface.
+	 * Remains uninitialized (invalid) for non-preloadable nodes. */
 	UPROPERTY(Transient)
 	TInstancedStruct<FFlowPreloadHelper> PreloadHelper;
 
 	bool TryInitializePreloadHelper();
 	void DeinitializePreloadHelper();
 
-	// Forwards PinName to the PreloadHelper if one exists. Returns true if the helper consumed the pin.
+	/* Forwards PinName to the PreloadHelper if one exists. Returns true if the helper consumed the pin. */
 	bool DispatchExecuteInputToPreloadHelper(const FName& PinName);
 
 //////////////////////////////////////////////////////////////////////////

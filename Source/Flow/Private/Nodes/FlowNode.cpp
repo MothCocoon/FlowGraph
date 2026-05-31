@@ -6,9 +6,9 @@
 #include "FlowAsset.h"
 #include "FlowSettings.h"
 #include "Interfaces/FlowPreloadableInterface.h"
+#include "Interfaces/FlowNodeWithExternalDataPinSupplierInterface.h"
 #include "Policies/FlowPreloadHelper.h"
 #include "Policies/FlowPreloadPolicy.h"
-#include "Interfaces/FlowNodeWithExternalDataPinSupplierInterface.h"
 #include "Types/FlowAutoDataPinsWorkingData.h"
 #include "Types/FlowDataPinValue.h"
 #include "Types/FlowPinConnectionChange.h"
@@ -1327,7 +1327,7 @@ bool UFlowNode::TryInitializePreloadHelper()
 
 	const FFlowPreloadPolicy& PreloadPolicy = FlowAsset->GetPreloadPolicy();
 
-	UScriptStruct* HelperType = PreloadPolicy.GetPreloadHelperStructType(*this);
+	const UScriptStruct* HelperType = PreloadPolicy.GetPreloadHelperStructType(*this);
 	if (!IsValid(HelperType))
 	{
 		LogError(TEXT("FFlowPreloadPolicy::GetPreloadHelperStructType returned null — PreloadHelper will not be created."));

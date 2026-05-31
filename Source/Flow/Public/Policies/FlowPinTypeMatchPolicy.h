@@ -16,15 +16,14 @@ enum class EFlowPinTypeMatchRules : uint32
 	AllowSubCategoryObjectSameLayout		= 1 << 5,
 	SameLayoutMustMatchPropertyNames		= 1 << 6,
 
-	// The "Standard" PinType matching rules (applies to most types)
+	/* The "Standard" PinType matching rules (applies to most types). */
 	StandardPinTypeMatchRulesMask = 
 		RequirePinCategoryMatch |
 		RequirePinCategoryMemberReferenceMatch |
 		AllowSubCategoryObjectSubclasses |
 		AllowSubCategoryObjectSameLayout UMETA(DisplayName = "Standard PinType Match Rules (mask)"),
 
-	// For types like Object, Class, InstancedStruct, 
-	// which use the SubCategoryObject field to customize the pin type
+	/* For types like Object, Class, InstancedStruct, which use the SubCategoryObject field to customize the pin type. */
 	SubCategoryObjectPinTypeMatchRulesMask =
 		StandardPinTypeMatchRulesMask |
 		RequirePinSubCategoryObjectMatch UMETA(DisplayName = "SubCategory Object PinType Match Rules (mask)"),

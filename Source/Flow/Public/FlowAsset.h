@@ -6,11 +6,12 @@
 #include "Asset/FlowAssetParamsTypes.h"
 #include "Asset/FlowDeferredTransitionScope.h"
 #include "Nodes/FlowNode.h"
-#include "StructUtils/InstancedStruct.h"
 
 #if WITH_EDITOR
 #include "FlowMessageLog.h"
 #endif
+
+#include "StructUtils/InstancedStruct.h"
 #include "Templates/SharedPointer.h"
 #include "UObject/ObjectKey.h"
 
@@ -400,13 +401,13 @@ protected:
 	TInstancedStruct<FFlowPreloadPolicy> PreloadPolicy;
 
 #if WITH_EDITOR
-	/* Override these functions to set up unique policy(ies) for a UFlowAsset subclass */
+	/* Override these functions to set up unique policy(ies) for a UFlowAsset subclass. */
 	virtual void InitializePinConnectionPolicy();
 	virtual void InitializePreloadPolicy();
 #endif
 
 public:
-	/* FFlowPolicy accessors */
+	/* FFlowPolicy accessors. */
 	const FFlowPinConnectionPolicy& GetPinConnectionPolicy() const;
 	const FFlowPreloadPolicy& GetPreloadPolicy() const;
 
