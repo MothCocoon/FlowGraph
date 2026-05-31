@@ -2,8 +2,6 @@
 #pragma once
 
 #include "UObject/Interface.h"
-#include "Templates/SubclassOf.h"
-
 #include "FlowPredicateInterface.generated.h"
 
 class UFlowNodeAddOn;

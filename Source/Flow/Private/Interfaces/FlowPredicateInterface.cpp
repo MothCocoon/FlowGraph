@@ -3,6 +3,8 @@
 #include "Interfaces/FlowPredicateInterface.h"
 #include "AddOns/FlowNodeAddOn.h"
 
+#include UE_INLINE_GENERATED_CPP_BY_NAME(FlowPredicateInterface)
+
 bool IFlowPredicateInterface::ImplementsInterfaceSafe(const UFlowNodeAddOn* AddOnTemplate)
 {
 	if (!IsValid(AddOnTemplate))
@@ -10,7 +12,7 @@ bool IFlowPredicateInterface::ImplementsInterfaceSafe(const UFlowNodeAddOn* AddO
 		return false;
 	}
 
-	UClass* AddOnClass = AddOnTemplate->GetClass();
+	const UClass* AddOnClass = AddOnTemplate->GetClass();
 	if (AddOnClass->ImplementsInterface(UFlowPredicateInterface::StaticClass()))
 	{
 		return true;
