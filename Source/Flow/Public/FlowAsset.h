@@ -387,7 +387,7 @@ public:
 	const TArray<UFlowNode*>& GetRecordedNodes() const { return RecordedNodes; }
 
 //////////////////////////////////////////////////////////////////////////
-// FFlowPolicy subclass access
+// Flow Policies
 
 protected:
 	/* Policy for UFlowGraphSchema (and others) to use to enforce pin connectivity.
@@ -407,7 +407,6 @@ protected:
 #endif
 
 public:
-	/* FFlowPolicy accessors. */
 	const FFlowPinConnectionPolicy& GetPinConnectionPolicy() const;
 	const FFlowPreloadPolicy& GetPreloadPolicy() const;
 

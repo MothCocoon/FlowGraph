@@ -30,7 +30,7 @@ public:
 public:	
 	virtual ~FFlowPreloadHelper() = default;
 
-	// IFlowCoreExecutableInterface pass-through
+	// IFlowCoreExecutableInterface
 	virtual void OnNodeInitializeInstance(UFlowNode& Node) PURE_VIRTUAL(OnNodeInitializeInstance);
 	virtual void OnNodeActivate(UFlowNode& Node) PURE_VIRTUAL(OnNodeActivate);
 	virtual void OnNodeCleanup(UFlowNode& Node) PURE_VIRTUAL(OnNodeCleanup);
@@ -87,12 +87,13 @@ protected:
 	int32 PendingPreloadCount = 0;
 
 public:	
-	// IFlowCoreExecutableInterface pass-through
+	// IFlowCoreExecutableInterface
 	virtual void OnNodeInitializeInstance(UFlowNode& Node) override;
 	virtual void OnNodeActivate(UFlowNode& Node) override;
 	virtual void OnNodeCleanup(UFlowNode& Node) override;
 	virtual void OnNodeDeinitializeInstance(UFlowNode& Node) override;
 	virtual EFlowPreloadInputResult OnNodeExecuteInput(UFlowNode& Node, const FName& PinName) override;
+	// --
 
 	virtual bool IsContentPreloaded() const override { return bContentPreloaded; }
 

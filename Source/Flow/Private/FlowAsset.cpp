@@ -55,8 +55,6 @@ UFlowAsset::UFlowAsset(const FObjectInitializer& ObjectInitializer)
 	, bStartNodePlacedAsGhostNode(false)
 	, TemplateAsset(nullptr)
 	, FinishPolicy(EFlowFinishPolicy::Keep)
-	, PinConnectionPolicy()
-	, PreloadPolicy()
 {
 	if (!AssetGuid.IsValid())
 	{
