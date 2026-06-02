@@ -23,7 +23,7 @@ UFlowLevelSequencePlayer* UFlowLevelSequencePlayer::CreateFlowLevelSequencePlaye
 	AActor* TransformOriginActor,
 	const bool bReplicates,
 	const bool bAlwaysRelevant,
-	ALevelSequenceActor*& OutActor
+	TObjectPtr<AFlowLevelSequenceActor>& OutActor
 )
 {
 	if (LevelSequence == nullptr)

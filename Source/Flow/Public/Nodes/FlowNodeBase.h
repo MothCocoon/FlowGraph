@@ -288,6 +288,12 @@ private:
 	UFUNCTION(BlueprintPure, Category = DataPins, DisplayName = "Resolve DataPin By Name")
 	FFlowDataPinResult TryResolveDataPin(FName PinName) const;
 	
+protected:
+	/* Protected accessor for TryResolveDataPin()'s use 
+	 * (we still want "most" flow nodes to not use TryResolveDataPin directly, 
+	 * they should be using the template versions below.) */
+	FFlowDataPinResult TryResolveDataPin_SetGraphOutputAccess(FName PinName) const { return TryResolveDataPin(PinName); }
+
 public:
 	/* Generic single-value resolve & extractor. */
 	template <typename TFlowPinType>
@@ -456,8 +462,8 @@ public:
 	/* This method allows to have different for every node instance, i.e. Red if node represents enemy, Green if node represents a friend. */
 	virtual bool GetDynamicTitleColor(FLinearColor& OutColor) const;
 
-	virtual FText GetNodeTitle() const { return K2_GetNodeTitle(); }
-	virtual FText GetNodeToolTip() const { return K2_GetNodeToolTip(); }
+	virtual FText GetNodeTitle() const;
+	virtual FText GetNodeToolTip() const;
 
 	FText GetGeneratedDisplayName() const;
 
@@ -488,7 +494,12 @@ public:
 	
 	UFUNCTION(BlueprintNativeEvent, Category = "FlowNode")
 	FText K2_GetNodeToolTip() const;
-
+	
+	// <MKT> #ASIntegration #NodeCategory add overridable function for AS, no BP gen class to edit default category for, cant edit category member variable either
+	UFUNCTION(BlueprintNativeEvent, Category = "FlowNode")
+	FString K2_GetNodeCategory() const;
+	// </MKT>
+	
 	UFUNCTION(BlueprintPure, Category = "FlowNode")
 	virtual FText GetNodeConfigText() const;
 

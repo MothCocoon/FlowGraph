@@ -2,21 +2,19 @@
 
 #include "Nodes/Graph/FlowNode_Finish.h"
 
+#include "FlowAsset.h"
+
 #include UE_INLINE_GENERATED_CPP_BY_NAME(FlowNode_Finish)
 
 UFlowNode_Finish::UFlowNode_Finish()
 {
-#if WITH_EDITOR
-	Category = TEXT("Graph");
-	NodeDisplayStyle = FlowNodeStyle::InOut;
-#endif
-
 	OutputPins = {};
-	AllowedSignalModes = {EFlowSignalMode::Enabled, EFlowSignalMode::Disabled};
 }
 
 void UFlowNode_Finish::ExecuteInput(const FName& PinName)
 {
+	CommitOutputDataPinValues();
+
 	// this will call FinishFlow()
 	Finish();
 }

@@ -4,6 +4,7 @@
 #include "LevelSequencePlayer.h"
 #include "FlowLevelSequencePlayer.generated.h"
 
+class AFlowLevelSequenceActor;
 class UFlowNode;
 
 /**
@@ -29,7 +30,7 @@ public:
 		AActor* TransformOriginActor,
 		const bool bReplicates,
 		const bool bAlwaysRelevant,
-		ALevelSequenceActor*& OutActor);
+		TObjectPtr<AFlowLevelSequenceActor>& OutActor);
 
 	void SetFlowEventReceiver(UFlowNode* FlowNode) { FlowEventReceiver = FlowNode; }
 

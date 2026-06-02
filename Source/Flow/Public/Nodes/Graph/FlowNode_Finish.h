@@ -1,7 +1,7 @@
 // Copyright https://github.com/MothCocoon/FlowGraph/graphs/contributors
 #pragma once
 
-#include "Nodes/FlowNode.h"
+#include "Nodes/Graph/FlowNode_SetGraphOutput.h"
 #include "FlowNode_Finish.generated.h"
 
 /**
@@ -9,7 +9,7 @@
  * All active nodes and sub graphs will be deactivated.
  */
 UCLASS(NotBlueprintable, meta = (DisplayName = "Finish"))
-class FLOW_API UFlowNode_Finish : public UFlowNode
+class FLOW_API UFlowNode_Finish : public UFlowNode_SetGraphOutput
 {
 	GENERATED_BODY()
 	

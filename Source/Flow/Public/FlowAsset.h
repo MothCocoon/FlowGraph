@@ -5,8 +5,12 @@
 #include "FlowTypes.h"
 #include "Asset/FlowAssetParamsTypes.h"
 #include "Asset/FlowDeferredTransitionScope.h"
+#include "Interfaces/FlowGraphOutputDataReceiverInterface.h"
 #include "Nodes/FlowNode.h"
 #include "StructUtils/InstancedStruct.h"
+#include "Types/FlowDataPinValue.h"
+#include "Types/FlowNamedDataPinProperty.h"
+#include "Types/FlowOutputDataPinValues.h"
 
 #if WITH_EDITOR
 #include "FlowMessageLog.h"
@@ -125,12 +129,21 @@ protected:
 
 	TArray<TSubclassOf<UFlowNodeBase>> AllowedInSubgraphNodeClasses;
 	TArray<TSubclassOf<UFlowNodeBase>> DeniedInSubgraphNodeClasses;
-	
+
 	bool bStartNodePlacedAsGhostNode;
 
 private:
 	UPROPERTY()
 	TMap<FGuid, TObjectPtr<UFlowNode>> Nodes;
+
+public:
+	const TArray<FFlowNamedDataPinProperty>& GetOutputDataPinDeclarations() const { return OutputDataPinDeclarations; }
+
+protected:
+	/* Output Data Pins define typed data values that this graph produces when it finishes.
+	* Sub Graph node using this Flow Asset will generate a context Output Data Pin for every entry on this list. */
+	UPROPERTY(EditAnywhere, Category = "Sub Graph")
+	TArray<FFlowNamedDataPinProperty> OutputDataPinDeclarations;
 
 #if WITH_EDITORONLY_DATA
 protected:
@@ -318,10 +331,22 @@ protected:
 	UPROPERTY(Transient)
 	EFlowFinishPolicy FinishPolicy;
 
+	 /* Receiver that will be given a snapshot of OutputDataPinValues when this graph finishes.
+	  * Typically the SubGraph node that created this instance. */
+	UPROPERTY(Transient)
+	TWeakObjectPtr<UObject> OutputDataReceiver;
+
+	/* Live output data pin values for this running instance.
+	 * Initialized from OutputDataPinDeclarations defaults at StartFlow; updated by SetGraphOutput/Finish nodes. */
+	UPROPERTY(Transient)
+	FFlowOutputDataPinValues OutputDataPinValues;
+
 public:
 	virtual void InitializeInstance(const TWeakObjectPtr<UObject> InOwner, UFlowAsset& InTemplateAsset);
 	virtual void DeinitializeInstance();
 	bool IsInstanceInitialized() const { return IsValid(TemplateAsset); }
+	
+	void FinishFlowAndDeinitializeInstance(const EFlowFinishPolicy InFinishPolicy);
 
 	UFlowAsset* GetTemplateAsset() const { return TemplateAsset; }
 
@@ -341,9 +366,17 @@ public:
 	AActor* TryFindActorOwner() const;
 
 	virtual void PreStartFlow();
-	virtual void StartFlow(IFlowDataPinValueSupplierInterface* DataPinValueSupplier = nullptr);
+	virtual void StartFlow(IFlowDataPinValueSupplierInterface* DataPinValueSupplier = nullptr, IFlowGraphOutputDataReceiverInterface* InOutputDataReceiver = nullptr);
 
-	virtual void FinishFlow(const EFlowFinishPolicy InFinishPolicy, const bool bRemoveInstance = true);
+	/* Write a single output data pin value into the live store for this running instance.
+	 * Called by SetGraphOutput and Finish nodes for each connected output pin. */
+	void WriteOutputDataPinValue(const FName& PinName, const TInstancedStruct<FFlowDataPinValue>& Value);
+
+	/* Flush all of the OutputDataPinValues to the receiver (if set) */
+	void FlushOutputDataPinValuesToReceiver();
+	
+	virtual void FinishFlow(const EFlowFinishPolicy InFinishPolicy);
+	
 
 	bool HasStartedFlow() const;
 	void TriggerCustomInput(const FName& EventName, IFlowDataPinValueSupplierInterface* DataPinValueSupplier = nullptr);
@@ -360,6 +393,8 @@ protected:
 
 	virtual void FinishNode(UFlowNode* Node);
 	void ResetNodes();
+
+	void InitializeOutputDataReceiverAndValues(IFlowGraphOutputDataReceiverInterface* InOutputDataReceiver);
 
 #if !UE_BUILD_SHIPPING
 public:	

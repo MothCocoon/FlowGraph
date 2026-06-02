@@ -621,7 +621,10 @@ FString UFlowNodeBase::GetNodeCategory() const
 		}
 	}
 
-	return Category;
+	// <MKT> #ASIntegration #NodeCategory
+	return K2_GetNodeCategory();
+	//return Category;
+	// </MKT>
 }
 
 bool UFlowNodeBase::GetDynamicTitleColor(FLinearColor& OutColor) const
@@ -634,6 +637,32 @@ bool UFlowNodeBase::GetDynamicTitleColor(FLinearColor& OutColor) const
 	}
 
 	return false;
+}
+
+FText UFlowNodeBase::GetNodeTitle() const
+{
+	if (HasAnyFlags(RF_ClassDefaultObject | RF_ArchetypeObject))
+	{
+		// For the archetype of the node (e.g. in the node selection UI), only use the default value
+		return UFlowNodeBase::K2_GetNodeTitle_Implementation();
+	}
+	else
+	{
+		return K2_GetNodeTitle();
+	}
+}
+
+FText UFlowNodeBase::GetNodeToolTip() const
+{
+	if (HasAnyFlags(RF_ClassDefaultObject | RF_ArchetypeObject))
+	{
+		// For the archetype of the node (e.g. in the node selection UI), only use the default value
+		return UFlowNodeBase::K2_GetNodeToolTip_Implementation();
+	}
+	else
+	{
+		return K2_GetNodeToolTip();
+	}
 }
 
 FText UFlowNodeBase::GetGeneratedDisplayName() const
@@ -817,6 +846,15 @@ FText UFlowNodeBase::K2_GetNodeToolTip_Implementation() const
 	return GetClass()->GetToolTipText();
 #else
 	return FText::GetEmpty();
+#endif
+}
+
+FString UFlowNodeBase::K2_GetNodeCategory_Implementation() const
+{
+#if WITH_EDITORONLY_DATA
+	return Category;
+#else
+	return "";
 #endif
 }
 
