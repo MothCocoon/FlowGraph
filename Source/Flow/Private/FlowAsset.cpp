@@ -64,15 +64,6 @@ UFlowAsset::UFlowAsset(const FObjectInitializer& ObjectInitializer)
 	ExpectedOwnerClass = GetDefault<UFlowSettings>()->GetDefaultExpectedOwnerClass();
 }
 
-void UFlowAsset::PostInitProperties()
-{
-	Super::PostInitProperties();
-
-#if WITH_EDITOR
-	InitializePinConnectionPolicy();
-#endif
-}
-
 #if WITH_EDITOR
 void UFlowAsset::AddReferencedObjects(UObject* InThis, FReferenceCollector& Collector)
 {
@@ -947,6 +938,14 @@ void UFlowAsset::BroadcastRuntimeMessageAdded(const TSharedRef<FTokenizedMessage
 {
 	RuntimeMessageEvent.Broadcast(this, Message);
 }
+
+void UFlowAsset::SetupForEditing()
+{
+	InitializePinConnectionPolicy();
+
+	// Initialize any customizable Policies before we instantiate nodes
+	InitializePreloadPolicy();
+}
 #endif // WITH_EDITOR
 
 void UFlowAsset::InitializeInstance(const TWeakObjectPtr<UObject> InOwner, UFlowAsset& InTemplateAsset)
@@ -955,7 +954,7 @@ void UFlowAsset::InitializeInstance(const TWeakObjectPtr<UObject> InOwner, UFlow
 
 	Owner = InOwner;
 	TemplateAsset = &InTemplateAsset;
-	
+
 	// Initialize any customizable Policies before we instantiate nodes
 	InitializePreloadPolicy();
 
@@ -1165,12 +1164,13 @@ void UFlowAsset::InitializePreloadPolicy()
 			PreloadPolicy.InitializeAsScriptStruct(DefaultPolicy.GetScriptStruct(), DefaultPolicy.GetMemory());
 		}
 	}
-	
+
 	ensureAlwaysMsgf(PreloadPolicy.IsValid(), TEXT("There's no valid Preload Policy set in the project!"));
 }
 
 const FFlowPreloadPolicy& UFlowAsset::GetPreloadPolicy() const
 {
+	checkf(PreloadPolicy.IsValid(), TEXT("PreloadPolicy must be initialized prior to calling GetPreloadPolicy()"));
 	return PreloadPolicy.Get();
 }
 

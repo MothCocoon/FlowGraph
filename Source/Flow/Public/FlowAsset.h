@@ -62,8 +62,6 @@ public:
 // Graph (editor-only)
 
 public:
-	virtual void PostInitProperties() override;
-
 #if WITH_EDITOR
 public:	
 	friend class UFlowGraph;
@@ -93,6 +91,8 @@ private:
 
 #if WITH_EDITOR
 public:
+	void SetupForEditing();
+
 	UEdGraph* GetGraph() const { return FlowGraph; }
 
 	virtual EDataValidationResult ValidateAsset(FFlowMessageLog& MessageLog);
@@ -124,7 +124,7 @@ protected:
 
 	TArray<TSubclassOf<UFlowNodeBase>> AllowedInSubgraphNodeClasses;
 	TArray<TSubclassOf<UFlowNodeBase>> DeniedInSubgraphNodeClasses;
-	
+
 	bool bStartNodePlacedAsGhostNode;
 
 private:
