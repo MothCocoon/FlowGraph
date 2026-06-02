@@ -7,7 +7,6 @@
 #include "Asset/FlowDeferredTransitionScope.h"
 #include "Interfaces/FlowGraphOutputDataReceiverInterface.h"
 #include "Nodes/FlowNode.h"
-#include "StructUtils/InstancedStruct.h"
 #include "Types/FlowDataPinValue.h"
 #include "Types/FlowNamedDataPinProperty.h"
 #include "Types/FlowOutputDataPinValues.h"
@@ -16,6 +15,7 @@
 #include "FlowMessageLog.h"
 #endif
 
+#include "StructUtils/InstancedStruct.h"
 #include "Templates/SharedPointer.h"
 #include "UObject/ObjectKey.h"
 
@@ -29,6 +29,8 @@ struct FFlowPreloadPolicy;
 struct FFlowPinConnectionPolicy;
 
 class UEdGraph;
+class UFlowAsset;
+class UFlowAssetParams;
 class UEdGraphNode;
 
 #if !UE_BUILD_SHIPPING
@@ -53,6 +55,7 @@ public:
 	friend class FFlowAssetDetails;
 	friend class FFlowNode_SubGraphDetails;
 	friend class UFlowGraphSchema;
+	friend struct FFlowDeferredTransitionScope;
 
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Flow Asset")
 	FGuid AssetGuid;
@@ -66,8 +69,6 @@ public:
 // Graph (editor-only)
 
 public:
-	virtual void PostInitProperties() override;
-
 #if WITH_EDITOR
 public:	
 	friend class UFlowGraph;
@@ -97,6 +98,8 @@ private:
 
 #if WITH_EDITOR
 public:
+	void SetupForEditing();
+
 	UEdGraph* GetGraph() const { return FlowGraph; }
 
 	virtual EDataValidationResult ValidateAsset(FFlowMessageLog& MessageLog);
@@ -128,7 +131,7 @@ protected:
 
 	TArray<TSubclassOf<UFlowNodeBase>> AllowedInSubgraphNodeClasses;
 	TArray<TSubclassOf<UFlowNodeBase>> DeniedInSubgraphNodeClasses;
-
+	
 	bool bStartNodePlacedAsGhostNode;
 
 private:
@@ -143,19 +146,6 @@ protected:
 	* Sub Graph node using this Flow Asset will generate a context Output Data Pin for every entry on this list. */
 	UPROPERTY(EditAnywhere, Category = "Sub Graph")
 	TArray<FFlowNamedDataPinProperty> OutputDataPinDeclarations;
-
-#if WITH_EDITORONLY_DATA
-protected:
-	/* Custom Inputs define custom entry points in graph, it's similar to blueprint Custom Events.
-	 * Sub Graph node using this Flow Asset will generate context Input Pin for every valid Event name on this list. */
-	UPROPERTY(EditAnywhere, Category = "Sub Graph")
-	TArray<FName> CustomInputs;
-
-	/* Custom Outputs define custom graph outputs, this allows to send signals to the parent graph while executing this graph.
-	 * Sub Graph node using this Flow Asset will generate context Output Pin for every valid Event name on this list. */
-	UPROPERTY(EditAnywhere, Category = "Sub Graph")
-	TArray<FName> CustomOutputs;
-#endif // WITH_EDITORONLY_DATA
 
 public:
 #if WITH_EDITOR
@@ -397,7 +387,7 @@ public:
 	virtual void InitializeInstance(const TWeakObjectPtr<UObject> InOwner, UFlowAsset& InTemplateAsset);
 	virtual void DeinitializeInstance();
 	bool IsInstanceInitialized() const { return IsValid(TemplateAsset); }
-	
+
 	void FinishFlowAndDeinitializeInstance(const EFlowFinishPolicy InFinishPolicy);
 
 	UFlowAsset* GetTemplateAsset() const { return TemplateAsset; }
@@ -418,7 +408,7 @@ public:
 	AActor* TryFindActorOwner() const;
 
 	virtual void PreStartFlow();
-virtual void StartFlow(IFlowDataPinValueSupplierInterface* DataPinValueSupplier = nullptr, IFlowGraphOutputDataReceiverInterface* InOutputDataReceiver = nullptr);
+	virtual void StartFlow(IFlowDataPinValueSupplierInterface* DataPinValueSupplier = nullptr, IFlowGraphOutputDataReceiverInterface* InOutputDataReceiver = nullptr);
 
 	/* Write a single output data pin value into the live store for this running instance.
 	 * Called by SetGraphOutput and Finish nodes for each connected output pin. */
@@ -426,11 +416,8 @@ virtual void StartFlow(IFlowDataPinValueSupplierInterface* DataPinValueSupplier 
 
 	/* Flush all of the OutputDataPinValues to the receiver (if set) */
 	void FlushOutputDataPinValuesToReceiver();
-	
-	virtual void FinishFlow(const EFlowFinishPolicy InFinishPolicy);
 
-public:
-	virtual void FinishFlow(const EFlowFinishPolicy InFinishPolicy, const bool bRemoveInstance = true);
+	virtual void FinishFlow(const EFlowFinishPolicy InFinishPolicy);
 
 	bool HasStartedFlow() const;
 
@@ -440,13 +427,9 @@ protected:
 
 	void InitializeOutputDataReceiverAndValues(IFlowGraphOutputDataReceiverInterface* InOutputDataReceiver);
 
-#if !UE_BUILD_SHIPPING
-public:	
-	FFlowSignalEvent OnPinTriggered;
-#endif
-	
 public:
 	UFlowSubsystem* GetFlowSubsystem() const;
+	FName GetDisplayName() const;
 
 	UFlowNode_SubGraph* GetNodeOwningThisAssetInstance() const;
 	UFlowAsset* GetParentInstance() const;
@@ -467,7 +450,27 @@ public:
 	const TArray<UFlowNode*>& GetRecordedNodes() const { return RecordedNodes; }
 
 //////////////////////////////////////////////////////////////////////////
+// Preload policy
+
+protected:
+	/* Policy controlling when nodes implementing IFlowPreloadableInterface preload and flush their content.
+	 * Initialized from UFlowSettings defaults. Override InitializePreloadPolicy() in a subclass to set a unique policy. */
+	UPROPERTY(VisibleAnywhere, AdvancedDisplay, Category = Preload)
+	TInstancedStruct<FFlowPreloadPolicy> PreloadPolicy;
+
+	/* Override these functions to set up unique policy(ies) for a UFlowAsset subclass. */
+	virtual void InitializePreloadPolicy();
+
+public:
+	const FFlowPreloadPolicy& GetPreloadPolicy() const;
+
+//////////////////////////////////////////////////////////////////////////
 // Trigger Input
+
+#if !UE_BUILD_SHIPPING
+public:	
+	FFlowSignalEvent OnPinTriggered;
+#endif
 	
 protected:
 	/* Stack of active deferred transition scopes (innermost = top).
@@ -494,7 +497,7 @@ protected:
 protected:
 	void EnqueueDeferredTrigger(const FGuid& NodeGuid, const FName& PinName, const FConnectedPin& FromPin);
 	TSharedPtr<FFlowDeferredTransitionScope> PushDeferredTransitionScope();
-	void PopDeferredTransitionScope(const TSharedPtr<FFlowDeferredTransitionScope>& Scope);
+	void PopDeferredTransitionScope(const TSharedPtr<FFlowDeferredTransitionScope>& Scope) { TryFlushAndRemoveDeferredTransitionScope(Scope); }
 
 	bool TryFlushAndRemoveDeferredTransitionScope(const TSharedPtr<FFlowDeferredTransitionScope>& Scope);
 
