@@ -19,6 +19,7 @@
 #include "LevelEditor.h"
 #include "Modules/ModuleManager.h"
 #include "ScopedTransaction.h"
+#include "Runtime/Launch/Resources/Version.h"
 #include "ToolMenu.h"
 #include "ToolMenuDelegates.h"
 #include "ToolMenus.h"
@@ -989,7 +990,15 @@ bool SFlowGraphEditor::CanPasteNodes() const
 				NodeToPaste->DestroyNode();
 
 				// Rename and garbage the node so that it can't be found by name if the same clipboard is re-pasted
+#if ENGINE_MAJOR_VERSION == 5 && ENGINE_MINOR_VERSION < 8
 				NodeToPaste->Rename(*NewNameStr, nullptr, REN_NonTransactional | REN_DontCreateRedirectors | REN_ForceNoResetLoaders);
+#else
+				// from compilation warning
+				// "Rename will no longer call ResetLoaders making this flag no longer needed.
+				// Prefer REN_AllowPackageLinkerMismatch if you wish to intentionally allow the linker to contain references to objects whose names no longer match what was loaded from disk."
+				NodeToPaste->Rename(*NewNameStr, nullptr, REN_NonTransactional | REN_DontCreateRedirectors);
+#endif
+
 				NodeToPaste->MarkAsGarbage();
 			}
 		}

@@ -242,7 +242,7 @@ FText SFlowAssetInstanceList::JoinInstanceAndContextTexts(const FObjectKey& Asse
 {
 	if (const UFlowAsset* Instance = Cast<UFlowAsset>(AssetInstance.ResolveObjectPtr()))
 	{
-		FText Result = FText::FromName(Instance->GetDisplayName());
+		FText Result = FText::FromName(Instance->GetFName());
 
 		// add context name if there are multiple contexts present 
 		if (InstancesPerContext.Num() > 1)
@@ -321,7 +321,7 @@ void SFlowAssetBreadcrumb::FillBreadcrumb() const
 			TWeakObjectPtr<const UFlowAsset> Instance = InstancesFromRoot[Index];
 			TWeakObjectPtr<const UFlowAsset> ChildInstance = Index < InstancesFromRoot.Num() - 1 ? InstancesFromRoot[Index + 1] : nullptr;
 
-			BreadcrumbTrail->PushCrumb(FText::FromName(Instance->GetDisplayName()), FFlowBreadcrumb(Instance, ChildInstance));
+			BreadcrumbTrail->PushCrumb(FText::FromName(Instance->GetFName()), FFlowBreadcrumb(Instance, ChildInstance));
 		}
 	}
 }
