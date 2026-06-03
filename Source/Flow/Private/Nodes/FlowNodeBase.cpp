@@ -621,10 +621,7 @@ FString UFlowNodeBase::GetNodeCategory() const
 		}
 	}
 
-	// <MKT> #ASIntegration #NodeCategory
 	return K2_GetNodeCategory();
-	//return Category;
-	// </MKT>
 }
 
 bool UFlowNodeBase::GetDynamicTitleColor(FLinearColor& OutColor) const

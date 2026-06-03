@@ -497,7 +497,7 @@ protected:
 protected:
 	void EnqueueDeferredTrigger(const FGuid& NodeGuid, const FName& PinName, const FConnectedPin& FromPin);
 	TSharedPtr<FFlowDeferredTransitionScope> PushDeferredTransitionScope();
-	void PopDeferredTransitionScope(const TSharedPtr<FFlowDeferredTransitionScope>& Scope) { TryFlushAndRemoveDeferredTransitionScope(Scope); }
+	void PopDeferredTransitionScope(const TSharedPtr<FFlowDeferredTransitionScope>& Scope);
 
 	bool TryFlushAndRemoveDeferredTransitionScope(const TSharedPtr<FFlowDeferredTransitionScope>& Scope);
 

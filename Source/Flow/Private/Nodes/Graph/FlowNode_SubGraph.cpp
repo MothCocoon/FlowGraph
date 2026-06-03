@@ -317,7 +317,7 @@ FFlowDataPinResult UFlowNode_SubGraph::TrySupplyDataPin(FName PinName) const
 			}
 		}
 	}
-
+	
 	// Prefer the standard lookup if the pin is connected 
 	// (or if there is no FlowAssetParams to ask)
 	return Super::TrySupplyDataPin(PinName);

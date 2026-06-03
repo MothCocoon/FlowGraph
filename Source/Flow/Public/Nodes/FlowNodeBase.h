@@ -495,10 +495,8 @@ public:
 	UFUNCTION(BlueprintNativeEvent, Category = "FlowNode")
 	FText K2_GetNodeToolTip() const;
 	
-	// <MKT> #ASIntegration #NodeCategory add overridable function for AS, no BP gen class to edit default category for, cant edit category member variable either
 	UFUNCTION(BlueprintNativeEvent, Category = "FlowNode")
 	FString K2_GetNodeCategory() const;
-	// </MKT>
 	
 	UFUNCTION(BlueprintPure, Category = "FlowNode")
 	virtual FText GetNodeConfigText() const;
