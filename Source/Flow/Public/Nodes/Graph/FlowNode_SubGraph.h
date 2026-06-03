@@ -18,7 +18,7 @@ class FLOW_API UFlowNode_SubGraph
 	GENERATED_BODY()
 
 public:
-	UFlowNode_SubGraph();	
+	UFlowNode_SubGraph();
 
 	friend class UFlowAsset;
 	friend class FFlowNode_SubGraphDetails;
@@ -53,6 +53,7 @@ protected:
 
 	virtual void ExecuteInput(const FName& PinName) override;
 	virtual void Cleanup() override;
+	virtual void DeinitializeInstance() override;
 
 public:
 	virtual void ForceFinishNode() override;
