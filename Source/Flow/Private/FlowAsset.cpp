@@ -1023,6 +1023,7 @@ AActor* UFlowAsset::TryFindActorOwner() const
 	return nullptr;
 }
 
+void UFlowAsset::FinishFlowAndDeinitializeInstance(const EFlowFinishPolicy InFinishPolicy)
 {
 	FinishFlow(InFinishPolicy);
 	DeinitializeInstance();
