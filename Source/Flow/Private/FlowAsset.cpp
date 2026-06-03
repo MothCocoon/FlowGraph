@@ -9,6 +9,8 @@
 #include "Asset/FlowAssetParams.h"
 #include "Asset/FlowAssetParamsUtils.h"
 #include "Interfaces/FlowExecutionGate.h"
+#include "Interfaces/FlowGraphOutputDataReceiverInterface.h"
+#include "Types/FlowNamedDataPinProperty.h"
 #include "Nodes/FlowNodeBase.h"
 #include "Nodes/Graph/FlowNode_CustomInput.h"
 #include "Nodes/Graph/FlowNode_CustomOutput.h"
@@ -16,6 +18,7 @@
 #include "Nodes/Graph/FlowNode_SubGraph.h"
 #include "Policies/FlowPinConnectionPolicy.h"
 #include "Policies/FlowPreloadPolicy.h"
+#include "Types/FlowAutoDataPinsWorkingData.h"
 #include "Types/FlowDataPinValue.h"
 #include "Types/FlowStructUtils.h"
 
@@ -25,6 +28,7 @@
 #include "Algo/AnyOf.h"
 
 #if WITH_EDITOR
+#include "Nodes/Graph/FlowNode_SetGraphOutput.h"
 #include "AssetRegistry/AssetRegistryModule.h"
 #include "AssetToolsModule.h"
 #include "ContentBrowserModule.h"
@@ -77,10 +81,25 @@ void UFlowAsset::PostEditChangeProperty(FPropertyChangedEvent& PropertyChangedEv
 {
 	Super::PostEditChangeProperty(PropertyChangedEvent);
 
-	if (PropertyChangedEvent.Property && (PropertyChangedEvent.GetPropertyName() == GET_MEMBER_NAME_CHECKED(UFlowAsset, CustomInputs)
-		|| PropertyChangedEvent.GetPropertyName() == GET_MEMBER_NAME_CHECKED(UFlowAsset, CustomOutputs)))
+	const FName ChangedPropertyName = PropertyChangedEvent.GetPropertyName();
+	const FName ChangedMemberPropertyName = PropertyChangedEvent.GetMemberPropertyName();
+	if (PropertyChangedEvent.Property && (ChangedPropertyName == GET_MEMBER_NAME_CHECKED(UFlowAsset, CustomInputs)
+		|| ChangedPropertyName == GET_MEMBER_NAME_CHECKED(UFlowAsset, CustomOutputs)
+		|| ChangedMemberPropertyName == GET_MEMBER_NAME_CHECKED(UFlowAsset, OutputDataPinDeclarations)))
 	{
 		OnSubGraphReconstructionRequested.ExecuteIfBound();
+	}
+
+	if (PropertyChangedEvent.Property && ChangedMemberPropertyName == GET_MEMBER_NAME_CHECKED(UFlowAsset, OutputDataPinDeclarations))
+	{
+		for (const TPair<FGuid, UFlowNode*>& NodePair : GetNodes())
+		{
+			UFlowNode_SetGraphOutput* SetOutputNode = Cast<UFlowNode_SetGraphOutput>(NodePair.Value);
+			if (IsValid(SetOutputNode) && SetOutputNode->TryUpdateAutoDataPins())
+			{
+				SetOutputNode->OnReconstructionRequested.ExecuteIfBound();
+			}
+		}
 	}
 }
 
@@ -1043,8 +1062,10 @@ void UFlowAsset::PreStartFlow()
 #endif
 }
 
-void UFlowAsset::StartFlow(IFlowDataPinValueSupplierInterface* DataPinValueSupplier)
+void UFlowAsset::StartFlow(IFlowDataPinValueSupplierInterface* DataPinValueSupplier, IFlowGraphOutputDataReceiverInterface* InOutputDataReceiver)
 {
+	InitializeOutputDataReceiverAndValues(InOutputDataReceiver);
+
 	PreStartFlow();
 
 	if (UFlowNode* ConnectedEntryNode = GetDefaultEntryNode())
@@ -1074,6 +1095,11 @@ void UFlowAsset::FinishNode(UFlowNode* Node)
 		// if graph reached Finish and this asset instance was created by SubGraph node
 		if (Node->CanFinishGraph())
 		{
+			if (IFlowGraphOutputDataReceiverInterface* Receiver = Cast<IFlowGraphOutputDataReceiverInterface>(OutputDataReceiver.Get()))
+			{
+				Receiver->ReceiveOutputDataSnapshot(OutputDataPinValues);
+			}
+
 			if (NodeOwningThisAssetInstance.IsValid())
 			{
 				NodeOwningThisAssetInstance.Get()->TriggerFirstOutput(true);
@@ -1172,6 +1198,50 @@ const FFlowPreloadPolicy& UFlowAsset::GetPreloadPolicy() const
 {
 	checkf(PreloadPolicy.IsValid(), TEXT("PreloadPolicy must be initialized prior to calling GetPreloadPolicy()"));
 	return PreloadPolicy.Get();
+}
+
+void UFlowAsset::InitializeOutputDataReceiverAndValues(IFlowGraphOutputDataReceiverInterface* InOutputDataReceiver)
+{
+	OutputDataReceiver = Cast<UObject>(InOutputDataReceiver);
+
+	// Initialize the live output store from the template asset's declarations
+	OutputDataPinValues.Values.Reset();
+
+	if (const UFlowAsset* Template = TemplateAsset.Get())
+	{
+		for (const FFlowNamedDataPinProperty& Declaration : Template->OutputDataPinDeclarations)
+		{
+			if (Declaration.IsValid())
+			{
+				OutputDataPinValues.Values.Add(Declaration.Name, Declaration.DataPinValue);
+			}
+			else
+			{
+				UE_LOG(LogFlow, Warning, TEXT("Invalid OutputDataPin %s"), *Declaration.Name.ToString());
+			}
+		}
+	}
+}
+
+void UFlowAsset::WriteOutputDataPinValue(const FName& PinName, const TInstancedStruct<FFlowDataPinValue>& Value)
+{
+	if (OutputDataPinValues.Values.Contains(PinName))
+	{
+		OutputDataPinValues.Values[PinName] = Value;
+	}
+	else
+	{
+		UE_LOG(LogFlow, Warning, TEXT("Could not find pin named %s in WriteOutputDataPinValue"), *PinName.ToString());
+	}
+}
+
+void UFlowAsset::FlushOutputDataPinValuesToReceiver()
+{
+	if (IFlowGraphOutputDataReceiverInterface* Receiver = Cast<IFlowGraphOutputDataReceiverInterface>(OutputDataReceiver.Get()))
+	{
+		// Do an immediate push to the receiver
+		Receiver->ReceiveOutputDataSnapshot(OutputDataPinValues);
+	}
 }
 
 void UFlowAsset::TriggerCustomInput(const FName& EventName, IFlowDataPinValueSupplierInterface* DataPinValueSupplier)

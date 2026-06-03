@@ -288,6 +288,12 @@ private:
 	UFUNCTION(BlueprintPure, Category = DataPins, DisplayName = "Resolve DataPin By Name")
 	FFlowDataPinResult TryResolveDataPin(FName PinName) const;
 	
+protected:
+	/* Protected accessor for TryResolveDataPin()'s use 
+	 * (we still want "most" flow nodes to not use TryResolveDataPin directly, 
+	 * they should be using the template versions below.) */
+	FFlowDataPinResult TryResolveDataPin_SetGraphOutputAccess(FName PinName) const { return TryResolveDataPin(PinName); }
+
 public:
 	/* Generic single-value resolve & extractor. */
 	template <typename TFlowPinType>
