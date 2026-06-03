@@ -456,8 +456,8 @@ public:
 	/* This method allows to have different for every node instance, i.e. Red if node represents enemy, Green if node represents a friend. */
 	virtual bool GetDynamicTitleColor(FLinearColor& OutColor) const;
 
-	virtual FText GetNodeTitle() const { return K2_GetNodeTitle(); }
-	virtual FText GetNodeToolTip() const { return K2_GetNodeToolTip(); }
+	virtual FText GetNodeTitle() const;
+	virtual FText GetNodeToolTip() const;
 
 	FText GetGeneratedDisplayName() const;
 
@@ -488,7 +488,10 @@ public:
 	
 	UFUNCTION(BlueprintNativeEvent, Category = "FlowNode")
 	FText K2_GetNodeToolTip() const;
-
+	
+	UFUNCTION(BlueprintNativeEvent, Category = "FlowNode")
+	FString K2_GetNodeCategory() const;
+	
 	UFUNCTION(BlueprintPure, Category = "FlowNode")
 	virtual FText GetNodeConfigText() const;
 
