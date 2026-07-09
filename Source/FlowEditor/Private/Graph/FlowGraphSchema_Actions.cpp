@@ -292,7 +292,10 @@ UEdGraphNode* FFlowGraphSchemaAction_NewComment::PerformAction(class UEdGraph* P
 		return nullptr;
 	}
 
-	UEdGraphNode_Comment* CommentTemplate = NewObject<UEdGraphNode_Comment>();
+	const FScopedTransaction Transaction(LOCTEXT("AddComment", "Add Comment"));
+	ParentGraph->Modify();
+
+	UEdGraphNode_Comment* CommentNode = NewObject<UEdGraphNode_Comment>(ParentGraph, UEdGraphNode_Comment::StaticClass(), NAME_None, RF_Transactional);
 	FVector2D SpawnLocation = Location;
 
 	const TSharedPtr<SFlowGraphEditor> FlowGraphEditor = FFlowGraphUtils::GetFlowGraphEditor(ParentGraph);
@@ -301,13 +304,30 @@ UEdGraphNode* FFlowGraphSchemaAction_NewComment::PerformAction(class UEdGraph* P
 		FSlateRect Bounds;
 		if (FlowGraphEditor->GetBoundsForSelectedNodes(Bounds, 50.0f))
 		{
-			CommentTemplate->SetBounds(Bounds);
-			SpawnLocation.X = CommentTemplate->NodePosX;
-			SpawnLocation.Y = CommentTemplate->NodePosY;
+			CommentNode->SetBounds(Bounds);
+			SpawnLocation.X = CommentNode->NodePosX;
+			SpawnLocation.Y = CommentNode->NodePosY;
 		}
 	}
 
-	return FEdGraphSchemaAction_NewNode::SpawnNodeFromTemplate<UEdGraphNode_Comment>(ParentGraph, CommentTemplate, SpawnLocation);
+	// register to the graph
+	CommentNode->CreateNewGuid();
+	ParentGraph->AddNode(CommentNode, false, bSelectNewNode);
+
+	// set position
+	CommentNode->NodePosX = SpawnLocation.X;
+	CommentNode->NodePosY = SpawnLocation.Y;
+
+	// set default values
+	CommentNode->PostPlacedNewNode();
+
+	// select in editor UI
+	if (bSelectNewNode && FlowGraphEditor.IsValid())
+	{
+		FlowGraphEditor->SelectSingleNode(CommentNode);
+	}
+
+	return CommentNode;
 }
 
 #undef LOCTEXT_NAMESPACE
