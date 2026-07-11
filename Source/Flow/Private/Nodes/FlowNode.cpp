@@ -1275,7 +1275,7 @@ void UFlowNode::NotifyPreloadComplete()
 	{
 		if (Helper->OnPreloadComplete(*this) == EFlowPreloadResult::Completed)
 		{
-			TriggerOutput(FFlowPreloadHelper::OUTPIN_AllPreloadsComplete.PinName, false);
+			TriggerOutput(FFlowPreloadHelper::OUTPIN_Preloaded.PinName, false);
 		}
 	}
 }
