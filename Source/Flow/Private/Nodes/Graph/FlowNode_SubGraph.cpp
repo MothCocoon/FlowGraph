@@ -35,12 +35,19 @@ bool UFlowNode_SubGraph::CanBeAssetInstanced() const
 	return !Asset.IsNull() && (bCanInstanceIdenticalAsset || Asset.ToString() != GetFlowAsset()->GetTemplateAsset()->GetPathName());
 }
 
-void UFlowNode_SubGraph::PreloadContent()
+EFlowPreloadResult UFlowNode_SubGraph::PreloadContent()
 {
 	if (CanBeAssetInstanced() && GetFlowSubsystem())
 	{
 		GetFlowSubsystem()->CreateSubFlow(this, FString(), true);
 	}
+
+	FLOW_ASSERT_ENUM_MAX(EFlowPreloadResult, 2);
+
+	// TODO (gtaylor) CreateSubFlow is currently synchronous-only, 
+	// we could conceivably ADD ASYNC UFlowAsset load 
+	// (which could do the call CreateSubFlow after the asset was loaded).
+	return EFlowPreloadResult::Completed;
 }
 
 void UFlowNode_SubGraph::FlushContent()
@@ -53,6 +60,13 @@ void UFlowNode_SubGraph::FlushContent()
 
 void UFlowNode_SubGraph::ExecuteInput(const FName& PinName)
 {
+	// Since this node implements IFlowPreloadableInterface,
+	// we need to call this to allow the PreloadHelper to intercept preload-specific PinNames
+	if (DispatchExecuteInputToPreloadHelper(PinName))
+	{
+		return;
+	}
+
 	if (CanBeAssetInstanced() == false)
 	{
 		if (Asset.IsNull())
