@@ -8,10 +8,9 @@
 
 #include UE_INLINE_GENERATED_CPP_BY_NAME(FlowPreloadHelper)
 
-const FFlowPin FFlowPreloadHelper::OUTPIN_AllPreloadsComplete(TEXT("All Preloads Complete"));
-
-const FFlowPin FFlowPreloadHelper_Standard::INPIN_PreloadContent(TEXT("Preload Content"));
-const FFlowPin FFlowPreloadHelper_Standard::INPIN_FlushContent(TEXT("Flush Content"));
+const FFlowPin FFlowPreloadHelper_Standard::INPIN_PreloadContent(TEXT("All Preloads Complete"), FText::FromString(TEXT("Preload")));
+const FFlowPin FFlowPreloadHelper_Standard::INPIN_FlushContent(TEXT("Preload Content"), FText::FromString(TEXT("Flush")));
+const FFlowPin FFlowPreloadHelper::OUTPIN_Preloaded(TEXT("Flush Content"), FText::FromString(TEXT("Preloaded")));
 
 void FFlowPreloadHelper_Standard::TriggerPreload(UFlowNode& Node)
 {
@@ -194,6 +193,6 @@ void FFlowPreloadHelper_Standard::GetContextInputs(TArray<FFlowPin>& OutInputPin
 
 void FFlowPreloadHelper::GetContextOutputs(TArray<FFlowPin>& OutOutputPins) const
 {
-	OutOutputPins.AddUnique(OUTPIN_AllPreloadsComplete);
+	OutOutputPins.AddUnique(OUTPIN_Preloaded);
 }
 #endif
