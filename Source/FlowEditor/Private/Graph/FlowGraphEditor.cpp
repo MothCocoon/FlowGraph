@@ -770,7 +770,7 @@ void SFlowGraphEditor::PasteNodes()
 	PasteNodesHere(GetPasteLocation2f());
 }
 
-void SFlowGraphEditor::PasteNodesHere(const FVector2D& Location)
+void SFlowGraphEditor::PasteNodesHere(const FVector2f& Location)
 {
 	// Undo/Redo support
 	const FScopedTransaction Transaction(LOCTEXT("PasteNode", "Paste Node"));

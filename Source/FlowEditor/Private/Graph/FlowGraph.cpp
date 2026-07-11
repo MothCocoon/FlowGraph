@@ -180,6 +180,12 @@ void UFlowGraph::OnLoaded()
 
 	UpdateVersion();
 
+	UFlowAsset* FlowAsset = GetFlowAsset();
+	if (IsValid(FlowAsset))
+	{
+		FlowAsset->SetupForEditing();
+	}
+
 	// Setup all the Nodes in the graph for editing
 	for (UEdGraphNode* Node : Nodes)
 	{

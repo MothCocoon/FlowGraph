@@ -2,13 +2,16 @@
 
 #include "FlowSettings.h"
 #include "FlowComponent.h"
+#include "Policies/FlowPreloadPolicy.h"
 #include "Policies/FlowStandardPinConnectionPolicies.h"
+#include "Policies/FlowStandardPreloadPolicies.h"
 
 #include UE_INLINE_GENERATED_CPP_BY_NAME(FlowSettings)
 
 UFlowSettings::UFlowSettings(const FObjectInitializer& ObjectInitializer)
 	: Super(ObjectInitializer)
 	, PinConnectionPolicy(FFlowPinConnectionPolicy_VeryRelaxed::StaticStruct())
+	, PreloadPolicy(FFlowPreloadPolicy_Standard::StaticStruct())
 	, bDeferTriggeredOutputsWhileTriggering(true)
 	, bLogOnSignalDisabled(true)
 	, bLogOnSignalPassthrough(true)
@@ -24,7 +27,13 @@ const FFlowPinConnectionPolicy* UFlowSettings::GetPinConnectionPolicy() const
 	return PinConnectionPolicy.GetPtr<FFlowPinConnectionPolicy>();
 }
 
+const FFlowPreloadPolicy* UFlowSettings::GetPreloadPolicy() const
+{
+	return PreloadPolicy.GetPtr<FFlowPreloadPolicy>();
+}
+
 #if WITH_EDITOR
+
 void UFlowSettings::PostEditChangeProperty(FPropertyChangedEvent& PropertyChangedEvent)
 {
 	Super::PostEditChangeProperty(PropertyChangedEvent);
@@ -34,6 +43,7 @@ void UFlowSettings::PostEditChangeProperty(FPropertyChangedEvent& PropertyChange
 		(void)OnAdaptiveNodeTitlesChanged.ExecuteIfBound();
 	}
 }
+
 #endif
 
 UClass* UFlowSettings::GetDefaultExpectedOwnerClass() const
