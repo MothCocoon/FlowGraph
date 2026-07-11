@@ -77,6 +77,12 @@ public:
 	 * By default, uses the seed for the Flow Node that this addon is attached to. */
 	FLOW_API virtual int32 GetRandomSeed() const override;
 
+	/* Called when this AddOn's async preloading finishes (i.e. PreloadContent returned PreloadInProgress).
+	 * Async C++ addons call this from their completion delegate; async Blueprint addons call it on self.
+	 * Delegates to the owning FlowNode's NotifyPreloadComplete(). */
+	UFUNCTION(BlueprintCallable, Category = "Preload Content")
+	FLOW_API void NotifyPreloadComplete();
+
 #if WITH_EDITOR
 	// IFlowContextPinSupplierInterface
 	FLOW_API virtual bool SupportsContextPins() const override { return Super::SupportsContextPins() || (!InputPins.IsEmpty() || !OutputPins.IsEmpty()); }

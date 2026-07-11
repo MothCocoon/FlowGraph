@@ -3,18 +3,14 @@
 
 #include "Types/FlowPinEnums.h"
 #include "Types/FlowPinTypeName.h"
+#include "Types/FlowPinTypeNamesStandard.h"
 
+#include "EdGraph/EdGraphPin.h"
 #include "Templates/SubclassOf.h"
 #include "UObject/ObjectMacros.h"
-#include "Types/FlowPinTypeNamesStandard.h"
-#include "EdGraph/EdGraphPin.h"
 
 #include "FlowPin.generated.h"
 
-class UEnum;
-class UClass;
-class UObject;
-class IPropertyHandle;
 struct FFlowPinType;
 
 USTRUCT(BlueprintType, meta = (HasNativeMake = "/Script/Flow.FlowDataPinBlueprintLibrary.MakeStruct", HasNativeBreak = "/Script/Flow.FlowDataPinBlueprintLibrary.BreakStruct"))
@@ -74,28 +70,36 @@ public:
 	{
 	}
 
-	explicit FFlowPin(const FString& InPinName)
-		: PinName(*InPinName)
+	explicit FFlowPin(const FName& InPinName, const FText& InPinFriendlyName)
+		: PinName(InPinName)
+		, PinFriendlyName(InPinFriendlyName)
 	{
 	}
 
-	explicit FFlowPin(const FText& InPinName)
-		: PinName(*InPinName.ToString())
+	explicit FFlowPin(const FName& InPinName, const FText& InPinFriendlyName, const FString& InPinTooltip)
+		: PinName(InPinName)
+		, PinFriendlyName(InPinFriendlyName)
+		, PinToolTip(InPinTooltip)
 	{
 	}
 
-	explicit FFlowPin(const TCHAR* InPinName)
-		: PinName(FName(InPinName))
+	explicit FFlowPin(const FName& InPinName, const FText& InPinFriendlyName, const FFlowPinTypeName& InTypeName, UObject* OptionalSubCategoryObject = nullptr)
+		: PinName(InPinName)
+		, PinFriendlyName(InPinFriendlyName)
 	{
+		SetPinTypeName(InTypeName);
+		SetPinSubCategoryObject(OptionalSubCategoryObject);
 	}
 
-	explicit FFlowPin(const uint8& InPinName)
-		: PinName(FName(*FString::FromInt(InPinName)))
+	explicit FFlowPin(const FName& InPinName, const FFlowPinTypeName& InTypeName, UObject* OptionalSubCategoryObject = nullptr)
+		: PinName(InPinName)
 	{
+		SetPinTypeName(InTypeName);
+		SetPinSubCategoryObject(OptionalSubCategoryObject);
 	}
 
-	explicit FFlowPin(const int32& InPinName)
-		: PinName(FName(*FString::FromInt(InPinName)))
+	explicit FFlowPin(const FStringView InPinName)
+		: PinName(InPinName)
 	{
 	}
 	
@@ -121,33 +125,63 @@ public:
 	{
 	}
 
-	explicit FFlowPin(const FName& InPinName, const FText& InPinFriendlyName)
-		: PinName(InPinName)
+	explicit FFlowPin(const FText& InPinName)
+		: PinName(InPinName.ToString())
+	{
+	}
+
+	explicit FFlowPin(const FText& InPinName, const FText& InPinFriendlyName)
+		: PinName(InPinName.ToString())
 		, PinFriendlyName(InPinFriendlyName)
 	{
 	}
 
-	explicit FFlowPin(const FName& InPinName, const FText& InPinFriendlyName, const FString& InPinTooltip)
+	explicit FFlowPin(const FText& InPinName, const FString& InPinTooltip)
+		: PinName(InPinName.ToString())
+		, PinToolTip(InPinTooltip)
+	{
+	}
+
+	explicit FFlowPin(const FText& InPinName, const FText& InPinFriendlyName, const FString& InPinTooltip)
+		: PinName(InPinName.ToString())
+		, PinFriendlyName(InPinFriendlyName)
+		, PinToolTip(InPinTooltip)
+	{
+	}
+
+	explicit FFlowPin(const TCHAR* InPinName)
+		: PinName(InPinName)
+	{
+	}
+
+	explicit FFlowPin(const TCHAR* InPinName, const FText& InPinFriendlyName)
+		: PinName(InPinName)
+		, PinFriendlyName(InPinFriendlyName)
+	{
+	}
+#endif
+
+	explicit FFlowPin(const TCHAR* InPinName, const FString& InPinTooltip)
+		: PinName(InPinName)
+		, PinToolTip(InPinTooltip)
+	{
+	}
+
+	explicit FFlowPin(const TCHAR* InPinName, const FText& InPinFriendlyName, const FString& InPinTooltip)
 		: PinName(InPinName)
 		, PinFriendlyName(InPinFriendlyName)
 		, PinToolTip(InPinTooltip)
 	{
 	}
 
-	explicit FFlowPin(const FName& InPinName, const FText& InPinFriendlyName, const FFlowPinTypeName& InTypeName, UObject* OptionalSubCategoryObject = nullptr)
-		: PinName(InPinName)
-		, PinFriendlyName(InPinFriendlyName)
+	explicit FFlowPin(const uint8& InPinName)
+		: PinName(FName(*FString::FromInt(InPinName)))
 	{
-		SetPinTypeName(InTypeName);
-		SetPinSubCategoryObject(OptionalSubCategoryObject);
 	}
-#endif
 
-	explicit FFlowPin(const FName& InPinName, const FFlowPinTypeName& InTypeName, UObject* OptionalSubCategoryObject = nullptr)
-		: PinName(InPinName)
+	explicit FFlowPin(const int32& InPinName)
+		: PinName(FName(*FString::FromInt(InPinName)))
 	{
-		SetPinTypeName(InTypeName);
-		SetPinSubCategoryObject(OptionalSubCategoryObject);
 	}
 
 	FORCEINLINE bool IsValid() const
@@ -178,7 +212,7 @@ public:
 	bool DeepIsEqual(const FFlowPin& Other) const
 	{
 		// Do a deep pin match (not a simple name-only match), to check if the pins are exactly equal
-		return 
+		return
 			PinName == Other.PinName &&
 #if WITH_EDITORONLY_DATA
 			PinFriendlyName.EqualTo(Other.PinFriendlyName) && 
@@ -195,12 +229,11 @@ public:
 	}
 
 public:
-
 #if WITH_EDITOR
 	FText BuildHeaderText() const;
 
 	static bool ValidateEnum(const UEnum& EnumType);
-		
+
 	FEdGraphPinType BuildEdGraphPinType() const;
 	void ConfigureFromEdGraphPin(const FEdGraphPinType& EdGraphPinType);
 #endif
@@ -219,8 +252,6 @@ public:
 	FORCEINLINE bool IsDataPin() const { return !IsExecPin(); }
 	// --
 
-	// 
-	
 	/**
 	 * Metadata keys for properties that bind and auto-generate Data Pins.
      */
@@ -265,7 +296,6 @@ public:
 	// --
 
 protected:
-
 	void TrySetStructSubCategoryObjectFromPinType();
 };
 

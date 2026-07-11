@@ -2,6 +2,7 @@
 
 #include "Nodes/Actor/FlowNode_ExecuteComponent.h"
 #include "Interfaces/FlowCoreExecutableInterface.h"
+#include "Interfaces/FlowPreloadableInterface.h"
 #include "Interfaces/FlowExternalExecutableInterface.h"
 #include "Interfaces/FlowContextPinSupplierInterface.h"
 #include "FlowAsset.h"
@@ -74,38 +75,40 @@ void UFlowNode_ExecuteComponent::DeinitializeInstance()
 	Super::DeinitializeInstance();
 }
 
-void UFlowNode_ExecuteComponent::PreloadContent()
+EFlowPreloadResult UFlowNode_ExecuteComponent::PreloadContent()
 {
-	Super::PreloadContent();
-
 	if (UActorComponent* ResolvedComp = TryResolveComponent())
 	{
-		if (IFlowCoreExecutableInterface* ComponentAsCoreExecutable = Cast<IFlowCoreExecutableInterface>(ResolvedComp))
+		if (IFlowPreloadableInterface* PreloadableComponent = Cast<IFlowPreloadableInterface>(ResolvedComp))
 		{
-			ComponentAsCoreExecutable->PreloadContent();
-		}
-		else if (ResolvedComp->Implements<UFlowCoreExecutableInterface>())
-		{
-			IFlowCoreExecutableInterface::Execute_K2_PreloadContent(ResolvedComp);
+			FLOW_ASSERT_ENUM_MAX(EFlowPreloadResult, 2);
+
+			const EFlowPreloadResult PreloadableComponentResult = PreloadableComponent->PreloadContent();
+
+			// TODO (gtaylor) Consider adding a mechanism for components to do an async preload.
+			// Components have no back-reference to this node and cannot call NotifyPreloadComplete().
+			// Async (PreloadInProgress) component preloads are therefore unsupported (For Now(tm)):
+			// if a component returns PreloadInProgress the PendingPreloadCount would never reach zero.
+			ensureAlwaysMsgf(PreloadableComponentResult == EFlowPreloadResult::Completed,
+				TEXT("Component '%s' returned PreloadInProgress from PreloadContent(), but UFlowNode_ExecuteComponent has no mechanism to receive the async completion callback. Treating as Completed."),
+				*ResolvedComp->GetName());
+
+			return EFlowPreloadResult::Completed;
 		}
 	}
+
+	return EFlowPreloadResult::Completed;
 }
 
 void UFlowNode_ExecuteComponent::FlushContent()
 {
 	if (UActorComponent* ResolvedComp = TryResolveComponent())
 	{
-		if (IFlowCoreExecutableInterface* ComponentAsCoreExecutable = Cast<IFlowCoreExecutableInterface>(ResolvedComp))
+		if (IFlowPreloadableInterface* Preloadable = Cast<IFlowPreloadableInterface>(ResolvedComp))
 		{
-			ComponentAsCoreExecutable->FlushContent();
-		}
-		else if (ResolvedComp->Implements<UFlowCoreExecutableInterface>())
-		{
-			IFlowCoreExecutableInterface::Execute_K2_FlushContent(ResolvedComp);
+			Preloadable->FlushContent();
 		}
 	}
-
-	Super::FlushContent();
 }
 
 void UFlowNode_ExecuteComponent::OnActivate()
@@ -180,6 +183,13 @@ void UFlowNode_ExecuteComponent::ForceFinishNode()
 
 void UFlowNode_ExecuteComponent::ExecuteInput(const FName& PinName)
 {
+	// Since this node implements IFlowPreloadableInterface,
+	// we need to call this to allow the PreloadHelper to intercept preload-specific PinNames
+	if (DispatchExecuteInputToPreloadHelper(PinName))
+	{
+		return;
+	}
+
 	Super::ExecuteInput(PinName);
 
 	if (UActorComponent* ResolvedComp = TryResolveComponent())
