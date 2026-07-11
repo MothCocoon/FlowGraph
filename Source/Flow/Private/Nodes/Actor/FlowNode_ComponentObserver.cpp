@@ -40,7 +40,11 @@ void UFlowNode_ComponentObserver::ExecuteInput(const FName& PinName)
 
 void UFlowNode_ComponentObserver::OnLoad_Implementation()
 {
-	if (IdentityTags.IsValid())
+	if (SuccessLimit > 0 && SuccessCount == SuccessLimit)
+	{
+		TriggerOutput(TEXT("Completed"), true);
+	}
+	else if (IdentityTags.IsValid())
 	{
 		StartObserving();
 	}
@@ -121,9 +125,9 @@ void UFlowNode_ComponentObserver::OnComponentUnregistered(UFlowComponent* Compon
 
 void UFlowNode_ComponentObserver::OnEventReceived()
 {
+	SuccessCount++;
 	TriggerFirstOutput(false);
 
-	SuccessCount++;
 	if (SuccessLimit > 0 && SuccessCount == SuccessLimit)
 	{
 		TriggerOutput(TEXT("Completed"), true);

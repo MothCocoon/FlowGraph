@@ -28,7 +28,7 @@ public:
 	 * Return EFlowPreloadResult::Completed  if loading finished synchronously.
 	 * Return EFlowPreloadResult::PreloadInProgress if loading started but is not yet done.
 	 *   - In the PreloadInProgress case you MUST call NotifyPreloadComplete() on this node
-	 *     (game thread) when loading finishes. AllPreloadsComplete fires at that point.
+	 *     (game thread) when loading finishes. "Preloaded" output fires at that point.
 	 *   - If NotifyPreloadComplete() is called from within PreloadContent() itself
 	 *     (e.g. FStreamableManager fires synchronously for an already-cached asset),
 	 *     that is safe — state guards prevent double-fire.
