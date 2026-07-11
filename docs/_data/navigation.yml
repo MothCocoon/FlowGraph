@@ -38,7 +38,9 @@
 
 - title: Releases
   docs:
-    - title: Version 2.3 (in works)
+    - title: Version 2.4 (in works)
+      url: /Releases/Version24
+    - title: Version 2.3
       url: /Releases/Version23
     - title: Version 2.2
       url: /Releases/Version22

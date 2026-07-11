@@ -79,7 +79,7 @@ struct FFlowDataPinValueOwner
 struct FFlowDataPinValueOwnerCollection
 {
 public:
-	void AddValueOwner(IFlowDataPinValueOwnerInterface& ValueOwnerInterface);
+	FLOW_API void AddValueOwner(IFlowDataPinValueOwnerInterface& ValueOwnerInterface);
 
 	TArray<FFlowDataPinValueOwner>& GetValueOwners() { return ValueOwners; }
 

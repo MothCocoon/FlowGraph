@@ -31,16 +31,6 @@ public:
 	void K2_DeinitializeInstance();
 	virtual void DeinitializeInstance() { Execute_K2_DeinitializeInstance(Cast<UObject>(this)); }
 
-	/* If preloading is enabled, will be called to preload content. */
-	UFUNCTION(BlueprintImplementableEvent, Category = "FlowNode", DisplayName = "Preload Content")
-	void K2_PreloadContent();
-	virtual void PreloadContent() { Execute_K2_PreloadContent(Cast<UObject>(this)); }
-
-	/* If preloading is enabled, will be called to flush content. */
-	UFUNCTION(BlueprintImplementableEvent, Category = "FlowNode", DisplayName = "Flush Content")
-	void K2_FlushContent();
-	virtual void FlushContent() { Execute_K2_FlushContent(Cast<UObject>(this)); }
-
 	/* Called immediately before the first input is triggered. */
 	UFUNCTION(BlueprintImplementableEvent, Category = "FlowNode", DisplayName = "OnActivate")
 	void K2_OnActivate();

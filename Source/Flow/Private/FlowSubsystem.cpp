@@ -164,28 +164,23 @@ void UFlowSubsystem::FinishAllRootFlows(UObject* Owner, const EFlowFinishPolicy 
 
 UFlowAsset* UFlowSubsystem::CreateSubFlow(UFlowNode_SubGraph* SubGraphNode, const FString& SavedInstanceName, const bool bPreloading /* = false */)
 {
-	UFlowAsset* NewInstance = nullptr;
+	UFlowAsset* AssetInstance = nullptr;
 
 	if (!InstancedSubFlows.Contains(SubGraphNode))
 	{
 		const TWeakObjectPtr<UObject> Owner = SubGraphNode->GetFlowAsset() ? SubGraphNode->GetFlowAsset()->GetOwner() : nullptr;
-		NewInstance = CreateFlowInstance(Owner, SubGraphNode->Asset.LoadSynchronous(), SavedInstanceName);
+		AssetInstance = CreateFlowInstance(Owner, SubGraphNode->Asset.LoadSynchronous(), SavedInstanceName);
 
-		if (NewInstance)
+		if (AssetInstance)
 		{
-			InstancedSubFlows.Add(SubGraphNode, NewInstance);
-
-			if (bPreloading)
-			{
-				NewInstance->PreloadNodes();
-			}
+			InstancedSubFlows.Add(SubGraphNode, AssetInstance);
 		}
 	}
 
 	if (InstancedSubFlows.Contains(SubGraphNode) && !bPreloading)
 	{
 		// get instanced asset from map - in case it was already instanced by calling CreateSubFlow() with bPreloading == true
-		UFlowAsset* AssetInstance = InstancedSubFlows[SubGraphNode];
+		AssetInstance = InstancedSubFlows[SubGraphNode];
 
 		AssetInstance->NodeOwningThisAssetInstance = SubGraphNode;
 		SubGraphNode->GetFlowAsset()->ActiveSubGraphs.Add(SubGraphNode, AssetInstance);
@@ -197,7 +192,7 @@ UFlowAsset* UFlowSubsystem::CreateSubFlow(UFlowNode_SubGraph* SubGraphNode, cons
 		}
 	}
 
-	return NewInstance;
+	return AssetInstance;
 }
 
 void UFlowSubsystem::RemoveSubFlow(UFlowNode_SubGraph* SubGraphNode, const EFlowFinishPolicy FinishPolicy)

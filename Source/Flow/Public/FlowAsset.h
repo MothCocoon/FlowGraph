@@ -11,6 +11,7 @@
 #include "FlowMessageLog.h"
 #endif
 
+#include "StructUtils/InstancedStruct.h"
 #include "Templates/SharedPointer.h"
 #include "UObject/ObjectKey.h"
 
@@ -20,6 +21,7 @@ class UFlowNode_CustomOutput;
 class UFlowNode_CustomInput;
 class UFlowNode_SubGraph;
 class UFlowSubsystem;
+struct FFlowPreloadPolicy;
 struct FFlowPinConnectionPolicy;
 
 class UEdGraph;
@@ -60,8 +62,6 @@ public:
 // Graph (editor-only)
 
 public:
-	virtual void PostInitProperties() override;
-
 #if WITH_EDITOR
 public:	
 	friend class UFlowGraph;
@@ -91,6 +91,8 @@ private:
 
 #if WITH_EDITOR
 public:
+	void SetupForEditing();
+
 	UEdGraph* GetGraph() const { return FlowGraph; }
 
 	virtual EDataValidationResult ValidateAsset(FFlowMessageLog& MessageLog);
@@ -122,7 +124,7 @@ protected:
 
 	TArray<TSubclassOf<UFlowNodeBase>> AllowedInSubgraphNodeClasses;
 	TArray<TSubclassOf<UFlowNodeBase>> DeniedInSubgraphNodeClasses;
-	
+
 	bool bStartNodePlacedAsGhostNode;
 
 private:
@@ -344,9 +346,6 @@ protected:
 	UPROPERTY()
 	TSet<TObjectPtr<UFlowNode_CustomInput>> CustomInputNodes;
 
-	UPROPERTY()
-	TSet<TObjectPtr<UFlowNode>> PreloadedNodes;
-
 	/* Nodes that have any work left, not marked as Finished yet. */
 	UPROPERTY()
 	TArray<TObjectPtr<UFlowNode>> ActiveNodes;
@@ -380,9 +379,6 @@ public:
 	UFUNCTION(BlueprintPure, Category = "Flow")
 	AActor* TryFindActorOwner() const;
 
-	/* Opportunity to preload content of project-specific nodes. */
-	virtual void PreloadNodes() {}
-
 	virtual void PreStartFlow();
 	virtual void StartFlow(IFlowDataPinValueSupplierInterface* DataPinValueSupplier = nullptr);
 	bool HasStartedFlow() const;
@@ -414,6 +410,21 @@ public:
 	/* Returns nodes active in the past, done their work. */
 	UFUNCTION(BlueprintPure, Category = "Flow")
 	const TArray<UFlowNode*>& GetRecordedNodes() const { return RecordedNodes; }
+
+//////////////////////////////////////////////////////////////////////////
+// Preload policy
+
+protected:
+	/* Policy controlling when nodes implementing IFlowPreloadableInterface preload and flush their content.
+	 * Initialized from UFlowSettings defaults. Override InitializePreloadPolicy() in a subclass to set a unique policy. */
+	UPROPERTY(VisibleAnywhere, AdvancedDisplay, Category = Preload)
+	TInstancedStruct<FFlowPreloadPolicy> PreloadPolicy;
+
+	/* Override these functions to set up unique policy(ies) for a UFlowAsset subclass. */
+	virtual void InitializePreloadPolicy();
+
+public:
+	const FFlowPreloadPolicy& GetPreloadPolicy() const;
 
 //////////////////////////////////////////////////////////////////////////
 // Trigger Input
