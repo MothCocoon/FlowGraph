@@ -389,7 +389,7 @@ public:
 	/* Returns true if this node's content is currently preloaded. */
 	bool IsContentPreloaded() const;
 
-	/* Called when async preloading finishes (i.e. PreloadContent returned PreloadInProgress). Updates helper state and fires OUTPIN_AllPreloadsComplete.
+	/* Called when async preloading finishes (i.e. PreloadContent returned PreloadInProgress). Updates helper state and fires "Preloaded" output.
 	 * Async C++ nodes call this from their completion delegate; async Blueprint nodes call it on self.
 	 * Safe to call from within PreloadContent() (e.g. if FStreamableManager fires synchronously).
 	 * Must be called on the game thread. No-op if called after TriggerFlush (cancellation guard). */
