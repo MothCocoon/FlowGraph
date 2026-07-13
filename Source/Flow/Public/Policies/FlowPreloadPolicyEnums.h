@@ -53,12 +53,12 @@ FLOW_ENUM_RANGE_VALUES(EFlowFlushTiming);
 UENUM()
 enum class EFlowPreloadResult : uint8
 {
-	/* Preloading completed synchronously. The helper fires AllPreloadsComplete immediately. */
+	/* Preloading completed synchronously. The helper fires "Preloaded" output immediately. */
 	Completed,
 
 	/* Preloading started but is not yet finished (e.g. async asset streaming).
 	 * The node MUST call NotifyPreloadComplete() on itself (game thread) when loading finishes.
-	 * The helper fires AllPreloadsComplete only when that call arrives. */
+	 * The helper fires "Preloaded" output only when that call arrives. */
 	PreloadInProgress,
 
 	Max     UMETA(Hidden),

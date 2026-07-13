@@ -1,18 +1,27 @@
 ---
-title: Flow 2.3 (in works)
+title: Flow 2.3
 ---
 
-This is the upcoming release. This page is updated regularly after changes are pushed to the repository.
+July 11, 2026.
 
-This release includes pull requests from the community: Bargestt (Vasilii Bulgakov), Chen-Gary (Gary Chen), dskliarov-gsc, EvanC4, LindyHopperGT (Riot Games).
+This release includes pull requests from the community: Bargestt (Vasilii Bulgakov), Chen-Gary (Gary Chen), CyaDaPaKnat, dskliarov-gsc, EvanC4, fade-Raider (Federico Ciardi), LindyHopperGT (Riot Games).
 
-This is the first release for UE 5.8, and the last for UE 5.6.
+This is the first release for UE 5.8.
+
+* [Flow 5.8](https://github.com/MothCocoon/FlowGraph/releases/tag/v2.3-5.8)
+* [Flow 5.7](https://github.com/MothCocoon/FlowGraph/releases/tag/v2.3-5.7)
+* [Flow 5.6](https://github.com/MothCocoon/FlowGraph/releases/tag/v2.3-5.6)
+
+Flow Game (sample project)
+* [Flow Game 5.8](https://github.com/MothCocoon/FlowGame/releases/tag/v2.3-5.8)
+* [Flow Game 5.7](https://github.com/MothCocoon/FlowGame/releases/tag/v2.3-5.7)
+* [Flow Game 5.6](https://github.com/MothCocoon/FlowGame/releases/tag/v2.3-5.6)
 
 ## Update Notes
 ### Critical warning for Data Pins users
-If you were using Data Pins in your assets prior to Flow 2.2, do not upgrade directly from your current Flow Graph version to the version newer than 2.2.
+If you were using Data Pins in your assets prior to Flow 2.2, do not upgrade directly from your current Flow Graph version to the version newer than 2.3.
 Version 2.2 came with a huge Data Pins refactor and it requires data migration occuring while loading assets.
-* Update first to the Flow Graph 2.2.
+* Update first to the Flow Graph 2.2 or 2.3.
 * Resave all Flow Graph assets.
 * Continue with updating to newer Flow Graph version.
 
@@ -22,6 +31,7 @@ This is BREAKING CHANGE. It requires updating constructors for C++ Flow Nodes. I
 ## Flow Node
 * Added Paste option to the right-click menu for Flow Nodes. Formerly could only paste onto a Flow Node using Ctrl + V. (contributed by LindyHopperGT)
 * Added Attach AddOn drop-down to Flow Node (and AddOn) details. Adds a more convenient method for attaching addons that is fewer-clicks per operation and a bit less hidden. This is in addition to the right-click menu on these nodes. (contributed by LindyHopperGT)
+* Replaced the stubbed, nonfunctional preload mechanism in FlowGraph with a policy-driven, async-safe & per-project extendable system. This change added `FlowPreloadableInterface`, `FFlowPreloadPolicy`, `FFlowPreloadHelper` and `FFlowPreloadHelper_Standard`. (contributed by LindyHopperGT)
 * Setting `UFlowNode` pointer on AddOns more reliably in editor. Updated the node pointer in editor for AddOns so that it is usable any time while in editor, can updated when addons are moved/rebuilt. (contributed by LindyHopperGT)
 * Updated Flow Palette filters. (contributed by LindyHopperGT)
     *  Improved the Flow Palette filtering by category to also check superclasses of the `UFlowAsset` subclass being edited.
@@ -35,6 +45,7 @@ This is BREAKING CHANGE. It requires updating constructors for C++ Flow Nodes. I
     * Updated some Flow Nodes (Log, FormatText) to update their config text on pin connection changes.
 
 ## Specific Flow Nodes
+* `UFlowNode_ComponentObserver` - fixed SuccessCount persistence on save during Success flow. (contributed by fade-Raider)
 * `UFlowNode_Reroute` (contributed by LindyHopperGT)
     * Reroute nodes can now retype themselves if connected to a new type (and in doing so, break incompatible connections).
     * Copy/paste for data pin reroutes preserves the type of the reroute (was being lost).
@@ -46,12 +57,14 @@ This is BREAKING CHANGE. It requires updating constructors for C++ Flow Nodes. I
 * Added `CompareValues` predicate (for data pins) and auto-generate data pins refactor. (contributed by LindyHopperGT)
     *  Refactored the auto-generate data pins code so that the CompareValues predicate can get its pins generated, duplicates disambiguated and the results queried.
     * Created CompareValues predicate, which is analogous to the Compare Blackboard Values predicate, but for data pins.
+* Fixed: Nodes cannot be moved inside the comment block.
 
 ## Flow Asset
+* Fixed `UFlowSubsystem::CreateSubFlow()` returning nullptr if instance was preloaded. (contributed by CyaDaPaKnat)
 * Fixed: assets didn't show dirty and version control statuses. (contributed by Bargestt)
 * Fixed dirtying graph on copy. (contributed by Bargestt)
 * Fix invalid instance class when pasting. (contributed by Bargestt)
-* Refactored LogError/LogWarning/LogNote. Extracted shared LogRuntimeMessage() helper. Three identical copy-pasted functions → one implementation with severity parameter. (contributed by LindyHopperGT, improved by Bargestt)
+* Refactored LogError/LogWarning/LogNote. Extracted shared `LogRuntimeMessage()` helper. Three identical copy-pasted functions → one implementation with severity parameter. (contributed by LindyHopperGT, improved by Bargestt)
 * Fixed `TryFindActorOwner()` to correctly return the Owner when it is already an AActor, not just when it's a component. Fulfills the documented contract. (contributed by LindyHopperGT)
 * Crash fix in `CancelAndWarnForUnflushedDeferredTriggers()`. Null-guard ToNode and FromNode before dereferencing in UE_LOG. Prevents crash during abnormal termination when nodes are already destroyed. (contributed by LindyHopperGT)
 * Introduced `FFlowPolicy` instanced-struct policy meant to handle various project-specific policies. Refactored Pin Connection policy to use it. (contributed by LindyHopperGT)
@@ -64,6 +77,7 @@ This is BREAKING CHANGE. It requires updating constructors for C++ Flow Nodes. I
 * Added `CanSave` check to `UFlowComponent`. Allows for transient Flow graphs and components that are never saved. (contributed by Bargestt)
 
 ## Misc
-* Fixed one of `UFlowSubsystem::FindComponents` variants which could return no components if method has been called with the following parameters: EGameplayContainerMatchType::All and bExactMatch = false. (contributed by Bargestt)
+* Fixed one of `UFlowSubsystem::FindComponents()` variants which could return no components if method has been called with the following parameters: EGameplayContainerMatchType::All and bExactMatch = false. (contributed by Bargestt)
 * In `UFlowGraphSettings`, all occurences of hard refences `TSubclassOf` have been changed to `TSoftClassPtr`. In general, TSubclassOf should be avoided to prevent automatic loading of unnecessary assets. In case of plugins, using hard reference was using issue with loading some assets defined in other plugins. Since `UFlowGraphSettings` could load assets before other plugin is loaded. (contributed by Chen-Gary)
-* Fix crash when `OnMapOpened` delegate fires after `SLevelEditorFlow` destruction. (contributed by EvanC4)
+* Fixed crash when `OnMapOpened` delegate fires after `SLevelEditorFlow` destruction. (contributed by EvanC4)
+* Added export macro on Missing on `FFlowDataPinValueOwnerCollection::AddValueOwner`. (contributed by CyaDaPaKnat)
