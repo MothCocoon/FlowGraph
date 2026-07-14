@@ -1,5 +1,4 @@
 // Copyright https://github.com/MothCocoon/FlowGraph/graphs/contributors
-
 #include "Graph/Nodes/FlowGraphNode.h"
 
 #include "FlowAsset.h"
@@ -9,6 +8,7 @@
 #include "Debugger/FlowDebuggerSubsystem.h"
 
 #include "FlowEditorCommands.h"
+#include "FlowLogChannels.h"
 #include "Graph/FlowGraph.h"
 #include "Graph/FlowGraphEditorSettings.h"
 #include "Graph/FlowGraphSchema.h"
@@ -23,7 +23,7 @@
 #include "Developer/ToolMenus/Public/ToolMenus.h"
 #include "DiffResults.h"
 #include "Editor.h"
-#include "FlowLogChannels.h"
+#include "Editor/Transactor.h"
 #include "Framework/Commands/GenericCommands.h"
 #include "GraphDiffControl.h"
 #include "GraphEditorActions.h"
@@ -34,19 +34,12 @@
 #include "Subsystems/AssetEditorSubsystem.h"
 #include "Textures/SlateIcon.h"
 #include "ToolMenuSection.h"
-#include "Editor/Transactor.h"
 
 #include UE_INLINE_GENERATED_CPP_BY_NAME(FlowGraphNode)
 
 #define LOCTEXT_NAMESPACE "FlowGraphNode"
 
-UFlowGraphNode::UFlowGraphNode(const FObjectInitializer& ObjectInitializer)
-	: Super(ObjectInitializer)
-	, NodeInstance(nullptr)
-	, bBlueprintCompilationPending(false)
-	, bIsReconstructingNode(false)
-	, bIsDestroyingNode(false)
-	, bNeedsFullReconstruction(false)
+UFlowGraphNode::UFlowGraphNode()
 {
 	OrphanedPinSaveMode = ESaveOrphanPinMode::SaveAll;
 }
