@@ -1,6 +1,7 @@
 // Copyright https://github.com/MothCocoon/FlowGraph/graphs/contributors
 #pragma once
 
+#include "Interfaces/FlowPreloadableInterface.h"
 #include "Nodes/FlowNode.h"
 #include "FlowNode_SubGraph.generated.h"
 
@@ -10,7 +11,9 @@ class UFlowAssetParams;
  * Creates instance of provided Flow Asset and starts its execution.
  */
 UCLASS(NotBlueprintable, meta = (DisplayName = "Sub Graph"))
-class FLOW_API UFlowNode_SubGraph : public UFlowNode
+class FLOW_API UFlowNode_SubGraph
+	: public UFlowNode
+	, public IFlowPreloadableInterface
 {
 	GENERATED_BODY()
 
@@ -43,8 +46,10 @@ private:
 protected:
 	virtual bool CanBeAssetInstanced() const;
 
-	virtual void PreloadContent() override;
+	// IFlowPreloadableInterface
+	virtual EFlowPreloadResult PreloadContent() override;
 	virtual void FlushContent() override;
+	// --
 
 	virtual void ExecuteInput(const FName& PinName) override;
 	virtual void Cleanup() override;

@@ -5,6 +5,8 @@
 #include "Net/UnrealNetwork.h"
 #include "Runtime/Launch/Resources/Version.h"
 
+#include "DefaultLevelSequenceInstanceData.h"
+
 #include UE_INLINE_GENERATED_CPP_BY_NAME(FlowLevelSequenceActor)
 
 AFlowLevelSequenceActor::AFlowLevelSequenceActor(const FObjectInitializer& ObjectInitializer)
@@ -39,6 +41,14 @@ void AFlowLevelSequenceActor::OnRep_ReplicatedLevelSequenceAsset()
 {
 	LevelSequenceAsset = ReplicatedLevelSequenceAsset;
 	ReplicatedLevelSequenceAsset = nullptr;
+	
+	// InstanceData is not replicated to the client.
+	// However, it can be assumed that the spawn transform of the level sequence actor is the transform origin for the sequence.
+	if (UDefaultLevelSequenceInstanceData* InstanceData = Cast<UDefaultLevelSequenceInstanceData>(DefaultInstanceData))
+	{
+		bOverrideInstanceData = true;
+		InstanceData->TransformOriginActor = this;
+	}
 
 	InitializePlayer();
 }
