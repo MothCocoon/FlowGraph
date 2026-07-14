@@ -12,11 +12,14 @@ UFlowNode_ExecutionMultiGate::UFlowNode_ExecutionMultiGate()
 	NodeDisplayStyle = FlowNodeStyle::Logic;
 #endif
 
-	FString ResetPinTooltip = TEXT("Finish work of this node.");
-	ResetPinTooltip += LINE_TERMINATOR;
-	ResetPinTooltip += TEXT("Calling In input will start triggering output pins once again.");
+	FFlowPin ResetPin(TEXT("Reset"));
+#if WITH_EDITORONLY_DATA
+	ResetPin.PinToolTip = TEXT("Finish work of this node.");
+	ResetPin.PinToolTip += LINE_TERMINATOR;
+	ResetPin.PinToolTip += TEXT("Calling In input will start triggering output pins once again.");
+#endif
+	InputPins.Add(ResetPin);
 
-	InputPins.Add(FFlowPin(TEXT("Reset"), ResetPinTooltip));
 	SetNumberedOutputPins(0, 1);
 	AllowedSignalModes = {EFlowSignalMode::Enabled, EFlowSignalMode::Disabled};
 }
