@@ -1,7 +1,5 @@
 // Copyright https://github.com/MothCocoon/FlowGraph/graphs/contributors
-
 #include "Nodes/Route/FlowNode_Timer.h"
-#include "FlowSettings.h"
 
 #include "Engine/World.h"
 #include "TimerManager.h"
@@ -13,12 +11,6 @@
 FName UFlowNode_Timer::INPIN_CompletionTime;
 
 UFlowNode_Timer::UFlowNode_Timer()
-	: CompletionTime(1.0f)
-	, StepTime(0.0f)
-	, ResolvedCompletionTime(0.0f)
-	, SumOfSteps(0.0f)
-	, RemainingCompletionTime(0.0f)
-	, RemainingStepTime(0.0f)
 {
 #if WITH_EDITOR
 	Category = TEXT("Route");
@@ -107,7 +99,7 @@ float UFlowNode_Timer::ResolveCompletionTime() const
 {
 	// Get the CompletionTime from either the default (property) or the data pin (if connected)
 	float ResolvedTime = CompletionTime;
-	const EFlowDataPinResolveResult TimeResult = TryResolveDataPinValue<FFlowPinType_Float>(INPIN_CompletionTime, ResolvedTime);
+	TryResolveDataPinValue<FFlowPinType_Float>(INPIN_CompletionTime, ResolvedTime);
 
 	return ResolvedTime;
 }
@@ -183,13 +175,29 @@ void UFlowNode_Timer::OnLoad_Implementation()
 }
 
 #if WITH_EDITOR
+FString UFlowNode_Timer::GetStatusString() const
+{
+	FString ProgressString;
+	if (StepTime > 0.0f)
+	{
+		ProgressString = FString::Printf(TEXT("%.*f"), 2, SumOfSteps);
+	}
+	else if (CompletionTimerHandle.IsValid() && GetWorld())
+	{
+		ProgressString = FString::Printf(TEXT("%.*f"), 2, GetWorld()->GetTimerManager().GetTimerElapsed(CompletionTimerHandle));
+	}
+
+	if (!ProgressString.IsEmpty())
+	{
+		return FText::Format(LOCTEXT("ProgressStatus", "Progress: {0}"), { FText::FromString(ProgressString) }).ToString();
+	}
+
+	return FString();
+}
 
 void UFlowNode_Timer::UpdateNodeConfigText_Implementation()
 {
-	constexpr bool bErrorIfInputPinNotFound = false;
-	const bool bIsInputConnected = IsInputConnected(INPIN_CompletionTime);
-
-	if (bIsInputConnected)
+	if (IsInputConnected(INPIN_CompletionTime))
 	{
 		// CompletionTime will be sourced from the data pin
 
@@ -227,27 +235,6 @@ void UFlowNode_Timer::UpdateNodeConfigText_Implementation()
 		SetNodeConfigText(FText(LOCTEXT("CompletesNextTick", "Completes in next tick")));
 	}
 }
-
-FString UFlowNode_Timer::GetStatusString() const
-{
-	FString ProgressString;
-	if (StepTime > 0.0f)
-	{
-		ProgressString = FString::Printf(TEXT("%.*f"), 2, SumOfSteps);
-	}
-	else if (CompletionTimerHandle.IsValid() && GetWorld())
-	{
-		ProgressString = FString::Printf(TEXT("%.*f"), 2, GetWorld()->GetTimerManager().GetTimerElapsed(CompletionTimerHandle));
-	}
-
-	if (!ProgressString.IsEmpty())
-	{
-		return FText::Format(LOCTEXT("ProgressStatus", "Progress: {0}"), { FText::FromString(ProgressString) }).ToString();
-	}
-
-	return FString();
-}
-
 #endif
 
 #undef LOCTEXT_NAMESPACE

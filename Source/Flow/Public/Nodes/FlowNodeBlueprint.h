@@ -10,12 +10,13 @@
 UCLASS(BlueprintType)
 class FLOW_API UFlowNodeBlueprint : public UBlueprint
 {
-	GENERATED_UCLASS_BODY()
+	GENERATED_BODY()
+
+public:
+	UFlowNodeBlueprint() = default;
 
 #if WITH_EDITOR
-	// UBlueprint
 	virtual bool SupportedByDefaultBlueprintFactory() const override { return false; }
 	virtual bool SupportsDelegates() const override { return false; }
-	// --
 #endif
 };

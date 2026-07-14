@@ -1,15 +1,13 @@
 // Copyright https://github.com/MothCocoon/FlowGraph/graphs/contributors
-
 #include "Graph/Nodes/FlowGraphNode_SubGraph.h"
-#include "Graph/Widgets/SFlowGraphNode_SubGraph.h"
 
+#include "Graph/Widgets/SFlowGraphNode_SubGraph.h"
 #include "FlowAsset.h"
 #include "Nodes/Graph/FlowNode_SubGraph.h"
 
 #include UE_INLINE_GENERATED_CPP_BY_NAME(FlowGraphNode_SubGraph)
 
-UFlowGraphNode_SubGraph::UFlowGraphNode_SubGraph(const FObjectInitializer& ObjectInitializer)
-	: Super(ObjectInitializer)
+UFlowGraphNode_SubGraph::UFlowGraphNode_SubGraph()
 {
 	AssignedNodeClasses = {UFlowNode_SubGraph::StaticClass()};
 }

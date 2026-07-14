@@ -37,7 +37,7 @@ protected:
 
 public:
 	// IFlowDataPinValueSupplierInterface
-	virtual FFlowDataPinResult TrySupplyDataPin(FName PinName) const override;
+	virtual FFlowDataPinResult TrySupplyDataPin(const FName PinName) const override;
 	// --
 
 	static const FName OUTPIN_TextOutput;
