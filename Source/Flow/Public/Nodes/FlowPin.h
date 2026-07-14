@@ -1,20 +1,15 @@
 // Copyright https://github.com/MothCocoon/FlowGraph/graphs/contributors
 #pragma once
 
-#include "Types/FlowPinEnums.h"
-#include "Types/FlowPinTypeName.h"
-
+#include "EdGraph/EdGraphPin.h"
 #include "Templates/SubclassOf.h"
 #include "UObject/ObjectMacros.h"
-#include "Types/FlowPinTypeNamesStandard.h"
-#include "EdGraph/EdGraphPin.h"
 
+#include "Types/FlowPinEnums.h"
+#include "Types/FlowPinTypeName.h"
+#include "Types/FlowPinTypeNamesStandard.h"
 #include "FlowPin.generated.h"
 
-class UEnum;
-class UClass;
-class UObject;
-class IPropertyHandle;
 struct FFlowPinType;
 
 USTRUCT(BlueprintType, meta = (HasNativeMake = "/Script/Flow.FlowDataPinBlueprintLibrary.MakeStruct", HasNativeBreak = "/Script/Flow.FlowDataPinBlueprintLibrary.BreakStruct"))
@@ -28,15 +23,11 @@ struct FLOW_API FFlowPin
 
 #if WITH_EDITORONLY_DATA
 	/* 
-	 * Editor Only
-	 * An optional Display Name, you can use it to override PinName without the need to update graph connections. 
+	 * Optional Display Name, you can use it to override PinName without the need to update graph connections. 
 	 */
 	UPROPERTY(EditDefaultsOnly, Category = FlowPin)
 	FText PinFriendlyName;
 
-	/* 
-	 * Editor Only
-	 */
 	UPROPERTY(EditDefaultsOnly, Category = FlowPin)
 	FString PinToolTip;
 #endif
@@ -275,8 +266,6 @@ public:
 	static bool IsExecPinCategory(const FName& PC);
 	FORCEINLINE bool IsDataPin() const { return !IsExecPin(); }
 	// --
-
-	// 
 
 	/**
 	 * Metadata keys for properties that bind and auto-generate Data Pins.
