@@ -1,5 +1,4 @@
 // Copyright https://github.com/MothCocoon/FlowGraph/graphs/contributors
-
 #include "Nodes/Actor/FlowNode_PlayLevelSequence.h"
 
 #include "FlowAsset.h"
@@ -22,17 +21,6 @@ FFlowNodeLevelSequenceEvent UFlowNode_PlayLevelSequence::OnPlaybackStarted;
 FFlowNodeLevelSequenceEvent UFlowNode_PlayLevelSequence::OnPlaybackCompleted;
 
 UFlowNode_PlayLevelSequence::UFlowNode_PlayLevelSequence()
-	: bPlayReverse(false)
-	, bUseGraphOwnerAsTransformOrigin(false)
-	, bReplicates(false)
-	, bAlwaysRelevant(false)
-	, bApplyOwnerTimeDilation(true)
-	, LoadedSequence(nullptr)
-	, SequencePlayer(nullptr)
-	, CachedPlayRate(0)
-	, StartTime(0.0f)
-	, ElapsedTime(0.0f)
-	, TimeDilation(1.0f)
 {
 #if WITH_EDITOR
 	Category = TEXT("Actor");
@@ -61,7 +49,7 @@ TArray<FFlowPin> UFlowNode_PlayLevelSequence::GetContextOutputs() const
 		return Pins;
 	}
 
-	Sequence.LoadSynchronous();
+	(void)Sequence.LoadSynchronous();
 	if (Sequence && Sequence->GetMovieScene())
 	{
 		for (const UMovieSceneTrack* Track : Sequence->GetMovieScene()->GetTracks())
@@ -347,6 +335,16 @@ FString UFlowNode_PlayLevelSequence::GetNodeDescription() const
 	return Sequence.IsNull() ? TEXT("[No sequence]") : Sequence.GetAssetName();
 }
 
+FString UFlowNode_PlayLevelSequence::GetStatusString() const
+{
+	return GetPlaybackProgress();
+}
+
+UObject* UFlowNode_PlayLevelSequence::GetAssetToEdit()
+{
+	return Sequence.IsNull() ? nullptr : Sequence.LoadSynchronous();
+}
+
 EDataValidationResult UFlowNode_PlayLevelSequence::ValidateNode()
 {
 	if (Sequence.IsNull())
@@ -356,16 +354,6 @@ EDataValidationResult UFlowNode_PlayLevelSequence::ValidateNode()
 	}
 
 	return EDataValidationResult::Valid;
-}
-
-FString UFlowNode_PlayLevelSequence::GetStatusString() const
-{
-	return GetPlaybackProgress();
-}
-
-UObject* UFlowNode_PlayLevelSequence::GetAssetToEdit()
-{
-	return Sequence.IsNull() ? nullptr : Sequence.LoadSynchronous();
 }
 #endif
 

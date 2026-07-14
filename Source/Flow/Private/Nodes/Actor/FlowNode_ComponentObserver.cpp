@@ -1,6 +1,6 @@
 // Copyright https://github.com/MothCocoon/FlowGraph/graphs/contributors
-
 #include "Nodes/Actor/FlowNode_ComponentObserver.h"
+
 #include "FlowSubsystem.h"
 
 #include UE_INLINE_GENERATED_CPP_BY_NAME(FlowNode_ComponentObserver)
@@ -158,6 +158,16 @@ FString UFlowNode_ComponentObserver::GetNodeDescription() const
 	return GetIdentityTagsDescription(IdentityTags);
 }
 
+FString UFlowNode_ComponentObserver::GetStatusString() const
+{
+	if (ActivationState == EFlowNodeState::Active && RegisteredActors.Num() == 0)
+	{
+		return NoActorsFound;
+	}
+
+	return FString();
+}
+
 EDataValidationResult UFlowNode_ComponentObserver::ValidateNode()
 {
 	if (IdentityTags.IsEmpty())
@@ -167,15 +177,5 @@ EDataValidationResult UFlowNode_ComponentObserver::ValidateNode()
 	}
 
 	return EDataValidationResult::Valid;
-}
-
-FString UFlowNode_ComponentObserver::GetStatusString() const
-{
-	if (ActivationState == EFlowNodeState::Active && RegisteredActors.Num() == 0)
-	{
-		return NoActorsFound;
-	}
-
-	return FString();
 }
 #endif

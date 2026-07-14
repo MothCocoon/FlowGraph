@@ -15,7 +15,7 @@ class FLOW_API UFlowNode_ExecutionMultiGate final : public UFlowNode
 public:
 	UFlowNode_ExecutionMultiGate();
 
-protected:	
+protected:
 	UPROPERTY(EditAnywhere, Category = "MultiGate")
 	bool bRandom;
 
@@ -25,7 +25,7 @@ protected:
 	bool bLoop;
 
 	UPROPERTY(EditAnywhere, Category = "MultiGate")
-	int32 StartIndex;
+	int32 StartIndex = INDEX_NONE;
 
 private:
 	UPROPERTY(SaveGame)
@@ -39,7 +39,6 @@ public:
 	virtual bool CanUserAddOutput() const override { return true; }
 #endif
 
-protected:
 	virtual void ExecuteInput(const FName& PinName) override;
 	virtual void Cleanup() override;
 

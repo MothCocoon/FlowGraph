@@ -1,22 +1,23 @@
 // Copyright https://github.com/MothCocoon/FlowGraph/graphs/contributors
-
 #include "Nodes/Route/FlowNode_ExecutionMultiGate.h"
 
 #include UE_INLINE_GENERATED_CPP_BY_NAME(FlowNode_ExecutionMultiGate)
 
 UFlowNode_ExecutionMultiGate::UFlowNode_ExecutionMultiGate()
-	: StartIndex(INDEX_NONE)
 {
 #if WITH_EDITOR
 	Category = TEXT("Route");
 	NodeDisplayStyle = FlowNodeStyle::Logic;
 #endif
 
-	FString ResetPinTooltip = TEXT("Finish work of this node.");
-	ResetPinTooltip += LINE_TERMINATOR;
-	ResetPinTooltip += TEXT("Calling In input will start triggering output pins once again.");
+	FFlowPin ResetPin(TEXT("Reset"));
+#if WITH_EDITORONLY_DATA
+	ResetPin.PinToolTip = TEXT("Finish work of this node.");
+	ResetPin.PinToolTip += LINE_TERMINATOR;
+	ResetPin.PinToolTip += TEXT("Calling In input will start triggering output pins once again.");
+#endif
+	InputPins.Add(ResetPin);
 
-	InputPins.Add(FFlowPin(TEXT("Reset"), ResetPinTooltip));
 	SetNumberedOutputPins(0, 1);
 	AllowedSignalModes = {EFlowSignalMode::Enabled, EFlowSignalMode::Disabled};
 }
@@ -95,7 +96,7 @@ void UFlowNode_ExecutionMultiGate::Cleanup()
 {
 	NextOutput = 0;
 	Completed.Reset();
-	
+
 	Super::Cleanup();
 }
 

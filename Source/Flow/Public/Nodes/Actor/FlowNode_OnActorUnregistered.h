@@ -12,9 +12,6 @@ class FLOW_API UFlowNode_OnActorUnregistered : public UFlowNode_ComponentObserve
 {
 	GENERATED_BODY()
 
-public:
-	UFlowNode_OnActorUnregistered();
-
 protected:
 	virtual void ObserveActor(TWeakObjectPtr<AActor> Actor, TWeakObjectPtr<UFlowComponent> Component) override;
 	virtual void ForgetActor(TWeakObjectPtr<AActor> Actor, TWeakObjectPtr<UFlowComponent> Component) override;
