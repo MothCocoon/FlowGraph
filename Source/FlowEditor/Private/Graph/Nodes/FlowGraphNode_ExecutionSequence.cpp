@@ -1,6 +1,6 @@
 // Copyright https://github.com/MothCocoon/FlowGraph/graphs/contributors
-
 #include "Graph/Nodes/FlowGraphNode_ExecutionSequence.h"
+
 #include "Nodes/Route/FlowNode_ExecutionMultiGate.h"
 #include "Nodes/Route/FlowNode_ExecutionSequence.h"
 
@@ -8,8 +8,7 @@
 
 #include UE_INLINE_GENERATED_CPP_BY_NAME(FlowGraphNode_ExecutionSequence)
 
-UFlowGraphNode_ExecutionSequence::UFlowGraphNode_ExecutionSequence(const FObjectInitializer& ObjectInitializer)
-	: Super(ObjectInitializer)
+UFlowGraphNode_ExecutionSequence::UFlowGraphNode_ExecutionSequence()
 {
 	AssignedNodeClasses = {UFlowNode_ExecutionSequence::StaticClass(), UFlowNode_ExecutionMultiGate::StaticClass()};
 }
