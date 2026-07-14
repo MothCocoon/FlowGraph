@@ -372,7 +372,7 @@ bool UFlowAssetParams::CanSupplyDataPinValues() const
 	return !PropertyMap.IsEmpty();
 }
 
-FFlowDataPinResult UFlowAssetParams::TrySupplyDataPin(FName PinName) const
+FFlowDataPinResult UFlowAssetParams::TrySupplyDataPin(const FName PinName) const
 {
 	if (const TInstancedStruct<FFlowDataPinValue>* Found = PropertyMap.Find(PinName))
 	{

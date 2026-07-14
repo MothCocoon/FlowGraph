@@ -7,7 +7,10 @@
 UCLASS()
 class FLOWEDITOR_API UFlowGraphNode_Start : public UFlowGraphNode
 {
-	GENERATED_UCLASS_BODY()
+	GENERATED_BODY()
+
+public:
+	UFlowGraphNode_Start();
 
 	// UEdGraphNode
 	virtual TSharedPtr<SGraphNode> CreateVisualWidget() override;

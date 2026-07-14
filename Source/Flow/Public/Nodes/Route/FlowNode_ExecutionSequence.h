@@ -11,7 +11,7 @@ UCLASS(NotBlueprintable, meta = (DisplayName = "Sequence"))
 class FLOW_API UFlowNode_ExecutionSequence final : public UFlowNode
 {
 	GENERATED_BODY()
-	
+
 public:
 	UFlowNode_ExecutionSequence();
 
@@ -26,7 +26,7 @@ protected:
 	 * will automatically execute the updated connections you created.
 	 */
 	UPROPERTY(EditAnywhere, Category = "Sequence")
-	bool bSavePinExecutionState;
+	bool bSavePinExecutionState = true;
 
 	UPROPERTY(SaveGame)
 	TSet<FGuid> ExecutedConnections;
@@ -36,11 +36,11 @@ public:
 	virtual bool CanUserAddOutput() const override { return true; }
 #endif
 
-protected:
 	virtual void ExecuteInput(const FName& PinName) override;
 	virtual void OnLoad_Implementation() override;
 	virtual void Cleanup() override;
 
+protected:
 	void ExecuteNewConnections();
 
 #if WITH_EDITOR

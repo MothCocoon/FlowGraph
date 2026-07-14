@@ -11,17 +11,16 @@ UCLASS(NotBlueprintable, meta = (DisplayName = "Reroute"))
 class FLOW_API UFlowNode_Reroute final : public UFlowNode
 {
 	GENERATED_BODY()
-	
+
 public:
 	UFlowNode_Reroute();
 
-protected:
 	// IFlowCoreExecutableInterface
 	virtual void ExecuteInput(const FName& PinName) override;
 	// --
 
 	// IFlowDataPinValueSupplierInterface
-	virtual FFlowDataPinResult TrySupplyDataPin(FName PinName) const override;
+	virtual FFlowDataPinResult TrySupplyDataPin(const FName PinName) const override;
 	// --
 
 public:
