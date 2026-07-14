@@ -107,12 +107,12 @@ public:
 
 protected:
 	UPROPERTY(EditDefaultsOnly, Category = "FlowNode")
-	TArray<EFlowSignalMode> AllowedSignalModes;
+	TArray<EFlowSignalMode> AllowedSignalModes = {EFlowSignalMode::Enabled, EFlowSignalMode::Disabled, EFlowSignalMode::PassThrough};
 
 	/* If enabled, signal will pass through node without calling ExecuteInput().
 	 * Designed to handle patching already released games. */
 	UPROPERTY()
-	EFlowSignalMode SignalMode;
+	EFlowSignalMode SignalMode = EFlowSignalMode::Enabled;
 
 //////////////////////////////////////////////////////////////////////////
 // All created pins (default, class-specific and added by user)
@@ -290,11 +290,11 @@ public:
 
 	// IFlowDataPinValueSupplierInterface
 public:
-	virtual FFlowDataPinResult TrySupplyDataPin(FName PinName) const override;
+	virtual FFlowDataPinResult TrySupplyDataPin(const FName PinName) const override;
 
 protected:
 	/* Helper for TryGetFlowDataPinSupplierDatasForPinName(). */
-	void TryAddSupplierDataToArray(FFlowPinValueSupplierData& InOutSupplierData, TFlowPinValueSupplierDataArray& InOutPinValueSupplierDatas) const;
+	static void TryAddSupplierDataToArray(const FFlowPinValueSupplierData& InOutSupplierData, TFlowPinValueSupplierDataArray& InOutPinValueSupplierDatas);
 
 public:
 	/* Advanced helper for TrySupplyDataPin, which can be overridden in subclasses to provide additional or replacement object(s)
@@ -350,7 +350,7 @@ public:
 
 protected:
 	UPROPERTY(SaveGame)
-	EFlowNodeState ActivationState;
+	EFlowNodeState ActivationState = EFlowNodeState::NeverActivated;
 
 public:
 	EFlowNodeState GetActivationState() const { return ActivationState; }

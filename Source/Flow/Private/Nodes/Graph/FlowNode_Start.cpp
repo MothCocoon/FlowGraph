@@ -1,5 +1,4 @@
 // Copyright https://github.com/MothCocoon/FlowGraph/graphs/contributors
-
 #include "Nodes/Graph/FlowNode_Start.h"
 
 #include UE_INLINE_GENERATED_CPP_BY_NAME(FlowNode_Start)
@@ -12,7 +11,7 @@ UFlowNode_Start::UFlowNode_Start()
 	bCanDelete = bCanDuplicate = false;
 #endif
 
-	OutputPins = { UFlowNode::DefaultOutputPin };
+	OutputPins = {UFlowNode::DefaultOutputPin};
 }
 
 void UFlowNode_Start::ExecuteInput(const FName& PinName)
@@ -26,10 +25,9 @@ void UFlowNode_Start::SetDataPinValueSupplier(IFlowDataPinValueSupplierInterface
 }
 
 #if WITH_EDITOR
-
 bool UFlowNode_Start::TryAppendExternalInputPins(TArray<FFlowPin>& InOutPins) const
 {
-	// Add pins for all of the Flow DataPin Properties
+	// Add pins for all the Flow DataPin Properties
 	for (const FFlowNamedDataPinProperty& DataPinProperty : NamedProperties)
 	{
 		if (DataPinProperty.IsValid())
@@ -37,13 +35,12 @@ bool UFlowNode_Start::TryAppendExternalInputPins(TArray<FFlowPin>& InOutPins) co
 			InOutPins.AddUnique(DataPinProperty.CreateFlowPin());
 		}
 	}
-	
+
 	return !NamedProperties.IsEmpty();
 }
+#endif
 
-#endif // WITH_EDITOR
-
-FFlowDataPinResult UFlowNode_Start::TrySupplyDataPin(FName PinName) const
+FFlowDataPinResult UFlowNode_Start::TrySupplyDataPin(const FName PinName) const
 {
 	if (FlowDataPinValueSupplierInterface)
 	{
@@ -57,4 +54,3 @@ FFlowDataPinResult UFlowNode_Start::TrySupplyDataPin(FName PinName) const
 
 	return Super::TrySupplyDataPin(PinName);
 }
-

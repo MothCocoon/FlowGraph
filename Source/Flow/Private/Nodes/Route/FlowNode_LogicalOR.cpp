@@ -1,13 +1,9 @@
 // Copyright https://github.com/MothCocoon/FlowGraph/graphs/contributors
-
 #include "Nodes/Route/FlowNode_LogicalOR.h"
 
 #include UE_INLINE_GENERATED_CPP_BY_NAME(FlowNode_LogicalOR)
 
 UFlowNode_LogicalOR::UFlowNode_LogicalOR()
-	: bEnabled(true)
-	, ExecutionLimit(1)
-	, ExecutionCount(0)
 {
 #if WITH_EDITOR
 	Category = TEXT("Route|Logic");
@@ -65,7 +61,7 @@ FString UFlowNode_LogicalOR::GetStatusString() const
 	{
 		return FString::Printf(TEXT("ExecutionCount: %d/%d"), ExecutionCount, ExecutionLimit);
 	}
-	
+
 	return Super::GetStatusString();
 }
 #endif
