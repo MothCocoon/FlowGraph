@@ -7,7 +7,10 @@
 UCLASS()
 class FLOWEDITOR_API UFlowGraphNode_Reroute : public UFlowGraphNode
 {
-	GENERATED_UCLASS_BODY()
+	GENERATED_BODY()
+
+public:
+	UFlowGraphNode_Reroute();
 
 	// UEdGraphNode
 	virtual TSharedPtr<SGraphNode> CreateVisualWidget() override;
@@ -16,7 +19,7 @@ class FLOWEDITOR_API UFlowGraphNode_Reroute : public UFlowGraphNode
 
 	virtual bool CanPlaceBreakpoints() const override;
 
-	void ConfigureRerouteNodeFromPinConnections(UEdGraphPin& InPin, UEdGraphPin &OutPin);
+	void ConfigureRerouteNodeFromPinConnections(UEdGraphPin& InPin, UEdGraphPin& OutPin);
 
 	virtual void NodeConnectionListChanged() override;
 
