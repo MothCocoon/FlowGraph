@@ -1,11 +1,9 @@
 // Copyright https://github.com/MothCocoon/FlowGraph/graphs/contributors
-
 #include "Nodes/Route/FlowNode_ExecutionMultiGate.h"
 
 #include UE_INLINE_GENERATED_CPP_BY_NAME(FlowNode_ExecutionMultiGate)
 
 UFlowNode_ExecutionMultiGate::UFlowNode_ExecutionMultiGate()
-	: StartIndex(INDEX_NONE)
 {
 #if WITH_EDITOR
 	Category = TEXT("Route");
@@ -98,7 +96,7 @@ void UFlowNode_ExecutionMultiGate::Cleanup()
 {
 	NextOutput = 0;
 	Completed.Reset();
-	
+
 	Super::Cleanup();
 }
 

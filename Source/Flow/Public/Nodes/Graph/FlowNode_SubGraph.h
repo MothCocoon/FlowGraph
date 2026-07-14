@@ -11,14 +11,12 @@ class UFlowAssetParams;
  * Creates instance of provided Flow Asset and starts its execution.
  */
 UCLASS(NotBlueprintable, meta = (DisplayName = "Sub Graph"))
-class FLOW_API UFlowNode_SubGraph
-	: public UFlowNode
-	, public IFlowPreloadableInterface
+class FLOW_API UFlowNode_SubGraph : public UFlowNode, public IFlowPreloadableInterface
 {
 	GENERATED_BODY()
 
 public:
-	UFlowNode_SubGraph();	
+	UFlowNode_SubGraph();
 
 	friend class UFlowAsset;
 	friend class FFlowNode_SubGraphDetails;
@@ -46,13 +44,10 @@ private:
 protected:
 	virtual bool CanBeAssetInstanced() const;
 
+public:
 	// IFlowPreloadableInterface
 	virtual EFlowPreloadResult PreloadContent() override;
 	virtual void FlushContent() override;
-	// --
-
-	// IFlowDataPinValueSupplierInterface
-	virtual FFlowDataPinResult TrySupplyDataPin(FName PinName) const override;
 	// --
 
 	virtual void ExecuteInput(const FName& PinName) override;
@@ -61,11 +56,13 @@ protected:
 public:
 	virtual void ForceFinishNode() override;
 
-protected:
+	// IFlowDataPinValueSupplierInterface
+	virtual FFlowDataPinResult TrySupplyDataPin(const FName PinName) const override;
+	// --
+
 	virtual void OnLoad_Implementation() override;
 
 #if WITH_EDITORONLY_DATA
-
 protected:
 	/* All the classes allowed to be used as assets on this subgraph node. */
 	UPROPERTY()
@@ -77,13 +74,15 @@ protected:
 #endif
 
 #if WITH_EDITOR
-
 public:
 	virtual FText K2_GetNodeTitle_Implementation() const override;
 	virtual FString GetNodeDescription() const override;
 	virtual UObject* GetAssetToEdit() override;
+
+protected:
 	virtual EDataValidationResult ValidateNode() override;
-	
+
+public:
 	// IFlowContextPinSupplierInterface
 	virtual bool SupportsContextPins() const override { return true; }
 	virtual TArray<FFlowPin> GetContextInputs() const override;
