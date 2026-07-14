@@ -1,14 +1,13 @@
 // Copyright https://github.com/MothCocoon/FlowGraph/graphs/contributors
 #pragma once
 
-#include "Types/FlowPinEnums.h"
-#include "Types/FlowPinTypeName.h"
-#include "Types/FlowPinTypeNamesStandard.h"
-
 #include "EdGraph/EdGraphPin.h"
 #include "Templates/SubclassOf.h"
 #include "UObject/ObjectMacros.h"
 
+#include "Types/FlowPinEnums.h"
+#include "Types/FlowPinTypeName.h"
+#include "Types/FlowPinTypeNamesStandard.h"
 #include "FlowPin.generated.h"
 
 struct FFlowPinType;
@@ -22,12 +21,14 @@ struct FLOW_API FFlowPin
 	UPROPERTY(EditDefaultsOnly, Category = FlowPin)
 	FName PinName;
 
-	/* An optional Display Name, you can use it to override PinName without the need to update graph connections. */
+#if WITH_EDITORONLY_DATA
+	/* Optional Display Name, you can use it to override PinName without the need to update graph connections. */
 	UPROPERTY(EditDefaultsOnly, Category = FlowPin)
 	FText PinFriendlyName;
 
 	UPROPERTY(EditDefaultsOnly, Category = FlowPin)
 	FString PinToolTip;
+#endif
 
 	/* Deprecated PinType, use PinTypeName instead (all standard names are defined in FFlowPinTypeNamesStandard). */
 	UPROPERTY(Meta = (DeprecatedProperty, DeprecationMessage = "Use PinTypeName instead"))
@@ -64,20 +65,26 @@ public:
 
 	explicit FFlowPin(const FName& InPinName, const FText& InPinFriendlyName)
 		: PinName(InPinName)
+#if WITH_EDITORONLY_DATA
 		, PinFriendlyName(InPinFriendlyName)
+#endif
 	{
 	}
 
 	explicit FFlowPin(const FName& InPinName, const FText& InPinFriendlyName, const FString& InPinTooltip)
 		: PinName(InPinName)
+#if WITH_EDITORONLY_DATA
 		, PinFriendlyName(InPinFriendlyName)
 		, PinToolTip(InPinTooltip)
+#endif
 	{
 	}
 
 	explicit FFlowPin(const FName& InPinName, const FText& InPinFriendlyName, const FFlowPinTypeName& InTypeName, UObject* OptionalSubCategoryObject = nullptr)
 		: PinName(InPinName)
+#if WITH_EDITORONLY_DATA
 		, PinFriendlyName(InPinFriendlyName)
+#endif
 	{
 		SetPinTypeName(InTypeName);
 		SetPinSubCategoryObject(OptionalSubCategoryObject);
@@ -97,20 +104,26 @@ public:
 
 	explicit FFlowPin(const FStringView InPinName, const FText& InPinFriendlyName)
 		: PinName(InPinName)
+#if WITH_EDITORONLY_DATA
 		, PinFriendlyName(InPinFriendlyName)
+#endif
 	{
 	}
 
 	explicit FFlowPin(const FStringView InPinName, const FString& InPinTooltip)
 		: PinName(InPinName)
+#if WITH_EDITORONLY_DATA
 		, PinToolTip(InPinTooltip)
+#endif
 	{
 	}
 
 	explicit FFlowPin(const FStringView InPinName, const FText& InPinFriendlyName, const FString& InPinTooltip)
 		: PinName(InPinName)
+#if WITH_EDITORONLY_DATA
 		, PinFriendlyName(InPinFriendlyName)
 		, PinToolTip(InPinTooltip)
+#endif
 	{
 	}
 
@@ -121,20 +134,26 @@ public:
 
 	explicit FFlowPin(const FText& InPinName, const FText& InPinFriendlyName)
 		: PinName(InPinName.ToString())
+#if WITH_EDITORONLY_DATA
 		, PinFriendlyName(InPinFriendlyName)
+#endif
 	{
 	}
 
 	explicit FFlowPin(const FText& InPinName, const FString& InPinTooltip)
 		: PinName(InPinName.ToString())
+#if WITH_EDITORONLY_DATA
 		, PinToolTip(InPinTooltip)
+#endif
 	{
 	}
 
 	explicit FFlowPin(const FText& InPinName, const FText& InPinFriendlyName, const FString& InPinTooltip)
 		: PinName(InPinName.ToString())
+#if WITH_EDITORONLY_DATA
 		, PinFriendlyName(InPinFriendlyName)
 		, PinToolTip(InPinTooltip)
+#endif
 	{
 	}
 
@@ -145,20 +164,26 @@ public:
 
 	explicit FFlowPin(const TCHAR* InPinName, const FText& InPinFriendlyName)
 		: PinName(InPinName)
+#if WITH_EDITORONLY_DATA
 		, PinFriendlyName(InPinFriendlyName)
+#endif
 	{
 	}
 
 	explicit FFlowPin(const TCHAR* InPinName, const FString& InPinTooltip)
 		: PinName(InPinName)
+#if WITH_EDITORONLY_DATA
 		, PinToolTip(InPinTooltip)
+#endif
 	{
 	}
 
 	explicit FFlowPin(const TCHAR* InPinName, const FText& InPinFriendlyName, const FString& InPinTooltip)
 		: PinName(InPinName)
+#if WITH_EDITORONLY_DATA
 		, PinFriendlyName(InPinFriendlyName)
 		, PinToolTip(InPinTooltip)
+#endif
 	{
 	}
 
@@ -202,8 +227,10 @@ public:
 		// Do a deep pin match (not a simple name-only match), to check if the pins are exactly equal
 		return
 			PinName == Other.PinName &&
+#if WITH_EDITORONLY_DATA
 			PinFriendlyName.EqualTo(Other.PinFriendlyName) &&
 			PinToolTip == Other.PinToolTip &&
+#endif
 			ContainerType == Other.ContainerType &&
 			PinTypeName == Other.PinTypeName &&
 			PinSubCategoryObject == Other.PinSubCategoryObject;
