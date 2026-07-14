@@ -74,18 +74,127 @@ public:
 	{
 	}
 
-	explicit FFlowPin(const FString& InPinName)
-		: PinName(*InPinName)
+	explicit FFlowPin(const FName& InPinName, const FText& InPinFriendlyName)
+		: PinName(InPinName)
+#if WITH_EDITORONLY_DATA
+		, PinFriendlyName(InPinFriendlyName)
+#endif
+	{
+	}
+
+	explicit FFlowPin(const FName& InPinName, const FText& InPinFriendlyName, const FString& InPinTooltip)
+		: PinName(InPinName)
+#if WITH_EDITORONLY_DATA
+		, PinFriendlyName(InPinFriendlyName)
+		, PinToolTip(InPinTooltip)
+#endif
+	{
+	}
+
+	explicit FFlowPin(const FName& InPinName, const FText& InPinFriendlyName, const FFlowPinTypeName& InTypeName, UObject* OptionalSubCategoryObject = nullptr)
+		: PinName(InPinName)
+#if WITH_EDITORONLY_DATA
+		, PinFriendlyName(InPinFriendlyName)
+#endif
+	{
+		SetPinTypeName(InTypeName);
+		SetPinSubCategoryObject(OptionalSubCategoryObject);
+	}
+
+	explicit FFlowPin(const FName& InPinName, const FFlowPinTypeName& InTypeName, UObject* OptionalSubCategoryObject = nullptr)
+		: PinName(InPinName)
+	{
+		SetPinTypeName(InTypeName);
+		SetPinSubCategoryObject(OptionalSubCategoryObject);
+	}
+
+	explicit FFlowPin(const FStringView InPinName)
+		: PinName(InPinName)
+	{
+	}
+
+	explicit FFlowPin(const FStringView InPinName, const FText& InPinFriendlyName)
+		: PinName(InPinName)
+#if WITH_EDITORONLY_DATA
+		, PinFriendlyName(InPinFriendlyName)
+#endif
+	{
+	}
+
+	explicit FFlowPin(const FStringView InPinName, const FString& InPinTooltip)
+		: PinName(InPinName)
+#if WITH_EDITORONLY_DATA
+		, PinToolTip(InPinTooltip)
+#endif
+	{
+	}
+
+	explicit FFlowPin(const FStringView InPinName, const FText& InPinFriendlyName, const FString& InPinTooltip)
+		: PinName(InPinName)
+#if WITH_EDITORONLY_DATA
+		, PinFriendlyName(InPinFriendlyName)
+		, PinToolTip(InPinTooltip)
+#endif
 	{
 	}
 
 	explicit FFlowPin(const FText& InPinName)
-		: PinName(*InPinName.ToString())
+		: PinName(InPinName.ToString())
+	{
+	}
+
+	explicit FFlowPin(const FText& InPinName, const FText& InPinFriendlyName)
+		: PinName(InPinName.ToString())
+#if WITH_EDITORONLY_DATA
+		, PinFriendlyName(InPinFriendlyName)
+#endif
+	{
+	}
+
+	explicit FFlowPin(const FText& InPinName, const FString& InPinTooltip)
+		: PinName(InPinName.ToString())
+#if WITH_EDITORONLY_DATA
+		, PinToolTip(InPinTooltip)
+#endif
+	{
+	}
+
+	explicit FFlowPin(const FText& InPinName, const FText& InPinFriendlyName, const FString& InPinTooltip)
+		: PinName(InPinName.ToString())
+#if WITH_EDITORONLY_DATA
+		, PinFriendlyName(InPinFriendlyName)
+		, PinToolTip(InPinTooltip)
+#endif
 	{
 	}
 
 	explicit FFlowPin(const TCHAR* InPinName)
-		: PinName(FName(InPinName))
+		: PinName(InPinName)
+	{
+	}
+
+	explicit FFlowPin(const TCHAR* InPinName, const FText& InPinFriendlyName)
+		: PinName(InPinName)
+#if WITH_EDITORONLY_DATA
+		, PinFriendlyName(InPinFriendlyName)
+#endif
+	{
+	}
+
+	explicit FFlowPin(const TCHAR* InPinName, const FString& InPinTooltip)
+		: PinName(InPinName)
+#if WITH_EDITORONLY_DATA
+		, PinToolTip(InPinTooltip)
+#endif
+	{
+	}
+
+	explicit FFlowPin(const TCHAR* InPinName, const FText& InPinFriendlyName, const FString& InPinTooltip)
+		: PinName(InPinName)
+#if WITH_EDITORONLY_DATA
+		, PinFriendlyName(InPinFriendlyName)
+		, PinToolTip(InPinTooltip)
+#endif
 	{
 	}
 
@@ -97,57 +206,6 @@ public:
 	explicit FFlowPin(const int32& InPinName)
 		: PinName(FName(*FString::FromInt(InPinName)))
 	{
-	}
-	
-	explicit FFlowPin(const FStringView InPinName, const FString& InPinTooltip)
-		: PinName(InPinName)
-#if WITH_EDITORONLY_DATA
-		, PinToolTip(InPinTooltip)
-#endif
-	{
-	}
-	
-#if WITH_EDITORONLY_DATA
-	explicit FFlowPin(const FStringView InPinName, const FText& InPinFriendlyName)
-		: PinName(InPinName)
-		, PinFriendlyName(InPinFriendlyName)
-	{
-	}
-
-	explicit FFlowPin(const FStringView InPinName, const FText& InPinFriendlyName, const FString& InPinTooltip)
-		: PinName(InPinName)
-		, PinFriendlyName(InPinFriendlyName)
-		, PinToolTip(InPinTooltip)
-	{
-	}
-
-	explicit FFlowPin(const FName& InPinName, const FText& InPinFriendlyName)
-		: PinName(InPinName)
-		, PinFriendlyName(InPinFriendlyName)
-	{
-	}
-
-	explicit FFlowPin(const FName& InPinName, const FText& InPinFriendlyName, const FString& InPinTooltip)
-		: PinName(InPinName)
-		, PinFriendlyName(InPinFriendlyName)
-		, PinToolTip(InPinTooltip)
-	{
-	}
-
-	explicit FFlowPin(const FName& InPinName, const FText& InPinFriendlyName, const FFlowPinTypeName& InTypeName, UObject* OptionalSubCategoryObject = nullptr)
-		: PinName(InPinName)
-		, PinFriendlyName(InPinFriendlyName)
-	{
-		SetPinTypeName(InTypeName);
-		SetPinSubCategoryObject(OptionalSubCategoryObject);
-	}
-#endif
-
-	explicit FFlowPin(const FName& InPinName, const FFlowPinTypeName& InTypeName, UObject* OptionalSubCategoryObject = nullptr)
-		: PinName(InPinName)
-	{
-		SetPinTypeName(InTypeName);
-		SetPinSubCategoryObject(OptionalSubCategoryObject);
 	}
 
 	FORCEINLINE bool IsValid() const
@@ -178,10 +236,10 @@ public:
 	bool DeepIsEqual(const FFlowPin& Other) const
 	{
 		// Do a deep pin match (not a simple name-only match), to check if the pins are exactly equal
-		return 
+		return
 			PinName == Other.PinName &&
 #if WITH_EDITORONLY_DATA
-			PinFriendlyName.EqualTo(Other.PinFriendlyName) && 
+			PinFriendlyName.EqualTo(Other.PinFriendlyName) &&
 			PinToolTip == Other.PinToolTip &&
 #endif
 			ContainerType == Other.ContainerType &&
@@ -195,12 +253,11 @@ public:
 	}
 
 public:
-
 #if WITH_EDITOR
 	FText BuildHeaderText() const;
 
 	static bool ValidateEnum(const UEnum& EnumType);
-		
+
 	FEdGraphPinType BuildEdGraphPinType() const;
 	void ConfigureFromEdGraphPin(const FEdGraphPinType& EdGraphPinType);
 #endif
@@ -220,7 +277,7 @@ public:
 	// --
 
 	// 
-	
+
 	/**
 	 * Metadata keys for properties that bind and auto-generate Data Pins.
      */
@@ -265,7 +322,6 @@ public:
 	// --
 
 protected:
-
 	void TrySetStructSubCategoryObjectFromPinType();
 };
 
