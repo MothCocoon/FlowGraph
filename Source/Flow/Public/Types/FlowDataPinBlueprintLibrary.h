@@ -34,15 +34,21 @@ public:
 	UFUNCTION(BlueprintPure, Category = FlowPin, Meta = (BlueprintThreadSafe, DisplayName = "Make Flow Pin"))
 	static UPARAM(DisplayName = "Flow Pin") FFlowPin MakeStruct(FName PinName, FText PinFriendlyName, FString PinToolTip)
 	{
+#if WITH_EDITOR
 		return FFlowPin(PinName, PinFriendlyName, PinToolTip);
+#else
+		return FFlowPin(PinName);
+#endif		
 	}
 
 	UFUNCTION(BlueprintPure, Category = FlowPin, Meta = (BlueprintThreadSafe, DisplayName = "Break Flow Pin"))
 	static void BreakStruct(UPARAM(DisplayName = "Flow Pin") FFlowPin Ref, FName& OutPinName, FText& OutPinFriendlyName, FString& OutPinToolTip)
 	{
 		OutPinName = Ref.PinName;
+#if WITH_EDITOR
 		OutPinFriendlyName = Ref.PinFriendlyName;
 		OutPinToolTip = Ref.PinToolTip;
+#endif
 	}
 
 	/**

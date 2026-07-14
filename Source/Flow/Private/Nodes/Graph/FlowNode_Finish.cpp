@@ -1,5 +1,4 @@
 // Copyright https://github.com/MothCocoon/FlowGraph/graphs/contributors
-
 #include "Nodes/Graph/FlowNode_Finish.h"
 
 #include "FlowAsset.h"

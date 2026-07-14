@@ -22,7 +22,7 @@ protected:
 	/* If true, node will check given Notify Tag is present in the Recently Sent Notify Tags.
 	 * This might be helpful in multiplayer, if client-side Flow Node started work after server sent the Notify. */
 	UPROPERTY(EditAnywhere, Category = "Notify")
-	bool bRetroactive;
+	bool bRetroactive = false;
 
 	virtual void ObserveActor(TWeakObjectPtr<AActor> Actor, TWeakObjectPtr<UFlowComponent> Component) override;
 	virtual void ForgetActor(TWeakObjectPtr<AActor> Actor, TWeakObjectPtr<UFlowComponent> Component) override;
