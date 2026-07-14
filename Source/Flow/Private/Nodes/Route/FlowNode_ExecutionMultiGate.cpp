@@ -19,6 +19,7 @@ UFlowNode_ExecutionMultiGate::UFlowNode_ExecutionMultiGate()
 	ResetPin.PinToolTip += TEXT("Calling In input will start triggering output pins once again.");
 #endif
 	InputPins.Add(ResetPin);
+
 	SetNumberedOutputPins(0, 1);
 	AllowedSignalModes = {EFlowSignalMode::Enabled, EFlowSignalMode::Disabled};
 }
