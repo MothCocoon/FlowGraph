@@ -15,16 +15,12 @@ class FLOW_API UFlowNode_CustomInput : public UFlowNode_CustomEventBase
 public:
 	UFlowNode_CustomInput();
 
-	friend class UFlowAsset;
-
-protected:
 	virtual void ExecuteInput(const FName& PinName) override;
 
 public:
 	virtual void PostEditImport() override;
 
 #if WITH_EDITOR
-public:
 	virtual FText K2_GetNodeTitle_Implementation() const override;
 #endif
 };

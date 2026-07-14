@@ -1,6 +1,6 @@
 // Copyright https://github.com/MothCocoon/FlowGraph/graphs/contributors
-
 #include "Nodes/Graph/FlowNode_FormatText.h"
+
 #include "Types/FlowPinTypesStandard.h"
 
 #include UE_INLINE_GENERATED_CPP_BY_NAME(FlowNode_FormatText)
@@ -19,13 +19,13 @@ UFlowNode_FormatText::UFlowNode_FormatText()
 	OutputPins.Add(FFlowPin(OUTPIN_TextOutput, FFlowPinType_Text::GetPinTypeNameStatic()));
 }
 
-FFlowDataPinResult UFlowNode_FormatText::TrySupplyDataPin(FName PinName) const
+FFlowDataPinResult UFlowNode_FormatText::TrySupplyDataPin(const FName PinName) const
 {
 	if (PinName == OUTPIN_TextOutput)
 	{
 		FText FormattedText;
 		const EFlowDataPinResolveResult FormatResult = TryResolveFormattedText(PinName, FormattedText);
-	
+
 		if (FlowPinType::IsSuccess(FormatResult))
 		{
 			return FFlowDataPinResult(FFlowDataPinValue_Text(FormattedText));
@@ -42,7 +42,7 @@ FFlowDataPinResult UFlowNode_FormatText::TrySupplyDataPin(FName PinName) const
 EFlowDataPinResolveResult UFlowNode_FormatText::TryResolveFormattedText(const FName& PinName, FText& OutFormattedText) const
 {
 	FText ResolvedFormatText = FormatText;
-	const EFlowDataPinResolveResult ResolveResult = TryResolveDataPinValue<FFlowPinType_Text>(GET_MEMBER_NAME_CHECKED(ThisClass, FormatText), ResolvedFormatText);
+	TryResolveDataPinValue<FFlowPinType_Text>(GET_MEMBER_NAME_CHECKED(ThisClass, FormatText), ResolvedFormatText);
 
 	if (TryFormatTextWithNamedPropertiesAsParameters(ResolvedFormatText, OutFormattedText))
 	{
@@ -70,11 +70,11 @@ void UFlowNode_FormatText::UpdateNodeConfigText_Implementation()
 {
 	constexpr bool bErrorIfInputPinNotFound = true;
 	FConnectedPin ConnectedPin;
-	const bool bIsInputConnected = FindFirstInputPinConnection(GET_MEMBER_NAME_CHECKED(ThisClass, FormatText), bErrorIfInputPinNotFound, ConnectedPin);
-
-	if (bIsInputConnected)
+	
+	// is input connected?
+	if (FindFirstInputPinConnection(GET_MEMBER_NAME_CHECKED(ThisClass, FormatText), bErrorIfInputPinNotFound, ConnectedPin))
 	{
-		SetNodeConfigText(FText::Format(LOCTEXT("FormatTextFromPin", "Format from: {0}"), { FText::FromString(ConnectedPin.PinName.ToString()) }));
+		SetNodeConfigText(FText::Format(LOCTEXT("FormatTextFromPin", "Format from: {0}"), {FText::FromString(ConnectedPin.PinName.ToString())}));
 	}
 	else
 	{

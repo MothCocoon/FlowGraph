@@ -1,5 +1,4 @@
 // Copyright https://github.com/MothCocoon/FlowGraph/graphs/contributors
-
 #include "Nodes/FlowNodeBase.h"
 
 #include "FlowAsset.h"
@@ -16,37 +15,20 @@
 #include "Types/FlowNamedDataPinProperty.h"
 
 #include "Components/ActorComponent.h"
-#if WITH_EDITOR
-#include "Editor.h"
-#endif
-
 #include "Engine/Blueprint.h"
 #include "Engine/Engine.h"
 #include "Engine/ViewportStatsSubsystem.h"
 #include "Engine/World.h"
 #include "GameFramework/Actor.h"
-#include "Misc/App.h"
 #include "Misc/Paths.h"
-#include "Serialization/MemoryReader.h"
-#include "Serialization/MemoryWriter.h"
+
+#if WITH_EDITOR
+#include "Editor.h"
+#endif
 
 #include UE_INLINE_GENERATED_CPP_BY_NAME(FlowNodeBase)
 
 using namespace EFlowForEachAddOnFunctionReturnValue_Classifiers;
-
-UFlowNodeBase::UFlowNodeBase()
-#if WITH_EDITORONLY_DATA
-	: GraphNode(nullptr)
-	, bDisplayNodeTitleWithoutPrefix(true)
-	, bCanDelete(true)
-	, bCanDuplicate(true)
-	, bNodeDeprecated(false)
-	, NodeDisplayStyle(FlowNodeStyle::Node)
-	, NodeStyle(EFlowNodeStyle::Invalid)
-	, NodeColor(FLinearColor::Black)
-#endif
-{
-}
 
 UWorld* UFlowNodeBase::GetWorld() const
 {
