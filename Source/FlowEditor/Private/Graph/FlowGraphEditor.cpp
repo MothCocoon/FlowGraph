@@ -266,7 +266,7 @@ void SFlowGraphEditor::BindGraphCommands()
 	CommandList->MapAction(FlowGraphCommands.EnableAllBreakpoints,
 					   FExecuteAction::CreateSP(this, &SFlowGraphEditor::EnableAllBreakpoints),
 					   FCanExecuteAction::CreateSP(this, &SFlowGraphEditor::HasAnyDisabledBreakpoints));
-	
+
 	CommandList->MapAction(FlowGraphCommands.DisableAllBreakpoints,
 	                       FExecuteAction::CreateSP(this, &SFlowGraphEditor::DisableAllBreakpoints),
 	                       FCanExecuteAction::CreateSP(this, &SFlowGraphEditor::HasAnyEnabledBreakpoints));
@@ -1585,11 +1585,15 @@ bool SFlowGraphEditor::CanFocusViewport() const
 
 void SFlowGraphEditor::JumpToNodeDefinition() const
 {
-	UFlowGraphNode* SelectedNode = *GetSelectedFlowNodes().CreateConstIterator();
-	if (SelectedNode != nullptr)
-	{
-		SelectedNode->JumpToDefinition();
-	}
+    TSet<UFlowGraphNode*> SelectedNodes = GetSelectedFlowNodes();
+    if (SelectedNodes.Num() == 1)
+    {
+        UFlowGraphNode* SelectedNode = *SelectedNodes.CreateConstIterator();
+	    if (SelectedNode != nullptr)
+	    {
+		    SelectedNode->JumpToDefinition();
+	    }
+    }
 }
 
 bool SFlowGraphEditor::CanJumpToNodeDefinition() const
