@@ -750,12 +750,13 @@ void UFlowSubsystem::FindComponents(const FGameplayTagContainer& Tags, const EGa
 	else // EGameplayContainerMatchType::All
 	{
 		TSet<TWeakObjectPtr<UFlowComponent>> ComponentsWithAnyTag;
-		for (const FGameplayTag& Tag : Tags)
+
+		// Seed the candidate pool using just the first tag, then filter down to only those that have all tags.
+		if (!Tags.IsEmpty())
 		{
 			TArray<TWeakObjectPtr<UFlowComponent>> ComponentsPerTag;
-			FindComponents(Tag, bExactMatch, ComponentsPerTag);
+			FindComponents(Tags.GetByIndex(0), bExactMatch, ComponentsPerTag);
 			ComponentsWithAnyTag.Append(ComponentsPerTag);
-			break;
 		}
 
 		for (const TWeakObjectPtr<UFlowComponent>& Component : ComponentsWithAnyTag)
