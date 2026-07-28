@@ -491,9 +491,9 @@ void SFlowGraphEditor::OnSelectedNodesChanged(const TSet<UObject*>& Nodes)
 	OnSelectionChangedEvent.ExecuteIfBound(Nodes);
 }
 
-TSet<UFlowGraphNode*> SFlowGraphEditor::GetSelectedFlowNodes() const
+TArray<UFlowGraphNode*> SFlowGraphEditor::GetSelectedFlowNodes() const
 {
-	TSet<UFlowGraphNode*> Result;
+	TArray<UFlowGraphNode*> Result;
 
 	const FGraphPanelSelectionSet SelectedNodes = GetSelectedNodes();
 	for (FGraphPanelSelectionSet::TConstIterator NodeIt(SelectedNodes); NodeIt; ++NodeIt)
@@ -1097,19 +1097,23 @@ void SFlowGraphEditor::ReconstructNode() const
 {
 	for (UFlowGraphNode* SelectedNode : GetSelectedFlowNodes())
 	{
-		SelectedNode->ReconstructNode();
+		if (SelectedNode->SupportsContextPins())
+		{
+			SelectedNode->ReconstructNode();
+		}
 	}
 }
 
 bool SFlowGraphEditor::CanReconstructNode() const
 {
-	TSet<UFlowGraphNode*> SelectedNodes = GetSelectedFlowNodes();
-	if (CanEdit() && SelectedNodes.Num() == 1)
+	if (CanEdit())
 	{
-		UFlowGraphNode* SelectedNode = *SelectedNodes.CreateConstIterator();
-		if (SelectedNode != nullptr)
+		for (const UFlowGraphNode* SelectedNode : GetSelectedFlowNodes())
 		{
-			return SelectedNode->SupportsContextPins();
+			if (SelectedNode->SupportsContextPins())
+			{
+				return true;
+			}
 		}
 	}
 
@@ -1120,19 +1124,23 @@ void SFlowGraphEditor::AddInput() const
 {
 	for (UFlowGraphNode* SelectedNode : GetSelectedFlowNodes())
 	{
-		SelectedNode->AddUserInput();
+		if (SelectedNode->CanUserAddInput())
+		{
+			SelectedNode->AddUserInput();
+		}
 	}
 }
 
 bool SFlowGraphEditor::CanAddInput() const
 {
-	TSet<UFlowGraphNode*> SelectedFlowNodes = GetSelectedFlowNodes();
-	if (CanEdit() && SelectedFlowNodes.Num() == 1)
+	if (CanEdit())
 	{
-		UFlowGraphNode* SelectedNode = *SelectedFlowNodes.CreateConstIterator();
-		if (SelectedNode != nullptr)
+		for (const UFlowGraphNode* SelectedNode : GetSelectedFlowNodes())
 		{
-			return SelectedNode->CanUserAddInput();
+			if (SelectedNode->CanUserAddInput())
+			{
+				return true;
+			}
 		}
 	}
 
@@ -1143,19 +1151,23 @@ void SFlowGraphEditor::AddOutput() const
 {
 	for (UFlowGraphNode* SelectedNode : GetSelectedFlowNodes())
 	{
-		SelectedNode->AddUserOutput();
+		if (SelectedNode->CanUserAddOutput())
+		{
+			SelectedNode->AddUserOutput();
+		}
 	}
 }
 
 bool SFlowGraphEditor::CanAddOutput() const
 {
-	TSet<UFlowGraphNode*> SelectedFlowNodes = GetSelectedFlowNodes();
-	if (CanEdit() && SelectedFlowNodes.Num() == 1)
+	if (CanEdit())
 	{
-		UFlowGraphNode* SelectedNode = *SelectedFlowNodes.CreateConstIterator();
-		if (SelectedNode != nullptr)
+		for (const UFlowGraphNode* SelectedNode : GetSelectedFlowNodes())
 		{
-			return SelectedNode->CanUserAddOutput();
+			if (SelectedNode->CanUserAddOutput())
+			{
+				return true;
+			}
 		}
 	}
 
@@ -1511,7 +1523,10 @@ void SFlowGraphEditor::SetSignalMode(const EFlowSignalMode Mode) const
 
 	for (UFlowGraphNode* SelectedNode : GetSelectedFlowNodes())
 	{
-		SelectedNode->SetSignalMode(Mode);
+		if (SelectedNode->CanSetSignalMode(Mode))
+		{
+			SelectedNode->SetSignalMode(Mode);
+		}
 	}
 
 	FlowAsset->Modify();
@@ -1524,13 +1539,11 @@ bool SFlowGraphEditor::CanSetSignalMode(const EFlowSignalMode Mode) const
 		return false;
 	}
 
-	TSet<UFlowGraphNode*> SelectedNodes = GetSelectedFlowNodes();
-	if (SelectedNodes.Num() == 1)
+	for (const UFlowGraphNode* SelectedNode : GetSelectedFlowNodes())
 	{
-		UFlowGraphNode* SelectedNode = *SelectedNodes.CreateConstIterator();
-		if (SelectedNode != nullptr)
+		if (SelectedNode->CanSetSignalMode(Mode))
 		{
-			return SelectedNode->CanSetSignalMode(Mode);
+			return true;
 		}
 	}
 
@@ -1550,29 +1563,29 @@ void SFlowGraphEditor::OnForcePinActivation()
 
 void SFlowGraphEditor::FocusViewport() const
 {
-	const TSet<UFlowGraphNode*> SelectedNodes = GetSelectedFlowNodes();
-	if (SelectedNodes.IsEmpty())
+	const TArray<UFlowGraphNode*> SelectedNodes = GetSelectedFlowNodes();
+	if (SelectedNodes.Num() == 1)
 	{
-		return;
-	}
-
-	const UFlowGraphNode* SelectedNode = *SelectedNodes.CreateConstIterator();
-	const UFlowNode* FlowNode = Cast<UFlowNode>(SelectedNode->GetFlowNodeBase());
-	if (UFlowNode* InspectedInstance = FlowNode->GetInspectedInstance())
-	{
-		if (AActor* ActorToFocus = InspectedInstance->GetActorToFocus())
+		const UFlowGraphNode* SelectedNode = SelectedNodes[0];
+		if (const UFlowNode* FlowNode = Cast<UFlowNode>(SelectedNode->GetFlowNodeBase()))
 		{
-			GEditor->SelectNone(false, false, false);
-			GEditor->SelectActor(ActorToFocus, true, true, true);
-			GEditor->NoteSelectionChange();
-
-			GEditor->MoveViewportCamerasToActor(*ActorToFocus, false);
-
-			const FLevelEditorModule& LevelEditorModule = FModuleManager::LoadModuleChecked<FLevelEditorModule>("LevelEditor");
-			const TSharedPtr<SDockTab> LevelEditorTab = LevelEditorModule.GetLevelEditorInstanceTab().Pin();
-			if (LevelEditorTab.IsValid())
+			if (UFlowNode* InspectedInstance = FlowNode->GetInspectedInstance())
 			{
-				LevelEditorTab->DrawAttention();
+				if (AActor* ActorToFocus = InspectedInstance->GetActorToFocus())
+				{
+					GEditor->SelectNone(false, false, false);
+					GEditor->SelectActor(ActorToFocus, true, true, true);
+					GEditor->NoteSelectionChange();
+
+					GEditor->MoveViewportCamerasToActor(*ActorToFocus, false);
+
+					const FLevelEditorModule& LevelEditorModule = FModuleManager::LoadModuleChecked<FLevelEditorModule>("LevelEditor");
+					const TSharedPtr<SDockTab> LevelEditorTab = LevelEditorModule.GetLevelEditorInstanceTab().Pin();
+					if (LevelEditorTab.IsValid())
+					{
+						LevelEditorTab->DrawAttention();
+					}
+				}
 			}
 		}
 	}
@@ -1585,15 +1598,12 @@ bool SFlowGraphEditor::CanFocusViewport() const
 
 void SFlowGraphEditor::JumpToNodeDefinition() const
 {
-    TSet<UFlowGraphNode*> SelectedNodes = GetSelectedFlowNodes();
-    if (SelectedNodes.Num() == 1)
-    {
-        UFlowGraphNode* SelectedNode = *SelectedNodes.CreateConstIterator();
-	    if (SelectedNode != nullptr)
-	    {
-		    SelectedNode->JumpToDefinition();
-	    }
-    }
+	const TArray<UFlowGraphNode*> SelectedNodes = GetSelectedFlowNodes();
+	if (SelectedNodes.Num() == 1)
+	{
+		const UFlowGraphNode* SelectedNode = SelectedNodes[0];
+		SelectedNode->JumpToDefinition();
+	}
 }
 
 bool SFlowGraphEditor::CanJumpToNodeDefinition() const
