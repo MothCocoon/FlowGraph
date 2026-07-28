@@ -761,6 +761,7 @@ void UFlowSubsystem::FindComponents(const FGameplayTagContainer& Tags, const EGa
 			{
 				TArray<TWeakObjectPtr<UFlowComponent>> ComponentsPerTag;
 				FindComponents(Tag, bExactMatch, ComponentsPerTag);
+				ComponentsWithAnyTag.Append(ComponentsPerTag);
 				break;
 			}
 		}
