@@ -6,6 +6,8 @@ This is the upcoming release. This page is updated regularly after changes are p
 
 This release includes pull requests from the community: Bargestt (Vasilii Bulgakov), dyanikoglu (Doğa Can Yanıkoğlu), northstarswap.
 
+This is the first release for UE 5.9.
+
 ## Update Notes
 ### Critical warning for Data Pins users
 If you were using Data Pins in your assets prior to Flow 2.2, do not upgrade directly from your current Flow Graph version to the version newer than 2.3.
