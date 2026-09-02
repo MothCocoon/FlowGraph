@@ -1148,6 +1148,11 @@ TWeakObjectPtr<UFlowAsset> UFlowAsset::GetFlowInstance(UFlowNode_SubGraph* SubGr
 	return ActiveSubGraphs.FindRef(SubGraphNode);
 }
 
+FName UFlowAsset::GetDisplayName() const
+{
+	return GetFName();
+}
+
 void UFlowAsset::InitializePreloadPolicy()
 {
 	if (PreloadPolicy.IsValid())
