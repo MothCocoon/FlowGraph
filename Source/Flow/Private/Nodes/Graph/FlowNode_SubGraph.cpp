@@ -96,12 +96,24 @@ void UFlowNode_SubGraph::ExecuteInput(const FName& PinName)
 
 void UFlowNode_SubGraph::Cleanup()
 {
-	if (CanBeAssetInstanced() && GetFlowSubsystem())
+	UFlowSubsystem* FlowSubsystem = GetFlowSubsystem();
+	if (CanBeAssetInstanced() && FlowSubsystem)
 	{
-		GetFlowSubsystem()->RemoveSubFlow(this, EFlowFinishPolicy::Keep);
+		FlowSubsystem->FinishSubFlow(this, EFlowFinishPolicy::Keep);
 	}
 
 	Super::Cleanup();
+}
+
+void UFlowNode_SubGraph::DeinitializeInstance()
+{
+	UFlowSubsystem* FlowSubsystem = GetFlowSubsystem();
+	if (CanBeAssetInstanced() && FlowSubsystem)
+	{
+		FlowSubsystem->RemoveSubFlow(this, EFlowFinishPolicy::Keep);
+	}
+	
+	Super::DeinitializeInstance();
 }
 
 void UFlowNode_SubGraph::ForceFinishNode()

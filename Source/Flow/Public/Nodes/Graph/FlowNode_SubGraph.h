@@ -52,6 +52,7 @@ public:
 
 	virtual void ExecuteInput(const FName& PinName) override;
 	virtual void Cleanup() override;
+	virtual void DeinitializeInstance() override;
 
 public:
 	virtual void ForceFinishNode() override;

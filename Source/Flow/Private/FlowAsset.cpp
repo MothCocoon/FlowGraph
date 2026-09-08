@@ -896,7 +896,7 @@ void UFlowAsset::ClearInstances()
 	{
 		if (ActiveInstances.IsValidIndex(i) && ActiveInstances[i])
 		{
-			ActiveInstances[i]->FinishFlow(EFlowFinishPolicy::Keep);
+			ActiveInstances[i]->FinishFlowAndDeinitializeInstance(EFlowFinishPolicy::Keep);
 		}
 	}
 
@@ -1023,6 +1023,12 @@ AActor* UFlowAsset::TryFindActorOwner() const
 	return nullptr;
 }
 
+void UFlowAsset::FinishFlowAndDeinitializeInstance(const EFlowFinishPolicy InFinishPolicy)
+{
+	FinishFlow(InFinishPolicy);
+	DeinitializeInstance();
+}
+
 void UFlowAsset::PreStartFlow()
 {
 	ResetNodes();
@@ -1081,13 +1087,14 @@ void UFlowAsset::FinishNode(UFlowNode* Node)
 				return;
 			}
 
-			// if this instance is a Root Flow, we need to deregister it from the subsystem first
+			// if this instance is a Root Flow, we need to deregister it from the subsystem first. This will 
+			// finalize and deinitialize the root flow.
 			if (Owner.IsValid())
 			{
 				const TSet<UFlowAsset*>& RootFlowInstances = GetFlowSubsystem()->GetRootInstancesByOwner(Owner.Get());
 				if (RootFlowInstances.Contains(this))
 				{
-					GetFlowSubsystem()->FinishRootFlow(Owner.Get(), TemplateAsset, EFlowFinishPolicy::Keep);
+					GetFlowSubsystem()->FinishAndDeinitializeRootFlow(Owner.Get(), TemplateAsset, EFlowFinishPolicy::Keep);
 
 					return;
 				}
@@ -1108,7 +1115,7 @@ void UFlowAsset::ResetNodes()
 	RecordedNodes.Empty();
 }
 
-void UFlowAsset::FinishFlow(const EFlowFinishPolicy InFinishPolicy, const bool bRemoveInstance /*= true*/)
+void UFlowAsset::FinishFlow(const EFlowFinishPolicy InFinishPolicy)
 {
 	FinishPolicy = InFinishPolicy;
 
@@ -1120,12 +1127,6 @@ void UFlowAsset::FinishFlow(const EFlowFinishPolicy InFinishPolicy, const bool b
 		Node->Deactivate();
 	}
 	ActiveNodes.Empty();
-
-	// provides option to finish game-specific logic prior to removing asset instance 
-	if (bRemoveInstance)
-	{
-		DeinitializeInstance();
-	}
 }
 
 UFlowSubsystem* UFlowAsset::GetFlowSubsystem() const

@@ -362,6 +362,8 @@ public:
 	virtual void DeinitializeInstance();
 	bool IsInstanceInitialized() const { return IsValid(TemplateAsset); }
 
+	void FinishFlowAndDeinitializeInstance(const EFlowFinishPolicy InFinishPolicy);
+
 	UFlowAsset* GetTemplateAsset() const { return TemplateAsset; }
 
 	/* Object that spawned Root Flow instance, i.e. World Settings or Player Controller.
@@ -381,6 +383,8 @@ public:
 
 	virtual void PreStartFlow();
 	virtual void StartFlow(IFlowDataPinValueSupplierInterface* DataPinValueSupplier = nullptr);
+	virtual void FinishFlow(const EFlowFinishPolicy InFinishPolicy);
+
 	bool HasStartedFlow() const;
 
 protected:
