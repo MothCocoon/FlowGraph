@@ -68,7 +68,7 @@ protected:
 public:
 	FOnSelectionChanged OnSelectionChangedEvent;
 
-	TSet<UFlowGraphNode*> GetSelectedFlowNodes() const;
+	TArray<UFlowGraphNode*> GetSelectedFlowNodes() const;
 
 protected:
 	virtual bool CanSelectAllNodes() const { return true; }

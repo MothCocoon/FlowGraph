@@ -1,6 +1,6 @@
 // Copyright https://github.com/MothCocoon/FlowGraph/graphs/contributors
-
 #include "Nodes/Actor/FlowNode_ExecuteComponent.h"
+
 #include "Interfaces/FlowCoreExecutableInterface.h"
 #include "Interfaces/FlowPreloadableInterface.h"
 #include "Interfaces/FlowExternalExecutableInterface.h"
@@ -11,6 +11,7 @@
 #include "Types/FlowAutoDataPinsWorkingData.h"
 #include "Types/FlowInjectComponentsHelper.h"
 #include "Types/FlowInjectComponentsManager.h"
+
 #include "GameFramework/Actor.h"
 #include "Components/ActorComponent.h"
 
@@ -19,7 +20,6 @@
 #include UE_INLINE_GENERATED_CPP_BY_NAME(FlowNode_ExecuteComponent)
 
 UFlowNode_ExecuteComponent::UFlowNode_ExecuteComponent()
-	: Super()
 {
 #if WITH_EDITOR
 	Category = TEXT("Actor");
@@ -268,8 +268,9 @@ TArray<FFlowPin> UFlowNode_ExecuteComponent::GetContextOutputs() const
 	{
 		if (const IFlowContextPinSupplierInterface* CompAsStaticInterface = Cast<IFlowContextPinSupplierInterface>(ResolvedComp))
 		{
-			// The native (static) class implements the interface, so we call it directly (default implementation provided by the interface will call the K2 BP version of it.
-			// we assume that the implementor of the interface is responsible for invoking K2_GetContextOutputs in their overrides of GetContextOutputs()
+			// The native (static) class implements the interface, so we call it directly.
+			// Default implementation provided by the interface will call the K2 BP version of it.
+			// We assume that the implementor of the interface is responsible for invoking K2_GetContextOutputs in their overrides of GetContextOutputs().
 			ContextOutputs = CompAsStaticInterface->GetContextOutputs();
 		}
 		else
@@ -523,7 +524,7 @@ void UFlowNode_ExecuteComponent::RefreshComponentSource()
 	}
 }
 
-void UFlowNode_ExecuteComponent::RefreshPins()
+void UFlowNode_ExecuteComponent::RefreshPins() const
 {
 	OnReconstructionRequested.ExecuteIfBound();
 }
@@ -542,7 +543,7 @@ EDataValidationResult UFlowNode_ExecuteComponent::ValidateNode()
 	const bool bHasComponent = ComponentRef.IsConfigured();
 	if (!bHasComponent)
 	{
-		ValidationLog.Error<UFlowNode>(TEXT("ExecuteComponent requires a valid Compoennt reference"), this);
+		ValidationLog.Error<UFlowNode>(TEXT("ExecuteComponent requires a valid component reference"), this);
 
 		return EDataValidationResult::Invalid;
 	}

@@ -1,6 +1,6 @@
 // Copyright https://github.com/MothCocoon/FlowGraph/graphs/contributors
-
 #include "Nodes/Route/FlowNode_Branch.h"
+
 #include "AddOns/FlowNodeAddOn_PredicateAND.h"
 #include "AddOns/FlowNodeAddOn_PredicateOR.h"
 #include "FlowSettings.h"
@@ -41,8 +41,7 @@ EFlowAddOnAcceptResult UFlowNode_Branch::AcceptFlowNodeAddOnChild_Implementation
 
 void UFlowNode_Branch::ExecuteInput(const FName& PinName)
 {
-	bool bPassedRootPredicates = false;
-	FName ResultPinName = OUTPIN_False;
+	bool bPassedRootPredicates;
 
 	// Test the root-level IFlowPredicateInterface addons
 	FLOW_ASSERT_ENUM_MAX(EFlowPredicateCombinationRule, 2);
@@ -53,7 +52,6 @@ void UFlowNode_Branch::ExecuteInput(const FName& PinName)
 	else
 	{
 		check(BranchCombinationRule == EFlowPredicateCombinationRule::OR);
-
 		bPassedRootPredicates = UFlowNodeAddOn_PredicateOR::EvaluatePredicateOR(AddOns);
 	}
 
@@ -71,10 +69,10 @@ void UFlowNode_Branch::ExecuteInput(const FName& PinName)
 FText UFlowNode_Branch::K2_GetNodeTitle_Implementation() const
 {
 	FLOW_ASSERT_ENUM_MAX(EFlowPredicateCombinationRule, 2);
-	if (BranchCombinationRule != EFlowPredicateCombinationRule::AND && 
+	if (BranchCombinationRule != EFlowPredicateCombinationRule::AND &&
 		GetDefault<UFlowSettings>()->bUseAdaptiveNodeTitles)
 	{
-		return FText::Format(LOCTEXT("BranchTitle", "{0} ({1})"), { Super::K2_GetNodeTitle_Implementation(), UEnum::GetDisplayValueAsText(BranchCombinationRule) });
+		return FText::Format(LOCTEXT("BranchTitle", "{0} ({1})"), {Super::K2_GetNodeTitle_Implementation(), UEnum::GetDisplayValueAsText(BranchCombinationRule)});
 	}
 
 	return Super::K2_GetNodeTitle_Implementation();

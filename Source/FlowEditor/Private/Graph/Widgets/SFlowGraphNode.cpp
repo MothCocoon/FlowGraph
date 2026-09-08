@@ -7,6 +7,7 @@
 #include "Graph/FlowGraphSettings.h"
 
 #include "Nodes/FlowNode.h"
+#include "Runtime/Launch/Resources/Version.h"
 
 #include "Debugger/FlowDebuggerSubsystem.h"
 
@@ -363,7 +364,9 @@ void SFlowGraphNode::UpdateGraphNode()
 	FGraphNodeMetaData TagMeta(TEXT("FlowGraphNode"));
 	PopulateMetaTag(&TagMeta);
 
+#if ENGINE_MAJOR_VERSION == 5 && ENGINE_MINOR_VERSION < 8
 	this->ContentScale.Bind(this, &SGraphNode::GetContentScale);
+#endif
 
 	const TSharedPtr<SVerticalBox> InnerVerticalBox = SNew(SVerticalBox)
 		+ SVerticalBox::Slot()

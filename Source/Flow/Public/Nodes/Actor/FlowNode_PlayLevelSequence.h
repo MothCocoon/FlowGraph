@@ -24,16 +24,16 @@ DECLARE_MULTICAST_DELEGATE(FFlowNodeLevelSequenceEvent);
 UCLASS(NotBlueprintable, meta = (DisplayName = "Play Level Sequence"))
 class FLOW_API UFlowNode_PlayLevelSequence
 	: public UFlowNode
-	, public IFlowPreloadableInterface
+	  , public IFlowPreloadableInterface
 {
 	GENERATED_BODY()
-	
+
 public:
 	UFlowNode_PlayLevelSequence();
-	
+
 	friend struct FFlowTrackExecutionToken;
 
-public:	
+public:
 	static FFlowNodeLevelSequenceEvent OnPlaybackStarted;
 	static FFlowNodeLevelSequenceEvent OnPlaybackCompleted;
 
@@ -44,30 +44,30 @@ public:
 	FMovieSceneSequencePlaybackSettings PlaybackSettings;
 
 	UPROPERTY(EditAnywhere, Category = "Sequence")
-	bool bPlayReverse;
+	bool bPlayReverse = false;
 
 	UPROPERTY(EditAnywhere, Category = "Sequence")
 	FLevelSequenceCameraSettings CameraSettings;
-	
+
 	/* Level Sequence playback can be moved to any place in the world by applying Transform Origin.
 	 * Enabling this option will use actor that created Root Flow instance, i.e. World Settings or Player Controller/
 	 * See https://docs.unrealengine.com/5.0/en-US/creating-level-sequences-with-dynamic-transforms-in-unreal-engine/ */
 	UPROPERTY(EditAnywhere, Category = "Sequence")
-	bool bUseGraphOwnerAsTransformOrigin;
+	bool bUseGraphOwnerAsTransformOrigin = false;
 
 	/* If true, playback of this level sequence on the server will be synchronized across other clients. */
 	UPROPERTY(EditAnywhere, Category = "Sequence")
-	bool bReplicates;
+	bool bReplicates = false;
 
 	/* Always relevant for network (overrides bOnlyRelevantToOwner). */
 	UPROPERTY(EditAnywhere, Category = "Sequence")
-	bool bAlwaysRelevant;
+	bool bAlwaysRelevant = false;
 
-	/* If True, Play Rate will by multiplied by Custom Time Dilation.
+	/* If True, Play Rate will be multiplied by Custom Time Dilation.
 	 * Enabling this option will use Custom Time Dilation from actor that created Root Flow instance, i.e. World Settings or Player Controller. */
 	UPROPERTY(EditAnywhere, Category = "Sequence")
-	bool bApplyOwnerTimeDilation;
-	
+	bool bApplyOwnerTimeDilation = true;
+
 protected:
 	UPROPERTY()
 	TObjectPtr<ULevelSequence> LoadedSequence;
@@ -76,16 +76,16 @@ protected:
 	TObjectPtr<UFlowLevelSequencePlayer> SequencePlayer;
 
 	/* Play Rate set by the user in PlaybackSettings. */
-	float CachedPlayRate;
+	float CachedPlayRate = 0.0f;
 
 	UPROPERTY(SaveGame)
-	float StartTime;
+	float StartTime = 0.0f;
 
 	UPROPERTY(SaveGame)
-	float ElapsedTime;
+	float ElapsedTime = 0.0f;
 
 	UPROPERTY(SaveGame)
-	float TimeDilation;
+	float TimeDilation = 1.0f;
 
 	FStreamableManager StreamableManager;
 
@@ -109,7 +109,6 @@ public:
 	virtual void InitializeInstance() override;
 	void CreatePlayer();
 
-protected:
 	virtual void ExecuteInput(const FName& PinName) override;
 
 	virtual void OnSave_Implementation() override;
@@ -127,8 +126,6 @@ protected:
 
 public:
 	virtual void StopPlayback();
-
-protected:
 	virtual void Cleanup() override;
 
 public:
@@ -136,13 +133,15 @@ public:
 
 #if WITH_EDITOR
 	virtual FString GetNodeDescription() const override;
-	virtual EDataValidationResult ValidateNode() override;
-	
 	virtual FString GetStatusString() const override;
 	virtual UObject* GetAssetToEdit() override;
+	
+protected:	
+	virtual EDataValidationResult ValidateNode() override;
 #endif
 
 #if ENABLE_VISUAL_LOG
+public:	
 	virtual void GrabDebugSnapshot(struct FVisualLogEntry* Snapshot) const override;
 #endif
 };

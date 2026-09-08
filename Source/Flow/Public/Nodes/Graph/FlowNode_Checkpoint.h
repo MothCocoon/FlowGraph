@@ -12,7 +12,7 @@ UCLASS(NotBlueprintable, Config = Game, defaultconfig, meta = (DisplayName = "Ch
 class FLOW_API UFlowNode_Checkpoint final : public UFlowNode
 {
 	GENERATED_BODY()
-	
+
 public:
 	UFlowNode_Checkpoint();
 
@@ -21,8 +21,9 @@ protected:
 	 * [/Script/Flow.FlowNode_Checkpoint]
 	 * bUseAsyncSave=True */
 	UPROPERTY(VisibleAnywhere, Config, Category = "Checkpoint")
-	bool bUseAsyncSave;
+	bool bUseAsyncSave = false;
 
+public:
 	virtual void ExecuteInput(const FName& PinName) override;
 	virtual void OnLoad_Implementation() override;
 };
