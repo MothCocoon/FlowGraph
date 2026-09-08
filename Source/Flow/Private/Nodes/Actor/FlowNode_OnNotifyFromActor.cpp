@@ -6,8 +6,6 @@
 #include UE_INLINE_GENERATED_CPP_BY_NAME(FlowNode_OnNotifyFromActor)
 
 UFlowNode_OnNotifyFromActor::UFlowNode_OnNotifyFromActor()
-	: NotifyMatchType(EFlowTagMatchType::HasExact)
-	, bRetroactive(false)
 {
 #if WITH_EDITOR
 	NodeDisplayStyle = FlowNodeStyle::Condition;
