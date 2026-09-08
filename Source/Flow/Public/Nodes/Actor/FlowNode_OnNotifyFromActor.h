@@ -19,6 +19,9 @@ protected:
 	UPROPERTY(EditAnywhere, Category = "Notify")
 	FGameplayTagContainer NotifyTags;
 
+	UPROPERTY(EditAnywhere, Category = "Notify")
+	EFlowTagMatchType NotifyMatchType = EFlowTagMatchType::HasExact;
+
 	/* If true, node will check given Notify Tag is present in the Recently Sent Notify Tags.
 	 * This might be helpful in multiplayer, if client-side Flow Node started work after server sent the Notify. */
 	UPROPERTY(EditAnywhere, Category = "Notify")
