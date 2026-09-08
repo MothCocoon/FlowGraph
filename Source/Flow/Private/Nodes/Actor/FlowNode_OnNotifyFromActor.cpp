@@ -6,7 +6,8 @@
 #include UE_INLINE_GENERATED_CPP_BY_NAME(FlowNode_OnNotifyFromActor)
 
 UFlowNode_OnNotifyFromActor::UFlowNode_OnNotifyFromActor()
-	: bRetroactive(false)
+	: NotifyMatchType(EFlowTagMatchType::HasExact)
+	, bRetroactive(false)
 {
 #if WITH_EDITOR
 	NodeDisplayStyle = FlowNodeStyle::Condition;
@@ -20,9 +21,13 @@ void UFlowNode_OnNotifyFromActor::ObserveActor(TWeakObjectPtr<AActor> Actor, TWe
 		RegisteredActors.Emplace(Actor, Component);
 		Component->OnNotifyFromComponent.AddUObject(this, &UFlowNode_OnNotifyFromActor::OnNotifyFromComponent);
 
-		if (bRetroactive && Component->GetRecentlySentNotifyTags().HasAnyExact(NotifyTags))
+		if (bRetroactive)
 		{
-			OnEventReceived();
+			const bool NotifyMatches = FlowTypes::HasMatchingTags(Component->GetRecentlySentNotifyTags(), NotifyTags, NotifyMatchType);
+			if (NotifyMatches)
+			{
+				OnEventReceived();
+			}
 		}
 	}
 }
@@ -34,27 +39,14 @@ void UFlowNode_OnNotifyFromActor::ForgetActor(TWeakObjectPtr<AActor> Actor, TWea
 
 void UFlowNode_OnNotifyFromActor::OnNotifyFromComponent(UFlowComponent* Component, const FGameplayTag& Tag)
 {
-	bool IdentityMatches = false;
-
-	switch (IdentityMatchType)
+	const bool IdentityMatches = FlowTypes::HasMatchingTags(Component->IdentityTags, IdentityTags, IdentityMatchType);
+	if (IdentityMatches)
 	{
-		case EFlowTagContainerMatchType::HasAny:
-			IdentityMatches = Component->IdentityTags.HasAny(IdentityTags);
-			break;
-		case EFlowTagContainerMatchType::HasAnyExact:
-			IdentityMatches = Component->IdentityTags.HasAnyExact(IdentityTags);
-			break;
-		case EFlowTagContainerMatchType::HasAll:
-			IdentityMatches = Component->IdentityTags.HasAll(IdentityTags);
-			break;
-		case EFlowTagContainerMatchType::HasAllExact:
-			IdentityMatches = Component->IdentityTags.HasAllExact(IdentityTags);
-			break;
-	}
-
-	if (IdentityMatches && (!NotifyTags.IsValid() || NotifyTags.HasTagExact(Tag)))
-	{
-		OnEventReceived();
+		const bool NotifyMatches = NotifyTags.IsValid() ? FlowTypes::HasMatchingTag(Tag, NotifyTags, NotifyMatchType) : true;
+		if (NotifyMatches)
+		{
+			OnEventReceived();
+		}
 	}
 }
 
