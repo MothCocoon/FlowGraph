@@ -103,6 +103,8 @@ void FFlowAssetEditor::RegisterTabSpawners(const TSharedRef<class FTabManager>& 
 {
 	WorkspaceMenuCategory = InTabManager->AddLocalWorkspaceMenuCategory(LOCTEXT("WorkspaceMenu_FlowAssetEditor", "Flow Editor"));
 	const auto WorkspaceMenuCategoryRef = WorkspaceMenuCategory.ToSharedRef();
+	
+	DetailsView->SetHostTabManager(InTabManager);
 
 	FAssetEditorToolkit::RegisterTabSpawners(InTabManager);
 

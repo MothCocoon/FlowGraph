@@ -31,6 +31,7 @@
 #include "DetailCustomizations/FlowAssetParamsPtrCustomization.h"
 #include "DetailCustomizations/FlowDataPinValueOwnerCustomizations.h"
 #include "DetailCustomizations/FlowDataPinValueStandardCustomizations.h"
+#include "DetailCustomizations/FlowIdentityCustomization.h"
 
 #include "FlowAsset.h"
 #include "AddOns/FlowNodeAddOn.h"
@@ -42,6 +43,7 @@
 #include "Nodes/Graph/FlowNode_CustomOutput.h"
 #include "Nodes/Graph/FlowNode_SubGraph.h"
 #include "Types/FlowNamedDataPinProperty.h"
+#include "Types/FlowIdentity.h"
 
 #include "AssetToolsModule.h"
 #include "AssetRegistry/AssetRegistryModule.h"
@@ -274,7 +276,8 @@ void FFlowEditorModule::RegisterDetailCustomizations()
 		RegisterCustomStructLayout(*FFlowDataPinValue_InstancedStruct::StaticStruct(), FOnGetPropertyTypeCustomizationInstance::CreateStatic(&FFlowDataPinValueCustomization_InstancedStruct::MakeInstance));
 		RegisterCustomStructLayout(*FFlowDataPinValue_Class::StaticStruct(), FOnGetPropertyTypeCustomizationInstance::CreateStatic(&FFlowDataPinValueCustomization_Class::MakeInstance));
 		RegisterCustomStructLayout(*FFlowDataPinValue_Object::StaticStruct(), FOnGetPropertyTypeCustomizationInstance::CreateStatic(&FFlowDataPinValueCustomization_Object::MakeInstance));
-
+		RegisterCustomStructLayout(*FFlowIdentity::StaticStruct(), FOnGetPropertyTypeCustomizationInstance::CreateStatic(&FFlowIdentityCustomization::MakeInstance));
+		
 		PropertyModule.NotifyCustomizationModuleChanged();
 	}
 }
