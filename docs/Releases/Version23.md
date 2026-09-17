@@ -6,7 +6,7 @@ July 11, 2026.
 
 This release includes pull requests from the community: Bargestt (Vasilii Bulgakov), Chen-Gary (Gary Chen), CyaDaPaKnat, dskliarov-gsc, EvanC4, fade-Raider (Federico Ciardi), LindyHopperGT (Riot Games).
 
-This is the first release for UE 5.8.
+This is the first release for UE 5.8, and the last for UE 5.6.
 
 * [Flow 5.8](https://github.com/MothCocoon/FlowGraph/releases/tag/v2.3-5.8)
 * [Flow 5.7](https://github.com/MothCocoon/FlowGraph/releases/tag/v2.3-5.7)

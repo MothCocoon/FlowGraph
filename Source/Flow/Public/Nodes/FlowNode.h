@@ -148,7 +148,10 @@ protected:
 	uint8 CountNumberedOutputs() const;
 
 public:
+	UFUNCTION(BlueprintPure, Category = "FlowNode")
 	const TArray<FFlowPin>& GetInputPins() const { return InputPins; }
+
+	UFUNCTION(BlueprintPure, Category = "FlowNode")
 	const TArray<FFlowPin>& GetOutputPins() const { return OutputPins; }
 
 	UFUNCTION(BlueprintPure, Category = "FlowNode")
