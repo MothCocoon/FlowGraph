@@ -85,7 +85,11 @@ void UFlowSubsystem::StartRootFlow(UObject* Owner, UFlowAsset* FlowAsset, const 
 	{
 		if (UFlowAsset* NewFlow = CreateRootFlow(Owner, FlowAsset, bAllowMultipleInstances))
 		{
-			NewFlow->StartFlow(DataPinValueSupplier.GetInterface());
+			// TODO (gtaylor) Not implementing output parameters "yet", 
+			// see Subgraph node for the pioneer implementation.
+			constexpr IFlowGraphOutputDataReceiverInterface* OutputDataReceiverInterface = nullptr;
+
+			NewFlow->StartFlow(DataPinValueSupplier.GetInterface(), OutputDataReceiverInterface);
 		}
 	}
 #if WITH_EDITOR
@@ -182,13 +186,18 @@ UFlowAsset* UFlowSubsystem::CreateSubFlow(UFlowNode_SubGraph* SubGraphNode, cons
 		// get instanced asset from map - in case it was already instanced by calling CreateSubFlow() with bPreloading == true
 		AssetInstance = InstancedSubFlows[SubGraphNode];
 
-		AssetInstance->NodeOwningThisAssetInstance = SubGraphNode;
+		if (!AssetInstance->NodeOwningThisAssetInstance.IsValid())
+		{
+			AssetInstance->NodeOwningThisAssetInstance = SubGraphNode;			
+		}
+		check(AssetInstance->NodeOwningThisAssetInstance == SubGraphNode);
+		
 		SubGraphNode->GetFlowAsset()->ActiveSubGraphs.Add(SubGraphNode, AssetInstance);
 
 		// don't activate Start Node if we're loading Sub Graph from SaveGame
 		if (SavedInstanceName.IsEmpty())
 		{
-			AssetInstance->StartFlow(SubGraphNode);
+			AssetInstance->StartFlow(SubGraphNode, SubGraphNode);
 		}
 	}
 
