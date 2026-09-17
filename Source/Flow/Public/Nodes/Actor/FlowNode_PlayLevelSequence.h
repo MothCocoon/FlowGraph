@@ -10,6 +10,7 @@
 #include "Nodes/FlowNode.h"
 #include "FlowNode_PlayLevelSequence.generated.h"
 
+class AFlowLevelSequenceActor;
 class UFlowLevelSequencePlayer;
 
 DECLARE_MULTICAST_DELEGATE(FFlowNodeLevelSequenceEvent);
@@ -75,6 +76,9 @@ protected:
 	UPROPERTY()
 	TObjectPtr<UFlowLevelSequencePlayer> SequencePlayer;
 
+	UPROPERTY()
+	TObjectPtr<AFlowLevelSequenceActor> SequenceActor;
+
 	/* Play Rate set by the user in PlaybackSettings. */
 	float CachedPlayRate = 0.0f;
 
@@ -104,6 +108,10 @@ public:
 	// IFlowPreloadableInterface
 	virtual EFlowPreloadResult PreloadContent() override;
 	virtual void FlushContent() override;
+	// --
+
+	// UFlowNodeBase
+	virtual EFlowAddOnAcceptResult AcceptFlowNodeAddOnChild_Implementation(const UFlowNodeAddOn* AddOnTemplate, const TArray<UFlowNodeAddOn*>& AdditionalAddOnsToAssumeAreChildren) const override;
 	// --
 
 	virtual void InitializeInstance() override;

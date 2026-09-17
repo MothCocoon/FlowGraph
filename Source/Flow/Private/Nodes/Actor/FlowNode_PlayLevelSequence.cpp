@@ -4,7 +4,10 @@
 #include "FlowAsset.h"
 #include "FlowLogChannels.h"
 #include "FlowSubsystem.h"
+#include "AddOns/FlowNodeAddOn.h"
+#include "LevelSequence/FlowLevelSequenceActor.h"
 #include "LevelSequence/FlowLevelSequencePlayer.h"
+#include "LevelSequence/IFlowPlayLevelSequenceAddOnInterface.h"
 
 #if WITH_EDITOR
 #include "MovieScene/MovieSceneFlowTrack.h"
@@ -12,7 +15,6 @@
 #endif
 
 #include "LevelSequence.h"
-#include "LevelSequenceActor.h"
 #include "VisualLogger/VisualLogger.h"
 
 #include UE_INLINE_GENERATED_CPP_BY_NAME(FlowNode_PlayLevelSequence)
@@ -136,8 +138,22 @@ void UFlowNode_PlayLevelSequence::InitializeInstance()
 {
 	Super::InitializeInstance();
 
+	SequenceActor = nullptr;
+
 	// Cache Play Rate set by user
 	CachedPlayRate = PlaybackSettings.PlayRate;
+}
+
+EFlowAddOnAcceptResult UFlowNode_PlayLevelSequence::AcceptFlowNodeAddOnChild_Implementation(
+	const UFlowNodeAddOn* AddOnTemplate,
+	const TArray<UFlowNodeAddOn*>& AdditionalAddOnsToAssumeAreChildren) const
+{
+	if (IFlowPlayLevelSequenceAddOnInterface::ImplementsInterfaceSafe(AddOnTemplate))
+	{
+		return EFlowAddOnAcceptResult::TentativeAccept;
+	}
+
+	return Super::AcceptFlowNodeAddOnChild_Implementation(AddOnTemplate, AdditionalAddOnsToAssumeAreChildren);
 }
 
 void UFlowNode_PlayLevelSequence::CreatePlayer()
@@ -145,8 +161,6 @@ void UFlowNode_PlayLevelSequence::CreatePlayer()
 	LoadedSequence = Sequence.LoadSynchronous();
 	if (LoadedSequence)
 	{
-		ALevelSequenceActor* SequenceActor;
-
 		AActor* OwningActor = TryGetRootFlowActorOwner();
 
 		// Apply AActor::CustomTimeDilation from owner of the Root Flow
@@ -164,6 +178,17 @@ void UFlowNode_PlayLevelSequence::CreatePlayer()
 		if (SequencePlayer)
 		{
 			SequencePlayer->SetFlowEventReceiver(this);
+		}
+
+		// Notify add-ons so they can apply binding overrides before Play() is called
+		if (AFlowLevelSequenceActor* FlowSequenceActor = SequenceActor.Get())
+		{
+			ForEachAddOnForClass<UFlowPlayLevelSequenceAddOnInterface>([this, FlowSequenceActor, OwningActor](UFlowNodeAddOn& AddOn)
+			{
+				IFlowPlayLevelSequenceAddOnInterface* Interface = CastChecked<IFlowPlayLevelSequenceAddOnInterface>(&AddOn);
+				Interface->OnSequencePlayerCreated(*FlowSequenceActor, OwningActor);
+				return EFlowForEachAddOnFunctionReturnValue::Continue;
+			});
 		}
 
 		const FFrameRate FrameRate = LoadedSequence->GetMovieScene()->GetTickResolution();
@@ -306,6 +331,12 @@ void UFlowNode_PlayLevelSequence::Cleanup()
 		}
 		SequencePlayer = nullptr;
 	}
+
+	if (IsValid(SequenceActor) && SequenceActor->HasAuthority())
+	{
+		SequenceActor->Destroy();
+	}
+	SequenceActor = nullptr;
 
 	LoadedSequence = nullptr;
 	StartTime = 0.0f;
