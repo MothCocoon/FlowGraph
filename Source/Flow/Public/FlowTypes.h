@@ -78,6 +78,13 @@ enum class EFlowNetMode : uint8
 };
 
 UENUM(BlueprintType)
+enum class EFlowTagMatchType : uint8
+{
+	Has		 UMETA(ToolTip = "Check if container contains the tag."),
+	HasExact UMETA(ToolTip = "Check if container contains the tag, only allowing exact matches."),
+};
+
+UENUM(BlueprintType)
 enum class EFlowTagContainerMatchType : uint8
 {
 	HasAny				UMETA(ToolTip = "Check if container A contains ANY of the tags in the specified container B."),
@@ -88,6 +95,32 @@ enum class EFlowTagContainerMatchType : uint8
 
 namespace FlowTypes
 {
+	FORCEINLINE_DEBUGGABLE bool HasMatchingTag(const FGameplayTag& Tag, const FGameplayTagContainer& Container, const EFlowTagMatchType MatchType)
+	{
+		switch (MatchType)
+		{
+			case EFlowTagMatchType::Has:
+				return Tag.MatchesAny(Container);
+			case EFlowTagMatchType::HasExact:
+				return Tag.MatchesAnyExact(Container);
+			default:
+				return false;
+		}
+	}
+	
+	FORCEINLINE_DEBUGGABLE bool HasMatchingTags(const FGameplayTagContainer& Container, const FGameplayTagContainer& OtherContainer, const EFlowTagMatchType MatchType)
+	{
+		switch (MatchType)
+		{
+			case EFlowTagMatchType::Has:
+				return Container.HasAny(OtherContainer);
+			case EFlowTagMatchType::HasExact:
+				return Container.HasAnyExact(OtherContainer);
+			default:
+				return false;
+		}
+	}
+	
 	FORCEINLINE_DEBUGGABLE bool HasMatchingTags(const FGameplayTagContainer& Container, const FGameplayTagContainer& OtherContainer, const EFlowTagContainerMatchType MatchType)
 	{
 		switch (MatchType)
