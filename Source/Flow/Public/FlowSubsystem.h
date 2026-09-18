@@ -78,16 +78,21 @@ public:
 	 * Nodes have opportunity to terminate themselves differently if Flow Graph has been aborted
 	 * Example: Spawn node might despawn all actors if Flow Graph is aborted, not completed */
 	UFUNCTION(BlueprintCallable, Category = "FlowSubsystem", meta = (DefaultToSelf = "Owner"))
-	virtual void FinishRootFlow(UObject* Owner, UFlowAsset* TemplateAsset, const EFlowFinishPolicy FinishPolicy);
+	virtual void FinishAndDeinitializeRootFlow(UObject* Owner, UFlowAsset* TemplateAsset, const EFlowFinishPolicy FinishPolicy);
 
 	/* Finish Policy value is read by Flow Node
 	 * Nodes have opportunity to terminate themselves differently if Flow Graph has been aborted
 	 * Example: Spawn node might despawn all actors if Flow Graph is aborted, not completed */
 	UFUNCTION(BlueprintCallable, Category = "FlowSubsystem", meta = (DefaultToSelf = "Owner"))
-	virtual void FinishAllRootFlows(UObject* Owner, const EFlowFinishPolicy FinishPolicy);
+	virtual void FinishAndDeinitializeAllRootFlows(UObject* Owner, const EFlowFinishPolicy FinishPolicy);
 
 protected:
 	UFlowAsset* CreateSubFlow(UFlowNode_SubGraph* SubGraphNode, const FString& SavedInstanceName = FString(), const bool bPreloading = false);
+	
+	/* Finishes the SubFlow running in the SubGraphNode. It does not deinitialize or removes from the internal InstancedSubFlows list */
+	void FinishSubFlow(UFlowNode_SubGraph* SubGraphNode, const EFlowFinishPolicy FinishPolicy);
+	
+	/* Removes the Subflow from the InstancedSubFlows list; and Finishes and Deinitializes it. */
 	void RemoveSubFlow(UFlowNode_SubGraph* SubGraphNode, const EFlowFinishPolicy FinishPolicy);
 
 public:
