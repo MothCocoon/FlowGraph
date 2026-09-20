@@ -85,7 +85,11 @@ void UFlowSubsystem::StartRootFlow(UObject* Owner, UFlowAsset* FlowAsset, const 
 	{
 		if (UFlowAsset* NewFlow = CreateRootFlow(Owner, FlowAsset, bAllowMultipleInstances))
 		{
-			NewFlow->StartFlow(DataPinValueSupplier.GetInterface());
+			// TODO (gtaylor) Not implementing output parameters "yet", 
+			// see Subgraph node for the pioneer implementation.
+			constexpr IFlowGraphOutputDataReceiverInterface* OutputDataReceiverInterface = nullptr;
+
+			NewFlow->StartFlow(DataPinValueSupplier.GetInterface(), OutputDataReceiverInterface);
 		}
 	}
 #if WITH_EDITOR
@@ -182,18 +186,19 @@ UFlowAsset* UFlowSubsystem::CreateSubFlow(UFlowNode_SubGraph* SubGraphNode, cons
 		// get instanced asset from map - in case it was already instanced by calling CreateSubFlow() with bPreloading == true
 		AssetInstance = InstancedSubFlows[SubGraphNode];
 
+		// ensure that asset instance reference to its SubGraph owner
 		if (!AssetInstance->NodeOwningThisAssetInstance.IsValid())
 		{
-			AssetInstance->NodeOwningThisAssetInstance = SubGraphNode;			
+			AssetInstance->NodeOwningThisAssetInstance = SubGraphNode;
 		}
 		check(AssetInstance->NodeOwningThisAssetInstance == SubGraphNode);
-		
+
 		SubGraphNode->GetFlowAsset()->ActiveSubGraphs.Add(SubGraphNode, AssetInstance);
 
 		// don't activate Start Node if we're loading Sub Graph from SaveGame
 		if (SavedInstanceName.IsEmpty())
 		{
-			AssetInstance->StartFlow(SubGraphNode);
+			AssetInstance->StartFlow(SubGraphNode, SubGraphNode);
 		}
 	}
 
@@ -427,7 +432,7 @@ void UFlowSubsystem::OnGameSaved(TArray<FFlowComponentSaveData>& FlowComponents,
 				if (FlowComponent->CanSave())
 				{
 					FlowComponent->SaveRootFlow(FlowInstances);
-				}				
+				}
 			}
 			else
 			{
@@ -450,7 +455,7 @@ void UFlowSubsystem::OnGameSaved(TArray<FFlowComponentSaveData>& FlowComponents,
 			if (RegisteredComponent->CanSave())
 			{
 				FlowComponents.Emplace(RegisteredComponent->SaveInstance());
-			}		
+			}
 		}
 	}
 }
@@ -514,7 +519,7 @@ const FFlowComponentSaveData* UFlowSubsystem::GetLoadedComponentRecord(const UFl
 	{
 		const FString WorldName = Component->GetWorld()->GetName();
 		const FString ActorName = Component->GetOwner()->GetName();
-		
+
 		for (const FFlowComponentSaveData& ComponentRecord : LoadedSaveGame->FlowComponents)
 		{
 			if (ComponentRecord.WorldName == WorldName && ComponentRecord.ActorInstanceName == ActorName)
@@ -533,7 +538,7 @@ const FFlowAssetSaveData* UFlowSubsystem::GetLoadedAssetRecord(const UObject* Ow
 	{
 		const FName& WorldName = GetWorld()->GetFName();
 		const bool bAssetBoundToWorld = Asset->IsBoundToWorld();
-		
+
 		for (const FFlowAssetSaveData& AssetRecord : LoadedSaveGame->FlowInstances)
 		{
 			if (AssetRecord.InstanceName == SavedAssetInstanceName && (!bAssetBoundToWorld || AssetRecord.WorldName == WorldName))
@@ -769,26 +774,33 @@ void UFlowSubsystem::FindComponents(const FGameplayTagContainer& Tags, const EGa
 	{
 		for (const FGameplayTag& Tag : Tags)
 		{
-			TArray<TWeakObjectPtr<UFlowComponent>> ComponentsPerTag;
-			FindComponents(Tag, bExactMatch, ComponentsPerTag);
-			OutComponents.Append(ComponentsPerTag);
+			if (Tag.IsValid())
+			{
+				TArray<TWeakObjectPtr<UFlowComponent>> ComponentsPerTag;
+				FindComponents(Tag, bExactMatch, ComponentsPerTag);
+				OutComponents.Append(ComponentsPerTag);
+			}
 		}
 	}
 	else // EGameplayContainerMatchType::All
 	{
 		TSet<TWeakObjectPtr<UFlowComponent>> ComponentsWithAnyTag;
+
+		// Seed the candidate pool using just the first valid tag, then filter down to only those that have all tags.
 		for (const FGameplayTag& Tag : Tags)
 		{
-			TArray<TWeakObjectPtr<UFlowComponent>> ComponentsPerTag;
-			FindComponents(Tag, bExactMatch, ComponentsPerTag);
-			ComponentsWithAnyTag.Append(ComponentsPerTag);
-			break;
+			if (Tag.IsValid())
+			{
+				TArray<TWeakObjectPtr<UFlowComponent>> ComponentsPerTag;
+				FindComponents(Tag, bExactMatch, ComponentsPerTag);
+				ComponentsWithAnyTag.Append(ComponentsPerTag);
+				break;
+			}
 		}
 
 		for (const TWeakObjectPtr<UFlowComponent>& Component : ComponentsWithAnyTag)
 		{
-			if (Component.IsValid() && 
-				(bExactMatch ? Component->IdentityTags.HasAllExact(Tags) : Component->IdentityTags.HasAll(Tags)))
+			if (Component.IsValid() && (bExactMatch ? Component->IdentityTags.HasAllExact(Tags) : Component->IdentityTags.HasAll(Tags)))
 			{
 				OutComponents.Emplace(Component);
 			}
