@@ -83,6 +83,10 @@ void UFlowNode_SubGraph::ExecuteInput(const FName& PinName)
 
 	if (PinName == TEXT("Start"))
 	{
+		// Results of the previous execution must not be readable while the new one is running.
+		// The cache is refilled when the sub graph writes its outputs or finishes.
+		CachedOutputDataPinValues.Values.Reset();
+
 		if (GetFlowSubsystem())
 		{
 			GetFlowSubsystem()->CreateSubFlow(this);
@@ -160,6 +164,11 @@ FFlowDataPinResult UFlowNode_SubGraph::TrySupplyDataPin(const FName PinName) con
 	return Super::TrySupplyDataPin(PinName);
 }
 
+void UFlowNode_SubGraph::ReceiveOutputDataSnapshot(const FFlowOutputDataPinValues& Snapshot)
+{
+	CachedOutputDataPinValues = Snapshot;
+}
+
 void UFlowNode_SubGraph::OnLoad_Implementation()
 {
 	if (!SavedAssetInstanceName.IsEmpty() && !Asset.IsNull())
@@ -167,11 +176,6 @@ void UFlowNode_SubGraph::OnLoad_Implementation()
 		GetFlowSubsystem()->LoadSubFlow(this, SavedAssetInstanceName);
 		SavedAssetInstanceName = FString();
 	}
-}
-
-void UFlowNode_SubGraph::ReceiveOutputDataSnapshot(const FFlowOutputDataPinValues& Snapshot)
-{
-	CachedOutputDataPinValues = Snapshot;
 }
 
 #if WITH_EDITOR
