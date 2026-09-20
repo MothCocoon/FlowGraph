@@ -1019,6 +1019,11 @@ void UFlowAsset::DeinitializeInstance()
 	}
 }
 
+FName UFlowAsset::GetInstanceName() const
+{
+	return GetFName();
+}
+
 AActor* UFlowAsset::TryFindActorOwner() const
 {
 	UObject* OwnerObject = GetOwner();
