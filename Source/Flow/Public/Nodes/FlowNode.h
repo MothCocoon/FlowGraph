@@ -107,12 +107,12 @@ public:
 
 protected:
 	UPROPERTY(EditDefaultsOnly, Category = "FlowNode")
-	TArray<EFlowSignalMode> AllowedSignalModes;
+	TArray<EFlowSignalMode> AllowedSignalModes = {EFlowSignalMode::Enabled, EFlowSignalMode::Disabled, EFlowSignalMode::PassThrough};
 
 	/* If enabled, signal will pass through node without calling ExecuteInput().
 	 * Designed to handle patching already released games. */
 	UPROPERTY()
-	EFlowSignalMode SignalMode;
+	EFlowSignalMode SignalMode = EFlowSignalMode::Enabled;
 
 //////////////////////////////////////////////////////////////////////////
 // All created pins (default, class-specific and added by user)
@@ -148,7 +148,10 @@ protected:
 	uint8 CountNumberedOutputs() const;
 
 public:
+	UFUNCTION(BlueprintPure, Category = "FlowNode")
 	const TArray<FFlowPin>& GetInputPins() const { return InputPins; }
+
+	UFUNCTION(BlueprintPure, Category = "FlowNode")
 	const TArray<FFlowPin>& GetOutputPins() const { return OutputPins; }
 
 	UFUNCTION(BlueprintPure, Category = "FlowNode")
@@ -290,11 +293,11 @@ public:
 
 	// IFlowDataPinValueSupplierInterface
 public:
-	virtual FFlowDataPinResult TrySupplyDataPin(FName PinName) const override;
+	virtual FFlowDataPinResult TrySupplyDataPin(const FName PinName) const override;
 
 protected:
 	/* Helper for TryGetFlowDataPinSupplierDatasForPinName(). */
-	void TryAddSupplierDataToArray(FFlowPinValueSupplierData& InOutSupplierData, TFlowPinValueSupplierDataArray& InOutPinValueSupplierDatas) const;
+	static void TryAddSupplierDataToArray(const FFlowPinValueSupplierData& InOutSupplierData, TFlowPinValueSupplierDataArray& InOutPinValueSupplierDatas);
 
 public:
 	/* Advanced helper for TrySupplyDataPin, which can be overridden in subclasses to provide additional or replacement object(s)
@@ -350,7 +353,7 @@ public:
 
 protected:
 	UPROPERTY(SaveGame)
-	EFlowNodeState ActivationState;
+	EFlowNodeState ActivationState = EFlowNodeState::NeverActivated;
 
 public:
 	EFlowNodeState GetActivationState() const { return ActivationState; }
@@ -389,7 +392,7 @@ public:
 	/* Returns true if this node's content is currently preloaded. */
 	bool IsContentPreloaded() const;
 
-	/* Called when async preloading finishes (i.e. PreloadContent returned PreloadInProgress). Updates helper state and fires OUTPIN_AllPreloadsComplete.
+	/* Called when async preloading finishes (i.e. PreloadContent returned PreloadInProgress). Updates helper state and fires "Preloaded" output.
 	 * Async C++ nodes call this from their completion delegate; async Blueprint nodes call it on self.
 	 * Safe to call from within PreloadContent() (e.g. if FStreamableManager fires synchronously).
 	 * Must be called on the game thread. No-op if called after TriggerFlush (cancellation guard). */

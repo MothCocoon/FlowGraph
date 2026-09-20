@@ -1,14 +1,14 @@
 // Copyright https://github.com/MothCocoon/FlowGraph/graphs/contributors
-
 #include "Nodes/FlowPin.h"
+
 #include "FlowLogChannels.h"
+#include "Types/FlowPinType.h"
+#include "Types/FlowPinTypesStandard.h"
 
 #include "GameplayTagContainer.h"
 #include "Misc/DateTime.h"
 #include "Misc/MessageDialog.h"
 #include "StructUtils/InstancedStruct.h"
-#include "Types/FlowPinType.h"
-#include "Types/FlowPinTypesStandard.h"
 
 #include UE_INLINE_GENERATED_CPP_BY_NAME(FlowPin)
 

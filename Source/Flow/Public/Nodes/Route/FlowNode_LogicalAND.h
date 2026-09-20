@@ -12,20 +12,19 @@ UCLASS(NotBlueprintable, meta = (DisplayName = "AND", Keywords = "&"))
 class FLOW_API UFlowNode_LogicalAND final : public UFlowNode
 {
 	GENERATED_BODY()
-	
+
 public:
 	UFlowNode_LogicalAND();
 
 private:
 	UPROPERTY(SaveGame)
 	TSet<FName> ExecutedInputNames;
-	
-#if WITH_EDITOR
+
 public:
+#if WITH_EDITOR
 	virtual bool CanUserAddInput() const override { return true; }
 #endif
 
-protected:
 	virtual void ExecuteInput(const FName& PinName) override;
 	virtual void Cleanup() override;
 };

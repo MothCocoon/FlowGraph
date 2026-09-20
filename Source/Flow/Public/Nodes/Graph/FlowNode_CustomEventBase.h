@@ -11,7 +11,7 @@ UCLASS(Abstract, NotBlueprintable)
 class FLOW_API UFlowNode_CustomEventBase : public UFlowNode
 {
 	GENERATED_BODY()
-	
+
 public:
 	UFlowNode_CustomEventBase();
 
@@ -24,8 +24,9 @@ public:
 	const FName& GetEventName() const { return EventName; }
 
 #if WITH_EDITOR
-public:
 	virtual FString GetNodeDescription() const override;
+
+protected:
 	virtual EDataValidationResult ValidateNode() override;
 #endif
 };

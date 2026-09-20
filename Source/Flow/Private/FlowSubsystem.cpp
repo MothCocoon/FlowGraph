@@ -168,23 +168,23 @@ void UFlowSubsystem::FinishAllRootFlows(UObject* Owner, const EFlowFinishPolicy 
 
 UFlowAsset* UFlowSubsystem::CreateSubFlow(UFlowNode_SubGraph* SubGraphNode, const FString& SavedInstanceName, const bool bPreloading /* = false */)
 {
-	UFlowAsset* NewInstance = nullptr;
+	UFlowAsset* AssetInstance = nullptr;
 
 	if (!InstancedSubFlows.Contains(SubGraphNode))
 	{
 		const TWeakObjectPtr<UObject> Owner = SubGraphNode->GetFlowAsset() ? SubGraphNode->GetFlowAsset()->GetOwner() : nullptr;
-		NewInstance = CreateFlowInstance(Owner, SubGraphNode->Asset.LoadSynchronous(), SavedInstanceName);
+		AssetInstance = CreateFlowInstance(Owner, SubGraphNode->Asset.LoadSynchronous(), SavedInstanceName);
 
-		if (NewInstance)
+		if (AssetInstance)
 		{
-			InstancedSubFlows.Add(SubGraphNode, NewInstance);
+			InstancedSubFlows.Add(SubGraphNode, AssetInstance);
 		}
 	}
 
 	if (InstancedSubFlows.Contains(SubGraphNode) && !bPreloading)
 	{
 		// get instanced asset from map - in case it was already instanced by calling CreateSubFlow() with bPreloading == true
-		UFlowAsset* AssetInstance = InstancedSubFlows[SubGraphNode];
+		AssetInstance = InstancedSubFlows[SubGraphNode];
 
 		// ensure that asset instance reference to its SubGraph owner
 		if (!AssetInstance->NodeOwningThisAssetInstance.IsValid())
@@ -202,7 +202,7 @@ UFlowAsset* UFlowSubsystem::CreateSubFlow(UFlowNode_SubGraph* SubGraphNode, cons
 		}
 	}
 
-	return NewInstance;
+	return AssetInstance;
 }
 
 void UFlowSubsystem::RemoveSubFlow(UFlowNode_SubGraph* SubGraphNode, const EFlowFinishPolicy FinishPolicy)
@@ -752,26 +752,33 @@ void UFlowSubsystem::FindComponents(const FGameplayTagContainer& Tags, const EGa
 	{
 		for (const FGameplayTag& Tag : Tags)
 		{
-			TArray<TWeakObjectPtr<UFlowComponent>> ComponentsPerTag;
-			FindComponents(Tag, bExactMatch, ComponentsPerTag);
-			OutComponents.Append(ComponentsPerTag);
+			if (Tag.IsValid())
+			{
+				TArray<TWeakObjectPtr<UFlowComponent>> ComponentsPerTag;
+				FindComponents(Tag, bExactMatch, ComponentsPerTag);
+				OutComponents.Append(ComponentsPerTag);
+			}
 		}
 	}
 	else // EGameplayContainerMatchType::All
 	{
 		TSet<TWeakObjectPtr<UFlowComponent>> ComponentsWithAnyTag;
+
+		// Seed the candidate pool using just the first valid tag, then filter down to only those that have all tags.
 		for (const FGameplayTag& Tag : Tags)
 		{
-			TArray<TWeakObjectPtr<UFlowComponent>> ComponentsPerTag;
-			FindComponents(Tag, bExactMatch, ComponentsPerTag);
-			ComponentsWithAnyTag.Append(ComponentsPerTag);
-			break;
+			if (Tag.IsValid())
+			{
+				TArray<TWeakObjectPtr<UFlowComponent>> ComponentsPerTag;
+				FindComponents(Tag, bExactMatch, ComponentsPerTag);
+				ComponentsWithAnyTag.Append(ComponentsPerTag);
+				break;
+			}
 		}
 
 		for (const TWeakObjectPtr<UFlowComponent>& Component : ComponentsWithAnyTag)
 		{
-			if (Component.IsValid() &&
-				(bExactMatch ? Component->IdentityTags.HasAllExact(Tags) : Component->IdentityTags.HasAll(Tags)))
+			if (Component.IsValid() && (bExactMatch ? Component->IdentityTags.HasAllExact(Tags) : Component->IdentityTags.HasAll(Tags)))
 			{
 				OutComponents.Emplace(Component);
 			}

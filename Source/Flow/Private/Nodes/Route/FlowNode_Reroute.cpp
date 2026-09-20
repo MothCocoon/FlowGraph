@@ -1,6 +1,6 @@
 // Copyright https://github.com/MothCocoon/FlowGraph/graphs/contributors
-
 #include "Nodes/Route/FlowNode_Reroute.h"
+
 #include "FlowAsset.h"
 
 #include UE_INLINE_GENERATED_CPP_BY_NAME(FlowNode_Reroute)
@@ -37,7 +37,7 @@ void UFlowNode_Reroute::ConfigureOutputPin(const UFlowNode& ConnectedNode, const
 }
 #endif
 
-FFlowDataPinResult UFlowNode_Reroute::TrySupplyDataPin(FName PinName) const
+FFlowDataPinResult UFlowNode_Reroute::TrySupplyDataPin(const FName PinName) const
 {
 	const FFlowPin* InputPin = FindInputPinByName(UFlowNode::DefaultInputPin.PinName);
 	if (!InputPin)

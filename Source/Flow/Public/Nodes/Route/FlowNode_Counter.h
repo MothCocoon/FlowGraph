@@ -17,13 +17,12 @@ public:
 
 protected:
 	UPROPERTY(EditAnywhere, Category = "Counter", meta = (ClampMin = 2))
-	int32 Goal;
+	int32 Goal = 2;
 
-private:
 	UPROPERTY(SaveGame)
-	int32 CurrentSum;
+	int32 CurrentSum = 0;
 
-protected:
+public:
 	virtual void ExecuteInput(const FName& PinName) override;
 	virtual void Cleanup() override;
 

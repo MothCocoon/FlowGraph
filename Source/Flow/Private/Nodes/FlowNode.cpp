@@ -1,8 +1,7 @@
 // Copyright https://github.com/MothCocoon/FlowGraph/graphs/contributors
-
 #include "Nodes/FlowNode.h"
-#include "AddOns/FlowNodeAddOn.h"
 
+#include "AddOns/FlowNodeAddOn.h"
 #include "FlowAsset.h"
 #include "FlowSettings.h"
 #include "Interfaces/FlowPreloadableInterface.h"
@@ -15,15 +14,15 @@
 #include "Types/FlowPinType.h"
 
 #include "Components/ActorComponent.h"
-#if WITH_EDITOR
-#include "Editor.h"
-#endif
-
 #include "Engine/BlueprintGeneratedClass.h"
 #include "GameFramework/Actor.h"
 #include "Misc/App.h"
 #include "Serialization/MemoryReader.h"
 #include "Serialization/MemoryWriter.h"
+
+#if WITH_EDITOR
+#include "Editor.h"
+#endif
 
 FFlowPin UFlowNode::DefaultInputPin(TEXT("In"));
 FFlowPin UFlowNode::DefaultOutputPin(TEXT("Out"));
@@ -34,9 +33,6 @@ FString UFlowNode::MissingClass = TEXT("Missing class");
 FString UFlowNode::NoActorsFound = TEXT("No actors found");
 
 UFlowNode::UFlowNode()
-	: AllowedSignalModes({EFlowSignalMode::Enabled, EFlowSignalMode::Disabled, EFlowSignalMode::PassThrough})
-	, SignalMode(EFlowSignalMode::Enabled)
-	, ActivationState(EFlowNodeState::NeverActivated)
 {
 #if WITH_EDITOR
 	Category = TEXT("Uncategorized");
@@ -530,7 +526,7 @@ bool UFlowNode::TryUpdateAutoDataPins()
 }
 #endif
 
-FFlowDataPinResult UFlowNode::TrySupplyDataPin(FName PinName) const
+FFlowDataPinResult UFlowNode::TrySupplyDataPin(const FName PinName) const
 {
 	const FFlowPin* FlowPin = FindOutputPinByName(PinName);
 	if (!FlowPin)
@@ -594,7 +590,7 @@ bool UFlowNode::TryGatherPropertyOwnersAndPopulateResult(
 		return false;
 	}
 
-	const FFlowDataPinValueOwner* ValueOwner = nullptr;
+	const FFlowDataPinValueOwner* ValueOwner;
 	FName PropertyNameToLookup;
 	const TArray<FFlowDataPinValueOwner>& ValueOwners = ValueOwnerCollection.GetValueOwners();
 
@@ -637,7 +633,7 @@ bool UFlowNode::TryGatherPropertyOwnersAndPopulateResult(
 		return false;
 	}
 
-	// Populate the value for the pin on the its owner object
+	// Populate the value for the pin on its owner object
 	const UObject* ValueOwnerAsObject = Cast<UObject>(ValueOwner->OwnerInterface);
 	const UFlowNode& FlowNodeThis = *this;
 	if (DataPinType.PopulateResult(*ValueOwnerAsObject, FlowNodeThis, PropertyNameToLookup, OutSuppliedResult))
@@ -695,7 +691,7 @@ bool UFlowNode::TryGetFlowDataPinSupplierDatasForPinName(const FName& PinName, T
 	return !InOutPinValueSupplierDatas.IsEmpty();
 }
 
-void UFlowNode::TryAddSupplierDataToArray(FFlowPinValueSupplierData& InOutSupplierData, TFlowPinValueSupplierDataArray& InOutPinValueSupplierDatas) const
+void UFlowNode::TryAddSupplierDataToArray(const FFlowPinValueSupplierData& InOutSupplierData, TFlowPinValueSupplierDataArray& InOutPinValueSupplierDatas)
 {
 	// If the connected node can supply data pin values, insert it into the top of the priority queue
 	const UFlowNode* SupplierFlowNode = CastChecked<UFlowNode>(InOutSupplierData.PinValueSupplier);
@@ -840,10 +836,10 @@ void UFlowNode::SetConnections(const TMap<FName, FConnectedPin>& InConnections)
 	if (OldConnections.Num() == InConnections.Num())
 	{
 		bool bAllEqual = true;
-		for (const TPair<FName, FConnectedPin>& KVP : OldConnections)
+		for (const TPair<FName, FConnectedPin>& OldConnection : OldConnections)
 		{
-			const FConnectedPin* Other = InConnections.Find(KVP.Key);
-			if (!Other || !(*Other == KVP.Value))
+			const FConnectedPin* Other = InConnections.Find(OldConnection.Key);
+			if (!Other || *Other != OldConnection.Value)
 			{
 				bAllEqual = false;
 				break;
@@ -1090,12 +1086,10 @@ bool UFlowNode::FindConnectedNodeForPinCached(const FName& FlowPinName, FConnect
 	// - exec output pins
 	// - data input pins
 	// In both cases, there must be only one connection (due to schema rules in Flow).
-	// For the opposite direction (exec inputs, data outputs, the uncached version must be used.
-	const FConnectedPin* FoundConnectedPin = Connections.Find(FlowPinName);
-	if (FoundConnectedPin)
+	// For the opposite direction (exec inputs, data outputs) the uncached version must be used.
+	if (const FConnectedPin* FoundConnectedPin = Connections.Find(FlowPinName))
 	{
 		ConnectedPin = *FoundConnectedPin;
-
 		return true;
 	}
 
@@ -1275,7 +1269,7 @@ void UFlowNode::NotifyPreloadComplete()
 	{
 		if (Helper->OnPreloadComplete(*this) == EFlowPreloadResult::Completed)
 		{
-			TriggerOutput(FFlowPreloadHelper::OUTPIN_AllPreloadsComplete.PinName, false);
+			TriggerOutput(FFlowPreloadHelper::OUTPIN_Preloaded.PinName, false);
 		}
 	}
 }

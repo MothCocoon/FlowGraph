@@ -1,6 +1,6 @@
 // Copyright https://github.com/MothCocoon/FlowGraph/graphs/contributors
-
 #include "Nodes/Route/FlowNode_Switch.h"
+
 #include "AddOns/FlowNodeAddOn.h"
 #include "FlowSettings.h"
 #include "Interfaces/FlowSwitchCaseInterface.h"
@@ -43,24 +43,22 @@ void UFlowNode_Switch::ExecuteInput(const FName& PinName)
 	int32 TriggeringCaseCount = 0;
 
 	// Trigger the IFlowSwitchCaseInterface addons that pass
-	const EFlowForEachAddOnFunctionReturnValue SwitchCaseResult = 
-		ForEachAddOnForClassConst<UFlowSwitchCaseInterface>(
-			[&TriggeringCaseCount, this](const UFlowNodeAddOn& SwitchCaseAddOn)
+	ForEachAddOnForClassConst<UFlowSwitchCaseInterface>([&TriggeringCaseCount, this](const UFlowNodeAddOn& SwitchCaseAddOn)
+	{
+		const IFlowSwitchCaseInterface* SwitchCaseInterface = CastChecked<IFlowSwitchCaseInterface>(&SwitchCaseAddOn);
+
+		if (IFlowSwitchCaseInterface::Execute_TryTriggerForCase(&SwitchCaseAddOn))
+		{
+			++TriggeringCaseCount;
+
+			if (bOnlyTriggerFirstPassingCase)
 			{
-				const IFlowSwitchCaseInterface* SwitchCaseInterface = CastChecked<IFlowSwitchCaseInterface>(&SwitchCaseAddOn);
+				return EFlowForEachAddOnFunctionReturnValue::BreakWithSuccess;
+			}
+		}
 
-				if (IFlowSwitchCaseInterface::Execute_TryTriggerForCase(&SwitchCaseAddOn))
-				{
-					++TriggeringCaseCount;
-
-					if (bOnlyTriggerFirstPassingCase)
-					{
-						return EFlowForEachAddOnFunctionReturnValue::BreakWithSuccess;
-					}
-				}
-
-				return EFlowForEachAddOnFunctionReturnValue::Continue;
-			});
+		return EFlowForEachAddOnFunctionReturnValue::Continue;
+	});
 
 	if (TriggeringCaseCount == 0)
 	{
@@ -74,7 +72,7 @@ FText UFlowNode_Switch::K2_GetNodeTitle_Implementation() const
 {
 	if (!bOnlyTriggerFirstPassingCase && GetDefault<UFlowSettings>()->bUseAdaptiveNodeTitles)
 	{
-		return FText::Format(LOCTEXT("SwitchTitle", "{0} (All Passing)"), { Super::K2_GetNodeTitle_Implementation() });
+		return FText::Format(LOCTEXT("SwitchTitle", "{0} (All Passing)"), {Super::K2_GetNodeTitle_Implementation()});
 	}
 
 	return Super::K2_GetNodeTitle_Implementation();

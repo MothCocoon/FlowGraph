@@ -1,6 +1,6 @@
 // Copyright https://github.com/MothCocoon/FlowGraph/graphs/contributors
-
 #include "Nodes/Developer/FlowNode_Log.h"
+
 #include "FlowLogChannels.h"
 
 #include "Engine/Engine.h"
@@ -10,19 +10,14 @@
 #define LOCTEXT_NAMESPACE "FlowNode_Log"
 
 UFlowNode_Log::UFlowNode_Log()
-	: Message()
-	, Verbosity(EFlowLogVerbosity::Warning)
-	, bPrintToScreen(true)
-	, Duration(5.0f)
-	, TextColor(FColor::Yellow)
 {
 #if WITH_EDITOR
 	Category = TEXT("Developer");
 	NodeDisplayStyle = FlowNodeStyle::Developer;
 #endif
 
-	InputPins = { UFlowNode::DefaultInputPin };
-	OutputPins = { UFlowNode::DefaultOutputPin };
+	InputPins = {UFlowNode::DefaultInputPin};
+	OutputPins = {UFlowNode::DefaultOutputPin};
 }
 
 void UFlowNode_Log::ExecuteInput(const FName& PinName)
@@ -42,7 +37,7 @@ void UFlowNode_Log::ExecuteInput(const FName& PinName)
 
 	// Format Message with named properties
 	FText FormattedMessage = FText::FromString(ResolvedMessage);
-	(void) TryFormatTextWithNamedPropertiesAsParameters(FormattedMessage, FormattedMessage);
+	(void)TryFormatTextWithNamedPropertiesAsParameters(FormattedMessage, FormattedMessage);
 
 	// Display the message
 
@@ -97,13 +92,12 @@ void UFlowNode_Log::OnEditorPinConnectionsChanged(const TArray<FFlowPinConnectio
 void UFlowNode_Log::UpdateNodeConfigText_Implementation()
 {
 	constexpr bool bErrorIfInputPinNotFound = true;
-
 	FConnectedPin ConnectedPin;
-	const bool bIsInputConnected = FindFirstInputPinConnection(GET_MEMBER_NAME_CHECKED(ThisClass, Message), bErrorIfInputPinNotFound, ConnectedPin);
 
-	if (bIsInputConnected)
+	// is input connected?
+	if (FindFirstInputPinConnection(GET_MEMBER_NAME_CHECKED(ThisClass, Message), bErrorIfInputPinNotFound, ConnectedPin))
 	{
-		SetNodeConfigText(FText::Format(LOCTEXT("LogFromPin", "Message from: {0}"), { FText::FromString(ConnectedPin.PinName.ToString()) }));
+		SetNodeConfigText(FText::Format(LOCTEXT("LogFromPin", "Message from: {0}"), {FText::FromString(ConnectedPin.PinName.ToString())}));
 	}
 	else
 	{

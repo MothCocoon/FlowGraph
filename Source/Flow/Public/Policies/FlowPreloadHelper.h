@@ -25,7 +25,7 @@ struct FLOW_API FFlowPreloadHelper
 
 public:	
 	/* Exec output pin fired when all preloads for this node are complete. */
-	static const FFlowPin OUTPIN_AllPreloadsComplete;
+	static const FFlowPin OUTPIN_Preloaded;
 	
 public:	
 	virtual ~FFlowPreloadHelper() = default;
@@ -47,7 +47,7 @@ public:
 
 	/* Called by UFlowNode::NotifyPreloadComplete() when async preloading finishes.
 	 * Possible results:
-	 * - Completed			- all participants finished, AllPreloadsComplete should fire.
+	 * - Completed			- all participants finished, "Preloaded" output should fire.
 	 * - PreloadInProgress  - call arrived after flush/cancel, or other participants are still in progress. */
 	virtual EFlowPreloadResult OnPreloadComplete(UFlowNode& Node) PURE_VIRTUAL(OnPreloadComplete, return EFlowPreloadResult::Invalid;);
 
@@ -83,7 +83,7 @@ protected:
 
 	/* Number of outstanding async completions (node + addons) between TriggerPreload and full completion.
 	 * Counts up before any PreloadContent calls so re-entrant NotifyPreloadComplete() is safe.
-	 * TriggerFlush resets to 0; OnPreloadComplete decrements; AllPreloadsComplete fires when it reaches 0. */
+	 * TriggerFlush resets to 0; OnPreloadComplete decrements; "Preloaded" output fires when it reaches 0. */
 	int32 PendingPreloadCount = 0;
 
 public:	

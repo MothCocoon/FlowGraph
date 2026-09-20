@@ -1,12 +1,7 @@
 // Copyright https://github.com/MothCocoon/FlowGraph/graphs/contributors
-
 #include "Nodes/Actor/FlowNode_OnActorUnregistered.h"
 
 #include UE_INLINE_GENERATED_CPP_BY_NAME(FlowNode_OnActorUnregistered)
-
-UFlowNode_OnActorUnregistered::UFlowNode_OnActorUnregistered()
-{
-}
 
 void UFlowNode_OnActorUnregistered::ObserveActor(TWeakObjectPtr<AActor> Actor, TWeakObjectPtr<UFlowComponent> Component)
 {

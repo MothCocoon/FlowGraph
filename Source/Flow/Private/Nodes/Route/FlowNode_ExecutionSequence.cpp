@@ -1,11 +1,9 @@
 // Copyright https://github.com/MothCocoon/FlowGraph/graphs/contributors
-
 #include "Nodes/Route/FlowNode_ExecutionSequence.h"
 
 #include UE_INLINE_GENERATED_CPP_BY_NAME(FlowNode_ExecutionSequence)
 
 UFlowNode_ExecutionSequence::UFlowNode_ExecutionSequence()
-	: bSavePinExecutionState(true)
 {
 #if WITH_EDITOR
 	Category = TEXT("Route");

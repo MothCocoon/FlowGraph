@@ -9,16 +9,12 @@
  * Execution of the graph always starts from this node.
  */
 UCLASS(NotBlueprintable, NotPlaceable, meta = (DisplayName = "Start"))
-class FLOW_API UFlowNode_Start
-	: public UFlowNode_DefineProperties
-	, public IFlowNodeWithExternalDataPinSupplierInterface
+class FLOW_API UFlowNode_Start : public UFlowNode_DefineProperties, public IFlowNodeWithExternalDataPinSupplierInterface
 {
 	GENERATED_BODY()
 
 public:
 	UFlowNode_Start();
-
-	friend class UFlowAsset;
 
 protected:
 	/* External DataPin Value Supplier.
@@ -40,6 +36,6 @@ public:
 	// --
 
 	// IFlowDataPinValueSupplierInterface
-	virtual FFlowDataPinResult TrySupplyDataPin(FName PinName) const override;
+	virtual FFlowDataPinResult TrySupplyDataPin(const FName PinName) const override;
 	// --
 };

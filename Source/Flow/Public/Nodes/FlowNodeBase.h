@@ -86,8 +86,6 @@ class FLOW_API UFlowNodeBase
 	GENERATED_BODY()
 
 public:
-	UFlowNodeBase();
-
 	friend class SFlowGraphNode;
 	friend class UFlowAsset;
 	friend class UFlowGraphNode;
@@ -380,13 +378,13 @@ protected:
 	TObjectPtr<UEdGraphNode> GraphNode;
 
 	UPROPERTY(EditDefaultsOnly, Category = "FlowNode")
-	uint8 bDisplayNodeTitleWithoutPrefix : 1;
+	uint8 bDisplayNodeTitleWithoutPrefix : 1 = true;
 
-	uint8 bCanDelete : 1 ;
-	uint8 bCanDuplicate : 1;
+	uint8 bCanDelete : 1 = true;
+	uint8 bCanDuplicate : 1 = true;
 
 	UPROPERTY(EditDefaultsOnly, Category = "FlowNode")
-	bool bNodeDeprecated;
+	bool bNodeDeprecated = false;
 
 	/* If this node is deprecated, it might be replaced by another node. */
 	UPROPERTY(EditDefaultsOnly, Category = "FlowNode")
@@ -436,15 +434,15 @@ protected:
 	FString Category;
 	
 	UPROPERTY(EditDefaultsOnly, Category = "FlowNode", meta = (Categories = "Flow.NodeStyle"))
-	FGameplayTag NodeDisplayStyle;
+	FGameplayTag NodeDisplayStyle = FlowNodeStyle::Node;
 
 	/* Deprecated NodeStyle, replaced by NodeDisplayStyle. */
 	UPROPERTY(meta = (DeprecatedProperty, DeprecationMessage = "Use the NodeDisplayStyle instead."))
-	EFlowNodeStyle NodeStyle;
+	EFlowNodeStyle NodeStyle = EFlowNodeStyle::Invalid;
 
 	/* Set Node Style to custom to use your own color for this node (if using Flow.NodeStyle.Custom). */
 	UPROPERTY(EditDefaultsOnly, Category = "FlowNode", DisplayName = "Custom Node Color")
-	FLinearColor NodeColor;
+	FLinearColor NodeColor = FLinearColor::Black;
 
 	/* Optional developer-facing text to explain the configuration of this node when viewed in the editor.
 	 * May be authored or set procedurally via UpdateNodeConfigText and SetNodeConfigText. */
@@ -462,8 +460,8 @@ public:
 	/* This method allows to have different for every node instance, i.e. Red if node represents enemy, Green if node represents a friend. */
 	virtual bool GetDynamicTitleColor(FLinearColor& OutColor) const;
 
-	virtual FText GetNodeTitle() const { return K2_GetNodeTitle(); }
-	virtual FText GetNodeToolTip() const { return K2_GetNodeToolTip(); }
+	virtual FText GetNodeTitle() const;
+	virtual FText GetNodeToolTip() const;
 
 	FText GetGeneratedDisplayName() const;
 
@@ -494,7 +492,10 @@ public:
 	
 	UFUNCTION(BlueprintNativeEvent, Category = "FlowNode")
 	FText K2_GetNodeToolTip() const;
-
+	
+	UFUNCTION(BlueprintNativeEvent, Category = "FlowNode")
+	FString K2_GetNodeCategory() const;
+	
 	UFUNCTION(BlueprintPure, Category = "FlowNode")
 	virtual FText GetNodeConfigText() const;
 

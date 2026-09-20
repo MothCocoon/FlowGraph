@@ -4,6 +4,7 @@
 #include "LevelSequencePlayer.h"
 #include "FlowLevelSequencePlayer.generated.h"
 
+class AFlowLevelSequenceActor;
 class UFlowNode;
 
 /**
@@ -24,12 +25,12 @@ public:
 	static UFlowLevelSequencePlayer* CreateFlowLevelSequencePlayer(
 		const UObject* WorldContextObject,
 		ULevelSequence* LevelSequence,
-		FMovieSceneSequencePlaybackSettings Settings,
-		FLevelSequenceCameraSettings CameraSettings,
-		AActor* TransformOriginActor,
+		const FMovieSceneSequencePlaybackSettings& Settings,
+		const FLevelSequenceCameraSettings CameraSettings,
+		const AActor* TransformOriginActor,
 		const bool bReplicates,
 		const bool bAlwaysRelevant,
-		ALevelSequenceActor*& OutActor);
+		TObjectPtr<AFlowLevelSequenceActor>& OutActor);
 
 	void SetFlowEventReceiver(UFlowNode* FlowNode) { FlowEventReceiver = FlowNode; }
 

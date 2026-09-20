@@ -37,24 +37,23 @@ private:
 	FString Message;
 
 	UPROPERTY(EditAnywhere, Category = "Flow")
-	EFlowLogVerbosity Verbosity;
+	EFlowLogVerbosity Verbosity = EFlowLogVerbosity::Warning;
 
 	UPROPERTY(EditAnywhere, Category = "Flow")
-	bool bPrintToScreen;
+	bool bPrintToScreen = true;
 
 	UPROPERTY(EditAnywhere, Category = "Flow", meta = (EditCondition = "bPrintToScreen", EditConditionHides))
-	float Duration;
+	float Duration = 5.0f;
 
 	UPROPERTY(EditAnywhere, Category = "Flow", meta = (EditCondition = "bPrintToScreen", EditConditionHides))
-	FColor TextColor;
+	FColor TextColor = FColor::Yellow;
 
-protected:
+public:
 	// IFlowCoreExecutableInterface
 	virtual void ExecuteInput(const FName& PinName) override;
 	// --
 
 #if WITH_EDITOR
-public:
 	// UObject
 	virtual void PostEditChangeChainProperty(FPropertyChangedChainEvent& PropertyChangedEvent) override;
 	// --
@@ -66,6 +65,5 @@ public:
 	virtual void UpdateNodeConfigText_Implementation() override;
 #endif
 
-public:
 	EFlowLogVerbosity GetVerbosity() const { return Verbosity; }
 };

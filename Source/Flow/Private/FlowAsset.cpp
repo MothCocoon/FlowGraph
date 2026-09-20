@@ -983,7 +983,7 @@ void UFlowAsset::InitializeInstance(const TWeakObjectPtr<UObject> InOwner, UFlow
 
 		if (UFlowNode_CustomInput* CustomInput = Cast<UFlowNode_CustomInput>(NewNodeInstance))
 		{
-			if (!CustomInput->EventName.IsNone())
+			if (!CustomInput->GetEventName().IsNone())
 			{
 				CustomInputNodes.Emplace(CustomInput);
 			}
@@ -1016,6 +1016,11 @@ void UFlowAsset::DeinitializeInstance()
 
 		TemplateAsset = nullptr;
 	}
+}
+
+FName UFlowAsset::GetInstanceName() const
+{
+	return GetFName();
 }
 
 AActor* UFlowAsset::TryFindActorOwner() const
@@ -1247,7 +1252,7 @@ void UFlowAsset::TriggerCustomInput(const FName& EventName, IFlowDataPinValueSup
 {
 	for (UFlowNode_CustomInput* CustomInputNode : CustomInputNodes)
 	{
-		if (CustomInputNode->EventName == EventName)
+		if (CustomInputNode->GetEventName() == EventName)
 		{
 			RecordedNodes.Add(CustomInputNode);
 

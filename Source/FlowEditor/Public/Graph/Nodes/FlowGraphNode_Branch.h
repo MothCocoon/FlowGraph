@@ -7,7 +7,10 @@
 UCLASS()
 class FLOWEDITOR_API UFlowGraphNode_Branch : public UFlowGraphNode
 {
-	GENERATED_UCLASS_BODY()
+	GENERATED_BODY()
+
+public:
+	UFlowGraphNode_Branch();
 
 	// UEdGraphNode
 	virtual FSlateIcon GetIconAndTint(FLinearColor& OutColor) const override;

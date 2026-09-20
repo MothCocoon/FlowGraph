@@ -68,7 +68,7 @@ protected:
 public:
 	FOnSelectionChanged OnSelectionChangedEvent;
 
-	TSet<UFlowGraphNode*> GetSelectedFlowNodes() const;
+	TArray<UFlowGraphNode*> GetSelectedFlowNodes() const;
 
 protected:
 	virtual bool CanSelectAllNodes() const { return true; }
@@ -92,7 +92,7 @@ protected:
 	TArray<UFlowGraphNode*> DerivePasteTargetNodesFromSelectedNodes() const;
 
 public:
-	virtual void PasteNodesHere(const FVector2D& Location);
+	virtual void PasteNodesHere(const FVector2f& Location);
 	virtual bool CanPasteNodes() const;
 
 protected:

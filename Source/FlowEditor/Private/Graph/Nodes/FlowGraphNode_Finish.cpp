@@ -1,14 +1,12 @@
 // Copyright https://github.com/MothCocoon/FlowGraph/graphs/contributors
-
 #include "Graph/Nodes/FlowGraphNode_Finish.h"
-#include "Graph/Widgets/SFlowGraphNode_Finish.h"
 
+#include "Graph/Widgets/SFlowGraphNode_Finish.h"
 #include "Nodes/Graph/FlowNode_Finish.h"
 
 #include UE_INLINE_GENERATED_CPP_BY_NAME(FlowGraphNode_Finish)
 
-UFlowGraphNode_Finish::UFlowGraphNode_Finish(const FObjectInitializer& ObjectInitializer)
-	: Super(ObjectInitializer)
+UFlowGraphNode_Finish::UFlowGraphNode_Finish()
 {
 	AssignedNodeClasses = {UFlowNode_Finish::StaticClass()};
 }

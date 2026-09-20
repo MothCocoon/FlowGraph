@@ -30,7 +30,7 @@ FLOW_ENUM_RANGE_VALUES(EExecuteComponentSource)
 
 namespace EExecuteComponentSource_Classifiers
 {
-	FORCEINLINE bool DoesComponentSourceUseInjectManager(EExecuteComponentSource Source) { return FLOW_IS_ENUM_IN_SUBRANGE(Source, EExecuteComponentSource::UsesInjectManager); }
+	FORCEINLINE bool DoesComponentSourceUseInjectManager(const EExecuteComponentSource Source) { return FLOW_IS_ENUM_IN_SUBRANGE(Source, EExecuteComponentSource::UsesInjectManager); }
 }
 
 /**
@@ -90,7 +90,7 @@ public:
 	
 protected:
 #if WITH_EDITOR
-	void RefreshPins();
+	void RefreshPins() const;
 	const UActorComponent* TryGetExpectedComponent() const;
 
 	void RefreshComponentSource();
