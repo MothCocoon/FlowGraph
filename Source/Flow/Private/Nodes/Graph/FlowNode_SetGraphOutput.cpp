@@ -6,10 +6,6 @@
 #include "Types/FlowDataPinResults.h"
 #include "Types/FlowNamedDataPinProperty.h"
 
-#if WITH_EDITOR
-#include "Types/FlowAutoDataPinsWorkingData.h"
-#endif
-
 #include UE_INLINE_GENERATED_CPP_BY_NAME(FlowNode_SetGraphOutput)
 
 UFlowNode_SetGraphOutput::UFlowNode_SetGraphOutput()
@@ -29,7 +25,7 @@ void UFlowNode_SetGraphOutput::ExecuteInput(const FName& PinName)
 	TriggerFirstOutput(true);
 }
 
-void UFlowNode_SetGraphOutput::CommitOutputDataPinValues()
+void UFlowNode_SetGraphOutput::CommitOutputDataPinValues() const
 {
 	UFlowAsset* FlowAsset = GetFlowAsset();
 	if (!IsValid(FlowAsset))
@@ -61,7 +57,6 @@ void UFlowNode_SetGraphOutput::CommitOutputDataPinValues()
 		if (PinResult.Result == EFlowDataPinResolveResult::Success)
 		{
 			bNeedsFlush = true;
-
 			FlowAsset->WriteOutputDataPinValue(Declaration.Name, PinResult.ResultValue);
 		}
 	}

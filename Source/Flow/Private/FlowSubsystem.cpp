@@ -186,12 +186,13 @@ UFlowAsset* UFlowSubsystem::CreateSubFlow(UFlowNode_SubGraph* SubGraphNode, cons
 		// get instanced asset from map - in case it was already instanced by calling CreateSubFlow() with bPreloading == true
 		AssetInstance = InstancedSubFlows[SubGraphNode];
 
+		// ensure that asset instance reference to its SubGraph owner
 		if (!AssetInstance->NodeOwningThisAssetInstance.IsValid())
 		{
-			AssetInstance->NodeOwningThisAssetInstance = SubGraphNode;			
+			AssetInstance->NodeOwningThisAssetInstance = SubGraphNode;
 		}
 		check(AssetInstance->NodeOwningThisAssetInstance == SubGraphNode);
-		
+
 		SubGraphNode->GetFlowAsset()->ActiveSubGraphs.Add(SubGraphNode, AssetInstance);
 
 		// don't activate Start Node if we're loading Sub Graph from SaveGame

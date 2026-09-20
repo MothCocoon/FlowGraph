@@ -4,9 +4,7 @@
 #include "Interfaces/FlowGraphOutputDataReceiverInterface.h"
 #include "Interfaces/FlowPreloadableInterface.h"
 #include "Nodes/FlowNode.h"
-#include "Types/FlowDataPinValue.h"
 #include "Types/FlowOutputDataPinValues.h"
-#include "StructUtils/InstancedStruct.h"
 #include "FlowNode_SubGraph.generated.h"
 
 class UFlowAssetParams;
@@ -76,6 +74,10 @@ public:
 
 	// IFlowDataPinValueSupplierInterface
 	virtual FFlowDataPinResult TrySupplyDataPin(const FName PinName) const override;
+	// --
+	
+	// IFlowGraphOutputDataReceiverInterface
+	virtual void ReceiveOutputDataSnapshot(const FFlowOutputDataPinValues& Snapshot) override;
 	// --
 
 	virtual void OnLoad_Implementation() override;
