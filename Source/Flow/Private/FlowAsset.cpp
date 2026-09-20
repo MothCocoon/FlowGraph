@@ -1000,6 +1000,11 @@ void UFlowAsset::DeinitializeInstance()
 	}
 }
 
+FName UFlowAsset::GetInstanceName() const
+{
+	return GetFName();
+}
+
 AActor* UFlowAsset::TryFindActorOwner() const
 {
 	UObject* OwnerObject = GetOwner();
@@ -1146,11 +1151,6 @@ UFlowAsset* UFlowAsset::GetParentInstance() const
 TWeakObjectPtr<UFlowAsset> UFlowAsset::GetFlowInstance(UFlowNode_SubGraph* SubGraphNode) const
 {
 	return ActiveSubGraphs.FindRef(SubGraphNode);
-}
-
-FName UFlowAsset::GetDisplayName() const
-{
-	return GetFName();
 }
 
 void UFlowAsset::InitializePreloadPolicy()

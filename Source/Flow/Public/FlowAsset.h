@@ -40,7 +40,7 @@ class FLOW_API UFlowAsset : public UObject
 {
 	GENERATED_UCLASS_BODY()
 
-public:	
+public:
 	friend class UFlowNode;
 	friend class UFlowNode_CustomOutput;
 	friend class UFlowNode_SubGraph;
@@ -63,7 +63,7 @@ public:
 
 public:
 #if WITH_EDITOR
-public:	
+public:
 	friend class UFlowGraph;
 
 	// UObject
@@ -73,7 +73,7 @@ public:
 	virtual void PostLoad() override;
 	virtual void PreSaveRoot(FObjectPreSaveRootContext ObjectSaveContext) override;
 	// --
-#endif	
+#endif
 
 #if WITH_EDITORONLY_DATA
 public:
@@ -206,7 +206,7 @@ public:
 
 //////////////////////////////////////////////////////////////////////////
 // Custom Inputs/Outputs
-	
+
 #if WITH_EDITORONLY_DATA
 protected:
 	/* Custom Inputs define custom entry points in graph, it's similar to blueprint Custom Events.
@@ -219,11 +219,11 @@ protected:
 	UPROPERTY(EditAnywhere, Category = "Sub Graph")
 	TArray<FName> CustomOutputs;
 #endif
-	
-public:	
+
+public:
 	/* Gathers all the nodes that are connected to the Start & Custom Inputs of the flow graph. */
 	TArray<UFlowNode*> GatherNodesConnectedToAllInputs() const;
-	
+
 	UFlowNode_CustomInput* TryFindCustomInputNodeByEventName(const FName& EventName) const;
 	UFlowNode_CustomOutput* TryFindCustomOutputNodeByEventName(const FName& EventName) const;
 
@@ -250,7 +250,7 @@ protected:
 	 * Also used at runtime by predicates (e.g., CompareValues) for type classification queries. */
 	UPROPERTY(VisibleAnywhere, AdvancedDisplay, Category = PinConnection)
 	TInstancedStruct<FFlowPinConnectionPolicy> PinConnectionPolicy;
-	
+
 public:
 #if WITH_EDITOR
 	/* Override these functions to set up unique policy(ies) for a UFlowAsset subclass */
@@ -258,7 +258,7 @@ public:
 #endif
 
 	const FFlowPinConnectionPolicy& GetPinConnectionPolicy() const;
-	
+
 	/*  Return all other Pins connected to the passed Pin. */
 	TArray<FConnectedPin> GatherPinsConnectedToPin(const FConnectedPin& Pin) const;
 
@@ -277,8 +277,7 @@ public:
 	virtual FString GenerateParamsAssetName() const;
 
 protected:
-
-	void ReconcileBaseAssetParams(const FDateTime& AssetLastSavedTimestamp);		
+	void ReconcileBaseAssetParams(const FDateTime& AssetLastSavedTimestamp);
 #endif
 
 //////////////////////////////////////////////////////////////////////////
@@ -362,6 +361,8 @@ public:
 	virtual void DeinitializeInstance();
 	bool IsInstanceInitialized() const { return IsValid(TemplateAsset); }
 
+	virtual FName GetInstanceName() const;
+
 	UFlowAsset* GetTemplateAsset() const { return TemplateAsset; }
 
 	/* Object that spawned Root Flow instance, i.e. World Settings or Player Controller.
@@ -386,13 +387,12 @@ public:
 protected:
 	virtual void FinishNode(UFlowNode* Node);
 	void ResetNodes();
-	
-public:	
+
+public:
 	virtual void FinishFlow(const EFlowFinishPolicy InFinishPolicy, const bool bRemoveInstance = true);
 
 public:
 	UFlowSubsystem* GetFlowSubsystem() const;
-	FName GetDisplayName() const;
 
 	UFlowNode_SubGraph* GetNodeOwningThisAssetInstance() const;
 	UFlowAsset* GetParentInstance() const;
@@ -431,17 +431,17 @@ public:
 // Trigger Input
 
 #if !UE_BUILD_SHIPPING
-public:	
+public:
 	FFlowSignalEvent OnPinTriggered;
 #endif
-	
+
 protected:
 	/* Stack of active deferred transition scopes (innermost = top).
 	 * Stored as TSharedPtr so callers can safely cache a reference to a specific scope
 	 * without it being invalidated by array reallocations/resizes during nested triggers. */
 	TArray<TSharedPtr<FFlowDeferredTransitionScope>> DeferredTransitionScopes;
-	
-public:	
+
+public:
 	void TriggerCustomInput(const FName& EventName, IFlowDataPinValueSupplierInterface* DataPinValueSupplier = nullptr);
 
 	void TriggerCustomInput_FromSubGraph(UFlowNode_SubGraph* Node, const FName& EventName) const;
@@ -449,11 +449,11 @@ public:
 
 	/* todo: Extend FromPin through to Node level Trigger functions. */
 	virtual void TriggerInput(const FGuid& NodeGuid, const FName& PinName, const FConnectedPin& FromPin);
-	
+
 protected:
 	/* Trigger the node directly (no deferral, no new scope). */
 	void TriggerInputDirect(const FGuid& NodeGuid, const FName& PinName, const FConnectedPin& FromPin);
-	
+
 	/* Allow subclasses to disable the standard defer trigger mechanism */
 	virtual bool ShouldDeferTriggers() const;
 
@@ -471,8 +471,8 @@ public:
 
 	/* Clear (do not trigger) any remaining deferred transitions (for shutdown cases). */
 	void ClearAllDeferredTriggerScopes();
-	
-protected:	
+
+protected:
 	void CancelAndWarnForUnflushedDeferredTriggers();
 
 	/* Returns a shared pointer to the current top (innermost) deferred transition scope,
@@ -487,7 +487,7 @@ protected:
 	 * If the class is an AActor, and the Flow Asset is owned by a component, it will consider the component's owner for the AActor. */
 	UPROPERTY(EditAnywhere, Category = "Flow")
 	TSubclassOf<UObject> ExpectedOwnerClass;
-	
+
 public:
 	UClass* GetExpectedOwnerClass() const { return ExpectedOwnerClass; }
 
