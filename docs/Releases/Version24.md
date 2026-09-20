@@ -4,7 +4,8 @@ title: Flow 2.4 (in works)
 
 This is the upcoming release. This page is updated regularly after changes are pushed to the repository.
 
-This release includes pull requests from the community: Bargestt (Vasilii Bulgakov), dyanikoglu (Doğa Can Yanıkoğlu), northstarswap.
+This release includes pull requests from the community: Bargestt (Vasilii Bulgakov), dyanikoglu (Doğa Can Yanıkoğlu), , LindyHopperGT (Riot Games), northstarswap, omarchuk-gsc.
+
 
 This is the first release for UE 5.9.
 
@@ -20,10 +21,13 @@ Version 2.2 came with a huge Data Pins refactor and it requires data migration o
 This is BREAKING CHANGE if you have any custom UFlowGraphNode class. Updating the code is trivial though.
 
 ## Flow Node
-* Wrapped editor only properties in `FFlowPin`: display name and tooltip. (contributed by Bargestt)
+* Call `GetNodeTitle()` and `GetNodeDescription()` on node instances only when displaying actual node instances. This allows us to preserve the default title and description for the archetype (e.g. in the node selection list). (contributed by LindyHopperGT)
+* Exposed `GetInputPins()` and `GetOutputPins()` to blueprints for automatic tests. (contributed by omarchuk-gsc)
+* Editor-only properties of `FFlowPin` wrapped with `WITH_EDITORONLY_DATA`: display name and tooltip. (contributed by Bargestt)
 
 ## Specific Nodes
 * Moved `TrySupplyDataPin` override in `UFlowNode_SubGraph` outside of WITH_EDITOR directive. This fixes Flow Asset Params in packaged game. (contributed by dyanikoglu)
+* `PlayLevelSequence` node now supports multiplayer via replicated binding on `AFlowLevelSequenceActor`. (contributed by LindyHopperGT)
 
 ## Misc
 * Fixed `-Wunreachable-code-loop-increment` errors on Clang. (based on changelist contributed by northstarswap)
