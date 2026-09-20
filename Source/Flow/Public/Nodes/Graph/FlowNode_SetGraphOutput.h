@@ -17,13 +17,14 @@ class FLOW_API UFlowNode_SetGraphOutput : public UFlowNode
 public:
 	UFlowNode_SetGraphOutput();
 
-protected:
 	virtual void ExecuteInput(const FName& PinName) override;
 
+protected:
 	/* Resolve all connected input data pins and write them to the Flow Asset's output store. */
-	void CommitOutputDataPinValues();
+	void CommitOutputDataPinValues() const;
 
 #if WITH_EDITOR
+public:	
 	// IFlowContextPinSupplierInterface
 	virtual bool SupportsContextPins() const override;
 	// --

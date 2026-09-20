@@ -139,15 +139,6 @@ private:
 	TMap<FGuid, TObjectPtr<UFlowNode>> Nodes;
 
 public:
-	const TArray<FFlowNamedDataPinProperty>& GetOutputDataPinDeclarations() const { return OutputDataPinDeclarations; }
-
-protected:
-	/* Output Data Pins define typed data values that this graph produces when it finishes.
-	* Sub Graph node using this Flow Asset will generate a context Output Data Pin for every entry on this list. */
-	UPROPERTY(EditAnywhere, Category = "Sub Graph")
-	TArray<FFlowNamedDataPinProperty> OutputDataPinDeclarations;
-
-public:
 #if WITH_EDITOR
 	FFlowGraphEvent OnSubGraphReconstructionRequested;
 
@@ -222,21 +213,26 @@ public:
 
 //////////////////////////////////////////////////////////////////////////
 // Custom Inputs/Outputs
-	
+
 #if WITH_EDITORONLY_DATA
 protected:
 	/* Custom Inputs define custom entry points in graph, it's similar to blueprint Custom Events.
-	 * Sub Graph node using this Flow Asset will generate context Input Pin for every valid Event name on this list. */
+	 * SubGraph node using this Flow Asset will generate context Input Pin for every valid Event name on this list. */
 	UPROPERTY(EditAnywhere, Category = "Sub Graph")
 	TArray<FName> CustomInputs;
 
 	/* Custom Outputs define custom graph outputs, this allows to send signals to the parent graph while executing this graph.
-	 * Sub Graph node using this Flow Asset will generate context Output Pin for every valid Event name on this list. */
+	 * SubGraph node using this Flow Asset will generate context Output Pin for every valid Event name on this list. */
 	UPROPERTY(EditAnywhere, Category = "Sub Graph")
 	TArray<FName> CustomOutputs;
 #endif
-	
-public:	
+
+	/* Output Data Pins define typed data values that this graph produces when it finishes.
+	 * SubGraph node using this Flow Asset will generate a context Output Data Pin for every entry on this list. */
+	UPROPERTY(EditAnywhere, Category = "Sub Graph")
+	TArray<FFlowNamedDataPinProperty> OutputDataPinDeclarations;
+
+public:
 	/* Gathers all the nodes that are connected to the Start & Custom Inputs of the flow graph. */
 	TArray<UFlowNode*> GatherNodesConnectedToAllInputs() const;
 	
@@ -257,6 +253,9 @@ protected:
 	void AddCustomOutput(const FName& EventName);
 	void RemoveCustomOutput(const FName& EventName);
 #endif
+
+public:
+	const TArray<FFlowNamedDataPinProperty>& GetOutputDataPinDeclarations() const { return OutputDataPinDeclarations; }
 
 //////////////////////////////////////////////////////////////////////////
 // Pin connections
@@ -374,7 +373,7 @@ protected:
 	EFlowFinishPolicy FinishPolicy;
 
 	 /* Receiver that will be given a snapshot of OutputDataPinValues when this graph finishes.
-	  * Typically the SubGraph node that created this instance. */
+	  * Typically, the SubGraph node that created this instance. */
 	UPROPERTY(Transient)
 	TWeakObjectPtr<UObject> OutputDataReceiver;
 
@@ -408,20 +407,22 @@ public:
 	virtual void PreStartFlow();
 	virtual void StartFlow(IFlowDataPinValueSupplierInterface* DataPinValueSupplier = nullptr, IFlowGraphOutputDataReceiverInterface* InOutputDataReceiver = nullptr);
 
+	bool HasStartedFlow() const;
+
+protected:
+	void InitializeOutputDataReceiverAndValues(IFlowGraphOutputDataReceiverInterface* InOutputDataReceiver);
+	
+public:	
 	/* Write a single output data pin value into the live store for this running instance.
 	 * Called by SetGraphOutput and Finish nodes for each connected output pin. */
 	void WriteOutputDataPinValue(const FName& PinName, const TInstancedStruct<FFlowDataPinValue>& Value);
 
-	/* Flush all of the OutputDataPinValues to the receiver (if set) */
-	void FlushOutputDataPinValuesToReceiver();
-
-	bool HasStartedFlow() const;
-
+	/* Flush all the OutputDataPinValues to the receiver (if set) */
+	void FlushOutputDataPinValuesToReceiver() const;
+	
 protected:
 	virtual void FinishNode(UFlowNode* Node);
 	void ResetNodes();
-
-	void InitializeOutputDataReceiverAndValues(IFlowGraphOutputDataReceiverInterface* InOutputDataReceiver);
 
 public:	
 	virtual void FinishFlow(const EFlowFinishPolicy InFinishPolicy, const bool bRemoveInstance = true);
