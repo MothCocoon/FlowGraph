@@ -5,7 +5,11 @@
 #include "FlowTypes.h"
 #include "Asset/FlowAssetParamsTypes.h"
 #include "Asset/FlowDeferredTransitionScope.h"
+#include "Interfaces/FlowGraphOutputDataReceiverInterface.h"
 #include "Nodes/FlowNode.h"
+#include "Types/FlowDataPinValue.h"
+#include "Types/FlowNamedDataPinProperty.h"
+#include "Types/FlowOutputDataPinValues.h"
 
 #if WITH_EDITOR
 #include "FlowMessageLog.h"
@@ -26,6 +30,8 @@ struct FFlowPinConnectionPolicy;
 
 class UEdGraph;
 class UEdGraphNode;
+class UFlowAsset;
+class UFlowAssetParams;
 
 #if !UE_BUILD_SHIPPING
 DECLARE_DELEGATE(FFlowGraphEvent);
@@ -49,6 +55,7 @@ public:
 	friend class FFlowAssetDetails;
 	friend class FFlowNode_SubGraphDetails;
 	friend class UFlowGraphSchema;
+	friend struct FFlowDeferredTransitionScope;
 
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Flow Asset")
 	FGuid AssetGuid;
@@ -210,15 +217,20 @@ public:
 #if WITH_EDITORONLY_DATA
 protected:
 	/* Custom Inputs define custom entry points in graph, it's similar to blueprint Custom Events.
-	 * Sub Graph node using this Flow Asset will generate context Input Pin for every valid Event name on this list. */
+	 * SubGraph node using this Flow Asset will generate context Input Pin for every valid Event name on this list. */
 	UPROPERTY(EditAnywhere, Category = "Sub Graph")
 	TArray<FName> CustomInputs;
 
 	/* Custom Outputs define custom graph outputs, this allows to send signals to the parent graph while executing this graph.
-	 * Sub Graph node using this Flow Asset will generate context Output Pin for every valid Event name on this list. */
+	 * SubGraph node using this Flow Asset will generate context Output Pin for every valid Event name on this list. */
 	UPROPERTY(EditAnywhere, Category = "Sub Graph")
 	TArray<FName> CustomOutputs;
 #endif
+
+	/* Output Data Pins define typed data values that this graph produces when it finishes.
+	 * SubGraph node using this Flow Asset will generate a context Output Data Pin for every entry on this list. */
+	UPROPERTY(EditAnywhere, Category = "Sub Graph")
+	TArray<FFlowNamedDataPinProperty> OutputDataPinDeclarations;
 
 public:
 	/* Gathers all the nodes that are connected to the Start & Custom Inputs of the flow graph. */
@@ -241,6 +253,9 @@ protected:
 	void AddCustomOutput(const FName& EventName);
 	void RemoveCustomOutput(const FName& EventName);
 #endif
+
+public:
+	const TArray<FFlowNamedDataPinProperty>& GetOutputDataPinDeclarations() const { return OutputDataPinDeclarations; }
 
 //////////////////////////////////////////////////////////////////////////
 // Pin connections
@@ -356,6 +371,16 @@ protected:
 	UPROPERTY(Transient)
 	EFlowFinishPolicy FinishPolicy;
 
+	 /* Receiver that will be given a snapshot of OutputDataPinValues when this graph finishes.
+	  * Typically, the SubGraph node that created this instance. */
+	UPROPERTY(Transient)
+	TWeakObjectPtr<UObject> OutputDataReceiver;
+
+	/* Live output data pin values for this running instance.
+	 * Initialized from OutputDataPinDeclarations defaults at StartFlow; updated by SetGraphOutput/Finish nodes. */
+	UPROPERTY(Transient)
+	FFlowOutputDataPinValues OutputDataPinValues;
+
 public:
 	virtual void InitializeInstance(const TWeakObjectPtr<UObject> InOwner, UFlowAsset& InTemplateAsset);
 	virtual void DeinitializeInstance();
@@ -381,9 +406,21 @@ public:
 	AActor* TryFindActorOwner() const;
 
 	virtual void PreStartFlow();
-	virtual void StartFlow(IFlowDataPinValueSupplierInterface* DataPinValueSupplier = nullptr);
+	virtual void StartFlow(IFlowDataPinValueSupplierInterface* DataPinValueSupplier = nullptr, IFlowGraphOutputDataReceiverInterface* InOutputDataReceiver = nullptr);
+
 	bool HasStartedFlow() const;
 
+protected:
+	void InitializeOutputDataReceiverAndValues(IFlowGraphOutputDataReceiverInterface* InOutputDataReceiver);
+	
+public:	
+	/* Write a single output data pin value into the live store for this running instance.
+	 * Called by SetGraphOutput and Finish nodes for each connected output pin. */
+	void WriteOutputDataPinValue(const FName& PinName, const TInstancedStruct<FFlowDataPinValue>& Value);
+
+	/* Flush all the OutputDataPinValues to the receiver (if set) */
+	void FlushOutputDataPinValuesToReceiver() const;
+	
 protected:
 	virtual void FinishNode(UFlowNode* Node);
 	void ResetNodes();
