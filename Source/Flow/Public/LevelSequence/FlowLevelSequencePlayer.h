@@ -25,9 +25,9 @@ public:
 	static UFlowLevelSequencePlayer* CreateFlowLevelSequencePlayer(
 		const UObject* WorldContextObject,
 		ULevelSequence* LevelSequence,
-		FMovieSceneSequencePlaybackSettings Settings,
-		FLevelSequenceCameraSettings CameraSettings,
-		AActor* TransformOriginActor,
+		const FMovieSceneSequencePlaybackSettings& Settings,
+		const FLevelSequenceCameraSettings CameraSettings,
+		const AActor* TransformOriginActor,
 		const bool bReplicates,
 		const bool bAlwaysRelevant,
 		TObjectPtr<AFlowLevelSequenceActor>& OutActor);

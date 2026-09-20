@@ -170,7 +170,7 @@ void UFlowNode_PlayLevelSequence::CreatePlayer()
 		}
 
 		// Apply Transform Origin
-		AActor* TransformOriginActor = bUseGraphOwnerAsTransformOrigin ? OwningActor : nullptr;
+		const AActor* TransformOriginActor = bUseGraphOwnerAsTransformOrigin ? OwningActor : nullptr;
 
 		// Finally create the player
 		SequencePlayer = UFlowLevelSequencePlayer::CreateFlowLevelSequencePlayer(this, LoadedSequence, PlaybackSettings, CameraSettings, TransformOriginActor, bReplicates, bAlwaysRelevant, SequenceActor);
