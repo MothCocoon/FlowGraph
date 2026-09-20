@@ -426,7 +426,8 @@ protected:
 	void ResetNodes();
 
 public:
-	virtual void FinishFlow(const EFlowFinishPolicy InFinishPolicy, const bool bRemoveInstance = true);
+	void FinishFlowAndDeinitializeInstance(const EFlowFinishPolicy InFinishPolicy);
+	virtual void FinishFlow(const EFlowFinishPolicy InFinishPolicy);
 
 public:
 	UFlowSubsystem* GetFlowSubsystem() const;

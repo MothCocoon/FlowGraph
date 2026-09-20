@@ -127,7 +127,7 @@ UFlowAsset* UFlowSubsystem::CreateRootFlow(UObject* Owner, UFlowAsset* FlowAsset
 	return NewFlow;
 }
 
-void UFlowSubsystem::FinishRootFlow(UObject* Owner, UFlowAsset* TemplateAsset, const EFlowFinishPolicy FinishPolicy)
+void UFlowSubsystem::FinishAndDeinitializeRootFlow(UObject* Owner, UFlowAsset* TemplateAsset, const EFlowFinishPolicy FinishPolicy)
 {
 	UFlowAsset* InstanceToFinish = nullptr;
 
@@ -143,11 +143,11 @@ void UFlowSubsystem::FinishRootFlow(UObject* Owner, UFlowAsset* TemplateAsset, c
 	if (InstanceToFinish)
 	{
 		RootInstances.Remove(InstanceToFinish);
-		InstanceToFinish->FinishFlow(FinishPolicy);
+		InstanceToFinish->FinishFlowAndDeinitializeInstance(FinishPolicy);
 	}
 }
 
-void UFlowSubsystem::FinishAllRootFlows(UObject* Owner, const EFlowFinishPolicy FinishPolicy)
+void UFlowSubsystem::FinishAndDeinitializeAllRootFlows(UObject* Owner, const EFlowFinishPolicy FinishPolicy)
 {
 	TArray<UFlowAsset*> InstancesToFinish;
 
@@ -162,7 +162,7 @@ void UFlowSubsystem::FinishAllRootFlows(UObject* Owner, const EFlowFinishPolicy 
 	for (UFlowAsset* InstanceToFinish : InstancesToFinish)
 	{
 		RootInstances.Remove(InstanceToFinish);
-		InstanceToFinish->FinishFlow(FinishPolicy);
+		InstanceToFinish->FinishFlowAndDeinitializeInstance(FinishPolicy);
 	}
 }
 
@@ -205,6 +205,23 @@ UFlowAsset* UFlowSubsystem::CreateSubFlow(UFlowNode_SubGraph* SubGraphNode, cons
 	return AssetInstance;
 }
 
+void UFlowSubsystem::FinishSubFlow(UFlowNode_SubGraph* SubGraphNode, const EFlowFinishPolicy FinishPolicy)
+{
+	if (InstancedSubFlows.Contains(SubGraphNode))
+	{
+		// The flow asset running on the subgraph node. 
+		UFlowAsset* SubgraphFlowAsset = InstancedSubFlows[SubGraphNode];
+		
+		// This is the flow asset that has the subgraph node. Do not confuse with the flow asset that the node is running.
+		// Remove the subgraph flow from the owning flow active subgraph list. 
+		UFlowAsset* SubgraphNodeParentFlow = SubGraphNode->GetFlowAsset();		
+		SubgraphNodeParentFlow->ActiveSubGraphs.Remove(SubGraphNode);
+		
+		// Finish the flow but do not remove the instance. 
+		SubgraphFlowAsset->FinishFlow(FinishPolicy);
+	}
+}
+
 void UFlowSubsystem::RemoveSubFlow(UFlowNode_SubGraph* SubGraphNode, const EFlowFinishPolicy FinishPolicy)
 {
 	if (InstancedSubFlows.Contains(SubGraphNode))
@@ -214,7 +231,12 @@ void UFlowSubsystem::RemoveSubFlow(UFlowNode_SubGraph* SubGraphNode, const EFlow
 		SubGraphNode->GetFlowAsset()->ActiveSubGraphs.Remove(SubGraphNode);
 		InstancedSubFlows.Remove(SubGraphNode);
 
-		AssetInstance->FinishFlow(FinishPolicy);
+		if (AssetInstance->IsActive())
+		{
+			AssetInstance->FinishFlow(FinishPolicy);
+		}
+		
+		AssetInstance->DeinitializeInstance();		
 
 		// Make sure to set the NodeOwningThisAssetInstance after the FinishFlow call, as it may be needed in the FinishFlow method
 		AssetInstance->NodeOwningThisAssetInstance = nullptr;
