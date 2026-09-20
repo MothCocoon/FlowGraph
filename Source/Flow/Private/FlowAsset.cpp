@@ -1023,12 +1023,6 @@ AActor* UFlowAsset::TryFindActorOwner() const
 	return nullptr;
 }
 
-void UFlowAsset::FinishFlowAndDeinitializeInstance(const EFlowFinishPolicy InFinishPolicy)
-{
-	FinishFlow(InFinishPolicy);
-	DeinitializeInstance();
-}
-
 void UFlowAsset::PreStartFlow()
 {
 	ResetNodes();
@@ -1113,6 +1107,12 @@ void UFlowAsset::ResetNodes()
 	}
 
 	RecordedNodes.Empty();
+}
+
+void UFlowAsset::FinishFlowAndDeinitializeInstance(const EFlowFinishPolicy InFinishPolicy)
+{
+	FinishFlow(InFinishPolicy);
+	DeinitializeInstance();
 }
 
 void UFlowAsset::FinishFlow(const EFlowFinishPolicy InFinishPolicy)
