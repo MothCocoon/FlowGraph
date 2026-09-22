@@ -45,6 +45,7 @@
 
 #include "AssetToolsModule.h"
 #include "AssetRegistry/AssetRegistryModule.h"
+#include "Subsystems/AssetEditorSubsystem.h"
 #include "EdGraphUtilities.h"
 #include "IAssetSearchModule.h"
 #include "Framework/MultiBox/MultiBoxBuilder.h"
@@ -96,6 +97,26 @@ void FFlowEditorModule::StartupModule()
 		RegisterAssetIndexers();
 	}
 	ModulesChangedHandle = FModuleManager::Get().OnModulesChanged().AddStatic(&FFlowEditorModule::ModulesChangesCallback);
+	
+	FFlowGraphToken::OnJumpToNodeRequested.BindLambda([](UObject* Asset, const UEdGraphNode* Node, const UEdGraphPin* Pin) {
+		UAssetEditorSubsystem* AssetEditorSubsystem = GEditor->GetEditorSubsystem<UAssetEditorSubsystem>();
+		AssetEditorSubsystem->OpenEditorForAsset(Asset);
+
+		if (IAssetEditorInstance* EditorInstance = AssetEditorSubsystem->FindEditorForAsset(Asset, /*bFocusIfOpen*/ true))
+		{
+			if (FFlowAssetEditor* FlowEditor = static_cast<FFlowAssetEditor*>(EditorInstance))
+			{
+				if (Pin && !Pin->IsPendingKill())
+				{
+					FlowEditor->JumpToPin(Pin);
+				}
+				else if (Node)
+				{
+					FlowEditor->JumpToNode(Node);
+				}
+			}
+		}
+	});
 }
 
 void FFlowEditorModule::RegisterForAssetChanges()
@@ -114,6 +135,8 @@ void FFlowEditorModule::RegisterForAssetChanges()
 
 void FFlowEditorModule::ShutdownModule()
 {
+	FFlowGraphToken::OnJumpToNodeRequested.Unbind();
+
 	FFlowEditorStyle::Shutdown();
 
 	UnregisterDetailCustomizations();
