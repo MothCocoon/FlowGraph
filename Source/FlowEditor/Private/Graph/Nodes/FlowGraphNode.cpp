@@ -1184,6 +1184,8 @@ void UFlowGraphNode::ForcePinActivation(const FEdGraphPinReference PinReference)
 		return;
 	}
 
+	FScopedConditionalWorldSwitcher WorldSwitcher(InspectedNodeInstance->GetWorld());
+
 	if (const UEdGraphPin* FoundPin = PinReference.Get())
 	{
 		switch (FoundPin->Direction)
