@@ -148,7 +148,7 @@ void UFlowAsset::PreSaveRoot(FObjectPreSaveRootContext ObjectSaveContext)
 	ReconcileBaseAssetParams(FDateTime::Now());
 }
 
-EDataValidationResult UFlowAsset::ValidateAsset(FFlowMessageLog& MessageLog)
+EDataValidationResult UFlowAsset::ValidateAsset(FFlowMessageLog& MessageLog) const
 {
 	// validate nodes
 	for (const TPair<FGuid, UFlowNode*>& Node : ObjectPtrDecay(Nodes))
@@ -202,6 +202,17 @@ EDataValidationResult UFlowAsset::ValidateAsset(FFlowMessageLog& MessageLog)
 
 	// otherwise, the asset is considered valid (even with warnings or notes)
 	return EDataValidationResult::Valid;
+}
+
+EDataValidationResult UFlowAsset::IsDataValid(FDataValidationContext& Context) const
+{
+	FFlowMessageLog				LogResults;
+	const EDataValidationResult Result = ValidateAsset(LogResults);
+	for (const TSharedRef<FTokenizedMessage>& Message : LogResults.Messages)
+	{
+		Context.AddMessage(Message);
+	}
+	return Result;
 }
 
 bool UFlowAsset::IsNodeOrAddOnClassAllowed(const UClass* FlowNodeOrAddOnClass, FText* OutOptionalFailureReason) const
@@ -354,7 +365,7 @@ bool UFlowAsset::IsFlowNodeClassInDeniedClasses(const UClass& FlowNodeClass) con
 	return false;
 }
 
-void UFlowAsset::ValidateAddOnTree(UFlowNodeAddOn& AddOn, FFlowMessageLog& MessageLog)
+void UFlowAsset::ValidateAddOnTree(UFlowNodeAddOn& AddOn, FFlowMessageLog& MessageLog) const
 {
 	// Filter unauthorized addon nodes
 	FText FailureReason;

@@ -159,10 +159,8 @@ public:
 	// --
 #endif
 
-protected:
-	void OnLogTokenClicked(const TSharedRef<class IMessageToken>& Token) const;
-
 public:
 	/* Find in flow */
 	void JumpToNode(const UEdGraphNode* Node) const;
+	void JumpToPin(const UEdGraphPin* Pin) const;
 };

@@ -8,17 +8,21 @@
 
 #define LOCTEXT_NAMESPACE "FlowMessageLog"
 
+FFlowGraphToken::FOnJumpToNode FFlowGraphToken::OnJumpToNodeRequested;
+
 const FName FFlowMessageLog::LogName(TEXT("FlowGraph"));
 
 FFlowGraphToken::FFlowGraphToken(const UFlowAsset* InFlowAsset)
 {
 	CachedText = FText::FromString(InFlowAsset->GetClass()->GetPathName());
+	MessageTokenActivated = FOnMessageTokenActivated::CreateStatic(&FFlowGraphToken::OnTokenActivated);
 }
 
 FFlowGraphToken::FFlowGraphToken(const UFlowNodeBase* InFlowNodeBase)
 	: GraphNode(InFlowNodeBase->GetGraphNode())
 {
 	CachedText = InFlowNodeBase->GetNodeTitle();
+	MessageTokenActivated = FOnMessageTokenActivated::CreateStatic(&FFlowGraphToken::OnTokenActivated);
 }
 
 FFlowGraphToken::FFlowGraphToken(const UEdGraphNode* InGraphNode, const UEdGraphPin* InPin)
@@ -37,6 +41,27 @@ FFlowGraphToken::FFlowGraphToken(const UEdGraphNode* InGraphNode, const UEdGraph
 	{
 		CachedText = GraphNode->GetNodeTitle(ENodeTitleType::ListView);
 	}
+	MessageTokenActivated = FOnMessageTokenActivated::CreateStatic(&FFlowGraphToken::OnTokenActivated);
+}
+
+void FFlowGraphToken::OnTokenActivated(const TSharedRef<IMessageToken>& InToken)
+{
+	const TSharedRef<FFlowGraphToken> Self = StaticCastSharedRef<FFlowGraphToken>(InToken);
+
+	const UEdGraphNode* Node = Self->GetGraphNode();
+	if (!Node)
+	{
+		return;
+	}
+
+	const UEdGraph* Graph = Node->GetGraph();
+	UObject*		Asset = Graph ? Graph->GetOuter() : nullptr;
+	if (!Asset)
+	{
+		return;
+	}
+
+	FFlowGraphToken::OnJumpToNodeRequested.ExecuteIfBound(Asset, Node, Self->GetPin());
 }
 
 TSharedPtr<IMessageToken> FFlowGraphToken::Create(const UFlowAsset* InFlowAsset, FTokenizedMessage& Message)
