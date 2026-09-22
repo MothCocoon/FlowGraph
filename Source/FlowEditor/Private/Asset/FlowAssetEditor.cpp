@@ -500,12 +500,10 @@ void FFlowAssetEditor::CreateWidgets()
 	FMessageLogModule& MessageLogModule = FModuleManager::LoadModuleChecked<FMessageLogModule>("MessageLog");
 	{
 		RuntimeLogListing = FFlowMessageLogListing::GetLogListing(FlowAsset, EFlowLogType::Runtime);
-		RuntimeLogListing->OnMessageTokenClicked().AddSP(this, &FFlowAssetEditor::OnLogTokenClicked);
 		RuntimeLog = MessageLogModule.CreateLogListingWidget(RuntimeLogListing.ToSharedRef());
 	}
 	{
 		ValidationLogListing = FFlowMessageLogListing::GetLogListing(FlowAsset, EFlowLogType::Validation);
-		ValidationLogListing->OnMessageTokenClicked().AddSP(this, &FFlowAssetEditor::OnLogTokenClicked);
 		ValidationLog = MessageLogModule.CreateLogListingWidget(ValidationLogListing.ToSharedRef());
 	}
 }
@@ -568,46 +566,19 @@ void FFlowAssetEditor::JumpToInnerObject(UObject* InnerObject)
 }
 #endif
 
-void FFlowAssetEditor::OnLogTokenClicked(const TSharedRef<IMessageToken>& Token) const
-{
-	if (Token->GetType() == EMessageToken::Object)
-	{
-		const TSharedRef<FUObjectToken> ObjectToken = StaticCastSharedRef<FUObjectToken>(Token);
-		if (const UObject* Object = ObjectToken->GetObject().Get())
-		{
-			if (Object->IsAsset())
-			{
-				GEditor->GetEditorSubsystem<UAssetEditorSubsystem>()->OpenEditorForAsset(const_cast<UObject*>(Object));
-			}
-			else
-			{
-				UE_LOG(LogFlowEditor, Warning, TEXT("Unknown type of hyperlinked object (%s), cannot focus it"), *GetNameSafe(Object));
-			}
-		}
-	}
-	else if (Token->GetType() == EMessageToken::EdGraph && GraphEditor.IsValid())
-	{
-		const TSharedRef<FFlowGraphToken> EdGraphToken = StaticCastSharedRef<FFlowGraphToken>(Token);
-
-		if (const UEdGraphPin* GraphPin = EdGraphToken->GetPin())
-		{
-			if (!GraphPin->IsPendingKill())
-			{
-				GraphEditor->JumpToPin(GraphPin);
-			}
-		}
-		else if (const UEdGraphNode* GraphNode = EdGraphToken->GetGraphNode())
-		{
-			GraphEditor->JumpToNode(GraphNode, true);
-		}
-	}
-}
-
 void FFlowAssetEditor::JumpToNode(const UEdGraphNode* Node) const
 {
 	if (GetFlowGraph().IsValid())
 	{
 		GetFlowGraph()->JumpToNode(Node, false);
+	}
+}
+
+void FFlowAssetEditor::JumpToPin(const UEdGraphPin* Pin) const
+{
+	if (GraphEditor.IsValid())
+	{
+		GraphEditor->JumpToPin(Pin);
 	}
 }
 

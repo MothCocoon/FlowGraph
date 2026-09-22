@@ -13,6 +13,7 @@
 
 #if WITH_EDITOR
 #include "FlowMessageLog.h"
+#include "Misc/DataValidation.h"
 #endif
 
 #include "StructUtils/InstancedStruct.h"
@@ -102,7 +103,8 @@ public:
 
 	UEdGraph* GetGraph() const { return FlowGraph; }
 
-	virtual EDataValidationResult ValidateAsset(FFlowMessageLog& MessageLog);
+	virtual EDataValidationResult ValidateAsset(FFlowMessageLog& MessageLog) const;
+	virtual EDataValidationResult IsDataValid(FDataValidationContext& Context) const override;
 
 	/* Returns whether the node class is allowed in this flow asset. */
 	bool IsNodeOrAddOnClassAllowed(const UClass* FlowNodeClass, FText* OutOptionalFailureReason = nullptr) const;
@@ -119,7 +121,7 @@ protected:
 
 private:
 	/* Recursively validates the given addon and its children. */
-	void ValidateAddOnTree(UFlowNodeAddOn& AddOn, FFlowMessageLog& MessageLog);
+	void ValidateAddOnTree(UFlowNodeAddOn& AddOn, FFlowMessageLog& MessageLog) const;
 #endif
 
 //////////////////////////////////////////////////////////////////////////
