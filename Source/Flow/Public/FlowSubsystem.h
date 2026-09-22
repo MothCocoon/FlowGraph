@@ -36,12 +36,12 @@ public:
 
 	virtual bool ShouldCreateSubsystem(UObject* Outer) const override;
 	virtual UWorld* GetWorld() const override;
-	
+
 	virtual void Deinitialize() override;
 
 //////////////////////////////////////////////////////////////////////////
 // Lifetime cycle of Flow Asset instances
-	
+
 protected:
 	/* All asset templates with active instances */
 	UPROPERTY()
@@ -56,6 +56,7 @@ protected:
 	TMap<TObjectPtr<UFlowNode_SubGraph>, TObjectPtr<UFlowAsset>> InstancedSubFlows;
 
 #if !UE_BUILD_SHIPPING
+
 public:
 	/* Called after creating the first instance of given Flow Asset */
 	static FNativeFlowAssetEvent OnInstancedTemplateAdded;
@@ -109,7 +110,7 @@ public:
 	/* Returns all assets instanced by object from another system like World Settings */
 	UFUNCTION(BlueprintPure, Category = "FlowSubsystem")
 	TMap<UObject*, UFlowAsset*> GetRootInstances() const;
-	
+
 	/* Returns asset instanced by specific object */
 	UFUNCTION(BlueprintPure, Category = "FlowSubsystem")
 	TSet<UFlowAsset*> GetRootInstancesByOwner(const UObject* Owner) const;
