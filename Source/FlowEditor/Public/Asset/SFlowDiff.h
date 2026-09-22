@@ -3,15 +3,14 @@
 
 #include "IDetailsView.h"
 #include "DiffResults.h"
-#include "GraphEditor.h"
 #include "SDetailsDiff.h"
 #include "Textures/SlateIcon.h"
 
 struct FFlowGraphToDiff;
 struct FFlowObjectDiffArgs;
-class IDetailsView;
-class SSplitter2x2;
 class UFlowAsset;
+class SLinkableScrollBar;
+class SGraphEditor;
 
 enum class EAssetEditorCloseReason : uint8;
 
@@ -49,21 +48,19 @@ struct FLOWEDITOR_API FFlowDiffPanel
 	void FocusDiff(const UEdGraphPin& Pin) const;
 	void FocusDiff(const UEdGraphNode& Node) const;
 
-	void OnNodeClicked(UObject* ClickedNode );
-
 	/* The Flow Asset that owns the graph we are showing. */
 	const UFlowAsset* FlowAsset;
 
 	/* The box around the graph editor, used to change the content when new graphs are set. */
 	TSharedPtr<SBox> GraphEditorBox;
 
-	/* using SNullWidget::NullNullWidget can only work for a single widget, since widget instances can only be
-	 * used one at a time. PanelDefaultDetailsView is used for displaying an empty details panel instead, as well
-	 * as if the user selects a node in the graph view. */
-	TSharedPtr<IDetailsView> PanelDefaultDetailsView;
+	/** The details view associated with the graph editor */
+	TSharedPtr<IDetailsView> DetailsView;
+
+	TSharedPtr<SLinkableScrollBar> DetailScrollbar;
 
 	/* The graph editor which does the work of displaying the graph. */
-	TWeakPtr<class SGraphEditor> GraphEditor;
+	TWeakPtr<SGraphEditor> GraphEditor;
 
 	/* Revision information for this asset. */
 	FRevisionInfo RevisionInfo;
@@ -74,12 +71,13 @@ struct FLOWEDITOR_API FFlowDiffPanel
 	/* The widget that contains the revision info in graph mode. */
 	TSharedPtr<SWidget> OverlayGraphRevisionInfo;
 
-	TWeakPtr<SSplitter2x2> GraphDiffSplitter = nullptr;
 	bool bIsOldPanel = false;
 	
 private:
 	/* Command list for this diff panel. */
 	TSharedPtr<FUICommandList> GraphEditorCommands;
+
+	FPropertyPath PropertyToHighlight;
 };
 
 /* Visual Diff between two Flow Assets. */
@@ -102,6 +100,8 @@ public:
 
 	void Construct(const FArguments& InArgs);
 	virtual ~SFlowDiff() override;
+
+	virtual void Tick(const FGeometry& AllottedGeometry, const double InCurrentTime, const float InDeltaTime) override;
 
 	/* Called when a new Graph is clicked on by user. */
 	void OnGraphChanged(const FFlowGraphToDiff* Diff);
@@ -195,6 +195,9 @@ protected:
 	/* The two panels used to show the old & new revision. */
 	FFlowDiffPanel PanelOld, PanelNew;
 
+	/* Diff info about the flow details in graph diff view */
+	TSharedPtr<FAsyncDetailViewDiff> GraphDetailDiff;
+
 	/* If the two views should be locked. */
 	bool bLockViews;
 
@@ -210,9 +213,6 @@ protected:
 
 	friend struct FListItemGraphToDiff;
 
-	/* We can't use the global tab manager because we need to instance the diff control, so we have our own tab manager. */
-	TSharedPtr<FTabManager> TabManager;
-
 	/* Tree of differences collected across all panels. */
 	TArray<TSharedPtr<class FBlueprintDifferenceTreeEntry>> PrimaryDifferencesList;
 
@@ -227,8 +227,6 @@ protected:
 
 	/* A pointer to the window holding this. */
 	TWeakPtr<SWindow> WeakParentWindow;
-
-	TSharedPtr<SSplitter2x2> GraphDiffSplitter = nullptr;
 
 	FDelegateHandle AssetEditorCloseDelegate;
 };
