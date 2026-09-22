@@ -1,8 +1,10 @@
 // Copyright https://github.com/MothCocoon/FlowGraph/graphs/contributors
 #pragma once
 
+#include "Interfaces/FlowGraphOutputDataReceiverInterface.h"
 #include "Interfaces/FlowPreloadableInterface.h"
 #include "Nodes/FlowNode.h"
+#include "Types/FlowOutputDataPinValues.h"
 #include "FlowNode_SubGraph.generated.h"
 
 class UFlowAssetParams;
@@ -11,7 +13,10 @@ class UFlowAssetParams;
  * Creates instance of provided Flow Asset and starts its execution.
  */
 UCLASS(NotBlueprintable, meta = (DisplayName = "Sub Graph"))
-class FLOW_API UFlowNode_SubGraph : public UFlowNode, public IFlowPreloadableInterface
+class FLOW_API UFlowNode_SubGraph
+	: public UFlowNode
+	, public IFlowPreloadableInterface
+	, public IFlowGraphOutputDataReceiverInterface
 {
 	GENERATED_BODY()
 
@@ -25,7 +30,7 @@ public:
 	static FFlowPin StartPin;
 	static FFlowPin FinishPin;
 
-private:
+protected:
 	UPROPERTY(EditAnywhere, Category = "Graph")
 	TSoftObjectPtr<UFlowAsset> Asset;
 
@@ -40,6 +45,12 @@ private:
 
 	UPROPERTY(SaveGame)
 	FString SavedAssetInstanceName;
+
+	/* Cached output data pin values received from the inner Flow Asset when it finishes. 
+	 * Note - Not saved "yet", but should decide if we should include the  
+	 *        cached output values in the save state. */
+	UPROPERTY(Transient)
+	FFlowOutputDataPinValues CachedOutputDataPinValues;
 
 protected:
 	virtual bool CanBeAssetInstanced() const;
@@ -58,6 +69,10 @@ public:
 
 	// IFlowDataPinValueSupplierInterface
 	virtual FFlowDataPinResult TrySupplyDataPin(const FName PinName) const override;
+	// --
+	
+	// IFlowGraphOutputDataReceiverInterface
+	virtual void ReceiveOutputDataSnapshot(const FFlowOutputDataPinValues& Snapshot) override;
 	// --
 
 	virtual void OnLoad_Implementation() override;
