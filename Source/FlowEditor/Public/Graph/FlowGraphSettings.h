@@ -181,6 +181,14 @@ class FLOWEDITOR_API UFlowGraphSettings : public UDeveloperSettings
 
 	UPROPERTY(EditAnywhere, config, Category = "Wires", meta = (ClampMin = 0.0f))
 	float SelectedWireThickness;
+	
+	
+	UPROPERTY(EditAnywhere, config, Category = "Details")
+	bool bShowFlowTagsInActorDetails = true;
+	
+	/** FlowComponent only. Move category Flow to the top of details panel */
+	UPROPERTY(EditAnywhere, config, Category = "Details")
+	bool bMarkFlowCategoryImportant = true;
 
 public:
 	virtual FName GetCategoryName() const override { return FName("Flow Graph"); }

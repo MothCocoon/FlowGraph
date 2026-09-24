@@ -32,6 +32,7 @@ private:
 
 	bool bIsRegisteredForAssetChanges = false;
 
+	TSharedPtr<class FFlowActorDetails> ActorDetails;
 public:
 	virtual void StartupModule() override;
 	virtual void ShutdownModule() override;
