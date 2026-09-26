@@ -9,6 +9,7 @@
 #include "Graph/FlowGraphNodesPolicy.h"
 #include "FlowGraphSettings.generated.h"
 
+class UFlowComponent;
 class UFlowNodeBase;
 
 USTRUCT()
@@ -181,7 +182,19 @@ class FLOWEDITOR_API UFlowGraphSettings : public UDeveloperSettings
 
 	UPROPERTY(EditAnywhere, config, Category = "Wires", meta = (ClampMin = 0.0f))
 	float SelectedWireThickness;
+	
+	
+	/** FlowComponent only. Move category Flow to the top of details panel */
+	UPROPERTY(EditAnywhere, config, Category = "Details")
+	bool bMarkFlowCategoryImportant = true;
 
+	/** Use these tags If identity Categories are no overriden */
+	UPROPERTY(EditAnywhere, config, Category = "Details")
+	TArray<FGameplayTag> DefaultIdentityTagCategories;
+	
+	/** Per component class categories. Overrides DefaultIdentityTagCategories */
+	UPROPERTY(EditAnywhere, config, Category = "Details")
+	TMap<TSoftClassPtr<UFlowComponent>, FGameplayTagContainer> ComponentClassIdentityTagCategories;
 public:
 	virtual FName GetCategoryName() const override { return FName("Flow Graph"); }
 	virtual FText GetSectionText() const override { return INVTEXT("Graph Settings"); }
