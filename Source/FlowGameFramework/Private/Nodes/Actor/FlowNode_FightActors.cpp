@@ -24,8 +24,8 @@ void UFlowNode_FightActors::OnBeforeCohortActorCleanup(UFlowActorSpawnRecord& Re
 {
 	FLOW_ASSERT_ENUM_MAX(EFlowFightActorState, 4);
 	AActor* Actor = Record.GetOwnedActor();
-	if (Actor 
-		&& Actor->IsActorBeingDestroyed() 
+	if (Actor
+		&& Actor->IsActorBeingDestroyed()
 		&& !bCleaningUpFight
 		&& FightState == EFlowFightActorState::Executing)
 	{

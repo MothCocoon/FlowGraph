@@ -82,7 +82,7 @@ enum class EFlowTeleportFailureReason : uint8
 
 	Max UMETA(Hidden),
 	Invalid UMETA(Hidden),
-	Min = 0 UMETA(Hidden), 
+	Min = 0 UMETA(Hidden),
 };
 FLOW_ENUM_RANGE_VALUES(EFlowTeleportFailureReason);
 

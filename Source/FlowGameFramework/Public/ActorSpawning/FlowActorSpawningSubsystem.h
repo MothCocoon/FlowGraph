@@ -30,15 +30,15 @@ public:
 };
 
 // NOTE (gtaylor) This is the actor spawning subsystem used by the Spawn Actors and Fight Actors nodes
-// 
+//
 // It is setup to be a fire-and-forget async actor spawning system that processes a queue of spawn requests
-// over multiple game frames.  It is configured by default to spawn sequentially, so that each EQS query 
-// can take into account the location of the previously spawned actor(s) in their group.  But it can be 
-// configured to spawn immediately if so desired. A single spawn request may also override the spawn policy 
+// over multiple game frames.  It is configured by default to spawn sequentially, so that each EQS query
+// can take into account the location of the previously spawned actor(s) in their group.  But it can be
+// configured to spawn immediately if so desired. A single spawn request may also override the spawn policy
 // separately from the system setting.
-// 
-// If you don't need immediate spawning, spawning over multiple frames is gentler on the UE systems, 
-// amortizing the spawn-actor costs over multiple frames and preventing a big frame-spike at the start of 
+//
+// If you don't need immediate spawning, spawning over multiple frames is gentler on the UE systems,
+// amortizing the spawn-actor costs over multiple frames and preventing a big frame-spike at the start of
 // an encounter.  So it's generally good to preserve if you can wait for them to spawn over time.
 
 /** Queues actor spawn attempts for authoritative worlds and staggers synchronous successes across ticks. */

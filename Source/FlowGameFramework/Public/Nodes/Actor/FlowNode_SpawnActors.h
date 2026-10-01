@@ -8,7 +8,7 @@
 
 #include "FlowNode_SpawnActors.generated.h"
 
-// NOTE (gtaylor) The SpawnActors Node (SAN) implementation for FlowGraph plugin is only 
+// NOTE (gtaylor) The SpawnActors Node (SAN) implementation for FlowGraph plugin is only
 // marginally usable on its own. If you combine it with the AIFlowGraph UAIFlowActorSpawnRecordEQS
 // it becomes more interesting.  And for many projects you might want to also make your own
 // subclass of it (or of SANBase) to hook into your project's actor lifetime systems (pooling, etc.)
@@ -21,7 +21,7 @@
 // The Spawning architecture goes through the actor spawning subsystem. This allows for fire-and-forget
 // async actor spawning that progresses over multiple game frames.  It is configured by default to spawn
 // sequentially, so that each EQS query can take into account the location of the previously spawned actor(s)
-// in their group.  But it can be configured to spawn immediately if so desired.  
+// in their group.  But it can be configured to spawn immediately if so desired.
 
 class UFlowActorSpawnRecord;
 

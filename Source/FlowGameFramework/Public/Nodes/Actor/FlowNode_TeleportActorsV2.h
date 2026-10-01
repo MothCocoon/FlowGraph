@@ -69,7 +69,7 @@ struct FLOWGAMEFRAMEWORK_API FFlowTeleportActivation
 };
 
 // NOTE (gtaylor) This is a Teleport Actors flow node, adapted from a version we had internally.
-// It is branded here as 'v2' as a disambiguator, since our version was named the same.  
+// It is branded here as 'v2' as a disambiguator, since our version was named the same.
 // It has a number of different teleport configuration options, combined from multiple different
 // teleport cases we were using, across a few different teleport nodes.  So we combined them
 // all into a single teleport node.

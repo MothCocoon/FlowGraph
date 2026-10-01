@@ -138,7 +138,7 @@ int32 UFlowNode_FightActorsBase::ExecuteFightPass(
 			const int32 CohortQueued = Cohort->ExecuteSpawningPass(Method, *Assistant, bIsInitialPass);
 			NumQueued += CohortQueued;
 
-			if (CohortQueued > 0 && 
+			if (CohortQueued > 0 &&
 				(IsSingleCohortMethod(Method)
 				 || IsSingleActorMethod(Method)))
 			{

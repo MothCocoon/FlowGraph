@@ -105,7 +105,7 @@ void UFlowActorSpawnRecord::CompleteSpawnLocation(bool bSucceeded)
 		return;
 	}
 
-	const EFlowActorSpawnRecordState NextState = 
+	const EFlowActorSpawnRecordState NextState =
 		(bSucceeded)
 			? EFlowActorSpawnRecordState::TrySpawnActor
 			: EFlowActorSpawnRecordState::FailedSpawn;
