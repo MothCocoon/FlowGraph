@@ -109,6 +109,9 @@ public:
 
 	virtual TSubclassOf<UFlowAsset> GetDefaultFlowAssetForSubgraphs() const { return GetClass(); }
 
+	/* Sub-classes can override once they support edits in PIE. Called by the Asset Editor. */
+	virtual bool CanEditInPIE() const { return false; }
+
 protected:
 	bool CanFlowNodeClassBeUsedByFlowAsset(const UClass& FlowNodeClass) const;
 	bool CanFlowAssetUseFlowNodeClass(const UClass& FlowNodeClass) const;
@@ -300,7 +303,7 @@ protected:
 
 private:
 	/* Original object holds references to instances. */
-	UPROPERTY(Transient)
+	UPROPERTY(Transient, NonTransactional)
 	TArray<TObjectPtr<UFlowAsset>> ActiveInstances;
 
 #if WITH_EDITORONLY_DATA

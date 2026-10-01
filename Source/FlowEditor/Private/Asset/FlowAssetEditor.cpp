@@ -309,6 +309,8 @@ void FFlowAssetEditor::InitFlowAssetEditor(const EToolkitMode::Type Mode, const 
 	UFlowGraphSchema::SubscribeToAssetChanges();
 	FlowAsset->OnDetailsRefreshRequested.BindThreadSafeSP(this, &FFlowAssetEditor::RefreshDetails);
 
+	bCanEditInPIE = FlowAsset->CanEditInPIE();
+
 	BindToolbarCommands();
 	CreateToolbar();
 
@@ -396,7 +398,7 @@ void FFlowAssetEditor::BindToolbarCommands()
 	// Editing
 	ToolkitCommands->MapAction(ToolbarCommands.RefreshAsset,
 	                           FExecuteAction::CreateSP(this, &FFlowAssetEditor::RefreshAsset),
-	                           FCanExecuteAction::CreateStatic(&FFlowAssetEditor::CanEdit));
+	                           FCanExecuteAction::CreateSP(this, &FFlowAssetEditor::CanEdit));
 
 	ToolkitCommands->MapAction(ToolbarCommands.ValidateAsset,
 	                           FExecuteAction::CreateSP(this, &FFlowAssetEditor::ValidateAsset_Internal),
@@ -478,7 +480,7 @@ void FFlowAssetEditor::CreateWidgets()
 
 		FPropertyEditorModule& PropertyModule = FModuleManager::LoadModuleChecked<FPropertyEditorModule>("PropertyEditor");
 		DetailsView = PropertyModule.CreateDetailView(Args);
-		DetailsView->SetIsPropertyEditingEnabledDelegate(FIsPropertyEditingEnabled::CreateStatic(&FFlowAssetEditor::CanEdit));
+		DetailsView->SetIsPropertyEditingEnabledDelegate(FIsPropertyEditingEnabled::CreateSP(this, &FFlowAssetEditor::CanEdit));
 		DetailsView->SetObject(FlowAsset);
 	}
 
@@ -513,12 +515,18 @@ void FFlowAssetEditor::CreateWidgets()
 void FFlowAssetEditor::CreateGraphWidget()
 {
 	SAssignNew(GraphEditor, SFlowGraphEditor, SharedThis(this))
-	.DetailsView(DetailsView);
+	.DetailsView(DetailsView)
+	.CanEditInPIE(bCanEditInPIE);
 }
 
 bool FFlowAssetEditor::CanEdit()
 {
-	return GEditor->PlayWorld == nullptr;
+	return GEditor->PlayWorld == nullptr || bCanEditInPIE;
+}
+
+void FFlowAssetEditor::SetCanEditInPIE(bool value)
+{
+	bCanEditInPIE = value;
 }
 
 void FFlowAssetEditor::SetUISelectionState(const FName SelectionOwner)
