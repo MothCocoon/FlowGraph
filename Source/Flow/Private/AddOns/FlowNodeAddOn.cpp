@@ -19,6 +19,25 @@ UFlowNodeAddOn::UFlowNodeAddOn()
 #endif
 }
 
+#if WITH_EDITOR
+void UFlowNodeAddOn::PostDuplicate(bool bDuplicateForPIE)
+{
+	Super::PostDuplicate(bDuplicateForPIE);
+
+	if (!bDuplicateForPIE)
+	{
+		SetGuid(FGuid::NewGuid());
+	}
+}
+
+void UFlowNodeAddOn::PostEditImport()
+{
+	Super::PostEditImport();
+
+	SetGuid(FGuid::NewGuid());
+}
+#endif
+
 void UFlowNodeAddOn::InitializeInstance()
 {
 	CacheFlowNode();

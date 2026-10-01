@@ -146,6 +146,57 @@ void UFlowAsset::PostLoad()
 void UFlowAsset::PreSaveRoot(FObjectPreSaveRootContext ObjectSaveContext)
 {
 	ReconcileBaseAssetParams(FDateTime::Now());
+	RepairDuplicateAddOnGuids();
+}
+
+int32 UFlowAsset::RepairDuplicateAddOnGuids()
+{
+	TSet<FGuid> SeenAddOnGuids;
+	int32 NumRepaired = 0;
+
+	TFunction<void(UFlowNodeAddOn&)> RepairAddOnTree = [this, &SeenAddOnGuids, &NumRepaired, &RepairAddOnTree](UFlowNodeAddOn& AddOn)
+	{
+		bool bAlreadyInSet = false;
+		SeenAddOnGuids.Add(AddOn.GetGuid(), &bAlreadyInSet);
+
+		if (bAlreadyInSet)
+		{
+			const FGuid OldGuid = AddOn.GetGuid();
+			const FGuid NewGuid = FGuid::NewGuid();
+			AddOn.SetGuid(NewGuid);
+			SeenAddOnGuids.Add(NewGuid);
+			++NumRepaired;
+
+			UE_LOG(LogFlow, Log, TEXT("RepairDuplicateAddOnGuids: %s AddOn %s had duplicate Guid %s, re-minted to %s"),
+				*GetPathName(), *AddOn.GetName(), *OldGuid.ToString(), *NewGuid.ToString());
+		}
+
+		for (UFlowNodeAddOn* Child : AddOn.GetFlowNodeAddOnChildren())
+		{
+			if (IsValid(Child))
+			{
+				RepairAddOnTree(*Child);
+			}
+		}
+	};
+
+	for (const TPair<FGuid, UFlowNode*>& Node : ObjectPtrDecay(Nodes))
+	{
+		if (!IsValid(Node.Value))
+		{
+			continue;
+		}
+
+		for (UFlowNodeAddOn* AddOn : Node.Value->GetFlowNodeAddOnChildren())
+		{
+			if (IsValid(AddOn))
+			{
+				RepairAddOnTree(*AddOn);
+			}
+		}
+	}
+
+	return NumRepaired;
 }
 
 EDataValidationResult UFlowAsset::ValidateAsset(FFlowMessageLog& MessageLog)

@@ -104,6 +104,12 @@ public:
 
 	virtual EDataValidationResult ValidateAsset(FFlowMessageLog& MessageLog);
 
+	/* Re-mints the NodeGuid of any UFlowNodeAddOn (at any nesting depth) whose Guid collides with
+	 * one already seen earlier in the walk, keeping the first occurrence of each Guid unchanged.
+	 * Called from PreSaveRoot so every explicit save self-heals; also callable directly to repair
+	 * already-saved assets. Returns the number of AddOns that were re-minted. */
+	int32 RepairDuplicateAddOnGuids();
+
 	/* Returns whether the node class is allowed in this flow asset. */
 	bool IsNodeOrAddOnClassAllowed(const UClass* FlowNodeClass, FText* OutOptionalFailureReason = nullptr) const;
 
