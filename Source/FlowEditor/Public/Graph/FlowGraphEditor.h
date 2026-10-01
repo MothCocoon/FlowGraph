@@ -7,6 +7,7 @@
 #include "FlowGraph.h"
 
 class FFlowAssetEditor;
+class FFlowCollapseToSubGraphTool;
 class IDetailsView;
 class UEdGraphPin;
 class UFlowDebuggerSubsystem;
@@ -17,6 +18,8 @@ struct FFlowBreakpoint;
  */
 class FLOWEDITOR_API SFlowGraphEditor : public SGraphEditor
 {
+	friend class FFlowCollapseToSubGraphTool;
+
 public:
 	SLATE_BEGIN_ARGS(SFlowGraphEditor)
 		{
@@ -104,6 +107,9 @@ protected:
 
 	virtual void ReconstructNode() const;
 	virtual bool CanReconstructNode() const;
+
+	virtual void CreateSubGraphFromSelection();
+	virtual bool CanCreateSubGraphFromSelection() const;
 
 	// ---- Pin breakpoint helpers ----
 	static bool GetValidExecBreakpointPinContext(const UEdGraphPin* Pin, FGuid& OutNodeGuid, FName& OutPinName);
