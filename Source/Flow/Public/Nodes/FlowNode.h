@@ -323,6 +323,11 @@ protected:
 
 #if WITH_EDITOR
 
+public:
+	// UObject interface
+	virtual EDataValidationResult IsDataValid(FDataValidationContext& Context) const override;
+	// --
+
 protected:
 	virtual EDataValidationResult ValidateNode() override;
 	void ValidateFlowPinArrayIsUnique(const TArray<FFlowPin>& FlowPins, TSet<FName>& InOutUniquePinNames, EDataValidationResult& InOutResult);
