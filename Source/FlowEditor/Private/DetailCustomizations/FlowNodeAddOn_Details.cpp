@@ -4,9 +4,11 @@
 
 #include "AddOns/FlowNodeAddOn.h"
 #include "DetailCustomizations/FlowDetailsAddOnUI.h"
+#include "Graph/FlowGraphEditorSettings.h"
 
 #include "DetailCategoryBuilder.h"
 #include "DetailLayoutBuilder.h"
+#include "IDetailPropertyRow.h"
 #include "DetailWidgetRow.h"
 #include "Widgets/Input/SComboButton.h"
 #include "Widgets/Text/STextBlock.h"
@@ -18,8 +20,28 @@ void FFlowNodeAddOn_Details::CustomizeDetails(IDetailLayoutBuilder& DetailLayout
 	// hide class properties while editing node addon instance placed in the graph
 	if (DetailLayout.HasClassDefaultObject() == false)
 	{
-		DetailLayout.HideCategory(TEXT("FlowNode"));
-		DetailLayout.HideCategory(TEXT("FlowNodeAddOn"));
+		if (GetDefault<UFlowGraphEditorSettings>()->bMergeAddOnDetails)
+		{
+			IDetailCategoryBuilder& AddOnDetailsCategory = DetailLayout.EditCategory(
+				TEXT("AddOnDetails"),
+				LOCTEXT("AddOnDetailsCategory", "AddOn Details"),
+				ECategoryPriority::Uncommon);
+
+			TSharedRef<IPropertyHandle> AddOnsProperty = DetailLayout.GetProperty(TEXT("AddOns"), UFlowNodeBase::StaticClass());
+			IDetailPropertyRow& AddOnsRow = AddOnDetailsCategory.AddProperty(AddOnsProperty);
+			AddOnsRow.CustomWidget(true)
+				.NameContent()
+				[
+					SNew(STextBlock)
+					.Text(LOCTEXT("AddOnDetailsProperty", "Child AddOns"))
+					.ToolTipText(LOCTEXT("AddOnDetailsTooltip", "AddOns attached to this AddOn."))
+				]
+				.ValueContent()
+				[
+					SNew(STextBlock)
+				];
+			AddOnsRow.ShouldAutoExpand(true);
+		}
 	}
 
 	// Cache edited addon

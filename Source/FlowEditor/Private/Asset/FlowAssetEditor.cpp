@@ -9,6 +9,7 @@
 #include "Asset/FlowAssetToolbar.h"
 #include "Asset/FlowMessageLogListing.h"
 #include "Graph/FlowGraphEditor.h"
+#include "Graph/FlowGraphEditorSettings.h"
 #include "Graph/FlowGraphSchema.h"
 #include "Graph/Widgets/SFlowPalette.h"
 
@@ -24,6 +25,7 @@
 #include "MessageLogModule.h"
 #include "Misc/UObjectToken.h"
 #include "Modules/ModuleManager.h"
+#include "ObjectEditorUtils.h"
 #include "PropertyEditorModule.h"
 #include "ToolMenus.h"
 #include "Widgets/Docking/SDockTab.h"
@@ -35,6 +37,21 @@
 #endif
 
 #define LOCTEXT_NAMESPACE "FlowAssetEditor"
+
+namespace FlowAssetEditor_Private
+{
+	bool ShouldShowDetailsProperty(const FPropertyAndParent& PropertyAndParent)
+	{
+		const FName CategoryName = FObjectEditorUtils::GetCategoryFName(&PropertyAndParent.Property);
+		if (CategoryName == TEXT("FlowNode") || CategoryName == TEXT("FlowNodeAddOn"))
+		{
+			return false;
+		}
+
+		return PropertyAndParent.Property.GetFName() != TEXT("AddOns")
+			|| GetDefault<UFlowGraphEditorSettings>()->bMergeAddOnDetails;
+	}
+}
 
 const FName FFlowAssetEditor::DetailsTab(TEXT("Details"));
 const FName FFlowAssetEditor::GraphTab(TEXT("Graph"));
@@ -50,6 +67,11 @@ FFlowAssetEditor::FFlowAssetEditor()
 
 FFlowAssetEditor::~FFlowAssetEditor()
 {
+	if (FlowGraphEditorSettingsChangedHandle.IsValid())
+	{
+		UFlowGraphEditorSettings::OnSettingsChanged().Remove(FlowGraphEditorSettingsChangedHandle);
+	}
+
 	GEditor->UnregisterForUndo(this);
 }
 
@@ -309,6 +331,9 @@ void FFlowAssetEditor::InitFlowAssetEditor(const EToolkitMode::Type Mode, const 
 	UFlowGraphSchema::SubscribeToAssetChanges();
 	FlowAsset->OnDetailsRefreshRequested.BindThreadSafeSP(this, &FFlowAssetEditor::RefreshDetails);
 
+	FlowGraphEditorSettingsChangedHandle = UFlowGraphEditorSettings::OnSettingsChanged().AddRaw(
+		this, &FFlowAssetEditor::RefreshDetails);
+
 	BindToolbarCommands();
 	CreateToolbar();
 
@@ -479,6 +504,8 @@ void FFlowAssetEditor::CreateWidgets()
 		FPropertyEditorModule& PropertyModule = FModuleManager::LoadModuleChecked<FPropertyEditorModule>("PropertyEditor");
 		DetailsView = PropertyModule.CreateDetailView(Args);
 		DetailsView->SetIsPropertyEditingEnabledDelegate(FIsPropertyEditingEnabled::CreateStatic(&FFlowAssetEditor::CanEdit));
+		DetailsView->SetIsPropertyVisibleDelegate(
+			FIsPropertyVisible::CreateStatic(&FlowAssetEditor_Private::ShouldShowDetailsProperty));
 		DetailsView->SetObject(FlowAsset);
 	}
 

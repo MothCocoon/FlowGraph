@@ -2,6 +2,7 @@
 #pragma once
 
 #include "EditorUndoClient.h"
+#include "Delegates/Delegate.h"
 #include "Misc/NotifyHook.h"
 #include "Toolkits/AssetEditorToolkit.h"
 #include "Toolkits/IToolkitHost.h"
@@ -64,6 +65,8 @@ protected:
 private:
 	/* The current UI selection state of this editor. */
 	FName CurrentUISelection;
+
+	FDelegateHandle FlowGraphEditorSettingsChangedHandle;
 
 public:
 	FFlowAssetEditor();

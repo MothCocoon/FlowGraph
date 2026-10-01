@@ -5,11 +5,14 @@
 
 #include UE_INLINE_GENERATED_CPP_BY_NAME(FlowGraphEditorSettings)
 
+UFlowGraphEditorSettings::FOnSettingsChanged UFlowGraphEditorSettings::SettingsChanged;
+
 UFlowGraphEditorSettings::UFlowGraphEditorSettings()
 	: NodeDoubleClickTarget(EFlowNodeDoubleClickTarget::PrimaryAssetOrNodeDefinition)
 	, bShowNodeClass(false)
 	, bShowNodeDescriptionWhilePlaying(true)
 	, bShowAddonDescriptions(true)
+	, bMergeAddOnDetails(false)
 	, bEnforceFriendlyPinNames(false)
 	, bShowSubGraphPreview(true)
 	, bShowSubGraphPath(true)
@@ -28,5 +31,15 @@ void UFlowGraphEditorSettings::PostEditChangeProperty(FPropertyChangedEvent& Pro
 	{
 		GetDefault<UFlowGraphSchema>()->ForceVisualizationCacheClear();
 	}
+
+	if (PropertyChangedEvent.GetMemberPropertyName() == GET_MEMBER_NAME_CHECKED(UFlowGraphEditorSettings, bMergeAddOnDetails))
+	{
+		SettingsChanged.Broadcast();
+	}
 }
 #endif
+
+UFlowGraphEditorSettings::FOnSettingsChanged& UFlowGraphEditorSettings::OnSettingsChanged()
+{
+	return SettingsChanged;
+}
