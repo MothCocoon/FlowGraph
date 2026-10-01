@@ -17,7 +17,10 @@ EFlowAddOnAcceptResult UFlowNodeAddOn_PredicateNOT::AcceptFlowNodeAddOnChild_Imp
 	const UFlowNodeAddOn* AddOnTemplate,
 	const TArray<UFlowNodeAddOn*>& AdditionalAddOnsToAssumeAreChildren) const
 {
-	if (AddOns.Num() >= 1 || !AdditionalAddOnsToAssumeAreChildren.IsEmpty())
+	if (HasOtherDirectAddOnChildMatching(
+		*UFlowNodeAddOn::StaticClass(),
+		AddOnTemplate,
+		AdditionalAddOnsToAssumeAreChildren))
 	{
 		// Must not have more than one child Add-On under any circumstances
 		return EFlowAddOnAcceptResult::Reject;
