@@ -23,6 +23,7 @@
 #include "Widgets/Views/STableViewBase.h"
 #include "Widgets/Views/STreeView.h"
 
+#include "Find/FlowSearch.h"
 #include "FindInFlowEnums.h"
 
 class ITableRow;
@@ -94,15 +95,6 @@ public:
 
 	/* Whether this item is a subgraph node. */
 	bool bIsSubGraphNode = false;
-};
-
-struct FFindInFlowCache
-{
-	/* Removes all cached data for the changed flow asset. */
-	static void OnFlowAssetChanged(UFlowAsset& ChangedFlowAsset);
-
-	/* Cache searchable strings per node (for repeat searches). */
-	static TMap<TWeakObjectPtr<UEdGraphNode>, TMap<EFlowSearchFlags, TSet<FString>>> CategoryStringCache;
 };
 
 struct FFindInFlowAllResults

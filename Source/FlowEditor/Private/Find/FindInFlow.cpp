@@ -53,41 +53,6 @@
 #define LOCTEXT_NAMESPACE "FindInFlow"
 
 //////////////////////////////////////////////////////////////////////////
-// FFindInFlowCache
-
-TMap<TWeakObjectPtr<UEdGraphNode>, TMap<EFlowSearchFlags, TSet<FString>>> FFindInFlowCache::CategoryStringCache;
-
-void FFindInFlowCache::OnFlowAssetChanged(UFlowAsset& ChangedFlowAsset)
-{
-	TArray<TWeakObjectPtr<UEdGraphNode>> EntriesToRemove;
-
-	for (const auto& KV : CategoryStringCache)
-	{
-		const TWeakObjectPtr<UEdGraphNode>& EdNodePtr = KV.Key;
-
-		UEdGraphNode* EdNode = EdNodePtr.Get();
-
-		if (!IsValid(EdNode))
-		{
-			EntriesToRemove.Add(EdNodePtr);
-
-			continue;
-		}
-
-		UEdGraph* EdGraph = ChangedFlowAsset.GetGraph();
-		if (EdGraph->Nodes.Contains(EdNode))
-		{
-			EntriesToRemove.Add(EdNodePtr);
-		}
-	}
-
-	for (const TWeakObjectPtr<UEdGraphNode>& EdNodePtr : EntriesToRemove)
-	{
-		CategoryStringCache.Remove(EdNodePtr);
-	}
-}
-
-//////////////////////////////////////////////////////////////////////////
 // FFindInFlowResult
 
 FFindInFlowResult::FFindInFlowResult(const FString& InValue, UFlowAsset* InOwningFlowAsset)
