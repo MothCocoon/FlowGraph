@@ -406,7 +406,7 @@ void SFlowGraphNode::UpdateGraphNode()
 		];
 
 	this->GetOrAddSlot(ENodeZone::Center)
-		.HAlign(HAlign_Center)
+		.HAlign(HAlign_Fill)
 		.VAlign(VAlign_Center)
 		[
 			SAssignNew(MainVerticalBox, SVerticalBox)
@@ -620,6 +620,7 @@ void SFlowGraphNode::CreateOrRebuildSubNodeBox(const TSharedPtr<SVerticalBox>& I
 
 	InnerVerticalBox->AddSlot()
 		.AutoHeight()
+		.HAlign(HAlign_Fill)
 		[
 			SubNodeBox.ToSharedRef()
 		];
@@ -944,7 +945,7 @@ void SFlowGraphNode::AddSubNode(const TSharedPtr<SGraphNode> SubNodeWidget)
 {
 	SubNodes.Add(SubNodeWidget);
 
-	SubNodeBox->AddSlot().AutoHeight()
+	SubNodeBox->AddSlot().AutoHeight().HAlign(HAlign_Fill)
 		[
 			SubNodeWidget.ToSharedRef()
 		];
