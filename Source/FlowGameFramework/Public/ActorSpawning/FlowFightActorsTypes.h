@@ -233,7 +233,7 @@ struct FLOWGAMEFRAMEWORK_API FFlowFightActorCounts
 	float CalculateAliveAndPendingVsInitialCountUnitPercent() const;
 };
 
-/** Authorable timing and pass policy shared by vanilla Flow and converted MKT fights. */
+/** Authorable timing and pass policy for Flow fights. */
 USTRUCT(BlueprintType)
 struct FLOWGAMEFRAMEWORK_API FFlowFightReinforcementParameters
 {

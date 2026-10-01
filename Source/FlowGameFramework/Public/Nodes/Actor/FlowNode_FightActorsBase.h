@@ -21,7 +21,7 @@ class FLOWGAMEFRAMEWORK_API UFlowNode_FightActorsBase
 	GENERATED_BODY()
 
 protected:
-	/** Authored once for both vanilla Flow and MKT fights; migrated MKT values use the Flow enum. */
+	/** Initial cohort spawning policy for this fight. */
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = Configuration,
 		DisplayName = "Initial Spawn Method", meta = (DisplayPriority = 4))
 	EFlowFightActorSpawnMethod InitialSpawnMethod = EFlowFightActorSpawnMethod::FullSpawnAllCohorts;
@@ -32,7 +32,7 @@ protected:
 	EFlowFightActorCompletionRule CompletionRule =
 		EFlowFightActorCompletionRule::AllActorsDefeatedWithNoReinforcementsScheduled;
 
-	/** V2-shaped fight state machine, separate from the containing Flow node's activation state. */
+	/** Fight lifecycle state, separate from the Flow node's activation state. */
 	UPROPERTY(Transient)
 	EFlowFightActorState FightState = EFlowFightActorState::Invalid;
 
