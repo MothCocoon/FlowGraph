@@ -983,9 +983,61 @@ void UFlowAsset::SetupForEditing()
 }
 #endif // WITH_EDITOR
 
-void UFlowAsset::InitializeInstance(const TWeakObjectPtr<UObject> InOwner, UFlowAsset& InTemplateAsset)
+bool UFlowAsset::IsRuntimeGraphValid(FString& OutErrorMessage) const
+{
+	OutErrorMessage.Empty();
+
+	for (const TPair<FGuid, UFlowNode*>& NodePair : ObjectPtrDecay(Nodes))
+	{
+		if (!NodePair.Key.IsValid())
+		{
+			OutErrorMessage = FString::Printf(TEXT("Flow asset '%s' contains a runtime node with an invalid map GUID."),
+				*GetPathName());
+			return false;
+		}
+
+		const UFlowNode* Node = NodePair.Value;
+		if (!IsValid(Node))
+		{
+			OutErrorMessage = FString::Printf(TEXT("Flow asset '%s' contains an invalid runtime node for GUID '%s'."),
+				*GetPathName(), *NodePair.Key.ToString());
+			return false;
+		}
+
+		if (Node->GetGuid() != NodePair.Key)
+		{
+			OutErrorMessage = FString::Printf(
+				TEXT("Flow asset '%s' maps GUID '%s' to node '%s' whose GUID is '%s'."),
+				*GetPathName(), *NodePair.Key.ToString(), *Node->GetPathName(), *Node->GetGuid().ToString());
+			return false;
+		}
+
+		for (const TPair<FName, FConnectedPin>& ConnectionPair : Node->Connections)
+		{
+			const FGuid& ConnectedNodeGuid = ConnectionPair.Value.NodeGuid;
+			if (ConnectedNodeGuid.IsValid() && !IsValid(Nodes.FindRef(ConnectedNodeGuid)))
+			{
+				OutErrorMessage = FString::Printf(
+					TEXT("Flow asset '%s' node '%s' pin '%s' references missing runtime node '%s'."),
+					*GetPathName(), *NodePair.Key.ToString(), *ConnectionPair.Key.ToString(), *ConnectedNodeGuid.ToString());
+				return false;
+			}
+		}
+	}
+
+	return true;
+}
+
+bool UFlowAsset::InitializeInstance(const TWeakObjectPtr<UObject> InOwner, UFlowAsset& InTemplateAsset)
 {
 	check(!IsInstanceInitialized());
+
+	FString ValidationError;
+	if (!IsRuntimeGraphValid(ValidationError))
+	{
+		UE_LOG(LogFlow, Error, TEXT("Flow instance initialization rejected: %s"), *ValidationError);
+		return false;
+	}
 
 	Owner = InOwner;
 	TemplateAsset = &InTemplateAsset;
@@ -1008,6 +1060,8 @@ void UFlowAsset::InitializeInstance(const TWeakObjectPtr<UObject> InOwner, UFlow
 
 		NewNodeInstance->InitializeInstance();
 	}
+
+	return true;
 }
 
 void UFlowAsset::DeinitializeInstance()

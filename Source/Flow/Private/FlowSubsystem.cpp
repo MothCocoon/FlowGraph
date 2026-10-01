@@ -228,6 +228,14 @@ UFlowAsset* UFlowSubsystem::CreateFlowInstance(const TWeakObjectPtr<UObject> Own
 		return nullptr;
 	}
 
+	FString ValidationError;
+	if (!LoadedFlowAsset->IsRuntimeGraphValid(ValidationError))
+	{
+		UE_LOG(LogFlow, Error, TEXT("Flow instance creation rejected: %s"), *ValidationError);
+		return nullptr;
+	}
+
+	const bool bTemplateWasAlreadyInstanced = InstancedTemplates.Contains(LoadedFlowAsset);
 	AddInstancedTemplate(LoadedFlowAsset);
 
 #if WITH_EDITOR
@@ -245,7 +253,15 @@ UFlowAsset* UFlowSubsystem::CreateFlowInstance(const TWeakObjectPtr<UObject> Own
 	}
 
 	UFlowAsset* NewInstance = NewObject<UFlowAsset>(this, LoadedFlowAsset->GetClass(), *NewInstanceName, RF_Transient, LoadedFlowAsset, false, nullptr);
-	NewInstance->InitializeInstance(Owner, *LoadedFlowAsset);
+	if (!NewInstance->InitializeInstance(Owner, *LoadedFlowAsset))
+	{
+		if (!bTemplateWasAlreadyInstanced)
+		{
+			RemoveInstancedTemplate(LoadedFlowAsset);
+		}
+
+		return nullptr;
+	}
 
 	LoadedFlowAsset->AddInstance(NewInstance);
 
