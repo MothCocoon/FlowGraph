@@ -46,4 +46,9 @@ public:
 protected:	
 	virtual EDataValidationResult ValidateNode() override;
 #endif
+
+#if WITH_EDITOR
+public:
+	virtual const FFlowAgentDoc& GetAgentDoc() const override;
+#endif
 };

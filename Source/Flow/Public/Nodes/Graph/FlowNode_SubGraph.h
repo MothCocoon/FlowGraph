@@ -119,4 +119,9 @@ private:
 #endif
 
 	static const FName AssetParams_MemberName;
+
+#if WITH_EDITOR
+public:
+	virtual const FFlowAgentDoc& GetAgentDoc() const override;
+#endif
 };
