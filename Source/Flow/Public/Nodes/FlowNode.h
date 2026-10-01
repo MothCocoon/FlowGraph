@@ -81,17 +81,7 @@ public:
 	// --
 #endif
 
-	/* Inherits Guid after graph node. */
-	UPROPERTY()
-	FGuid NodeGuid;
-
 public:
-	UFUNCTION(BlueprintCallable, Category = "FlowNode")
-	void SetGuid(const FGuid& NewGuid) { NodeGuid = NewGuid; }
-
-	UFUNCTION(BlueprintPure, Category = "FlowNode")
-	const FGuid& GetGuid() const { return NodeGuid; }
-
 	/* Returns a random seed suitable for this flow node,
 	 * by default based on the node Guid,
 	 * but may be overridden in subclasses to supply some other value. */

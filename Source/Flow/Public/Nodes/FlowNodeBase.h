@@ -141,6 +141,18 @@ public:
 	/* Returns the owning top-level Flow node. */
 	virtual const UFlowNode* GetParentNode() const PURE_VIRTUAL(GetParentNode, return nullptr;);
 
+	/* Stable identity persisted across saves. Flow nodes inherit it from the graph node; AddOns
+	 * mint their identity at construction. */
+	UPROPERTY()
+	FGuid NodeGuid;
+
+public:
+	UFUNCTION(BlueprintCallable, Category = "FlowNode")
+	void SetGuid(const FGuid& NewGuid) { NodeGuid = NewGuid; }
+
+	UFUNCTION(BlueprintPure, Category = "FlowNode")
+	const FGuid& GetGuid() const { return NodeGuid; }
+
 //////////////////////////////////////////////////////////////////////////
 // Pins	
 
