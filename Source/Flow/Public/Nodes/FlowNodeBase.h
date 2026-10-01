@@ -9,6 +9,7 @@
 #include "Interfaces/FlowDataPinValueOwnerInterface.h"
 #include "FlowMessageLog.h"
 #include "FlowTags.h" // used by subclasses
+#include "Nodes/FlowAgentDoc.h"
 #include "FlowTypes.h"
 #include "Types/FlowDataPinResults.h"
 #include "Types/FlowPinConnectionChange.h"
@@ -460,6 +461,11 @@ protected:
 	 * May be authored or set procedurally via UpdateNodeConfigText and SetNodeConfigText. */
 	UPROPERTY(EditDefaultsOnly, AdvancedDisplay, Category = "FlowNode")
 	FText DevNodeConfigText;
+
+	/* Agent-facing documentation for this class. Blueprint classes author this on their CDO; native
+	 * classes override GetAgentDoc() to return a compiled-in constant instead. */
+	UPROPERTY(EditDefaultsOnly, Category = "Agent (MCP)", DisplayName = "Agent Documentation")
+	FFlowAgentDoc AgentDoc;
 #endif // WITH_EDITORONLY_DATA
 
 #if WITH_EDITOR
@@ -493,6 +499,13 @@ public:
 	 * @return Returns true if the Node wants to display an icon in the top-right corner.
 	 */
 	virtual bool GetCornerIcon(FName& OutBrushName, FName& OutStyleSetName) const { return false; }
+
+	/** Returns the agent-facing guidance authored on this class or supplied by a native override. */
+	virtual const FFlowAgentDoc& GetAgentDoc() const { return AgentDoc; }
+
+	/* Persists documentation for classes whose defaults serialize AgentDoc. Native overrides should
+	 * return their compiled-in documentation directly. */
+	void SetAgentDoc(const FFlowAgentDoc& InAgentDoc) { AgentDoc = InAgentDoc; }
 	
 protected:
 	void EnsureNodeDisplayStyle();
