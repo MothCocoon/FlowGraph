@@ -418,6 +418,20 @@ public:
 
 	void SetCanDelete(const bool CanDelete);
 
+	/* The single deprecation predicate for a Flow class. */
+	bool IsDeprecated() const { return bNodeDeprecated; }
+
+	/* The class an author should migrate to, or null when this class has no successor. */
+	const TSubclassOf<UFlowNode>& GetReplacedByClass() const { return ReplacedBy; }
+
+	/**
+	 * The pin surface a catalog or documentation consumer should report for this class, read from the
+	 * CDO. Defaults to nothing; UFlowNode reports its declared InputPins/OutputPins, and a base that
+	 * generates its pins procedurally overrides this to report what it will generate. Pins
+	 * contributed by attached addons are outside the scope of a CDO and are not reported here.
+	 */
+	virtual void GetCatalogPins(TArray<FFlowPin>& OutInputPins, TArray<FFlowPin>& OutOutputPins) const {}
+
 	/* Set up UFlowNodeBase when being opened for edit in the editor. */
 	virtual void SetupForEditing(UEdGraphNode& EdGraphNode);
 
