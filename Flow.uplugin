@@ -20,6 +20,11 @@
 			"LoadingPhase" : "PreDefault"
 		},
 		{
+			"Name" : "FlowGameFramework",
+			"Type" : "Runtime",
+			"LoadingPhase" : "PreDefault"
+		},
+		{
 			"Name" : "FlowDebugger",
 			"Type" : "DeveloperTool",
 			"LoadingPhase" : "PreDefault"
