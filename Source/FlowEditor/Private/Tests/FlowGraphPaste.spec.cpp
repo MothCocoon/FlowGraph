@@ -41,6 +41,7 @@ public:
 	{
 		FlowAsset = Asset;
 		FlowAssetEditor = AssetEditor;
+		bCanEditInPIE = false;
 		SGraphEditor::Construct(SGraphEditor::FArguments().GraphToEdit(Asset->GetGraph()));
 	}
 
@@ -61,6 +62,16 @@ struct FTestGraph
 		GEditor->GetEditorSubsystem<UAssetEditorSubsystem>()->NotifyAssetOpened(Asset.Get(), &AssetEditor.Get());
 		UFlowGraph::CreateGraph(Asset.Get(), UFlowGraphSchema::StaticClass());
 		Graph = CastChecked<UFlowGraph>(Asset->GetGraph());
+		// Remove schema defaults so each paste test starts with an empty graph and asset.
+		TArray<UEdGraphNode*> DefaultNodes = Graph->Nodes;
+		for (UEdGraphNode* DefaultNode : DefaultNodes)
+		{
+			if (const UFlowGraphNode* FlowGraphNode = Cast<UFlowGraphNode>(DefaultNode))
+			{
+				Asset->UnregisterNode(FlowGraphNode->NodeGuid);
+			}
+			DefaultNode->DestroyNode();
+		}
 		Editor = SNew(STestFlowGraphEditor, Asset.Get(), AssetEditor);
 	}
 
