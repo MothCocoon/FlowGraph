@@ -160,6 +160,9 @@ public:
 	const TMap<FGuid, UFlowNode*>& GetNodes() const { return ObjectPtrDecay(Nodes); }
 	TArray<UFlowNode*> GetAllNodes() const;
 
+	/** Returns whether the serialized runtime node map can be initialized safely. */
+	bool IsRuntimeGraphValid(FString& OutErrorMessage) const;
+
 	UFlowNode* GetNode(const FGuid& Guid) const { return Nodes.FindRef(Guid); }
 
 	template <class T>
@@ -385,7 +388,7 @@ protected:
 	FFlowOutputDataPinValues OutputDataPinValues;
 
 public:
-	virtual void InitializeInstance(const TWeakObjectPtr<UObject> InOwner, UFlowAsset& InTemplateAsset);
+	virtual bool InitializeInstance(const TWeakObjectPtr<UObject> InOwner, UFlowAsset& InTemplateAsset);
 	virtual void DeinitializeInstance();
 	bool IsInstanceInitialized() const { return IsValid(TemplateAsset); }
 
