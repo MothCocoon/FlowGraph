@@ -246,6 +246,9 @@ public:
 	const TArray<FName>& GetCustomInputs() const { return CustomInputs; }
 	const TArray<FName>& GetCustomOutputs() const { return CustomOutputs; }
 
+	// Rebuilds the editor-only interface arrays after procedural graph-node creation.
+	void RebuildCustomInterfaceLists();
+
 protected:
 	void AddCustomInput(const FName& EventName);
 	void RemoveCustomInput(const FName& EventName);
