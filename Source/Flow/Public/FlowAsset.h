@@ -35,7 +35,6 @@ class UFlowAssetParams;
 
 #if !UE_BUILD_SHIPPING
 DECLARE_DELEGATE(FFlowGraphEvent);
-DECLARE_DELEGATE_TwoParams(FFlowSignalEvent, UFlowNode* /*FlowNode*/, const FName& /*PinName*/);
 #endif
 
 /**
@@ -466,11 +465,6 @@ public:
 
 //////////////////////////////////////////////////////////////////////////
 // Trigger Input
-
-#if !UE_BUILD_SHIPPING
-public:
-	FFlowSignalEvent OnPinTriggered;
-#endif
 
 protected:
 	/* Stack of active deferred transition scopes (innermost = top).

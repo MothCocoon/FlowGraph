@@ -6,6 +6,7 @@
 #include "FlowEditorLogChannels.h"
 
 #include "Asset/FlowAssetEditorContext.h"
+#include "Asset/FlowDebugEditorSubsystem.h"
 #include "Asset/FlowAssetToolbar.h"
 #include "Asset/FlowMessageLogListing.h"
 #include "Graph/FlowGraphEditor.h"
@@ -16,6 +17,7 @@
 
 #include "EdGraph/EdGraphNode.h"
 #include "Editor.h"
+#include "Engine/Engine.h"
 #include "EditorClassUtils.h"
 #include "GraphEditor.h"
 #include "IDetailsView.h"
@@ -410,8 +412,33 @@ void FFlowAssetEditor::BindToolbarCommands()
 	                           FExecuteAction::CreateSP(this, &FFlowAssetEditor::EditAssetDefaults_Clicked),
 	                           FCanExecuteAction());
 
+	ToolkitCommands->MapAction(ToolbarCommands.ContinueFlowExecution,
+	                           FExecuteAction::CreateSP(this, &FFlowAssetEditor::ContinueFlowExecution),
+	                           FCanExecuteAction::CreateSP(this, &FFlowAssetEditor::IsFlowExecutionHalted),
+	                           FIsActionChecked(),
+	                           FIsActionButtonVisible::CreateSP(this, &FFlowAssetEditor::IsFlowExecutionHalted));
+
 	// Engine's Play commands
 	ToolkitCommands->Append(FPlayWorldCommands::GlobalPlayWorldActions.ToSharedRef());
+}
+
+void FFlowAssetEditor::ContinueFlowExecution()
+{
+	if (UFlowDebugEditorSubsystem* DebugSubsystem = GetFlowDebugEditorSubsystem())
+	{
+		DebugSubsystem->RequestContinue();
+	}
+}
+
+bool FFlowAssetEditor::IsFlowExecutionHalted() const
+{
+	const UFlowDebugEditorSubsystem* DebugSubsystem = GetFlowDebugEditorSubsystem();
+	return DebugSubsystem && DebugSubsystem->IsHaltedAtBreakpoint();
+}
+
+UFlowDebugEditorSubsystem* FFlowAssetEditor::GetFlowDebugEditorSubsystem()
+{
+	return GEngine ? GEngine->GetEngineSubsystem<UFlowDebugEditorSubsystem>() : nullptr;
 }
 
 void FFlowAssetEditor::RefreshAsset()

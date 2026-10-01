@@ -16,6 +16,7 @@ public:
 
 	TSharedPtr<FUICommandInfo> SearchInAsset;
 	TSharedPtr<FUICommandInfo> EditAssetDefaults;
+	TSharedPtr<FUICommandInfo> ContinueFlowExecution;
 
 	virtual void RegisterCommands() override;
 };

@@ -97,13 +97,6 @@ protected:
 	virtual void AddInstancedTemplate(UFlowAsset* Template);
 	virtual void RemoveInstancedTemplate(UFlowAsset* Template);
 
-public:
-	/* Try to flush (and clear) all Deferred Trigger scopes.
-	 * (can fail to flush all if a FFlowExecutionGate causes a new halt) */
-	bool TryFlushAllDeferredTriggerScopes() const;
-
-	/* Clear (do not trigger) any remaining deferred transitions. (for shutdown cases) */
-	void ClearAllDeferredTriggerScopes();
 
 public:
 	/* Returns all assets instanced by object from another system like World Settings */

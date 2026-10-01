@@ -20,6 +20,13 @@ class FLOWEDITOR_API UFlowDebugEditorSubsystem : public UFlowDebuggerSubsystem
 public:
 	UFlowDebugEditorSubsystem();
 
+	/* True while a Flow call stack is suspended at a breakpoint. */
+	bool IsHaltedAtBreakpoint() const { return bIsHaltedAtBreakpoint; }
+
+	/* Continues a Flow call stack suspended at a breakpoint, from where it stopped.
+	 * Safe to call when nothing is halted. */
+	void RequestContinue() { ReleaseHalt(); }
+
 protected:
 	TMap<TWeakObjectPtr<UFlowAsset>, TSharedPtr<class IMessageLogListing>> RuntimeLogs;
 
@@ -34,10 +41,25 @@ protected:
 	virtual void OnResumePIE(const bool bIsSimulating);
 	virtual void OnEndPIE(const bool bIsSimulating);
 
+	virtual EFlowBreakAction HaltUntilReleased(const FFlowBreakContext& Context) override;
+
+	/* Ends the nested tick loop entered by HaltUntilReleased(), letting the halted Flow stack resume. */
+	void ReleaseHalt();
+
+	/* Persistent notification offering the way out of a halt, since the level toolbar cannot. */
+	void ShowHaltNotification(const FFlowBreakContext& Context);
+	void DismissHaltNotification();
+
 	virtual void PauseSession(UFlowAsset& FlowAssetInstance) override;
 	virtual void ResumeSession(UFlowAsset& FlowAssetInstance) override;
 	virtual void StopSession() override;
 	virtual void OnFlowDebuggerStateChanged(EFlowDebuggerState PrevState, EFlowDebuggerState NextState, UFlowAsset* FlowAssetInstance);
 
 	void OnBreakpointHit(const UFlowNode* FlowNode) const;
+
+private:
+	/* True while a Flow call stack is suspended inside HaltUntilReleased(). */
+	bool bIsHaltedAtBreakpoint = false;
+
+	TSharedPtr<class SNotificationItem> HaltNotification;
 };
