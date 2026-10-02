@@ -426,10 +426,12 @@ protected:
 	void ResetNodes();
 
 public:
+	void FinishFlowAndDeinitializeInstance(const EFlowFinishPolicy InFinishPolicy);
 	virtual void FinishFlow(const EFlowFinishPolicy InFinishPolicy, const bool bRemoveInstance = true);
 
 public:
 	UFlowSubsystem* GetFlowSubsystem() const;
+	FName GetDisplayName() const;
 
 	UFlowNode_SubGraph* GetNodeOwningThisAssetInstance() const;
 	UFlowAsset* GetParentInstance() const;
