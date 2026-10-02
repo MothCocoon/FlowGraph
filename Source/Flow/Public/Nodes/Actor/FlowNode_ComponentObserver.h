@@ -29,16 +29,16 @@ protected:
 	/* Container A: Identity Tags in Flow Component.
 	 * Container B: Identity Tags listed above. */
 	UPROPERTY(EditAnywhere, Category = "ObservedComponent")
-	EFlowTagContainerMatchType IdentityMatchType;
+	EFlowTagContainerMatchType IdentityMatchType = EFlowTagContainerMatchType::HasAnyExact;
 
 	/* This node will become Completed, if Success Limit > 0 and Success Count reaches this limit.
 	 * Set this to zero, if you'd like receive events indefinitely (node would finish work only if explicitly Stopped). */
 	UPROPERTY(EditAnywhere, Category = "Lifetime", meta = (ClampMin = 0))
-	int32 SuccessLimit;
+	int32 SuccessLimit = 1;
 
 	/* This node will become Completed, if Success Limit > 0 and Success Count reaches this limit. */
 	UPROPERTY(VisibleAnywhere, Category = "Lifetime", SaveGame)
-	int32 SuccessCount;
+	int32 SuccessCount = 0;
 
 	TMap<TWeakObjectPtr<AActor>, TWeakObjectPtr<UFlowComponent>> RegisteredActors;
 
