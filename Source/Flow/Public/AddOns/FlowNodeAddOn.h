@@ -18,7 +18,18 @@ class UFlowNodeAddOn : public UFlowNodeBase
 
 public:
 	FLOW_API UFlowNodeAddOn();
-	
+
+	// UObject
+#if WITH_EDITOR
+	/* Every editor copy path - text paste, node duplicate, whole-asset duplicate - is
+	 * serialization-based and carries NodeGuid over verbatim, so identity has to be re-minted
+	 * here. Runtime instancing uses NewObject-with-template and invokes neither of these, so
+	 * instanced AddOns still inherit their template's NodeGuid. */
+	FLOW_API virtual void PostDuplicate(bool bDuplicateForPIE) override;
+	FLOW_API virtual void PostEditImport() override;
+#endif
+	// --
+
 protected:
 	/* The Flow Node that contains this AddOn.
 	 * Accessible only when initialized, runtime only. */
