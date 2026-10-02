@@ -1569,6 +1569,11 @@ TMap<uint8, FPinRecord> UFlowNode::GetWireRecords() const
 	TMap<uint8, FPinRecord> Result;
 	for (const TPair<FName, TArray<FPinRecord>>& Record : OutputRecords)
 	{
+		// An empty array could crash when using Last() function
+		if (Record.Value.IsEmpty())
+		{
+			continue;
+		}
 		Result.Emplace(OutputPins.IndexOfByKey(Record.Key), Record.Value.Last());
 	}
 	return Result;
