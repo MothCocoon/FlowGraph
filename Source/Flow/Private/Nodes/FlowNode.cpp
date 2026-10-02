@@ -1319,7 +1319,8 @@ bool UFlowNode::TryInitializePreloadHelper()
 		return false;
 	}
 
-	// Preload helpers can be initialized before the preload policy when an asset is upgraded during load.
+	// A helper can initialize before the preload policy when an asset is upgraded during load.
+// Ensure the policy is initialized before accessing it.
 	FlowAsset->EnsurePreloadPolicyInitialized();
 
 	const FFlowPreloadPolicy& PreloadPolicy = FlowAsset->GetPreloadPolicy();
