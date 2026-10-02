@@ -67,5 +67,6 @@ authoring lives with the owning plugin or project.
 
 ## Extensions
 
-An installed extension can add another `agent-docs/` root. Read its index for the behavior it owns;
-this index is sufficient for Flow Graph itself.
+An installed extension can add another `agent-docs/` root. FlowGraphCourier adds the
+`guide:courier-text-format` and `concept:courier-subgraph-selection` articles here. Read its index
+for the behavior it owns; this index is sufficient for Flow Graph itself.
