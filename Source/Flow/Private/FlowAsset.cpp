@@ -18,6 +18,7 @@
 #include "Nodes/Graph/FlowNode_SubGraph.h"
 #include "Policies/FlowPinConnectionPolicy.h"
 #include "Policies/FlowPreloadPolicy.h"
+#include "Types/FlowAutoDataPinsWorkingData.h"
 #include "Types/FlowDataPinValue.h"
 #include "Types/FlowStructUtils.h"
 
@@ -397,7 +398,7 @@ void UFlowAsset::RegisterNode(const FGuid& NewGuid, UFlowNode* NewNode)
 	NewNode->SetGuid(NewGuid);
 	Nodes.Emplace(NewGuid, NewNode);
 
-	HarvestNodeConnections();
+	HarvestNodeConnections(NewNode);
 
 	if (NewNode->TryUpdateAutoDataPins())
 	{
@@ -448,7 +449,18 @@ void UFlowAsset::HarvestNodeConnections(UFlowNode* TargetNode)
 		bool bNodeDirty = false;
 
 		TMap<FName, FConnectedPin> FoundConnections;
-		const TArray<UEdGraphPin*>& GraphNodePins = FlowNode->GetGraphNode()->Pins;
+		const UEdGraphNode* EdGraphNode = FlowNode->GetGraphNode();
+
+		if (!IsValid(EdGraphNode))
+		{
+			// A node may exist in Nodes[] without a GraphNode if the importer has populated
+			// the asset before RegraphFlowAsset has finished linking runtime nodes to their
+			// editor counterparts. Such nodes have no pins to harvest yet; skip them.
+
+			continue;
+		}
+
+		const TArray<UEdGraphPin*>& GraphNodePins = EdGraphNode->Pins;
 
 		for (const UEdGraphPin* ThisPin : GraphNodePins)
 		{
