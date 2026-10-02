@@ -70,7 +70,7 @@ struct FLOWEDITOR_API FFlowSearchResultItem
 	// Which search flag categories actually produced a hit for this node.
 	EFlowSearchFlags MatchedFlags = EFlowSearchFlags::None;
 
-	// Matched pins, if any. Only populated when the search flags include EFlowSearchFlags::PinNames.
+	// Matched pins, if any. Only populated when the search flags include EFlowSearchFlags::Pins.
 	TArray<FFlowSearchMatchedPin> MatchedPins;
 
 	// A representative "Key: Value" snippet from the first matched property, for agent display.
