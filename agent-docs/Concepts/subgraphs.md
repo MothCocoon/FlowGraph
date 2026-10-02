@@ -144,10 +144,6 @@ parent-local state, or add an asset hop without making the behavior easier to un
   termination condition in mind (e.g. a decrementing counter passed via `AssetParams`), never for
   unconditional self-reference.
 
-## Ecosystem links
-
-- $KB:flow:guide:courier-text-format (Subgraph Interface section - Courier JSON fields)
-
 ## See also
 
 - $KB:flow:guide:flowgraph-index

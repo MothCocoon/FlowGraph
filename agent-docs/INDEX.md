@@ -37,13 +37,6 @@ catalog serves it beside reflected pins and properties. A class's `Articles` ent
 `concept:<id>` or `pattern:<id>` to connect it to shared articles. Mark content that agents may
 change only on explicit instruction with `<!-- KB-LOCK -->` and `<!-- /KB-LOCK -->`.
 
-## Available guides
-
-- $KB:flow:guide:courier-text-format - the Courier v2 JSON document: what its fields mean and what
-  a document does when applied (identity, apply order, merge behavior, addon parentage, pin names,
-  the error model). The exact schema is published live by `describe_toolset`; read this for meaning,
-  not shape.
-
 ## Scripts (`Scripts/`)
 
 - `kb_lint.py` - generic KB consistency checker (dangling `$KB:` references, filename/tag

@@ -20,13 +20,11 @@ public:
 protected:
 	/* When true, outputs are selected randomly each activation instead of in order. */
 	UPROPERTY(EditAnywhere, Category = "MultiGate")
-	bool bRandom;
-
+	bool bRandom = false;
 	/* Allow executing output pins again, without triggering Reset pin.
 	 * If set to False, every output pin can be triggered only once/ */
 	UPROPERTY(EditAnywhere, Category = "MultiGate")
-	bool bLoop;
-
+	bool bLoop = false;
 	/* Index of the first output pin to fire on the first activation (0-based). */
 	UPROPERTY(EditAnywhere, Category = "MultiGate")
 	int32 StartIndex = INDEX_NONE;
