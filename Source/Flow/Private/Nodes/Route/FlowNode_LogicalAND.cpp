@@ -43,7 +43,7 @@ FString UFlowNode_LogicalAND::GetStatusString() const
 
 	return TextBuilder.ToText().ToString();
 }
-f WITH_EDITOR
+
 const FFlowAgentDoc& UFlowNode_LogicalAND::GetAgentDoc() const
 {
 	static const FFlowAgentDoc Doc = MakeAgentDoc(
