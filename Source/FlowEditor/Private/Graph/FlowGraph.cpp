@@ -41,6 +41,7 @@ void UFlowGraph::CreateGraph(UFlowAsset* InFlowAsset, TSubclassOf<UFlowGraphSche
 	UFlowGraphSchema::GatherNodes();
 
 	InFlowAsset->FlowGraph = NewGraph;
+
 	if (bCreateDefaultNodes)
 	{
 		InFlowAsset->FlowGraph->GetSchema()->CreateDefaultNodesForGraph(*InFlowAsset->FlowGraph);
@@ -129,9 +130,12 @@ void UFlowGraph::RecursivelyRefreshAddOns(UFlowGraphNode& FromFlowGraphNode)
 
 void UFlowGraph::NotifyGraphChanged()
 {
-	if (UFlowAsset* FlowAsset = GetFlowAsset())
+	if (!IsLocked())
 	{
-		FlowAsset->HarvestNodeConnections();
+		if (UFlowAsset* FlowAsset = GetFlowAsset())
+		{
+			FlowAsset->HarvestNodeConnections();
+		}
 	}
 
 	Super::NotifyGraphChanged();
