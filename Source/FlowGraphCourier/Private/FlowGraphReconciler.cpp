@@ -783,7 +783,8 @@ TSharedPtr<FFlowReconcileExecutionPlan> FFlowGraphReconciler::ComputeReconcilePl
 	ClassifyParsedNodes(Plan->AllParsedNodes, EffectiveScopedNodeGuids, CurrentNodes,
 		Plan->NodesToAdd, Plan->NodesToUpdate, Plan->NodesToDelete, Plan->AliasMap);
 
-	// The converter's alias map is authoritative because ClassifyParsedNodes tracks node aliases only.
+	// The converter's alias map is authoritative because it covers both node and addon aliases.
+	// ClassifyParsedNodes is a node-only helper retained from v1 and doesn't track addon aliases.
 	Plan->AliasMap = AliasMap;
 
 	Plan->Plan.NodesDeleted = Plan->NodesToDelete;

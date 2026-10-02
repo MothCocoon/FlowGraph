@@ -53,7 +53,8 @@ private:
 
 	// Appends one UpsertAddon op per addon under OwnerNode, parented via ParentGuid = OwnerGuid,
 	// recursing into each addon's own children (an addon-of-addon is parented to its immediate
-	// addon owner, not the top-level node). The document uses flat parent GUID references.
+	// addon owner, not the top-level node) - Courier v2's flat parentGuid representation, not the
+	// v1 grammar's indentation-nested one.
 	static void BuildAddonOps(const UFlowNodeBase* OwnerNode, const FGuid& OwnerGuid, FFlowCourierDocument& OutDocument);
 
 	// NodeGuidFilter: nullptr (default) includes every connection, matching the pre-existing
