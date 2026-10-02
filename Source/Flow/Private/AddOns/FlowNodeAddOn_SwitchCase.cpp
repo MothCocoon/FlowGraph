@@ -152,8 +152,6 @@ FText UFlowNodeAddOn_SwitchCase::K2_GetNodeTitle_Implementation() const
 	return Super::K2_GetNodeTitle_Implementation();
 }
 
-#undef LOCTEXT_NAMESPACE
-
 #if WITH_EDITOR
 const FFlowAgentDoc& UFlowNodeAddOn_SwitchCase::GetAgentDoc() const
 {
@@ -164,3 +162,5 @@ const FFlowAgentDoc& UFlowNodeAddOn_SwitchCase::GetAgentDoc() const
 	return Doc;
 }
 #endif
+
+#undef LOCTEXT_NAMESPACE

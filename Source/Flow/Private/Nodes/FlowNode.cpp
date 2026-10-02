@@ -77,8 +77,8 @@ EDataValidationResult UFlowNode::IsDataValid(FDataValidationContext& Context) co
 			if (!OwningFlowAssetNodes.Contains(Connection.Value.NodeGuid))
 			{
 				Context.AddError(FText::FromString(FString::Printf(
-					TEXT("Pin '%s' on Node '%s' is connected to node Guid %s, which does not exist in the owning Flow Asset '%s'. "
-						"This connection is stale and will silently fail to trigger at runtime. Open the flow asset in editor and resave."),
+					TEXT("Pin '%s' on Node '%s' is connected to node Guid %s, which does not exist in the owning Flow Asset '%s'. ")
+					TEXT("This connection is stale and will silently fail to trigger at runtime. Open the flow asset in editor and resave."),
 					*Connection.Key.ToString(),
 					*GetName(),
 					*Connection.Value.NodeGuid.ToString(),
