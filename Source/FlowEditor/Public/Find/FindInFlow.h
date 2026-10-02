@@ -174,6 +174,13 @@ protected:
 	/* Get current scope display text. */
 	FText GetCurrentScopeText() const;
 
+	TSharedRef<SWidget> MakePinFilterMenu();
+	FText GetPinFilterSummaryText() const;
+	FText GetPinFilterToolTip() const;
+	bool ArePinFiltersEnabled() const;
+	void OnPinDirectionChanged(EFlowSearchPinDirection NewDirection);
+	void OnPinConnectionChanged(EFlowSearchPinConnectionState NewConnection);
+
 	/* Runs FFlowSearch::Search and populates SearchResults from the flat item list. */
 	void InitiateSearch();
 
@@ -204,6 +211,8 @@ protected:
 
 	/* Search configuration. */
 	EFlowSearchFlags SearchFlags = EFlowSearchFlags::DefaultSearchFlags;
+	EFlowSearchPinDirection PinDirection = EFlowSearchPinDirection::Any;
+	EFlowSearchPinConnectionState PinConnection = EFlowSearchPinConnectionState::Any;
 
 	TSharedPtr<SSpinBox<int32>> MaxDepthSpinBox;
 	int32 MaxSearchDepth = 3;
