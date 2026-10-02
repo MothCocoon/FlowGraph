@@ -62,9 +62,7 @@ FString UFlowNode_OnNotifyFromActor::GetNodeDescription() const
 {
 	return GetIdentityTagsDescription(IdentityTags) + LINE_TERMINATOR + GetNotifyTagsDescription(NotifyTags);
 }
-#endif
 
-#if WITH_EDITOR
 const FFlowAgentDoc& UFlowNode_OnNotifyFromActor::GetAgentDoc() const
 {
 	static const FFlowAgentDoc Doc = MakeAgentDoc(

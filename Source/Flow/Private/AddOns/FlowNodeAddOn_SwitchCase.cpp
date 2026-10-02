@@ -3,6 +3,7 @@
 #include "AddOns/FlowNodeAddOn_SwitchCase.h"
 #include "AddOns/FlowNodeAddOn_PredicateAND.h"
 #include "AddOns/FlowNodeAddOn_PredicateOR.h"
+#include "FlowLogChannels.h"
 #include "FlowSettings.h"
 #include "Nodes/FlowNode.h"
 
@@ -42,7 +43,12 @@ void UFlowNodeAddOn_SwitchCase::PostEditChangeProperty(struct FPropertyChangedEv
 
 TArray<FFlowPin> UFlowNodeAddOn_SwitchCase::GetContextOutputs() const
 {
-	const UFlowNode* FlowNodeOwner = GetFlowNode();
+	const UFlowNode* FlowNodeOwner = IsValid(FlowNode) ? FlowNode.Get() : FindOwningFlowNode();
+	if (!IsValid(FlowNodeOwner))
+	{
+		UE_LOG(LogFlow, Error, TEXT("Flow SwitchCase context owner missing: AddOn '%s', Guid '%s', Outer '%s', CachedOwner '%s'"),
+			*GetPathName(), *GetGuid().ToString(), *GetNameSafe(GetOuter()), *GetNameSafe(FlowNode.Get()));
+	}
 	check(IsValid(FlowNodeOwner));
 
 	int32 DuplicateCount = 0;
@@ -146,8 +152,6 @@ FText UFlowNodeAddOn_SwitchCase::K2_GetNodeTitle_Implementation() const
 	return Super::K2_GetNodeTitle_Implementation();
 }
 
-#undef LOCTEXT_NAMESPACE
-
 #if WITH_EDITOR
 const FFlowAgentDoc& UFlowNodeAddOn_SwitchCase::GetAgentDoc() const
 {
@@ -158,3 +162,5 @@ const FFlowAgentDoc& UFlowNodeAddOn_SwitchCase::GetAgentDoc() const
 	return Doc;
 }
 #endif
+
+#undef LOCTEXT_NAMESPACE
