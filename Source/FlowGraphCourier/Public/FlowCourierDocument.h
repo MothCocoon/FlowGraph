@@ -77,8 +77,7 @@ struct FLOWGRAPHCOURIER_API FFlowCourierOp
 
 	// Identity of the node/addon this op targets. Exactly one of Guid/NewAlias must be set on any
 	// op that targets an object (Upsert*/Delete*). NewAlias names an object being created in this
-	// document; Guid names one that already exists. There is no single field or sentinel that
-	// means both - that ambiguity is exactly what Courier v2 removes.
+	// document; Guid names one that already exists.
 	UPROPERTY()
 	FString Guid;
 

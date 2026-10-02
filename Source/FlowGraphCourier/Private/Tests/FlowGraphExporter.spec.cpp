@@ -43,33 +43,33 @@ void FFlowGraphExporterSpec::Define()
 		{
 			UFlowGraph* FlowGraph = Cast<UFlowGraph>(TestFlowAsset->GetGraph());
 			if (!FlowGraph) { return; }
-
+			
 			UFlowGraphNode* StartGraphNode = NewObject<UFlowGraphNode>(FlowGraph);
 			StartGraphNode->CreateNewGuid();
 			UFlowNode* StartFlowNode = TestFlowAsset->CreateNode(UFlowNode_Reroute::StaticClass(), StartGraphNode);
 			StartGraphNode->SetNodeTemplate(StartFlowNode);
 			StartGraphNode->AllocateDefaultPins();
 			FlowGraph->AddNode(StartGraphNode, false, false);
-
+			
 			UFlowGraphNode* FinishGraphNode = NewObject<UFlowGraphNode>(FlowGraph);
 			FinishGraphNode->CreateNewGuid();
 			UFlowNode* FinishFlowNode = TestFlowAsset->CreateNode(UFlowNode_Reroute::StaticClass(), FinishGraphNode);
 			FinishGraphNode->SetNodeTemplate(FinishFlowNode);
 			FinishGraphNode->AllocateDefaultPins();
 			FlowGraph->AddNode(FinishGraphNode, false, false);
-
+			
 			if (StartGraphNode->OutputPins.Num() > 0 && FinishGraphNode->InputPins.Num() > 0)
 			{
 				UEdGraphPin* OutputPin = StartGraphNode->OutputPins[0];
 				UEdGraphPin* InputPin = FinishGraphNode->InputPins[0];
 				OutputPin->MakeLinkTo(InputPin);
 			}
-
+			
 			FlowGraph->NotifyGraphChanged();
 			TestFlowAsset->HarvestNodeConnections();
-
+			
 			FString ExportedText = UFlowGraphExporter::ExportFlowGraphToString(TestFlowAsset);
-
+			
 			TestTrue("Export should not be empty", !ExportedText.IsEmpty());
 			TestTrue("Export should declare Courier v2's formatVersion", ExportedText.Contains(TEXT("\"formatVersion\": 2")));
 			TestTrue("Export should contain UpsertNode ops", ExportedText.Contains(TEXT("\"kind\": \"UpsertNode\"")));
@@ -80,9 +80,9 @@ void FFlowGraphExporterSpec::Define()
 		{
 			TestFlowAsset->AssetGuid = FGuid::NewGuid();
 			TestFlowAsset->bWorldBound = true;
-
+			
 			FString ExportedText = UFlowGraphExporter::ExportFlowGraphToString(TestFlowAsset);
-
+			
 			TestTrue("Export should contain bWorldBound", ExportedText.Contains(TEXT("\"bWorldBound\": true")));
 			TestTrue("Export should contain expectedOwnerClass", ExportedText.Contains(TEXT("\"expectedOwnerClass\"")));
 		});
@@ -91,7 +91,7 @@ void FFlowGraphExporterSpec::Define()
 		{
 			UFlowGraph* FlowGraph = Cast<UFlowGraph>(TestFlowAsset->GetGraph());
 			if (!FlowGraph) { return; }
-
+			
 			UFlowGraphNode* GraphNode = NewObject<UFlowGraphNode>(FlowGraph);
 			GraphNode->CreateNewGuid();
 			UFlowNode* FlowNode = TestFlowAsset->CreateNode(UFlowNode_Reroute::StaticClass(), GraphNode);
@@ -99,9 +99,9 @@ void FFlowGraphExporterSpec::Define()
 			GraphNode->AllocateDefaultPins();
 			FlowGraph->AddNode(GraphNode, false, false);
 			FlowGraph->NotifyGraphChanged();
-
+			
 			FString ExportedText = UFlowGraphExporter::ExportFlowGraphToString(TestFlowAsset);
-
+			
 			TestTrue("Export should contain an UpsertNode op", ExportedText.Contains(TEXT("\"kind\": \"UpsertNode\"")));
 			TestTrue("Export should contain a type field", ExportedText.Contains(TEXT("\"type\":")));
 			TestTrue("Export should contain a properties field", ExportedText.Contains(TEXT("\"properties\":")));
@@ -112,7 +112,7 @@ void FFlowGraphExporterSpec::Define()
 		It("should handle empty flow asset", [this]()
 		{
 			FString ExportedText = UFlowGraphExporter::ExportFlowGraphToString(TestFlowAsset);
-
+			
 			TestTrue("Export should not be empty", !ExportedText.IsEmpty());
 			TestTrue("Export should declare Courier v2's formatVersion", ExportedText.Contains(TEXT("\"formatVersion\": 2")));
 			TestTrue("Export should contain an empty ops array", ExportedText.Contains(TEXT("\"ops\": []")));
@@ -121,7 +121,7 @@ void FFlowGraphExporterSpec::Define()
 		It("should handle null flow asset gracefully", [this]()
 		{
 			FString ExportedText = UFlowGraphExporter::ExportFlowGraphToString(nullptr);
-
+			
 			TestTrue("Export should be empty for null asset", ExportedText.IsEmpty());
 		});
 
@@ -129,43 +129,43 @@ void FFlowGraphExporterSpec::Define()
 		{
 			UFlowGraph* FlowGraph = Cast<UFlowGraph>(TestFlowAsset->GetGraph());
 			if (!FlowGraph) { return; }
-
+			
 			UFlowGraphNode* GraphNode1 = NewObject<UFlowGraphNode>(FlowGraph);
 			GraphNode1->CreateNewGuid();
 			UFlowNode* FlowNode1 = TestFlowAsset->CreateNode(UFlowNode_Reroute::StaticClass(), GraphNode1);
 			GraphNode1->SetNodeTemplate(FlowNode1);
 			GraphNode1->AllocateDefaultPins();
 			FlowGraph->AddNode(GraphNode1, false, false);
-
+			
 			UFlowGraphNode* GraphNode2 = NewObject<UFlowGraphNode>(FlowGraph);
 			GraphNode2->CreateNewGuid();
 			UFlowNode* FlowNode2 = TestFlowAsset->CreateNode(UFlowNode_Reroute::StaticClass(), GraphNode2);
 			GraphNode2->SetNodeTemplate(FlowNode2);
 			GraphNode2->AllocateDefaultPins();
 			FlowGraph->AddNode(GraphNode2, false, false);
-
+			
 			UFlowGraphNode* GraphNode3 = NewObject<UFlowGraphNode>(FlowGraph);
 			GraphNode3->CreateNewGuid();
 			UFlowNode* FlowNode3 = TestFlowAsset->CreateNode(UFlowNode_Reroute::StaticClass(), GraphNode3);
 			GraphNode3->SetNodeTemplate(FlowNode3);
 			GraphNode3->AllocateDefaultPins();
 			FlowGraph->AddNode(GraphNode3, false, false);
-
+			
 			if (GraphNode1->OutputPins.Num() > 0 && GraphNode2->InputPins.Num() > 0)
 			{
 				GraphNode1->OutputPins[0]->MakeLinkTo(GraphNode2->InputPins[0]);
 			}
-
+			
 			if (GraphNode2->OutputPins.Num() > 0 && GraphNode3->InputPins.Num() > 0)
 			{
 				GraphNode2->OutputPins[0]->MakeLinkTo(GraphNode3->InputPins[0]);
 			}
-
+			
 			FlowGraph->NotifyGraphChanged();
 			TestFlowAsset->HarvestNodeConnections();
-
+			
 			FString ExportedText = UFlowGraphExporter::ExportFlowGraphToString(TestFlowAsset);
-
+			
 			int32 ConnectionCount = 0;
 			int32 SearchPos = 0;
 			const FString AddConnectionMarker = TEXT("\"kind\": \"AddConnection\"");
@@ -174,7 +174,7 @@ void FFlowGraphExporterSpec::Define()
 				ConnectionCount++;
 				SearchPos += AddConnectionMarker.Len();
 			}
-
+			
 			TestEqual("Export should contain two connections", ConnectionCount, 2);
 		});
 	});

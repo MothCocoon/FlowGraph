@@ -258,38 +258,38 @@ void FFlowGraphImporterSpec::Define()
 					// Check that NamedProperties array was imported correctly
 					FProperty* NamedPropsProperty = DefinePropsNode->GetClass()->FindPropertyByName(TEXT("NamedProperties"));
 					TestNotNull("NamedProperties property should exist", NamedPropsProperty);
-
+					
 					if (NamedPropsProperty)
 					{
 						FArrayProperty* ArrayProperty = CastField<FArrayProperty>(NamedPropsProperty);
 						TestNotNull("NamedProperties should be an array property", ArrayProperty);
-
+						
 						if (ArrayProperty)
 						{
 							void* ArrayPtr = ArrayProperty->ContainerPtrToValuePtr<void>(DefinePropsNode);
 							FScriptArrayHelper ArrayHelper(ArrayProperty, ArrayPtr);
-
+							
 							TestEqual("NamedProperties should have 1 element", ArrayHelper.Num(), 1);
-
+							
 							if (ArrayHelper.Num() > 0)
 							{
 								// Verify the struct has the correct PropertyName
 								FStructProperty* InnerStructProp = CastField<FStructProperty>(ArrayProperty->Inner);
 								TestNotNull("Inner property should be a struct", InnerStructProp);
-
+								
 								if (InnerStructProp)
 								{
 									void* StructPtr = ArrayHelper.GetRawPtr(0);
-
+									
 									// Check Name field
 									FProperty* NameFieldProp = InnerStructProp->Struct->FindPropertyByName(TEXT("Name"));
 									TestNotNull("Name field should exist", NameFieldProp);
-
+									
 									if (NameFieldProp)
 									{
 										FNameProperty* NameProp = CastField<FNameProperty>(NameFieldProp);
 										TestNotNull("Name should be a Name property", NameProp);
-
+										
 										if (NameProp)
 										{
 											FName NameValue = NameProp->GetPropertyValue_InContainer(StructPtr);
@@ -297,31 +297,31 @@ void FFlowGraphImporterSpec::Define()
 											TestFalse("Name should not be empty", NameValue.IsNone());
 										}
 									}
-
+									
 									// Check DataPinValue field
 									FProperty* DataPinValueProp = InnerStructProp->Struct->FindPropertyByName(TEXT("DataPinValue"));
 									TestNotNull("DataPinValue field should exist", DataPinValueProp);
-
+									
 									if (DataPinValueProp)
 									{
 										FStructProperty* DataPinValueStructProp = CastField<FStructProperty>(DataPinValueProp);
 										TestNotNull("DataPinValue should be a struct property", DataPinValueStructProp);
-
+										
 										if (DataPinValueStructProp)
 										{
 											// Get the TInstancedStruct value
 											void* DataPinValuePtr = DataPinValueStructProp->ContainerPtrToValuePtr<void>(StructPtr);
-
+											
 											// Export to text to see what we got
 											FString DataPinValueExport;
 											DataPinValueStructProp->ExportText_Direct(DataPinValueExport, DataPinValuePtr, nullptr, nullptr, PPF_None);
 											UE_LOG(LogFlow, Log, TEXT("DataPinValue exported as: %s"), *DataPinValueExport);
-
+											
 											// Check if it's not None
 											TestNotEqual("DataPinValue should not be None", DataPinValueExport, FString(TEXT("None")));
 										}
 									}
-
+									
 									// Log the struct for debugging
 									FString StructDebugString;
 									InnerStructProp->Struct->ExportText(StructDebugString, StructPtr, nullptr, nullptr, PPF_None, nullptr);
@@ -739,7 +739,7 @@ void FFlowGraphImporterSpec::Define()
 						if (OriginalConnection.NodeGuid.IsValid())
 						{
 							FConnectedPin ImportedConnection = ImportedNode->GetConnection(OutputPin.PinName);
-							TestTrue(FString::Printf(TEXT("Node %s output pin %s should have connection"),
+							TestTrue(FString::Printf(TEXT("Node %s output pin %s should have connection"), 
 								*OriginalNodePair.Key.ToString(), *OutputPin.PinName.ToString()),
 								ImportedConnection.NodeGuid.IsValid());
 
@@ -765,7 +765,7 @@ void FFlowGraphImporterSpec::Define()
 							if (OriginalConnection.NodeGuid.IsValid())
 							{
 								FConnectedPin ImportedConnection = ImportedNode->GetConnection(InputPin.PinName);
-								TestTrue(FString::Printf(TEXT("Node %s input pin %s should have connection"),
+								TestTrue(FString::Printf(TEXT("Node %s input pin %s should have connection"), 
 									*OriginalNodePair.Key.ToString(), *InputPin.PinName.ToString()),
 									ImportedConnection.NodeGuid.IsValid());
 
@@ -790,7 +790,7 @@ void FFlowGraphImporterSpec::Define()
 				// Log the editor state for debugging
 				UE_LOG(LogFlow, Log, TEXT("Regrapher test: GEditor=%p, IsRunningCommandlet=%d, IsUnattended=%d"),
 					(void*)GEditor, IsRunningCommandlet(), FApp::IsUnattended());
-
+				
 				if (GEditor)
 				{
 					UE_LOG(LogFlow, Log, TEXT("Regrapher test: GEditor->PlayWorld=%p"), (void*)GEditor->PlayWorld.Get());
@@ -832,7 +832,7 @@ void FFlowGraphImporterSpec::Define()
 					FGuid StartGuid;
 					FGuid::Parse(TEXT("00000000-0000-0000-0000-000000000001"), StartGuid);
 					UFlowNode* StartNode = TestFlowAsset->GetNode(StartGuid);
-
+					
 					if (StartNode)
 					{
 						UEdGraphNode* GraphNode = StartNode->GetGraphNode();
@@ -884,7 +884,7 @@ void FFlowGraphImporterSpec::Define()
 				);
 
 				TestNotNull("Imported and regraphed asset should not be null", ImportedAsset);
-
+				
 				if (ImportedAsset)
 				{
 					// Verify the asset has a graph
@@ -895,12 +895,12 @@ void FFlowGraphImporterSpec::Define()
 					FGuid StartGuid;
 					FGuid::Parse(TEXT("00000000-0000-0000-0000-000000000001"), StartGuid);
 					UFlowNode* StartNode = ImportedAsset->GetNode(StartGuid);
-
+					
 					if (StartNode)
 					{
 						UEdGraphNode* GraphNode = StartNode->GetGraphNode();
 						TestNotNull("Start node should have a graph node", GraphNode);
-
+						
 						if (GraphNode)
 						{
 							// Verify the graph node has pins
@@ -911,7 +911,7 @@ void FFlowGraphImporterSpec::Define()
 					FGuid FinishGuid;
 					FGuid::Parse(TEXT("00000000-0000-0000-0000-000000000002"), FinishGuid);
 					UFlowNode* FinishNode = ImportedAsset->GetNode(FinishGuid);
-
+					
 					if (FinishNode)
 					{
 						UEdGraphNode* GraphNode = FinishNode->GetGraphNode();
@@ -945,7 +945,7 @@ void FFlowGraphImporterSpec::Define()
 				);
 
 				TestNotNull("Imported and regraphed asset should not be null", ImportedAsset);
-
+				
 				if (ImportedAsset)
 				{
 					// Verify the asset has a graph

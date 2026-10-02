@@ -1008,7 +1008,7 @@ bool UFlowGraphImporter::SetPropertyFromString(FProperty* Property, void* ValueP
 	// Handle different property types
 	if (FBoolProperty* BoolProperty = CastField<FBoolProperty>(Property))
 	{
-		bool bValue = ValueString.Equals(TEXT("true"), ESearchCase::IgnoreCase) ||
+		bool bValue = ValueString.Equals(TEXT("true"), ESearchCase::IgnoreCase) || 
 		              ValueString.Equals(TEXT("1"));
 		BoolProperty->SetPropertyValue(ValuePtr, bValue);
 		return true;
@@ -1057,7 +1057,7 @@ bool UFlowGraphImporter::SetPropertyFromString(FProperty* Property, void* ValueP
 			// Extract the display string (third parameter)
 			int32 LastQuoteStart = ValueString.Find(TEXT("\""), ESearchCase::CaseSensitive, ESearchDir::FromEnd);
 			int32 SecondLastQuoteStart = ValueString.Find(TEXT("\""), ESearchCase::CaseSensitive, ESearchDir::FromEnd, LastQuoteStart - 1);
-
+			
 			if (LastQuoteStart != INDEX_NONE && SecondLastQuoteStart != INDEX_NONE)
 			{
 				FString DisplayString = ValueString.Mid(SecondLastQuoteStart + 1, LastQuoteStart - SecondLastQuoteStart - 1);

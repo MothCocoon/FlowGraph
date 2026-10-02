@@ -1,4 +1,4 @@
-// Copyright https://github.com/MothCocoon/FlowGraph/graphs/contributors
+﻿// Copyright https://github.com/MothCocoon/FlowGraph/graphs/contributors
 
 #include "FlowCatalogQuery.h"
 #include "FlowLogChannels.h"
@@ -1286,33 +1286,33 @@ bool UFlowCatalogQuery::ExportFlowCatalogToFile(const FString& OutputFilePath, c
 void UFlowCatalogQuery::GatherAllNodeClasses(TArray<UClass*>& OutNodeClasses)
 {
 	OutNodeClasses.Reset();
-
+	
 	TArray<UClass*> NativeFlowNodes;
 	GetDerivedClasses(UFlowNode::StaticClass(), NativeFlowNodes);
-
+	
 	for (UClass* Class : NativeFlowNodes)
 	{
 		if (Class->ClassGeneratedBy != nullptr)
 		{
 			continue;
 		}
-
+		
 		if (Class->HasAnyClassFlags(CLASS_Abstract | CLASS_Deprecated | CLASS_NewerVersionExists) ||
 			Class->HasMetaData(TEXT("ExcludeFromFlowCatalog")))
 		{
 			continue;
 		}
-
-		if (Class->GetName().StartsWith(TEXT("SKEL_")) ||
+		
+		if (Class->GetName().StartsWith(TEXT("SKEL_")) || 
 			Class->GetName().StartsWith(TEXT("REINST_")) ||
 			Class->GetName().StartsWith(TEXT("TRASHCLASS_")))
 		{
 			continue;
 		}
-
+		
 		OutNodeClasses.Add(Class);
 	}
-
+	
 	GatherBlueprintDerivedClasses(UFlowNodeBlueprint::StaticClass(), UFlowNode::StaticClass(), OutNodeClasses);
 }
 
@@ -1365,7 +1365,7 @@ FString UFlowCatalogQuery::GetNodeDescription(const UClass* NodeOrAddOnClass)
 	{
 		return FString();
 	}
-
+	
 #if WITH_EDITOR
 	// UFlowNodeBase supplies tooltips for both nodes and addons.
 	if (const UFlowNodeBase* DefaultNode = Cast<UFlowNodeBase>(NodeOrAddOnClass->GetDefaultObject()))
@@ -1376,14 +1376,14 @@ FString UFlowCatalogQuery::GetNodeDescription(const UClass* NodeOrAddOnClass)
 			return Tooltip.ToString();
 		}
 	}
-
+	
 	const FText ClassTooltip = NodeOrAddOnClass->GetToolTipText();
 	if (!ClassTooltip.IsEmpty())
 	{
 		return ClassTooltip.ToString();
 	}
 #endif
-
+	
 	return FString();
 }
 
@@ -1400,7 +1400,7 @@ FString UFlowCatalogQuery::GetNodeCategory(const UClass* NodeOrAddOnClass)
 		return DefaultNode->GetNodeCategory();
 	}
 #endif
-
+	
 	return FString();
 }
 
@@ -1708,7 +1708,7 @@ FString UFlowCatalogQuery::GetPropertyTypeName(const FProperty* Property)
 	{
 		return TEXT("Unknown");
 	}
-
+	
 	if (CastField<FBoolProperty>(Property))
 	{
 		return TEXT("Boolean");
@@ -1813,7 +1813,7 @@ FString UFlowCatalogQuery::GetPropertyTypeName(const FProperty* Property)
 		FString ValueType = GetPropertyTypeName(MapProp->ValueProp);
 		return FString::Printf(TEXT("Map<%s, %s>"), *KeyType, *ValueType);
 	}
-
+	
 	return Property->GetCPPType();
 }
 
@@ -1823,7 +1823,7 @@ FString UFlowCatalogQuery::GetPropertyTooltip(const FProperty* Property)
 	{
 		return TEXT("");
 	}
-
+	
 #if WITH_EDITOR
 	FText Tooltip = Property->GetToolTipText();
 	if (!Tooltip.IsEmpty())
@@ -1831,7 +1831,7 @@ FString UFlowCatalogQuery::GetPropertyTooltip(const FProperty* Property)
 		return Tooltip.ToString();
 	}
 #endif
-
+	
 	return TEXT("");
 }
 
@@ -1841,12 +1841,12 @@ FString UFlowCatalogQuery::GetPropertyPinBinding(const FProperty* Property)
 	{
 		return TEXT("-");
 	}
-
+	
 #if WITH_EDITOR
 	bool bIsOutputPin = Property->HasMetaData(FFlowPin::MetadataKey_SourceForOutputFlowPin);
 	bool bIsInputPin = Property->HasMetaData(FFlowPin::MetadataKey_DefaultForInputFlowPin);
 	bool bHasFlowPinType = Property->HasMetaData(FFlowPin::MetadataKey_FlowPinType);
-
+	
 	if (bIsOutputPin)
 	{
 		const FString PinName = GetAutoDataPinName(Property, FFlowPin::MetadataKey_SourceForOutputFlowPin);
@@ -1862,7 +1862,7 @@ FString UFlowCatalogQuery::GetPropertyPinBinding(const FProperty* Property)
 		FString PinType = Property->GetMetaData(FFlowPin::MetadataKey_FlowPinType);
 		return FString::Printf(TEXT("Data Pin (%s)"), *PinType);
 	}
-
+	
 	if (const FStructProperty* StructProp = CastField<FStructProperty>(Property))
 	{
 		if (StructProp->Struct)
@@ -1872,9 +1872,9 @@ FString UFlowCatalogQuery::GetPropertyPinBinding(const FProperty* Property)
 				FString PinType = StructProp->Struct->GetMetaData(FFlowPin::MetadataKey_FlowPinType);
 				return FString::Printf(TEXT("Data Pin (%s)"), *PinType);
 			}
-
+			
 			FString StructName = StructProp->Struct->GetName();
-			if (StructName.StartsWith(TEXT("FlowDataPinValue_")) ||
+			if (StructName.StartsWith(TEXT("FlowDataPinValue_")) || 
 				StructName.StartsWith(TEXT("FlowDataPinOutputProperty_")) ||
 				StructName.StartsWith(TEXT("FlowDataPinInputProperty_")))
 			{
@@ -1887,7 +1887,7 @@ FString UFlowCatalogQuery::GetPropertyPinBinding(const FProperty* Property)
 		}
 	}
 #endif
-
+	
 	return TEXT("-");
 }
 
@@ -1895,12 +1895,12 @@ FString UFlowCatalogQuery::GetPinTypeName(const FFlowPin& Pin)
 {
 	const FFlowPinTypeName& PinTypeName = Pin.GetPinTypeName();
 	FString TypeStr = PinTypeName.ToString();
-
+	
 	if (TypeStr.IsEmpty() || TypeStr == TEXT("exec") || TypeStr == TEXT("Exec"))
 	{
 		return TEXT("Exec");
 	}
-
+	
 	return TypeStr;
 }
 
@@ -1910,7 +1910,7 @@ bool UFlowCatalogQuery::CanNodeAddUserInputPins(const UClass* NodeClass)
 	{
 		return false;
 	}
-
+	
 #if WITH_EDITOR
 	const UFlowNode* DefaultNode = NodeClass->GetDefaultObject<UFlowNode>();
 	if (DefaultNode)
@@ -1918,7 +1918,7 @@ bool UFlowCatalogQuery::CanNodeAddUserInputPins(const UClass* NodeClass)
 		return DefaultNode->CanUserAddInput();
 	}
 #endif
-
+	
 	return false;
 }
 
@@ -1928,7 +1928,7 @@ bool UFlowCatalogQuery::CanNodeAddUserOutputPins(const UClass* NodeClass)
 	{
 		return false;
 	}
-
+	
 #if WITH_EDITOR
 	const UFlowNode* DefaultNode = NodeClass->GetDefaultObject<UFlowNode>();
 	if (DefaultNode)
@@ -1936,7 +1936,7 @@ bool UFlowCatalogQuery::CanNodeAddUserOutputPins(const UClass* NodeClass)
 		return DefaultNode->CanUserAddOutput();
 	}
 #endif
-
+	
 	return false;
 }
 
@@ -2114,3 +2114,4 @@ bool UFlowCatalogQuery::ClassHasPinOfAnyType(const UClass* NodeOrAddOnClass, con
 
 	return false;
 }
+

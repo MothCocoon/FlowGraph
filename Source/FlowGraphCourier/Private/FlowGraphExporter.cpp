@@ -319,7 +319,7 @@ void UFlowGraphExporter::BuildDocumentConnections(const UFlowAsset* FlowAsset, F
 
 FString UFlowGraphExporter::SerializeDocumentToJson(const FFlowCourierDocument& Document)
 {
-
+	
 	TSharedRef<FJsonObject> JsonObject = MakeShared<FJsonObject>();
 	if (!FJsonObjectConverter::UStructToJsonObject(FFlowCourierDocument::StaticStruct(), &Document, JsonObject, 0, 0))
 	{
@@ -392,7 +392,7 @@ FString UFlowGraphExporter::GetPropertyValueAsString(const FProperty* Property, 
 	{
 		return TEXT("");
 	}
-
+	
 	if (const FBoolProperty* BoolProp = CastField<FBoolProperty>(Property))
 	{
 		return BoolProp->GetPropertyValue(ValuePtr) ? TEXT("true") : TEXT("false");
@@ -481,7 +481,7 @@ FString UFlowGraphExporter::GetPropertyValueAsString(const FProperty* Property, 
 		Property->ExportTextItem_Direct(ArrayString, ValuePtr, ValuePtr, nullptr, PPF_None);
 		return ArrayString;
 	}
-
+	
 	// For any other property types, use the generic ExportText
 	FString ExportedText;
 	Property->ExportTextItem_Direct(ExportedText, ValuePtr, ValuePtr, nullptr, PPF_None);
