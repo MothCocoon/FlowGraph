@@ -21,7 +21,7 @@ project that provides them.
 
 - **No per-class node/addon articles.** A class's documentation lives on the class itself
   (`FFlowAgentDoc`, read via the catalog with `FindFlowNodeTypes`), not as a markdown file.
-- `Concept` articles for generic ecosystem semantics (e.g. the Flow Courier format, the addon attachment handshake, subgraph composition).
+- `Concept` articles for generic ecosystem semantics (e.g. the addon attachment handshake and subgraph composition).
 - `Authoring/` guides for how to build a new generic node/addon.
 
 ## Conventions
