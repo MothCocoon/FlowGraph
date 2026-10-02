@@ -362,8 +362,8 @@ public:
 #if !UE_BUILD_SHIPPING
 
 protected:
-	TMap<FName, TArray<FPinRecord>> InputRecords;
-	TMap<FName, TArray<FPinRecord>> OutputRecords;
+	TMap<FName, FPinRecordBuffer> InputRecords;
+	TMap<FName, FPinRecordBuffer> OutputRecords;
 #endif
 
 protected:
