@@ -12,7 +12,6 @@
 #include "AssetRegistry/ARFilter.h"
 #include "EdGraph/EdGraph.h"
 #include "EdGraph/EdGraphNode.h"
-#include "EdGraph/EdGraphPin.h"
 #include "UObject/TopLevelAssetPath.h"
 
 //////////////////////////////////////////////////////////////////////////
@@ -60,9 +59,8 @@ bool FFlowSearch::Search(const FFlowSearchQuery& Query, TArray<FFlowSearchResult
 	}
 
 	FSearchContext Ctx;
-	Ctx.Flags     = Query.Flags;
-	Ctx.MaxDepth  = FMath::Max(Query.MaxDepth, 1);
-	Ctx.PinFilter = Query.PinFilter;
+	Ctx.Flags    = Query.Flags;
+	Ctx.MaxDepth = FMath::Max(Query.MaxDepth, 1);
 
 	// Build upper-cased token list (AND semantics, same as SFindInFlow).
 	Query.SearchText.ParseIntoArray(Ctx.Tokens, TEXT(" "), true);
@@ -78,18 +76,6 @@ bool FFlowSearch::Search(const FFlowSearchQuery& Query, TArray<FFlowSearchResult
 
 	const int32 ResultsBefore = OutResults.Num();
 
-	// Optional hook for callers to report progress on the search, since it can take a while for large projects.
-	int32 TotalAssets = 0;
-	int32 ProcessedAssets = 0;
-	const auto ReportProgress = [&Query, &ProcessedAssets, &TotalAssets](const UFlowAsset* Asset)
-	{
-		++ProcessedAssets;
-		if (Query.OnAssetSearchProgress)
-		{
-			Query.OnAssetSearchProgress(ProcessedAssets, TotalAssets, Asset ? Asset->GetName() : FString());
-		}
-	};
-
 	switch (Query.Scope)
 	{
 	case EFlowSearchScope::ThisAssetOnly:
@@ -97,9 +83,7 @@ bool FFlowSearch::Search(const FFlowSearchQuery& Query, TArray<FFlowSearchResult
 			UFlowAsset* Asset = Query.ContextAsset.Get();
 			if (Asset && Asset->GetGraph())
 			{
-				TotalAssets = 1;
 				ProcessAsset(Asset, Ctx, false, FSoftObjectPath(), OutResults);
-				ReportProgress(Asset);
 			}
 		}
 		break;
@@ -123,7 +107,6 @@ bool FFlowSearch::Search(const FFlowSearchQuery& Query, TArray<FFlowSearchResult
 			}
 
 			Registry.Get().GetAssets(Filter, Assets);
-			TotalAssets = Assets.Num();
 
 			for (const FAssetData& Data : Assets)
 			{
@@ -132,7 +115,6 @@ bool FFlowSearch::Search(const FFlowSearchQuery& Query, TArray<FFlowSearchResult
 				{
 					ProcessAsset(Asset, Ctx, false, FSoftObjectPath(), OutResults);
 				}
-				ReportProgress(Asset);
 			}
 		}
 		break;
@@ -164,29 +146,19 @@ bool FFlowSearch::ProcessAsset(
 
 	for (UEdGraphNode* EdNode : Asset->GetGraph()->Nodes)
 	{
-		if (!IsValid(EdNode))
+		const TMap<EFlowSearchFlags, TSet<FString>>* CategoryStrings = BuildCategoryStrings(EdNode, Ctx);
+		if (!CategoryStrings)
 		{
 			continue;
 		}
 
-		TArray<FFlowSearchMatchedPin> MatchedPins;
-		const TMap<EFlowSearchFlags, TSet<FString>>* CategoryStrings = BuildCategoryStrings(EdNode, Ctx);
 		EFlowSearchFlags NodeMatchedFlags = EFlowSearchFlags::None;
-		if (CategoryStrings)
+		for (const TPair<EFlowSearchFlags, TSet<FString>>& Pair : *CategoryStrings)
 		{
-			for (const TPair<EFlowSearchFlags, TSet<FString>>& Pair : *CategoryStrings)
+			if (EnumHasAnyFlags(Ctx.Flags, Pair.Key) && StringSetMatchesTokens(Ctx.Tokens, Pair.Value))
 			{
-				if (EnumHasAnyFlags(Ctx.Flags, Pair.Key) && StringSetMatchesTokens(Ctx.Tokens, Pair.Value))
-				{
-					EnumAddFlags(NodeMatchedFlags, Pair.Key);
-				}
+				EnumAddFlags(NodeMatchedFlags, Pair.Key);
 			}
-		}
-
-		if (EnumHasAnyFlags(Ctx.Flags, EFlowSearchFlags::PinNames)
-			&& FindMatchingPins(*EdNode, Ctx.Tokens, Ctx.PinFilter, MatchedPins))
-		{
-			EnumAddFlags(NodeMatchedFlags, EFlowSearchFlags::PinNames);
 		}
 
 		if (NodeMatchedFlags != EFlowSearchFlags::None)
@@ -194,7 +166,6 @@ bool FFlowSearch::ProcessAsset(
 			FFlowSearchResultItem Item;
 			Item.AssetPath    = AssetPath;
 			Item.MatchedFlags = NodeMatchedFlags;
-			Item.MatchedPins  = MoveTemp(MatchedPins);
 			Item.bIsSubGraphNode     = bIsSubGraphNode;
 			Item.SubgraphOwnerAssetPath = SubgraphOwnerPath;
 			Item.MatchedSnippet = BuildMatchedSnippet(*CategoryStrings, NodeMatchedFlags, Ctx.Tokens);
@@ -415,47 +386,6 @@ void FFlowSearch::AppendPropertyValues(
 	}
 }
 
-bool FFlowSearch::FindMatchingPins(
-	const UEdGraphNode& EdNode,
-	const TArray<FString>& Tokens,
-	const FFlowSearchPinFilter& Filter,
-	TArray<FFlowSearchMatchedPin>& OutMatchedPins)
-{
-	for (const UEdGraphPin* Pin : EdNode.Pins)
-	{
-		if (!Pin || Pin->bOrphanedPin || !StringMatchesTokens(Tokens, Pin->PinName.ToString()))
-		{
-			continue;
-		}
-
-		const bool bIsInput = Pin->Direction == EGPD_Input;
-		const bool bIsOutput = Pin->Direction == EGPD_Output;
-		const bool bMatchesDirection = Filter.Direction == EFlowSearchPinDirection::Any
-			|| (Filter.Direction == EFlowSearchPinDirection::Input && bIsInput)
-			|| (Filter.Direction == EFlowSearchPinDirection::Output && bIsOutput);
-		if (!bMatchesDirection)
-		{
-			continue;
-		}
-
-		const bool bConnected = !Pin->LinkedTo.IsEmpty();
-		const bool bMatchesConnectionState = Filter.ConnectionState == EFlowSearchPinConnectionState::Any
-			|| (Filter.ConnectionState == EFlowSearchPinConnectionState::Connected && bConnected)
-			|| (Filter.ConnectionState == EFlowSearchPinConnectionState::Unconnected && !bConnected);
-		if (!bMatchesConnectionState)
-		{
-			continue;
-		}
-
-		FFlowSearchMatchedPin& MatchedPin = OutMatchedPins.AddDefaulted_GetRef();
-		MatchedPin.PinName = Pin->PinName;
-		MatchedPin.Direction = bIsInput ? EFlowSearchPinDirection::Input : EFlowSearchPinDirection::Output;
-		MatchedPin.bConnected = bConnected;
-	}
-
-	return !OutMatchedPins.IsEmpty();
-}
-
 bool FFlowSearch::StringMatchesTokens(const TArray<FString>& Tokens, const FString& Str)
 {
 	const FString Upper = Str.ToUpper();
@@ -496,7 +426,6 @@ FString FFlowSearch::BuildMatchedSnippet(
 		EFlowSearchFlags::PropertyNames,
 		EFlowSearchFlags::Tooltips,
 		EFlowSearchFlags::AddOns,
-		EFlowSearchFlags::PinNames,
 	};
 
 	// Walk the matched categories in priority order; return the first string that hits a token.

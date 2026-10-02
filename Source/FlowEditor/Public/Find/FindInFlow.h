@@ -107,9 +107,6 @@ struct FFindInFlowAllResults
 	/* This buffer stores the currently displayed results. */
 	TArray<FSearchResult> ItemsFound;
 
-	/* Visited assets to prevent cycles in subgraph recursion. */
-	TSet<UFlowAsset*> VisitedAssets;
-
 	void Setup()
 	{
 		RootSearchResult = MakeShareable(new FFindInFlowResult(TEXT("Root")));
@@ -119,12 +116,14 @@ struct FFindInFlowAllResults
 	{
 		ItemsFound.Empty();
 		RootSearchResult->Children.Empty();
-		VisitedAssets.Empty();
 	}
 };
 
 /**
- * Widget for searching for (Flow nodes) across focused FlowNodes.
+ * Widget for searching Flow nodes within one or all Flow Assets.
+ * Thin presenter over FFlowSearch - all search logic lives in FlowSearch.h/cpp.
+ * Responsibilities: UI state -> FFlowSearchQuery, FFlowSearchResultItem[] -> FFindInFlowResult
+ * tree, tree-view display, click/double-click navigation, INI persistence.
  */
 class SFindInFlow : public SCompoundWidget
 {
@@ -169,29 +168,17 @@ protected:
 	/* Called when a new row is being generated. */
 	TSharedRef<ITableRow> OnGenerateRow(FSearchResult InItem, const TSharedRef<STableViewBase>& OwnerTable);
 
-	/* Begins the search based on the SearchValue. */
-	void InitiateSearch();
-
-	/* Build searchable string from node and its FlowNodeBase + AddOns. */
-	const TMap<EFlowSearchFlags, TSet<FString>>* BuildCategoryStrings(UEdGraphNode* Node, int32 Depth) const;
-
-	/* Determines if a string matches the search tokens. */
-	static bool StringMatchesSearchTokens(const TArray<FString>& Tokens, const FString& ComparisonString);
-	static bool StringSetMatchesSearchTokens(const TArray<FString>& Tokens, const TSet<FString>& StringSet);
-
 	/* Generate widget for scope combo. */
 	TSharedRef<SWidget> GenerateScopeWidget(TSharedPtr<EFlowSearchScope> Item) const;
 
 	/* Get current scope display text. */
 	FText GetCurrentScopeText() const;
 
-	bool ProcessAsset(UFlowAsset* Asset, FSearchResult ParentResult, const TArray<FString>& Tokens, int32 Depth);
+	/* Runs FFlowSearch::Search and populates SearchResults from the flat item list. */
+	void InitiateSearch();
 
-	bool RecurseIntoSubgraphsIfEnabled(UEdGraphNode* EdNode, FSearchResult ParentResult, const TArray<FString>& Tokens, int32 Depth);
-
-	void UpdateSearchFlagToStringMapForEdGraphNode(const UEdGraphNode& EdGraphNode, TMap<EFlowSearchFlags, TSet<FString>>& SearchFlagToStringMap, int32 Depth) const;
-	void UpdateSearchFlagToStringMapForFlowNodeBase(const UFlowNodeBase& FlowNodeBase, TMap<EFlowSearchFlags, TSet<FString>>& SearchFlagToStringMap, int32 Depth) const;
-	void AppendPropertyValues(const void* Container, const UStruct* Struct, const UObject* ParentObject, TMap<EFlowSearchFlags, TSet<FString>>& SearchFlagToStringMap, int32 Depth) const;
+	/* Maps one FFlowSearchResultItem to a tree result, loading its owning asset for navigation. */
+	FSearchResult MakeResultItem(const struct FFlowSearchResultItem& Item) const;
 
 protected:
 	/* Pointer back to the flow editor that owns us. */
@@ -208,9 +195,6 @@ protected:
 
 	/* Struct with all of the search results. */
 	FFindInFlowAllResults SearchResults;
-
-	/* Repeat Search Caching. */
-	FFindInFlowCache SearchCache;
 
 	/* The string to highlight in the results. */
 	FText HighlightText;
