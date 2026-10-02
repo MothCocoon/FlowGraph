@@ -931,7 +931,7 @@ void UFlowAsset::ClearInstances()
 	{
 		if (ActiveInstances.IsValidIndex(i) && ActiveInstances[i])
 		{
-			ActiveInstances[i]->FinishFlow(EFlowFinishPolicy::Keep);
+			ActiveInstances[i]->FinishFlowAndDeinitializeInstance(EFlowFinishPolicy::Keep);
 		}
 	}
 
@@ -1226,13 +1226,14 @@ void UFlowAsset::FinishNode(UFlowNode* Node)
 				return;
 			}
 
-			// if this instance is a Root Flow, we need to deregister it from the subsystem first
+			// If this instance is a Root Flow, deregister it from the subsystem first.
+			// This will finish and deinitialize the root flow.
 			if (Owner.IsValid())
 			{
 				const TSet<UFlowAsset*>& RootFlowInstances = GetFlowSubsystem()->GetRootInstancesByOwner(Owner.Get());
 				if (RootFlowInstances.Contains(this))
 				{
-					GetFlowSubsystem()->FinishRootFlow(Owner.Get(), TemplateAsset, EFlowFinishPolicy::Keep);
+					GetFlowSubsystem()->FinishAndDeinitializeRootFlow(Owner.Get(), TemplateAsset, EFlowFinishPolicy::Keep);
 
 					return;
 				}
@@ -1253,7 +1254,13 @@ void UFlowAsset::ResetNodes()
 	RecordedNodes.Empty();
 }
 
-void UFlowAsset::FinishFlow(const EFlowFinishPolicy InFinishPolicy, const bool bRemoveInstance /*= true*/)
+void UFlowAsset::FinishFlowAndDeinitializeInstance(const EFlowFinishPolicy InFinishPolicy)
+{
+	FinishFlow(InFinishPolicy, false);
+	DeinitializeInstance();
+}
+
+void UFlowAsset::FinishFlow(const EFlowFinishPolicy InFinishPolicy, const bool bRemoveInstance)
 {
 	FinishPolicy = InFinishPolicy;
 
@@ -1266,9 +1273,9 @@ void UFlowAsset::FinishFlow(const EFlowFinishPolicy InFinishPolicy, const bool b
 	}
 	ActiveNodes.Empty();
 
-	// provides option to finish game-specific logic prior to removing asset instance 
 	if (bRemoveInstance)
 	{
+		// Allow game-specific logic to finish before removing this asset instance.
 		DeinitializeInstance();
 	}
 }
@@ -1276,6 +1283,11 @@ void UFlowAsset::FinishFlow(const EFlowFinishPolicy InFinishPolicy, const bool b
 UFlowSubsystem* UFlowAsset::GetFlowSubsystem() const
 {
 	return Cast<UFlowSubsystem>(GetOuter());
+}
+
+FName UFlowAsset::GetDisplayName() const
+{
+	return GetFName();
 }
 
 UFlowNode_SubGraph* UFlowAsset::GetNodeOwningThisAssetInstance() const
@@ -1291,6 +1303,14 @@ UFlowAsset* UFlowAsset::GetParentInstance() const
 TWeakObjectPtr<UFlowAsset> UFlowAsset::GetFlowInstance(UFlowNode_SubGraph* SubGraphNode) const
 {
 	return ActiveSubGraphs.FindRef(SubGraphNode);
+}
+
+void UFlowAsset::EnsurePreloadPolicyInitialized()
+{
+	if (!PreloadPolicy.IsValid())
+	{
+		InitializePreloadPolicy();
+	}
 }
 
 void UFlowAsset::InitializePreloadPolicy()
