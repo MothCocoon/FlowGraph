@@ -5,8 +5,10 @@
 #include "FlowNode_LogicalAND.generated.h"
 
 /**
- * Logical AND.
- * Output will be triggered only once.
+ * Fires its output only after ALL of its input pins have each been triggered at least once.
+ * Output fires exactly once per activation cycle.
+ * Add input pins via the node context menu.
+ * Use to synchronize multiple parallel branches before continuing.
  */
 UCLASS(NotBlueprintable, meta = (DisplayName = "AND", Keywords = "&"))
 class FLOW_API UFlowNode_LogicalAND final : public UFlowNode
@@ -23,13 +25,13 @@ private:
 public:
 #if WITH_EDITOR
 	virtual bool CanUserAddInput() const override { return true; }
+
 #endif
 
 	virtual void ExecuteInput(const FName& PinName) override;
 	virtual void Cleanup() override;
 
 #if WITH_EDITOR
-public:
 	virtual const FFlowAgentDoc& GetAgentDoc() const override;
 #endif
 };

@@ -8,6 +8,10 @@
 
 class UFlowNode;
 
+/**
+ * Defines one case for a Switch-style node, evaluating its attached child predicates as a single AND/OR combination
+ * and exposing an output pin under CaseName if the combination passes.
+ */
 UCLASS(MinimalApi, Blueprintable, meta = (DisplayName = "Case"))
 class UFlowNodeAddOn_SwitchCase
 	: public UFlowNodeAddOn
@@ -56,7 +60,6 @@ public:
 	// --
 
 #if WITH_EDITOR
-public:
 	virtual const FFlowAgentDoc& GetAgentDoc() const override;
 #endif
 };

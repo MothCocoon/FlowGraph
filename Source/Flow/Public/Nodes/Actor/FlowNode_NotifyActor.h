@@ -42,13 +42,9 @@ public:
 
 #if WITH_EDITOR
 	virtual FString GetNodeDescription() const override;
+	virtual const FFlowAgentDoc& GetAgentDoc() const override;
 	
 protected:	
 	virtual EDataValidationResult ValidateNode() override;
-#endif
-
-#if WITH_EDITOR
-public:
-	virtual const FFlowAgentDoc& GetAgentDoc() const override;
 #endif
 };

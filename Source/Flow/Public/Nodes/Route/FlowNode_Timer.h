@@ -6,9 +6,11 @@
 #include "FlowNode_Timer.generated.h"
 
 /**
- * Triggers outputs after time elapsed.
+ * Waits for CompletionTime seconds then fires the Completed output.
+ * Optionally fires the Step output repeatedly every StepTime seconds during the wait
+ * CompletionTime can be overridden via a data pin at runtime.
  */
-UCLASS(NotBlueprintable, meta = (DisplayName = "Timer", Keywords = "delay, step, tick"))
+UCLASS(NotBlueprintable, meta = (DisplayName = "Timer", Keywords = "delay step tick"))
 class FLOW_API UFlowNode_Timer : public UFlowNode
 {
 	GENERATED_BODY()
@@ -17,11 +19,14 @@ public:
 	UFlowNode_Timer();
 
 protected:
-	/* If the value is closer to 0, Timer will complete in next tick. */
+	/* Total duration in seconds before the Completed output fires.
+	 * Values near 0 complete on the next tick.
+	 * Overridable via input data pin. */
 	UPROPERTY(EditAnywhere, Category = "Timer", meta = (ClampMin = 0.0f, DefaultForInputFlowPin, FlowPinType = Float))
 	float CompletionTime = 1.0f;
 
-	/* This allows to trigger other nodes multiple times before completing the Timer. */
+	/* If > 0, fires the Step output every StepTime seconds while waiting.
+	 * Set to 0 to disable periodic steps. */
 	UPROPERTY(EditAnywhere, Category = "Timer", meta = (ClampMin = 0.0f))
 	float StepTime = 0.0f;
 
@@ -70,10 +75,6 @@ public:
 public:
 	virtual FString GetStatusString() const override;
 	virtual void UpdateNodeConfigText_Implementation() override;
-#endif
-
-#if WITH_EDITOR
-public:
 	virtual const FFlowAgentDoc& GetAgentDoc() const override;
 #endif
 };

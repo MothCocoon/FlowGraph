@@ -4,7 +4,6 @@
 
 #include "Containers/Array.h"
 #include "Containers/UnrealString.h"
-#include "Templates/UnrealTemplate.h"
 #include "UObject/NameTypes.h"
 #include "UObject/ObjectMacros.h"
 
@@ -37,11 +36,14 @@ struct FLOW_API FFlowAgentDoc
 	UPROPERTY(EditDefaultsOnly, Category = "AgentDoc")
 	TArray<FName> Articles;
 
-	/* A doc counts as authored once any field is set. */
+	/* A doc counts as authored once any field is set */
 	bool HasDoc() const { return !Guidance.IsEmpty() || !Tags.IsEmpty() || !Articles.IsEmpty(); }
 };
 
-/** Builds an FFlowAgentDoc in one call for a native class's GetAgentDoc() override. */
+/**
+ * Builds an FFlowAgentDoc in one call, so a native class's GetAgentDoc() override stays a single
+ * statement rather than four field assignments.
+ */
 inline FFlowAgentDoc MakeAgentDoc(
 	const FString& InGuidance,
 	TArray<FName> InTags,

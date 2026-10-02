@@ -5,9 +5,11 @@
 #include "FlowNode_ExecutionMultiGate.generated.h"
 
 /**
- * Executes a series of pins in order.
+ * Fires one output pin per activation, cycling through all output pins in order or, if bRandom is set, in random
+ * order; a Reset input pin restarts the cycle from the beginning. Optionally loops when all outputs have been fired.
+ * Use bRandom for randomized ordering, bLoop to allow re-cycling, and StartIndex to begin from a specific pin.
  */
-UCLASS(NotBlueprintable, meta = (DisplayName = "Multi Gate", Keywords = "series, loop, random"))
+UCLASS(NotBlueprintable, meta = (DisplayName = "Multi Gate", Keywords = "series loop random"))
 class FLOW_API UFlowNode_ExecutionMultiGate final : public UFlowNode
 {
 	GENERATED_BODY()
@@ -16,6 +18,7 @@ public:
 	UFlowNode_ExecutionMultiGate();
 
 protected:
+	/* When true, outputs are selected randomly each activation instead of in order. */
 	UPROPERTY(EditAnywhere, Category = "MultiGate")
 	bool bRandom;
 
@@ -24,6 +27,7 @@ protected:
 	UPROPERTY(EditAnywhere, Category = "MultiGate")
 	bool bLoop;
 
+	/* Index of the first output pin to fire on the first activation (0-based). */
 	UPROPERTY(EditAnywhere, Category = "MultiGate")
 	int32 StartIndex = INDEX_NONE;
 
@@ -44,10 +48,6 @@ public:
 
 #if WITH_EDITOR
 	virtual FString GetNodeDescription() const override;
-#endif
-
-#if WITH_EDITOR
-public:
 	virtual const FFlowAgentDoc& GetAgentDoc() const override;
 #endif
 };

@@ -5,11 +5,12 @@
 #include "FlowNode_Switch.generated.h"
 
 /**
- * Similar to a Branch flow node, provides a "Switch" style logic (ie, C/C++),
- * where cases are evaluated and triggered if their predicates pass.
- * By default, only the first passing case is triggered (see bOnlyTriggerFirstPassingCase).
+ * Evaluates each output case's predicate AddOns and fires the output(s) whose predicates pass.
+ * Unlike Branch (which has only True/False), Switch supports N named cases plus a DefaultCase
+ * output that fires when no other case passes. Set bOnlyTriggerFirstPassingCase = false to
+ * allow multiple cases to fire in a single evaluation.
  */
-UCLASS(MinimalApi, NotBlueprintable, meta = (DisplayName = "Switch"))
+UCLASS(MinimalApi, NotBlueprintable, meta = (DisplayName = "Switch", Keywords = "switch branch case predicate"))
 class UFlowNode_Switch : public UFlowNode
 {
 	GENERATED_BODY()
@@ -34,7 +35,6 @@ public:
 	static const FName OUTPIN_DefaultCase;
 
 #if WITH_EDITOR
-public:
 	virtual const FFlowAgentDoc& GetAgentDoc() const override;
 #endif
 };

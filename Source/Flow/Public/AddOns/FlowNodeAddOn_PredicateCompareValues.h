@@ -12,6 +12,10 @@
 
 struct FFlowPinConnectionPolicy;
 
+/**
+ * Compares two data-pin values using a configurable operator (equal, not-equal, greater/less-than, etc.), resolving
+ * both sides through the flow's own data-pin type system rather than a fixed type.
+ */
 UCLASS(MinimalApi, NotBlueprintable, meta = (DisplayName = "Compare Values"))
 class UFlowNodeAddOn_PredicateCompareValues
 	: public UFlowNodeAddOn
@@ -39,6 +43,8 @@ public:
 	/* Utility function for subclasses, if they want to force a named property to be Input or Output.
 	* Unused in this class. */
 	void OnPostEditEnsureAllNamedPropertiesPinDirection(const FProperty& Property, bool bIsInput);
+
+	virtual const FFlowAgentDoc& GetAgentDoc() const override;
 #endif
 
 protected:
@@ -150,11 +156,6 @@ private:
 	/* Populate cached type names from the current LeftValue/RightValue.
 	* Returns false (and logs error) if either value is not configured. */
 	bool CacheTypeNames(FCachedTypeNames& OutCache) const;
-
-#if WITH_EDITOR
-public:
-	virtual const FFlowAgentDoc& GetAgentDoc() const override;
-#endif
 };
 
 // -----------------------------------------------------------------------

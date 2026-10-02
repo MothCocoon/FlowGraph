@@ -5,7 +5,7 @@
 #include "FlowNode_Reroute.generated.h"
 
 /**
- * Reroute.
+ * A reroute node (similar to Blueprint reroute nodes)
  */
 UCLASS(NotBlueprintable, meta = (DisplayName = "Reroute"))
 class FLOW_API UFlowNode_Reroute final : public UFlowNode
@@ -28,10 +28,7 @@ public:
 	// For configuration from connecting pins via UFlowGraphNode_Reroute
 	void ConfigureInputPin(const UFlowNode& ConnectedNode, const FEdGraphPinType& EdGraphPinType);
 	void ConfigureOutputPin(const UFlowNode& ConnectedNode, const FEdGraphPinType& EdGraphPinType);
-#endif
 
-#if WITH_EDITOR
-public:
 	virtual const FFlowAgentDoc& GetAgentDoc() const override;
 #endif
 };

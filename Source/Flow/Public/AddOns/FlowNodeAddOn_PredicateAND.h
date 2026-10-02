@@ -8,6 +8,10 @@
 
 class UFlowNode;
 
+/**
+ * Combines all attached child predicate AddOns with logical AND, evaluating true only if every child predicate
+ * evaluates true.
+ */
 UCLASS(MinimalApi, NotBlueprintable, meta = (DisplayName = "AND"))
 class UFlowNodeAddOn_PredicateAND
 	: public UFlowNodeAddOn
@@ -29,7 +33,6 @@ public:
 	FLOW_API static bool EvaluatePredicateAND(const TArray<UFlowNodeAddOn*>& AddOns);
 
 #if WITH_EDITOR
-public:
 	virtual const FFlowAgentDoc& GetAgentDoc() const override;
 #endif
 };
