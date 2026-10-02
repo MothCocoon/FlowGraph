@@ -7,6 +7,7 @@
 #include "Containers/Map.h"
 #include "Containers/Set.h"
 #include "Misc/Guid.h"
+#include "Templates/Function.h"
 #include "Templates/SharedPointer.h"
 #include "UObject/WeakObjectPtr.h"
 
@@ -15,6 +16,37 @@
 class UFlowAsset;
 class UEdGraphNode;
 class UStruct;
+
+/**
+ * Set of data types for pin search filtering.
+ */
+
+enum class EFlowSearchPinDirection : uint8
+{
+	Any,
+	Input,
+	Output,
+};
+
+enum class EFlowSearchPinConnectionState : uint8
+{
+	Any,
+	Connected,
+	Unconnected,
+};
+
+struct FLOWEDITOR_API FFlowSearchPinFilter
+{
+	EFlowSearchPinDirection Direction = EFlowSearchPinDirection::Any;
+	EFlowSearchPinConnectionState ConnectionState = EFlowSearchPinConnectionState::Any;
+};
+
+struct FLOWEDITOR_API FFlowSearchMatchedPin
+{
+	FName PinName;
+	EFlowSearchPinDirection Direction = EFlowSearchPinDirection::Any;
+	bool bConnected = false;
+};
 
 /**
  * A single node hit returned by FFlowSearch::Search.
@@ -37,6 +69,9 @@ struct FLOWEDITOR_API FFlowSearchResultItem
 
 	// Which search flag categories actually produced a hit for this node.
 	EFlowSearchFlags MatchedFlags = EFlowSearchFlags::None;
+
+	// Matched pins, if any. Only populated when the search flags include EFlowSearchFlags::PinNames.
+	TArray<FFlowSearchMatchedPin> MatchedPins;
 
 	// A representative "Key: Value" snippet from the first matched property, for agent display.
 	FString MatchedSnippet;
@@ -68,6 +103,13 @@ struct FLOWEDITOR_API FFlowSearchQuery
 
 	// Required for ThisAssetOnly / AllOfThisType. Ignored for AllFlowAssets.
 	TWeakObjectPtr<UFlowAsset> ContextAsset;
+	
+	// Narrow pin search results to specific attributes (e.g. connection state, direction).
+	FFlowSearchPinFilter PinFilter;
+	
+	// Callback for reporting asset search progress.
+	using FOnAssetSearchProgress = TFunction<void(int32 ProcessedAssets, int32 TotalAssets, const FString& CurrentAssetName)>;
+	FOnAssetSearchProgress OnAssetSearchProgress;
 };
 
 /**
@@ -112,6 +154,7 @@ private:
 		TArray<FString> Tokens;         // Upper-cased AND tokens
 		EFlowSearchFlags Flags;
 		int32 MaxDepth;
+		FFlowSearchPinFilter PinFilter;
 		TSet<UFlowAsset*> VisitedAssets; // Cycle guard for subgraph recursion
 	};
 
@@ -152,6 +195,12 @@ private:
 		const FSearchContext& Ctx,
 		int32 Depth,
 		TMap<EFlowSearchFlags, TSet<FString>>& OutMap);
+
+	static bool FindMatchingPins(
+		const UEdGraphNode& EdNode,
+		const TArray<FString>& Tokens,
+		const FFlowSearchPinFilter& Filter,
+		TArray<FFlowSearchMatchedPin>& OutMatchedPins);
 
 	static bool StringMatchesTokens(const TArray<FString>& Tokens, const FString& Str);
 	static bool StringSetMatchesTokens(const TArray<FString>& Tokens, const TSet<FString>& StringSet);
