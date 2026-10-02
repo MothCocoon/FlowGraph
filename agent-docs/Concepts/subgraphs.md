@@ -36,18 +36,27 @@ an output pin named `Done`. Wire them like any other exec pin:
 ParentNode.Cancel -> SubGraphNode.Cancel
 SubGraphNode.Done -> NextNode.In
 ```
-If the sub-asset's `CustomInput`/`CustomOutput` set changes, verify that the parent `SubGraph` node's
-context pins have refreshed. The parent graph may need to be refreshed or recompiled to pick up the
-new interface.
+This list of context pins is rebuilt by `UFlowAsset::RebuildCustomInterfaceLists` - called after
+import/patch (`FlowGraphImporter.cpp`'s `PopulateFlowAssetFromText`/`ApplyMutationText` paths both
+call it under `WITH_EDITOR`). If a `SubGraph` node's context pins look stale right after an
+edit to the sub-asset's `CustomInput`/`CustomOutput` set, this is the mechanism to check - the
+parent asset needs its own regraph/reload to pick up an interface change made in the sub-asset.
 
 ## Create a sub-graph from a selection
+
+The Flow Courier toolset also exposes the editor's collapse convenience as two agent operations:
+`PlanFlowSubgraphFromSelection` and `CreateFlowSubgraphFromSelection`. The caller supplies exact
+top-level node GUIDs and a child name beginning with `Subgraph_`. The plan is read-only and reports
+the boundary counts, warnings, errors, and names that will become the child interface. The create
+operation reruns that plan before applying, replaces the source selection with one `SubGraph` node,
+and returns the generated child asset path and replacement node GUID.
 
 The collapse interface is deliberately exec-only. It needs exactly one incoming execution link,
 rejects data links crossing the boundary, and keeps the source asset's CustomInput, CustomOutput,
 and Finish nodes outside the selection. The first unnamed exit maps to the child's built-in Finish;
-named or additional exits become deterministic Custom Outputs. Review the generated interface before
-applying. After an apply, export or diff both the source and child assets because this operation
-changes two packages.
+named or additional exits become deterministic Custom Outputs. Use the mutation dry run before
+applying: it rolls back the source graph and removes the temporary child package. After an apply,
+export or diff both the source and child assets because this operation changes two packages.
 
 The generated child is a distinct asset package. Do not assume that asset-level configuration or
 domain context is inherited from the parent just because the child runs inside the parent graph.
@@ -114,10 +123,10 @@ parent-local state, or add an asset hop without making the behavior easier to un
    goal is readability, reuse, or both.
 2. Design the child exec and data interface before moving nodes. Name entry/exit pins by behavior,
    keep data inputs and outputs narrow, and decide whether `AssetParams` is appropriate.
-3. Use the editor's collapse tool to review boundary constraints and the generated interface before
-   applying. The collapse operation is exec-only, so it cannot create a crossing data-pin interface.
-   Create or patch that child and parent interface separately after the extraction when data pins
-   are part of the abstraction.
+3. Use `PlanFlowSubgraphFromSelection` to check boundary constraints and the generated interface;
+   then dry-run `CreateFlowSubgraphFromSelection` before applying it. The collapse operation is
+   exec-only, so it cannot create a crossing data-pin interface. Create or patch that child and
+   parent interface separately after the extraction when data pins are part of the abstraction.
 4. After applying, export or diff both parent and child. Verify the child class/domain settings,
    every entry and completion path, output declarations, and all connections.
 5. For deduplication, inspect every former call site. Confirm that each variation is represented by
@@ -126,13 +135,18 @@ parent-local state, or add an asset hop without making the behavior easier to un
 ## Pitfalls / notes
 
 - A `CustomInput`/`CustomOutput` name collision inside one sub-asset (two nodes with the same
-  `EventName`) is a real risk when hand-editing serialized graph data. The parent's context pin
-  naming depends on `EventName` being unique per direction within that sub-asset.
-- Don't confuse sub-graph composition with graph editing: a sub-graph runs a child asset, while a
-  graph-edit operation changes nodes inside one asset.
+  `EventName`) is a real risk if hand-editing Flow Courier text - the parent's context pin naming
+  depends on `EventName` being unique per direction within that sub-asset.
+- Don't confuse this with the `ApplyFlowPatch` reconciler's scoped patching (`scopeNodeGuids`,
+  `newAlias` for a new node) - that's a *patching* mechanism for editing one asset's nodes,
+  unrelated to `SubGraph`'s *composition* mechanism for nesting one asset inside another.
 - `bCanInstanceIdenticalAsset` is off by default for a reason - only enable it with a clear
   termination condition in mind (e.g. a decrementing counter passed via `AssetParams`), never for
   unconditional self-reference.
+
+## Ecosystem links
+
+- $KB:flow:guide:courier-text-format (Subgraph Interface section - Courier JSON fields)
 
 ## See also
 
