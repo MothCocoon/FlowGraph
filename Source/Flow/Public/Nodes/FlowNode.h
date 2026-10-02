@@ -442,7 +442,7 @@ public:
 	UFlowNode* GetInspectedInstance() const;
 
 	TMap<uint8, FPinRecord> GetWireRecords() const;
-	TArray<FPinRecord> GetPinRecords(const FName& PinName, const EEdGraphPinDirection PinDirection) const;
+	TArray<FPinRecord> GetPinRecords(const FName& PinName, const EEdGraphPinDirection PinDirection, int32& OutTotalPinRecords) const;
 #endif
 
 	/* Information displayed while node is working - displayed over node as NodeInfoPopup. */

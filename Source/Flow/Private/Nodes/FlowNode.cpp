@@ -1579,15 +1579,24 @@ TMap<uint8, FPinRecord> UFlowNode::GetWireRecords() const
 	return Result;
 }
 
-TArray<FPinRecord> UFlowNode::GetPinRecords(const FName& PinName, const EEdGraphPinDirection PinDirection) const
+TArray<FPinRecord> UFlowNode::GetPinRecords(const FName& PinName, const EEdGraphPinDirection PinDirection, int32& OutTotalPinRecords) const
 {
 	switch (PinDirection)
 	{
 		case EGPD_Input:
-			return InputRecords.FindRef(PinName).GetArray();
+		{
+			const FPinRecordBuffer& Buffer = InputRecords.FindRef(PinName);
+			OutTotalPinRecords = Buffer.TotalPinRecords;
+			return Buffer.GetArray();
+		}
 		case EGPD_Output:
-			return OutputRecords.FindRef(PinName).GetArray();
+		{
+			const FPinRecordBuffer& Buffer = OutputRecords.FindRef(PinName);
+			OutTotalPinRecords = Buffer.TotalPinRecords;
+			return Buffer.GetArray();
+		}
 		default:
+			OutTotalPinRecords = 0;
 			return TArray<FPinRecord>();
 	}
 }
