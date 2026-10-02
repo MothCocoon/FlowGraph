@@ -1312,12 +1312,15 @@ bool UFlowNode::TryInitializePreloadHelper()
 		return false;
 	}
 
-	const UFlowAsset* FlowAsset = GetFlowAsset();
+	UFlowAsset* FlowAsset = GetFlowAsset();
 	if (!IsValid(FlowAsset))
 	{
 		LogError(TEXT("IFlowPreloadableInterface node has no valid FlowAsset during InitializeInstance — PreloadHelper will not be created."));
 		return false;
 	}
+
+	// Preload helpers can be initialized before the preload policy when an asset is upgraded during load.
+	FlowAsset->EnsurePreloadPolicyInitialized();
 
 	const FFlowPreloadPolicy& PreloadPolicy = FlowAsset->GetPreloadPolicy();
 
