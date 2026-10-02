@@ -9,6 +9,7 @@
 #include "Graph/FlowGraphNodesPolicy.h"
 #include "FlowGraphSettings.generated.h"
 
+class UFlowNode;
 class UFlowNodeBase;
 
 USTRUCT()
