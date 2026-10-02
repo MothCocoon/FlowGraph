@@ -71,17 +71,16 @@ public:
 #endif
 
 public:
-	// UObject	
+	// UObject
 	virtual void PostLoad() override;
 	// --
 
 #if WITH_EDITOR
-	// UObject	
+	// UObject
 	virtual void PostEditChangeProperty(FPropertyChangedEvent& PropertyChangedEvent) override;
 	// --
 #endif
 
-public:
 	/* Returns a random seed suitable for this flow node,
 	 * by default based on the node Guid,
 	 * but may be overridden in subclasses to supply some other value. */
@@ -157,6 +156,10 @@ public:
 	virtual TArray<FFlowPin> GetContextOutputs() const override;
 	// --
 
+	//~Begin UFlowNodeBase Interface
+	virtual void GetCatalogPins(TArray<FFlowPin>& OutInputPins, TArray<FFlowPin>& OutOutputPins) const override;
+	//~End UFlowNodeBase Interface
+
 	virtual bool CanUserAddInput() const;
 	virtual bool CanUserAddOutput() const;
 
@@ -167,7 +170,7 @@ public:
 protected:
 	UFUNCTION(BlueprintImplementableEvent, Category = "FlowNode", meta = (DisplayName = "Can Finish Graph"))
 	bool K2_CanFinishGraph() const;
-	
+
 	UFUNCTION(BlueprintImplementableEvent, Category = "FlowNode", meta = (DisplayName = "Can User Add Input"))
 	bool K2_CanUserAddInput() const;
 
@@ -234,7 +237,7 @@ protected:
 
 	/* Helper templates for Find*PinConnection* functions */
 	template <bool bExecIsCached>
-	bool FindFirstPinConnection(const FFlowPin& FlowPin, const TArray<FFlowPin>& FlowPinArray, FConnectedPin& FirstConnectedPin) const;		
+	bool FindFirstPinConnection(const FFlowPin& FlowPin, const TArray<FFlowPin>& FlowPinArray, FConnectedPin& FirstConnectedPin) const;
 	template <bool bExecIsCached>
 	bool FindPinConnections(const FFlowPin& FlowPin, const TArray<FFlowPin>& FlowPinArray, TArray<FConnectedPin>* ConnectedPins) const;
 
@@ -268,7 +271,7 @@ public:
 	TMap<FName, FFlowPinPropertySource> MapDataPinNameToPropertySource;
 
 #if WITH_EDITORONLY_DATA
-protected:	
+protected:
 	UPROPERTY(VisibleDefaultsOnly, AdvancedDisplay, Category = "FlowNode", meta = (GetByRef))
 	TArray<FFlowPin> AutoInputDataPins;
 
@@ -322,6 +325,10 @@ protected:
 	static FString NoActorsFound;
 
 #if WITH_EDITOR
+public:
+	// UObject
+	virtual EDataValidationResult IsDataValid(FDataValidationContext& Context) const override;
+	// --
 
 protected:
 	virtual EDataValidationResult ValidateNode() override;

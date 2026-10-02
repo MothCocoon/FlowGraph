@@ -32,7 +32,7 @@ void UFlowNode_Timer::InitializeInstance()
 {
 	Super::InitializeInstance();
 
-	// Initialize to the configured value, 
+	// Initialize to the configured value,
 	// but we will overwrite this with the results of ResolveCompletionTime() when the timer is started
 	ResolvedCompletionTime = CompletionTime;
 }
@@ -235,11 +235,7 @@ void UFlowNode_Timer::UpdateNodeConfigText_Implementation()
 		SetNodeConfigText(FText(LOCTEXT("CompletesNextTick", "Completes in next tick")));
 	}
 }
-#endif
 
-#undef LOCTEXT_NAMESPACE
-
-#if WITH_EDITOR
 const FFlowAgentDoc& UFlowNode_Timer::GetAgentDoc() const
 {
 	static const FFlowAgentDoc Doc = MakeAgentDoc(
@@ -249,3 +245,5 @@ const FFlowAgentDoc& UFlowNode_Timer::GetAgentDoc() const
 	return Doc;
 }
 #endif
+
+#undef LOCTEXT_NAMESPACE

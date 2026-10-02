@@ -16,7 +16,6 @@ FFlowPin UFlowNode_SubGraph::FinishPin(TEXT("Finish"));
 const FName UFlowNode_SubGraph::AssetParams_MemberName = GET_MEMBER_NAME_CHECKED(ThisClass, AssetParams);
 
 UFlowNode_SubGraph::UFlowNode_SubGraph()
-	: bCanInstanceIdenticalAsset(false)
 {
 #if WITH_EDITOR
 	Category = TEXT("Graph");
@@ -43,8 +42,8 @@ EFlowPreloadResult UFlowNode_SubGraph::PreloadContent()
 
 	FLOW_ASSERT_ENUM_MAX(EFlowPreloadResult, 2);
 
-	// TODO (gtaylor) CreateSubFlow is currently synchronous-only, 
-	// we could conceivably ADD ASYNC UFlowAsset load 
+	// TODO (gtaylor) CreateSubFlow is currently synchronous-only,
+	// we could conceivably ADD ASYNC UFlowAsset load
 	// (which could do the call CreateSubFlow after the asset was loaded).
 	return EFlowPreloadResult::Completed;
 }
@@ -100,12 +99,24 @@ void UFlowNode_SubGraph::ExecuteInput(const FName& PinName)
 
 void UFlowNode_SubGraph::Cleanup()
 {
-	if (CanBeAssetInstanced() && GetFlowSubsystem())
+	UFlowSubsystem* FlowSubsystem = GetFlowSubsystem();
+	if (CanBeAssetInstanced() && FlowSubsystem)
 	{
-		GetFlowSubsystem()->RemoveSubFlow(this, EFlowFinishPolicy::Keep);
+		FlowSubsystem->FinishSubFlow(this, EFlowFinishPolicy::Keep);
 	}
 
 	Super::Cleanup();
+}
+
+void UFlowNode_SubGraph::DeinitializeInstance()
+{
+	UFlowSubsystem* FlowSubsystem = GetFlowSubsystem();
+	if (CanBeAssetInstanced() && FlowSubsystem)
+	{
+		FlowSubsystem->RemoveSubFlow(this, EFlowFinishPolicy::Keep);
+	}
+
+	Super::DeinitializeInstance();
 }
 
 void UFlowNode_SubGraph::ForceFinishNode()
@@ -117,13 +128,13 @@ FFlowDataPinResult UFlowNode_SubGraph::TrySupplyDataPin(const FName PinName) con
 {
 	if (PinName == AssetParams_MemberName)
 	{
-		// Prevent infinite recursion by sourcing the AssetParams pin directly 
+		// Prevent infinite recursion by sourcing the AssetParams pin directly
 		// (otherwise, it would attempt to resolve it below and infinitely crash our stack.
 		// don't ask me how I know).
 		return Super::TrySupplyDataPin(PinName);
 	}
 
-  // Check cached output data pin values first — output pins are never "input connected",
+	// Check cached output data pin values first — output pins are never "input connected",
 	// so this must come before IsInputConnected to avoid a spurious "unknown input pin" error.
 	if (const TInstancedStruct<FFlowDataPinValue>* CachedValue = CachedOutputDataPinValues.Values.Find(PinName))
 	{
@@ -135,10 +146,11 @@ FFlowDataPinResult UFlowNode_SubGraph::TrySupplyDataPin(const FName PinName) con
 			return Result;
 		}
 	}
-  
+
 	if (!IsInputConnected(PinName))
 	{
-		if (IsInputConnected(AssetParams_MemberName) || !AssetParams.IsNull())
+		const bool bHasAssetParams = IsInputConnected(AssetParams_MemberName) || !AssetParams.IsNull();
+		if (bHasAssetParams)
 		{
 			// If not connected, we can source the value from the asset data params (if available)
 			TObjectPtr<UObject> Value = nullptr;
@@ -158,7 +170,7 @@ FFlowDataPinResult UFlowNode_SubGraph::TrySupplyDataPin(const FName PinName) con
 			}
 		}
 	}
-	
+
 	// Prefer the standard lookup if the pin is connected
 	// (or if there is no FlowAssetParams to ask)
 	return Super::TrySupplyDataPin(PinName);
@@ -214,6 +226,15 @@ EDataValidationResult UFlowNode_SubGraph::ValidateNode()
 	}
 
 	return EDataValidationResult::Valid;
+}
+
+const FFlowAgentDoc& UFlowNode_SubGraph::GetAgentDoc() const
+{
+	static const FFlowAgentDoc Doc = MakeAgentDoc(
+		/*Guidance*/ TEXT("Custom Input/Output nodes in the child asset automatically add matching pins to this node - use them to route signals in and out of the sub-graph mid-run. Enabling bCanInstanceIdenticalAsset can cause infinite recursion if the child unconditionally spawns itself; leave it off unless you have a real termination condition."),
+		/*Tags*/     { TEXT("graph"), TEXT("subgraph"), TEXT("composition") },
+		/*Articles*/ {  });
+	return Doc;
 }
 
 TArray<FFlowPin> UFlowNode_SubGraph::GetContextInputs() const
@@ -361,14 +382,3 @@ void UFlowNode_SubGraph::SubscribeToAssetChanges()
 #endif
 
 #undef LOCTEXT_NAMESPACE
-
-#if WITH_EDITOR
-const FFlowAgentDoc& UFlowNode_SubGraph::GetAgentDoc() const
-{
-	static const FFlowAgentDoc Doc = MakeAgentDoc(
-		/*Guidance*/ TEXT("Custom Input/Output nodes in the child asset automatically add matching pins to this node - use them to route signals in and out of the sub-graph mid-run. Enabling bCanInstanceIdenticalAsset can cause infinite recursion if the child unconditionally spawns itself; leave it off unless you have a real termination condition."),
-		/*Tags*/     { TEXT("graph"), TEXT("subgraph"), TEXT("composition") },
-		/*Articles*/ {  });
-	return Doc;
-}
-#endif

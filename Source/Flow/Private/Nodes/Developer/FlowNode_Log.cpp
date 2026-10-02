@@ -26,7 +26,7 @@ void UFlowNode_Log::ExecuteInput(const FName& PinName)
 	FString ResolvedMessage;
 	const EFlowDataPinResolveResult MessageResult = TryResolveDataPinValue<FFlowPinType_String>(GET_MEMBER_NAME_CHECKED(ThisClass, Message), ResolvedMessage);
 
-	// #FlowDataPinLegacy - retire this backward compatibility when we remove legacy data pin support?  
+	// #FlowDataPinLegacy - retire this backward compatibility when we remove legacy data pin support?
 	FLOW_ASSERT_ENUM_MAX(EFlowDataPinResolveResult, 9);
 	if (MessageResult == EFlowDataPinResolveResult::FailedUnknownPin)
 	{
@@ -105,11 +105,6 @@ void UFlowNode_Log::UpdateNodeConfigText_Implementation()
 	}
 }
 
-#endif
-
-#undef LOCTEXT_NAMESPACE
-
-#if WITH_EDITOR
 const FFlowAgentDoc& UFlowNode_Log::GetAgentDoc() const
 {
 	static const FFlowAgentDoc Doc = MakeAgentDoc(
@@ -118,4 +113,7 @@ const FFlowAgentDoc& UFlowNode_Log::GetAgentDoc() const
 		/*Articles*/ {  });
 	return Doc;
 }
+
 #endif
+
+#undef LOCTEXT_NAMESPACE

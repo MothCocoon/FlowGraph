@@ -75,9 +75,7 @@ FString UFlowNode_Counter::GetStatusString() const
 {
 	return FString::FromInt(CurrentSum);
 }
-#endif
 
-#if WITH_EDITOR
 const FFlowAgentDoc& UFlowNode_Counter::GetAgentDoc() const
 {
 	static const FFlowAgentDoc Doc = MakeAgentDoc(

@@ -140,9 +140,7 @@ FString UFlowNode_ExecutionMultiGate::GetNodeDescription() const
 
 	return Result;
 }
-#endif
 
-#if WITH_EDITOR
 const FFlowAgentDoc& UFlowNode_ExecutionMultiGate::GetAgentDoc() const
 {
 	static const FFlowAgentDoc Doc = MakeAgentDoc(

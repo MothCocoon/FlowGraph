@@ -64,9 +64,7 @@ FString UFlowNode_LogicalOR::GetStatusString() const
 
 	return Super::GetStatusString();
 }
-#endif
 
-#if WITH_EDITOR
 const FFlowAgentDoc& UFlowNode_LogicalOR::GetAgentDoc() const
 {
 	static const FFlowAgentDoc Doc = MakeAgentDoc(

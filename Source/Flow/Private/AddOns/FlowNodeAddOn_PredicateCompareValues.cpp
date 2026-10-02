@@ -98,7 +98,7 @@ bool UFlowNodeAddOn_PredicateCompareValues::IsNumericTypeName(
 	const FFlowPinConnectionPolicy& PinConnectionPolicy,
 	const FName& TypeName)
 {
-	return 
+	return
 		PinConnectionPolicy.GetAllSupportedIntegerTypes().Contains(TypeName) ||
 		PinConnectionPolicy.GetAllSupportedFloatTypes().Contains(TypeName);
 }
@@ -140,7 +140,7 @@ bool UFlowNodeAddOn_PredicateCompareValues::IsAnyStringLikeTypeName(
 	const FName& TypeName)
 {
 	// Special-casing NameLike, since the CompareValues predicate counts Enums as Names
-	return 
+	return
 		IsNameLikeType(TypeName) ||
 		PinConnectionPolicy.GetAllSupportedStringLikeTypes().Contains(TypeName);
 }
@@ -277,7 +277,7 @@ EDataValidationResult UFlowNodeAddOn_PredicateCompareValues::ValidateNode()
 	}
 
 	// Validate arithmetic operators are only used with numeric types
-	if (IsArithmeticOp() && 
+	if (IsArithmeticOp() &&
 		!(IsNumericTypeName(PinConnectionPolicy, LeftTypeName) && IsNumericTypeName(PinConnectionPolicy, RightTypeName)))
 	{
 		LogValidationError(FString::Printf(
@@ -323,6 +323,15 @@ FText UFlowNodeAddOn_PredicateCompareValues::K2_GetNodeTitle_Implementation() co
 	}
 
 	return Super::K2_GetNodeTitle_Implementation();
+}
+
+const FFlowAgentDoc& UFlowNodeAddOn_PredicateCompareValues::GetAgentDoc() const
+{
+	static const FFlowAgentDoc Doc = MakeAgentDoc(
+		/*Guidance*/ TEXT("Arithmetic operators only work for numeric or otherwise-ordered types - attempting them on an incompatible pair, such as two objects, fails the comparison rather than producing a meaningful result. Equality falls back to a generic string comparison for types with no dedicated comparator, so two values that print identically can still evaluate true even if their underlying types differ."),
+		/*Tags*/     { TEXT("predicate"), TEXT("compare"), TEXT("value") },
+		/*Articles*/ {  });
+	return Doc;
 }
 
 #endif // WITH_EDITOR
@@ -719,14 +728,3 @@ bool UFlowNodeAddOn_PredicateCompareValues::EvaluatePredicate_Implementation() c
 }
 
 #undef LOCTEXT_NAMESPACE
-
-#if WITH_EDITOR
-const FFlowAgentDoc& UFlowNodeAddOn_PredicateCompareValues::GetAgentDoc() const
-{
-	static const FFlowAgentDoc Doc = MakeAgentDoc(
-		/*Guidance*/ TEXT("Arithmetic operators only work for numeric or otherwise-ordered types - attempting them on an incompatible pair, such as two objects, fails the comparison rather than producing a meaningful result. Equality falls back to a generic string comparison for types with no dedicated comparator, so two values that print identically can still evaluate true even if their underlying types differ."),
-		/*Tags*/     { TEXT("predicate"), TEXT("compare"), TEXT("value") },
-		/*Articles*/ {  });
-	return Doc;
-}
-#endif

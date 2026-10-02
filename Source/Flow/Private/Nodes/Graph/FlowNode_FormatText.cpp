@@ -70,7 +70,7 @@ void UFlowNode_FormatText::UpdateNodeConfigText_Implementation()
 {
 	constexpr bool bErrorIfInputPinNotFound = true;
 	FConnectedPin ConnectedPin;
-	
+
 	// is input connected?
 	if (FindFirstInputPinConnection(GET_MEMBER_NAME_CHECKED(ThisClass, FormatText), bErrorIfInputPinNotFound, ConnectedPin))
 	{
@@ -82,11 +82,6 @@ void UFlowNode_FormatText::UpdateNodeConfigText_Implementation()
 	}
 }
 
-#endif
-
-#undef LOCTEXT_NAMESPACE
-
-#if WITH_EDITOR
 const FFlowAgentDoc& UFlowNode_FormatText::GetAgentDoc() const
 {
 	static const FFlowAgentDoc Doc = MakeAgentDoc(
@@ -95,4 +90,7 @@ const FFlowAgentDoc& UFlowNode_FormatText::GetAgentDoc() const
 		/*Articles*/ {  });
 	return Doc;
 }
+
 #endif
+
+#undef LOCTEXT_NAMESPACE

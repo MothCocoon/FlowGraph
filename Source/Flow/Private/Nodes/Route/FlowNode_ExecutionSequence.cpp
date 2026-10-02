@@ -68,9 +68,7 @@ FString UFlowNode_ExecutionSequence::GetNodeDescription() const
 
 	return Super::GetNodeDescription();
 }
-#endif
 
-#if WITH_EDITOR
 const FFlowAgentDoc& UFlowNode_ExecutionSequence::GetAgentDoc() const
 {
 	static const FFlowAgentDoc Doc = MakeAgentDoc(

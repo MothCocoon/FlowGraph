@@ -78,8 +78,6 @@ FText UFlowNode_Branch::K2_GetNodeTitle_Implementation() const
 	return Super::K2_GetNodeTitle_Implementation();
 }
 
-#undef LOCTEXT_NAMESPACE
-
 #if WITH_EDITOR
 const FFlowAgentDoc& UFlowNode_Branch::GetAgentDoc() const
 {
@@ -90,3 +88,5 @@ const FFlowAgentDoc& UFlowNode_Branch::GetAgentDoc() const
 	return Doc;
 }
 #endif
+
+#undef LOCTEXT_NAMESPACE
