@@ -9,6 +9,8 @@
 #include "Asset/FlowAssetToolbar.h"
 #include "Asset/FlowMessageLogListing.h"
 #include "Graph/FlowGraphEditor.h"
+#include "Graph/FlowGraphEditorLayout.h"
+#include "Graph/Nodes/FlowGraphNode.h"
 #include "Graph/FlowGraphSchema.h"
 #include "Graph/Widgets/SFlowPalette.h"
 
@@ -25,6 +27,7 @@
 #include "Misc/UObjectToken.h"
 #include "Modules/ModuleManager.h"
 #include "PropertyEditorModule.h"
+#include "ScopedTransaction.h"
 #include "ToolMenus.h"
 #include "Widgets/Docking/SDockTab.h"
 
@@ -410,8 +413,61 @@ void FFlowAssetEditor::BindToolbarCommands()
 	                           FExecuteAction::CreateSP(this, &FFlowAssetEditor::EditAssetDefaults_Clicked),
 	                           FCanExecuteAction());
 
+	ToolkitCommands->MapAction(ToolbarCommands.AutoFormatGraph,
+	                           FExecuteAction::CreateSP(this, &FFlowAssetEditor::AutoFormatGraph),
+	                           FCanExecuteAction::CreateSP(this, &FFlowAssetEditor::CanEdit));
+
 	// Engine's Play commands
 	ToolkitCommands->Append(FPlayWorldCommands::GlobalPlayWorldActions.ToSharedRef());
+}
+
+void FFlowAssetEditor::AutoFormatGraph()
+{
+	if (!FlowAsset || !GraphEditor.IsValid())
+	{
+		return;
+	}
+
+	const FScopedTransaction Transaction(LOCTEXT("AutoFormatGraph", "Auto-Format Flow Graph"));
+
+	TSet<FGuid> TargetGuids;
+	const TArray<UFlowGraphNode*> SelectedNodes = GraphEditor->GetSelectedFlowNodes();
+	if (SelectedNodes.Num() > 0)
+	{
+		for (const UFlowGraphNode* GraphNode : SelectedNodes)
+		{
+			if (GraphNode)
+			{
+				TargetGuids.Add(GraphNode->NodeGuid);
+			}
+		}
+	}
+
+	TMap<FGuid, FIntPoint> MeasuredNodeSizes;
+	for (const TPair<FGuid, UFlowNode*>& Pair : FlowAsset->GetNodes())
+	{
+		if (!Pair.Value || (!TargetGuids.IsEmpty() && !TargetGuids.Contains(Pair.Key)))
+		{
+			continue;
+		}
+
+		const UEdGraphNode* GraphNode = Pair.Value->GetGraphNode();
+		FSlateRect Bounds;
+		if (GraphNode && GraphEditor->GetBoundsForNode(GraphNode, Bounds, 0.0f))
+		{
+			MeasuredNodeSizes.Add(Pair.Key, FIntPoint(
+				FMath::CeilToInt(Bounds.Right - Bounds.Left),
+				FMath::CeilToInt(Bounds.Bottom - Bounds.Top)));
+		}
+	}
+
+	TMap<FGuid, FIntPoint> Positions;
+	UFlowGraphEditorLayout::ComputeAutoFormatPositionsWithSizes(
+		FlowAsset, TargetGuids, MeasuredNodeSizes, Positions);
+	UFlowGraphEditorLayout::ApplyPositionsToExistingGraphWithSizes(
+		FlowAsset, Positions, MeasuredNodeSizes);
+
+	GraphEditor->NotifyGraphChanged();
 }
 
 void FFlowAssetEditor::RefreshAsset()

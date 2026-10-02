@@ -17,6 +17,8 @@ public:
 	TSharedPtr<FUICommandInfo> SearchInAsset;
 	TSharedPtr<FUICommandInfo> EditAssetDefaults;
 
+	TSharedPtr<FUICommandInfo> AutoFormatGraph;
+
 	virtual void RegisterCommands() override;
 };
 
