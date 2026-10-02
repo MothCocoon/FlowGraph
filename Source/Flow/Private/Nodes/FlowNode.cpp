@@ -1506,7 +1506,10 @@ void UFlowNode::Deactivate()
 		return;
 	}
 
-	if (GetFlowAsset()->FinishPolicy == EFlowFinishPolicy::Abort)
+	const UFlowAsset* FlowAsset = GetFlowAsset();
+	ensureMsgf(FlowAsset, TEXT("Flow Node is orphaned and could not retrieve its Flow Asset"));
+
+	if (IsValid(FlowAsset) && FlowAsset->FinishPolicy == EFlowFinishPolicy::Abort)
 	{
 		ActivationState = EFlowNodeState::Aborted;
 	}
