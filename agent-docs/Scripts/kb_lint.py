@@ -13,8 +13,8 @@ Checks, across one or more `agent-docs/` roots:
      declares that exact tag as its own (a "definition" - the tag appearing
      on its own line near the top of the file, as described in INDEX.md).
   2. Every article's declared tag id matches its filename, normalized
-     (lowercased, `-`/`_` stripped) so `MyArticle.md` /
-     `my-article` compare equal. The exemption is any file literally named
+     (lowercased, `-`/`_` stripped) so `CourierTextFormat.md` /
+     `courier-text-format` compare equal. The exemption is any file literally named
      `INDEX.md` (any casing) - every index in this KB deliberately decouples
      its filename from its semantic id (e.g. `flowgraph-index`) so every domain
      root can use the same filename.
@@ -62,8 +62,9 @@ TAG_REFERENCE_RE = re.compile(r"\$KB:([A-Za-z0-9_-]+):([A-Za-z0-9_-]+):([A-Za-z0
 
 
 def normalize_for_filename_match(value: str) -> str:
-    """Lowercases and strips '-'/'_' so PascalCase/kebab-case variants of the same word
-    compare equal."""
+    """Lowercases and strips '-'/'_' so PascalCase/kebab-case/SCREAMING variants of the same word
+    compare equal (e.g. 'CourierTextFormat' and 'courier-text-format' both become
+    'couriertextformat')."""
     return value.lower().replace("-", "").replace("_", "")
 
 

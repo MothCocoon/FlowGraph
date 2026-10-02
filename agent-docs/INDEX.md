@@ -21,7 +21,7 @@ project that provides them.
 
 - **No per-class node/addon articles.** A class's documentation lives on the class itself
   (`FFlowAgentDoc`, read via the catalog with `FindFlowNodeTypes`), not as a markdown file.
-- `Concept` articles for generic ecosystem semantics (e.g. the addon attachment handshake and subgraph composition).
+- `Concept` articles for generic ecosystem semantics (e.g. the Flow Courier format, the addon attachment handshake, subgraph composition).
 - `Authoring/` guides for how to build a new generic node/addon.
 
 ## Conventions
@@ -36,6 +36,13 @@ Keep one concept or pattern per article. Put class-specific guidance in `FFlowAg
 catalog serves it beside reflected pins and properties. A class's `Articles` entries use
 `concept:<id>` or `pattern:<id>` to connect it to shared articles. Mark content that agents may
 change only on explicit instruction with `<!-- KB-LOCK -->` and `<!-- /KB-LOCK -->`.
+
+## Available guides
+
+- $KB:flow:guide:courier-text-format - the Courier v2 JSON document: what its fields mean and what
+  a document does when applied (identity, apply order, merge behavior, addon parentage, pin names,
+  the error model). The exact schema is published live by `describe_toolset`; read this for meaning,
+  not shape.
 
 ## Scripts (`Scripts/`)
 
@@ -67,6 +74,5 @@ authoring lives with the owning plugin or project.
 
 ## Extensions
 
-An installed extension can add another `agent-docs/` root. FlowGraphCourier adds the
-`guide:courier-text-format` and `concept:courier-subgraph-selection` articles here. Read its index
-for the behavior it owns; this index is sufficient for Flow Graph itself.
+An installed extension can add another `agent-docs/` root. Read its index for the behavior it owns;
+this index is sufficient for Flow Graph itself.
