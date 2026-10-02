@@ -369,12 +369,6 @@ TArray<FFlowPin> UFlowNode::GetContextOutputs() const
 	return ContextOutputs;
 }
 
-void UFlowNode::GetCatalogPins(TArray<FFlowPin>& OutInputPins, TArray<FFlowPin>& OutOutputPins) const
-{
-	OutInputPins = InputPins;
-	OutOutputPins = OutputPins;
-}
-
 bool UFlowNode::CanUserAddInput() const
 {
 	return K2_CanUserAddInput();

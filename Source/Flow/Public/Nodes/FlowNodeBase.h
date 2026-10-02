@@ -516,21 +516,6 @@ public:
 	 * so tooling must not report such a write as persisted. */
 	void SetAgentDoc(const FFlowAgentDoc& InAgentDoc) { AgentDoc = InAgentDoc; }
 
-	/* The single deprecation predicate for a Flow class. Keying anything off the category string
-	 * instead corrupts category filtering, because Category is display metadata. */
-	bool IsDeprecated() const { return bNodeDeprecated; }
-
-	/* The class an author should migrate to, or null when this class has no successor. */
-	const TSubclassOf<UFlowNode>& GetReplacedByClass() const { return ReplacedBy; }
-
-	/**
-	 * The pin surface a catalog or documentation consumer should report for this class, read from the
-	 * CDO. Defaults to nothing; UFlowNode reports its declared InputPins/OutputPins, and a base that
-	 * generates its pins procedurally overrides this to report what it will generate. Pins
-	 * contributed by attached addons are outside the scope of a CDO and are not reported here.
-	 */
-	virtual void GetCatalogPins(TArray<FFlowPin>& OutInputPins, TArray<FFlowPin>& OutOutputPins) const {}
-
 protected:
 	void EnsureNodeDisplayStyle();
 #endif // WITH_EDITOR
