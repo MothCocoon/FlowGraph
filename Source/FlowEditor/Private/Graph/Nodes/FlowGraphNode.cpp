@@ -1157,7 +1157,7 @@ void UFlowGraphNode::GetPinHoverText(const UEdGraphPin& Pin, FString& HoverTextO
 		if (FlowPinType::IsSuccess(DataResult.Result) && DataResult.ResultValue.IsValid())
 		{
 			const FFlowDataPinValue& Value = DataResult.ResultValue.Get<FFlowDataPinValue>();
-			if (!Value.TryConvertValuesToString(ValueString))
+			if (!Value.GetDebugString(ValueString))
 			{
 				ValueString = TEXT("<unformattable>");
 			}

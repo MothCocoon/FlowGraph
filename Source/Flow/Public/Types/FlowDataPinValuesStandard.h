@@ -434,6 +434,7 @@ public:
 
 	FLOW_API virtual const FFlowPinTypeName& GetPinTypeName() const override { return PinType::GetPinTypeNameStatic(); }
 	FLOW_API virtual bool TryConvertValuesToString(FString& OutString) const override;
+	FLOW_API virtual bool GetDebugString(FString& OutString) const override;
 };
 
 //======================================================================
