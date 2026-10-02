@@ -567,21 +567,21 @@ EDataValidationResult UFlowNode_ExecuteComponent::ValidateNode()
 		}
 
 		// Check that the component implements the expected interfaces
-		if (!Cast<IFlowExternalExecutableInterface>(ExpectedComponent))
+		if (!ExpectedComponent->Implements<UFlowExternalExecutableInterface>())
 		{
 			ValidationLog.Error<UFlowNode>(TEXT("Expected component to implement IFlowExternalExecutableInterface"), this);
 
 			return EDataValidationResult::Invalid;
 		}
 
-		if (!Cast<IFlowCoreExecutableInterface>(ExpectedComponent))
+		if (!ExpectedComponent->Implements<UFlowCoreExecutableInterface>())
 		{
 			ValidationLog.Error<UFlowNode>(TEXT("Expected component to implement IFlowCoreExecutableInterface"), this);
 
 			return EDataValidationResult::Invalid;
 		}
 	}
-		
+
 	return FinalResult;
 }
 
@@ -719,8 +719,6 @@ void UFlowNode_ExecuteComponent::UpdateNodeConfigText_Implementation()
 #endif // WITH_EDITOR
 }
 
-#undef LOCTEXT_NAMESPACE
-
 #if WITH_EDITOR
 const FFlowAgentDoc& UFlowNode_ExecuteComponent::GetAgentDoc() const
 {
@@ -731,3 +729,5 @@ const FFlowAgentDoc& UFlowNode_ExecuteComponent::GetAgentDoc() const
 	return Doc;
 }
 #endif
+
+#undef LOCTEXT_NAMESPACE
