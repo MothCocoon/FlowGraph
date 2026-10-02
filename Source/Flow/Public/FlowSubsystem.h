@@ -89,10 +89,10 @@ public:
 protected:
 	UFlowAsset* CreateSubFlow(UFlowNode_SubGraph* SubGraphNode, const FString& SavedInstanceName = FString(), const bool bPreloading = false);
 
-	/* Finishes the SubFlow without deinitializing it or removing it from InstancedSubFlows. */
+	/* Finishes the SubFlow running in the SubGraphNode. It does not deinitialize or removes from the internal InstancedSubFlows list */
 	void FinishSubFlow(UFlowNode_SubGraph* SubGraphNode, const EFlowFinishPolicy FinishPolicy);
 
-	/* Removes the SubFlow from InstancedSubFlows, then finishes and deinitializes it. */
+	/* Removes the Subflow from the InstancedSubFlows list; and Finishes and Deinitializes it. */
 	void RemoveSubFlow(UFlowNode_SubGraph* SubGraphNode, const EFlowFinishPolicy FinishPolicy);
 
 public:
