@@ -6,9 +6,6 @@
 #include UE_INLINE_GENERATED_CPP_BY_NAME(FlowNode_ComponentObserver)
 
 UFlowNode_ComponentObserver::UFlowNode_ComponentObserver()
-	: IdentityMatchType(EFlowTagContainerMatchType::HasAnyExact)
-	, SuccessLimit(1)
-	, SuccessCount(0)
 {
 #if WITH_EDITOR
 	NodeDisplayStyle = FlowNodeStyle::Condition;
