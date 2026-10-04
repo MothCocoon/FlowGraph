@@ -273,7 +273,14 @@ void FFlowEditorModule::RegisterDetailCustomizations()
 		RegisterCustomStructLayout(*FFlowDataPinValue_Int64::StaticStruct(), FOnGetPropertyTypeCustomizationInstance::CreateStatic(&FFlowDataPinValueCustomization_Int64::MakeInstance));
 		RegisterCustomStructLayout(*FFlowDataPinValue_Name::StaticStruct(), FOnGetPropertyTypeCustomizationInstance::CreateStatic(&FFlowDataPinValueCustomization_Name::MakeInstance));
 		RegisterCustomStructLayout(*FFlowDataPinValue_Object::StaticStruct(), FOnGetPropertyTypeCustomizationInstance::CreateStatic(&FFlowDataPinValueCustomization_Object::MakeInstance));
+		RegisterCustomStructLayout(*FFlowDataPinValue_Rotator::StaticStruct(), FOnGetPropertyTypeCustomizationInstance::CreateStatic(&FFlowDataPinValueCustomization_Rotator::MakeInstance));
+		RegisterCustomStructLayout(*FFlowDataPinValue_String::StaticStruct(), FOnGetPropertyTypeCustomizationInstance::CreateStatic(&FFlowDataPinValueCustomization_String::MakeInstance));
+		RegisterCustomStructLayout(*FFlowDataPinValue_Text::StaticStruct(), FOnGetPropertyTypeCustomizationInstance::CreateStatic(&FFlowDataPinValueCustomization_Text::MakeInstance));
+		RegisterCustomStructLayout(*FFlowDataPinValue_Transform::StaticStruct(), FOnGetPropertyTypeCustomizationInstance::CreateStatic(&FFlowDataPinValueCustomization_Transform::MakeInstance));
+		RegisterCustomStructLayout(*FFlowDataPinValue_Vector::StaticStruct(), FOnGetPropertyTypeCustomizationInstance::CreateStatic(&FFlowDataPinValueCustomization_Vector::MakeInstance));
 		RegisterCustomStructLayout(*FFlowIdentity::StaticStruct(), FOnGetPropertyTypeCustomizationInstance::CreateStatic(&FFlowIdentityCustomization::MakeInstance));
+		RegisterCustomStructLayout(*FFlowNamedDataPinProperty::StaticStruct(), FOnGetPropertyTypeCustomizationInstance::CreateStatic(&FFlowNamedDataPinPropertyCustomization::MakeInstance));
+		RegisterCustomStructLayout(*FFlowPin::StaticStruct(), FOnGetPropertyTypeCustomizationInstance::CreateStatic(&FFlowPinCustomization::MakeInstance));
 		
 		PropertyModule.NotifyCustomizationModuleChanged();
 	}
