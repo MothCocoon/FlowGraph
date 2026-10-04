@@ -30,22 +30,6 @@ void FFlowComponentDetails::ResolveCategoriesMeta(const TSharedPtr<IPropertyHand
 {
 	if (PropertyHandle->IsSamePropertyNode(IdentityTagsHandle))
 	{
-		const UFlowGraphSettings* Settings = GetDefault<UFlowGraphSettings>();
-
-		// The most derived class with an entry wins
-		const FGameplayTagContainer* ClassTags = nullptr;
-		for (const UClass* Class = IdentityTagsHandle->GetOuterBaseClass(); Class && ClassTags == nullptr; Class = Class->GetSuperClass())
-		{
-			ClassTags = Settings->ComponentIdentityTagCategories.Find(Class);
-		}
-
-		if (ClassTags)
-		{
-			MetaString = FString::JoinBy(*ClassTags, TEXT(","), [](const FGameplayTag& Tag) { return Tag.ToString(); });
-		}
-		else
-		{
-			MetaString = FString::JoinBy(Settings->DefaultIdentityTagCategories, TEXT(","), [](const FGameplayTag& Tag) { return Tag.ToString(); });
-		}
+		MetaString = GetDefault<UFlowGraphSettings>()->GetIdentityTagCategories(IdentityTagsHandle->GetOuterBaseClass());
 	}
 }

@@ -92,6 +92,9 @@ class FLOWEDITOR_API UFlowGraphSettings : public UDeveloperSettings
 	UPROPERTY(EditAnywhere, config, Category = "Default UI", meta = (EditCondition = "bShowAssetToolbarAboveLevelEditor"))
 	TSoftClassPtr<class UFlowAsset> WorldAssetClass;
 
+	UPROPERTY(EditAnywhere, config, Category = "Details")
+	bool bShowFlowTagsInActorDetails = true;
+
 	/** Flow Component only.
 	 * Show "Flow" category above regular categories in component's Details panel.
 	 * Requires refreshing the Details panel (reselect the object) to see the change. */
@@ -207,6 +210,9 @@ public:
 
 	/* Override-safe category query for Flow Node. */
 	static FString GetNodeCategoryForNode(const UFlowNodeBase& FlowNodeBase);
+
+	/* Categories meta string for Identity Tag picker of the given Flow Component class. */
+	FString GetIdentityTagCategories(const UClass* ComponentClass) const;
 
 #if WITH_EDITOR
 	const TMap<FGameplayTag, FFlowNodeDisplayStyleConfig>& EnsureNodeDisplayStylesMap();

@@ -1,22 +1,20 @@
 // Copyright https://github.com/MothCocoon/FlowGraph/graphs/contributors
-
 #include "FlowEditorModule.h"
-#include "FlowEditorStyle.h"
 
 #include "Asset/FlowAssetEditor.h"
 #include "Asset/FlowAssetIndexer.h"
+#include "FlowEditorStyle.h"
 #include "Graph/FlowGraphConnectionDrawingPolicy.h"
 #include "Graph/FlowGraphPinFactory.h"
 #include "Graph/FlowGraphSettings.h"
-#include "Utils/SLevelEditorFlow.h"
 #include "MovieScene/FlowTrackEditor.h"
 #include "Nodes/AssetTypeActions_FlowNodeBlueprint.h"
 #include "Nodes/AssetTypeActions_FlowNodeAddOnBlueprint.h"
 #include "Pins/SFlowInputPinHandle.h"
 #include "Pins/SFlowOutputPinHandle.h"
+#include "Utils/SLevelEditorFlow.h"
 
-#include "FlowModule.h"
-
+#include "DetailCustomizations/FlowActorDetails.h"
 #include "DetailCustomizations/FlowActorOwnerComponentRefCustomization.h"
 #include "DetailCustomizations/FlowAssetDetails.h"
 #include "DetailCustomizations/FlowAssetParamsPtrCustomization.h"
@@ -36,6 +34,7 @@
 
 #include "FlowAsset.h"
 #include "FlowComponent.h"
+#include "FlowModule.h"
 #include "AddOns/FlowNodeAddOn.h"
 #include "Asset/FlowAssetParamsTypes.h"
 #include "Find/FindInFlow.h"
@@ -65,17 +64,25 @@ FAssetCategoryPath FFlowAssetCategoryPaths::Flow(LOCTEXT("Flow", "Flow"));
 
 void FFlowEditorModule::StartupModule()
 {
+	// register style
 	FFlowEditorStyle::Initialize();
-
 	TrySetFlowNodeDisplayStyleDefaults();
-
-	RegisterAssets();
 
 	// register visual utilities
 	FEdGraphUtilities::RegisterVisualPinConnectionFactory(MakeShareable(new FFlowGraphConnectionDrawingPolicyFactory));
 	FEdGraphUtilities::RegisterVisualPinFactory(MakeShareable(new FFlowGraphPinFactory()));
 	FEdGraphUtilities::RegisterVisualPinFactory(MakeShareable(new FFlowInputPinHandleFactory()));
 	FEdGraphUtilities::RegisterVisualPinFactory(MakeShareable(new FFlowOutputPinHandleFactory()));
+
+	// register asset actions
+	RegisterAssets();
+
+	// register type customizations
+	RegisterDetailCustomizations();
+
+	// register actor customization
+	ActorDetails = MakeShared<FFlowActorDetails>();
+	ActorDetails->Register();
 
 	// add Flow Toolbar
 	if (GetDefault<UFlowGraphSettings>()->bShowAssetToolbarAboveLevelEditor)
@@ -92,8 +99,6 @@ void FFlowEditorModule::StartupModule()
 	ISequencerModule& SequencerModule = FModuleManager::Get().LoadModuleChecked<ISequencerModule>("Sequencer");
 	FlowTrackCreateEditorHandle = SequencerModule.RegisterTrackEditor(FOnCreateTrackEditor::CreateStatic(&FFlowTrackEditor::CreateTrackEditor));
 
-	RegisterDetailCustomizations();
-
 	// register asset indexers
 	if (FModuleManager::Get().IsModuleLoaded(AssetSearchModuleName))
 	{
@@ -108,10 +113,9 @@ void FFlowEditorModule::RegisterForAssetChanges()
 	{
 		// Register asset change detection for search cache invalidation
 		const FAssetRegistryModule& AssetRegistry = FModuleManager::LoadModuleChecked<FAssetRegistryModule>("AssetRegistry");
-		AssetRegistry.Get().OnAssetUpdated().AddStatic(&FFlowEditorModule::OnAssetUpdated);
-		AssetRegistry.Get().OnAssetRenamed().AddStatic(&FFlowEditorModule::OnAssetRenamed);
-		AssetRegistry.Get().OnAssetRemoved().AddStatic(&FFlowEditorModule::OnAssetUpdated);
-
+		AssetUpdatedHandle = AssetRegistry.Get().OnAssetUpdated().AddStatic(&FFlowEditorModule::OnAssetUpdated);
+		AssetRenamedHandle = AssetRegistry.Get().OnAssetRenamed().AddStatic(&FFlowEditorModule::OnAssetRenamed);
+		AssetRemovedHandle = AssetRegistry.Get().OnAssetRemoved().AddStatic(&FFlowEditorModule::OnAssetUpdated);
 		bIsRegisteredForAssetChanges = true;
 	}
 }
@@ -120,30 +124,34 @@ void FFlowEditorModule::ShutdownModule()
 {
 	FFlowEditorStyle::Shutdown();
 
-	UnregisterDetailCustomizations();
-
+	// unregister asset actions
 	UnregisterAssets();
+	
+	// unregister type customizations
+	UnregisterDetailCustomizations();
+	
+	// unregister actor customization
+	ActorDetails.Reset();
 
 	// unregister track editors
 	ISequencerModule& SequencerModule = FModuleManager::Get().LoadModuleChecked<ISequencerModule>("Sequencer");
 	SequencerModule.UnRegisterTrackEditor(FlowTrackCreateEditorHandle);
 
+	// unregister asset indexers
 	FModuleManager::Get().OnModulesChanged().Remove(ModulesChangedHandle);
 
+	// Unregister asset change detection
 	if (bIsRegisteredForAssetChanges && FModuleManager::Get().IsModuleLoaded("AssetRegistry"))
 	{
-		// Unregister asset change detection
-		FAssetRegistryModule& AssetRegistry = FModuleManager::Get().GetModuleChecked<FAssetRegistryModule>("AssetRegistry");
-
-		AssetRegistry.Get().OnAssetUpdated().RemoveAll(this);
-		AssetRegistry.Get().OnAssetRenamed().RemoveAll(this);
-		AssetRegistry.Get().OnAssetRemoved().RemoveAll(this);
-
+		const FAssetRegistryModule& AssetRegistry = FModuleManager::Get().GetModuleChecked<FAssetRegistryModule>("AssetRegistry");
+		AssetRegistry.Get().OnAssetUpdated().Remove(AssetUpdatedHandle);
+		AssetRegistry.Get().OnAssetRenamed().Remove(AssetRenamedHandle);
+		AssetRegistry.Get().OnAssetRemoved().Remove(AssetRemovedHandle);
 		bIsRegisteredForAssetChanges = false;
 	}
 }
 
-void FFlowEditorModule::TrySetFlowNodeDisplayStyleDefaults() const
+void FFlowEditorModule::TrySetFlowNodeDisplayStyleDefaults()
 {
 	// Force the Flow module to be loaded before we try to access the Settings
 	FModuleManager::LoadModuleChecked<FFlowModule>("Flow");
@@ -281,12 +289,12 @@ void FFlowEditorModule::RegisterDetailCustomizations()
 		RegisterCustomStructLayout(*FFlowIdentity::StaticStruct(), FOnGetPropertyTypeCustomizationInstance::CreateStatic(&FFlowIdentityCustomization::MakeInstance));
 		RegisterCustomStructLayout(*FFlowNamedDataPinProperty::StaticStruct(), FOnGetPropertyTypeCustomizationInstance::CreateStatic(&FFlowNamedDataPinPropertyCustomization::MakeInstance));
 		RegisterCustomStructLayout(*FFlowPin::StaticStruct(), FOnGetPropertyTypeCustomizationInstance::CreateStatic(&FFlowPinCustomization::MakeInstance));
-		
+
 		PropertyModule.NotifyCustomizationModuleChanged();
 	}
 }
 
-void FFlowEditorModule::UnregisterDetailCustomizations()
+void FFlowEditorModule::UnregisterDetailCustomizations() const
 {
 	// unregister details customizations
 	if (FModuleManager::Get().IsModuleLoaded("PropertyEditor"))
