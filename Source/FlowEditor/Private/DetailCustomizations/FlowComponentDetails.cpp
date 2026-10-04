@@ -1,7 +1,6 @@
-// Fill out your copyright notice in the Description page of Project Settings.
-
-
+// Copyright https://github.com/MothCocoon/FlowGraph/graphs/contributors
 #include "DetailCustomizations/FlowComponentDetails.h"
+
 #include "FlowComponent.h"
 
 #include "DetailCategoryBuilder.h"
@@ -18,7 +17,6 @@ void FFlowComponentDetails::CustomizeDetails(IDetailLayoutBuilder& DetailBuilder
 {
 	const UFlowGraphSettings* Settings = GetDefault<UFlowGraphSettings>();
 	UGameplayTagsManager::Get().OnGetCategoriesMetaFromPropertyHandle.AddSP(this, &FFlowComponentDetails::ResolveCategoriesMeta);	
-	
 	
 	IdentityTagsHandle = DetailBuilder.GetProperty(GET_MEMBER_NAME_CHECKED(UFlowComponent, IdentityTags));
 
