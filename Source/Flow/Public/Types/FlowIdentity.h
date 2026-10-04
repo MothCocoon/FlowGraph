@@ -15,12 +15,32 @@ struct FLOW_API FFlowIdentity
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Identity")
 	EFlowTagContainerMatchType IdentityMatchType;
 
+	/* Restricts matching to Flow Components of this class.
+	 * Class is never loaded by the filter itself. */
+	UPROPERTY(EditDefaultsOnly, BlueprintReadWrite, Category = "Identity")
+	TSoftClassPtr<class UFlowComponent> ComponentFilter;
+
+	/* Restricts matching to actors of this class.
+	 * Class is never loaded by the filter itself. */
+	UPROPERTY(EditDefaultsOnly, BlueprintReadWrite, Category = "Identity")
+	TSoftClassPtr<class AActor> ActorFilter;
+
 	FFlowIdentity()
 		: IdentityMatchType(EFlowTagContainerMatchType::HasAnyExact)
 	{
 	}
 
-	FString ToString(bool bShortNames = false, bool bIncludeMatchType = false, bool bIncludeClassFilters = false, FString Separator = TEXT("\n")) const;
+	bool IsValid() const;
+	bool IsExactMatch() const;
+	EGameplayContainerMatchType GetContainerMatchType() const;
+
+	bool Matches(const FGameplayTagContainer& Tags) const;
+	bool Matches(const UFlowComponent* Component) const;
+	bool Matches(const AActor* Actor) const;
+
+	bool MatchesFilters(const UFlowComponent* Component) const;
+
+	FString ToString(const bool bShortNames = false, const bool bIncludeMatchType = false, const bool bIncludeClassFilters = false, const FString& Separator = TEXT("\n")) const;
 	bool SerializeFromMismatchedTag(const FPropertyTag& Tag, FStructuredArchive::FSlot Slot);
 };
 

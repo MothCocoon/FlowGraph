@@ -622,6 +622,18 @@ void FFlowIdentityCustomization::CustomizeChildren(TSharedRef<IPropertyHandle> P
 
 	ChildBuilder.AddProperty(IdentityTagsHandle.ToSharedRef());
 	ChildBuilder.AddProperty(PropertyHandle->GetChildHandle(GET_MEMBER_NAME_CHECKED(FFlowIdentity, IdentityMatchType)).ToSharedRef());
+
+	const TSharedPtr<IPropertyHandle> ComponentFilterHandle = PropertyHandle->GetChildHandle(GET_MEMBER_NAME_CHECKED(FFlowIdentity, ComponentFilter));
+	if (ComponentFilterHandle.IsValid())
+	{
+		ChildBuilder.AddProperty(ComponentFilterHandle.ToSharedRef());
+	}
+
+	const TSharedPtr<IPropertyHandle> ActorFilterHandle = PropertyHandle->GetChildHandle(GET_MEMBER_NAME_CHECKED(FFlowIdentity, ActorFilter));
+	if (ActorFilterHandle.IsValid())
+	{
+		ChildBuilder.AddProperty(ActorFilterHandle.ToSharedRef());
+	}
 }
 
 void FFlowIdentityCustomization::UpdateCachedStructs()
@@ -648,6 +660,14 @@ bool FFlowIdentityCustomization::IsActorAllowed(const AActor* Actor) const
 	const UFlowComponent* FlowComponent = Actor->FindComponentByClass<UFlowComponent>();
 	if (FlowComponent && FlowComponent->IdentityTags.IsValid())
 	{
+		for (const auto& Struct : CachedIdentities)
+		{
+			const FFlowIdentity* Identity = Struct.GetPtr();
+			if (Identity && !Identity->MatchesFilters(FlowComponent))
+			{
+				return false;
+			}
+		}
 		return true;
 	}
 	return false;
@@ -655,16 +675,12 @@ bool FFlowIdentityCustomization::IsActorAllowed(const AActor* Actor) const
 
 bool FFlowIdentityCustomization::IsActorMatches(const AActor* Actor) const
 {
-	const UFlowComponent* FlowComponent = Actor->FindComponentByClass<UFlowComponent>();
-	if (FlowComponent && FlowComponent->IdentityTags.IsValid())
+	for (const auto& Struct : CachedIdentities)
 	{
-		for (const auto& Struct : CachedIdentities)
+		const FFlowIdentity* Identity = Struct.GetPtr();
+		if (Identity && Identity->Matches(Actor))
 		{
-			const FFlowIdentity* Identity = Struct.GetPtr();
-			if (Identity && FlowTypes::HasMatchingTags(FlowComponent->IdentityTags, Identity->IdentityTags, Identity->IdentityMatchType))
-			{
-				return true;
-			}
+			return true;
 		}
 	}
 	return false;
@@ -924,6 +940,36 @@ TSharedRef<SWidget> FFlowIdentityCustomization::MenuContent_ActorPicker()
 {
 	FMenuBuilder MenuBuilder(false, nullptr);
 	const FUIAction NoAction(FExecuteAction(), FCanExecuteAction::CreateLambda([]() { return false; }));
+
+	MenuBuilder.BeginSection(NAME_None, LOCTEXT("FilterInfo", "Filter Info"));
+	{
+		TArray<FString> ActorFilters;
+		TArray<FString> CompFilters;
+		for (const auto& Struct : CachedIdentities)
+		{
+			const FFlowIdentity* Identity = Struct.GetPtr();
+			if (Identity && !Identity->ActorFilter.IsNull())
+			{
+				ActorFilters.Add(Identity->ActorFilter.GetAssetName());
+			}
+			if (Identity && !Identity->ComponentFilter.IsNull())
+			{
+				CompFilters.Add(Identity->ComponentFilter.GetAssetName());
+			}
+		}
+
+		if (!ActorFilters.IsEmpty())
+		{
+			MenuBuilder.AddMenuEntry(FText::Format(LOCTEXT("ActorFilters", "Actor Class: {0}"), FText::FromString(FString::Join(ActorFilters, TEXT(", ")))),
+			                         FText::GetEmpty(), FSlateIcon(), NoAction);
+		}
+		if (!CompFilters.IsEmpty())
+		{
+			MenuBuilder.AddMenuEntry(FText::Format(LOCTEXT("ComponentFilters", "Component Class: {0}"), FText::FromString(FString::Join(CompFilters, TEXT(", ")))),
+			                         FText::GetEmpty(), FSlateIcon(), NoAction);
+		}
+	}
+	MenuBuilder.EndSection();
 
 	MenuBuilder.BeginSection(NAME_None, LOCTEXT("BrowseHeader", "Browse"));
 	{

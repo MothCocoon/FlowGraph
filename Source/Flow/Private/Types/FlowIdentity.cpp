@@ -5,7 +5,77 @@
 
 #include UE_INLINE_GENERATED_CPP_BY_NAME(FlowIdentity)
 
-FString FFlowIdentity::ToString(bool bShortNames, bool bIncludeMatchType, bool bIncludeClassFilters, FString Separator) const
+bool FFlowIdentity::IsValid() const
+{
+	return !IdentityTags.IsEmpty();
+}
+
+bool FFlowIdentity::IsExactMatch() const
+{
+	return IdentityMatchType == EFlowTagContainerMatchType::HasAnyExact || IdentityMatchType == EFlowTagContainerMatchType::HasAllExact;
+}
+
+EGameplayContainerMatchType FFlowIdentity::GetContainerMatchType() const
+{
+	if (IdentityMatchType == EFlowTagContainerMatchType::HasAny || IdentityMatchType == EFlowTagContainerMatchType::HasAnyExact)
+	{
+		return EGameplayContainerMatchType::Any;
+	}
+	else
+	{
+		return EGameplayContainerMatchType::All;
+	}
+}
+
+bool FFlowIdentity::Matches(const FGameplayTagContainer& Tags) const
+{
+	return IsValid() && FlowTypes::HasMatchingTags(Tags, IdentityTags, IdentityMatchType);
+}
+
+bool FFlowIdentity::Matches(const UFlowComponent* Component) const
+{
+	if (IsValid() && Component)
+	{
+		return MatchesFilters(Component) && FlowTypes::HasMatchingTags(Component->IdentityTags, IdentityTags, IdentityMatchType);
+	}
+
+	return false;
+}
+
+bool FFlowIdentity::Matches(const AActor* Actor) const
+{
+	if (IsValid() && Actor)
+	{
+		TInlineComponentArray<UFlowComponent*> Components(Actor);
+		for (const UFlowComponent* Component : Components)
+		{
+			if (MatchesFilters(Component) && FlowTypes::HasMatchingTags(Component->IdentityTags, IdentityTags, IdentityMatchType))
+			{
+				return true;
+			}
+		}
+	}
+	
+	return false;
+}
+
+bool FFlowIdentity::MatchesFilters(const UFlowComponent* Component) const
+{
+	const AActor* Actor = Component ? Component->GetOwner() : nullptr;
+	if (Actor)
+	{
+		// Filter class not loaded means no instance of it exists, so it can't match
+		const UClass* ActorClass = ActorFilter.Get();
+		const UClass* ComponentClass = ComponentFilter.Get();
+
+		return (ActorFilter.IsNull() || (ActorClass && Actor->IsA(ActorClass)))
+			&& (ComponentFilter.IsNull() || (ComponentClass && Component->IsA(ComponentClass)));
+	}
+
+	return false;
+}
+
+FString FFlowIdentity::ToString(const bool bShortNames, const bool bIncludeMatchType, const bool bIncludeClassFilters, const FString& Separator) const
 {
 	if (IdentityTags.IsEmpty())
 	{
@@ -23,6 +93,19 @@ FString FFlowIdentity::ToString(bool bShortNames, bool bIncludeMatchType, bool b
 		FString MatchName = UEnum::GetValueAsString(IdentityMatchType);
 		MatchName.Split(TEXT("::"), nullptr, &MatchName);
 		Result += Separator + MatchName;
+	}
+
+	if (bIncludeClassFilters)
+	{
+		if (!ComponentFilter.IsNull())
+		{
+			Result += Separator + ComponentFilter.GetAssetName();
+		}
+
+		if (!ActorFilter.IsNull())
+		{
+			Result += Separator + ActorFilter.GetAssetName();
+		}
 	}
 
 	return Result;
