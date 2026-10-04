@@ -66,18 +66,6 @@ class FLOWEDITOR_API UFlowGraphSettings : public UDeveloperSettings
 	virtual void PostEditChangeProperty(FPropertyChangedEvent& PropertyChangedEvent) override;
 #endif
 
-	/** Flow Component only. Move "Flow" category to the (almost) top of Details panel. */
-	UPROPERTY(EditAnywhere, config, Category = "Component")
-	bool bMarkFlowCategoryImportant = true;
-
-	/** Use these tags if identity Categories are no overriden. */
-	UPROPERTY(EditAnywhere, config, Category = "Component")
-	TArray<FGameplayTag> DefaultIdentityTagCategories;
-
-	/** Per component class categories. Overrides DefaultIdentityTagCategories. */
-	UPROPERTY(EditAnywhere, config, Category = "Component")
-	TMap<TSoftClassPtr<UFlowComponent>, FGameplayTagContainer> ComponentClassIdentityTagCategories;
-
 	/* Show Flow Asset in Flow category of "Create Asset" menu?
 	 * Requires restart after making a change. */
 	UPROPERTY(EditAnywhere, config, Category = "Default UI", meta = (ConfigRestartRequired = true))
@@ -103,6 +91,19 @@ class FLOWEDITOR_API UFlowGraphSettings : public UDeveloperSettings
 	/* Flow Asset class allowed to be assigned via Level Editor toolbar. */
 	UPROPERTY(EditAnywhere, config, Category = "Default UI", meta = (EditCondition = "bShowAssetToolbarAboveLevelEditor"))
 	TSoftClassPtr<class UFlowAsset> WorldAssetClass;
+
+	/** FlowComponent only. Move category Flow to the top of details panel */
+	UPROPERTY(EditAnywhere, config, Category = "Details")
+	bool bMarkFlowCategoryImportant = true;
+
+	/** Use these tags if identity Categories are not overridden */
+	UPROPERTY(EditAnywhere, config, Category = "Details")
+	TArray<FGameplayTag> DefaultIdentityTagCategories;
+
+	/** Per component class categories. The most derived matching class is used.
+	 * Classes without a match use DefaultIdentityTagCategories. */
+	UPROPERTY(EditAnywhere, config, Category = "Details")
+	TMap<TSoftClassPtr<UFlowComponent>, FGameplayTagContainer> ComponentClassIdentityTagCategories;
 
 	/* Hide specific nodes from the Flow Palette without changing the source code.
 	 * Requires restart after making a change. */
@@ -194,22 +195,6 @@ class FLOWEDITOR_API UFlowGraphSettings : public UDeveloperSettings
 
 	UPROPERTY(EditAnywhere, config, Category = "Wires", meta = (ClampMin = 0.0f))
 	float SelectedWireThickness;
-	
-	/** FlowComponent only. Move category Flow to the top of details panel */
-	UPROPERTY(EditAnywhere, config, Category = "Details")
-	bool bMarkFlowCategoryImportant = true;
-
-	/** Use these tags If identity Categories are no overriden */
-	UPROPERTY(EditAnywhere, config, Category = "Details")
-	TArray<FGameplayTag> DefaultIdentityTagCategories;
-	
-	/** Per component class categories. Overrides DefaultIdentityTagCategories */
-	UPROPERTY(EditAnywhere, config, Category = "Details")
-	TMap<TSoftClassPtr<UFlowComponent>, FGameplayTagContainer> ComponentClassIdentityTagCategories;
-  
-	/** Use these tags if identity Categories are not overridden */
-	UPROPERTY(EditAnywhere, config, Category = "Details")
-	TArray<FGameplayTag> DefaultIdentityTagCategories;
 
 public:
 	virtual FName GetCategoryName() const override { return FName("Flow Graph"); }
