@@ -1,5 +1,5 @@
 ---
-title: Flow 2.4 (work in the progress)
+title: Flow 2.4 (work in progress)
 ---
 
 This is the upcoming release. This page is updated regularly after changes are pushed to the repository.
