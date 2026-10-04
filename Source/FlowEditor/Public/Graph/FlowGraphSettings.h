@@ -211,6 +211,9 @@ public:
 	/* Override-safe category query for Flow Node. */
 	static FString GetNodeCategoryForNode(const UFlowNodeBase& FlowNodeBase);
 
+	/* Categories meta string for Identity Tag picker of the given Flow Component class. */
+	FString GetIdentityTagCategories(const UClass* ComponentClass) const;
+
 #if WITH_EDITOR
 	const TMap<FGameplayTag, FFlowNodeDisplayStyleConfig>& EnsureNodeDisplayStylesMap();
 	void TryAddDefaultNodeDisplayStyle(const FFlowNodeDisplayStyleConfig& StyleConfig);

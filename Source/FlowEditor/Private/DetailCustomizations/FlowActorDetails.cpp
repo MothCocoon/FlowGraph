@@ -5,11 +5,14 @@
 #include "Graph/FlowGraphSettings.h"
 
 #include "ActorDetailsDelegates.h"
+#include "Algo/AllOf.h"
 #include "DetailCategoryBuilder.h"
 #include "DetailLayoutBuilder.h"
 #include "DetailWidgetRow.h"
+#include "GameplayTagsManager.h"
 #include "HAL/PlatformApplicationMisc.h"
 #include "IDetailChildrenBuilder.h"
+#include "IDetailPropertyRow.h"
 #include "ISinglePropertyView.h"
 #include "SGameplayTagPicker.h"
 
@@ -55,55 +58,88 @@ public:
 	{
 	}
 
+	virtual ~FFlowActorDetailsBuilder() override
+	{
+		UGameplayTagsManager::Get().OnGetCategoriesMetaFromPropertyHandle.RemoveAll(this);
+	}
+
 	virtual void GenerateHeaderRowContent(FDetailWidgetRow& NodeRow) override
 	{
 	}
 
 	virtual void GenerateChildContent(IDetailChildrenBuilder& ChildBuilder) override
 	{
-		TArray<UFlowComponent*> Components = FFlowActorDetails::GetSelectedFlowComponents(Getter);
-		if (Components.Num() == 1)
+		if (!UGameplayTagsManager::Get().OnGetCategoriesMetaFromPropertyHandle.IsBoundToObject(this))
 		{
-			// Special case because AddExternalObjectProperty breaks sliders
-			const FText IdentityRow = LOCTEXT("RowIdentityTags", "Identity Tags");
+			UGameplayTagsManager::Get().OnGetCategoriesMetaFromPropertyHandle.AddSP(this, &FFlowActorDetailsBuilder::ResolveCategoriesMeta);
+		}
 
-			FPropertyEditorModule& Module = FModuleManager::GetModuleChecked<FPropertyEditorModule>("PropertyEditor");
-			FSinglePropertyParams Params;
-			Params.NamePlacement = EPropertyNamePlacement::Hidden;
-			PropertyView = Module.CreateSingleProperty(Components[0], GET_MEMBER_NAME_CHECKED(UFlowComponent, IdentityTags), Params);
+		const TArray<UFlowComponent*> Components = FFlowActorDetails::GetSelectedFlowComponents(Getter);
 
-			if (PropertyView.IsValid())
+		// Tag picker reads categories while its widget is constructed, before the property handle is known
+		EditedComponents.Reset();
+		EditedComponents.Append(Components);
+
+		// Tag categories are configured per class, so each class gets its own row and picker filter
+		TMap<UClass*, TArray<UObject*>> ComponentsByClass;
+		for (UFlowComponent* Component : Components)
+		{
+			ComponentsByClass.FindOrAdd(Component->GetClass()).Add(Component);
+		}
+
+		for (const TPair<UClass*, TArray<UObject*>>& ClassComponents : ComponentsByClass)
+		{
+			const FText RowName = ComponentsByClass.Num() == 1
+				? LOCTEXT("RowIdentityTags", "Identity Tags")
+				: FText::Format(LOCTEXT("RowIdentityTagsForClass", "Identity Tags: {0}"), ClassComponents.Key->GetDisplayNameText());
+
+			if (ClassComponents.Value.Num() == 1)
 			{
-				FUIAction Copy, Paste;
-				TSharedPtr<IPropertyHandle> ViewHandle = PropertyView->GetPropertyHandle();
-				if (ViewHandle.IsValid())
+				AddSinglePropertyRow(ChildBuilder, ClassComponents.Value[0], RowName);
+			}
+			else
+			{
+				if (IDetailPropertyRow* Row = ChildBuilder.AddExternalObjectProperty(ClassComponents.Value, GET_MEMBER_NAME_CHECKED(UFlowComponent, IdentityTags)))
 				{
-					ViewHandle->CreateDefaultPropertyCopyPasteActions(Copy, Paste);
-					Paste = FUIAction(
-						FExecuteAction::CreateSP(this, &FFlowActorDetailsBuilder::PasteTags),
-						FCanExecuteAction::CreateSP(this, &FFlowActorDetailsBuilder::CanPasteTags));
+					Row->DisplayName(RowName);
 				}
-
-				ChildBuilder.AddCustomRow(IdentityRow)
-				            .CopyAction(Copy)
-				            .PasteAction(Paste)
-				            .NameContent()
-					[
-						SNew(STextBlock)
-						.Font(IPropertyTypeCustomizationUtils::GetRegularFont())
-						.Text(IdentityRow)
-					]
-					.ValueContent()
-					[
-						PropertyView.ToSharedRef()
-					];
 			}
 		}
-		else
+	}
+
+	void AddSinglePropertyRow(IDetailChildrenBuilder& ChildBuilder, UObject* Component, const FText& RowName)
+	{
+		// Special case because AddExternalObjectProperty breaks sliders
+		FPropertyEditorModule& Module = FModuleManager::GetModuleChecked<FPropertyEditorModule>("PropertyEditor");
+		FSinglePropertyParams Params;
+		Params.NamePlacement = EPropertyNamePlacement::Hidden;
+		const TSharedPtr<ISinglePropertyView> PropertyView = Module.CreateSingleProperty(Component, GET_MEMBER_NAME_CHECKED(UFlowComponent, IdentityTags), Params);
+
+		if (PropertyView.IsValid())
 		{
-			TArray<UObject*> Objects;
-			Objects.Append(Components);
-			ChildBuilder.AddExternalObjectProperty(Objects, GET_MEMBER_NAME_CHECKED(UFlowComponent, IdentityTags));
+			FUIAction Copy, Paste;
+			TSharedPtr<IPropertyHandle> ViewHandle = PropertyView->GetPropertyHandle();
+			if (ViewHandle.IsValid())
+			{
+				ViewHandle->CreateDefaultPropertyCopyPasteActions(Copy, Paste);
+				Paste = FUIAction(
+					FExecuteAction::CreateSP(this, &FFlowActorDetailsBuilder::PasteTags, ViewHandle),
+					FCanExecuteAction::CreateSP(this, &FFlowActorDetailsBuilder::CanPasteTags, ViewHandle));
+			}
+
+			ChildBuilder.AddCustomRow(RowName)
+			            .CopyAction(Copy)
+			            .PasteAction(Paste)
+			            .NameContent()
+				[
+					SNew(STextBlock)
+					.Font(IPropertyTypeCustomizationUtils::GetRegularFont())
+					.Text(RowName)
+				]
+				.ValueContent()
+				[
+					PropertyView.ToSharedRef()
+				];
 		}
 	}
 
@@ -115,14 +151,8 @@ public:
 		return Name;
 	}
 
-	void PasteTags() const
+	void PasteTags(TSharedPtr<IPropertyHandle> StructPropertyHandle) const
 	{
-		if (!PropertyView.IsValid())
-		{
-			return;
-		}
-
-		TSharedPtr<IPropertyHandle> StructPropertyHandle = PropertyView->GetPropertyHandle();
 		if (!StructPropertyHandle.IsValid())
 		{
 			return;
@@ -166,9 +196,9 @@ public:
 		}
 	}
 
-	bool CanPasteTags() const
+	bool CanPasteTags(TSharedPtr<IPropertyHandle> StructPropertyHandle) const
 	{
-		if (!PropertyView.IsValid() || !PropertyView->GetPropertyHandle().IsValid())
+		if (!StructPropertyHandle.IsValid())
 		{
 			return false;
 		}
@@ -191,9 +221,29 @@ public:
 		return false;
 	}
 
+	void ResolveCategoriesMeta(const TSharedPtr<IPropertyHandle> PropertyHandle, FString& MetaString) const
+	{
+		const FProperty* Property = PropertyHandle.IsValid() ? PropertyHandle->GetProperty() : nullptr;
+		if (Property && Property->GetFName() == GET_MEMBER_NAME_CHECKED(UFlowComponent, IdentityTags))
+		{
+			TArray<UObject*> OuterObjects;
+			PropertyHandle->GetOuterObjects(OuterObjects);
+
+			const bool bEditedHere = !OuterObjects.IsEmpty() && Algo::AllOf(OuterObjects, [this](const UObject* Object)
+			{
+				return EditedComponents.Contains(Object);
+			});
+
+			if (bEditedHere)
+			{
+				MetaString = GetDefault<UFlowGraphSettings>()->GetIdentityTagCategories(PropertyHandle->GetOuterBaseClass());
+			}
+		}
+	}
+
 private:
 	FGetSelectedActors Getter;
-	TSharedPtr<ISinglePropertyView> PropertyView;
+	TArray<TWeakObjectPtr<UObject>> EditedComponents;
 };
 
 FFlowActorDetails::~FFlowActorDetails()
