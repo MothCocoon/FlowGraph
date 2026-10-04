@@ -52,6 +52,11 @@ class FLOWEDITOR_API FFlowGraphConnectionDrawingPolicy : public FConnectionDrawi
 public:
 	FFlowGraphConnectionDrawingPolicy(int32 InBackLayerID, int32 InFrontLayerID, float ZoomFactor, const FSlateRect& InClippingRect, FSlateWindowElementList& InDrawElements, UEdGraph* InGraphObj);
 
+	// Exporting this class forces the implicit copy operations to be emitted, and those touch FConnectionDrawingPolicy::LocalMousePosition, deprecated in UE 5.8. 
+	// The factory only ever heap-allocates this policy, so drop the copy operations rather than silence the warning.
+	FFlowGraphConnectionDrawingPolicy(const FFlowGraphConnectionDrawingPolicy&) = delete;
+	FFlowGraphConnectionDrawingPolicy& operator=(const FFlowGraphConnectionDrawingPolicy&) = delete;
+
 	void BuildPaths();
 
 	// FConnectionDrawingPolicy

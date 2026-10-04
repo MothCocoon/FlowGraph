@@ -73,6 +73,18 @@ public:
 	UPROPERTY(EditAnywhere, config, Category = "Search", meta = (ClampMin = 1))
 	int32 DefaultMaxSearchDepth = 1;
 
+	/** Clicking action button in FlowIdentity menu will close it */
+	UPROPERTY(EditAnywhere, config, Category = "Details")
+	bool bFlowIdentity_CloseOnAction = true;
+	
+	/** FlowIdentity menu will display short tag names */
+	UPROPERTY(EditAnywhere, config, Category = "Details")
+	bool bFlowIdentity_DisplayShortNames = true;
+	
+	/** FlowIdentity menu tag selection windows will be at least this size. Use in projects with long tag names */
+	UPROPERTY(EditAnywhere, config, Category = "Details")
+	int32 FlowIdentity_MinWindowWidth = 400;
+	
 public:
 	virtual FName GetCategoryName() const override { return FName("Flow Graph"); }
 	virtual FText GetSectionText() const override { return INVTEXT("User Settings"); }
