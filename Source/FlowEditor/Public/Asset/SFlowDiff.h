@@ -71,13 +71,9 @@ struct FLOWEDITOR_API FFlowDiffPanel
 	/* The widget that contains the revision info in graph mode. */
 	TSharedPtr<SWidget> OverlayGraphRevisionInfo;
 
-	bool bIsOldPanel = false;
-	
 private:
 	/* Command list for this diff panel. */
 	TSharedPtr<FUICommandList> GraphEditorCommands;
-
-	FPropertyPath PropertyToHighlight;
 };
 
 /* Visual Diff between two Flow Assets. */

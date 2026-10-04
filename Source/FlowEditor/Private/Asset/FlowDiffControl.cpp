@@ -349,7 +349,7 @@ TSharedPtr<FFlowObjectDiff> FFlowGraphToDiff::FindParentDiff(UFlowGraphNode* Nod
 	}
 
 	const UFlowGraphNode* ParentNode = Node->GetParentNode();
-	while ( IsValid( ParentNode ) )
+	while (IsValid(ParentNode))
 	{
 		for (auto& FlowNodeDiff : FlowObjectDiffsByNodeName)
 		{
@@ -358,14 +358,11 @@ TSharedPtr<FFlowObjectDiff> FFlowGraphToDiff::FindParentDiff(UFlowGraphNode* Nod
 			{
 				continue;
 			}
-			//if parent node is set, use that.
-			if (IsValid(ParentNode))
+			
+			if (FlowNodeDiff.Value->DiffResult->Result.Node1 == ParentNode
+				|| FlowNodeDiff.Value->DiffResult->Result.Node2 == ParentNode)
 			{
-				if (FlowNodeDiff.Value->DiffResult->Result.Node1 == ParentNode
-					|| FlowNodeDiff.Value->DiffResult->Result.Node2 == ParentNode)
-				{
-					return FlowNodeDiff.Value;
-				}
+				return FlowNodeDiff.Value;
 			}
 		}
 
