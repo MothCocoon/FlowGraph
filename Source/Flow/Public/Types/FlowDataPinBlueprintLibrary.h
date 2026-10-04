@@ -42,13 +42,14 @@ public:
 	}
 
 	UFUNCTION(BlueprintPure, Category = FlowPin, Meta = (BlueprintThreadSafe, DisplayName = "Break Flow Pin"))
-	static void BreakStruct(UPARAM(DisplayName = "Flow Pin") FFlowPin Ref, FName& OutPinName, FText& OutPinFriendlyName, FString& OutPinToolTip)
+	static void BreakStruct(UPARAM(DisplayName = "Flow Pin") FFlowPin Ref, FName& OutPinName, FText& OutPinFriendlyName, FString& OutPinToolTip, FName& OutPinType)
 	{
 		OutPinName = Ref.PinName;
 #if WITH_EDITOR
 		OutPinFriendlyName = Ref.PinFriendlyName;
 		OutPinToolTip = Ref.PinToolTip;
 #endif
+		OutPinType = Ref.GetPinTypeName().Name;
 	}
 
 	/**
