@@ -878,7 +878,7 @@ void UFlowAsset::ReconcileBaseAssetParams(const FDateTime& AssetLastSavedTimesta
 	if (EFlowReconcilePropertiesResult_Classifiers::IsErrorResult(ReconcileResult))
 	{
 		UE_LOG(LogFlow, Error, TEXT("Failed to reconcile BaseAssetParams for %s: %s"),
-			   *BaseAssetParamsPtr->GetPathName(), *UEnum::GetDisplayValueAsText(ReconcileResult).ToString());
+		       *BaseAssetParamsPtr->GetPathName(), *UEnum::GetDisplayValueAsText(ReconcileResult).ToString());
 	}
 }
 #endif
@@ -914,7 +914,8 @@ void UFlowAsset::ClearInstances()
 	{
 		if (ActiveInstances.IsValidIndex(i) && ActiveInstances[i])
 		{
-			ActiveInstances[i]->FinishFlowAndDeinitializeInstance(EFlowFinishPolicy::Keep);
+			ActiveInstances[i]->FinishFlowInstance(EFlowFinishPolicy::Keep);
+			ActiveInstances[i]->DeinitializeInstance();
 		}
 	}
 
@@ -990,31 +991,6 @@ void UFlowAsset::InitializeInstance(const TWeakObjectPtr<UObject> InOwner, UFlow
 		}
 
 		NewNodeInstance->InitializeInstance();
-	}
-}
-
-void UFlowAsset::DeinitializeInstance()
-{
-	// These should have been flushed in FinishFlow()
-	check(DeferredTransitionScopes.IsEmpty());
-
-	if (IsInstanceInitialized())
-	{
-		for (const TPair<FGuid, UFlowNode*>& Node : ObjectPtrDecay(Nodes))
-		{
-			if (IsValid(Node.Value))
-			{
-				Node.Value->DeinitializeInstance();
-			}
-		}
-
-		const int32 ActiveInstancesLeft = TemplateAsset->RemoveInstance(this);
-		if (ActiveInstancesLeft == 0 && GetFlowSubsystem())
-		{
-			GetFlowSubsystem()->RemoveInstancedTemplate(TemplateAsset);
-		}
-
-		TemplateAsset = nullptr;
 	}
 }
 
@@ -1168,7 +1144,7 @@ void UFlowAsset::FinishNode(UFlowNode* Node)
 				}
 			}
 
-			FinishFlow(EFlowFinishPolicy::Keep);
+			FinishFlowInstance(EFlowFinishPolicy::Keep);
 		}
 	}
 }
@@ -1183,13 +1159,17 @@ void UFlowAsset::ResetNodes()
 	RecordedNodes.Empty();
 }
 
-void UFlowAsset::FinishFlowAndDeinitializeInstance(const EFlowFinishPolicy InFinishPolicy)
+void UFlowAsset::FinishFlow(const EFlowFinishPolicy InFinishPolicy, const bool bRemoveInstance)
 {
-	FinishFlow(InFinishPolicy);
-	DeinitializeInstance();
+	FinishFlowInstance(InFinishPolicy);
+	
+	if (bRemoveInstance)
+	{
+		DeinitializeInstance();
+	}
 }
 
-void UFlowAsset::FinishFlow(const EFlowFinishPolicy InFinishPolicy)
+void UFlowAsset::FinishFlowInstance(const EFlowFinishPolicy InFinishPolicy)
 {
 	FinishPolicy = InFinishPolicy;
 
@@ -1201,6 +1181,31 @@ void UFlowAsset::FinishFlow(const EFlowFinishPolicy InFinishPolicy)
 		Node->Deactivate();
 	}
 	ActiveNodes.Empty();
+}
+
+void UFlowAsset::DeinitializeInstance()
+{
+	// These should have been flushed in FinishFlowInstance()
+	check(DeferredTransitionScopes.IsEmpty());
+
+	if (IsInstanceInitialized())
+	{
+		for (const TPair<FGuid, UFlowNode*>& Node : ObjectPtrDecay(Nodes))
+		{
+			if (IsValid(Node.Value))
+			{
+				Node.Value->DeinitializeInstance();
+			}
+		}
+
+		const int32 ActiveInstancesLeft = TemplateAsset->RemoveInstance(this);
+		if (ActiveInstancesLeft == 0 && GetFlowSubsystem())
+		{
+			GetFlowSubsystem()->RemoveInstancedTemplate(TemplateAsset);
+		}
+
+		TemplateAsset = nullptr;
+	}
 }
 
 UFlowSubsystem* UFlowAsset::GetFlowSubsystem() const
@@ -1422,7 +1427,7 @@ void UFlowAsset::CancelAndWarnForUnflushedDeferredTriggers()
 	// In normal execution these should have been flushed via PopDeferredTransitionScope() in TriggerInputDirect
 	// In the debugger they should have been flushed by ResumePIE
 	// Remaining scopes here usually mean:
-	//   - early/abnormal termination (e.g. FinishFlow called from unexpected place)
+	//   - early/abnormal termination (e.g. FinishFlowInstance called from unexpected place)
 	//   - exception/early return before Pop
 	//   - forced deinitialization during active execution (e.g. PIE stop, subsystem cleanup)
 	if (!DeferredTransitionScopes.IsEmpty())
@@ -1442,7 +1447,7 @@ void UFlowAsset::CancelAndWarnForUnflushedDeferredTriggers()
 			{
 				UE_LOG(LogFlow, Warning, TEXT("FlowAsset '%s' is finishing with %d lingering deferred transition scope(s) — dropping them. "
 					"This is usually unexpected and may indicate a bug or abnormal termination."),
-					*GetName(), DeferredTransitionScopes.Num());
+				    *GetName(), DeferredTransitionScopes.Num());
 			}
 
 			TotalDroppedTriggers += Triggers.Num();
@@ -1456,17 +1461,17 @@ void UFlowAsset::CancelAndWarnForUnflushedDeferredTriggers()
 				const FString FromNodeName = FromNode ? FromNode->GetName() : TEXT("<null/destroyed>");
 
 				UE_LOG(LogFlow, Error,
-					TEXT("  → Dropped deferred trigger:\n")
-					TEXT("      To Node: %s (%s)\n")
-					TEXT("      To Pin:  %s\n")
-					TEXT("      From Node: %s (%s)\n")
-					TEXT("      From Pin:  %s"),
-					*ToNodeName,
-					*Trigger.NodeGuid.ToString(),
-					*Trigger.PinName.ToString(),
-					*FromNodeName,
-					*Trigger.FromPin.NodeGuid.ToString(),
-					*Trigger.FromPin.PinName.ToString()
+				       TEXT("  → Dropped deferred trigger:\n")
+				       TEXT("      To Node: %s (%s)\n")
+				       TEXT("      To Pin:  %s\n")
+				       TEXT("      From Node: %s (%s)\n")
+				       TEXT("      From Pin:  %s"),
+				       *ToNodeName,
+				       *Trigger.NodeGuid.ToString(),
+				       *Trigger.PinName.ToString(),
+				       *FromNodeName,
+				       *Trigger.FromPin.NodeGuid.ToString(),
+				       *Trigger.FromPin.PinName.ToString()
 				);
 			}
 		}

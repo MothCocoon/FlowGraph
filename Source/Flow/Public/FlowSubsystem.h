@@ -87,13 +87,13 @@ public:
 	virtual void FinishAndDeinitializeAllRootFlows(UObject* Owner, const EFlowFinishPolicy FinishPolicy);
 
 protected:
+	virtual void FinishAndDeinitializeInstance(UFlowAsset* InstanceToFinish, const EFlowFinishPolicy FinishPolicy);
+
 	UFlowAsset* CreateSubFlow(UFlowNode_SubGraph* SubGraphNode, const FString& SavedInstanceName = FString(), const bool bPreloading = false);
 	
-	/* Finishes the SubFlow running in the SubGraphNode. It does not deinitialize or removes from the internal InstancedSubFlows list */
-	void FinishSubFlow(UFlowNode_SubGraph* SubGraphNode, const EFlowFinishPolicy FinishPolicy);
-	
-	/* Removes the Subflow from the InstancedSubFlows list; and Finishes and Deinitializes it. */
-	void RemoveSubFlow(UFlowNode_SubGraph* SubGraphNode, const EFlowFinishPolicy FinishPolicy);
+	/* Finishes the SubFlow running in the SubGraphNode.
+	 * Optionally: deinitialize instance and remove Flow Asset instance. */
+	void FinishSubFlow(UFlowNode_SubGraph* SubGraphNode, const EFlowFinishPolicy FinishPolicy, const bool bRemoveInstance);
 
 public:
 	UFlowAsset* CreateFlowInstance(const TWeakObjectPtr<UObject> Owner, UFlowAsset* LoadedFlowAsset, FString NewInstanceName = FString());

@@ -383,7 +383,6 @@ protected:
 
 public:
 	virtual void InitializeInstance(const TWeakObjectPtr<UObject> InOwner, UFlowAsset& InTemplateAsset);
-	virtual void DeinitializeInstance();
 	bool IsInstanceInitialized() const { return IsValid(TemplateAsset); }
 
 	virtual FName GetInstanceName() const;
@@ -426,8 +425,11 @@ protected:
 	void ResetNodes();
 
 public:
-	void FinishFlowAndDeinitializeInstance(const EFlowFinishPolicy InFinishPolicy);
-	virtual void FinishFlow(const EFlowFinishPolicy InFinishPolicy);
+	UE_DEPRECATED(5.6, "Method replaced with FinishFlowInstance and (if bRemoveInstance == true) separate call to DeinitializeInstance.")
+	void FinishFlow(const EFlowFinishPolicy InFinishPolicy, const bool bRemoveInstance = true);
+
+	virtual void FinishFlowInstance(const EFlowFinishPolicy InFinishPolicy);
+	virtual void DeinitializeInstance();
 
 public:
 	UFlowSubsystem* GetFlowSubsystem() const;
