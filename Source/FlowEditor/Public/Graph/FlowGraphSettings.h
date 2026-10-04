@@ -92,18 +92,23 @@ class FLOWEDITOR_API UFlowGraphSettings : public UDeveloperSettings
 	UPROPERTY(EditAnywhere, config, Category = "Default UI", meta = (EditCondition = "bShowAssetToolbarAboveLevelEditor"))
 	TSoftClassPtr<class UFlowAsset> WorldAssetClass;
 
-	/** FlowComponent only. Move category Flow to the top of details panel */
+	/** Flow Component only.
+	 * Show "Flow" category above regular categories in component's Details panel.
+	 * Requires refreshing the Details panel (reselect the object) to see the change. */
 	UPROPERTY(EditAnywhere, config, Category = "Details")
 	bool bMarkFlowCategoryImportant = true;
 
-	/** Use these tags if identity Categories are not overridden */
+	/** Default tag categories used by Flow Identity, and Identity Tag picker in the Flow Component.
+	 * Requires refreshing the Details panel (reselect the object) to see the updated filter. */
 	UPROPERTY(EditAnywhere, config, Category = "Details")
 	TArray<FGameplayTag> DefaultIdentityTagCategories;
 
-	/** Per component class categories. The most derived matching class is used.
-	 * Classes without a match use DefaultIdentityTagCategories. */
+	/** Tag categories set per Flow Component class.
+	 * The most derived matching class is used.
+	 * Overrides DefaultIdentityTagCategories, but only in Identity Tag picker in the Flow Component.
+	 * Requires refreshing the Details panel (reselect the object) to see the updated filter. */
 	UPROPERTY(EditAnywhere, config, Category = "Details")
-	TMap<TSoftClassPtr<UFlowComponent>, FGameplayTagContainer> ComponentClassIdentityTagCategories;
+	TMap<TSoftClassPtr<UFlowComponent>, FGameplayTagContainer> ComponentIdentityTagCategories;
 
 	/* Hide specific nodes from the Flow Palette without changing the source code.
 	 * Requires restart after making a change. */

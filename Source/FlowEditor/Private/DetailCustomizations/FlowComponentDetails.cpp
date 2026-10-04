@@ -36,7 +36,7 @@ void FFlowComponentDetails::ResolveCategoriesMeta(const TSharedPtr<IPropertyHand
 		const FGameplayTagContainer* ClassTags = nullptr;
 		for (const UClass* Class = IdentityTagsHandle->GetOuterBaseClass(); Class && ClassTags == nullptr; Class = Class->GetSuperClass())
 		{
-			ClassTags = Settings->ComponentClassIdentityTagCategories.Find(Class);
+			ClassTags = Settings->ComponentIdentityTagCategories.Find(Class);
 		}
 
 		if (ClassTags)
