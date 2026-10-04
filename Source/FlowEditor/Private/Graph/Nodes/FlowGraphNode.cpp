@@ -1184,6 +1184,8 @@ void UFlowGraphNode::ForcePinActivation(const FEdGraphPinReference PinReference)
 		return;
 	}
 
+	// Editor UI runs with the editor world as GWorld.
+	// Without this, soft pointers would resolve to editor objects and actors would spawn in the editor world.
 	FScopedConditionalWorldSwitcher WorldSwitcher(InspectedNodeInstance->GetWorld());
 
 	if (const UEdGraphPin* FoundPin = PinReference.Get())
