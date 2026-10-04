@@ -21,25 +21,11 @@
 // Duplicate for UE::GameplayTags::EditorUtilities
 namespace FlowActorDetails::TagHelpers
 {
-	FString GameplayTagExportText(const FGameplayTag Tag)
-	{
-		FString ExportString;
-		FGameplayTag::StaticStruct()->ExportText(ExportString, &Tag, &Tag, /*OwnerObject*/nullptr, /*PortFlags*/0, /*ExportRootScope*/nullptr);
-		return ExportString;
-	}
-
 	FGameplayTag GameplayTagTryImportText(const FString& Text)
 	{
 		FGameplayTag Tag;
 		FGameplayTag::StaticStruct()->ImportText(*Text, &Tag, /*OwnerObject*/nullptr, PPF_None, nullptr, FGameplayTag::StaticStruct()->GetName(), /*bAllowNativeOverride*/true);
 		return Tag;
-	}
-
-	FString GameplayTagContainerExportText(const FGameplayTagContainer& TagContainer)
-	{
-		FString ExportString;
-		FGameplayTagContainer::StaticStruct()->ExportText(ExportString, &TagContainer, &TagContainer, /*OwnerObject*/nullptr, /*PortFlags*/0, /*ExportRootScope*/nullptr);
-		return ExportString;
 	}
 
 	FGameplayTagContainer GameplayTagContainerTryImportText(const FString& Text)
@@ -50,201 +36,185 @@ namespace FlowActorDetails::TagHelpers
 	}
 }
 
-class FFlowActorDetailsBuilder : public IDetailCustomNodeBuilder, public TSharedFromThis<FFlowActorDetailsBuilder>
+FFlowActorDetailsBuilder::FFlowActorDetailsBuilder(const FGetSelectedActors& GetSelectedActors)
+	: Getter(GetSelectedActors)
 {
-public:
-	explicit FFlowActorDetailsBuilder(const FGetSelectedActors& GetSelectedActors)
-		: Getter(GetSelectedActors)
+}
+
+FFlowActorDetailsBuilder::~FFlowActorDetailsBuilder()
+{
+	UGameplayTagsManager::Get().OnGetCategoriesMetaFromPropertyHandle.RemoveAll(this);
+}
+
+void FFlowActorDetailsBuilder::GenerateChildContent(IDetailChildrenBuilder& ChildBuilder)
+{
+	if (!UGameplayTagsManager::Get().OnGetCategoriesMetaFromPropertyHandle.IsBoundToObject(this))
 	{
+		UGameplayTagsManager::Get().OnGetCategoriesMetaFromPropertyHandle.AddSP(this, &FFlowActorDetailsBuilder::ResolveCategoriesMeta);
 	}
 
-	virtual ~FFlowActorDetailsBuilder() override
+	const TArray<UFlowComponent*> Components = FFlowActorDetails::GetSelectedFlowComponents(Getter);
+
+	// Tag picker reads categories while its widget is constructed, before the property handle is known
+	EditedComponents.Reset();
+	EditedComponents.Append(Components);
+
+	// Tag categories are configured per class, so each class gets its own row and picker filter
+	TMap<UClass*, TArray<UObject*>> ComponentsByClass;
+	for (UFlowComponent* Component : Components)
 	{
-		UGameplayTagsManager::Get().OnGetCategoriesMetaFromPropertyHandle.RemoveAll(this);
+		ComponentsByClass.FindOrAdd(Component->GetClass()).Add(Component);
 	}
 
-	virtual void GenerateHeaderRowContent(FDetailWidgetRow& NodeRow) override
+	for (const TPair<UClass*, TArray<UObject*>>& ClassComponents : ComponentsByClass)
 	{
-	}
+		const FText RowName = ComponentsByClass.Num() == 1
+			                      ? LOCTEXT("RowIdentityTags", "Identity Tags")
+			                      : FText::Format(LOCTEXT("RowIdentityTagsForClass", "Identity Tags: {0}"), ClassComponents.Key->GetDisplayNameText());
 
-	virtual void GenerateChildContent(IDetailChildrenBuilder& ChildBuilder) override
-	{
-		if (!UGameplayTagsManager::Get().OnGetCategoriesMetaFromPropertyHandle.IsBoundToObject(this))
+		if (ClassComponents.Value.Num() == 1)
 		{
-			UGameplayTagsManager::Get().OnGetCategoriesMetaFromPropertyHandle.AddSP(this, &FFlowActorDetailsBuilder::ResolveCategoriesMeta);
+			AddSinglePropertyRow(ChildBuilder, ClassComponents.Value[0], RowName);
 		}
-
-		const TArray<UFlowComponent*> Components = FFlowActorDetails::GetSelectedFlowComponents(Getter);
-
-		// Tag picker reads categories while its widget is constructed, before the property handle is known
-		EditedComponents.Reset();
-		EditedComponents.Append(Components);
-
-		// Tag categories are configured per class, so each class gets its own row and picker filter
-		TMap<UClass*, TArray<UObject*>> ComponentsByClass;
-		for (UFlowComponent* Component : Components)
+		else
 		{
-			ComponentsByClass.FindOrAdd(Component->GetClass()).Add(Component);
-		}
-
-		for (const TPair<UClass*, TArray<UObject*>>& ClassComponents : ComponentsByClass)
-		{
-			const FText RowName = ComponentsByClass.Num() == 1
-				? LOCTEXT("RowIdentityTags", "Identity Tags")
-				: FText::Format(LOCTEXT("RowIdentityTagsForClass", "Identity Tags: {0}"), ClassComponents.Key->GetDisplayNameText());
-
-			if (ClassComponents.Value.Num() == 1)
+			if (IDetailPropertyRow* Row = ChildBuilder.AddExternalObjectProperty(ClassComponents.Value, GET_MEMBER_NAME_CHECKED(UFlowComponent, IdentityTags)))
 			{
-				AddSinglePropertyRow(ChildBuilder, ClassComponents.Value[0], RowName);
-			}
-			else
-			{
-				if (IDetailPropertyRow* Row = ChildBuilder.AddExternalObjectProperty(ClassComponents.Value, GET_MEMBER_NAME_CHECKED(UFlowComponent, IdentityTags)))
-				{
-					Row->DisplayName(RowName);
-				}
+				Row->DisplayName(RowName);
 			}
 		}
 	}
+}
 
-	void AddSinglePropertyRow(IDetailChildrenBuilder& ChildBuilder, UObject* Component, const FText& RowName)
+FName FFlowActorDetailsBuilder::GetName() const
+{
+	static const FName Name("FActorFlowDetailsBuilder");
+	return Name;
+}
+
+void FFlowActorDetailsBuilder::AddSinglePropertyRow(IDetailChildrenBuilder& ChildBuilder, UObject* Component, const FText& RowName)
+{
+	// Special case because AddExternalObjectProperty breaks sliders
+	FPropertyEditorModule& Module = FModuleManager::GetModuleChecked<FPropertyEditorModule>("PropertyEditor");
+	FSinglePropertyParams Params;
+	Params.NamePlacement = EPropertyNamePlacement::Hidden;
+	const TSharedPtr<ISinglePropertyView> PropertyView = Module.CreateSingleProperty(Component, GET_MEMBER_NAME_CHECKED(UFlowComponent, IdentityTags), Params);
+
+	if (PropertyView.IsValid())
 	{
-		// Special case because AddExternalObjectProperty breaks sliders
-		FPropertyEditorModule& Module = FModuleManager::GetModuleChecked<FPropertyEditorModule>("PropertyEditor");
-		FSinglePropertyParams Params;
-		Params.NamePlacement = EPropertyNamePlacement::Hidden;
-		const TSharedPtr<ISinglePropertyView> PropertyView = Module.CreateSingleProperty(Component, GET_MEMBER_NAME_CHECKED(UFlowComponent, IdentityTags), Params);
-
-		if (PropertyView.IsValid())
+		FUIAction Copy, Paste;
+		TSharedPtr<IPropertyHandle> ViewHandle = PropertyView->GetPropertyHandle();
+		if (ViewHandle.IsValid())
 		{
-			FUIAction Copy, Paste;
-			TSharedPtr<IPropertyHandle> ViewHandle = PropertyView->GetPropertyHandle();
-			if (ViewHandle.IsValid())
-			{
-				ViewHandle->CreateDefaultPropertyCopyPasteActions(Copy, Paste);
-				Paste = FUIAction(
-					FExecuteAction::CreateSP(this, &FFlowActorDetailsBuilder::PasteTags, ViewHandle),
-					FCanExecuteAction::CreateSP(this, &FFlowActorDetailsBuilder::CanPasteTags, ViewHandle));
-			}
-
-			ChildBuilder.AddCustomRow(RowName)
-			            .CopyAction(Copy)
-			            .PasteAction(Paste)
-			            .NameContent()
-				[
-					SNew(STextBlock)
-					.Font(IPropertyTypeCustomizationUtils::GetRegularFont())
-					.Text(RowName)
-				]
-				.ValueContent()
-				[
-					PropertyView.ToSharedRef()
-				];
+			ViewHandle->CreateDefaultPropertyCopyPasteActions(Copy, Paste);
+			Paste = FUIAction(
+				FExecuteAction::CreateStatic(&FFlowActorDetailsBuilder::PasteTags, ViewHandle),
+				FCanExecuteAction::CreateStatic(&FFlowActorDetailsBuilder::CanPasteTags, ViewHandle));
 		}
+
+		ChildBuilder.AddCustomRow(RowName)
+		            .CopyAction(Copy)
+		            .PasteAction(Paste)
+		            .NameContent()
+			[
+				SNew(STextBlock)
+				.Font(IPropertyTypeCustomizationUtils::GetRegularFont())
+				.Text(RowName)
+			]
+			.ValueContent()
+			[
+				PropertyView.ToSharedRef()
+			];
+	}
+}
+
+void FFlowActorDetailsBuilder::PasteTags(TSharedPtr<IPropertyHandle> StructPropertyHandle)
+{
+	if (!StructPropertyHandle.IsValid())
+	{
+		return;
 	}
 
-	virtual bool InitiallyCollapsed() const override { return false; }
+	FString PastedText;
+	FPlatformApplicationMisc::ClipboardPaste(PastedText);
+	bool bHandled = false;
 
-	virtual FName GetName() const override
+	// Try to paste single tag
+	const FGameplayTag PastedTag = FlowActorDetails::TagHelpers::GameplayTagTryImportText(PastedText);
+	if (PastedTag.IsValid())
 	{
-		static const FName Name("FActorFlowDetailsBuilder");
-		return Name;
-	}
-
-	void PasteTags(TSharedPtr<IPropertyHandle> StructPropertyHandle) const
-	{
-		if (!StructPropertyHandle.IsValid())
+		TArray<FString> NewValues;
+		SGameplayTagPicker::EnumerateEditableTagContainersFromPropertyHandle(StructPropertyHandle.ToSharedRef(), [&NewValues, PastedTag](const FGameplayTagContainer& EditableTagContainer)
 		{
-			return;
-		}
+			FGameplayTagContainer TagContainerCopy = EditableTagContainer;
+			TagContainerCopy.AddTag(PastedTag);
 
-
-		FString PastedText;
-		FPlatformApplicationMisc::ClipboardPaste(PastedText);
-		bool bHandled = false;
-
-		// Try to paste single tag
-		const FGameplayTag PastedTag = FlowActorDetails::TagHelpers::GameplayTagTryImportText(PastedText);
-		if (PastedTag.IsValid())
-		{
-			TArray<FString> NewValues;
-			SGameplayTagPicker::EnumerateEditableTagContainersFromPropertyHandle(StructPropertyHandle.ToSharedRef(), [&NewValues, PastedTag](const FGameplayTagContainer& EditableTagContainer)
-			{
-				FGameplayTagContainer TagContainerCopy = EditableTagContainer;
-				TagContainerCopy.AddTag(PastedTag);
-
-				NewValues.Add(TagContainerCopy.ToString());
-				return true;
-			});
-
-			FScopedTransaction Transaction(LOCTEXT("GameplayTagContainerCustomization_PasteTag", "Paste Gameplay Tag"));
-			StructPropertyHandle->SetPerObjectValues(NewValues);
-			bHandled = true;
-		}
-
-		// Try to paste a container
-		if (!bHandled)
-		{
-			const FGameplayTagContainer PastedTagContainer = FlowActorDetails::TagHelpers::GameplayTagContainerTryImportText(PastedText);
-			if (PastedTagContainer.IsValid())
-			{
-				// From property
-				FScopedTransaction Transaction(LOCTEXT("GameplayTagContainerCustomization_PasteTagContainer", "Paste Gameplay Tag Container"));
-				StructPropertyHandle->SetValueFromFormattedString(PastedText);
-				bHandled = true;
-			}
-		}
-	}
-
-	bool CanPasteTags(TSharedPtr<IPropertyHandle> StructPropertyHandle) const
-	{
-		if (!StructPropertyHandle.IsValid())
-		{
-			return false;
-		}
-
-		FString PastedText;
-		FPlatformApplicationMisc::ClipboardPaste(PastedText);
-
-		const FGameplayTag PastedTag = FlowActorDetails::TagHelpers::GameplayTagTryImportText(PastedText);
-		if (PastedTag.IsValid())
-		{
+			NewValues.Add(TagContainerCopy.ToString());
 			return true;
-		}
+		});
 
+		FScopedTransaction Transaction(LOCTEXT("GameplayTagContainerCustomization_PasteTag", "Paste Gameplay Tag"));
+		StructPropertyHandle->SetPerObjectValues(NewValues);
+		bHandled = true;
+	}
+
+	// Try to paste a container
+	if (!bHandled)
+	{
 		const FGameplayTagContainer PastedTagContainer = FlowActorDetails::TagHelpers::GameplayTagContainerTryImportText(PastedText);
 		if (PastedTagContainer.IsValid())
 		{
-			return true;
+			// From property
+			FScopedTransaction Transaction(LOCTEXT("GameplayTagContainerCustomization_PasteTagContainer", "Paste Gameplay Tag Container"));
+			StructPropertyHandle->SetValueFromFormattedString(PastedText);
 		}
+	}
+}
 
+bool FFlowActorDetailsBuilder::CanPasteTags(TSharedPtr<IPropertyHandle> StructPropertyHandle)
+{
+	if (!StructPropertyHandle.IsValid())
+	{
 		return false;
 	}
 
-	void ResolveCategoriesMeta(const TSharedPtr<IPropertyHandle> PropertyHandle, FString& MetaString) const
+	FString PastedText;
+	FPlatformApplicationMisc::ClipboardPaste(PastedText);
+
+	const FGameplayTag PastedTag = FlowActorDetails::TagHelpers::GameplayTagTryImportText(PastedText);
+	if (PastedTag.IsValid())
 	{
-		const FProperty* Property = PropertyHandle.IsValid() ? PropertyHandle->GetProperty() : nullptr;
-		if (Property && Property->GetFName() == GET_MEMBER_NAME_CHECKED(UFlowComponent, IdentityTags))
-		{
-			TArray<UObject*> OuterObjects;
-			PropertyHandle->GetOuterObjects(OuterObjects);
-
-			const bool bEditedHere = !OuterObjects.IsEmpty() && Algo::AllOf(OuterObjects, [this](const UObject* Object)
-			{
-				return EditedComponents.Contains(Object);
-			});
-
-			if (bEditedHere)
-			{
-				MetaString = GetDefault<UFlowGraphSettings>()->GetIdentityTagCategories(PropertyHandle->GetOuterBaseClass());
-			}
-		}
+		return true;
 	}
 
-private:
-	FGetSelectedActors Getter;
-	TArray<TWeakObjectPtr<UObject>> EditedComponents;
-};
+	const FGameplayTagContainer PastedTagContainer = FlowActorDetails::TagHelpers::GameplayTagContainerTryImportText(PastedText);
+	if (PastedTagContainer.IsValid())
+	{
+		return true;
+	}
+
+	return false;
+}
+
+void FFlowActorDetailsBuilder::ResolveCategoriesMeta(const TSharedPtr<IPropertyHandle> PropertyHandle, FString& MetaString) const
+{
+	const FProperty* Property = PropertyHandle.IsValid() ? PropertyHandle->GetProperty() : nullptr;
+	if (Property && Property->GetFName() == GET_MEMBER_NAME_CHECKED(UFlowComponent, IdentityTags))
+	{
+		TArray<UObject*> OuterObjects;
+		PropertyHandle->GetOuterObjects(OuterObjects);
+
+		const bool bEditedHere = !OuterObjects.IsEmpty() && Algo::AllOf(OuterObjects, [this](const UObject* Object)
+		{
+			return EditedComponents.Contains(Object);
+		});
+
+		if (bEditedHere)
+		{
+			MetaString = GetDefault<UFlowGraphSettings>()->GetIdentityTagCategories(PropertyHandle->GetOuterBaseClass());
+		}
+	}
+}
 
 FFlowActorDetails::~FFlowActorDetails()
 {
@@ -304,6 +274,7 @@ TArray<class UFlowComponent*> FFlowActorDetails::GetSelectedFlowComponents(const
 			}
 		}
 	}
+
 	return Components;
 }
 
