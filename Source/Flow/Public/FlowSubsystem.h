@@ -258,6 +258,22 @@ public:
 	TMap<AActor*, UFlowComponent*> GetFlowActorsAndComponentsByTags(const FGameplayTagContainer Tags, const EGameplayContainerMatchType MatchType, const TSubclassOf<AActor> ActorClass, const bool bExactMatch = true) const;
 
 	/**
+	 * Returns all registered Flow Components identified by given Identity.
+	 * Note: Class filters are never loaded by this query.
+	 * @param Identity Identity that describes Component and Actor pair
+	 */
+	UFUNCTION(BlueprintPure, Category = "FlowSubsystem")
+	TSet<UFlowComponent*> GetFlowComponentsByIdentity(const struct FFlowIdentity& Identity) const;
+
+	/**
+	 * Returns all registered actors with Flow Component identified by given Identity.
+	 * Note: Class filters are never loaded by this query.
+	 * @param Identity Identity that describes Component and Actor pair
+	 */
+	UFUNCTION(BlueprintPure, Category = "FlowSubsystem")
+	TSet<AActor*> GetFlowActorsByIdentity(const FFlowIdentity& Identity) const;
+
+	/**
 	 * Returns all registered Flow Components identified by given tag
 	 * 
 	 * @tparam T Only components matching this class we'll be returned

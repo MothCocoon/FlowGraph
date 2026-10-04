@@ -14,6 +14,7 @@
 #include "Engine/World.h"
 #include "Logging/MessageLog.h"
 #include "Misc/Paths.h"
+#include "Types/FlowIdentity.h"
 #include "UObject/UObjectHash.h"
 
 #include UE_INLINE_GENERATED_CPP_BY_NAME(FlowSubsystem)
@@ -722,6 +723,50 @@ TMap<AActor*, UFlowComponent*> UFlowSubsystem::GetFlowActorsAndComponentsByTags(
 		if (Component.IsValid() && Component->GetOwner()->GetClass()->IsChildOf(ActorClass))
 		{
 			Result.Emplace(Component->GetOwner(), Component.Get());
+		}
+	}
+
+	return Result;
+}
+
+TSet<UFlowComponent*> UFlowSubsystem::GetFlowComponentsByIdentity(const FFlowIdentity& Identity) const
+{
+	TSet<UFlowComponent*> Result;
+
+	if (Identity.IsValid())
+	{
+		TSet<TWeakObjectPtr<UFlowComponent>> FoundComponents;
+		FindComponents(Identity.IdentityTags, Identity.GetContainerMatchType(), Identity.IsExactMatch(), FoundComponents);
+
+		for (const TWeakObjectPtr<UFlowComponent>& WeakComponent : FoundComponents)
+		{
+			UFlowComponent* Component = WeakComponent.Get();
+			if (Identity.MatchesFilters(Component))
+			{
+				Result.Emplace(Component);
+			}
+		}
+	}
+
+	return Result;
+}
+
+TSet<AActor*> UFlowSubsystem::GetFlowActorsByIdentity(const FFlowIdentity& Identity) const
+{
+	TSet<AActor*> Result;
+
+	if (Identity.IsValid())
+	{
+		TSet<TWeakObjectPtr<UFlowComponent>> FoundComponents;
+		FindComponents(Identity.IdentityTags, Identity.GetContainerMatchType(), Identity.IsExactMatch(), FoundComponents);
+
+		for (const TWeakObjectPtr<UFlowComponent>& WeakComponent : FoundComponents)
+		{
+			const UFlowComponent* Component = WeakComponent.Get();
+			if (Identity.MatchesFilters(Component))
+			{
+				Result.Emplace(Component->GetOwner());
+			}
 		}
 	}
 
