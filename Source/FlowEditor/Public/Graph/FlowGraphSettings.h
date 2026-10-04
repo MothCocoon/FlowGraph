@@ -92,6 +92,9 @@ class FLOWEDITOR_API UFlowGraphSettings : public UDeveloperSettings
 	UPROPERTY(EditAnywhere, config, Category = "Default UI", meta = (EditCondition = "bShowAssetToolbarAboveLevelEditor"))
 	TSoftClassPtr<class UFlowAsset> WorldAssetClass;
 
+	UPROPERTY(EditAnywhere, config, Category = "Details")
+	bool bShowFlowTagsInActorDetails = true;
+
 	/** Flow Component only.
 	 * Show "Flow" category above regular categories in component's Details panel.
 	 * Requires refreshing the Details panel (reselect the object) to see the change. */
@@ -200,14 +203,6 @@ class FLOWEDITOR_API UFlowGraphSettings : public UDeveloperSettings
 
 	UPROPERTY(EditAnywhere, config, Category = "Wires", meta = (ClampMin = 0.0f))
 	float SelectedWireThickness;
-	
-	
-	UPROPERTY(EditAnywhere, config, Category = "Details")
-	bool bShowFlowTagsInActorDetails = true;
-	
-	/** FlowComponent only. Move category Flow to the top of details panel */
-	UPROPERTY(EditAnywhere, config, Category = "Details")
-	bool bMarkFlowCategoryImportant = true;
 
 public:
 	virtual FName GetCategoryName() const override { return FName("Flow Graph"); }

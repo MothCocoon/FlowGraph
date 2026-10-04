@@ -17,6 +17,7 @@
 
 #include "FlowModule.h"
 
+#include "DetailCustomizations/FlowActorDetails.h"
 #include "DetailCustomizations/FlowActorOwnerComponentRefCustomization.h"
 #include "DetailCustomizations/FlowAssetDetails.h"
 #include "DetailCustomizations/FlowAssetParamsPtrCustomization.h"
@@ -33,11 +34,6 @@
 #include "DetailCustomizations/FlowNode_SubGraphDetails.h"
 #include "DetailCustomizations/FlowNodeAddOn_Details.h"
 #include "DetailCustomizations/FlowPinCustomization.h"
-#include "DetailCustomizations/FlowNamedDataPinPropertyCustomization.h"
-#include "DetailCustomizations/FlowAssetParamsPtrCustomization.h"
-#include "DetailCustomizations/FlowDataPinValueOwnerCustomizations.h"
-#include "DetailCustomizations/FlowDataPinValueStandardCustomizations.h"
-#include "DetailCustomizations/FlowActorDetails.h"
 
 #include "FlowAsset.h"
 #include "FlowComponent.h"
