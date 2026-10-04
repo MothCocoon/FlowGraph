@@ -4,7 +4,7 @@
 #include "Asset/SFlowDiff.h"
 #include "FlowEditorModule.h"
 #include "Graph/FlowGraphSettings.h"
-#include "Graph/FlowGraph.h"
+#include "Graph/Nodes/FlowGraphNode.h"
 
 #include "FlowAsset.h"
 
@@ -64,20 +64,29 @@ EAssetCommandResult UAssetDefinition_FlowAsset::PerformAssetDiff(const FAssetDif
 	const UFlowAsset* OldFlow = Cast<UFlowAsset>(DiffArgs.OldAsset);
 	const UFlowAsset* NewFlow = Cast<UFlowAsset>(DiffArgs.NewAsset);
 
-	auto SetupGraph = [](const UFlowAsset* Asset)
+	// Restores transient parent pointers of add-on graph nodes, required to build diff hierarchy and focus add-ons.
+	// Graph data stays untouched, so the diff compares revisions as saved.
+	for (const UFlowAsset* Asset : { OldFlow, NewFlow })
 	{
-		if (IsValid(Asset))
+		if (IsValid(Asset) && IsValid(Asset->GetGraph()))
 		{
-			UFlowGraph* FlowGraph = Cast<UFlowGraph>(Asset->GetGraph());
-			if (IsValid(FlowGraph)) // can it be invalid?
+			TArray<TObjectPtr<UEdGraphNode>> NodesToVisit = Asset->GetGraph()->Nodes;
+			while (NodesToVisit.Num() > 0)
 			{
-				FlowGraph->OnLoaded(); // mainly for filling parent nodes for add-ons, because they are transient
+				if (UFlowGraphNode* ParentNode = Cast<UFlowGraphNode>(NodesToVisit.Pop()))
+				{
+					for (UFlowGraphNode* SubNode : ParentNode->SubNodes)
+					{
+						if (IsValid(SubNode))
+						{
+							SubNode->SetParentNodeForSubNode(ParentNode);
+							NodesToVisit.Add(SubNode);
+						}
+					}
+				}
 			}
 		}
-	};
-
-	SetupGraph(OldFlow);
-	SetupGraph(NewFlow);
+	}
 
 	// sometimes we're comparing different revisions of one single asset (other 
 	// times we're comparing two completely separate assets altogether)
