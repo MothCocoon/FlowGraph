@@ -1,8 +1,6 @@
 // Copyright https://github.com/MothCocoon/FlowGraph/graphs/contributors
-
 #pragma once
 
-#include "CoreMinimal.h"
 #include "ActorDetailsDelegates.h"
 
 /**

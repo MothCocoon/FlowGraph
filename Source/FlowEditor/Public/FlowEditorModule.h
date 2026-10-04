@@ -29,10 +29,13 @@ private:
 	TArray<TSharedRef<IAssetTypeActions>> RegisteredAssetActions;
 	TSet<FName> CustomClassLayouts;
 	TSet<FName> CustomStructLayouts;
+	TSharedPtr<class FFlowActorDetails> ActorDetails;
 
+	FDelegateHandle AssetUpdatedHandle;
+	FDelegateHandle AssetRenamedHandle;
+	FDelegateHandle AssetRemovedHandle;
 	bool bIsRegisteredForAssetChanges = false;
 
-	TSharedPtr<class FFlowActorDetails> ActorDetails;
 public:
 	virtual void StartupModule() override;
 	virtual void ShutdownModule() override;
@@ -40,13 +43,13 @@ public:
 	void RegisterForAssetChanges();
 
 private:
-	void TrySetFlowNodeDisplayStyleDefaults() const;
+	static void TrySetFlowNodeDisplayStyleDefaults();
 
 	void RegisterAssets();
 	void UnregisterAssets();
 
 	void RegisterDetailCustomizations();
-	void UnregisterDetailCustomizations();
+	void UnregisterDetailCustomizations() const;
 
 	void RegisterCustomClassLayout(const TSubclassOf<UObject> Class, const FOnGetDetailCustomizationInstance DetailLayout);
 	void RegisterCustomStructLayout(const UScriptStruct& Struct, const FOnGetPropertyTypeCustomizationInstance DetailLayout);
