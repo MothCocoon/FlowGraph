@@ -9,6 +9,7 @@
 #include "Graph/FlowGraphNodesPolicy.h"
 #include "FlowGraphSettings.generated.h"
 
+class UFlowComponent;
 class UFlowNodeBase;
 
 USTRUCT()
@@ -90,6 +91,24 @@ class FLOWEDITOR_API UFlowGraphSettings : public UDeveloperSettings
 	/* Flow Asset class allowed to be assigned via Level Editor toolbar. */
 	UPROPERTY(EditAnywhere, config, Category = "Default UI", meta = (EditCondition = "bShowAssetToolbarAboveLevelEditor"))
 	TSoftClassPtr<class UFlowAsset> WorldAssetClass;
+
+	/** Flow Component only.
+	 * Show "Flow" category above regular categories in component's Details panel.
+	 * Requires refreshing the Details panel (reselect the object) to see the change. */
+	UPROPERTY(EditAnywhere, config, Category = "Details")
+	bool bMarkFlowCategoryImportant = true;
+
+	/** Default tag categories used by Flow Identity, and Identity Tag picker in the Flow Component.
+	 * Requires refreshing the Details panel (reselect the object) to see the updated filter. */
+	UPROPERTY(EditAnywhere, config, Category = "Details")
+	TArray<FGameplayTag> DefaultIdentityTagCategories;
+
+	/** Tag categories set per Flow Component class.
+	 * The most derived matching class is used.
+	 * Overrides DefaultIdentityTagCategories, but only in Identity Tag picker in the Flow Component.
+	 * Requires refreshing the Details panel (reselect the object) to see the updated filter. */
+	UPROPERTY(EditAnywhere, config, Category = "Details")
+	TMap<TSoftClassPtr<UFlowComponent>, FGameplayTagContainer> ComponentIdentityTagCategories;
 
 	/* Hide specific nodes from the Flow Palette without changing the source code.
 	 * Requires restart after making a change. */
@@ -181,10 +200,6 @@ class FLOWEDITOR_API UFlowGraphSettings : public UDeveloperSettings
 
 	UPROPERTY(EditAnywhere, config, Category = "Wires", meta = (ClampMin = 0.0f))
 	float SelectedWireThickness;
-	
-	/** Use these tags if identity Categories are not overridden */
-	UPROPERTY(EditAnywhere, config, Category = "Details")
-	TArray<FGameplayTag> DefaultIdentityTagCategories;
 
 public:
 	virtual FName GetCategoryName() const override { return FName("Flow Graph"); }
