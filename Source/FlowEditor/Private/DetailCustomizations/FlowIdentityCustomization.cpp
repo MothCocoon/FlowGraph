@@ -8,6 +8,7 @@
 
 #include "GameplayTagsManager.h"
 
+#include "Algo/AllOf.h"
 #include "ActorPickerMode.h"
 #include "ActorTreeItem.h"
 #include "LevelEditor.h"
@@ -638,14 +639,14 @@ void FFlowIdentityCustomization::CustomizeChildren(TSharedRef<IPropertyHandle> P
 
 void FFlowIdentityCustomization::UpdateCachedStructs()
 {
-	TArray<void*> StructPtrs;
-	StructPropertyHandle->AccessRawData(StructPtrs);
+	TArray<void*> RawData;
+	StructPropertyHandle->AccessRawData(RawData);
 
 	const FStructProperty* Property = CastFieldChecked<FStructProperty>(StructPropertyHandle->GetProperty());
 	check(Property->Struct);
 		
-	CachedIdentities.Reset(StructPtrs.Num());
-	for (void* RawPtr : StructPtrs)
+	CachedIdentities.Reset(RawData.Num());
+	for (void* RawPtr : RawData)
 	{
 		if (RawPtr)
 		{
@@ -655,22 +656,34 @@ void FFlowIdentityCustomization::UpdateCachedStructs()
 	}
 }
 
-bool FFlowIdentityCustomization::IsActorAllowed(const AActor* Actor) const
+bool FFlowIdentityCustomization::DoesActorPassFilters(const AActor* Actor) const
 {
-	const UFlowComponent* FlowComponent = Actor->FindComponentByClass<UFlowComponent>();
-	if (FlowComponent && FlowComponent->IdentityTags.IsValid())
+	return FindSourceComponent(Actor) != nullptr;
+}
+
+UFlowComponent* FFlowIdentityCustomization::FindSourceComponent(const AActor* Actor) const
+{
+	if (Actor)
 	{
-		for (const auto& Struct : CachedIdentities)
+		TInlineComponentArray<UFlowComponent*> FlowComponents(Actor);
+		for (UFlowComponent* FlowComponent : FlowComponents)
 		{
-			const FFlowIdentity* Identity = Struct.GetPtr();
-			if (Identity && !Identity->MatchesFilters(FlowComponent))
+			if (FlowComponent->IdentityTags.IsValid())
 			{
-				return false;
+				const bool bPassesFilters = Algo::AllOf(CachedIdentities, [FlowComponent](const TInstancedStruct<FFlowIdentity>& Struct)
+				{
+					const FFlowIdentity* Identity = Struct.GetPtr();
+					return !Identity || Identity->MatchesFilters(FlowComponent);
+				});
+
+				if (bPassesFilters)
+				{
+					return FlowComponent;
+				}
 			}
 		}
-		return true;
 	}
-	return false;
+	return nullptr;
 }
 
 bool FFlowIdentityCustomization::IsActorMatches(const AActor* Actor) const
@@ -809,7 +822,7 @@ void FFlowIdentityCustomization::OpenTagPicker_UseActor(AActor* Actor)
 	const TSharedRef<SWidget> Widget = CreateTagPicker();
 	if (TagSelector)
 	{
-		TagSelector->SetSourceFromActor(Actor);
+		TagSelector->SetSourceFromComponent(FindSourceComponent(Actor));
 		TagSelector->OnAction = FSimpleDelegate::CreateSPLambda(this, [this]()
 		{
 			if (OwningView.IsValid())
@@ -887,7 +900,7 @@ void FFlowIdentityCustomization::UseActor_SelectedInViewport() const
 	TArray<AActor*> SelectedActors = GEditor->GetEditorSubsystem<UEditorActorSubsystem>()->GetSelectedLevelActors();
 	for (const AActor* SelectedActor : SelectedActors)
 	{
-		UFlowComponent* FlowComponent = SelectedActor ? SelectedActor->FindComponentByClass<UFlowComponent>() : nullptr;
+		UFlowComponent* FlowComponent = FindSourceComponent(SelectedActor);
 		if (FlowComponent)
 		{
 			if (TagSelector)
@@ -903,7 +916,7 @@ void FFlowIdentityCustomization::UseActor_Explicit(AActor* Actor) const
 {
 	if (TagSelector)
 	{
-		TagSelector->SetSourceFromActor(Actor);
+		TagSelector->SetSourceFromComponent(FindSourceComponent(Actor));
 	}
 }
 
@@ -922,13 +935,13 @@ void FFlowIdentityCustomization::UseActor_FromEyeDrop()
 			Classes.Add(AActor::StaticClass());
 		});
 
-		const FOnShouldFilterActor OnShouldFilterActor = FOnShouldFilterActor::CreateSP(this, &FFlowIdentityCustomization::IsActorAllowed);
+		const FOnShouldFilterActor OnShouldFilterActor = FOnShouldFilterActor::CreateSP(this, &FFlowIdentityCustomization::DoesActorPassFilters);
 		const FOnActorPicked OnActorPicked = FOnActorPicked::CreateSP(this, &FFlowIdentityCustomization::OpenTagPicker_UseActor);
 
 		ActorPickerMode.BeginActorPickingMode(OnGetAllowedClasses, OnShouldFilterActor, OnActorPicked);
 
-		FLevelEditorModule& LevelEditorModule = FModuleManager::LoadModuleChecked<FLevelEditorModule>("LevelEditor");
-		TSharedPtr<SDockTab> LevelEditorTab = LevelEditorModule.GetLevelEditorInstanceTab().Pin();
+		const FLevelEditorModule& LevelEditorModule = FModuleManager::LoadModuleChecked<FLevelEditorModule>("LevelEditor");
+		const TSharedPtr<SDockTab> LevelEditorTab = LevelEditorModule.GetLevelEditorInstanceTab().Pin();
 		if (LevelEditorTab.IsValid())
 		{
 			LevelEditorTab->DrawAttention();
@@ -977,7 +990,7 @@ TSharedRef<SWidget> FFlowIdentityCustomization::MenuContent_ActorPicker()
 		                         FUIAction(FExecuteAction::CreateSP(this, &FFlowIdentityCustomization::UseActor_SelectedInViewport))
 		);
 
-		const FOnShouldFilterActor OnShouldFilter = FOnShouldFilterActor::CreateSP(this, &FFlowIdentityCustomization::IsActorAllowed);
+		const FOnShouldFilterActor OnShouldFilter = FOnShouldFilterActor::CreateSP(this, &FFlowIdentityCustomization::DoesActorPassFilters);
 		const FSceneOutlinerModule& SceneOutlinerModule = FModuleManager::Get().LoadModuleChecked<FSceneOutlinerModule>(TEXT("SceneOutliner"));
 
 		FSceneOutlinerInitializationOptions InitOptions;

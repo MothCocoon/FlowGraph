@@ -27,7 +27,6 @@ public:
 public:
 	void Construct(const FArguments& InArgs, const TSharedPtr<IPropertyHandle>& InIdentityTagsHandle);
 
-	void SetSourceFromActor(const AActor* Actor) { SetSourceFromComponent(Actor ? Actor->FindComponentByClass<UFlowComponent>() : nullptr); }
 	void SetSourceFromComponent(UFlowComponent* Component);
 
 protected:
@@ -81,7 +80,9 @@ public:
 protected:
 	void UpdateCachedStructs();
 	
-	virtual bool IsActorAllowed(const AActor* Actor) const;	
+	virtual bool DoesActorPassFilters(const AActor* Actor) const;
+	virtual UFlowComponent* FindSourceComponent(const AActor* Actor) const;
+	
 	virtual bool IsActorMatches(const AActor* Actor) const;		
 
 	virtual void ResolveCategoriesMeta(TSharedPtr<IPropertyHandle> PropertyHandle, FString& MetaString) const;
