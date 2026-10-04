@@ -18,7 +18,7 @@ public:
 	// --
 	
 protected:
-	virtual void ResolveCategoriesMeta(TSharedPtr<IPropertyHandle> PropertyHandle, FString& MetaString) const;
+	virtual void ResolveCategoriesMeta(const TSharedPtr<IPropertyHandle> PropertyHandle, FString& MetaString) const;
 	
 private:
 	TSharedPtr<IPropertyHandle> IdentityTagsHandle;

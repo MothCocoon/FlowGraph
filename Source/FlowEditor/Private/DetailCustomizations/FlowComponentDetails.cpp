@@ -26,25 +26,26 @@ void FFlowComponentDetails::CustomizeDetails(IDetailLayoutBuilder& DetailBuilder
 	Category.AddProperty(IdentityTagsHandle);
 }
 
-void FFlowComponentDetails::ResolveCategoriesMeta(TSharedPtr<IPropertyHandle> PropertyHandle, FString& MetaString) const
+void FFlowComponentDetails::ResolveCategoriesMeta(const TSharedPtr<IPropertyHandle> PropertyHandle, FString& MetaString) const
 {
 	if (PropertyHandle->IsSamePropertyNode(IdentityTagsHandle))
 	{
 		const UFlowGraphSettings* Settings = GetDefault<UFlowGraphSettings>();
 
-		if (Settings->ComponentClassIdentityTagCategories.IsEmpty())
+		// The most derived class with an entry wins
+		const FGameplayTagContainer* ClassTags = nullptr;
+		for (const UClass* Class = IdentityTagsHandle->GetOuterBaseClass(); Class && ClassTags == nullptr; Class = Class->GetSuperClass())
 		{
-			MetaString = FString::JoinBy(Settings->DefaultIdentityTagCategories, TEXT(","), [](const FGameplayTag& Tag) { return Tag.ToString(); });
+			ClassTags = Settings->ComponentClassIdentityTagCategories.Find(Class);
+		}
+
+		if (ClassTags)
+		{
+			MetaString = FString::JoinBy(*ClassTags, TEXT(","), [](const FGameplayTag& Tag) { return Tag.ToString(); });
 		}
 		else
 		{
-			for (const UClass* Class = IdentityTagsHandle->GetOuterBaseClass(); Class; Class = Class->GetSuperClass())
-			{
-				if (const FGameplayTagContainer* Tags = Settings->ComponentClassIdentityTagCategories.Find(Class))
-				{
-					MetaString = FString::JoinBy(*Tags, TEXT(","), [](const FGameplayTag& Tag) { return Tag.ToString(); });
-				};
-			}
+			MetaString = FString::JoinBy(Settings->DefaultIdentityTagCategories, TEXT(","), [](const FGameplayTag& Tag) { return Tag.ToString(); });
 		}
 	}
 }
