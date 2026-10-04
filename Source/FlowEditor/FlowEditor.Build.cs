@@ -18,6 +18,7 @@ public class FlowEditor : ModuleRules
 
 		PrivateDependencyModuleNames.AddRange(
 		[
+			"ActorPickerMode",
 			"AIModule", // For BlueprintNodeHelpers::DescribeProperty (could be copy/pasted out to remove editor-only dependency)
 			"ApplicationCore",
 			"AssetDefinition",
@@ -51,6 +52,7 @@ public class FlowEditor : ModuleRules
 			"PropertyEditor",
 			"PropertyPath",
 			"RenderCore",
+			"SceneOutliner",
 			"Sequencer",
 			"SequencerCore",
 			"Slate",
