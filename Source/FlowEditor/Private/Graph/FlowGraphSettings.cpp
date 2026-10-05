@@ -112,6 +112,23 @@ FString UFlowGraphSettings::GetNodeCategoryForNode(const UFlowNodeBase& FlowNode
 	return FlowNodeBase.GetNodeCategory();
 }
 
+FString UFlowGraphSettings::GetIdentityTagCategories(const UClass* ComponentClass) const
+{
+	// The most derived class with an entry wins
+	const FGameplayTagContainer* ClassTags = nullptr;
+	for (const UClass* Class = ComponentClass; Class && ClassTags == nullptr; Class = Class->GetSuperClass())
+	{
+		ClassTags = ComponentIdentityTagCategories.Find(Class);
+	}
+
+	if (ClassTags)
+	{
+		return FString::JoinBy(*ClassTags, TEXT(","), [](const FGameplayTag& Tag) { return Tag.ToString(); });
+	}
+
+	return FString::JoinBy(DefaultIdentityTagCategories, TEXT(","), [](const FGameplayTag& Tag) { return Tag.ToString(); });
+}
+
 const TMap<FGameplayTag, FFlowNodeDisplayStyleConfig>& UFlowGraphSettings::EnsureNodeDisplayStylesMap()
 {
 	if (NodeDisplayStylesAuthoredTags.Num() != NodeDisplayStyles.Num())

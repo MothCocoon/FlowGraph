@@ -9,6 +9,7 @@
 #include "Graph/FlowGraphNodesPolicy.h"
 #include "FlowGraphSettings.generated.h"
 
+class UFlowComponent;
 class UFlowNode;
 class UFlowNodeBase;
 
@@ -91,6 +92,27 @@ class FLOWEDITOR_API UFlowGraphSettings : public UDeveloperSettings
 	/* Flow Asset class allowed to be assigned via Level Editor toolbar. */
 	UPROPERTY(EditAnywhere, config, Category = "Default UI", meta = (EditCondition = "bShowAssetToolbarAboveLevelEditor"))
 	TSoftClassPtr<class UFlowAsset> WorldAssetClass;
+
+	UPROPERTY(EditAnywhere, config, Category = "Details")
+	bool bShowFlowTagsInActorDetails = true;
+
+	/** Flow Component only.
+	 * Show "Flow" category above regular categories in component's Details panel.
+	 * Requires refreshing the Details panel (reselect the object) to see the change. */
+	UPROPERTY(EditAnywhere, config, Category = "Details")
+	bool bMarkFlowCategoryImportant = true;
+
+	/** Default tag categories used by Flow Identity, and Identity Tag picker in the Flow Component.
+	 * Requires refreshing the Details panel (reselect the object) to see the updated filter. */
+	UPROPERTY(EditAnywhere, config, Category = "Details")
+	TArray<FGameplayTag> DefaultIdentityTagCategories;
+
+	/** Tag categories set per Flow Component class.
+	 * The most derived matching class is used.
+	 * Overrides DefaultIdentityTagCategories, but only in Identity Tag picker in the Flow Component.
+	 * Requires refreshing the Details panel (reselect the object) to see the updated filter. */
+	UPROPERTY(EditAnywhere, config, Category = "Details")
+	TMap<TSoftClassPtr<UFlowComponent>, FGameplayTagContainer> ComponentIdentityTagCategories;
 
 	/* Hide specific nodes from the Flow Palette without changing the source code.
 	 * Requires restart after making a change. */
@@ -189,6 +211,9 @@ public:
 
 	/* Override-safe category query for Flow Node. */
 	static FString GetNodeCategoryForNode(const UFlowNodeBase& FlowNodeBase);
+
+	/* Categories meta string for Identity Tag picker of the given Flow Component class. */
+	FString GetIdentityTagCategories(const UClass* ComponentClass) const;
 
 #if WITH_EDITOR
 	const TMap<FGameplayTag, FFlowNodeDisplayStyleConfig>& EnsureNodeDisplayStylesMap();
