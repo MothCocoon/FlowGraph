@@ -431,7 +431,7 @@ void UFlowGraph::RemoveOrphanedNodes()
 #if ENGINE_MAJOR_VERSION == 5 && ENGINE_MINOR_VERSION < 8
 	GetObjectsWithOuter(GetOuter(), AllInners, bIncludeNestedObjects);
 #else
-	GetObjectsWithOuter(GetOuter(), AllInners, EGetObjectsFlags::IncludeNestedObjects);
+	GetObjectsWithOuter(GetOuter(), AllInners, EGetObjectsFlags::None);
 #endif	
 
 	for (auto InnerIt = AllInners.CreateConstIterator(); InnerIt; ++InnerIt)

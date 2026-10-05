@@ -40,16 +40,17 @@
 			"Name": "AssetSearch",
 			"Enabled": true
 		},
+    {
+			"Name": "EngineAssetDefinitions",
+			"Enabled": true
+		},
 		{
 			"Name": "EditorScriptingUtilities",
 			"Enabled": true
 		},
 		{
-			"Name": "EngineAssetDefinitions",
-			"Enabled": true
-		},
-		{
 			"Name": "ToolsetRegistry",
+			"Name": "GameplayTagsEditor",
 			"Enabled": true
 		}
 	]
