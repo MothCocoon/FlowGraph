@@ -1208,6 +1208,11 @@ void UFlowAsset::DeinitializeInstance()
 	}
 }
 
+ESubGraphFinishPolicy UFlowAsset::GetSubGraphFinishPolicy() const
+{
+	return GetDefault<UFlowSettings>()->SubGraphFinishPolicy;
+}
+
 UFlowSubsystem* UFlowAsset::GetFlowSubsystem() const
 {
 	return Cast<UFlowSubsystem>(GetOuter());

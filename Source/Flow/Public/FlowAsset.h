@@ -431,6 +431,9 @@ public:
 	virtual void FinishFlowInstance(const EFlowFinishPolicy InFinishPolicy);
 	virtual void DeinitializeInstance();
 
+	/* Allow subclasses to override the project-wide SubGraph finish policy */
+	virtual ESubGraphFinishPolicy GetSubGraphFinishPolicy() const;
+
 public:
 	UFlowSubsystem* GetFlowSubsystem() const;
 

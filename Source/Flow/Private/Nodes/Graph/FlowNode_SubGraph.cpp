@@ -103,7 +103,9 @@ void UFlowNode_SubGraph::Cleanup()
 	UFlowSubsystem* FlowSubsystem = GetFlowSubsystem();
 	if (FlowSubsystem && CanBeAssetInstanced())
 	{
-		FlowSubsystem->FinishSubFlow(this, EFlowFinishPolicy::Keep, false);
+		const UFlowAsset* SubFlow = FlowSubsystem->GetInstancedSubFlows().FindRef(this);
+		const bool bRemoveInstanceOnCleanup = SubFlow && SubFlow->GetSubGraphFinishPolicy() == ESubGraphFinishPolicy::Deinitialize;
+		FlowSubsystem->FinishSubFlow(this, EFlowFinishPolicy::Keep, bRemoveInstanceOnCleanup);
 	}
 
 	Super::Cleanup();
