@@ -59,6 +59,14 @@ enum class EFlowFinishPolicy : uint8
 	Abort
 };
 
+/* What happens to the Flow Asset instance created by SubGraph node after the SubGraph finished. */
+UENUM(BlueprintType)
+enum class ESubGraphFinishPolicy : uint8
+{
+	Deinitialize	UMETA(ToolTip = "SubGraph instance is deinitialized immediately after finishing."),
+	Keep			UMETA(ToolTip = "SubGraph instance stays initialized until its parent Flow Asset deinitializes or the SubGraph node runs again.")
+};
+
 UENUM(BlueprintType)
 enum class EFlowSignalMode : uint8
 {
