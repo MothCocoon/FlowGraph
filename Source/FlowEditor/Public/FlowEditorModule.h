@@ -13,6 +13,8 @@ class FToolBarBuilder;
 struct FGraphPanelPinConnectionFactory;
 
 class FFlowAssetEditor;
+class UEdGraphNode;
+class UEdGraphPin;
 class UFlowAsset;
 
 struct FLOWEDITOR_API FFlowAssetCategoryPaths : EAssetCategoryPaths
@@ -29,7 +31,11 @@ private:
 	TArray<TSharedRef<IAssetTypeActions>> RegisteredAssetActions;
 	TSet<FName> CustomClassLayouts;
 	TSet<FName> CustomStructLayouts;
+	TSharedPtr<class FFlowActorDetails> ActorDetails;
 
+	FDelegateHandle AssetUpdatedHandle;
+	FDelegateHandle AssetRenamedHandle;
+	FDelegateHandle AssetRemovedHandle;
 	bool bIsRegisteredForAssetChanges = false;
 
 public:
@@ -39,13 +45,13 @@ public:
 	void RegisterForAssetChanges();
 
 private:
-	void TrySetFlowNodeDisplayStyleDefaults() const;
+	static void TrySetFlowNodeDisplayStyleDefaults();
 
 	void RegisterAssets();
 	void UnregisterAssets();
 
 	void RegisterDetailCustomizations();
-	void UnregisterDetailCustomizations();
+	void UnregisterDetailCustomizations() const;
 
 	void RegisterCustomClassLayout(const TSubclassOf<UObject> Class, const FOnGetDetailCustomizationInstance DetailLayout);
 	void RegisterCustomStructLayout(const UScriptStruct& Struct, const FOnGetPropertyTypeCustomizationInstance DetailLayout);
@@ -57,6 +63,8 @@ public:
 private:
 	static void ModulesChangesCallback(FName ModuleName, EModuleChangeReason ReasonForChange);
 	static void RegisterAssetIndexers();
+
+	static void JumpToNodeFromLogToken(UObject* Asset, const UEdGraphNode* Node, const UEdGraphPin* Pin);
 
 public:
 	static TSharedRef<FFlowAssetEditor> CreateFlowAssetEditor(const EToolkitMode::Type Mode, const TSharedPtr<IToolkitHost>& InitToolkitHost, UFlowAsset* FlowAsset);

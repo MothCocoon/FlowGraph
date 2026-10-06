@@ -47,6 +47,10 @@
 		{
 			"Name": "EngineAssetDefinitions",
 			"Enabled": true
+		},
+		{
+			"Name": "GameplayTagsEditor",
+			"Enabled": true
 		}
 	]
 }
