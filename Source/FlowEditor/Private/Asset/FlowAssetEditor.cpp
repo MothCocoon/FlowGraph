@@ -3,7 +3,6 @@
 #include "Asset/FlowAssetEditor.h"
 
 #include "FlowEditorCommands.h"
-#include "FlowEditorLogChannels.h"
 
 #include "Asset/FlowAssetEditorContext.h"
 #include "Asset/FlowAssetToolbar.h"
@@ -24,7 +23,6 @@
 #include "IMessageLogListing.h"
 #include "Kismet2/DebuggerCommands.h"
 #include "MessageLogModule.h"
-#include "Misc/UObjectToken.h"
 #include "Modules/ModuleManager.h"
 #include "PropertyEditorModule.h"
 #include "ScopedTransaction.h"
@@ -188,19 +186,19 @@ void FFlowAssetEditor::PostRegenerateMenusAndToolbars()
 
 void FFlowAssetEditor::SaveAsset_Execute()
 {
-	DoPresaveAssetUpdate();
+	DoPreSaveAssetUpdate();
 
 	FAssetEditorToolkit::SaveAsset_Execute();
 }
 
 void FFlowAssetEditor::SaveAssetAs_Execute()
 {
-	DoPresaveAssetUpdate();
+	DoPreSaveAssetUpdate();
 
 	FAssetEditorToolkit::SaveAssetAs_Execute();
 }
 
-void FFlowAssetEditor::DoPresaveAssetUpdate()
+void FFlowAssetEditor::DoPreSaveAssetUpdate() const
 {
 	if (IsValid(FlowAsset))
 	{
@@ -506,11 +504,7 @@ void FFlowAssetEditor::ValidateAsset_Internal()
 
 void FFlowAssetEditor::ValidateAsset(FFlowMessageLog& MessageLog)
 {
-	UFlowGraph* FlowGraph = Cast<UFlowGraph>(FlowAsset->GetGraph());
-	if (FlowGraph)
-	{
-		FlowGraph->ValidateAsset(MessageLog);
-	}
+	FlowAsset->ValidateAsset(MessageLog);
 }
 
 void FFlowAssetEditor::SearchInAsset()
@@ -558,12 +552,10 @@ void FFlowAssetEditor::CreateWidgets()
 	FMessageLogModule& MessageLogModule = FModuleManager::LoadModuleChecked<FMessageLogModule>("MessageLog");
 	{
 		RuntimeLogListing = FFlowMessageLogListing::GetLogListing(FlowAsset, EFlowLogType::Runtime);
-		RuntimeLogListing->OnMessageTokenClicked().AddSP(this, &FFlowAssetEditor::OnLogTokenClicked);
 		RuntimeLog = MessageLogModule.CreateLogListingWidget(RuntimeLogListing.ToSharedRef());
 	}
 	{
 		ValidationLogListing = FFlowMessageLogListing::GetLogListing(FlowAsset, EFlowLogType::Validation);
-		ValidationLogListing->OnMessageTokenClicked().AddSP(this, &FFlowAssetEditor::OnLogTokenClicked);
 		ValidationLog = MessageLogModule.CreateLogListingWidget(ValidationLogListing.ToSharedRef());
 	}
 }
@@ -626,46 +618,19 @@ void FFlowAssetEditor::JumpToInnerObject(UObject* InnerObject)
 }
 #endif
 
-void FFlowAssetEditor::OnLogTokenClicked(const TSharedRef<IMessageToken>& Token) const
+void FFlowAssetEditor::JumpToNode(const UEdGraphNode* Node) const
 {
-	if (Token->GetType() == EMessageToken::Object)
+	if (GraphEditor.IsValid())
 	{
-		const TSharedRef<FUObjectToken> ObjectToken = StaticCastSharedRef<FUObjectToken>(Token);
-		if (const UObject* Object = ObjectToken->GetObject().Get())
-		{
-			if (Object->IsAsset())
-			{
-				GEditor->GetEditorSubsystem<UAssetEditorSubsystem>()->OpenEditorForAsset(const_cast<UObject*>(Object));
-			}
-			else
-			{
-				UE_LOG(LogFlowEditor, Warning, TEXT("Unknown type of hyperlinked object (%s), cannot focus it"), *GetNameSafe(Object));
-			}
-		}
-	}
-	else if (Token->GetType() == EMessageToken::EdGraph && GraphEditor.IsValid())
-	{
-		const TSharedRef<FFlowGraphToken> EdGraphToken = StaticCastSharedRef<FFlowGraphToken>(Token);
-
-		if (const UEdGraphPin* GraphPin = EdGraphToken->GetPin())
-		{
-			if (!GraphPin->IsPendingKill())
-			{
-				GraphEditor->JumpToPin(GraphPin);
-			}
-		}
-		else if (const UEdGraphNode* GraphNode = EdGraphToken->GetGraphNode())
-		{
-			GraphEditor->JumpToNode(GraphNode, true);
-		}
+		GraphEditor->JumpToNode(Node, false);
 	}
 }
 
-void FFlowAssetEditor::JumpToNode(const UEdGraphNode* Node) const
+void FFlowAssetEditor::JumpToPin(const UEdGraphPin* Pin) const
 {
-	if (GetFlowGraph().IsValid())
+	if (GraphEditor.IsValid())
 	{
-		GetFlowGraph()->JumpToNode(Node, false);
+		GraphEditor->JumpToPin(Pin);
 	}
 }
 

@@ -46,6 +46,9 @@ void UFlowGraph::CreateGraph(UFlowAsset* InFlowAsset, TSubclassOf<UFlowGraphSche
 	{
 		InFlowAsset->FlowGraph->GetSchema()->CreateDefaultNodesForGraph(*InFlowAsset->FlowGraph);
 	}
+  
+  InFlowAsset->OnValidateGraph.BindUObject(NewGraph, &UFlowGraph::ValidateGraphNodes);
+	InFlowAsset->FlowGraph->GetSchema()->CreateDefaultNodesForGraph(*InFlowAsset->FlowGraph);
 }
 
 void UFlowGraph::RefreshGraph()
@@ -146,13 +149,8 @@ UFlowAsset* UFlowGraph::GetFlowAsset() const
 	return GetTypedOuter<UFlowAsset>();
 }
 
-void UFlowGraph::ValidateAsset(FFlowMessageLog& MessageLog)
+void UFlowGraph::ValidateGraphNodes(FFlowMessageLog& MessageLog) const
 {
-	if (UFlowAsset* FlowAsset = GetFlowAsset())
-	{
-		FlowAsset->ValidateAsset(MessageLog);
-	}
-
 	for (UEdGraphNode* Node : Nodes)
 	{
 		if (const UFlowGraphNode* FlowGraphNode = Cast<UFlowGraphNode>(Node))
@@ -171,6 +169,16 @@ void UFlowGraph::Serialize(FArchive& Ar)
 	{
 		// Logging of errors happens in UpdateDeprecatedClasses
 		UpdateDeprecatedClasses();
+	}
+}
+
+void UFlowGraph::PostLoad()
+{
+	Super::PostLoad();
+
+	if (UFlowAsset* FlowAsset = GetFlowAsset())
+	{
+		FlowAsset->OnValidateGraph.BindUObject(this, &UFlowGraph::ValidateGraphNodes);
 	}
 }
 

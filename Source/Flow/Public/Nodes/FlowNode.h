@@ -86,11 +86,6 @@ public:
 	 * but may be overridden in subclasses to supply some other value. */
 	virtual int32 GetRandomSeed() const override { return GetTypeHash(NodeGuid); }
 
-	virtual const UFlowNode* GetParentNode() const override
-	{
-		return UFlowNodeBase::GetFlowNodeSelfOrOwner();
-	}
-
 public:
 	virtual bool CanFinishGraph() const { return K2_CanFinishGraph(); }
 

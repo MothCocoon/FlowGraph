@@ -139,9 +139,6 @@ public:
 	UFUNCTION(BlueprintPure, Category = "FlowNode")
 	virtual int32 GetRandomSeed() const PURE_VIRTUAL(GetRandomSeed, return 0;);
 
-	/* Returns the owning top-level Flow node. */
-	virtual const UFlowNode* GetParentNode() const PURE_VIRTUAL(GetParentNode, return nullptr;);
-
 	/* Stable identity persisted across saves. For UFlowNode, inherits from graph node; for
 	 * UFlowNodeAddOn, auto-minted in constructor. Used by Flow Courier to upsert/delete individual
 	 * addons. Name-keyed serialization means no CoreRedirect needed. */
