@@ -21,7 +21,8 @@ void UFlowNode_OnNotifyFromActor::ObserveActor(TWeakObjectPtr<AActor> Actor, TWe
 
 		if (bRetroactive)
 		{
-			if (FlowTypes::HasMatchingTags(Component->GetRecentlySentNotifyTags(), NotifyTags, NotifyMatchType))
+			const FGameplayTagContainer& RecentlySentNotifyTags = Component->GetRecentlySentNotifyTags();
+			if (bExactMatch ? RecentlySentNotifyTags.HasAnyExact(NotifyTags) : RecentlySentNotifyTags.HasAny(NotifyTags))
 			{
 				OnEventReceived();
 			}
@@ -40,7 +41,7 @@ void UFlowNode_OnNotifyFromActor::OnNotifyFromComponent(UFlowComponent* Componen
 	{
 		if (NotifyTags.IsValid())
 		{
-			if (FlowTypes::HasMatchingTag(Tag, NotifyTags, NotifyMatchType))
+			if (bExactMatch ? Tag.MatchesAnyExact(NotifyTags) : Tag.MatchesAny(NotifyTags))
 			{
 				OnEventReceived();
 			}
