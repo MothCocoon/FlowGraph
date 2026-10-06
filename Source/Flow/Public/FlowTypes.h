@@ -46,7 +46,7 @@ FLOW_ENUM_RANGE_VALUES(EFlowNodeState)
 
 namespace EFlowNodeState_Classifiers
 {
-	FORCEINLINE bool IsFinishedState(EFlowNodeState State) { return FLOW_IS_ENUM_IN_SUBRANGE(State, EFlowNodeState::Finished); }
+	FORCEINLINE bool IsFinishedState(const EFlowNodeState State) { return FLOW_IS_ENUM_IN_SUBRANGE(State, EFlowNodeState::Finished); }
 }
 
 /* Finish Policy value is read by Flow Node
@@ -59,12 +59,20 @@ enum class EFlowFinishPolicy : uint8
 	Abort
 };
 
+/* What happens to the Flow Asset instance created by SubGraph node after the SubGraph finished. */
+UENUM(BlueprintType)
+enum class ESubGraphFinishPolicy : uint8
+{
+	Deinitialize	UMETA(ToolTip = "SubGraph instance is deinitialized immediately after finishing."),
+	Keep			UMETA(ToolTip = "SubGraph instance stays initialized until its parent Flow Asset deinitializes or the SubGraph node runs again.")
+};
+
 UENUM(BlueprintType)
 enum class EFlowSignalMode : uint8
 {
-	Enabled		UMETA(ToolTip = "Default state, node is fully executed."),
-	Disabled	UMETA(ToolTip = "No logic executed, any Input Pin activation is ignored. Node instantly enters a deactivated state."),
-	PassThrough UMETA(ToolTip = "Internal node logic not executed. All connected outputs are triggered, node finishes its work.")
+	Enabled			UMETA(ToolTip = "Default state, node is fully executed."),
+	Disabled		UMETA(ToolTip = "No logic executed, any Input Pin activation is ignored. Node instantly enters a deactivated state."),
+	PassThrough		UMETA(ToolTip = "Internal node logic not executed. All connected outputs are triggered, node finishes its work.")
 };
 
 UENUM(BlueprintType)
