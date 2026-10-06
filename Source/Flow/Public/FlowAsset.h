@@ -385,7 +385,6 @@ protected:
 
 public:
 	virtual void InitializeInstance(const TWeakObjectPtr<UObject> InOwner, UFlowAsset& InTemplateAsset);
-	virtual void DeinitializeInstance();
 	bool IsInstanceInitialized() const { return IsValid(TemplateAsset); }
 
 	virtual FName GetInstanceName() const;
@@ -428,7 +427,14 @@ protected:
 	void ResetNodes();
 
 public:
-	virtual void FinishFlow(const EFlowFinishPolicy InFinishPolicy, const bool bRemoveInstance = true);
+	UE_DEPRECATED(5.6, "Method replaced with FinishFlowInstance and (if bRemoveInstance == true) separate call to DeinitializeInstance.")
+	void FinishFlow(const EFlowFinishPolicy InFinishPolicy, const bool bRemoveInstance = true);
+
+	virtual void FinishFlowInstance(const EFlowFinishPolicy InFinishPolicy);
+	virtual void DeinitializeInstance();
+
+	/* Allow subclasses to override the project-wide SubGraph finish policy */
+	virtual ESubGraphFinishPolicy GetSubGraphFinishPolicy() const;
 
 public:
 	UFlowSubsystem* GetFlowSubsystem() const;

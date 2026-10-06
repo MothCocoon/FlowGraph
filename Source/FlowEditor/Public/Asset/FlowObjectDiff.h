@@ -41,7 +41,6 @@ class FLOWEDITOR_API FFlowObjectDiff : public TSharedFromThis<FFlowObjectDiff>
 public:
 	FFlowObjectDiff(TSharedPtr<FDiffResultItem> InDiffResult, const FFlowGraphToDiff& GraphToDiff);
 
-	void OnSelectDiff(const FSingleObjectDiffEntry& Property) const;
 	void DiffProperties(TArray<FSingleObjectDiffEntry>& OutPropertyDiffsArray) const;
 
 private:

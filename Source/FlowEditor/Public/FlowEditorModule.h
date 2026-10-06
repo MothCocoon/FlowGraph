@@ -31,7 +31,11 @@ private:
 	TArray<TSharedRef<IAssetTypeActions>> RegisteredAssetActions;
 	TSet<FName> CustomClassLayouts;
 	TSet<FName> CustomStructLayouts;
+	TSharedPtr<class FFlowActorDetails> ActorDetails;
 
+	FDelegateHandle AssetUpdatedHandle;
+	FDelegateHandle AssetRenamedHandle;
+	FDelegateHandle AssetRemovedHandle;
 	bool bIsRegisteredForAssetChanges = false;
 
 public:
