@@ -163,7 +163,7 @@ EDataValidationResult UFlowAsset::IsDataValid(FDataValidationContext& Context) c
 
 EDataValidationResult UFlowAsset::ValidateAsset(FFlowMessageLog& MessageLog) const
 {
-	// validate nodes
+	// validate runtime nodes
 	for (const TPair<FGuid, UFlowNode*>& Node : ObjectPtrDecay(Nodes))
 	{
 		if (IsValid(Node.Value))
@@ -203,6 +203,9 @@ EDataValidationResult UFlowAsset::ValidateAsset(FFlowMessageLog& MessageLog) con
 			MessageLog.Error(*ErrorMsg, this);
 		}
 	}
+
+	// validate editor's graph
+	OnValidateGraph.ExecuteIfBound(MessageLog);
 
 	// if at least one error has been logged : mark the asset as invalid
 	for (const TSharedRef<FTokenizedMessage>& Msg : MessageLog.Messages)

@@ -13,7 +13,6 @@
 
 #if WITH_EDITOR
 #include "FlowMessageLog.h"
-#include "Misc/DataValidation.h"
 #endif
 
 #include "StructUtils/InstancedStruct.h"
@@ -24,8 +23,6 @@
 
 class UFlowNode_CustomOutput;
 class UFlowNode_CustomInput;
-class UFlowNode_SubGraph;
-class UFlowSubsystem;
 struct FFlowPreloadPolicy;
 struct FFlowPinConnectionPolicy;
 
@@ -39,6 +36,10 @@ DECLARE_DELEGATE(FFlowGraphEvent);
 DECLARE_DELEGATE_TwoParams(FFlowSignalEvent, UFlowNode* /*FlowNode*/, const FName& /*PinName*/);
 #endif
 
+#if WITH_EDITOR
+DECLARE_DELEGATE_OneParam(FFlowGraphValidationEvent, FFlowMessageLog& /*MessageLog*/);
+#endif
+
 /**
  * Asset containing Flow nodes organized as non-linear graph.
  */
@@ -49,7 +50,6 @@ class FLOW_API UFlowAsset : public UObject
 
 public:
 	friend class UFlowNode;
-	friend class UFlowNode_CustomOutput;
 	friend class UFlowNode_SubGraph;
 	friend class UFlowSubsystem;
 
@@ -102,6 +102,10 @@ public:
 	void SetupForEditing();
 
 	UEdGraph* GetGraph() const { return FlowGraph; }
+
+	/* Validates the editor graph of the asset.
+	 * Bound by the graph itself, since its class lives in the editor module. */
+	FFlowGraphValidationEvent OnValidateGraph;
 
 	virtual EDataValidationResult IsDataValid(FDataValidationContext& Context) const override;
 	virtual EDataValidationResult ValidateAsset(FFlowMessageLog& MessageLog) const;
