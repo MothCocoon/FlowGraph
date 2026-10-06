@@ -36,12 +36,12 @@ public:
 
 	virtual bool ShouldCreateSubsystem(UObject* Outer) const override;
 	virtual UWorld* GetWorld() const override;
-	
+
 	virtual void Deinitialize() override;
 
 //////////////////////////////////////////////////////////////////////////
 // Lifetime cycle of Flow Asset instances
-	
+
 protected:
 	/* All asset templates with active instances */
 	UPROPERTY()
@@ -56,6 +56,7 @@ protected:
 	TMap<TObjectPtr<UFlowNode_SubGraph>, TObjectPtr<UFlowAsset>> InstancedSubFlows;
 
 #if !UE_BUILD_SHIPPING
+
 public:
 	/* Called after creating the first instance of given Flow Asset */
 	static FNativeFlowAssetEvent OnInstancedTemplateAdded;
@@ -87,13 +88,13 @@ public:
 	virtual void FinishAndDeinitializeAllRootFlows(UObject* Owner, const EFlowFinishPolicy FinishPolicy);
 
 protected:
+	virtual void FinishAndDeinitializeInstance(UFlowAsset* InstanceToFinish, const EFlowFinishPolicy FinishPolicy);
+
 	UFlowAsset* CreateSubFlow(UFlowNode_SubGraph* SubGraphNode, const FString& SavedInstanceName = FString(), const bool bPreloading = false);
-
-	/* Finishes the SubFlow running in the SubGraphNode. It does not deinitialize or removes from the internal InstancedSubFlows list */
-	void FinishSubFlow(UFlowNode_SubGraph* SubGraphNode, const EFlowFinishPolicy FinishPolicy);
-
-	/* Removes the Subflow from the InstancedSubFlows list; and Finishes and Deinitializes it. */
-	void RemoveSubFlow(UFlowNode_SubGraph* SubGraphNode, const EFlowFinishPolicy FinishPolicy);
+	
+	/* Finishes the SubFlow running in the SubGraphNode.
+	 * Optionally: deinitialize instance and remove Flow Asset instance. */
+	void FinishSubFlow(UFlowNode_SubGraph* SubGraphNode, const EFlowFinishPolicy FinishPolicy, const bool bRemoveInstance);
 
 public:
 	UFlowAsset* CreateFlowInstance(const TWeakObjectPtr<UObject> Owner, UFlowAsset* LoadedFlowAsset, FString NewInstanceName = FString());
@@ -114,7 +115,7 @@ public:
 	/* Returns all assets instanced by object from another system like World Settings */
 	UFUNCTION(BlueprintPure, Category = "FlowSubsystem")
 	TMap<UObject*, UFlowAsset*> GetRootInstances() const;
-	
+
 	/* Returns asset instanced by specific object */
 	UFUNCTION(BlueprintPure, Category = "FlowSubsystem")
 	TSet<UFlowAsset*> GetRootInstancesByOwner(const UObject* Owner) const;
@@ -260,6 +261,22 @@ public:
 	 */
 	UFUNCTION(BlueprintPure, Category = "FlowSubsystem", meta = (DeterminesOutputType = "ActorClass"))
 	TMap<AActor*, UFlowComponent*> GetFlowActorsAndComponentsByTags(const FGameplayTagContainer Tags, const EGameplayContainerMatchType MatchType, const TSubclassOf<AActor> ActorClass, const bool bExactMatch = true) const;
+
+	/**
+	 * Returns all registered Flow Components identified by given Identity.
+	 * Note: Class filters are never loaded by this query.
+	 * @param Identity Identity that describes Component and Actor pair
+	 */
+	UFUNCTION(BlueprintPure, Category = "FlowSubsystem")
+	TSet<UFlowComponent*> GetFlowComponentsByIdentity(const struct FFlowIdentity& Identity) const;
+
+	/**
+	 * Returns all registered actors with Flow Component identified by given Identity.
+	 * Note: Class filters are never loaded by this query.
+	 * @param Identity Identity that describes Component and Actor pair
+	 */
+	UFUNCTION(BlueprintPure, Category = "FlowSubsystem")
+	TSet<AActor*> GetFlowActorsByIdentity(const FFlowIdentity& Identity) const;
 
 	/**
 	 * Returns all registered Flow Components identified by given tag
