@@ -18,17 +18,15 @@ public:
 	UFlowNode_NotifyActor();
 
 protected:
-	UPROPERTY(EditAnywhere, Category = "Notify")
+	UPROPERTY(EditAnywhere, Category = "TargetComponent")
 	FGameplayTagContainer IdentityTags;
-	
-	UPROPERTY(EditAnywhere, Category = "Notify")
+
+	UPROPERTY(EditAnywhere, Category = "TargetComponent")
 	EGameplayContainerMatchType MatchType = EGameplayContainerMatchType::All;
-	/**
-	 * If true, identity tags must be an exact match.
-	 * Be careful, setting this to false may be very expensive, as the
-	 * search cost is proportional to the number of registered Gameplay Tags!
-	 */
-	UPROPERTY(EditAnywhere, Category = "Notify")
+
+	/* If true, Flow Component must have exact Identity Tags.
+	 * If false, a child of any Identity Tag also matches. */
+	UPROPERTY(EditAnywhere, Category = "TargetComponent")
 	bool bExactMatch = true;
 	
 	UPROPERTY(EditAnywhere, Category = "Notify")
