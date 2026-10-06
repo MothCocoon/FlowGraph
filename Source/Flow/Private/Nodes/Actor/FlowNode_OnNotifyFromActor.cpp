@@ -21,8 +21,7 @@ void UFlowNode_OnNotifyFromActor::ObserveActor(TWeakObjectPtr<AActor> Actor, TWe
 
 		if (bRetroactive)
 		{
-			const bool NotifyMatches = FlowTypes::HasMatchingTags(Component->GetRecentlySentNotifyTags(), NotifyTags, NotifyMatchType);
-			if (NotifyMatches)
+			if (FlowTypes::HasMatchingTags(Component->GetRecentlySentNotifyTags(), NotifyTags, NotifyMatchType))
 			{
 				OnEventReceived();
 			}
@@ -37,11 +36,16 @@ void UFlowNode_OnNotifyFromActor::ForgetActor(TWeakObjectPtr<AActor> Actor, TWea
 
 void UFlowNode_OnNotifyFromActor::OnNotifyFromComponent(UFlowComponent* Component, const FGameplayTag& Tag)
 {
-	const bool IdentityMatches = FlowTypes::HasMatchingTags(Component->IdentityTags, IdentityTags, IdentityMatchType);
-	if (IdentityMatches)
+	if (FlowTypes::HasMatchingTags(Component->IdentityTags, IdentityTags, IdentityMatchType)) // identity matches?
 	{
-		const bool NotifyMatches = NotifyTags.IsValid() ? FlowTypes::HasMatchingTag(Tag, NotifyTags, NotifyMatchType) : true;
-		if (NotifyMatches)
+		if (NotifyTags.IsValid())
+		{
+			if (FlowTypes::HasMatchingTag(Tag, NotifyTags, NotifyMatchType))
+			{
+				OnEventReceived();
+			}
+		}
+		else
 		{
 			OnEventReceived();
 		}
