@@ -5,6 +5,8 @@
 #include "Nodes/FlowNode.h"
 #include "FlowAsset.h"
 
+#include "EdGraph/EdGraph.h"
+
 #define LOCTEXT_NAMESPACE "FlowMessageLog"
 
 FFlowGraphToken::FOnJumpToNode FFlowGraphToken::OnJumpToNodeRequested;
