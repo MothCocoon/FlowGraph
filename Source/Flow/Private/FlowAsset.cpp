@@ -148,9 +148,22 @@ void UFlowAsset::PreSaveRoot(FObjectPreSaveRootContext ObjectSaveContext)
 	ReconcileBaseAssetParams(FDateTime::Now());
 }
 
-EDataValidationResult UFlowAsset::ValidateAsset(FFlowMessageLog& MessageLog)
+EDataValidationResult UFlowAsset::IsDataValid(FDataValidationContext& Context) const
 {
-	// validate nodes
+	FFlowMessageLog LogResults;
+	const EDataValidationResult Result = ValidateAsset(LogResults);
+
+	for (const TSharedRef<FTokenizedMessage>& Message : LogResults.Messages)
+	{
+		Context.AddMessage(Message);
+	}
+
+	return Result;
+}
+
+EDataValidationResult UFlowAsset::ValidateAsset(FFlowMessageLog& MessageLog) const
+{
+	// validate runtime nodes
 	for (const TPair<FGuid, UFlowNode*>& Node : ObjectPtrDecay(Nodes))
 	{
 		if (IsValid(Node.Value))
@@ -190,6 +203,9 @@ EDataValidationResult UFlowAsset::ValidateAsset(FFlowMessageLog& MessageLog)
 			MessageLog.Error(*ErrorMsg, this);
 		}
 	}
+
+	// validate editor's graph
+	OnValidateGraph.ExecuteIfBound(MessageLog);
 
 	// if at least one error has been logged : mark the asset as invalid
 	for (const TSharedRef<FTokenizedMessage>& Msg : MessageLog.Messages)
@@ -354,7 +370,7 @@ bool UFlowAsset::IsFlowNodeClassInDeniedClasses(const UClass& FlowNodeClass) con
 	return false;
 }
 
-void UFlowAsset::ValidateAddOnTree(UFlowNodeAddOn& AddOn, FFlowMessageLog& MessageLog)
+void UFlowAsset::ValidateAddOnTree(UFlowNodeAddOn& AddOn, FFlowMessageLog& MessageLog) const
 {
 	// Filter unauthorized addon nodes
 	FText FailureReason;
