@@ -73,10 +73,11 @@ public:
 	// --
 
 	UFlowAsset* GetFlowAsset() const;
-	void ValidateAsset(FFlowMessageLog& MessageLog);
+	void ValidateGraphNodes(FFlowMessageLog& MessageLog) const;
 
 	// UObject
 	virtual void Serialize(FArchive& Ar) override;
+	virtual void PostLoad() override;
 	// --
 	
 public:

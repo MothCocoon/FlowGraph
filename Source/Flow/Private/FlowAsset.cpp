@@ -28,9 +28,11 @@
 
 #if WITH_EDITOR
 #include "Nodes/Graph/FlowNode_SetGraphOutput.h"
+
 #include "AssetRegistry/AssetRegistryModule.h"
 #include "AssetToolsModule.h"
 #include "ContentBrowserModule.h"
+#include "Misc/DataValidation.h"
 #include "IContentBrowserSingleton.h"
 #include "Editor.h"
 #include "Editor/EditorEngine.h"
@@ -148,9 +150,22 @@ void UFlowAsset::PreSaveRoot(FObjectPreSaveRootContext ObjectSaveContext)
 	ReconcileBaseAssetParams(FDateTime::Now());
 }
 
-EDataValidationResult UFlowAsset::ValidateAsset(FFlowMessageLog& MessageLog)
+EDataValidationResult UFlowAsset::IsDataValid(FDataValidationContext& Context) const
 {
-	// validate nodes
+	FFlowMessageLog LogResults;
+	const EDataValidationResult Result = ValidateAsset(LogResults);
+
+	for (const TSharedRef<FTokenizedMessage>& Message : LogResults.Messages)
+	{
+		Context.AddMessage(Message);
+	}
+
+	return Result;
+}
+
+EDataValidationResult UFlowAsset::ValidateAsset(FFlowMessageLog& MessageLog) const
+{
+	// validate runtime nodes
 	for (const TPair<FGuid, UFlowNode*>& Node : ObjectPtrDecay(Nodes))
 	{
 		if (IsValid(Node.Value))
@@ -190,6 +205,9 @@ EDataValidationResult UFlowAsset::ValidateAsset(FFlowMessageLog& MessageLog)
 			MessageLog.Error(*ErrorMsg, this);
 		}
 	}
+
+	// validate editor's graph
+	OnValidateGraph.ExecuteIfBound(MessageLog);
 
 	// if at least one error has been logged : mark the asset as invalid
 	for (const TSharedRef<FTokenizedMessage>& Msg : MessageLog.Messages)
@@ -354,7 +372,7 @@ bool UFlowAsset::IsFlowNodeClassInDeniedClasses(const UClass& FlowNodeClass) con
 	return false;
 }
 
-void UFlowAsset::ValidateAddOnTree(UFlowNodeAddOn& AddOn, FFlowMessageLog& MessageLog)
+void UFlowAsset::ValidateAddOnTree(UFlowNodeAddOn& AddOn, FFlowMessageLog& MessageLog) const
 {
 	// Filter unauthorized addon nodes
 	FText FailureReason;
@@ -878,7 +896,7 @@ void UFlowAsset::ReconcileBaseAssetParams(const FDateTime& AssetLastSavedTimesta
 	if (EFlowReconcilePropertiesResult_Classifiers::IsErrorResult(ReconcileResult))
 	{
 		UE_LOG(LogFlow, Error, TEXT("Failed to reconcile BaseAssetParams for %s: %s"),
-			   *BaseAssetParamsPtr->GetPathName(), *UEnum::GetDisplayValueAsText(ReconcileResult).ToString());
+		       *BaseAssetParamsPtr->GetPathName(), *UEnum::GetDisplayValueAsText(ReconcileResult).ToString());
 	}
 }
 #endif
@@ -914,7 +932,8 @@ void UFlowAsset::ClearInstances()
 	{
 		if (ActiveInstances.IsValidIndex(i) && ActiveInstances[i])
 		{
-			ActiveInstances[i]->FinishFlow(EFlowFinishPolicy::Keep);
+			ActiveInstances[i]->FinishFlowInstance(EFlowFinishPolicy::Keep);
+			ActiveInstances[i]->DeinitializeInstance();
 		}
 	}
 
@@ -990,31 +1009,6 @@ void UFlowAsset::InitializeInstance(const TWeakObjectPtr<UObject> InOwner, UFlow
 		}
 
 		NewNodeInstance->InitializeInstance();
-	}
-}
-
-void UFlowAsset::DeinitializeInstance()
-{
-	// These should have been flushed in FinishFlow()
-	check(DeferredTransitionScopes.IsEmpty());
-
-	if (IsInstanceInitialized())
-	{
-		for (const TPair<FGuid, UFlowNode*>& Node : ObjectPtrDecay(Nodes))
-		{
-			if (IsValid(Node.Value))
-			{
-				Node.Value->DeinitializeInstance();
-			}
-		}
-
-		const int32 ActiveInstancesLeft = TemplateAsset->RemoveInstance(this);
-		if (ActiveInstancesLeft == 0 && GetFlowSubsystem())
-		{
-			GetFlowSubsystem()->RemoveInstancedTemplate(TemplateAsset);
-		}
-
-		TemplateAsset = nullptr;
 	}
 }
 
@@ -1155,19 +1149,20 @@ void UFlowAsset::FinishNode(UFlowNode* Node)
 				return;
 			}
 
-			// if this instance is a Root Flow, we need to deregister it from the subsystem first
+			// if this instance is a Root Flow, we need to deregister it from the subsystem first. This will 
+			// finalize and deinitialize the root flow.
 			if (Owner.IsValid())
 			{
 				const TSet<UFlowAsset*>& RootFlowInstances = GetFlowSubsystem()->GetRootInstancesByOwner(Owner.Get());
 				if (RootFlowInstances.Contains(this))
 				{
-					GetFlowSubsystem()->FinishRootFlow(Owner.Get(), TemplateAsset, EFlowFinishPolicy::Keep);
+					GetFlowSubsystem()->FinishAndDeinitializeRootFlow(Owner.Get(), TemplateAsset, EFlowFinishPolicy::Keep);
 
 					return;
 				}
 			}
 
-			FinishFlow(EFlowFinishPolicy::Keep);
+			FinishFlowInstance(EFlowFinishPolicy::Keep);
 		}
 	}
 }
@@ -1182,7 +1177,17 @@ void UFlowAsset::ResetNodes()
 	RecordedNodes.Empty();
 }
 
-void UFlowAsset::FinishFlow(const EFlowFinishPolicy InFinishPolicy, const bool bRemoveInstance /*= true*/)
+void UFlowAsset::FinishFlow(const EFlowFinishPolicy InFinishPolicy, const bool bRemoveInstance)
+{
+	FinishFlowInstance(InFinishPolicy);
+	
+	if (bRemoveInstance)
+	{
+		DeinitializeInstance();
+	}
+}
+
+void UFlowAsset::FinishFlowInstance(const EFlowFinishPolicy InFinishPolicy)
 {
 	FinishPolicy = InFinishPolicy;
 
@@ -1194,12 +1199,36 @@ void UFlowAsset::FinishFlow(const EFlowFinishPolicy InFinishPolicy, const bool b
 		Node->Deactivate();
 	}
 	ActiveNodes.Empty();
+}
 
-	// provides option to finish game-specific logic prior to removing asset instance 
-	if (bRemoveInstance)
+void UFlowAsset::DeinitializeInstance()
+{
+	// These should have been flushed in FinishFlowInstance()
+	check(DeferredTransitionScopes.IsEmpty());
+
+	if (IsInstanceInitialized())
 	{
-		DeinitializeInstance();
+		for (const TPair<FGuid, UFlowNode*>& Node : ObjectPtrDecay(Nodes))
+		{
+			if (IsValid(Node.Value))
+			{
+				Node.Value->DeinitializeInstance();
+			}
+		}
+
+		const int32 ActiveInstancesLeft = TemplateAsset->RemoveInstance(this);
+		if (ActiveInstancesLeft == 0 && GetFlowSubsystem())
+		{
+			GetFlowSubsystem()->RemoveInstancedTemplate(TemplateAsset);
+		}
+
+		TemplateAsset = nullptr;
 	}
+}
+
+ESubGraphFinishPolicy UFlowAsset::GetSubGraphFinishPolicy() const
+{
+	return GetDefault<UFlowSettings>()->SubGraphFinishPolicy;
 }
 
 UFlowSubsystem* UFlowAsset::GetFlowSubsystem() const
@@ -1421,7 +1450,7 @@ void UFlowAsset::CancelAndWarnForUnflushedDeferredTriggers()
 	// In normal execution these should have been flushed via PopDeferredTransitionScope() in TriggerInputDirect
 	// In the debugger they should have been flushed by ResumePIE
 	// Remaining scopes here usually mean:
-	//   - early/abnormal termination (e.g. FinishFlow called from unexpected place)
+	//   - early/abnormal termination (e.g. FinishFlowInstance called from unexpected place)
 	//   - exception/early return before Pop
 	//   - forced deinitialization during active execution (e.g. PIE stop, subsystem cleanup)
 	if (!DeferredTransitionScopes.IsEmpty())
@@ -1441,7 +1470,7 @@ void UFlowAsset::CancelAndWarnForUnflushedDeferredTriggers()
 			{
 				UE_LOG(LogFlow, Warning, TEXT("FlowAsset '%s' is finishing with %d lingering deferred transition scope(s) — dropping them. "
 					"This is usually unexpected and may indicate a bug or abnormal termination."),
-					*GetName(), DeferredTransitionScopes.Num());
+				    *GetName(), DeferredTransitionScopes.Num());
 			}
 
 			TotalDroppedTriggers += Triggers.Num();
@@ -1455,17 +1484,17 @@ void UFlowAsset::CancelAndWarnForUnflushedDeferredTriggers()
 				const FString FromNodeName = FromNode ? FromNode->GetName() : TEXT("<null/destroyed>");
 
 				UE_LOG(LogFlow, Error,
-					TEXT("  → Dropped deferred trigger:\n")
-					TEXT("      To Node: %s (%s)\n")
-					TEXT("      To Pin:  %s\n")
-					TEXT("      From Node: %s (%s)\n")
-					TEXT("      From Pin:  %s"),
-					*ToNodeName,
-					*Trigger.NodeGuid.ToString(),
-					*Trigger.PinName.ToString(),
-					*FromNodeName,
-					*Trigger.FromPin.NodeGuid.ToString(),
-					*Trigger.FromPin.PinName.ToString()
+				       TEXT("  → Dropped deferred trigger:\n")
+				       TEXT("      To Node: %s (%s)\n")
+				       TEXT("      To Pin:  %s\n")
+				       TEXT("      From Node: %s (%s)\n")
+				       TEXT("      From Pin:  %s"),
+				       *ToNodeName,
+				       *Trigger.NodeGuid.ToString(),
+				       *Trigger.PinName.ToString(),
+				       *FromNodeName,
+				       *Trigger.FromPin.NodeGuid.ToString(),
+				       *Trigger.FromPin.PinName.ToString()
 				);
 			}
 		}
