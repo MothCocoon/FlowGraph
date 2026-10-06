@@ -119,7 +119,7 @@ private:
 	TSharedRef<SDockTab> SpawnTab_Search(const FSpawnTabArgs& Args) const;
 	TSharedRef<SDockTab> SpawnTab_ValidationLog(const FSpawnTabArgs& Args) const;
 
-	void DoPresaveAssetUpdate();
+	void DoPreSaveAssetUpdate() const;
 
 public:
 	/* Edits the specified FlowAsset object. */
@@ -159,10 +159,8 @@ public:
 	// --
 #endif
 
-protected:
-	void OnLogTokenClicked(const TSharedRef<class IMessageToken>& Token) const;
-
 public:
 	/* Find in flow */
 	void JumpToNode(const UEdGraphNode* Node) const;
+	void JumpToPin(const UEdGraphPin* Pin) const;
 };

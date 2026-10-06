@@ -1,5 +1,4 @@
 // Copyright https://github.com/MothCocoon/FlowGraph/graphs/contributors
-
 #include "FlowMessageLog.h"
 
 #if WITH_EDITOR
@@ -8,17 +7,21 @@
 
 #define LOCTEXT_NAMESPACE "FlowMessageLog"
 
+FFlowGraphToken::FOnJumpToNode FFlowGraphToken::OnJumpToNodeRequested;
+
 const FName FFlowMessageLog::LogName(TEXT("FlowGraph"));
 
 FFlowGraphToken::FFlowGraphToken(const UFlowAsset* InFlowAsset)
 {
 	CachedText = FText::FromString(InFlowAsset->GetClass()->GetPathName());
+	MessageTokenActivated = FOnMessageTokenActivated::CreateStatic(&FFlowGraphToken::OnTokenActivated);
 }
 
 FFlowGraphToken::FFlowGraphToken(const UFlowNodeBase* InFlowNodeBase)
 	: GraphNode(InFlowNodeBase->GetGraphNode())
 {
 	CachedText = InFlowNodeBase->GetNodeTitle();
+	MessageTokenActivated = FOnMessageTokenActivated::CreateStatic(&FFlowGraphToken::OnTokenActivated);
 }
 
 FFlowGraphToken::FFlowGraphToken(const UEdGraphNode* InGraphNode, const UEdGraphPin* InPin)
@@ -36,6 +39,23 @@ FFlowGraphToken::FFlowGraphToken(const UEdGraphNode* InGraphNode, const UEdGraph
 	else
 	{
 		CachedText = GraphNode->GetNodeTitle(ENodeTitleType::ListView);
+	}
+	MessageTokenActivated = FOnMessageTokenActivated::CreateStatic(&FFlowGraphToken::OnTokenActivated);
+}
+
+void FFlowGraphToken::OnTokenActivated(const TSharedRef<IMessageToken>& InToken)
+{
+	const TSharedRef<FFlowGraphToken> Self = StaticCastSharedRef<FFlowGraphToken>(InToken);
+
+	if (const UEdGraphNode* Node = Self->GetGraphNode())
+	{
+		if (const UEdGraph* Graph = Node->GetGraph())
+		{
+			if (UObject* Asset = Graph->GetOuter())
+			{
+				OnJumpToNodeRequested.ExecuteIfBound(Asset, Node, Self->GetPin());
+			}
+		}
 	}
 }
 
