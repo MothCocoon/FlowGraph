@@ -141,7 +141,7 @@ UFlowAsset* UFlowGraph::GetFlowAsset() const
 
 void UFlowGraph::ValidateAsset(FFlowMessageLog& MessageLog)
 {
-	if (UFlowAsset* FlowAsset = GetFlowAsset())
+	if (const UFlowAsset* FlowAsset = GetFlowAsset())
 	{
 		FlowAsset->ValidateAsset(MessageLog);
 	}

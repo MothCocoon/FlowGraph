@@ -148,6 +148,19 @@ void UFlowAsset::PreSaveRoot(FObjectPreSaveRootContext ObjectSaveContext)
 	ReconcileBaseAssetParams(FDateTime::Now());
 }
 
+EDataValidationResult UFlowAsset::IsDataValid(FDataValidationContext& Context) const
+{
+	FFlowMessageLog LogResults;
+	const EDataValidationResult Result = ValidateAsset(LogResults);
+
+	for (const TSharedRef<FTokenizedMessage>& Message : LogResults.Messages)
+	{
+		Context.AddMessage(Message);
+	}
+
+	return Result;
+}
+
 EDataValidationResult UFlowAsset::ValidateAsset(FFlowMessageLog& MessageLog) const
 {
 	// validate nodes
@@ -202,17 +215,6 @@ EDataValidationResult UFlowAsset::ValidateAsset(FFlowMessageLog& MessageLog) con
 
 	// otherwise, the asset is considered valid (even with warnings or notes)
 	return EDataValidationResult::Valid;
-}
-
-EDataValidationResult UFlowAsset::IsDataValid(FDataValidationContext& Context) const
-{
-	FFlowMessageLog				LogResults;
-	const EDataValidationResult Result = ValidateAsset(LogResults);
-	for (const TSharedRef<FTokenizedMessage>& Message : LogResults.Messages)
-	{
-		Context.AddMessage(Message);
-	}
-	return Result;
 }
 
 bool UFlowAsset::IsNodeOrAddOnClassAllowed(const UClass* FlowNodeOrAddOnClass, FText* OutOptionalFailureReason) const

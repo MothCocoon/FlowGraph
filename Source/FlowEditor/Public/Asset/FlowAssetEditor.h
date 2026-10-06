@@ -119,7 +119,7 @@ private:
 	TSharedRef<SDockTab> SpawnTab_Search(const FSpawnTabArgs& Args) const;
 	TSharedRef<SDockTab> SpawnTab_ValidationLog(const FSpawnTabArgs& Args) const;
 
-	void DoPresaveAssetUpdate();
+	void DoPreSaveAssetUpdate() const;
 
 public:
 	/* Edits the specified FlowAsset object. */
