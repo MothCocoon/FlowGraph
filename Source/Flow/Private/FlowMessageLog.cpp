@@ -1,5 +1,4 @@
 // Copyright https://github.com/MothCocoon/FlowGraph/graphs/contributors
-
 #include "FlowMessageLog.h"
 
 #if WITH_EDITOR
@@ -48,20 +47,16 @@ void FFlowGraphToken::OnTokenActivated(const TSharedRef<IMessageToken>& InToken)
 {
 	const TSharedRef<FFlowGraphToken> Self = StaticCastSharedRef<FFlowGraphToken>(InToken);
 
-	const UEdGraphNode* Node = Self->GetGraphNode();
-	if (!Node)
+	if (const UEdGraphNode* Node = Self->GetGraphNode())
 	{
-		return;
+		if (const UEdGraph* Graph = Node->GetGraph())
+		{
+			if (UObject* Asset = Graph->GetOuter())
+			{
+				OnJumpToNodeRequested.ExecuteIfBound(Asset, Node, Self->GetPin());
+			}
+		}
 	}
-
-	const UEdGraph* Graph = Node->GetGraph();
-	UObject*		Asset = Graph ? Graph->GetOuter() : nullptr;
-	if (!Asset)
-	{
-		return;
-	}
-
-	FFlowGraphToken::OnJumpToNodeRequested.ExecuteIfBound(Asset, Node, Self->GetPin());
 }
 
 TSharedPtr<IMessageToken> FFlowGraphToken::Create(const UFlowAsset* InFlowAsset, FTokenizedMessage& Message)

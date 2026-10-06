@@ -99,7 +99,7 @@ void UFlowComponent::UnregisterWithFlowSubsystem()
 {
 	if (UFlowSubsystem* FlowSubsystem = GetFlowSubsystem())
 	{
-		FlowSubsystem->FinishAllRootFlows(this, EFlowFinishPolicy::Keep);
+		FlowSubsystem->FinishAndDeinitializeAllRootFlows(this, EFlowFinishPolicy::Keep);
 		FlowSubsystem->UnregisterComponent(this);
 	}
 }
@@ -461,7 +461,7 @@ void UFlowComponent::FinishRootFlow(UFlowAsset* TemplateAsset, const EFlowFinish
 {
 	if (UFlowSubsystem* FlowSubsystem = GetFlowSubsystem())
 	{
-		FlowSubsystem->FinishRootFlow(this, TemplateAsset, FinishPolicy);
+		FlowSubsystem->FinishAndDeinitializeRootFlow(this, TemplateAsset, FinishPolicy);
 	}
 }
 

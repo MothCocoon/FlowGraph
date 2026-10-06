@@ -3,7 +3,6 @@
 #include "Asset/FlowAssetEditor.h"
 
 #include "FlowEditorCommands.h"
-#include "FlowEditorLogChannels.h"
 
 #include "Asset/FlowAssetEditorContext.h"
 #include "Asset/FlowAssetToolbar.h"
@@ -22,7 +21,6 @@
 #include "IMessageLogListing.h"
 #include "Kismet2/DebuggerCommands.h"
 #include "MessageLogModule.h"
-#include "Misc/UObjectToken.h"
 #include "Modules/ModuleManager.h"
 #include "PropertyEditorModule.h"
 #include "ToolMenus.h"
@@ -103,6 +101,8 @@ void FFlowAssetEditor::RegisterTabSpawners(const TSharedRef<class FTabManager>& 
 {
 	WorkspaceMenuCategory = InTabManager->AddLocalWorkspaceMenuCategory(LOCTEXT("WorkspaceMenu_FlowAssetEditor", "Flow Editor"));
 	const auto WorkspaceMenuCategoryRef = WorkspaceMenuCategory.ToSharedRef();
+	
+	DetailsView->SetHostTabManager(InTabManager);
 
 	FAssetEditorToolkit::RegisterTabSpawners(InTabManager);
 
@@ -183,19 +183,19 @@ void FFlowAssetEditor::PostRegenerateMenusAndToolbars()
 
 void FFlowAssetEditor::SaveAsset_Execute()
 {
-	DoPresaveAssetUpdate();
+	DoPreSaveAssetUpdate();
 
 	FAssetEditorToolkit::SaveAsset_Execute();
 }
 
 void FFlowAssetEditor::SaveAssetAs_Execute()
 {
-	DoPresaveAssetUpdate();
+	DoPreSaveAssetUpdate();
 
 	FAssetEditorToolkit::SaveAssetAs_Execute();
 }
 
-void FFlowAssetEditor::DoPresaveAssetUpdate()
+void FFlowAssetEditor::DoPreSaveAssetUpdate() const
 {
 	if (IsValid(FlowAsset))
 	{
@@ -448,11 +448,7 @@ void FFlowAssetEditor::ValidateAsset_Internal()
 
 void FFlowAssetEditor::ValidateAsset(FFlowMessageLog& MessageLog)
 {
-	UFlowGraph* FlowGraph = Cast<UFlowGraph>(FlowAsset->GetGraph());
-	if (FlowGraph)
-	{
-		FlowGraph->ValidateAsset(MessageLog);
-	}
+	FlowAsset->ValidateAsset(MessageLog);
 }
 
 void FFlowAssetEditor::SearchInAsset()
@@ -568,9 +564,9 @@ void FFlowAssetEditor::JumpToInnerObject(UObject* InnerObject)
 
 void FFlowAssetEditor::JumpToNode(const UEdGraphNode* Node) const
 {
-	if (GetFlowGraph().IsValid())
+	if (GraphEditor.IsValid())
 	{
-		GetFlowGraph()->JumpToNode(Node, false);
+		GraphEditor->JumpToNode(Node, false);
 	}
 }
 
