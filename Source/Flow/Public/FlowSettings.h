@@ -5,6 +5,8 @@
 #include "StructUtils/InstancedStruct.h"
 #include "Types/FlowActorSpawnQueueMode.h"
 #include "UObject/SoftObjectPath.h"
+
+#include "FlowTypes.h"
 #include "FlowSettings.generated.h"
 
 struct FFlowPinConnectionPolicy;
@@ -36,6 +38,11 @@ public:
 	UPROPERTY(EditAnywhere, config, Category = "Default Policies", DisplayName = "Preload Policy", NoClear, meta = (ExcludeBaseStruct, BaseStruct = "/Script/Flow.FlowPreloadPolicy"))
 	FInstancedStruct PreloadPolicy;
 
+	/* What happens to the Flow Asset instance created by SubGraph node after the SubGraph finished.
+	 * Flow Asset class can override it. */
+	UPROPERTY(Config, EditAnywhere, Category = "Flow")
+	ESubGraphFinishPolicy SubGraphFinishPolicy;
+	
 	/* If True, defer the Triggered Outputs for a FlowAsset while it is currently processing a TriggeredInput.
      * If False, use legacy behavior for backward compatability. */
 	UPROPERTY(Config, EditAnywhere, Category = "Flow")
