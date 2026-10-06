@@ -13,7 +13,6 @@
 
 #if WITH_EDITOR
 #include "FlowMessageLog.h"
-#include "Misc/DataValidation.h"
 #endif
 
 #include "StructUtils/InstancedStruct.h"
@@ -105,7 +104,6 @@ public:
 	UEdGraph* GetGraph() const { return FlowGraph; }
 
 	FFlowGraphValidationEvent OnValidateGraph;
-
 	virtual EDataValidationResult IsDataValid(FDataValidationContext& Context) const override;
 	virtual EDataValidationResult ValidateAsset(FFlowMessageLog& MessageLog) const;
 
