@@ -14,7 +14,7 @@ void UFlowNode_Finish::ExecuteInput(const FName& PinName)
 {
 	CommitOutputDataPinValues();
 
-	// this will call FinishFlow()
+	// this will call FinishFlowInstance()
 	Finish();
 }
 
