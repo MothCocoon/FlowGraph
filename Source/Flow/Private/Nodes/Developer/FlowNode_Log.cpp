@@ -108,3 +108,14 @@ void UFlowNode_Log::UpdateNodeConfigText_Implementation()
 #endif
 
 #undef LOCTEXT_NAMESPACE
+
+#if WITH_EDITOR
+const FFlowAgentDoc& UFlowNode_Log::GetAgentDoc() const
+{
+	static const FFlowAgentDoc Doc = MakeAgentDoc(
+		/*Guidance*/ TEXT("A debugging aid, not intended to drive shipping gameplay logic - use it to trace graph execution during development, then remove or gate it before shipping. The Message input pin overrides the Message property when connected; Duration and TextColor only apply when bPrintToScreen is enabled."),
+		/*Tags*/     { TEXT("developer"), TEXT("debug"), TEXT("logging") },
+		/*Articles*/ {  });
+	return Doc;
+}
+#endif

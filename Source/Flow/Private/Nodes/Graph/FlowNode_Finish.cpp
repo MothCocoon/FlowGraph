@@ -17,3 +17,14 @@ void UFlowNode_Finish::ExecuteInput(const FName& PinName)
 	// this will call FinishFlowInstance()
 	Finish();
 }
+
+#if WITH_EDITOR
+const FFlowAgentDoc& UFlowNode_Finish::GetAgentDoc() const
+{
+	static const FFlowAgentDoc Doc = MakeAgentDoc(
+		/*Guidance*/ TEXT("Place one at every logical end point of the graph (success, failure, timeout, etc.) - multiple Finish nodes are allowed, and whichever one is triggered first wins."),
+		/*Tags*/     { TEXT("graph"), TEXT("finish"), TEXT("output") },
+		/*Articles*/ {  });
+	return Doc;
+}
+#endif

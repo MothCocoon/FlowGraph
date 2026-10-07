@@ -63,3 +63,14 @@ bool UFlowNodeAddOn_PredicateNOT::EvaluatePredicate_Implementation() const
 
 	return bResult;
 }
+
+#if WITH_EDITOR
+const FFlowAgentDoc& UFlowNodeAddOn_PredicateNOT::GetAgentDoc() const
+{
+	static const FFlowAgentDoc Doc = MakeAgentDoc(
+		/*Guidance*/ TEXT("With zero attached children the underlying AND across no predicates is vacuously true, so NOT of that is false - an empty NOT block always evaluates false, not true."),
+		/*Tags*/     { TEXT("predicate"), TEXT("not"), TEXT("logic") },
+		/*Articles*/ {  });
+	return Doc;
+}
+#endif
