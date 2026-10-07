@@ -102,15 +102,11 @@ public:
 	void SetupForEditing();
 
 	UEdGraph* GetGraph() const { return FlowGraph; }
+	virtual TSubclassOf<UFlowAsset> GetDefaultFlowAssetForSubgraphs() const { return GetClass(); }
 
-	FFlowGraphValidationEvent OnValidateGraph;
-	virtual EDataValidationResult IsDataValid(FDataValidationContext& Context) const override;
-	virtual EDataValidationResult ValidateAsset(FFlowMessageLog& MessageLog) const;
-
+public:	
 	/* Returns whether the node class is allowed in this flow asset. */
 	bool IsNodeOrAddOnClassAllowed(const UClass* FlowNodeClass, FText* OutOptionalFailureReason = nullptr) const;
-
-	virtual TSubclassOf<UFlowAsset> GetDefaultFlowAssetForSubgraphs() const { return GetClass(); }
 
 protected:
 	bool CanFlowNodeClassBeUsedByFlowAsset(const UClass& FlowNodeClass) const;
@@ -119,6 +115,11 @@ protected:
 
 	bool IsFlowNodeClassInAllowedClasses(const UClass& FlowNodeClass, const TSubclassOf<UFlowNodeBase>& RequiredAncestor = nullptr) const;
 	bool IsFlowNodeClassInDeniedClasses(const UClass& FlowNodeClass) const;
+
+public:
+	FFlowGraphValidationEvent OnValidateGraph;
+	virtual EDataValidationResult IsDataValid(FDataValidationContext& Context) const override;
+	virtual EDataValidationResult ValidateAsset(FFlowMessageLog& MessageLog) const;
 
 private:
 	/* Validates every direct child attachment on OwnerNode and recursively validates child trees. */
@@ -216,6 +217,12 @@ protected:
 public:
 	UFUNCTION(BlueprintPure, Category = "FlowAsset")
 	virtual UFlowNode* GetDefaultEntryNode() const;
+	
+	/* Re-mints the NodeGuid of any UFlowNodeAddOn (at any nesting depth) whose Guid collides with
+	 * one already seen earlier in the walk, keeping the first occurrence of each Guid unchanged.
+	 * Called from PreSaveRoot so every explicit save self-heals.
+	 * Returns the number of AddOns that were re-minted. */
+	int32 RepairDuplicateAddOnGuids() const;
 
 //////////////////////////////////////////////////////////////////////////
 // Custom Inputs/Outputs
