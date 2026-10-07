@@ -12,6 +12,8 @@
 
 UFlowNodeAddOn::UFlowNodeAddOn()
 {
+	SetGuid(FGuid::NewGuid());
+
 #if WITH_EDITOR
 	NodeDisplayStyle = FlowNodeStyle::AddOn;
 #endif
