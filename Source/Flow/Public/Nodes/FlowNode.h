@@ -81,6 +81,7 @@ public:
 	// --
 #endif
 
+public:
 	/* Returns a random seed suitable for this flow node,
 	 * by default based on the node Guid,
 	 * but may be overridden in subclasses to supply some other value. */
