@@ -122,6 +122,9 @@ public:
 	virtual EDataValidationResult ValidateAsset(FFlowMessageLog& MessageLog) const;
 
 private:
+	/* Validates every direct child attachment on OwnerNode and recursively validates child trees. */
+	void ValidateAddOnChildren(UFlowNodeBase& OwnerNode, FFlowMessageLog& MessageLog);
+
 	/* Recursively validates the given addon and its children. */
 	void ValidateAddOnTree(UFlowNodeAddOn& AddOn, FFlowMessageLog& MessageLog) const;
 #endif

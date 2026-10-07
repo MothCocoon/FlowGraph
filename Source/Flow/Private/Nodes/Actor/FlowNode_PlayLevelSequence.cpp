@@ -396,3 +396,14 @@ void UFlowNode_PlayLevelSequence::GrabDebugSnapshot(struct FVisualLogEntry* Snap
 	Snapshot->Status.Add(NewCategory);
 }
 #endif
+
+#if WITH_EDITOR
+const FFlowAgentDoc& UFlowNode_PlayLevelSequence::GetAgentDoc() const
+{
+	static const FFlowAgentDoc Doc = MakeAgentDoc(
+		/*Guidance*/ TEXT("Attach LevelSequenceActorBinding AddOns to override named sequence actor bindings before playback begins. Enable bUseGraphOwnerAsTransformOrigin to play the sequence relative to the actor that created the root flow instance rather than world origin."),
+		/*Tags*/     { TEXT("actor"), TEXT("sequence"), TEXT("cutscene") },
+		/*Articles*/ {  });
+	return Doc;
+}
+#endif

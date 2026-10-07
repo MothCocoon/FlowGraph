@@ -332,6 +332,35 @@ EFlowAddOnAcceptResult UFlowNodeBase::AcceptFlowNodeAddOnChild_Implementation(
 	return EFlowAddOnAcceptResult::Undetermined;
 }
 
+bool UFlowNodeBase::HasOtherDirectAddOnChildMatching(
+	const UClass& ClassOrInterface,
+	const UFlowNodeAddOn* IgnoredAddOn,
+	const TArray<UFlowNodeAddOn*>& AdditionalAddOnsToAssumeAreChildren) const
+{
+	const auto IsOtherMatchingAddOn = [&ClassOrInterface, IgnoredAddOn](const UFlowNodeAddOn* AddOn)
+	{
+		return IsValid(AddOn) && AddOn != IgnoredAddOn && AddOn->IsClassOrImplementsInterface(ClassOrInterface);
+	};
+
+	for (const UFlowNodeAddOn* AddOn : GetFlowNodeAddOnChildren())
+	{
+		if (IsOtherMatchingAddOn(AddOn))
+		{
+			return true;
+		}
+	}
+
+	for (const UFlowNodeAddOn* AddOn : AdditionalAddOnsToAssumeAreChildren)
+	{
+		if (IsOtherMatchingAddOn(AddOn))
+		{
+			return true;
+		}
+	}
+
+	return false;
+}
+
 #if WITH_EDITOR
 EFlowAddOnAcceptResult UFlowNodeBase::CheckAcceptFlowNodeAddOnChild(
 	const UFlowNodeAddOn* AddOnTemplate,

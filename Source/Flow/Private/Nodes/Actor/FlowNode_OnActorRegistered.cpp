@@ -11,3 +11,14 @@ void UFlowNode_OnActorRegistered::ObserveActor(TWeakObjectPtr<AActor> Actor, TWe
 		OnEventReceived();
 	}
 }
+
+#if WITH_EDITOR
+const FFlowAgentDoc& UFlowNode_OnActorRegistered::GetAgentDoc() const
+{
+	static const FFlowAgentDoc Doc = MakeAgentDoc(
+		/*Guidance*/ TEXT("Use to react to an actor spawning or becoming relevant, rather than polling for its existence. Pairs with On Actor Unregistered for the corresponding disappearance event."),
+		/*Tags*/     { TEXT("actor"), TEXT("event"), TEXT("bind") },
+		/*Articles*/ {  });
+	return Doc;
+}
+#endif

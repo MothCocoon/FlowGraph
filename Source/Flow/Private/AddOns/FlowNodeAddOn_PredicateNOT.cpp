@@ -17,7 +17,10 @@ EFlowAddOnAcceptResult UFlowNodeAddOn_PredicateNOT::AcceptFlowNodeAddOnChild_Imp
 	const UFlowNodeAddOn* AddOnTemplate,
 	const TArray<UFlowNodeAddOn*>& AdditionalAddOnsToAssumeAreChildren) const
 {
-	if (AddOns.Num() >= 1 || !AdditionalAddOnsToAssumeAreChildren.IsEmpty())
+	if (HasOtherDirectAddOnChildMatching(
+		*UFlowNodeAddOn::StaticClass(),
+		AddOnTemplate,
+		AdditionalAddOnsToAssumeAreChildren))
 	{
 		// Must not have more than one child Add-On under any circumstances
 		return EFlowAddOnAcceptResult::Reject;
@@ -63,3 +66,14 @@ bool UFlowNodeAddOn_PredicateNOT::EvaluatePredicate_Implementation() const
 
 	return bResult;
 }
+
+#if WITH_EDITOR
+const FFlowAgentDoc& UFlowNodeAddOn_PredicateNOT::GetAgentDoc() const
+{
+	static const FFlowAgentDoc Doc = MakeAgentDoc(
+		/*Guidance*/ TEXT("With zero attached children the underlying AND across no predicates is vacuously true, so NOT of that is false - an empty NOT block always evaluates false, not true."),
+		/*Tags*/     { TEXT("predicate"), TEXT("not"), TEXT("logic") },
+		/*Articles*/ {  });
+	return Doc;
+}
+#endif
