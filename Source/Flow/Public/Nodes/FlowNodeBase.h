@@ -95,6 +95,18 @@ public:
 // Node
 
 public:
+	/* Stable identity persisted across saves.
+	 * Nodes inherit it from the graph node.
+	 * AddOns mint their identity at construction. */
+	UPROPERTY()
+	FGuid NodeGuid;
+
+	UFUNCTION(BlueprintCallable, Category = "FlowNode")
+	void SetGuid(const FGuid& NewGuid) { NodeGuid = NewGuid; }
+
+	UFUNCTION(BlueprintPure, Category = "FlowNode")
+	const FGuid& GetGuid() const { return NodeGuid; }
+
 	// UObject
 	virtual UWorld* GetWorld() const override;
 	// --
@@ -137,9 +149,6 @@ public:
 	/* Returns a random seed suitable for this flow node base. */
 	UFUNCTION(BlueprintPure, Category = "FlowNode")
 	virtual int32 GetRandomSeed() const PURE_VIRTUAL(GetRandomSeed, return 0;);
-
-	/* Returns the owning top-level Flow node. */
-	virtual const UFlowNode* GetParentNode() const PURE_VIRTUAL(GetParentNode, return nullptr;);
 
 //////////////////////////////////////////////////////////////////////////
 // Pins	

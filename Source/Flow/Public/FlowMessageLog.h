@@ -23,7 +23,12 @@ private:
 	explicit FFlowGraphToken(const UFlowNodeBase* InFlowNodeBase);
 	explicit FFlowGraphToken(const UEdGraphNode* InGraphNode, const UEdGraphPin* InPin);
 
+	static void OnTokenActivated(const TSharedRef<IMessageToken>& InToken);
+
 public:
+	DECLARE_DELEGATE_ThreeParams(FOnJumpToNode, UObject* /*Asset*/, const UEdGraphNode* /*Node*/, const UEdGraphPin* /*Pin*/);
+	static FOnJumpToNode OnJumpToNodeRequested;
+	
 	/** Factory method, tokens can only be constructed as shared refs */
 	static TSharedPtr<IMessageToken> Create(const UFlowAsset* InFlowAsset, FTokenizedMessage& Message);
 	static TSharedPtr<IMessageToken> Create(const UFlowNodeBase* InFlowNodeBase, FTokenizedMessage& Message);

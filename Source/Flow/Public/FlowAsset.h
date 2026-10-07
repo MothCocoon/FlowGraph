@@ -23,8 +23,6 @@
 
 class UFlowNode_CustomOutput;
 class UFlowNode_CustomInput;
-class UFlowNode_SubGraph;
-class UFlowSubsystem;
 struct FFlowPreloadPolicy;
 struct FFlowPinConnectionPolicy;
 
@@ -38,6 +36,10 @@ DECLARE_DELEGATE(FFlowGraphEvent);
 DECLARE_DELEGATE_TwoParams(FFlowSignalEvent, UFlowNode* /*FlowNode*/, const FName& /*PinName*/);
 #endif
 
+#if WITH_EDITOR
+DECLARE_DELEGATE_OneParam(FFlowGraphValidationEvent, FFlowMessageLog& /*MessageLog*/);
+#endif
+
 /**
  * Asset containing Flow nodes organized as non-linear graph.
  */
@@ -48,7 +50,6 @@ class FLOW_API UFlowAsset : public UObject
 
 public:
 	friend class UFlowNode;
-	friend class UFlowNode_CustomOutput;
 	friend class UFlowNode_SubGraph;
 	friend class UFlowSubsystem;
 
@@ -101,13 +102,11 @@ public:
 	void SetupForEditing();
 
 	UEdGraph* GetGraph() const { return FlowGraph; }
+	virtual TSubclassOf<UFlowAsset> GetDefaultFlowAssetForSubgraphs() const { return GetClass(); }
 
-	virtual EDataValidationResult ValidateAsset(FFlowMessageLog& MessageLog);
-
+public:	
 	/* Returns whether the node class is allowed in this flow asset. */
 	bool IsNodeOrAddOnClassAllowed(const UClass* FlowNodeClass, FText* OutOptionalFailureReason = nullptr) const;
-
-	virtual TSubclassOf<UFlowAsset> GetDefaultFlowAssetForSubgraphs() const { return GetClass(); }
 
 	/* Sub-classes can override once they support edits in PIE. Called by the Asset Editor. */
 	virtual bool CanEditInPIE() const { return false; }
@@ -120,9 +119,14 @@ protected:
 	bool IsFlowNodeClassInAllowedClasses(const UClass& FlowNodeClass, const TSubclassOf<UFlowNodeBase>& RequiredAncestor = nullptr) const;
 	bool IsFlowNodeClassInDeniedClasses(const UClass& FlowNodeClass) const;
 
+public:
+	FFlowGraphValidationEvent OnValidateGraph;
+	virtual EDataValidationResult IsDataValid(FDataValidationContext& Context) const override;
+	virtual EDataValidationResult ValidateAsset(FFlowMessageLog& MessageLog) const;
+
 private:
 	/* Recursively validates the given addon and its children. */
-	void ValidateAddOnTree(UFlowNodeAddOn& AddOn, FFlowMessageLog& MessageLog);
+	void ValidateAddOnTree(UFlowNodeAddOn& AddOn, FFlowMessageLog& MessageLog) const;
 #endif
 
 //////////////////////////////////////////////////////////////////////////
@@ -213,6 +217,12 @@ protected:
 public:
 	UFUNCTION(BlueprintPure, Category = "FlowAsset")
 	virtual UFlowNode* GetDefaultEntryNode() const;
+	
+	/* Re-mints the NodeGuid of any UFlowNodeAddOn (at any nesting depth) whose Guid collides with
+	 * one already seen earlier in the walk, keeping the first occurrence of each Guid unchanged.
+	 * Called from PreSaveRoot so every explicit save self-heals.
+	 * Returns the number of AddOns that were re-minted. */
+	int32 RepairDuplicateAddOnGuids() const;
 
 //////////////////////////////////////////////////////////////////////////
 // Custom Inputs/Outputs
@@ -386,7 +396,6 @@ protected:
 
 public:
 	virtual void InitializeInstance(const TWeakObjectPtr<UObject> InOwner, UFlowAsset& InTemplateAsset);
-	virtual void DeinitializeInstance();
 	bool IsInstanceInitialized() const { return IsValid(TemplateAsset); }
 
 	virtual FName GetInstanceName() const;
@@ -429,7 +438,14 @@ protected:
 	void ResetNodes();
 
 public:
-	virtual void FinishFlow(const EFlowFinishPolicy InFinishPolicy, const bool bRemoveInstance = true);
+	UE_DEPRECATED(5.6, "Method replaced with FinishFlowInstance and (if bRemoveInstance == true) separate call to DeinitializeInstance.")
+	void FinishFlow(const EFlowFinishPolicy InFinishPolicy, const bool bRemoveInstance = true);
+
+	virtual void FinishFlowInstance(const EFlowFinishPolicy InFinishPolicy);
+	virtual void DeinitializeInstance();
+
+	/* Allow subclasses to override the project-wide SubGraph finish policy */
+	virtual ESubGraphFinishPolicy GetSubGraphFinishPolicy() const;
 
 public:
 	UFlowSubsystem* GetFlowSubsystem() const;

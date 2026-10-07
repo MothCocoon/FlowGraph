@@ -12,10 +12,31 @@
 
 UFlowNodeAddOn::UFlowNodeAddOn()
 {
+	SetGuid(FGuid::NewGuid());
+
 #if WITH_EDITOR
 	NodeDisplayStyle = FlowNodeStyle::AddOn;
 #endif
 }
+
+#if WITH_EDITOR
+void UFlowNodeAddOn::PostDuplicate(bool bDuplicateForPIE)
+{
+	Super::PostDuplicate(bDuplicateForPIE);
+
+	if (!bDuplicateForPIE)
+	{
+		SetGuid(FGuid::NewGuid());
+	}
+}
+
+void UFlowNodeAddOn::PostEditImport()
+{
+	Super::PostEditImport();
+
+	SetGuid(FGuid::NewGuid());
+}
+#endif
 
 void UFlowNodeAddOn::InitializeInstance()
 {
