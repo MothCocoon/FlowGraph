@@ -147,3 +147,14 @@ FText UFlowNodeAddOn_SwitchCase::K2_GetNodeTitle_Implementation() const
 }
 
 #undef LOCTEXT_NAMESPACE
+
+#if WITH_EDITOR
+const FFlowAgentDoc& UFlowNodeAddOn_SwitchCase::GetAgentDoc() const
+{
+	static const FFlowAgentDoc Doc = MakeAgentDoc(
+		/*Guidance*/ TEXT("BranchCombinationRule only governs this case's own child predicates, not how the owning Switch node picks among multiple passing cases - that behavior lives on the parent node. A case with no attached predicates and the default AND rule passes unconditionally."),
+		/*Tags*/     { TEXT("switch"), TEXT("case"), TEXT("predicate") },
+		/*Articles*/ {  });
+	return Doc;
+}
+#endif
