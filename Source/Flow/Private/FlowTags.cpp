@@ -20,4 +20,5 @@ UE_DEFINE_GAMEPLAY_TAG(FlowNodeStyle::AddOn, "Flow.NodeStyle.AddOn");
 UE_DEFINE_GAMEPLAY_TAG(FlowNodeStyle::AddOn_PerSpawnedActor, "Flow.NodeStyle.AddOn.PerSpawnedActor");
 UE_DEFINE_GAMEPLAY_TAG(FlowNodeStyle::AddOn_Predicate, "Flow.NodeStyle.AddOn.Predicate");
 UE_DEFINE_GAMEPLAY_TAG(FlowNodeStyle::AddOn_Predicate_Composite, "Flow.NodeStyle.AddOn.Predicate.Composite");
+UE_DEFINE_GAMEPLAY_TAG(FlowNodeStyle::AddOn_SelectCase, "Flow.NodeStyle.AddOn.SelectCase");
 UE_DEFINE_GAMEPLAY_TAG(FlowNodeStyle::AddOn_SwitchCase, "Flow.NodeStyle.AddOn.SwitchCase");

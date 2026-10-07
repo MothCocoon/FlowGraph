@@ -140,4 +140,13 @@ FString UFlowNode_ExecutionMultiGate::GetNodeDescription() const
 
 	return Result;
 }
+
+const FFlowAgentDoc& UFlowNode_ExecutionMultiGate::GetAgentDoc() const
+{
+	static const FFlowAgentDoc Doc = MakeAgentDoc(
+		/*Guidance*/ TEXT("Enable bLoop to allow the cycle to wrap back to already-fired outputs without an explicit Reset; leave it off if each output should only ever fire once. StartIndex chooses which pin fires first."),
+		/*Tags*/     { TEXT("route"), TEXT("multigate"), TEXT("random") },
+		/*Articles*/ {  });
+	return Doc;
+}
 #endif

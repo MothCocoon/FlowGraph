@@ -253,7 +253,14 @@ UFlowAsset* UFlowNodeBase::GetFlowAsset() const
 {
 	// In the case of an AddOn, we want our containing FlowNode's Outer, not our own
 	const UFlowNode* FlowNode = GetFlowNodeSelfOrOwner();
-	return FlowNode && FlowNode->GetOuter() ? Cast<UFlowAsset>(FlowNode->GetOuter()) : Cast<UFlowAsset>(GetOuter());
+	if (IsValid(FlowNode))
+	{
+		UObject* Outer = FlowNode->GetOuter();
+
+		return Cast<UFlowAsset>(Outer);
+	}
+
+	return Cast<UFlowAsset>(GetOuter());
 }
 
 const UFlowNode* UFlowNodeBase::GetFlowNodeSelfOrOwner() const
@@ -330,6 +337,35 @@ EFlowAddOnAcceptResult UFlowNodeBase::AcceptFlowNodeAddOnChild_Implementation(
 {
 	// Subclasses may override this function to allow AddOn children classes
 	return EFlowAddOnAcceptResult::Undetermined;
+}
+
+bool UFlowNodeBase::HasOtherDirectAddOnChildMatching(
+	const UClass& ClassOrInterface,
+	const UFlowNodeAddOn* IgnoredAddOn,
+	const TArray<UFlowNodeAddOn*>& AdditionalAddOnsToAssumeAreChildren) const
+{
+	const auto IsOtherMatchingAddOn = [&ClassOrInterface, IgnoredAddOn](const UFlowNodeAddOn* AddOn)
+	{
+		return IsValid(AddOn) && AddOn != IgnoredAddOn && AddOn->IsClassOrImplementsInterface(ClassOrInterface);
+	};
+
+	for (const UFlowNodeAddOn* AddOn : GetFlowNodeAddOnChildren())
+	{
+		if (IsOtherMatchingAddOn(AddOn))
+		{
+			return true;
+		}
+	}
+
+	for (const UFlowNodeAddOn* AddOn : AdditionalAddOnsToAssumeAreChildren)
+	{
+		if (IsOtherMatchingAddOn(AddOn))
+		{
+			return true;
+		}
+	}
+
+	return false;
 }
 
 #if WITH_EDITOR

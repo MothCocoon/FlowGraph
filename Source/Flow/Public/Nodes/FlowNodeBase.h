@@ -9,6 +9,7 @@
 #include "Interfaces/FlowDataPinValueOwnerInterface.h"
 #include "FlowMessageLog.h"
 #include "FlowTags.h" // used by subclasses
+#include "Nodes/FlowAgentDoc.h"
 #include "FlowTypes.h"
 #include "Types/FlowDataPinResults.h"
 #include "Types/FlowPinConnectionChange.h"
@@ -51,7 +52,7 @@ struct FLOW_API FFlowNodeOverlayIcon
 	/* Name of the brush to use for the icon */
 	UPROPERTY()
 	FName BrushName = NAME_None;
-	
+
 	/* Offset from the top-left corner of the node (position X moves right, positive Y moves down) */
 	UPROPERTY()
 	FVector2D Offset = FVector2D::ZeroVector;
@@ -150,8 +151,21 @@ public:
 	UFUNCTION(BlueprintPure, Category = "FlowNode")
 	virtual int32 GetRandomSeed() const PURE_VIRTUAL(GetRandomSeed, return 0;);
 
+	/* Stable identity persisted across saves. For UFlowNode, inherits from graph node; for
+	 * UFlowNodeAddOn, auto-minted in constructor. Used by Flow Courier to upsert/delete individual
+	 * addons. Name-keyed serialization means no CoreRedirect needed. */
+	UPROPERTY()
+	FGuid NodeGuid;
+
+public:
+	UFUNCTION(BlueprintCallable, Category = "FlowNode")
+	void SetGuid(const FGuid& NewGuid) { NodeGuid = NewGuid; }
+
+	UFUNCTION(BlueprintPure, Category = "FlowNode")
+	const FGuid& GetGuid() const { return NodeGuid; }
+
 //////////////////////////////////////////////////////////////////////////
-// Pins	
+// Pins
 
 public:
 	static const FFlowPin* FindFlowPinByName(const FName& PinName, const TArray<FFlowPin>& FlowPins);
@@ -159,7 +173,7 @@ public:
 	virtual bool IsSupportedInputPinName(const FName& PinName) const PURE_VIRTUAL(IsSupportedInputPinName, return true;);
 
 #if WITH_EDITOR
-public:	
+public:
 	// IFlowContextPinSupplierInterface
 	virtual bool SupportsContextPins() const override { return IFlowContextPinSupplierInterface::SupportsContextPins(); }
 	virtual TArray<FFlowPin> GetContextInputs() const override;
@@ -168,20 +182,20 @@ public:
 #endif
 
 	/** Called in the editor when this node's pin connections change. */
-	UFUNCTION(BlueprintImplementableEvent, Category = "FlowNode", DisplayName = "On Editor Pin Connections Changed")	
+	UFUNCTION(BlueprintImplementableEvent, Category = "FlowNode", DisplayName = "On Editor Pin Connections Changed")
 	void K2_OnEditorPinConnectionsChanged(const TArray<FFlowPinConnectionChange>& Changes);
 	virtual void OnEditorPinConnectionsChanged(const TArray<FFlowPinConnectionChange>& Changes) { K2_OnEditorPinConnectionsChanged(Changes); }
 
 //////////////////////////////////////////////////////////////////////////
 // Owners
 
-public:	
+public:
 	UFUNCTION(BlueprintPure, Category = "FlowNode")
 	UFlowAsset* GetFlowAsset() const;
 
 	const UFlowNode* GetFlowNodeSelfOrOwner() const;
 	virtual UFlowNode* GetFlowNodeSelfOrOwner() PURE_VIRTUAL(GetFlowNodeSelfOrOwner, return nullptr;);
-	
+
 	UFUNCTION(BlueprintPure, Category = "FlowNode")
 	UFlowSubsystem* GetFlowSubsystem() const;
 
@@ -218,6 +232,17 @@ protected:
 public:
 	virtual const TArray<UFlowNodeAddOn*>& GetFlowNodeAddOnChildren() const { return AddOns; }
 
+	/**
+	 * Returns whether another direct child AddOn matches the supplied class or interface. The parent
+	 * may itself be either a Flow node or an AddOn.
+	 * AdditionalAddOnsToAssumeAreChildren represents siblings introduced atomically, such as a
+	 * multi-paste operation. IgnoredAddOn is excluded from both collections.
+	 */
+	bool HasOtherDirectAddOnChildMatching(
+		const UClass& ClassOrInterface,
+		const UFlowNodeAddOn* IgnoredAddOn,
+		const TArray<UFlowNodeAddOn*>& AdditionalAddOnsToAssumeAreChildren) const;
+
 #if WITH_EDITOR
 	virtual TArray<UFlowNodeAddOn*>& GetFlowNodeAddOnChildrenByEditor() { return MutableView(AddOns); }
 	EFlowAddOnAcceptResult CheckAcceptFlowNodeAddOnChild(const UFlowNodeAddOn* AddOnTemplate, const TArray<UFlowNodeAddOn*>& AdditionalAddOnsToAssumeAreChildren) const;
@@ -226,7 +251,7 @@ public:
 	bool IsClassOrImplementsInterface(const UClass& InterfaceOrClass) const
 	{
 		// InterfaceOrClass can either be the AddOn's UClass (or its superclass)
-		// or an interface (the UClass version) that its UClass implements 
+		// or an interface (the UClass version) that its UClass implements
 		return IsA(&InterfaceOrClass) || GetClass()->ImplementsInterface(&InterfaceOrClass);
 	}
 
@@ -294,10 +319,10 @@ protected:
 private:
 	UFUNCTION(BlueprintPure, Category = DataPins, DisplayName = "Resolve DataPin By Name")
 	FFlowDataPinResult TryResolveDataPin(FName PinName) const;
-	
+
 protected:
-	/* Protected accessor for TryResolveDataPin()'s use 
-	 * (we still want "most" flow nodes to not use TryResolveDataPin directly, 
+	/* Protected accessor for TryResolveDataPin()'s use
+	 * (we still want "most" flow nodes to not use TryResolveDataPin directly,
 	 * they should be using the template versions below.) */
 	FFlowDataPinResult TryResolveDataPin_SetGraphOutputAccess(FName PinName) const { return TryResolveDataPin(PinName); }
 
@@ -441,7 +466,7 @@ protected:
 protected:
 	UPROPERTY()
 	FString Category;
-	
+
 	UPROPERTY(EditDefaultsOnly, Category = "FlowNode", meta = (Categories = "Flow.NodeStyle"))
 	FGameplayTag NodeDisplayStyle = FlowNodeStyle::Node;
 
@@ -457,6 +482,12 @@ protected:
 	 * May be authored or set procedurally via UpdateNodeConfigText and SetNodeConfigText. */
 	UPROPERTY(EditDefaultsOnly, AdvancedDisplay, Category = "FlowNode")
 	FText DevNodeConfigText;
+
+	/* Agent-facing documentation for this class - what it does for the author, and when to reach for
+	 * it. Blueprint classes author this on their CDO; native classes leave it empty and override
+	 * GetAgentDoc() to return a compiled-in constant instead. */
+	UPROPERTY(EditDefaultsOnly, Category = "Agent (MCP)", DisplayName = "Agent Documentation")
+	FFlowAgentDoc AgentDoc;
 #endif // WITH_EDITORONLY_DATA
 
 #if WITH_EDITOR
@@ -490,7 +521,20 @@ public:
 	 * @return Returns true if the Node wants to display an icon in the top-right corner.
 	 */
 	virtual bool GetCornerIcon(FName& OutBrushName, FName& OutStyleSetName) const { return false; }
-	
+
+	/**
+	 * Agent-facing documentation for this class. The single read seam, so a class is free to store
+	 * its doc either as a serialized CDO default (the base implementation) or as a compiled-in
+	 * constant returned by an override. Override also to inject shared guidance across a family of
+	 * classes. An undocumented class is normal - it simply returns an empty doc.
+	 */
+	virtual const FFlowAgentDoc& GetAgentDoc() const { return AgentDoc; }
+
+	/* Writes the agent doc onto this object. Only durable for a class whose defaults are serialized;
+	 * a class that returns a compiled-in constant from GetAgentDoc() ignores whatever is written here,
+	 * so tooling must not report such a write as persisted. */
+	void SetAgentDoc(const FFlowAgentDoc& InAgentDoc) { AgentDoc = InAgentDoc; }
+
 protected:
 	void EnsureNodeDisplayStyle();
 #endif // WITH_EDITOR
@@ -498,17 +542,17 @@ protected:
 public:
 	UFUNCTION(BlueprintNativeEvent, Category = "FlowNode")
 	FText K2_GetNodeTitle() const;
-	
+
 	UFUNCTION(BlueprintNativeEvent, Category = "FlowNode")
 	FText K2_GetNodeToolTip() const;
-	
+
 	UFUNCTION(BlueprintNativeEvent, Category = "FlowNode")
 	FString K2_GetNodeCategory() const;
-	
+
 	UFUNCTION(BlueprintPure, Category = "FlowNode")
 	virtual FText GetNodeConfigText() const;
 
-protected:	
+protected:
 	/* Set the editor-only Config Text.
 	 * For displaying config info on the Node in the flow graph, ignored in non-editor builds. */
 	UFUNCTION(BlueprintCallable, Category = "FlowNode")
@@ -536,7 +580,7 @@ public:
 	FString GetAddOnDescriptions() const;
 #endif
 
-protected:	
+protected:
 	/* Short summary of node's content - displayed over node as NodeInfoPopup. */
 	UFUNCTION(BlueprintImplementableEvent, Category = "FlowNode", meta = (DisplayName = "Get Node Description"))
 	FString K2_GetNodeDescription() const;

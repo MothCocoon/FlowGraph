@@ -22,6 +22,7 @@
 
 #if WITH_EDITOR
 #include "Editor.h"
+#include "Misc/DataValidation.h"
 #endif
 
 FFlowPin UFlowNode::DefaultInputPin(TEXT("In"));
@@ -61,6 +62,34 @@ void UFlowNode::PostEditChangeProperty(FPropertyChangedEvent& PropertyChangedEve
 		// Potentially need to rebuild the pins from this node
 		OnReconstructionRequested.ExecuteIfBound();
 	}
+}
+
+EDataValidationResult UFlowNode::IsDataValid(FDataValidationContext& Context) const
+{
+	EDataValidationResult Result = Super::IsDataValid(Context);
+
+	if (const UFlowAsset* OwningFlowAsset = GetFlowAsset())
+	{
+		const TMap<FGuid, UFlowNode*>& OwningFlowAssetNodes = OwningFlowAsset->GetNodes();
+
+		for (const TPair<FName, FConnectedPin>& Connection : Connections)
+		{
+			if (!OwningFlowAssetNodes.Contains(Connection.Value.NodeGuid))
+			{
+				Context.AddError(FText::FromString(FString::Printf(
+					TEXT("Pin '%s' on Node '%s' is connected to node Guid %s, which does not exist in the owning Flow Asset '%s'. ")
+					TEXT("This connection is stale and will silently fail to trigger at runtime. Open the flow asset in editor and resave."),
+					*Connection.Key.ToString(),
+					*GetName(),
+					*Connection.Value.NodeGuid.ToString(),
+					*OwningFlowAsset->GetPathName())));
+
+				Result = CombineDataValidationResults(Result, EDataValidationResult::Invalid);
+			}
+		}
+	}
+
+	return Result;
 }
 
 EDataValidationResult UFlowNode::ValidateNode()
@@ -1312,12 +1341,16 @@ bool UFlowNode::TryInitializePreloadHelper()
 		return false;
 	}
 
-	const UFlowAsset* FlowAsset = GetFlowAsset();
+	UFlowAsset* FlowAsset = GetFlowAsset();
 	if (!IsValid(FlowAsset))
 	{
 		LogError(TEXT("IFlowPreloadableInterface node has no valid FlowAsset during InitializeInstance — PreloadHelper will not be created."));
 		return false;
 	}
+
+	// A helper can initialize before the preload policy when an asset is upgraded during load.
+// Ensure the policy is initialized before accessing it.
+	FlowAsset->EnsurePreloadPolicyInitialized();
 
 	const FFlowPreloadPolicy& PreloadPolicy = FlowAsset->GetPreloadPolicy();
 
@@ -1473,7 +1506,10 @@ void UFlowNode::Deactivate()
 		return;
 	}
 
-	if (GetFlowAsset()->FinishPolicy == EFlowFinishPolicy::Abort)
+	const UFlowAsset* FlowAsset = GetFlowAsset();
+	ensureMsgf(FlowAsset, TEXT("Flow Node is orphaned and could not retrieve its Flow Asset"));
+
+	if (IsValid(FlowAsset) && FlowAsset->FinishPolicy == EFlowFinishPolicy::Abort)
 	{
 		ActivationState = EFlowNodeState::Aborted;
 	}

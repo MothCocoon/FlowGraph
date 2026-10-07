@@ -16,16 +16,14 @@ class UFlowLevelSequencePlayer;
 DECLARE_MULTICAST_DELEGATE(FFlowNodeLevelSequenceEvent);
 
 /**
- * Order of triggering outputs after calling Start
- * - PreStart, just before starting playback
- * - Started
- * - Out (always, even if Sequence is invalid)
- * - Completed
+ * Plays a Level Sequence asset, firing PreStart, Started, Out, and Completed outputs in that order, and supports
+ * save/restore of playback position. Attach LevelSequenceActorBinding AddOns to override named sequence actor
+ * bindings before playback begins.
  */
-UCLASS(NotBlueprintable, meta = (DisplayName = "Play Level Sequence"))
+UCLASS(NotBlueprintable, meta = (DisplayName = "Play Level Sequence", Keywords = "cutscene"))
 class FLOW_API UFlowNode_PlayLevelSequence
 	: public UFlowNode
-	  , public IFlowPreloadableInterface
+	, public IFlowPreloadableInterface
 {
 	GENERATED_BODY()
 
@@ -38,12 +36,15 @@ public:
 	static FFlowNodeLevelSequenceEvent OnPlaybackStarted;
 	static FFlowNodeLevelSequenceEvent OnPlaybackCompleted;
 
+	/* The Level Sequence asset to play. */
 	UPROPERTY(EditAnywhere, Category = "Sequence")
 	TSoftObjectPtr<ULevelSequence> Sequence;
 
+	/* Playback settings: start/end frames, play rate, loop count, etc. */
 	UPROPERTY(EditAnywhere, Category = "Sequence")
 	FMovieSceneSequencePlaybackSettings PlaybackSettings;
 
+	/* When true, plays the sequence in reverse. */
 	UPROPERTY(EditAnywhere, Category = "Sequence")
 	bool bPlayReverse = false;
 
@@ -143,6 +144,7 @@ public:
 	virtual FString GetNodeDescription() const override;
 	virtual FString GetStatusString() const override;
 	virtual UObject* GetAssetToEdit() override;
+	virtual const FFlowAgentDoc& GetAgentDoc() const override;
 	
 protected:	
 	virtual EDataValidationResult ValidateNode() override;

@@ -122,6 +122,9 @@ public:
 	virtual EDataValidationResult ValidateAsset(FFlowMessageLog& MessageLog) const;
 
 private:
+	/* Validates every direct child attachment on OwnerNode and recursively validates child trees. */
+	void ValidateAddOnChildren(UFlowNodeBase& OwnerNode, FFlowMessageLog& MessageLog);
+
 	/* Recursively validates the given addon and its children. */
 	void ValidateAddOnTree(UFlowNodeAddOn& AddOn, FFlowMessageLog& MessageLog) const;
 #endif
@@ -160,6 +163,9 @@ public:
 public:
 	const TMap<FGuid, UFlowNode*>& GetNodes() const { return ObjectPtrDecay(Nodes); }
 	TArray<UFlowNode*> GetAllNodes() const;
+
+	/** Returns whether the serialized runtime node map can be initialized safely. */
+	bool IsRuntimeGraphValid(FString& OutErrorMessage) const;
 
 	UFlowNode* GetNode(const FGuid& Guid) const { return Nodes.FindRef(Guid); }
 
@@ -446,6 +452,7 @@ public:
 
 public:
 	UFlowSubsystem* GetFlowSubsystem() const;
+	FName GetDisplayName() const;
 
 	UFlowNode_SubGraph* GetNodeOwningThisAssetInstance() const;
 	UFlowAsset* GetParentInstance() const;
@@ -478,6 +485,7 @@ protected:
 	virtual void InitializePreloadPolicy();
 
 public:
+	void EnsurePreloadPolicyInitialized();
 	const FFlowPreloadPolicy& GetPreloadPolicy() const;
 
 //////////////////////////////////////////////////////////////////////////
