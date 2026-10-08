@@ -1372,6 +1372,20 @@ void UFlowGraphSchema::OnBlueprintCompiled()
 
 void UFlowGraphSchema::OnHotReload(EReloadCompleteReason ReloadCompleteReason)
 {
+	RefreshNativeNodeCache();
+}
+
+void UFlowGraphSchema::RefreshNativeNodeCache()
+{
+	if ((GEditor && GEditor->PlayWorld) || GCompilingBlueprint)
+	{
+		return;
+	}
+
+	NativeFlowNodes.Reset();
+	NativeFlowNodeAddOns.Reset();
+	GraphNodesByFlowNodes.Reset();
+
 	GatherNodes();
 }
 
@@ -1387,7 +1401,9 @@ void UFlowGraphSchema::GatherNativeNodesOrAddOns(const TSubclassOf<UFlowNodeBase
 	GetDerivedClasses(FlowNodeBaseClass, FlowNodesOrAddOns);
 	for (UClass* Class : FlowNodesOrAddOns)
 	{
-		if (Class->ClassGeneratedBy == nullptr && IsFlowNodeOrAddOnPlaceable(Class))
+		if (Class->ClassGeneratedBy == nullptr
+			&& !EnumHasAnyFlags(Class->GetClassFlags(), CLASS_NewerVersionExists)
+			&& IsFlowNodeOrAddOnPlaceable(Class))
 		{
 			InOutNodesOrAddOnsArray.Emplace(Class);
 		}
