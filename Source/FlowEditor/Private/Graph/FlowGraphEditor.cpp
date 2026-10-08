@@ -34,6 +34,7 @@ void SFlowGraphEditor::Construct(const FArguments& InArgs, const TSharedPtr<FFlo
 	FlowAssetEditor = InAssetEditor;
 	FlowAsset = FlowAssetEditor.Pin()->GetFlowAsset();
 	DetailsView = InArgs._DetailsView;
+	bCanEditInPIE = InArgs._CanEditInPIE;
 
 	DebuggerSubsystem = GEngine->GetEngineSubsystem<UFlowDebuggerSubsystem>();
 
@@ -132,7 +133,7 @@ void SFlowGraphEditor::BindGraphCommands()
 	// Graph commands
 	CommandList->MapAction(GraphEditorCommands.CreateComment,
 	                       FExecuteAction::CreateSP(this, &SFlowGraphEditor::OnCreateComment),
-	                       FCanExecuteAction::CreateStatic(&SFlowGraphEditor::CanEdit));
+	                       FCanExecuteAction::CreateSP(this, &SFlowGraphEditor::CanEdit));
 
 	CommandList->MapAction(GraphEditorCommands.StraightenConnections,
 	                       FExecuteAction::CreateSP(this, &SFlowGraphEditor::OnStraightenConnections));
@@ -144,11 +145,11 @@ void SFlowGraphEditor::BindGraphCommands()
 	// Generic Node commands
 	CommandList->MapAction(GenericCommands.Undo,
 	                       FExecuteAction::CreateStatic(&SFlowGraphEditor::UndoGraphAction),
-	                       FCanExecuteAction::CreateStatic(&SFlowGraphEditor::CanEdit));
+	                       FCanExecuteAction::CreateSP(this, &SFlowGraphEditor::CanEdit));
 
 	CommandList->MapAction(GenericCommands.Redo,
 	                       FExecuteAction::CreateStatic(&SFlowGraphEditor::RedoGraphAction),
-	                       FCanExecuteAction::CreateStatic(&SFlowGraphEditor::CanEdit));
+	                       FCanExecuteAction::CreateSP(this, &SFlowGraphEditor::CanEdit));
 
 	CommandList->MapAction(GenericCommands.SelectAll,
 	                       FExecuteAction::CreateSP(this, &SFlowGraphEditor::SelectAllNodes),
@@ -425,9 +426,9 @@ bool SFlowGraphEditor::IsTabFocused() const
 	return FlowAssetEditor.Pin()->IsTabFocused(FFlowAssetEditor::GraphTab);
 }
 
-bool SFlowGraphEditor::CanEdit()
+bool SFlowGraphEditor::CanEdit() const
 {
-	return GEditor->PlayWorld == nullptr;
+	return GEditor->PlayWorld == nullptr || bCanEditInPIE;
 }
 
 bool SFlowGraphEditor::IsPIE()
