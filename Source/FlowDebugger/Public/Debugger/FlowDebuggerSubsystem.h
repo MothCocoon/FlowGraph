@@ -33,16 +33,12 @@ enum class EFlowDebuggerState
 	// Subranges for classifier checks
 	PausedGameFirst = Paused UMETA(Hidden),
 	PausedGameLast = Paused UMETA(Hidden),
-
-	FlushDeferredTriggersFirst = Resumed UMETA(Hidden),
-	FlushDeferredTriggersLast = Resumed UMETA(Hidden),
 };
 FLOW_ENUM_RANGE_VALUES(EFlowDebuggerState);
 
 namespace EFlowDebuggerState_Classifiers
 {
 	FORCEINLINE bool IsPausedGameState(EFlowDebuggerState State) { return FLOW_IS_ENUM_IN_SUBRANGE(State, EFlowDebuggerState::PausedGame); }
-	FORCEINLINE bool IsFlushDeferredTriggersState(EFlowDebuggerState State) { return FLOW_IS_ENUM_IN_SUBRANGE(State, EFlowDebuggerState::FlushDeferredTriggers); }
 }
 
 DECLARE_MULTICAST_DELEGATE_OneParam(FFlowAssetDebuggerEvent, const UFlowAsset& /*FlowAsset*/);
@@ -69,12 +65,14 @@ protected:
 	virtual void OnInstancedTemplateAdded(UFlowAsset* AssetTemplate);
 	virtual void OnInstancedTemplateRemoved(UFlowAsset* AssetTemplate);
 
-	virtual void OnPinTriggered(UFlowNode* FlowNode, const FName& PinName);
-
 public:
-	// IFlowExecutionGate
-	virtual bool IsFlowExecutionHalted() const override { return EFlowDebuggerState_Classifiers::IsPausedGameState(FlowDebuggerState); }
-	// --
+	//~ Begin IFlowExecutionGate
+	virtual bool WantsFlowBreak(const FFlowBreakContext& Context) const override;
+	virtual EFlowBreakAction BreakFlowExecution(const FFlowBreakContext& Context) override;
+	//~ End IFlowExecutionGate
+
+	/* True while execution is halted at a breakpoint. */
+	bool IsPausedAtBreakpoint() const { return EFlowDebuggerState_Classifiers::IsPausedGameState(FlowDebuggerState); }
 
 	virtual void AddBreakpoint(const FGuid& NodeGuid);
 	virtual void AddBreakpoint(const FGuid& NodeGuid, const FName& PinName);
@@ -94,6 +92,8 @@ public:
 
 	virtual FFlowBreakpoint* FindBreakpoint(const FGuid& NodeGuid);
 	virtual FFlowBreakpoint* FindBreakpoint(const FGuid& NodeGuid, const FName& PinName);
+	static const FFlowBreakpoint* FindBreakpointForRead(const FGuid& NodeGuid);
+	static const FFlowBreakpoint* FindBreakpointForRead(const FGuid& NodeGuid, const FName& PinName);
 	static bool HasAnyBreakpoints(const TWeakObjectPtr<UFlowAsset> FlowAsset);
 
 	virtual void SetBreakpointEnabled(const FGuid& NodeGuid, bool bEnabled);
@@ -109,6 +109,11 @@ public:
 protected:
 	virtual void MarkAsHit(const UFlowNode* FlowNode);
 	virtual void MarkAsHit(const UFlowNode* FlowNode, const FName& PinName);
+
+	/* Blocks until the user releases execution, keeping the halted Flow call stack alive.
+	 * The base implementation cannot halt without an application to pump, so it resumes immediately;
+	 * the editor implementation runs a nested tick loop. */
+	virtual EFlowBreakAction HaltUntilReleased(const FFlowBreakContext& Context) { return EFlowBreakAction::Continue; }
 
 	virtual void PauseSession(UFlowAsset& FlowAssetInstance);
 	virtual void ResumeSession(UFlowAsset& FlowAssetInstance);

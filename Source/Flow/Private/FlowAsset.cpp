@@ -8,7 +8,6 @@
 #include "AddOns/FlowNodeAddOn.h"
 #include "Asset/FlowAssetParams.h"
 #include "Asset/FlowAssetParamsUtils.h"
-#include "Interfaces/FlowExecutionGate.h"
 #include "Interfaces/FlowGraphOutputDataReceiverInterface.h"
 #include "Types/FlowNamedDataPinProperty.h"
 #include "Nodes/FlowNodeBase.h"
@@ -1382,12 +1381,7 @@ void UFlowAsset::TriggerCustomOutput(const FName& EventName)
 
 void UFlowAsset::TriggerInput(const FGuid& NodeGuid, const FName& PinName, const FConnectedPin& FromPin)
 {
-	if (FFlowExecutionGate::IsHalted())
-	{
-		// Halt always takes precedence for debugger correctness
-		EnqueueDeferredTrigger(NodeGuid, PinName, FromPin);
-	}
-	else if (ShouldDeferTriggers())
+	if (ShouldDeferTriggers())
 	{
 		// Defer only if we have an open the top scope
 		if (!DeferredTransitionScopes.IsEmpty() && DeferredTransitionScopes.Top()->IsOpen())
@@ -1428,12 +1422,8 @@ bool UFlowAsset::ShouldDeferTriggers() const
 
 void UFlowAsset::EnqueueDeferredTrigger(const FGuid& NodeGuid, const FName& PinName, const FConnectedPin& FromPin)
 {
-	if (DeferredTransitionScopes.IsEmpty() || !DeferredTransitionScopes.Top()->IsOpen())
-	{
-		// This should only occur when halted at an execution gate
-		check(FFlowExecutionGate::IsHalted());
-		PushDeferredTransitionScope();
-	}
+	// TriggerInput() is the only caller, and only enqueues while it holds an open top scope
+	check(!DeferredTransitionScopes.IsEmpty() && DeferredTransitionScopes.Top()->IsOpen());
 
 	// Always enqueue to the current innermost (top) scope
 	DeferredTransitionScopes.Top()->EnqueueDeferredTrigger(FFlowDeferredTriggerInput{NodeGuid, PinName, FromPin});
@@ -1459,18 +1449,14 @@ void UFlowAsset::PopDeferredTransitionScope(const TSharedPtr<FFlowDeferredTransi
 
 bool UFlowAsset::TryFlushAndRemoveDeferredTransitionScope(const TSharedPtr<FFlowDeferredTransitionScope>& ScopeToFlush)
 {
-	if (ScopeToFlush->TryFlushDeferredTriggers(*this))
+	if (!ScopeToFlush->TryFlushDeferredTriggers(*this))
 	{
-		// Remove the exact instance we were holding (handles nested push/pop cases)
-		DeferredTransitionScopes.RemoveSingle(ScopeToFlush);
-		return true;
-	}
-	else
-	{
-		// Flush was interrupted — should only happen due to execution gate halt
-		check(FFlowExecutionGate::IsHalted());
 		return false;
 	}
+
+	// Remove the exact instance we were holding (handles nested push/pop cases)
+	DeferredTransitionScopes.RemoveSingle(ScopeToFlush);
+	return true;
 }
 
 bool UFlowAsset::TryFlushAllDeferredTriggerScopes()
@@ -1482,10 +1468,10 @@ bool UFlowAsset::TryFlushAllDeferredTriggerScopes()
 			break;
 		}
 
-		// Keep flushing until stack is empty, or we hit an ExecutionGate halt
+		// Keep flushing until the stack is empty
 	}
 
-	check(DeferredTransitionScopes.IsEmpty() || FFlowExecutionGate::IsHalted());
+	check(DeferredTransitionScopes.IsEmpty());
 
 	return DeferredTransitionScopes.IsEmpty();
 }
@@ -1499,7 +1485,6 @@ void UFlowAsset::CancelAndWarnForUnflushedDeferredTriggers()
 {
 	// Aggressively drop any pending deferred triggers — graph is done
 	// In normal execution these should have been flushed via PopDeferredTransitionScope() in TriggerInputDirect
-	// In the debugger they should have been flushed by ResumePIE
 	// Remaining scopes here usually mean:
 	//   - early/abnormal termination (e.g. FinishFlowInstance called from unexpected place)
 	//   - exception/early return before Pop
