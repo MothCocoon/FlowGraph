@@ -27,3 +27,14 @@ void UFlowNode_LogicalAND::Cleanup()
 {
 	ExecutedInputNames.Empty();
 }
+
+#if WITH_EDITOR
+const FFlowAgentDoc& UFlowNode_LogicalAND::GetAgentDoc() const
+{
+	static const FFlowAgentDoc Doc = MakeAgentDoc(
+		/*Guidance*/ TEXT("Add input pins via the node's context menu to synchronize an arbitrary number of parallel branches before continuing - the node tracks distinct pin names triggered, not trigger count, so re-triggering the same input pin twice does not help it fire early."),
+		/*Tags*/     { TEXT("route"), TEXT("logic"), TEXT("synchronize") },
+		/*Articles*/ {  });
+	return Doc;
+}
+#endif

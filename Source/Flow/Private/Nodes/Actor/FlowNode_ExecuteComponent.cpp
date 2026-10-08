@@ -720,3 +720,14 @@ void UFlowNode_ExecuteComponent::UpdateNodeConfigText_Implementation()
 }
 
 #undef LOCTEXT_NAMESPACE
+
+#if WITH_EDITOR
+const FFlowAgentDoc& UFlowNode_ExecuteComponent::GetAgentDoc() const
+{
+	static const FFlowAgentDoc Doc = MakeAgentDoc(
+		/*Guidance*/ TEXT("Bind to an existing component by name, or inject a new one from a template or class, via ComponentSource. The component must implement IFlowCoreExecutableInterface or IFlowExternalExecutableInterface, or nothing will run."),
+		/*Tags*/     { TEXT("actor"), TEXT("component"), TEXT("subgraph") },
+		/*Articles*/ {  });
+	return Doc;
+}
+#endif
