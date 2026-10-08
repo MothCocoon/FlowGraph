@@ -38,4 +38,9 @@ public:
 	// IFlowDataPinValueSupplierInterface
 	virtual FFlowDataPinResult TrySupplyDataPin(const FName PinName) const override;
 	// --
+
+#if WITH_EDITOR
+public:
+	virtual const FFlowAgentDoc& GetAgentDoc() const override;
+#endif
 };

@@ -719,3 +719,14 @@ bool UFlowNodeAddOn_PredicateCompareValues::EvaluatePredicate_Implementation() c
 }
 
 #undef LOCTEXT_NAMESPACE
+
+#if WITH_EDITOR
+const FFlowAgentDoc& UFlowNodeAddOn_PredicateCompareValues::GetAgentDoc() const
+{
+	static const FFlowAgentDoc Doc = MakeAgentDoc(
+		/*Guidance*/ TEXT("Arithmetic operators only work for numeric or otherwise-ordered types - attempting them on an incompatible pair, such as two objects, fails the comparison rather than producing a meaningful result. Equality falls back to a generic string comparison for types with no dedicated comparator, so two values that print identically can still evaluate true even if their underlying types differ."),
+		/*Tags*/     { TEXT("predicate"), TEXT("compare"), TEXT("value") },
+		/*Articles*/ {  });
+	return Doc;
+}
+#endif
