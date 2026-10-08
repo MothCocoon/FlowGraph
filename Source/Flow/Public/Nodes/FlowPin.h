@@ -417,4 +417,28 @@ struct FLOW_API FPinRecord
 private:
 	FORCEINLINE static FString DoubleDigit(const int32 Number);
 };
+
+struct FLOW_API FPinRecordBuffer
+{
+	const uint32 RecentPinRecordsCapacity = 64;
+	TCircularBuffer<FPinRecord> RecentPinRecords = TCircularBuffer<FPinRecord>(RecentPinRecordsCapacity);
+	uint32 NextPinRecordIndex = 0;
+	uint32 TotalPinRecords = 0;
+
+	FPinRecordBuffer();
+
+public:
+	void Add(const FName& PinName, const FPinRecord& NewRecord);
+	void Add(const FName& PinName, FPinRecord&& NewRecord);
+	TArray<FPinRecord> GetArray() const;
+	FPinRecord& Last();
+	const FPinRecord& Last() const;
+	void RangeCheck(uint32 Index) const;
+	bool IsValidIndex(uint32 Index) const;
+	bool IsEmpty() const;
+	uint32 Capacity() const;
+
+private:
+	static void Log(const FName& PinName, const FPinRecord& Record);
+};
 #endif

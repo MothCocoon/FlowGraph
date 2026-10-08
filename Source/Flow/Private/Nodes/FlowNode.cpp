@@ -1371,8 +1371,8 @@ void UFlowNode::TriggerInput(const FName& PinName, const EFlowPinActivationType 
 
 #if !UE_BUILD_SHIPPING
 		// record for debugging
-		TArray<FPinRecord>& Records = InputRecords.FindOrAdd(PinName);
-		Records.Add(FPinRecord(FApp::GetCurrentTime(), ActivationType));
+		FPinRecordBuffer& Records = InputRecords.FindOrAdd(PinName);
+		Records.Add(PinName, FPinRecord(FApp::GetCurrentTime(), ActivationType));
 
 		if (const UFlowAsset* FlowAssetTemplate = GetFlowAsset()->GetTemplateAsset())
 		{
@@ -1437,8 +1437,8 @@ void UFlowNode::TriggerOutput(const FName PinName, const bool bFinish /*= false*
 	if (OutputPins.Contains(PinName))
 	{
 		// record for debugging, even if nothing is connected to this pin
-		TArray<FPinRecord>& Records = OutputRecords.FindOrAdd(PinName);
-		Records.Add(FPinRecord(FApp::GetCurrentTime(), ActivationType));
+		FPinRecordBuffer& Records = OutputRecords.FindOrAdd(PinName);
+		Records.Add(PinName, FPinRecord(FApp::GetCurrentTime(), ActivationType));
 
 		if (const UFlowAsset* FlowAssetTemplate = GetFlowAsset()->GetTemplateAsset())
 		{
@@ -1567,22 +1567,36 @@ bool UFlowNode::ShouldSave_Implementation()
 TMap<uint8, FPinRecord> UFlowNode::GetWireRecords() const
 {
 	TMap<uint8, FPinRecord> Result;
-	for (const TPair<FName, TArray<FPinRecord>>& Record : OutputRecords)
+	for (const TPair<FName, FPinRecordBuffer>& Record : OutputRecords)
 	{
+		// An empty array could crash when using Last() function
+		if (Record.Value.IsEmpty())
+		{
+			continue;
+		}
 		Result.Emplace(OutputPins.IndexOfByKey(Record.Key), Record.Value.Last());
 	}
 	return Result;
 }
 
-TArray<FPinRecord> UFlowNode::GetPinRecords(const FName& PinName, const EEdGraphPinDirection PinDirection) const
+TArray<FPinRecord> UFlowNode::GetPinRecords(const FName& PinName, const EEdGraphPinDirection PinDirection, int32& OutTotalPinRecords) const
 {
 	switch (PinDirection)
 	{
 		case EGPD_Input:
-			return InputRecords.FindRef(PinName);
+		{
+			const FPinRecordBuffer& Buffer = InputRecords.FindRef(PinName);
+			OutTotalPinRecords = Buffer.TotalPinRecords;
+			return Buffer.GetArray();
+		}
 		case EGPD_Output:
-			return OutputRecords.FindRef(PinName);
+		{
+			const FPinRecordBuffer& Buffer = OutputRecords.FindRef(PinName);
+			OutTotalPinRecords = Buffer.TotalPinRecords;
+			return Buffer.GetArray();
+		}
 		default:
+			OutTotalPinRecords = 0;
 			return TArray<FPinRecord>();
 	}
 }
