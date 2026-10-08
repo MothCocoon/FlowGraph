@@ -16,10 +16,17 @@
 
 TSharedPtr<SGraphPin> FFlowGraphPinFactory::CreatePin(UEdGraphPin* InPin) const
 {
-	if (!InPin->GetSchema()->IsA<UFlowGraphSchema>())
+	const UFlowGraphSchema* FlowGraphSchema = Cast<UFlowGraphSchema>(InPin->GetSchema());
+	if (!FlowGraphSchema)
 	{
-		// Limit pin widget creation to FlowGraph schemas 
+		// Limit pin widget creation to FlowGraph schemas
 		return nullptr;
+	}
+
+	// Let specialized Flow schemas provide their own widget before using the default Flow pins.
+	if (TSharedPtr<SGraphPin> CustomPinWidget = FlowGraphSchema->CreatePinWidget(InPin))
+	{
+		return CustomPinWidget;
 	}
 
 	const UFlowGraphNode* FlowGraphNode = Cast<UFlowGraphNode>(InPin->GetOwningNode());
