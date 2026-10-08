@@ -5,8 +5,9 @@
 #include "FlowNode_CustomOutput.generated.h"
 
 /**
- * Triggers output on SubGraph node containing this graph.
- * Triggered output name matches EventName selected on this node.
+ * Fires a named output pin on the parent SubGraph node that contains this sub-graph, allowing
+ * this sub-graph to signal back to the parent encounter flow. The triggered output pin name
+ * on the SubGraph node matches the EventName set on this node.
  */
 UCLASS(NotBlueprintable, meta = (DisplayName = "Custom Output"))
 class FLOW_API UFlowNode_CustomOutput final : public UFlowNode_CustomEventBase
@@ -20,5 +21,6 @@ public:
 
 #if WITH_EDITOR
 	virtual FText K2_GetNodeTitle_Implementation() const override;
+	virtual const FFlowAgentDoc& GetAgentDoc() const override;
 #endif
 };

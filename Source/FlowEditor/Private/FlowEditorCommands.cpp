@@ -23,6 +23,8 @@ void FFlowToolbarCommands::RegisterCommands()
 
 	UI_COMMAND(SearchInAsset, "Search", "Search in the current Flow Graph", EUserInterfaceActionType::Button, FInputChord(EModifierKey::Control | EModifierKey::Shift, EKeys::F));
 	UI_COMMAND(EditAssetDefaults, "Asset Defaults", "Edit the FlowAsset default properties", EUserInterfaceActionType::Button, FInputChord());
+
+	UI_COMMAND(AutoFormatGraph, "Auto-Format", "Auto-format the graph layout (formats selected nodes, or all nodes if nothing is selected)", EUserInterfaceActionType::Button, FInputChord());
 }
 
 FFlowGraphCommands::FFlowGraphCommands()
@@ -33,6 +35,8 @@ FFlowGraphCommands::FFlowGraphCommands()
 void FFlowGraphCommands::RegisterCommands()
 {
 	UI_COMMAND(ReconstructNode, "Reconstruct node", "Reconstruct this node", EUserInterfaceActionType::Button, FInputChord());
+
+	UI_COMMAND(CreateSubGraphFromSelection, "Create Sub-Graph from Selection", "Move the selected nodes into a new Flow Asset and replace them with a Sub Graph node that runs it", EUserInterfaceActionType::Button, FInputChord());
 
 	UI_COMMAND(AddInput, "Add Input", "Adds an input to the node", EUserInterfaceActionType::Button, FInputChord());
 	UI_COMMAND(AddOutput, "Add Output", "Adds an output to the node", EUserInterfaceActionType::Button, FInputChord());
