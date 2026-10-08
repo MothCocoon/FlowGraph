@@ -64,3 +64,14 @@ FText UFlowNode_CustomOutput::K2_GetNodeTitle_Implementation() const
 #endif
 
 #undef LOCTEXT_NAMESPACE
+
+#if WITH_EDITOR
+const FFlowAgentDoc& UFlowNode_CustomOutput::GetAgentDoc() const
+{
+	static const FFlowAgentDoc Doc = MakeAgentDoc(
+		/*Guidance*/ TEXT("Set EventName to the pin name the parent SubGraph node should expose as an output. Triggering with EventName unset, or set to a name no Custom Output node declares, only logs a warning - it does not fire anything."),
+		/*Tags*/     { TEXT("graph"), TEXT("subgraph"), TEXT("output") },
+		/*Articles*/ {  });
+	return Doc;
+}
+#endif
