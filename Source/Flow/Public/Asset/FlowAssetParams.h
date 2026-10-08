@@ -48,6 +48,7 @@ public:
 #if WITH_EDITOR
 	virtual void PostLoad() override;
 	virtual void PreSaveRoot(FObjectPreSaveRootContext ObjectSaveContext) override;
+	virtual void BeginDestroy() override;
 #endif
 	virtual void Serialize(FArchive& Ar) override;
 	// --
@@ -98,6 +99,15 @@ public:
 private:
 	FSimpleDelegate FlowDataPinValuesRebuildDelegate;
 	// --
+
+	/* Broadcasts when params have been reconciled with the start node. */
+	FSimpleMulticastDelegate OnAssetParamsReconciled;
+
+	/* Handle to remove the delegate instance on object destruction. */
+	FDelegateHandle OnParentAssetParamsReconciledHandle;
+
+	/* Void wrapper added as a delegate instance. */
+	void HandleParentParamsReconciled();
 
 protected:
 

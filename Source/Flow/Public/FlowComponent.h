@@ -204,6 +204,7 @@ public:
 
 	// IFlowAssetProviderInterface
 	virtual UFlowAsset* ProvideFlowAsset() const override { return RootFlow; }
+	virtual UFlowAssetParams* GetRootFlowParams_Implementation() const override { return RootFlowParams.ResolveFlowAssetParams(); }
 	// --
 
 //////////////////////////////////////////////////////////////////////////
