@@ -30,7 +30,7 @@ void UFlowGraph::CreateGraph(UFlowAsset* InFlowAsset)
 	return CreateGraph(InFlowAsset, UFlowGraphSchema::StaticClass());
 }
 
-void UFlowGraph::CreateGraph(UFlowAsset* InFlowAsset, TSubclassOf<UFlowGraphSchema> FlowSchema)
+void UFlowGraph::CreateGraph(UFlowAsset* InFlowAsset, TSubclassOf<UFlowGraphSchema> FlowSchema, bool bCreateDefaultNodes)
 {
 	UFlowGraph* NewGraph = CastChecked<UFlowGraph>(FBlueprintEditorUtils::CreateNewGraph(InFlowAsset, NAME_None, StaticClass(), FlowSchema));
 	NewGraph->bAllowDeletion = false;
@@ -41,7 +41,13 @@ void UFlowGraph::CreateGraph(UFlowAsset* InFlowAsset, TSubclassOf<UFlowGraphSche
 	UFlowGraphSchema::GatherNodes();
 
 	InFlowAsset->FlowGraph = NewGraph;
-	InFlowAsset->OnValidateGraph.BindUObject(NewGraph, &UFlowGraph::ValidateGraphNodes);
+
+	if (bCreateDefaultNodes)
+	{
+		InFlowAsset->FlowGraph->GetSchema()->CreateDefaultNodesForGraph(*InFlowAsset->FlowGraph);
+	}
+  
+  InFlowAsset->OnValidateGraph.BindUObject(NewGraph, &UFlowGraph::ValidateGraphNodes);
 	InFlowAsset->FlowGraph->GetSchema()->CreateDefaultNodesForGraph(*InFlowAsset->FlowGraph);
 }
 
@@ -127,9 +133,12 @@ void UFlowGraph::RecursivelyRefreshAddOns(UFlowGraphNode& FromFlowGraphNode)
 
 void UFlowGraph::NotifyGraphChanged()
 {
-	if (UFlowAsset* FlowAsset = GetFlowAsset())
+	if (!IsLocked())
 	{
-		FlowAsset->HarvestNodeConnections();
+		if (UFlowAsset* FlowAsset = GetFlowAsset())
+		{
+			FlowAsset->HarvestNodeConnections();
+		}
 	}
 
 	Super::NotifyGraphChanged();
@@ -517,6 +526,13 @@ void UFlowGraph::UnlockUpdates()
 
 	// Existing behavior
 	UpdateAsset();
+}
+
+void UFlowGraph::UnlockUpdatesWithoutReconcile()
+{
+	bLockUpdates = false;
+	PendingRerouteTypeFixups.Reset();
+	PendingNodeReconstructs.Reset();
 }
 
 void UFlowGraph::EnqueueRerouteTypeFixup(UFlowGraphNode_Reroute* RerouteNode)

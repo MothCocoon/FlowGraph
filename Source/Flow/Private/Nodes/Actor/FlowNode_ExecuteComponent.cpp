@@ -567,21 +567,21 @@ EDataValidationResult UFlowNode_ExecuteComponent::ValidateNode()
 		}
 
 		// Check that the component implements the expected interfaces
-		if (!Cast<IFlowExternalExecutableInterface>(ExpectedComponent))
+		if (!ExpectedComponent->Implements<UFlowExternalExecutableInterface>())
 		{
 			ValidationLog.Error<UFlowNode>(TEXT("Expected component to implement IFlowExternalExecutableInterface"), this);
 
 			return EDataValidationResult::Invalid;
 		}
 
-		if (!Cast<IFlowCoreExecutableInterface>(ExpectedComponent))
+		if (!ExpectedComponent->Implements<UFlowCoreExecutableInterface>())
 		{
 			ValidationLog.Error<UFlowNode>(TEXT("Expected component to implement IFlowCoreExecutableInterface"), this);
 
 			return EDataValidationResult::Invalid;
 		}
 	}
-		
+
 	return FinalResult;
 }
 
@@ -718,5 +718,16 @@ void UFlowNode_ExecuteComponent::UpdateNodeConfigText_Implementation()
 	SetNodeConfigText(ComponentNameText);
 #endif // WITH_EDITOR
 }
+
+#if WITH_EDITOR
+const FFlowAgentDoc& UFlowNode_ExecuteComponent::GetAgentDoc() const
+{
+	static const FFlowAgentDoc Doc = MakeAgentDoc(
+		/*Guidance*/ TEXT("Bind to an existing component by name, or inject a new one from a template or class, via ComponentSource. The component must implement IFlowCoreExecutableInterface or IFlowExternalExecutableInterface, or nothing will run."),
+		/*Tags*/     { TEXT("actor"), TEXT("component"), TEXT("subgraph") },
+		/*Articles*/ {  });
+	return Doc;
+}
+#endif
 
 #undef LOCTEXT_NAMESPACE

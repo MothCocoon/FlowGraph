@@ -22,6 +22,7 @@
 
 #if WITH_EDITOR
 #include "Editor.h"
+#include "Misc/DataValidation.h"
 #endif
 
 FFlowPin UFlowNode::DefaultInputPin(TEXT("In"));
@@ -61,6 +62,34 @@ void UFlowNode::PostEditChangeProperty(FPropertyChangedEvent& PropertyChangedEve
 		// Potentially need to rebuild the pins from this node
 		OnReconstructionRequested.ExecuteIfBound();
 	}
+}
+
+EDataValidationResult UFlowNode::IsDataValid(FDataValidationContext& Context) const
+{
+	EDataValidationResult Result = Super::IsDataValid(Context);
+
+	if (const UFlowAsset* OwningFlowAsset = GetFlowAsset())
+	{
+		const TMap<FGuid, UFlowNode*>& OwningFlowAssetNodes = OwningFlowAsset->GetNodes();
+
+		for (const TPair<FName, FConnectedPin>& Connection : Connections)
+		{
+			if (!OwningFlowAssetNodes.Contains(Connection.Value.NodeGuid))
+			{
+				Context.AddError(FText::FromString(FString::Printf(
+					TEXT("Pin '%s' on Node '%s' is connected to node Guid %s, which does not exist in the owning Flow Asset '%s'. ")
+					TEXT("This connection is stale and will silently fail to trigger at runtime. Open the flow asset in editor and resave."),
+					*Connection.Key.ToString(),
+					*GetName(),
+					*Connection.Value.NodeGuid.ToString(),
+					*OwningFlowAsset->GetPathName())));
+
+				Result = CombineDataValidationResults(Result, EDataValidationResult::Invalid);
+			}
+		}
+	}
+
+	return Result;
 }
 
 EDataValidationResult UFlowNode::ValidateNode()
@@ -367,6 +396,12 @@ TArray<FFlowPin> UFlowNode::GetContextOutputs() const
 	}
 
 	return ContextOutputs;
+}
+
+void UFlowNode::GetCatalogPins(TArray<FFlowPin>& OutInputPins, TArray<FFlowPin>& OutOutputPins) const
+{
+	OutInputPins = InputPins;
+	OutOutputPins = OutputPins;
 }
 
 bool UFlowNode::CanUserAddInput() const

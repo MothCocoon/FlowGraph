@@ -11,7 +11,7 @@ The aim of publishing it as an open-source project is to let people tell great s
 * Developers creating a Flow Node can call the execution of pins in any way they need. API is extremely simple.
 * Editor supports conveniently displaying debug information on nodes and wires while playing a game. You simply provide what kind of message would be displayed over active Flow Nodes - you can't have that with blueprint functions.
 * It's up to you to add game-specific functionalities by writing your nodes and editor customizations. It's not like a marketplace providing a very specific implementation of systems. It's a convenient base for building systems tailored to fit your needs.
-* Follow this short [Getting Started](https://mothcocoon.github.io/FlowGraph/Overview/GettingStarted) guide to start working with this plugin.
+* It's easy to include a Flow plugin in your own project. Follow this short [Getting Started](https://mothcocoon.github.io/FlowGraph/Overview/GettingStarted) guide.
 
 ## In-depth video presentation
 This 24-minute presentation breaks down the concept of the Flow Graph. Trust me, you want to understand the concept properly before diving into implementation.
@@ -20,6 +20,20 @@ This 24-minute presentation breaks down the concept of the Flow Graph. Trust me,
 
 ## Documentation
 [Plugin documentation on GitHub Pages.](https://mothcocoon.github.io/FlowGraph/)
+
+## FlowGraphCourier
+
+FlowGraphCourier requires the ToolsetRegistry plugin in Unreal Engine 5.8. The current
+`Flow.uplugin` descriptor includes Courier and ToolsetRegistry, so this combined plugin
+requires UE 5.8 in stock engine installations. The core Flow modules do not depend on
+ToolsetRegistry.
+
+FlowGraphCourier is the editor module for agent-assisted Flow graph discovery and editing. It
+registers an Epic ToolsetRegistry toolset with reflected operations for catalog queries, graph
+export, scoped JSON patches, validation, diffs, layout, and subgraph extraction. See the
+[MCP integration guide](docs/Courier/MCPIntegration.md), the
+[Courier v2 format guide](agent-docs/CourierTextFormat.md), and the
+[Flow agent documentation](agent-docs/INDEX.md).
 
 ## Acknowledgements
 I got an opportunity to work on something like the Flow Graph at Reikon Games. They shared my enthusiasm for providing the plugin as open source and as such allowed me to publish this work and keep expanding it as a personal project. Kudos, guys!

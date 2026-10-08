@@ -28,6 +28,11 @@
 			"Name" : "FlowEditor",
 			"Type" : "Editor",
 			"LoadingPhase" : "PreDefault"
+		},
+		{
+			"Name" : "FlowGraphCourier",
+			"Type" : "Editor",
+			"LoadingPhase" : "Default"
 		}
 	],
 	"Plugins": [
@@ -35,15 +40,16 @@
 			"Name": "AssetSearch",
 			"Enabled": true
 		},
+    {
+			"Name": "EngineAssetDefinitions",
+			"Enabled": true
+		},
 		{
 			"Name": "EditorScriptingUtilities",
 			"Enabled": true
 		},
 		{
-			"Name": "EngineAssetDefinitions",
-			"Enabled": true
-		},
-		{
+			"Name": "ToolsetRegistry",
 			"Name": "GameplayTagsEditor",
 			"Enabled": true
 		}

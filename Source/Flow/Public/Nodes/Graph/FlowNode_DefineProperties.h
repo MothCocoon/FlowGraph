@@ -10,7 +10,7 @@
 /**
  * FlowNode to define data pin property literals for use connecting to data pin inputs in a flow graph.
  */
-UCLASS(Blueprintable, meta = (DisplayName = "Define Properties"))
+UCLASS(Blueprintable, meta = (DisplayName = "Define Properties", Keywords = "datapin"))
 class FLOW_API UFlowNode_DefineProperties 
 	: public UFlowNode
 	, public IFlowNamedPropertiesSupplierInterface
@@ -37,6 +37,8 @@ public:
 	// UObject
 	virtual void PostEditChangeChainProperty(FPropertyChangedChainEvent& PropertyChangedEvent) override;
 	// --
+
+	virtual const FFlowAgentDoc& GetAgentDoc() const override;
 #endif
 
 	// IFlowNamedPropertiesSupplierInterface

@@ -545,6 +545,11 @@ void UFlowGraphNode::GetNodeContextMenuActions(class UToolMenu* Menu, class UGra
 		}
 
 		{
+			FToolMenuSection& Section = Menu->AddSection("FlowGraphNodeSubGraph", LOCTEXT("NodeSubGraphMenuHeader", "SubGraph"));
+			Section.AddMenuEntry(FlowGraphCommands.CreateSubGraphFromSelection);
+		}
+
+		{
 			FToolMenuSection& Section = Menu->AddSection("FlowGraphNodeBreakpoints", LOCTEXT("NodeBreakpointsMenuHeader", "Node Breakpoints"));
 			Section.AddMenuEntry(GraphCommands.AddBreakpoint);
 			Section.AddMenuEntry(GraphCommands.RemoveBreakpoint);

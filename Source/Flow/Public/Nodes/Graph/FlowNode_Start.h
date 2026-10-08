@@ -6,10 +6,14 @@
 #include "FlowNode_Start.generated.h"
 
 /**
- * Execution of the graph always starts from this node.
+ * The mandatory single entry point for a standard Flow Asset - execution always begins here when the graph starts, firing its
+ * output pin immediately. There is exactly one Start node per graph. Input data pins can be defined here to receive
+ * values passed in from the parent SubGraph node or external suppliers.
  */
-UCLASS(NotBlueprintable, NotPlaceable, meta = (DisplayName = "Start"))
-class FLOW_API UFlowNode_Start : public UFlowNode_DefineProperties, public IFlowNodeWithExternalDataPinSupplierInterface
+UCLASS(NotBlueprintable, NotPlaceable, meta = (DisplayName = "Start", Keywords = "start datapin"))
+class FLOW_API UFlowNode_Start
+	: public UFlowNode_DefineProperties
+	, public IFlowNodeWithExternalDataPinSupplierInterface
 {
 	GENERATED_BODY()
 
@@ -38,4 +42,9 @@ public:
 	// IFlowDataPinValueSupplierInterface
 	virtual FFlowDataPinResult TrySupplyDataPin(const FName PinName) const override;
 	// --
+
+#if WITH_EDITOR
+public:
+	virtual const FFlowAgentDoc& GetAgentDoc() const override;
+#endif
 };

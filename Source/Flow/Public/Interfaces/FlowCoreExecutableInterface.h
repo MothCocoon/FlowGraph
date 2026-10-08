@@ -26,7 +26,7 @@ public:
 	void K2_InitializeInstance();
 	virtual void InitializeInstance() { Execute_K2_InitializeInstance(Cast<UObject>(this));  }
 
-	/* Event called from UMKTFlowNode::DeinitializeInstance(). */
+	/* Event called from UFlowNodeBase::DeinitializeInstance(). */
 	UFUNCTION(BlueprintImplementableEvent, Category = "FlowNode", DisplayName = "Deinitialize Instance")
 	void K2_DeinitializeInstance();
 	virtual void DeinitializeInstance() { Execute_K2_DeinitializeInstance(Cast<UObject>(this)); }

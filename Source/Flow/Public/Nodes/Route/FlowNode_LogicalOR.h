@@ -5,8 +5,9 @@
 #include "FlowNode_LogicalOR.generated.h"
 
 /**
- * Logical OR.
- * Output will be triggered only once.
+ * Fires its output whenever ANY of its input pins is triggered, subject to ExecutionLimit.
+ * Use to merge multiple parallel branches into a single continuation point.
+ * Set ExecutionLimit to 0 to allow unlimited firings; set to N to block after N total firings.
  */
 UCLASS(NotBlueprintable, meta = (DisplayName = "OR", Keywords = "|"))
 class FLOW_API UFlowNode_LogicalOR final : public UFlowNode
@@ -42,5 +43,6 @@ protected:
 #if WITH_EDITOR
 public:
 	virtual FString GetStatusString() const override;
+	virtual const FFlowAgentDoc& GetAgentDoc() const override;
 #endif
 };

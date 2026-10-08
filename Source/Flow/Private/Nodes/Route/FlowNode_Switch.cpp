@@ -78,4 +78,15 @@ FText UFlowNode_Switch::K2_GetNodeTitle_Implementation() const
 	return Super::K2_GetNodeTitle_Implementation();
 }
 
+#if WITH_EDITOR
+const FFlowAgentDoc& UFlowNode_Switch::GetAgentDoc() const
+{
+	static const FFlowAgentDoc Doc = MakeAgentDoc(
+		/*Guidance*/ TEXT("Unlike Branch (True/False only), Switch supports N named cases via attached switch-case AddOns. Set bOnlyTriggerFirstPassingCase = false to allow multiple passing cases to fire in a single Evaluate rather than stopping at the first."),
+		/*Tags*/     { TEXT("route"), TEXT("switch"), TEXT("predicate") },
+		/*Articles*/ {  });
+	return Doc;
+}
+#endif
+
 #undef LOCTEXT_NAMESPACE
