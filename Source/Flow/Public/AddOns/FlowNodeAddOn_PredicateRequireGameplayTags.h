@@ -47,4 +47,9 @@ public:
 	/* Requirements to evaluate the Test Tags with. */
 	UPROPERTY(EditAnywhere, Category = Configuration)
 	FFlowGameplayTagRequirements Requirements;
+
+#if WITH_EDITOR
+public:
+	virtual const FFlowAgentDoc& GetAgentDoc() const override;
+#endif
 };

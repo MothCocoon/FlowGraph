@@ -85,3 +85,14 @@ void UFlowNode_FormatText::UpdateNodeConfigText_Implementation()
 #endif
 
 #undef LOCTEXT_NAMESPACE
+
+#if WITH_EDITOR
+const FFlowAgentDoc& UFlowNode_FormatText::GetAgentDoc() const
+{
+	static const FFlowAgentDoc Doc = MakeAgentDoc(
+		/*Guidance*/ TEXT("Inherits its named-property mechanism from Define Properties - complex types are exported via ToString, and InstancedStruct values are not supported as format arguments."),
+		/*Tags*/     { TEXT("graph"), TEXT("text"), TEXT("format") },
+		/*Articles*/ {  });
+	return Doc;
+}
+#endif

@@ -71,4 +71,9 @@ public:
 	virtual FString GetStatusString() const override;
 	virtual void UpdateNodeConfigText_Implementation() override;
 #endif
+
+#if WITH_EDITOR
+public:
+	virtual const FFlowAgentDoc& GetAgentDoc() const override;
+#endif
 };
