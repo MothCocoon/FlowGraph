@@ -2,12 +2,17 @@
 
 #include "DetailCustomizations/FlowNode_Details.h"
 
+#include "AddOns/FlowNodeAddOn.h"
 #include "DetailCustomizations/FlowDetailsAddOnUI.h"
+#include "Graph/FlowGraphEditorSettings.h"
 #include "Nodes/FlowNode.h"
 
 #include "DetailCategoryBuilder.h"
+#include "IDetailChildrenBuilder.h"
 #include "DetailLayoutBuilder.h"
+#include "IDetailPropertyRow.h"
 #include "DetailWidgetRow.h"
+#include "PropertyCustomizationHelpers.h"
 #include "Widgets/Input/SComboButton.h"
 #include "Widgets/Text/STextBlock.h"
 
@@ -18,7 +23,36 @@ void FFlowNode_Details::CustomizeDetails(IDetailLayoutBuilder& DetailLayout)
 	// Hide class-level category when editing an instance (not the CDO)
 	if (!DetailLayout.HasClassDefaultObject())
 	{
-		DetailLayout.HideCategory(TEXT("FlowNode"));
+		if (GetDefault<UFlowGraphEditorSettings>()->bMergeAddOnDetails)
+		{
+			IDetailCategoryBuilder& AddOnDetailsCategory = DetailLayout.EditCategory(
+				TEXT("AddOnDetails"),
+				LOCTEXT("AddOnDetailsCategory", "AddOn Details"),
+				ECategoryPriority::Uncommon);
+
+			TSharedRef<IPropertyHandle> AddOnsProperty = DetailLayout.GetProperty(TEXT("AddOns"), UFlowNodeBase::StaticClass());
+			const TSharedRef<FDetailArrayBuilder> AddOnsArrayBuilder = MakeShared<FDetailArrayBuilder>(
+				AddOnsProperty,
+				/*InGenerateHeader=*/true,
+				/*InDisplayResetToDefault=*/false);
+			AddOnsArrayBuilder->SetDisplayName(LOCTEXT("AddOnDetailsProperty", "AddOns"));
+			AddOnsArrayBuilder->OnGenerateArrayElementWidget(FOnGenerateArrayElementWidget::CreateLambda(
+				[](TSharedRef<IPropertyHandle> ElementHandle, int32 /*ElementIndex*/, IDetailChildrenBuilder& ChildrenBuilder)
+				{
+					IDetailPropertyRow& AddOnRow = ChildrenBuilder.AddProperty(ElementHandle);
+
+					UObject* AddOnObject = nullptr;
+					if (ElementHandle->GetValue(AddOnObject) == FPropertyAccess::Success)
+					{
+						if (const UFlowNodeAddOn* AddOn = Cast<UFlowNodeAddOn>(AddOnObject))
+						{
+							AddOnRow.DisplayName(AddOn->GetNodeTitle());
+						}
+					}
+				}));
+
+			AddOnDetailsCategory.AddCustomBuilder(AddOnsArrayBuilder);
+		}
 	}
 
 	// Cache edited object
