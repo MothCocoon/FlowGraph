@@ -85,3 +85,14 @@ const FFlowAgentDoc& UFlowNode_Counter::GetAgentDoc() const
 	return Doc;
 }
 #endif
+
+#if WITH_EDITOR
+const FFlowAgentDoc& UFlowNode_Counter::GetAgentDoc() const
+{
+	static const FFlowAgentDoc Doc = MakeAgentDoc(
+		/*Guidance*/ TEXT("Use to gate flow until a fixed number of events have occurred (e.g. after 3 enemies die). The count resets to zero automatically whenever Cleanup runs."),
+		/*Tags*/     { TEXT("route"), TEXT("counter"), TEXT("condition") },
+		/*Articles*/ {  });
+	return Doc;
+}
+#endif

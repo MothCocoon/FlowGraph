@@ -35,6 +35,7 @@ public:
 	static const FName OUTPIN_DefaultCase;
 
 #if WITH_EDITOR
+public:
 	virtual const FFlowAgentDoc& GetAgentDoc() const override;
 #endif
 };

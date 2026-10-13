@@ -29,21 +29,6 @@ void UFlowNode_LogicalAND::Cleanup()
 }
 
 #if WITH_EDITOR
-FString UFlowNode_LogicalAND::GetStatusString() const
-{
-	FTextBuilder TextBuilder;
-
-	if (ActivationState != EFlowNodeState::NeverActivated)
-	{
-		for (const FName& PinName : ExecutedInputNames)
-		{
-			TextBuilder.AppendLine(PinName.ToString());
-		}
-	}
-
-	return TextBuilder.ToText().ToString();
-}
-
 const FFlowAgentDoc& UFlowNode_LogicalAND::GetAgentDoc() const
 {
 	static const FFlowAgentDoc Doc = MakeAgentDoc(

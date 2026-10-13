@@ -90,3 +90,14 @@ const FFlowAgentDoc& UFlowNode_Branch::GetAgentDoc() const
 #endif
 
 #undef LOCTEXT_NAMESPACE
+
+#if WITH_EDITOR
+const FFlowAgentDoc& UFlowNode_Branch::GetAgentDoc() const
+{
+	static const FFlowAgentDoc Doc = MakeAgentDoc(
+		/*Guidance*/ TEXT("Attach one or more predicate AddOns (implementing IFlowPredicateInterface) as children to define what is being tested - with zero attached predicates the combination is vacuously true for both AND and OR."),
+		/*Tags*/     { TEXT("route"), TEXT("branch"), TEXT("predicate") },
+		/*Articles*/ {  });
+	return Doc;
+}
+#endif

@@ -460,9 +460,8 @@ protected:
 	UPROPERTY(EditDefaultsOnly, AdvancedDisplay, Category = "FlowNode")
 	FText DevNodeConfigText;
 
-	/* Agent-facing documentation for this class - what it does for the author, and when to reach for
-	 * it. Blueprint classes author this on their CDO; native classes leave it empty and override
-	 * GetAgentDoc() to return a compiled-in constant instead. */
+	/* Agent-facing documentation for this class. Blueprint classes author this on their CDO; native
+	 * classes override GetAgentDoc() to return a compiled-in constant instead. */
 	UPROPERTY(EditDefaultsOnly, Category = "Agent (MCP)", DisplayName = "Agent Documentation")
 	FFlowAgentDoc AgentDoc;
 #endif // WITH_EDITORONLY_DATA
@@ -499,19 +498,13 @@ public:
 	 */
 	virtual bool GetCornerIcon(FName& OutBrushName, FName& OutStyleSetName) const { return false; }
 
-	/**
-	 * Agent-facing documentation for this class. The single read seam, so a class is free to store
-	 * its doc either as a serialized CDO default (the base implementation) or as a compiled-in
-	 * constant returned by an override. Override also to inject shared guidance across a family of
-	 * classes. An undocumented class is normal - it simply returns an empty doc.
-	 */
+	/** Returns the agent-facing guidance authored on this class or supplied by a native override. */
 	virtual const FFlowAgentDoc& GetAgentDoc() const { return AgentDoc; }
 
-	/* Writes the agent doc onto this object. Only durable for a class whose defaults are serialized;
-	 * a class that returns a compiled-in constant from GetAgentDoc() ignores whatever is written here,
-	 * so tooling must not report such a write as persisted. */
+	/* Persists documentation for classes whose defaults serialize AgentDoc. Native overrides should
+	 * return their compiled-in documentation directly. */
 	void SetAgentDoc(const FFlowAgentDoc& InAgentDoc) { AgentDoc = InAgentDoc; }
-
+	
 protected:
 	void EnsureNodeDisplayStyle();
 #endif // WITH_EDITOR

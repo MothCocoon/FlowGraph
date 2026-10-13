@@ -21,6 +21,7 @@ public:
 	virtual void ExecuteInput(const FName& PinName) override;
 
 #if WITH_EDITOR
+public:
 	virtual const FFlowAgentDoc& GetAgentDoc() const override;
 #endif
 };
