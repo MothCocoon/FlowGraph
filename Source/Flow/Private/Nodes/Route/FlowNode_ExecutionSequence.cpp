@@ -69,3 +69,14 @@ FString UFlowNode_ExecutionSequence::GetNodeDescription() const
 	return Super::GetNodeDescription();
 }
 #endif
+
+#if WITH_EDITOR
+const FFlowAgentDoc& UFlowNode_ExecutionSequence::GetAgentDoc() const
+{
+	static const FFlowAgentDoc Doc = MakeAgentDoc(
+		/*Guidance*/ TEXT("Enable bSavePinExecutionState to persist, across save/load, which output connections have already fired - reconnecting or adding new outputs is detected automatically and those new connections still execute even after a load."),
+		/*Tags*/     { TEXT("route"), TEXT("sequence"), TEXT("fan-out") },
+		/*Articles*/ {  });
+	return Doc;
+}
+#endif

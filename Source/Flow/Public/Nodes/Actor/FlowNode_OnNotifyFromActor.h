@@ -19,6 +19,11 @@ protected:
 	UPROPERTY(EditAnywhere, Category = "Notify")
 	FGameplayTagContainer NotifyTags;
 
+	/* If true, received Notify Tag must exactly match one of Notify Tags.
+	 * If false, a child of any Notify Tag also matches. */
+	UPROPERTY(EditAnywhere, Category = "Notify")
+	bool bExactMatch = true;
+
 	/* If true, node will check given Notify Tag is present in the Recently Sent Notify Tags.
 	 * This might be helpful in multiplayer, if client-side Flow Node started work after server sent the Notify. */
 	UPROPERTY(EditAnywhere, Category = "Notify")
@@ -32,5 +37,10 @@ protected:
 #if WITH_EDITOR
 public:
 	virtual FString GetNodeDescription() const override;
+#endif
+
+#if WITH_EDITOR
+public:
+	virtual const FFlowAgentDoc& GetAgentDoc() const override;
 #endif
 };
