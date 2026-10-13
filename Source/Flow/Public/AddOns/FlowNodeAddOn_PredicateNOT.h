@@ -25,4 +25,9 @@ public:
 	// IFlowPredicateInterface
 	virtual bool EvaluatePredicate_Implementation() const override;
 	// --
+
+#if WITH_EDITOR
+public:
+	virtual const FFlowAgentDoc& GetAgentDoc() const override;
+#endif
 };
