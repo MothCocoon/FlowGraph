@@ -54,4 +54,9 @@ public:
 	// IFlowSwitchCaseInterface
 	virtual bool TryTriggerForCase_Implementation() const override;
 	// --
+
+#if WITH_EDITOR
+public:
+	virtual const FFlowAgentDoc& GetAgentDoc() const override;
+#endif
 };

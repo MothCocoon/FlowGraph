@@ -36,3 +36,14 @@ FText UFlowNode_CustomInput::K2_GetNodeTitle_Implementation() const
 #endif
 
 #undef LOCTEXT_NAMESPACE
+
+#if WITH_EDITOR
+const FFlowAgentDoc& UFlowNode_CustomInput::GetAgentDoc() const
+{
+	static const FFlowAgentDoc Doc = MakeAgentDoc(
+		/*Guidance*/ TEXT("Pick EventName from the names declared in the asset's CustomInputs array, which is what the parent SubGraph node exposes as input pins. Useful for letting a parent graph trigger a specific behavior inside a running sub-graph (e.g. a Cancel signal) rather than waiting for the sub-graph to finish naturally."),
+		/*Tags*/     { TEXT("graph"), TEXT("subgraph"), TEXT("input") },
+		/*Articles*/ {  });
+	return Doc;
+}
+#endif

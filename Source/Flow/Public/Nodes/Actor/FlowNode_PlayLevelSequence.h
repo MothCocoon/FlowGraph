@@ -152,4 +152,9 @@ protected:
 public:	
 	virtual void GrabDebugSnapshot(struct FVisualLogEntry* Snapshot) const override;
 #endif
+
+#if WITH_EDITOR
+public:
+	virtual const FFlowAgentDoc& GetAgentDoc() const override;
+#endif
 };
