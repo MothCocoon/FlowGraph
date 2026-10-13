@@ -66,21 +66,3 @@ void FFlowObjectDiff::DiffProperties(TArray<FSingleObjectDiffEntry>& OutProperty
 		OldDetailsView->DiffAgainst(*NewDetailsView.Get(), OutPropertyDiffsArray, bSortByDisplayOrder);
 	}
 }
-
-void FFlowObjectDiff::OnSelectDiff(const FSingleObjectDiffEntry& Property) const
-{
-	if (Property.DiffType == EPropertyDiffType::Type::Invalid)
-	{
-		return;
-	}
-
-	if (OldDetailsView.IsValid())
-	{
-		OldDetailsView->HighlightProperty(Property.Identifier);
-	}
-
-	if (NewDetailsView.IsValid())
-	{
-		NewDetailsView->HighlightProperty(Property.Identifier);
-	}
-}

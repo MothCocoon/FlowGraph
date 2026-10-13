@@ -66,4 +66,9 @@ public:
 #endif
 
 	EFlowLogVerbosity GetVerbosity() const { return Verbosity; }
+
+#if WITH_EDITOR
+public:
+	virtual const FFlowAgentDoc& GetAgentDoc() const override;
+#endif
 };
