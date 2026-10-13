@@ -63,7 +63,7 @@ private:
 
 	TSharedPtr<FFlowObjectDiff> GenerateFlowObjectDiff(const TSharedPtr<FDiffResultItem>& Differences);
 
-	TSharedPtr<FFlowObjectDiff> FindParentNode(class UFlowGraphNode* Node);
+	TSharedPtr<FFlowObjectDiff> FindParentDiff(class UFlowGraphNode* Node);
 
 	TMap<FString, TSharedPtr<FFlowObjectDiff>> FlowObjectDiffsByNodeName;
 
