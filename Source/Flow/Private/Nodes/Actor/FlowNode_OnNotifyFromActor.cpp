@@ -68,3 +68,14 @@ const FFlowAgentDoc& UFlowNode_OnNotifyFromActor::GetAgentDoc() const
 	return Doc;
 }
 #endif
+
+#if WITH_EDITOR
+const FFlowAgentDoc& UFlowNode_OnNotifyFromActor::GetAgentDoc() const
+{
+	static const FFlowAgentDoc Doc = MakeAgentDoc(
+		/*Guidance*/ TEXT("Enable bRetroactive to also fire if the matching notify was already sent before this node started observing - useful in multiplayer, where a client-side node may start listening after the server already sent the notify."),
+		/*Tags*/     { TEXT("actor"), TEXT("notify"), TEXT("event") },
+		/*Articles*/ {  });
+	return Doc;
+}
+#endif

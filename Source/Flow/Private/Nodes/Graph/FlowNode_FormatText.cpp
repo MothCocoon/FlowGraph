@@ -94,3 +94,14 @@ const FFlowAgentDoc& UFlowNode_FormatText::GetAgentDoc() const
 #endif
 
 #undef LOCTEXT_NAMESPACE
+
+#if WITH_EDITOR
+const FFlowAgentDoc& UFlowNode_FormatText::GetAgentDoc() const
+{
+	static const FFlowAgentDoc Doc = MakeAgentDoc(
+		/*Guidance*/ TEXT("Inherits its named-property mechanism from Define Properties - Object and Class values are formatted by object name, and InstancedStruct values by their struct type name, not their contents."),
+		/*Tags*/     { TEXT("graph"), TEXT("text"), TEXT("format") },
+		/*Articles*/ {  });
+	return Doc;
+}
+#endif
