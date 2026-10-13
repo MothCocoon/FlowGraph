@@ -142,6 +142,6 @@ const FFlowAgentDoc& UFlowNode_DefineProperties::GetAgentDoc() const
 		/*Guidance*/ TEXT("Use as a source of fixed, hand-authored literal values (numbers, tags, actors, etc.) for downstream data pins, rather than duplicating the same literal on multiple nodes. Format Text and Start build on this same named-property mechanism."),
 		/*Tags*/     { TEXT("graph"), TEXT("datapin"), TEXT("literal") },
 		/*Articles*/ {  });
-	return Doc;
+	return AgentDoc.HasDoc() ? AgentDoc : Doc;
 }
 #endif

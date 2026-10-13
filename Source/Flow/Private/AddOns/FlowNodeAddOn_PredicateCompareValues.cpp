@@ -724,7 +724,7 @@ bool UFlowNodeAddOn_PredicateCompareValues::EvaluatePredicate_Implementation() c
 const FFlowAgentDoc& UFlowNodeAddOn_PredicateCompareValues::GetAgentDoc() const
 {
 	static const FFlowAgentDoc Doc = MakeAgentDoc(
-		/*Guidance*/ TEXT("Arithmetic operators only work for numeric or otherwise-ordered types - attempting them on an incompatible pair, such as two objects, fails the comparison rather than producing a meaningful result. Equality falls back to a generic string comparison for types with no dedicated comparator, so two values that print identically can still evaluate true even if their underlying types differ."),
+		/*Guidance*/ TEXT("Arithmetic operators only work when both sides are numeric (Int, Int64, Float, Double) - any other pair logs an error and fails the comparison. Pins of different types must be a comparable pair or the comparison fails. Same-type pins with no dedicated comparator fall back to an equality check of their string conversions."),
 		/*Tags*/     { TEXT("predicate"), TEXT("compare"), TEXT("value") },
 		/*Articles*/ {  });
 	return Doc;
