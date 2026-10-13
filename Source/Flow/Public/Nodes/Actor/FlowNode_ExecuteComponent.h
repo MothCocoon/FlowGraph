@@ -133,4 +133,9 @@ protected:
 	/* Inject component(s) onto the owning Actor. */
 	UPROPERTY()
 	EExecuteComponentSource ComponentSource = EExecuteComponentSource::Undetermined;
+
+#if WITH_EDITOR
+public:
+	virtual const FFlowAgentDoc& GetAgentDoc() const override;
+#endif
 };

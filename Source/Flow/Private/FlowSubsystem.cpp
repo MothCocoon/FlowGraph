@@ -14,6 +14,7 @@
 #include "Engine/World.h"
 #include "Logging/MessageLog.h"
 #include "Misc/Paths.h"
+#include "Types/FlowIdentity.h"
 #include "UObject/UObjectHash.h"
 
 #include UE_INLINE_GENERATED_CPP_BY_NAME(FlowSubsystem)
@@ -127,7 +128,7 @@ UFlowAsset* UFlowSubsystem::CreateRootFlow(UObject* Owner, UFlowAsset* FlowAsset
 	return NewFlow;
 }
 
-void UFlowSubsystem::FinishRootFlow(UObject* Owner, UFlowAsset* TemplateAsset, const EFlowFinishPolicy FinishPolicy)
+void UFlowSubsystem::FinishAndDeinitializeRootFlow(UObject* Owner, UFlowAsset* TemplateAsset, const EFlowFinishPolicy FinishPolicy)
 {
 	UFlowAsset* InstanceToFinish = nullptr;
 
@@ -140,14 +141,10 @@ void UFlowSubsystem::FinishRootFlow(UObject* Owner, UFlowAsset* TemplateAsset, c
 		}
 	}
 
-	if (InstanceToFinish)
-	{
-		RootInstances.Remove(InstanceToFinish);
-		InstanceToFinish->FinishFlow(FinishPolicy);
-	}
+	FinishAndDeinitializeInstance(InstanceToFinish, FinishPolicy);
 }
 
-void UFlowSubsystem::FinishAllRootFlows(UObject* Owner, const EFlowFinishPolicy FinishPolicy)
+void UFlowSubsystem::FinishAndDeinitializeAllRootFlows(UObject* Owner, const EFlowFinishPolicy FinishPolicy)
 {
 	TArray<UFlowAsset*> InstancesToFinish;
 
@@ -161,18 +158,42 @@ void UFlowSubsystem::FinishAllRootFlows(UObject* Owner, const EFlowFinishPolicy 
 
 	for (UFlowAsset* InstanceToFinish : InstancesToFinish)
 	{
+		FinishAndDeinitializeInstance(InstanceToFinish, FinishPolicy);
+	}
+}
+
+void UFlowSubsystem::FinishAndDeinitializeInstance(UFlowAsset* InstanceToFinish, const EFlowFinishPolicy FinishPolicy)
+{
+	if (InstanceToFinish)
+	{
 		RootInstances.Remove(InstanceToFinish);
-		InstanceToFinish->FinishFlow(FinishPolicy);
+
+		InstanceToFinish->FinishFlowInstance(FinishPolicy);
+		InstanceToFinish->DeinitializeInstance();
 	}
 }
 
 UFlowAsset* UFlowSubsystem::CreateSubFlow(UFlowNode_SubGraph* SubGraphNode, const FString& SavedInstanceName, const bool bPreloading /* = false */)
 {
+	// all calls checks if SubGraphNode is valid
+	ensureAlways(SubGraphNode);
+
+	UFlowAsset* SubGraphOwner = SubGraphNode->GetFlowAsset();
 	UFlowAsset* AssetInstance = nullptr;
+
+	// Instance finished by the previous run of this node is replaced, so every run starts with fresh node instances.
+	// Preloaded instance is kept, as it hasn't started yet.
+	if (const UFlowAsset* PreviousInstance = InstancedSubFlows.FindRef(SubGraphNode))
+	{
+		if (PreviousInstance->HasStartedFlow() && !SubGraphOwner->ActiveSubGraphs.Contains(SubGraphNode))
+		{
+			FinishSubFlow(SubGraphNode, EFlowFinishPolicy::Keep, true);
+		}
+	}
 
 	if (!InstancedSubFlows.Contains(SubGraphNode))
 	{
-		const TWeakObjectPtr<UObject> Owner = SubGraphNode->GetFlowAsset() ? SubGraphNode->GetFlowAsset()->GetOwner() : nullptr;
+		const TWeakObjectPtr<UObject> Owner = SubGraphOwner ? SubGraphOwner->GetOwner() : nullptr;
 		AssetInstance = CreateFlowInstance(Owner, SubGraphNode->Asset.LoadSynchronous(), SavedInstanceName);
 
 		if (AssetInstance)
@@ -191,9 +212,8 @@ UFlowAsset* UFlowSubsystem::CreateSubFlow(UFlowNode_SubGraph* SubGraphNode, cons
 		{
 			AssetInstance->NodeOwningThisAssetInstance = SubGraphNode;
 		}
-		check(AssetInstance->NodeOwningThisAssetInstance == SubGraphNode);
 
-		SubGraphNode->GetFlowAsset()->ActiveSubGraphs.Add(SubGraphNode, AssetInstance);
+		SubGraphOwner->ActiveSubGraphs.Add(SubGraphNode, AssetInstance);
 
 		// don't activate Start Node if we're loading Sub Graph from SaveGame
 		if (SavedInstanceName.IsEmpty())
@@ -205,19 +225,24 @@ UFlowAsset* UFlowSubsystem::CreateSubFlow(UFlowNode_SubGraph* SubGraphNode, cons
 	return AssetInstance;
 }
 
-void UFlowSubsystem::RemoveSubFlow(UFlowNode_SubGraph* SubGraphNode, const EFlowFinishPolicy FinishPolicy)
+void UFlowSubsystem::FinishSubFlow(UFlowNode_SubGraph* SubGraphNode, const EFlowFinishPolicy FinishPolicy, const bool bRemoveInstance)
 {
 	if (InstancedSubFlows.Contains(SubGraphNode))
 	{
+		// The Flow Asset instantiated by SubGraph node 
 		UFlowAsset* AssetInstance = InstancedSubFlows[SubGraphNode];
 
 		SubGraphNode->GetFlowAsset()->ActiveSubGraphs.Remove(SubGraphNode);
-		InstancedSubFlows.Remove(SubGraphNode);
+		AssetInstance->FinishFlowInstance(FinishPolicy);
 
-		AssetInstance->FinishFlow(FinishPolicy);
+		if (bRemoveInstance)
+		{
+			InstancedSubFlows.Remove(SubGraphNode);
+			AssetInstance->DeinitializeInstance();
 
-		// Make sure to set the NodeOwningThisAssetInstance after the FinishFlow call, as it may be needed in the FinishFlow method
-		AssetInstance->NodeOwningThisAssetInstance = nullptr;
+			// Make sure to set the NodeOwningThisAssetInstance after the FinishFlowInstance and DeinitializeInstance calls, as it may be needed there
+			AssetInstance->NodeOwningThisAssetInstance = nullptr;
+		}
 	}
 }
 
@@ -722,6 +747,50 @@ TMap<AActor*, UFlowComponent*> UFlowSubsystem::GetFlowActorsAndComponentsByTags(
 		if (Component.IsValid() && Component->GetOwner()->GetClass()->IsChildOf(ActorClass))
 		{
 			Result.Emplace(Component->GetOwner(), Component.Get());
+		}
+	}
+
+	return Result;
+}
+
+TSet<UFlowComponent*> UFlowSubsystem::GetFlowComponentsByIdentity(const FFlowIdentity& Identity) const
+{
+	TSet<UFlowComponent*> Result;
+
+	if (Identity.IsValid())
+	{
+		TSet<TWeakObjectPtr<UFlowComponent>> FoundComponents;
+		FindComponents(Identity.IdentityTags, Identity.GetContainerMatchType(), Identity.IsExactMatch(), FoundComponents);
+
+		for (const TWeakObjectPtr<UFlowComponent>& WeakComponent : FoundComponents)
+		{
+			UFlowComponent* Component = WeakComponent.Get();
+			if (Identity.MatchesFilters(Component))
+			{
+				Result.Emplace(Component);
+			}
+		}
+	}
+
+	return Result;
+}
+
+TSet<AActor*> UFlowSubsystem::GetFlowActorsByIdentity(const FFlowIdentity& Identity) const
+{
+	TSet<AActor*> Result;
+
+	if (Identity.IsValid())
+	{
+		TSet<TWeakObjectPtr<UFlowComponent>> FoundComponents;
+		FindComponents(Identity.IdentityTags, Identity.GetContainerMatchType(), Identity.IsExactMatch(), FoundComponents);
+
+		for (const TWeakObjectPtr<UFlowComponent>& WeakComponent : FoundComponents)
+		{
+			const UFlowComponent* Component = WeakComponent.Get();
+			if (Identity.MatchesFilters(Component))
+			{
+				Result.Emplace(Component->GetOwner());
+			}
 		}
 	}
 

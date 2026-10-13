@@ -29,4 +29,9 @@ public:
 	void ConfigureInputPin(const UFlowNode& ConnectedNode, const FEdGraphPinType& EdGraphPinType);
 	void ConfigureOutputPin(const UFlowNode& ConnectedNode, const FEdGraphPinType& EdGraphPinType);
 #endif
+
+#if WITH_EDITOR
+public:
+	virtual const FFlowAgentDoc& GetAgentDoc() const override;
+#endif
 };

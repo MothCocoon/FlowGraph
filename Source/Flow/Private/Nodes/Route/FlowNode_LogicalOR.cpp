@@ -65,3 +65,14 @@ FString UFlowNode_LogicalOR::GetStatusString() const
 	return Super::GetStatusString();
 }
 #endif
+
+#if WITH_EDITOR
+const FFlowAgentDoc& UFlowNode_LogicalOR::GetAgentDoc() const
+{
+	static const FFlowAgentDoc Doc = MakeAgentDoc(
+		/*Guidance*/ TEXT("Use to merge multiple parallel branches into a single continuation point. Set ExecutionLimit to 0 for unlimited firings, or to N to block permanently after N total firings until re-enabled."),
+		/*Tags*/     { TEXT("route"), TEXT("logic"), TEXT("merge") },
+		/*Articles*/ {  });
+	return Doc;
+}
+#endif

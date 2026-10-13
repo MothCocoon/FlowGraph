@@ -63,6 +63,7 @@ public:
 
 	virtual void ExecuteInput(const FName& PinName) override;
 	virtual void Cleanup() override;
+	virtual void DeinitializeInstance() override;
 
 public:
 	virtual void ForceFinishNode() override;
@@ -119,4 +120,9 @@ private:
 #endif
 
 	static const FName AssetParams_MemberName;
+
+#if WITH_EDITOR
+public:
+	virtual const FFlowAgentDoc& GetAgentDoc() const override;
+#endif
 };
