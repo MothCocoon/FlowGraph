@@ -156,6 +156,11 @@ private:
 	/* Populate cached type names from the current LeftValue/RightValue.
 	* Returns false (and logs error) if either value is not configured. */
 	bool CacheTypeNames(FCachedTypeNames& OutCache) const;
+
+#if WITH_EDITOR
+public:
+	virtual const FFlowAgentDoc& GetAgentDoc() const override;
+#endif
 };
 
 // -----------------------------------------------------------------------

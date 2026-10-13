@@ -55,3 +55,14 @@ const FFlowAgentDoc& UFlowNode_NotifyActor::GetAgentDoc() const
 	return Doc;
 }
 #endif
+
+#if WITH_EDITOR
+const FFlowAgentDoc& UFlowNode_NotifyActor::GetAgentDoc() const
+{
+	static const FFlowAgentDoc Doc = MakeAgentDoc(
+		/*Guidance*/ TEXT("Set bExactMatch carefully - disabling it can become expensive, since the search cost then scales with the total number of registered Gameplay Tags rather than just this node's tags."),
+		/*Tags*/     { TEXT("actor"), TEXT("notify"), TEXT("event") },
+		/*Articles*/ {  });
+	return Doc;
+}
+#endif

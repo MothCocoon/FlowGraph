@@ -73,3 +73,14 @@ const FFlowAgentDoc& UFlowNode_CustomOutput::GetAgentDoc() const
 #endif
 
 #undef LOCTEXT_NAMESPACE
+
+#if WITH_EDITOR
+const FFlowAgentDoc& UFlowNode_CustomOutput::GetAgentDoc() const
+{
+	static const FFlowAgentDoc Doc = MakeAgentDoc(
+		/*Guidance*/ TEXT("Pick EventName from the names declared in the asset's CustomOutputs array, which is what the parent SubGraph node exposes as output pins. Triggering with EventName unset, or set to a name no Custom Output node declares, only logs a warning - it does not fire anything."),
+		/*Tags*/     { TEXT("graph"), TEXT("subgraph"), TEXT("output") },
+		/*Articles*/ {  });
+	return Doc;
+}
+#endif

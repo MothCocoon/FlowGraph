@@ -34,6 +34,7 @@ public:
 	virtual void Cleanup() override;
 
 #if WITH_EDITOR
+public:
 	virtual const FFlowAgentDoc& GetAgentDoc() const override;
 #endif
 };

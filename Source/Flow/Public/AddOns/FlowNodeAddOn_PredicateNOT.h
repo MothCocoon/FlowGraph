@@ -31,6 +31,7 @@ public:
 	// --
 
 #if WITH_EDITOR
+public:
 	virtual const FFlowAgentDoc& GetAgentDoc() const override;
 #endif
 };

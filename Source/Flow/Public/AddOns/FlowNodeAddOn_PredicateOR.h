@@ -33,6 +33,7 @@ public:
 	FLOW_API static bool EvaluatePredicateOR(const TArray<UFlowNodeAddOn*>& AddOns);
 
 #if WITH_EDITOR
+public:
 	virtual const FFlowAgentDoc& GetAgentDoc() const override;
 #endif
 };
