@@ -36,6 +36,10 @@ This is a BREAKING CHANGE if you have any custom UFlowGraphNode class. Updating 
 * `PlayLevelSequence` node now supports multiplayer via a replicated binding on `AFlowLevelSequenceActor`. (contributed by LindyHopperGT)
 * `OnNotifyFromActor` now has `bExactMatch` flag allowing users to choose how the `NotifyTag` should be matched. It's similar to the `NotifyActor` node. (contributed by fede-Raider)
 
+## Flow Node AddOns
+* Moved `NodeGuid` property to `UFlowNodeBase`, so now AddOns uses this for identification. (contributed by LindyHopperGT)
+    * Added code to update legacy graphs to set `NodeGuid` on AddOns.
+
 ## Flow Asset
 * Diff improvements. (contributed by MaksymKapelianovych)
     * Reintroduced graph orientation changing.
