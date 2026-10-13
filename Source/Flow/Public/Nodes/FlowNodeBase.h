@@ -96,6 +96,18 @@ public:
 // Node
 
 public:
+	/* Stable identity persisted across saves.
+	 * Nodes inherit it from the graph node.
+	 * AddOns mint their identity at construction. */
+	UPROPERTY()
+	FGuid NodeGuid;
+
+	UFUNCTION(BlueprintCallable, Category = "FlowNode")
+	void SetGuid(const FGuid& NewGuid) { NodeGuid = NewGuid; }
+
+	UFUNCTION(BlueprintPure, Category = "FlowNode")
+	const FGuid& GetGuid() const { return NodeGuid; }
+
 	// UObject
 	virtual UWorld* GetWorld() const override;
 	// --
