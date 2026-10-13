@@ -32,4 +32,9 @@ public:
 
 	static const FName INPIN_Evaluate;
 	static const FName OUTPIN_DefaultCase;
+
+#if WITH_EDITOR
+public:
+	virtual const FFlowAgentDoc& GetAgentDoc() const override;
+#endif
 };

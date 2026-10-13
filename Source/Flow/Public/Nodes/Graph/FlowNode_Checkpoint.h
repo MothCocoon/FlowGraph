@@ -26,4 +26,9 @@ protected:
 public:
 	virtual void ExecuteInput(const FName& PinName) override;
 	virtual void OnLoad_Implementation() override;
+
+#if WITH_EDITOR
+public:
+	virtual const FFlowAgentDoc& GetAgentDoc() const override;
+#endif
 };

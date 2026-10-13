@@ -66,3 +66,14 @@ bool UFlowNodeAddOn_PredicateOR::EvaluatePredicateOR(const TArray<UFlowNodeAddOn
 		return false;
 	}
 }
+
+#if WITH_EDITOR
+const FFlowAgentDoc& UFlowNodeAddOn_PredicateOR::GetAgentDoc() const
+{
+	static const FFlowAgentDoc Doc = MakeAgentDoc(
+		/*Guidance*/ TEXT("With zero attached qualifying children this evaluates true, not false - the same vacuous-true convention PredicateAND uses for an empty child set. Don't assume an unconfigured OR silently fails closed; add at least one child predicate if the intent is to gate on something actually being true."),
+		/*Tags*/     { TEXT("predicate"), TEXT("or"), TEXT("logic") },
+		/*Articles*/ {  });
+	return Doc;
+}
+#endif

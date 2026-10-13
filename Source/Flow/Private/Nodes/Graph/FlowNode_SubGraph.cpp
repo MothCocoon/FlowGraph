@@ -375,3 +375,14 @@ void UFlowNode_SubGraph::SubscribeToAssetChanges()
 #endif
 
 #undef LOCTEXT_NAMESPACE
+
+#if WITH_EDITOR
+const FFlowAgentDoc& UFlowNode_SubGraph::GetAgentDoc() const
+{
+	static const FFlowAgentDoc Doc = MakeAgentDoc(
+		/*Guidance*/ TEXT("Every name listed in the child asset's CustomInputs and CustomOutputs arrays becomes a matching pin on this node - pair them with Custom Input/Output nodes inside the child to route signals in and out of the sub-graph mid-run. Enabling bCanInstanceIdenticalAsset can cause infinite recursion if the child unconditionally spawns itself; leave it off unless you have a real termination condition."),
+		/*Tags*/     { TEXT("graph"), TEXT("subgraph"), TEXT("composition") },
+		/*Articles*/ {  });
+	return Doc;
+}
+#endif
