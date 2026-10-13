@@ -53,7 +53,7 @@ void UFlowNode_SubGraph::FlushContent()
 {
 	if (CanBeAssetInstanced() && GetFlowSubsystem())
 	{
-		GetFlowSubsystem()->RemoveSubFlow(this, EFlowFinishPolicy::Abort);
+		GetFlowSubsystem()->FinishSubFlow(this, EFlowFinishPolicy::Abort, true);
 	}
 }
 
@@ -100,12 +100,26 @@ void UFlowNode_SubGraph::ExecuteInput(const FName& PinName)
 
 void UFlowNode_SubGraph::Cleanup()
 {
-	if (CanBeAssetInstanced() && GetFlowSubsystem())
+	UFlowSubsystem* FlowSubsystem = GetFlowSubsystem();
+	if (FlowSubsystem && CanBeAssetInstanced())
 	{
-		GetFlowSubsystem()->RemoveSubFlow(this, EFlowFinishPolicy::Keep);
+		const UFlowAsset* SubFlow = FlowSubsystem->GetInstancedSubFlows().FindRef(this);
+		const bool bRemoveInstanceOnCleanup = SubFlow && SubFlow->GetSubGraphFinishPolicy() == ESubGraphFinishPolicy::Deinitialize;
+		FlowSubsystem->FinishSubFlow(this, EFlowFinishPolicy::Keep, bRemoveInstanceOnCleanup);
 	}
 
 	Super::Cleanup();
+}
+
+void UFlowNode_SubGraph::DeinitializeInstance()
+{
+	UFlowSubsystem* FlowSubsystem = GetFlowSubsystem();
+	if (FlowSubsystem && CanBeAssetInstanced())
+	{
+		FlowSubsystem->FinishSubFlow(this, EFlowFinishPolicy::Keep, true);
+	}
+
+	Super::DeinitializeInstance();
 }
 
 void UFlowNode_SubGraph::ForceFinishNode()
@@ -123,7 +137,7 @@ FFlowDataPinResult UFlowNode_SubGraph::TrySupplyDataPin(const FName PinName) con
 		return Super::TrySupplyDataPin(PinName);
 	}
 
-  // Check cached output data pin values first — output pins are never "input connected",
+	// Check cached output data pin values first — output pins are never "input connected",
 	// so this must come before IsInputConnected to avoid a spurious "unknown input pin" error.
 	if (const TInstancedStruct<FFlowDataPinValue>* CachedValue = CachedOutputDataPinValues.Values.Find(PinName))
 	{
@@ -135,7 +149,7 @@ FFlowDataPinResult UFlowNode_SubGraph::TrySupplyDataPin(const FName PinName) con
 			return Result;
 		}
 	}
-  
+
 	if (!IsInputConnected(PinName))
 	{
 		if (IsInputConnected(AssetParams_MemberName) || !AssetParams.IsNull())
@@ -158,7 +172,7 @@ FFlowDataPinResult UFlowNode_SubGraph::TrySupplyDataPin(const FName PinName) con
 			}
 		}
 	}
-	
+
 	// Prefer the standard lookup if the pin is connected
 	// (or if there is no FlowAssetParams to ask)
 	return Super::TrySupplyDataPin(PinName);
@@ -361,3 +375,14 @@ void UFlowNode_SubGraph::SubscribeToAssetChanges()
 #endif
 
 #undef LOCTEXT_NAMESPACE
+
+#if WITH_EDITOR
+const FFlowAgentDoc& UFlowNode_SubGraph::GetAgentDoc() const
+{
+	static const FFlowAgentDoc Doc = MakeAgentDoc(
+		/*Guidance*/ TEXT("Every name listed in the child asset's CustomInputs and CustomOutputs arrays becomes a matching pin on this node - pair them with Custom Input/Output nodes inside the child to route signals in and out of the sub-graph mid-run. Enabling bCanInstanceIdenticalAsset can cause infinite recursion if the child unconditionally spawns itself; leave it off unless you have a real termination condition."),
+		/*Tags*/     { TEXT("graph"), TEXT("subgraph"), TEXT("composition") },
+		/*Articles*/ {  });
+	return Doc;
+}
+#endif
