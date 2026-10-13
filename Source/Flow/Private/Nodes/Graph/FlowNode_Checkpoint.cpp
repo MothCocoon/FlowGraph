@@ -38,3 +38,14 @@ void UFlowNode_Checkpoint::OnLoad_Implementation()
 {
 	TriggerFirstOutput(true);
 }
+
+#if WITH_EDITOR
+const FFlowAgentDoc& UFlowNode_Checkpoint::GetAgentDoc() const
+{
+	static const FFlowAgentDoc Doc = MakeAgentDoc(
+		/*Guidance*/ TEXT("The class comment recommends replacing this with a game-specific save node and hiding this one from the palette via UFlowGraphSettings::NodesHiddenFromPalette, rather than using it as-is in shipping content."),
+		/*Tags*/     { TEXT("graph"), TEXT("save"), TEXT("checkpoint") },
+		/*Articles*/ {  });
+	return Doc;
+}
+#endif

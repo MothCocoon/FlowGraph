@@ -63,3 +63,14 @@ bool UFlowNodeAddOn_PredicateNOT::EvaluatePredicate_Implementation() const
 
 	return bResult;
 }
+
+#if WITH_EDITOR
+const FFlowAgentDoc& UFlowNodeAddOn_PredicateNOT::GetAgentDoc() const
+{
+	static const FFlowAgentDoc Doc = MakeAgentDoc(
+		/*Guidance*/ TEXT("Accepts a single predicate child and inverts its result. With zero attached children NOT evaluates true, for parity with an empty AND, so an empty NOT block does not block anything."),
+		/*Tags*/     { TEXT("predicate"), TEXT("not"), TEXT("logic") },
+		/*Articles*/ {  });
+	return Doc;
+}
+#endif
