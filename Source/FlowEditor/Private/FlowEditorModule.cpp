@@ -48,6 +48,7 @@
 
 #include "AssetToolsModule.h"
 #include "AssetRegistry/AssetRegistryModule.h"
+#include "Subsystems/AssetEditorSubsystem.h"
 #include "EdGraphUtilities.h"
 #include "IAssetSearchModule.h"
 #include "Framework/MultiBox/MultiBoxBuilder.h"
@@ -105,6 +106,9 @@ void FFlowEditorModule::StartupModule()
 		RegisterAssetIndexers();
 	}
 	ModulesChangedHandle = FModuleManager::Get().OnModulesChanged().AddStatic(&FFlowEditorModule::ModulesChangesCallback);
+
+	// register "node jumps" used by validation and message logs
+	FFlowGraphToken::OnJumpToNodeRequested.BindStatic(&FFlowEditorModule::JumpToNodeFromLogToken);
 }
 
 void FFlowEditorModule::RegisterForAssetChanges()
@@ -122,6 +126,8 @@ void FFlowEditorModule::RegisterForAssetChanges()
 
 void FFlowEditorModule::ShutdownModule()
 {
+	FFlowGraphToken::OnJumpToNodeRequested.Unbind();
+
 	FFlowEditorStyle::Shutdown();
 
 	// unregister asset actions
@@ -143,10 +149,13 @@ void FFlowEditorModule::ShutdownModule()
 	// Unregister asset change detection
 	if (bIsRegisteredForAssetChanges && FModuleManager::Get().IsModuleLoaded("AssetRegistry"))
 	{
+		// Unregister asset change detection
 		const FAssetRegistryModule& AssetRegistry = FModuleManager::Get().GetModuleChecked<FAssetRegistryModule>("AssetRegistry");
-		AssetRegistry.Get().OnAssetUpdated().Remove(AssetUpdatedHandle);
-		AssetRegistry.Get().OnAssetRenamed().Remove(AssetRenamedHandle);
-		AssetRegistry.Get().OnAssetRemoved().Remove(AssetRemovedHandle);
+
+		AssetRegistry.Get().OnAssetUpdated().RemoveAll(this);
+		AssetRegistry.Get().OnAssetRenamed().RemoveAll(this);
+		AssetRegistry.Get().OnAssetRemoved().RemoveAll(this);
+
 		bIsRegisteredForAssetChanges = false;
 	}
 }
@@ -332,6 +341,26 @@ void FFlowEditorModule::ModulesChangesCallback(const FName ModuleName, const EMo
 void FFlowEditorModule::RegisterAssetIndexers()
 {
 	IAssetSearchModule::Get().RegisterAssetIndexer(UFlowAsset::StaticClass(), MakeUnique<FFlowAssetIndexer>());
+}
+
+void FFlowEditorModule::JumpToNodeFromLogToken(UObject* Asset, const UEdGraphNode* Node, const UEdGraphPin* Pin)
+{
+	UAssetEditorSubsystem* AssetEditorSubsystem = GEditor->GetEditorSubsystem<UAssetEditorSubsystem>();
+	AssetEditorSubsystem->OpenEditorForAsset(Asset);
+
+	if (const IAssetEditorInstance* AssetEditor = AssetEditorSubsystem->FindEditorForAsset(Asset, true))
+	{
+		const FFlowAssetEditor* FlowAssetEditor = static_cast<const FFlowAssetEditor*>(AssetEditor);
+
+		if (Pin && !Pin->IsPendingKill())
+		{
+			FlowAssetEditor->JumpToPin(Pin);
+		}
+		else if (Node)
+		{
+			FlowAssetEditor->JumpToNode(Node);
+		}
+	}
 }
 
 TSharedRef<FFlowAssetEditor> FFlowEditorModule::CreateFlowAssetEditor(const EToolkitMode::Type Mode, const TSharedPtr<IToolkitHost>& InitToolkitHost, UFlowAsset* FlowAsset)

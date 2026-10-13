@@ -3,6 +3,8 @@
 
 #include "IDetailCustomization.h"
 
+class IPropertyHandle;
+
 class FFlowComponentDetails : public IDetailCustomization
 {
 public:

@@ -9,12 +9,16 @@
 #include "DetailCategoryBuilder.h"
 #include "DetailLayoutBuilder.h"
 #include "DetailWidgetRow.h"
+#include "GameFramework/WorldSettings.h"
 #include "GameplayTagsManager.h"
 #include "HAL/PlatformApplicationMisc.h"
 #include "IDetailChildrenBuilder.h"
 #include "IDetailPropertyRow.h"
 #include "ISinglePropertyView.h"
+#include "Modules/ModuleManager.h"
+#include "PropertyEditorModule.h"
 #include "SGameplayTagPicker.h"
+#include "ScopedTransaction.h"
 
 #define LOCTEXT_NAMESPACE "FlowDetails"
 

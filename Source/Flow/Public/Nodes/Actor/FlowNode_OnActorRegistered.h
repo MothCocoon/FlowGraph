@@ -14,4 +14,9 @@ class FLOW_API UFlowNode_OnActorRegistered : public UFlowNode_ComponentObserver
 	
 protected:
 	virtual void ObserveActor(TWeakObjectPtr<AActor> Actor, TWeakObjectPtr<UFlowComponent> Component) override;
+
+#if WITH_EDITOR
+public:
+	virtual const FFlowAgentDoc& GetAgentDoc() const override;
+#endif
 };

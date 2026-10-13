@@ -93,3 +93,14 @@ void UFlowNodeAddOn_PredicateRequireGameplayTags::UpdateNodeConfigText_Implement
 	SetNodeConfigText(TextBuilder.ToText());
 #endif // WITH_EDITOR
 }
+
+#if WITH_EDITOR
+const FFlowAgentDoc& UFlowNodeAddOn_PredicateRequireGameplayTags::GetAgentDoc() const
+{
+	static const FFlowAgentDoc Doc = MakeAgentDoc(
+		/*Guidance*/ TEXT("The tags being tested come from the Tags data pin, not a hardcoded list on the AddOn itself - if the pin is unconnected the test runs against whatever default value Tags holds, which is empty unless explicitly authored."),
+		/*Tags*/     { TEXT("predicate"), TEXT("gameplay-tag"), TEXT("requirement") },
+		/*Articles*/ {  });
+	return Doc;
+}
+#endif

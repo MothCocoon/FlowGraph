@@ -3,14 +3,17 @@
 
 #include "IDetailsView.h"
 #include "DiffResults.h"
+#include "GraphEditor.h"
 #include "SDetailsDiff.h"
 #include "Textures/SlateIcon.h"
 
 struct FFlowGraphToDiff;
 struct FFlowObjectDiffArgs;
 class UFlowAsset;
-class SLinkableScrollBar;
+
 class SGraphEditor;
+class SLinkableScrollBar;
+class UEdGraph;
 
 enum class EAssetEditorCloseReason : uint8;
 

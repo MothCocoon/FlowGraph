@@ -13,6 +13,8 @@ class FToolBarBuilder;
 struct FGraphPanelPinConnectionFactory;
 
 class FFlowAssetEditor;
+class UEdGraphNode;
+class UEdGraphPin;
 class UFlowAsset;
 
 struct FLOWEDITOR_API FFlowAssetCategoryPaths : EAssetCategoryPaths
@@ -61,6 +63,8 @@ public:
 private:
 	static void ModulesChangesCallback(FName ModuleName, EModuleChangeReason ReasonForChange);
 	static void RegisterAssetIndexers();
+
+	static void JumpToNodeFromLogToken(UObject* Asset, const UEdGraphNode* Node, const UEdGraphPin* Pin);
 
 public:
 	static TSharedRef<FFlowAssetEditor> CreateFlowAssetEditor(const EToolkitMode::Type Mode, const TSharedPtr<IToolkitHost>& InitToolkitHost, UFlowAsset* FlowAsset);

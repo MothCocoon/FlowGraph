@@ -19,9 +19,13 @@ void UFlowNode_OnNotifyFromActor::ObserveActor(TWeakObjectPtr<AActor> Actor, TWe
 		RegisteredActors.Emplace(Actor, Component);
 		Component->OnNotifyFromComponent.AddUObject(this, &UFlowNode_OnNotifyFromActor::OnNotifyFromComponent);
 
-		if (bRetroactive && Component->GetRecentlySentNotifyTags().HasAnyExact(NotifyTags))
+		if (bRetroactive)
 		{
-			OnEventReceived();
+			const FGameplayTagContainer& RecentlySentNotifyTags = Component->GetRecentlySentNotifyTags();
+			if (bExactMatch ? RecentlySentNotifyTags.HasAnyExact(NotifyTags) : RecentlySentNotifyTags.HasAny(NotifyTags))
+			{
+				OnEventReceived();
+			}
 		}
 	}
 }
@@ -33,27 +37,19 @@ void UFlowNode_OnNotifyFromActor::ForgetActor(TWeakObjectPtr<AActor> Actor, TWea
 
 void UFlowNode_OnNotifyFromActor::OnNotifyFromComponent(UFlowComponent* Component, const FGameplayTag& Tag)
 {
-	bool IdentityMatches = false;
-
-	switch (IdentityMatchType)
+	if (FlowTypes::HasMatchingTags(Component->IdentityTags, IdentityTags, IdentityMatchType)) // identity matches?
 	{
-		case EFlowTagContainerMatchType::HasAny:
-			IdentityMatches = Component->IdentityTags.HasAny(IdentityTags);
-			break;
-		case EFlowTagContainerMatchType::HasAnyExact:
-			IdentityMatches = Component->IdentityTags.HasAnyExact(IdentityTags);
-			break;
-		case EFlowTagContainerMatchType::HasAll:
-			IdentityMatches = Component->IdentityTags.HasAll(IdentityTags);
-			break;
-		case EFlowTagContainerMatchType::HasAllExact:
-			IdentityMatches = Component->IdentityTags.HasAllExact(IdentityTags);
-			break;
-	}
-
-	if (IdentityMatches && (!NotifyTags.IsValid() || NotifyTags.HasTagExact(Tag)))
-	{
-		OnEventReceived();
+		if (NotifyTags.IsValid())
+		{
+			if (bExactMatch ? Tag.MatchesAnyExact(NotifyTags) : Tag.MatchesAny(NotifyTags))
+			{
+				OnEventReceived();
+			}
+		}
+		else
+		{
+			OnEventReceived();
+		}
 	}
 }
 
@@ -61,5 +57,16 @@ void UFlowNode_OnNotifyFromActor::OnNotifyFromComponent(UFlowComponent* Componen
 FString UFlowNode_OnNotifyFromActor::GetNodeDescription() const
 {
 	return GetIdentityTagsDescription(IdentityTags) + LINE_TERMINATOR + GetNotifyTagsDescription(NotifyTags);
+}
+#endif
+
+#if WITH_EDITOR
+const FFlowAgentDoc& UFlowNode_OnNotifyFromActor::GetAgentDoc() const
+{
+	static const FFlowAgentDoc Doc = MakeAgentDoc(
+		/*Guidance*/ TEXT("Enable bRetroactive to also fire if the matching notify was already sent before this node started observing - useful in multiplayer, where a client-side node may start listening after the server already sent the notify."),
+		/*Tags*/     { TEXT("actor"), TEXT("notify"), TEXT("event") },
+		/*Articles*/ {  });
+	return Doc;
 }
 #endif

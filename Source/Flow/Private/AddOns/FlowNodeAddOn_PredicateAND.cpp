@@ -53,3 +53,14 @@ bool UFlowNodeAddOn_PredicateAND::EvaluatePredicateAND(const TArray<UFlowNodeAdd
 
 	return true;
 }
+
+#if WITH_EDITOR
+const FFlowAgentDoc& UFlowNodeAddOn_PredicateAND::GetAgentDoc() const
+{
+	static const FFlowAgentDoc Doc = MakeAgentDoc(
+		/*Guidance*/ TEXT("Attach directly to a predicate-supporting node, or nest under another predicate AddOn, rather than duplicating AND logic in a single custom predicate. With zero attached children this evaluates true vacuously, since there is nothing to fail."),
+		/*Tags*/     { TEXT("predicate"), TEXT("and"), TEXT("logic") },
+		/*Articles*/ {  });
+	return Doc;
+}
+#endif
