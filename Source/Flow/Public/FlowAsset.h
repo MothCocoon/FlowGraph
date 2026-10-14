@@ -91,6 +91,8 @@ public:
 	static FString ValidationError_AddOnNodeClassNotAllowed;
 	static FString ValidationError_NullNodeInstance;
 	static FString ValidationError_NullAddOnNodeInstance;
+	static FString ValidationError_ConnectedToMissingNode;
+	static FString ValidationError_AdviseResave;
 
 private:
 	UPROPERTY()
