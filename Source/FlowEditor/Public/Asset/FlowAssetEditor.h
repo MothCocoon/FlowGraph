@@ -45,6 +45,7 @@ protected:
 	TSharedPtr<class FFlowAssetToolbar> AssetToolbar;
 
 	TSharedPtr<SFlowGraphEditor> GraphEditor;
+	TSharedPtr<class SWidget> GraphEditorWidget;
 	TSharedPtr<class IDetailsView> DetailsView;
 	TSharedPtr<class SFlowPalette> Palette;
 
