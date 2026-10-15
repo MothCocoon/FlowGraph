@@ -1105,14 +1105,21 @@ void UFlowGraphNode::GetPinHoverText(const UEdGraphPin& Pin, FString& HoverTextO
 				HoverTextOut.Append(LINE_TERMINATOR).Append(LINE_TERMINATOR);
 			}
 
-			const TArray<FPinRecord>& PinRecords = InspectedNodeInstance->GetPinRecords(Pin.PinName, Pin.Direction);
+			int32 TotalPinRecords = 0;
+			const TArray<FPinRecord>& PinRecords = InspectedNodeInstance->GetPinRecords(Pin.PinName, Pin.Direction, TotalPinRecords);
+			const int32 StartIndexOffset = TotalPinRecords > PinRecords.Num() ? TotalPinRecords - PinRecords.Num() : 0;
 			if (PinRecords.Num() > 0)
 			{
 				HoverTextOut.Append(FPinRecord::PinActivations);
+				if (StartIndexOffset > 0)
+				{
+					HoverTextOut.Append(LINE_TERMINATOR);
+					HoverTextOut.Appendf(TEXT("... [%d lines hidden] ..."), StartIndexOffset);
+				}
 				for (int32 i = 0; i < PinRecords.Num(); i++)
 				{
 					HoverTextOut.Append(LINE_TERMINATOR);
-					HoverTextOut.Appendf(TEXT("%d) %s"), i + 1, *PinRecords[i].HumanReadableTime);
+					HoverTextOut.Appendf(TEXT("%d) %s"), StartIndexOffset + i + 1, *PinRecords[i].HumanReadableTime);
 
 					switch (PinRecords[i].ActivationType)
 					{

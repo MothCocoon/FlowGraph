@@ -347,8 +347,8 @@ public:
 #if !UE_BUILD_SHIPPING
 
 protected:
-	TMap<FName, TArray<FPinRecord>> InputRecords;
-	TMap<FName, TArray<FPinRecord>> OutputRecords;
+	TMap<FName, FPinRecordBuffer> InputRecords;
+	TMap<FName, FPinRecordBuffer> OutputRecords;
 #endif
 
 protected:
@@ -427,7 +427,7 @@ public:
 	UFlowNode* GetInspectedInstance() const;
 
 	TMap<uint8, FPinRecord> GetWireRecords() const;
-	TArray<FPinRecord> GetPinRecords(const FName& PinName, const EEdGraphPinDirection PinDirection) const;
+	TArray<FPinRecord> GetPinRecords(const FName& PinName, const EEdGraphPinDirection PinDirection, int32& OutTotalPinRecords) const;
 #endif
 
 	/* Information displayed while node is working - displayed over node as NodeInfoPopup. */
