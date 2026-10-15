@@ -91,6 +91,8 @@ public:
 	static FString ValidationError_AddOnNodeClassNotAllowed;
 	static FString ValidationError_NullNodeInstance;
 	static FString ValidationError_NullAddOnNodeInstance;
+	static FString ValidationError_ConnectedToMissingNode;
+	static FString ValidationError_AdviseResave;
 
 private:
 	UPROPERTY()
@@ -123,7 +125,7 @@ public:
 
 private:
 	/* Validates every direct child attachment on OwnerNode and recursively validates child trees. */
-	void ValidateAddOnChildren(UFlowNodeBase& OwnerNode, FFlowMessageLog& MessageLog);
+	void ValidateAddOnChildren(UFlowNodeBase& OwnerNode, FFlowMessageLog& MessageLog) const;
 
 	/* Recursively validates the given addon and its children. */
 	void ValidateAddOnTree(UFlowNodeAddOn& AddOn, FFlowMessageLog& MessageLog) const;

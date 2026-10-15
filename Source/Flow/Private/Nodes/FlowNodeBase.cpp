@@ -332,10 +332,7 @@ EFlowAddOnAcceptResult UFlowNodeBase::AcceptFlowNodeAddOnChild_Implementation(
 	return EFlowAddOnAcceptResult::Undetermined;
 }
 
-bool UFlowNodeBase::HasOtherDirectAddOnChildMatching(
-	const UClass& ClassOrInterface,
-	const UFlowNodeAddOn* IgnoredAddOn,
-	const TArray<UFlowNodeAddOn*>& AdditionalAddOnsToAssumeAreChildren) const
+bool UFlowNodeBase::HasOtherDirectAddOnChildMatching(const UClass& ClassOrInterface, const UFlowNodeAddOn* IgnoredAddOn, const TArray<UFlowNodeAddOn*>& AdditionalAddOnsToAssumeAreChildren) const
 {
 	const auto IsOtherMatchingAddOn = [&ClassOrInterface, IgnoredAddOn](const UFlowNodeAddOn* AddOn)
 	{
@@ -362,9 +359,7 @@ bool UFlowNodeBase::HasOtherDirectAddOnChildMatching(
 }
 
 #if WITH_EDITOR
-EFlowAddOnAcceptResult UFlowNodeBase::CheckAcceptFlowNodeAddOnChild(
-	const UFlowNodeAddOn* AddOnTemplate,
-	const TArray<UFlowNodeAddOn*>& AdditionalAddOnsToAssumeAreChildren) const
+EFlowAddOnAcceptResult UFlowNodeBase::CheckAcceptFlowNodeAddOnChild(const UFlowNodeAddOn* AddOnTemplate, const TArray<UFlowNodeAddOn*>& AdditionalAddOnsToAssumeAreChildren) const
 {
 	if (!IsValid(AddOnTemplate))
 	{
@@ -439,9 +434,7 @@ EFlowForEachAddOnFunctionReturnValue UFlowNodeBase::ForEachAddOnConst(
 	return ReturnValue;
 }
 
-EFlowForEachAddOnFunctionReturnValue UFlowNodeBase::ForEachAddOn(
-	const FFlowNodeAddOnFunction& Function,
-	EFlowForEachAddOnChildRule AddOnChildRule) const
+EFlowForEachAddOnFunctionReturnValue UFlowNodeBase::ForEachAddOn(const FFlowNodeAddOnFunction& Function, const EFlowForEachAddOnChildRule AddOnChildRule) const
 {
 	FLOW_ASSERT_ENUM_MAX(EFlowForEachAddOnFunctionReturnValue, 3);
 
@@ -476,10 +469,7 @@ EFlowForEachAddOnFunctionReturnValue UFlowNodeBase::ForEachAddOn(
 	return ReturnValue;
 }
 
-EFlowForEachAddOnFunctionReturnValue UFlowNodeBase::ForEachAddOnForClassConst(
-	const UClass& InterfaceOrClass,
-	const FConstFlowNodeAddOnFunction& Function,
-	EFlowForEachAddOnChildRule AddOnChildRule) const
+EFlowForEachAddOnFunctionReturnValue UFlowNodeBase::ForEachAddOnForClassConst(const UClass& InterfaceOrClass, const FConstFlowNodeAddOnFunction& Function, const EFlowForEachAddOnChildRule AddOnChildRule) const
 {
 	FLOW_ASSERT_ENUM_MAX(EFlowForEachAddOnFunctionReturnValue, 3);
 
