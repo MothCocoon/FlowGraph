@@ -9,15 +9,18 @@
 #include "Graph/Nodes/FlowGraphNode.h"
 #include "Interfaces/FlowExecutionGate.h"
 #include "FlowAsset.h"
-#include "FlowSubsystem.h"
 
+#include "CoreGlobals.h"
 #include "Editor/UnrealEdEngine.h"
 #include "Engine/Engine.h"
 #include "Engine/World.h"
+#include "Framework/Application/SlateApplication.h"
 #include "Framework/Notifications/NotificationManager.h"
 #include "Subsystems/AssetEditorSubsystem.h"
 #include "Templates/Function.h"
+#include "Templates/UnrealTemplate.h"
 #include "UnrealEdGlobals.h"
+#include "UnrealEngine.h"
 #include "Widgets/Notifications/SNotificationList.h"
 
 #include UE_INLINE_GENERATED_CPP_BY_NAME(FlowDebugEditorSubsystem)
@@ -80,12 +83,19 @@ void UFlowDebugEditorSubsystem::OnResumePIE(const bool bIsSimulating)
 	{
 		ResumeSession(*HaltedOnFlowAssetInstance.Get());
 	}
+
+	// Release the suspended Flow call stack after updating the debugger session state.
+	ReleaseHalt();
 }
 
 void UFlowDebugEditorSubsystem::OnEndPIE(const bool bIsSimulating)
 {
 	// Ensure we don't carry over a halted state between PIE sessions.
 	ClearHitBreakpoints();
+
+	// A Flow stack halted at a breakpoint must be released, or the nested tick loop would keep the
+	// editor inside a torn-down play session.
+	ReleaseHalt();
 
 	StopSession();
 
@@ -115,6 +125,90 @@ void UFlowDebugEditorSubsystem::OnEndPIE(const bool bIsSimulating)
 	}
 }
 
+EFlowBreakAction UFlowDebugEditorSubsystem::HaltUntilReleased(const FFlowBreakContext& Context)
+{
+	if (!GUnrealEd || !IsValid(GUnrealEd->PlayWorld) || !FSlateApplication::IsInitialized())
+	{
+		// There is no play session to stop, or no Slate application to pump while stopped
+		return EFlowBreakAction::Continue;
+	}
+
+	{
+		TGuardValue<bool> HaltedGuard(bIsHaltedAtBreakpoint, true);
+		TGuardValue<bool> DebuggingGuard(GIntraFrameDebuggingGameThread, true);
+
+		// The level toolbar's own Resume and Stop do not work while an in-stack halt is active
+		// without a registered Blueprint debugging world, so the halt has to offer its own way out.
+		ShowHaltNotification(Context);
+
+		// Keep editor-world work issued from the halted UI off the play world
+		const FTemporaryPlayInEditorIDOverride PlayInEditorIDOverride(INDEX_NONE);
+
+		// Suspends this call stack in place and pumps Slate until released, as Blueprint breakpoints do.
+		// World ticks do not run during the halt, but its wall-clock duration is not removed from the next frame's delta.
+		FSlateApplication::Get().EnterDebuggingMode();
+
+		DismissHaltNotification();
+	}
+
+	if (!GEditor || GEditor->ShouldEndPlayMap())
+	{
+		// The session is being stopped, so unwind rather than resume into a world that is going away
+		return EFlowBreakAction::Abort;
+	}
+
+	return EFlowBreakAction::Continue;
+}
+
+void UFlowDebugEditorSubsystem::ReleaseHalt()
+{
+	if (!bIsHaltedAtBreakpoint)
+	{
+		return;
+	}
+
+	// Ends the nested tick loop in HaltUntilReleased() on its next iteration. BreakFlowExecution()
+	// resumes the debugger session after the halt returns if another path has not already resumed it.
+	FSlateApplication::Get().LeaveDebuggingMode();
+}
+
+void UFlowDebugEditorSubsystem::ShowHaltNotification(const FFlowBreakContext& Context)
+{
+	DismissHaltNotification();
+
+	const FText NodeTitle = IsValid(Context.Node) ?
+		FText::FromString(Context.Node->GetName()) :
+		LOCTEXT("UnknownFlowNode", "unknown node");
+
+	FNotificationInfo Info{LOCTEXT("FlowExecutionHalted", "Flow execution halted at a breakpoint")};
+
+	// Stays up for the whole halt, since it carries the only reliable way to continue
+	Info.bFireAndForget = false;
+	Info.SubText = FText::Format(
+		LOCTEXT("FlowExecutionHaltedSubText", "{0} ({1})"), NodeTitle, FText::FromName(Context.PinName));
+
+	Info.HyperlinkText = LOCTEXT("ContinueFlowExecution", "Continue");
+	Info.Hyperlink = FSimpleDelegate::CreateUObject(this, &ThisClass::RequestContinue);
+
+	HaltNotification = FSlateNotificationManager::Get().AddNotification(Info);
+
+	if (HaltNotification.IsValid())
+	{
+		HaltNotification->SetCompletionState(SNotificationItem::CS_Pending);
+	}
+}
+
+void UFlowDebugEditorSubsystem::DismissHaltNotification()
+{
+	if (HaltNotification.IsValid())
+	{
+		HaltNotification->SetCompletionState(SNotificationItem::CS_None);
+		HaltNotification->SetFadeOutDuration(0.0f);
+		HaltNotification->ExpireAndFadeout();
+		HaltNotification.Reset();
+	}
+}
+
 void UFlowDebugEditorSubsystem::PauseSession(UFlowAsset& FlowAssetInstance)
 {
 	HaltedOnFlowAssetInstance = &FlowAssetInstance;
@@ -131,17 +225,6 @@ void UFlowDebugEditorSubsystem::ResumeSession(UFlowAsset& FlowAssetInstance)
 
 void UFlowDebugEditorSubsystem::StopSession()
 {
-	// Drop any pending deferred triggers — we are stopping the session entirely
-	if (HaltedOnFlowAssetInstance.IsValid())
-	{
-		UFlowSubsystem* FlowSubsystem = HaltedOnFlowAssetInstance->GetFlowSubsystem();
-
-		if (IsValid(FlowSubsystem))
-		{
-			FlowSubsystem->ClearAllDeferredTriggerScopes();
-		}
-	}
-
 	HaltedOnFlowAssetInstance.Reset();
 
 	Super::StopSession();
@@ -156,16 +239,17 @@ void UFlowDebugEditorSubsystem::OnFlowDebuggerStateChanged(EFlowDebuggerState Pr
 	const bool bIsPausedGameStatePrev = IsPausedGameState(PrevState);
 	const bool bIsPausedGameStateNext = IsPausedGameState(NextState);
 
-	// Handle Pause/Unpause of the game & pie systems
-	if (bIsPausedGameStatePrev != bIsPausedGameStateNext)
+	// Report the session as paused or resumed to the rest of the editor, but deliberately do not flag
+	// the play worlds as paused. While halted the game is frozen by the nested tick loop rather than
+	// by that flag, and setting it would show the level toolbar's Resume button, which cannot run
+	// during an in-stack halt and so would read as a wedged editor.
+	if (bIsPausedGameStatePrev != bIsPausedGameStateNext && GUnrealEd && IsValid(GUnrealEd->PlayWorld))
 	{
-		const bool bWasPaused = GUnrealEd->SetPIEWorldsPaused(bIsPausedGameStateNext);
-
-		if (bIsPausedGameStateNext && !bWasPaused)
+		if (bIsPausedGameStateNext)
 		{
 			GUnrealEd->PlaySessionPaused();
 		}
-		else if (!bIsPausedGameStateNext && bWasPaused)
+		else
 		{
 			GUnrealEd->PlaySessionResumed();
 		}
@@ -180,21 +264,6 @@ void UFlowDebugEditorSubsystem::OnFlowDebuggerStateChanged(EFlowDebuggerState Pr
 	else if (NextState == EFlowDebuggerState::Resumed)
 	{
 		OnDebuggerResumed.Broadcast(*FlowAssetInstance);
-	}
-
-	UFlowSubsystem* FlowSubsystem =
-		IsValid(FlowAssetInstance) ?
-			FlowAssetInstance->GetFlowSubsystem() :
-			nullptr;
-
-	if (FlowSubsystem && IsFlushDeferredTriggersState(NextState))
-	{
-		// Flush any deferred triggers now that halt is cleared.
-		FlowSubsystem->TryFlushAllDeferredTriggerScopes();
-
-		// NOTE (gtaylor) this flush needs to be the last thing we do in this function 
-		// (thus the explicit return to emphasize it), as this flush can be interrupted by another breakpoint
-		return;
 	}
 }
 
