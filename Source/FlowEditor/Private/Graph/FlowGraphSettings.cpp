@@ -5,6 +5,7 @@
 #include "FlowAsset.h"
 #include "FlowTags.h"
 #include "Graph/FlowGraphSchema.h"
+#include "Nodes/FlowNode.h"
 #include "Types/FlowGameplayTagMapUtils.h"
 
 #include "Framework/Notifications/NotificationManager.h"

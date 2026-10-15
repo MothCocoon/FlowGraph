@@ -10,6 +10,7 @@
 #include "FlowGraphSettings.generated.h"
 
 class UFlowComponent;
+class UFlowNode;
 class UFlowNodeBase;
 
 USTRUCT()
@@ -116,7 +117,7 @@ class FLOWEDITOR_API UFlowGraphSettings : public UDeveloperSettings
 	/* Hide specific nodes from the Flow Palette without changing the source code.
 	 * Requires restart after making a change. */
 	UPROPERTY(EditAnywhere, config, Category = "Nodes", meta = (ConfigRestartRequired = true))
-	TArray<TSoftClassPtr<class UFlowNode>> NodesHiddenFromPalette;
+	TArray<TSoftClassPtr<class UFlowNodeBase>> NodesHiddenFromPalette;
 
 	/* Configurable map of FlowAsset subclasses to the FlowAssetNodePolicy for that subclass. */
 	UPROPERTY(EditAnywhere, Config, Category = "Nodes", meta = (ConfigRestartRequired = true, AllowedClasses = "/Script/Flow.FlowAsset"))
@@ -124,7 +125,7 @@ class FLOWEDITOR_API UFlowGraphSettings : public UDeveloperSettings
 
 	/* Allows anyone to override Flow Palette category for specific nodes without modifying source code. */
 	UPROPERTY(EditAnywhere, config, Category = "Nodes")
-	TMap<TSoftClassPtr<class UFlowNode>, FString> OverridenNodeCategories;
+	TMap<TSoftClassPtr<class UFlowNodeBase>, FString> OverridenNodeCategories;
 
 	/* Hide default pin names on simple nodes, reduces UI clutter. */
 	UPROPERTY(EditAnywhere, config, Category = "Nodes")
