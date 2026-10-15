@@ -39,6 +39,8 @@ private:
 
 public:
 	static void SubscribeToAssetChanges();
+	/** Rebuilds cached native Flow node and AddOn classes after a class reload. */
+	static void RefreshNativeNodeCache();
 	static void GetPaletteActions(FGraphActionMenuBuilder& ActionMenuBuilder, const UFlowAsset* EditedFlowAsset, const FString& CategoryName);
 
 	// EdGraphSchema
