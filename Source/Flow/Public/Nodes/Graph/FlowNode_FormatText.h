@@ -30,6 +30,7 @@ public:
 	// --
 
 	virtual void UpdateNodeConfigText_Implementation() override;
+	virtual const FFlowAgentDoc& GetAgentDoc() const override;
 #endif
 
 protected:

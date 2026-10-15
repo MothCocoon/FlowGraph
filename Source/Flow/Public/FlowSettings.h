@@ -3,6 +3,7 @@
 
 #include "Engine/DeveloperSettings.h"
 #include "StructUtils/InstancedStruct.h"
+#include "Types/FlowActorSpawnQueueMode.h"
 #include "UObject/SoftObjectPath.h"
 
 #include "FlowTypes.h"
@@ -76,6 +77,18 @@ public:
 
 	UPROPERTY(Config, EditAnywhere, Category = "SaveSystem")
 	bool bWarnAboutMissingIdentityTags;
+
+	/* Default mode for new actor-spawn submissions. Use SubmitSpawnPass for aggregate completion. */
+	UPROPERTY(Config, EditAnywhere, Category = "Actor Spawning")
+	EFlowActorSpawnQueueMode DefaultActorSpawnQueueMode;
+
+	/* Quick staggered spawn successes allowed per world tick; fast failures do not count. */
+	UPROPERTY(Config, EditAnywhere, Category = "Actor Spawning", meta = (ClampMin = "1"))
+	int32 MaxActorSpawnSuccessesPerTick;
+
+	/* Maximum attempts in one automatic immediate flush; remaining records continue on later ticks. */
+	UPROPERTY(Config, EditAnywhere, Category = "Actor Spawning", meta = (ClampMin = "1"))
+	int32 MaxActorSpawnAttemptsPerFlush;
 
 public:
 	UClass* GetDefaultExpectedOwnerClass() const;

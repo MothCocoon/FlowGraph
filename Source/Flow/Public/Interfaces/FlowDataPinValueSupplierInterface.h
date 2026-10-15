@@ -26,5 +26,5 @@ public:
 	 * Implementers of this interface will need to use their own logic to answer this question. */
 	virtual bool CanSupplyDataPinValues() const { return true; }
 
-	virtual FFlowDataPinResult TrySupplyDataPin(FName PinName) const { return FFlowDataPinResult(); }
+	virtual FFlowDataPinResult TrySupplyDataPin(const FName PinName) const { return FFlowDataPinResult(); }
 };

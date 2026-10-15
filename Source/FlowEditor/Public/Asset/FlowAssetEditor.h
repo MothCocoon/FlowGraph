@@ -142,6 +142,8 @@ protected:
 
 	void EditAssetDefaults_Clicked() const;
 
+	virtual void AutoFormatGraph();
+
 	virtual void CreateWidgets();
 	virtual void CreateGraphWidget();
 

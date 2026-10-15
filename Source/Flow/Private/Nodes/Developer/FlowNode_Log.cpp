@@ -26,7 +26,7 @@ void UFlowNode_Log::ExecuteInput(const FName& PinName)
 	FString ResolvedMessage;
 	const EFlowDataPinResolveResult MessageResult = TryResolveDataPinValue<FFlowPinType_String>(GET_MEMBER_NAME_CHECKED(ThisClass, Message), ResolvedMessage);
 
-	// #FlowDataPinLegacy - retire this backward compatibility when we remove legacy data pin support?  
+	// #FlowDataPinLegacy - retire this backward compatibility when we remove legacy data pin support?
 	FLOW_ASSERT_ENUM_MAX(EFlowDataPinResolveResult, 9);
 	if (MessageResult == EFlowDataPinResolveResult::FailedUnknownPin)
 	{
@@ -103,6 +103,15 @@ void UFlowNode_Log::UpdateNodeConfigText_Implementation()
 	{
 		SetNodeConfigText(FText::FromString(Message));
 	}
+}
+
+const FFlowAgentDoc& UFlowNode_Log::GetAgentDoc() const
+{
+	static const FFlowAgentDoc Doc = MakeAgentDoc(
+		/*Guidance*/ TEXT("A debugging aid, not intended to drive shipping gameplay logic - use it to trace graph execution during development, then remove or gate it before shipping. The Message input pin overrides the Message property when connected; Duration and TextColor only apply when bPrintToScreen is enabled."),
+		/*Tags*/     { TEXT("developer"), TEXT("debug"), TEXT("logging") },
+		/*Articles*/ {  });
+	return Doc;
 }
 
 #endif
