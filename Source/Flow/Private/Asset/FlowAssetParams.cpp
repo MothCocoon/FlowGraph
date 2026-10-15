@@ -53,6 +53,21 @@ void UFlowAssetParams::PreSaveRoot(FObjectPreSaveRootContext ObjectSaveContext)
 			*GetPathName(), *UEnum::GetDisplayValueAsText(ReconcileResult).ToString());
 	}
 }
+
+void UFlowAssetParams::BeginDestroy()
+{
+	if (OnParentAssetParamsReconciledHandle.IsValid())
+	{
+		if (ParentParams.AssetPtr.IsValid())
+		{
+			ParentParams.AssetPtr->OnAssetParamsReconciled.Remove(OnParentAssetParamsReconciledHandle);
+		}
+
+		OnParentAssetParamsReconciledHandle.Reset();
+	}
+
+	Super::BeginDestroy();
+}
 #endif
 
 void UFlowAssetParams::Serialize(FArchive& Ar)
@@ -167,6 +182,11 @@ EFlowReconcilePropertiesResult UFlowAssetParams::ReconcilePropertiesWithStartNod
 	{
 		ConfigureFlowAssetParams(InOwnerFlowAsset, nullptr, MutablePropertiesFromStartNode);
 
+		if (OnAssetParamsReconciled.IsBound())
+		{
+			OnAssetParamsReconciled.Broadcast();
+		}
+
 		return EFlowReconcilePropertiesResult::ParamsPropertiesUpdated;
 	}
 
@@ -277,6 +297,13 @@ EFlowReconcilePropertiesResult UFlowAssetParams::ReconcilePropertiesWithParentPa
 
 	ModifyAndRebuildPropertiesMap();
 
+	if (!OnParentAssetParamsReconciledHandle.IsValid())
+	{
+		OnParentAssetParamsReconciledHandle = Parent->OnAssetParamsReconciled.AddUObject(
+			this,
+			&UFlowAssetParams::HandleParentParamsReconciled);
+	}
+
 	return EFlowReconcilePropertiesResult::ParamsPropertiesUpdated;
 }
 
@@ -311,6 +338,16 @@ bool UFlowAssetParams::CanEditFlowDataPinValueClassFilter(const FFlowDataPinValu
 {
 	// These are set by the Flow asset, which is authoritative
 	return false;
+}
+
+void UFlowAssetParams::HandleParentParamsReconciled()
+{
+	const EFlowReconcilePropertiesResult ReconcileResult = ReconcilePropertiesWithParentParams();
+	if (EFlowReconcilePropertiesResult_Classifiers::IsErrorResult(ReconcileResult))
+	{
+		UE_LOG(LogFlow, Error, TEXT("Failed to reconcile ParentParams during HandleParentParamsReconciled() for %s: %s"),
+			*GetPathName(), *UEnum::GetDisplayValueAsText(ReconcileResult).ToString());
+	}
 }
 
 EFlowReconcilePropertiesResult UFlowAssetParams::CheckForParentCycle() const

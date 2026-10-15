@@ -5,17 +5,40 @@
 
 #include "FlowDataPinValuesStandard.h"
 #include "FlowDataPinResults.h"
+#include "StructUtils/InstancedStruct.h"
 #include "FlowDataPinBlueprintLibrary.generated.h"
 
 struct FFlowDataPinValue;
+class UFlowAssetParams;
 
 /**
  * Auto‑cast operators for blueprint to their inner types
  */
 UCLASS()
-class UFlowDataPinBlueprintLibrary : public UBlueprintFunctionLibrary
+class FLOW_API UFlowDataPinBlueprintLibrary : public UBlueprintFunctionLibrary
 {
 	GENERATED_BODY()
+
+public:
+	/**
+	 * Iterates FFlowDataPinValue_InstancedStruct pins in the root flow params and returns the inner FInstancedStruct values
+	 * whose struct type matches (or is a child of) InnerType. Pass null to return all instanced struct values.
+	 * @param FlowAssetProvider Object implementing IFlowAssetProviderInterface (e.g. a UFlowComponent).
+	 * @param InnerType The struct type to filter inner values by. If null, all inner values are returned.
+	 * @return All matching inner FInstancedStruct values across all InstancedStruct data pin entries.
+	 */
+	UFUNCTION(BlueprintCallable, Category = "FlowNode|Params", meta = (DefaultToSelf = "FlowAssetProvider"))
+	static TArray<FInstancedStruct> GetRootFlowInstancedStructValues(UObject* FlowAssetProvider, const UScriptStruct* InnerType);
+
+	/**
+	 * Returns all UObject values stored in the root flow's FlowAssetParams that are of the given class (or a subclass of it).
+	 * Resolves the FlowAssetParams from the provider's root flow automatically.
+	 * @param FlowAssetProvider Object implementing IFlowAssetProviderInterface (e.g. a UFlowComponent).
+	 * @param ObjectClass The UObject subclass to filter by.
+	 * @return All matching UObject values across all Object data pin entries.
+	 */
+	UFUNCTION(BlueprintCallable, Category = "FlowNode|Params", meta = (DeterminesOutputType = "ObjectClass", DefaultToSelf = "FlowAssetProvider"))
+	static TArray<UObject*> GetRootFlowObjectParamsByClass(UObject* FlowAssetProvider, TSubclassOf<UObject> ObjectClass);
 
 private:
 	static void ResolveAndExtract_Impl(
