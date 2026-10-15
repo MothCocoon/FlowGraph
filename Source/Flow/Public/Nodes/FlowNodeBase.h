@@ -220,15 +220,12 @@ public:
 	virtual const TArray<UFlowNodeAddOn*>& GetFlowNodeAddOnChildren() const { return AddOns; }
 
 	/**
-	 * Returns whether another direct child AddOn matches the supplied class or interface. The parent
-	 * may itself be either a Flow node or an AddOn.
-	 * AdditionalAddOnsToAssumeAreChildren represents siblings introduced atomically, such as a
-	 * multi-paste operation. IgnoredAddOn is excluded from both collections.
+	 * Returns whether another direct child AddOn matches the supplied class or interface.
+	 * The parent may itself be either a Flow node or an AddOn.
+	 * AdditionalAddOnsToAssumeAreChildren represents siblings introduced atomically, such as a multi-paste operation.
+	 * IgnoredAddOn is excluded from both collections.
 	 */
-	bool HasOtherDirectAddOnChildMatching(
-		const UClass& ClassOrInterface,
-		const UFlowNodeAddOn* IgnoredAddOn,
-		const TArray<UFlowNodeAddOn*>& AdditionalAddOnsToAssumeAreChildren) const;
+	bool HasOtherDirectAddOnChildMatching(const UClass& ClassOrInterface, const UFlowNodeAddOn* IgnoredAddOn, const TArray<UFlowNodeAddOn*>& AdditionalAddOnsToAssumeAreChildren) const;
 
 #if WITH_EDITOR
 	virtual TArray<UFlowNodeAddOn*>& GetFlowNodeAddOnChildrenByEditor() { return MutableView(AddOns); }
@@ -271,8 +268,6 @@ public:
 
 	EFlowForEachAddOnFunctionReturnValue ForEachAddOnForClass(const UClass& InterfaceOrClass, const FFlowNodeAddOnFunction& Function, EFlowForEachAddOnChildRule AddOnChildRule = EFlowForEachAddOnChildRule::AllChildren) const;
 
-public:
-
 //////////////////////////////////////////////////////////////////////////
 // Data Pins
 
@@ -311,7 +306,7 @@ protected:
 	/* Protected accessor for TryResolveDataPin()'s use
 	 * (we still want "most" flow nodes to not use TryResolveDataPin directly,
 	 * they should be using the template versions below.) */
-	FFlowDataPinResult TryResolveDataPin_SetGraphOutputAccess(FName PinName) const { return TryResolveDataPin(PinName); }
+	FFlowDataPinResult TryResolveDataPin_SetGraphOutputAccess(const FName PinName) const { return TryResolveDataPin(PinName); }
 
 public:
 	/* Generic single-value resolve & extractor. */

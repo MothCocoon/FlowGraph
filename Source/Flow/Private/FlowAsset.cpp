@@ -45,6 +45,8 @@ FString UFlowAsset::ValidationError_NodeClassNotAllowed = TEXT("Node class {0} i
 FString UFlowAsset::ValidationError_AddOnNodeClassNotAllowed = TEXT("AddOn Node class {0} is not allowed in this asset.");
 FString UFlowAsset::ValidationError_NullNodeInstance = TEXT("Node with GUID {0} is NULL");
 FString UFlowAsset::ValidationError_NullAddOnNodeInstance = TEXT("Node with GUID {0} has NULL AddOn(s)");
+FString UFlowAsset::ValidationError_ConnectedToMissingNode = TEXT("Pin {0} on Node with GUID {1} is connected to Node with Guid {2}, which does not exist in {3}. {4}");
+FString UFlowAsset::ValidationError_AdviseResave = TEXT("Open the Flow Asset in editor and resave it.");
 #endif
 
 #include UE_INLINE_GENERATED_CPP_BY_NAME(FlowAsset)
@@ -317,42 +319,45 @@ EDataValidationResult UFlowAsset::IsDataValid(FDataValidationContext& Context) c
 EDataValidationResult UFlowAsset::ValidateAsset(FFlowMessageLog& MessageLog) const
 {
 	// validate runtime nodes
-	for (const TPair<FGuid, UFlowNode*>& Node : ObjectPtrDecay(Nodes))
+	for (const TPair<FGuid, UFlowNode*>& NodeIt : ObjectPtrDecay(Nodes))
 	{
-		if (IsValid(Node.Value))
-		{
-			FText FailureReason;
-			if (!IsNodeOrAddOnClassAllowed(Node.Value->GetClass(), &FailureReason))
-			{
-				const FString ErrorMsg =
-					FailureReason.IsEmpty()
-						? FString::Format(*ValidationError_NodeClassNotAllowed, {*Node.Value->GetClass()->GetName()})
-						: FailureReason.ToString();
+		UFlowNode* Node = NodeIt.Value;
 
-				MessageLog.Error(*ErrorMsg, Node.Value);
+		if (IsValid(Node))
+		{
+			// Check if this node class is still allowed in this asset class
+			FText FailureReason;
+			if (!IsNodeOrAddOnClassAllowed(Node->GetClass(), &FailureReason))
+			{
+				const FString ErrorMsg = !FailureReason.IsEmpty() ? FailureReason.ToString()
+					: FString::Format(*ValidationError_NodeClassNotAllowed, {*Node->GetClass()->GetName()});
+
+				MessageLog.Error(*ErrorMsg, Node);
 			}
 
-			Node.Value->ValidationLog.Messages.Empty();
-			Node.Value->ValidateNode();
-			MessageLog.Messages.Append(Node.Value->ValidationLog.Messages);
+			// Validate node connections
+			for (const TPair<FName, FConnectedPin>& Connection : Node->Connections)
+			{
+				if (!Nodes.Contains(Connection.Value.NodeGuid))
+				{
+					const FString ErrorMsg = FString::Format(*ValidationError_ConnectedToMissingNode, 
+						{*Connection.Key.ToString(), *NodeIt.Key.ToString(), *Connection.Value.NodeGuid.ToString(), GetPathName(), ValidationError_AdviseResave});
+
+					MessageLog.Error(*ErrorMsg, Node);
+				}
+			}
+
+			// Run node-specific validations
+			Node->ValidationLog.Messages.Empty();
+			Node->ValidateNode();
+			MessageLog.Messages.Append(Node->ValidationLog.Messages);
 
 			// Validate AddOns
-			for (UFlowNodeAddOn* AddOn : Node.Value->GetFlowNodeAddOnChildren())
-			{
-				if (IsValid(AddOn))
-				{
-					ValidateAddOnTree(*AddOn, MessageLog);
-				}
-				else
-				{
-					const FString ErrorMsg = FString::Format(*ValidationError_NullAddOnNodeInstance, {*Node.Key.ToString()});
-					MessageLog.Error(*ErrorMsg, this);
-				}
-			}
+			ValidateAddOnChildren(*Node, MessageLog);
 		}
 		else
 		{
-			const FString ErrorMsg = FString::Format(*ValidationError_NullNodeInstance, {*Node.Key.ToString()});
+			const FString ErrorMsg = FString::Format(*ValidationError_NullNodeInstance, {*NodeIt.Key.ToString()});
 			MessageLog.Error(*ErrorMsg, this);
 		}
 	}
@@ -395,7 +400,7 @@ void UFlowAsset::ValidateAddOnTree(UFlowNodeAddOn& AddOn, FFlowMessageLog& Messa
 	ValidateAddOnChildren(AddOn, MessageLog);
 }
 
-void UFlowAsset::ValidateAddOnChildren(UFlowNodeBase& OwnerNode, FFlowMessageLog& MessageLog)
+void UFlowAsset::ValidateAddOnChildren(UFlowNodeBase& OwnerNode, FFlowMessageLog& MessageLog) const
 {
 	const TArray<UFlowNodeAddOn*>& Children = OwnerNode.GetFlowNodeAddOnChildren();
 	for (UFlowNodeAddOn* Child : Children)
