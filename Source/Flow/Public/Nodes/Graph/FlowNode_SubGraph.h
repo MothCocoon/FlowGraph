@@ -112,7 +112,6 @@ public:
 	virtual FText K2_GetNodeTitle_Implementation() const override;
 	virtual FString GetNodeDescription() const override;
 	virtual UObject* GetAssetToEdit() override;
-	virtual const FFlowAgentDoc& GetAgentDoc() const override;
 
 protected:
 	virtual EDataValidationResult ValidateNode() override;

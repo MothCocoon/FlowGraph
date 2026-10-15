@@ -230,15 +230,6 @@ EDataValidationResult UFlowNode_SubGraph::ValidateNode()
 	return EDataValidationResult::Valid;
 }
 
-const FFlowAgentDoc& UFlowNode_SubGraph::GetAgentDoc() const
-{
-	static const FFlowAgentDoc Doc = MakeAgentDoc(
-		/*Guidance*/ TEXT("Custom Input/Output nodes in the child asset automatically add matching pins to this node - use them to route signals in and out of the sub-graph mid-run. Enabling bCanInstanceIdenticalAsset can cause infinite recursion if the child unconditionally spawns itself; leave it off unless you have a real termination condition."),
-		/*Tags*/     { TEXT("graph"), TEXT("subgraph"), TEXT("composition") },
-		/*Articles*/ {  });
-	return Doc;
-}
-
 TArray<FFlowPin> UFlowNode_SubGraph::GetContextInputs() const
 {
 	TArray<FFlowPin> ContextInputPins = Super::GetContextInputs();

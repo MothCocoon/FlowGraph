@@ -43,8 +43,6 @@ public:
 	/* Utility function for subclasses, if they want to force a named property to be Input or Output.
 	* Unused in this class. */
 	void OnPostEditEnsureAllNamedPropertiesPinDirection(const FProperty& Property, bool bIsInput);
-
-	virtual const FFlowAgentDoc& GetAgentDoc() const override;
 #endif
 
 protected:
