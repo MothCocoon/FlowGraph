@@ -53,35 +53,36 @@ class FLOW_API FFlowMessageLog
 public:
 	static const FName LogName;
 	TArray<TSharedRef<FTokenizedMessage>> Messages;
+		
+	FFlowMessageLog() {}
+	
 
-public:
-	FFlowMessageLog()
+	template <typename T>
+	TSharedRef<FTokenizedMessage> Message(const TCHAR* Format, T* Object, const EMessageSeverity::Type Severity)
 	{
+		TSharedRef<FTokenizedMessage> Message = FTokenizedMessage::Create(Severity);
+		AddMessage<T>(NAME_None, Format, Message, Object);
+		return Message;
 	}
 
 	template <typename T>
 	TSharedRef<FTokenizedMessage> Error(const TCHAR* Format, T* Object)
 	{
-		TSharedRef<FTokenizedMessage> Message = FTokenizedMessage::Create(EMessageSeverity::Error);
-		AddMessage<T>(NAME_None, Format, Message, Object);
-		return Message;
+		return Message<T>(Format, Object, EMessageSeverity::Error);
 	}
 
 	template <typename T>
 	TSharedRef<FTokenizedMessage> Warning(const TCHAR* Format, T* Object)
 	{
-		TSharedRef<FTokenizedMessage> Message = FTokenizedMessage::Create(EMessageSeverity::Warning);
-		AddMessage<T>(NAME_None, Format, Message, Object);
-		return Message;
+		return Message<T>(Format, Object, EMessageSeverity::Warning);
 	}
 
 	template <typename T>
 	TSharedRef<FTokenizedMessage> Note(const TCHAR* Format, T* Object)
 	{
-		TSharedRef<FTokenizedMessage> Message = FTokenizedMessage::Create(EMessageSeverity::Info);
-		AddMessage<T>(NAME_None, Format, Message, Object);
-		return Message;
+		return Message<T>(Format, Object, EMessageSeverity::Info);
 	}
+
 
 protected:
 	template <typename T>
