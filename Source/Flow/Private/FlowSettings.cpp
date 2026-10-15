@@ -20,9 +20,6 @@ UFlowSettings::UFlowSettings(const FObjectInitializer& ObjectInitializer)
 	, bUseAdaptiveNodeTitles(false)
 	, DefaultExpectedOwnerClass(UFlowComponent::StaticClass())
 	, bWarnAboutMissingIdentityTags(true)
-	, DefaultActorSpawnQueueMode(EFlowActorSpawnQueueMode::Staggered)
-	, MaxActorSpawnSuccessesPerTick(2)
-	, MaxActorSpawnAttemptsPerFlush(64)
 {
 }
 
