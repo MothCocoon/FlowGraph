@@ -70,7 +70,7 @@ void UFlowNode_FormatText::UpdateNodeConfigText_Implementation()
 {
 	constexpr bool bErrorIfInputPinNotFound = true;
 	FConnectedPin ConnectedPin;
-	
+
 	// is input connected?
 	if (FindFirstInputPinConnection(GET_MEMBER_NAME_CHECKED(ThisClass, FormatText), bErrorIfInputPinNotFound, ConnectedPin))
 	{

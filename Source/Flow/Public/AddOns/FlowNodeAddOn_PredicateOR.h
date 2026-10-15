@@ -8,6 +8,10 @@
 
 class UFlowNode;
 
+/**
+ * Combines all attached child predicate AddOns with logical OR, evaluating true if any one child predicate evaluates
+ * true.
+ */
 UCLASS(MinimalApi, NotBlueprintable, meta = (DisplayName = "OR"))
 class UFlowNodeAddOn_PredicateOR
 	: public UFlowNodeAddOn

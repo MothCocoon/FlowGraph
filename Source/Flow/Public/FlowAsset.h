@@ -166,6 +166,9 @@ public:
 	const TMap<FGuid, UFlowNode*>& GetNodes() const { return ObjectPtrDecay(Nodes); }
 	TArray<UFlowNode*> GetAllNodes() const;
 
+	/** Returns whether the serialized runtime node map can be initialized safely. */
+	bool IsRuntimeGraphValid(FString& OutErrorMessage) const;
+
 	UFlowNode* GetNode(const FGuid& Guid) const { return Nodes.FindRef(Guid); }
 
 	template <class T>
@@ -451,6 +454,7 @@ public:
 
 public:
 	UFlowSubsystem* GetFlowSubsystem() const;
+	FName GetDisplayName() const;
 
 	UFlowNode_SubGraph* GetNodeOwningThisAssetInstance() const;
 	UFlowAsset* GetParentInstance() const;
@@ -483,6 +487,7 @@ protected:
 	virtual void InitializePreloadPolicy();
 
 public:
+	void EnsurePreloadPolicyInitialized();
 	const FFlowPreloadPolicy& GetPreloadPolicy() const;
 
 //////////////////////////////////////////////////////////////////////////

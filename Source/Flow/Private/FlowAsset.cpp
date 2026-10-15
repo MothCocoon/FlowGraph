@@ -1070,9 +1070,61 @@ void UFlowAsset::SetupForEditing()
 }
 #endif // WITH_EDITOR
 
-void UFlowAsset::InitializeInstance(const TWeakObjectPtr<UObject> InOwner, UFlowAsset& InTemplateAsset)
+bool UFlowAsset::IsRuntimeGraphValid(FString& OutErrorMessage) const
+{
+	OutErrorMessage.Empty();
+
+	for (const TPair<FGuid, UFlowNode*>& NodePair : ObjectPtrDecay(Nodes))
+	{
+		if (!NodePair.Key.IsValid())
+		{
+			OutErrorMessage = FString::Printf(TEXT("Flow asset '%s' contains a runtime node with an invalid map GUID."),
+				*GetPathName());
+			return false;
+		}
+
+		const UFlowNode* Node = NodePair.Value;
+		if (!IsValid(Node))
+		{
+			OutErrorMessage = FString::Printf(TEXT("Flow asset '%s' contains an invalid runtime node for GUID '%s'."),
+				*GetPathName(), *NodePair.Key.ToString());
+			return false;
+		}
+
+		if (Node->GetGuid() != NodePair.Key)
+		{
+			OutErrorMessage = FString::Printf(
+				TEXT("Flow asset '%s' maps GUID '%s' to node '%s' whose GUID is '%s'."),
+				*GetPathName(), *NodePair.Key.ToString(), *Node->GetPathName(), *Node->GetGuid().ToString());
+			return false;
+		}
+
+		for (const TPair<FName, FConnectedPin>& ConnectionPair : Node->Connections)
+		{
+			const FGuid& ConnectedNodeGuid = ConnectionPair.Value.NodeGuid;
+			if (ConnectedNodeGuid.IsValid() && !IsValid(Nodes.FindRef(ConnectedNodeGuid)))
+			{
+				OutErrorMessage = FString::Printf(
+					TEXT("Flow asset '%s' node '%s' pin '%s' references missing runtime node '%s'."),
+					*GetPathName(), *NodePair.Key.ToString(), *ConnectionPair.Key.ToString(), *ConnectedNodeGuid.ToString());
+				return false;
+			}
+		}
+	}
+
+	return true;
+}
+
+bool UFlowAsset::InitializeInstance(const TWeakObjectPtr<UObject> InOwner, UFlowAsset& InTemplateAsset)
 {
 	check(!IsInstanceInitialized());
+
+	FString ValidationError;
+	if (!IsRuntimeGraphValid(ValidationError))
+	{
+		UE_LOG(LogFlow, Error, TEXT("Flow instance initialization rejected: %s"), *ValidationError);
+		return false;
+	}
 
 	Owner = InOwner;
 	TemplateAsset = &InTemplateAsset;
@@ -1095,6 +1147,8 @@ void UFlowAsset::InitializeInstance(const TWeakObjectPtr<UObject> InOwner, UFlow
 
 		NewNodeInstance->InitializeInstance();
 	}
+
+	return true;
 }
 
 FName UFlowAsset::GetInstanceName() const
@@ -1234,8 +1288,8 @@ void UFlowAsset::FinishNode(UFlowNode* Node)
 				return;
 			}
 
-			// if this instance is a Root Flow, we need to deregister it from the subsystem first. This will 
-			// finalize and deinitialize the root flow.
+			// If this instance is a Root Flow, deregister it from the subsystem first.
+			// This will finish and deinitialize the root flow.
 			if (Owner.IsValid())
 			{
 				const TSet<UFlowAsset*>& RootFlowInstances = GetFlowSubsystem()->GetRootInstancesByOwner(Owner.Get());
@@ -1321,6 +1375,11 @@ UFlowSubsystem* UFlowAsset::GetFlowSubsystem() const
 	return Cast<UFlowSubsystem>(GetOuter());
 }
 
+FName UFlowAsset::GetDisplayName() const
+{
+	return GetFName();
+}
+
 UFlowNode_SubGraph* UFlowAsset::GetNodeOwningThisAssetInstance() const
 {
 	return NodeOwningThisAssetInstance.Get();
@@ -1334,6 +1393,14 @@ UFlowAsset* UFlowAsset::GetParentInstance() const
 TWeakObjectPtr<UFlowAsset> UFlowAsset::GetFlowInstance(UFlowNode_SubGraph* SubGraphNode) const
 {
 	return ActiveSubGraphs.FindRef(SubGraphNode);
+}
+
+void UFlowAsset::EnsurePreloadPolicyInitialized()
+{
+	if (!PreloadPolicy.IsValid())
+	{
+		InitializePreloadPolicy();
+	}
 }
 
 void UFlowAsset::InitializePreloadPolicy()
