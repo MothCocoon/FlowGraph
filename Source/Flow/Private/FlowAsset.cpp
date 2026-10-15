@@ -353,18 +353,7 @@ EDataValidationResult UFlowAsset::ValidateAsset(FFlowMessageLog& MessageLog) con
 			MessageLog.Messages.Append(Node->ValidationLog.Messages);
 
 			// Validate AddOns
-			for (UFlowNodeAddOn* AddOn : Node->GetFlowNodeAddOnChildren())
-			{
-				if (IsValid(AddOn))
-				{
-					ValidateAddOnTree(*AddOn, MessageLog);
-				}
-				else
-				{
-					const FString ErrorMsg = FString::Format(*ValidationError_NullAddOnNodeInstance, {*NodeIt.Key.ToString()});
-					MessageLog.Error(*ErrorMsg, this);
-				}
-			}
+			ValidateAddOnChildren(*Node, MessageLog);
 		}
 		else
 		{
