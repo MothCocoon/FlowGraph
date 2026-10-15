@@ -12,6 +12,8 @@
 
 UFlowNodeAddOn::UFlowNodeAddOn()
 {
+	// AddOns have no single creation choke point analogous to UFlowAsset::RegisterNode, so - unlike
+	// UFlowNode - auto-mint a Guid here. See UFlowNodeBase::NodeGuid's doc comment.
 	SetGuid(FGuid::NewGuid());
 
 #if WITH_EDITOR

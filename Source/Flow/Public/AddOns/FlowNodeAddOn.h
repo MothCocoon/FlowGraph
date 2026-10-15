@@ -21,14 +21,15 @@ public:
 
 	// UObject
 #if WITH_EDITOR
-	/* Serialization-based editor copy paths (text paste, node duplicate and asset duplicate)
-	 * copy NodeGuid verbatim, so re-mint here. Runtime template instancing skips these
-	 * callbacks and must retain the template's NodeGuid. */
+	/* Every editor copy path - text paste, node duplicate, whole-asset duplicate - is
+	 * serialization-based and carries NodeGuid over verbatim, so identity has to be re-minted
+	 * here. Runtime instancing uses NewObject-with-template and invokes neither of these, so
+	 * instanced AddOns still inherit their template's NodeGuid. */
 	FLOW_API virtual void PostDuplicate(bool bDuplicateForPIE) override;
 	FLOW_API virtual void PostEditImport() override;
 #endif
 	// --
-	
+
 protected:
 	/* The Flow Node that contains this AddOn.
 	 * Accessible only when initialized, runtime only. */

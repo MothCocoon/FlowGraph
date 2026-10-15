@@ -70,7 +70,7 @@ void UFlowNode_FormatText::UpdateNodeConfigText_Implementation()
 {
 	constexpr bool bErrorIfInputPinNotFound = true;
 	FConnectedPin ConnectedPin;
-	
+
 	// is input connected?
 	if (FindFirstInputPinConnection(GET_MEMBER_NAME_CHECKED(ThisClass, FormatText), bErrorIfInputPinNotFound, ConnectedPin))
 	{
@@ -80,6 +80,15 @@ void UFlowNode_FormatText::UpdateNodeConfigText_Implementation()
 	{
 		SetNodeConfigText(FormatText);
 	}
+}
+
+const FFlowAgentDoc& UFlowNode_FormatText::GetAgentDoc() const
+{
+	static const FFlowAgentDoc Doc = MakeAgentDoc(
+		/*Guidance*/ TEXT("Inherits its named-property mechanism from Define Properties - complex types are exported via ToString, and InstancedStruct values are not supported as format arguments."),
+		/*Tags*/     { TEXT("graph"), TEXT("text"), TEXT("format") },
+		/*Articles*/ {  });
+	return Doc;
 }
 
 #endif

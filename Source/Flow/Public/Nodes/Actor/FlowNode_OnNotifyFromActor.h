@@ -37,6 +37,7 @@ protected:
 #if WITH_EDITOR
 public:
 	virtual FString GetNodeDescription() const override;
+	virtual const FFlowAgentDoc& GetAgentDoc() const override;
 #endif
 
 #if WITH_EDITOR

@@ -75,6 +75,12 @@ public:
 	UPROPERTY(VisibleAnywhere, config, Category = "Search", meta = (Bitmask, BitmaskEnum = "/Script/Flow.EFlowSearchFlags"))
 	uint32 DefaultSearchFlags = static_cast<uint32>(EFlowSearchFlags::DefaultSearchFlags);
 
+	UPROPERTY(VisibleAnywhere, config, Category = "Search")
+	uint8 DefaultSearchPinDirection = 0;
+
+	UPROPERTY(VisibleAnywhere, config, Category = "Search")
+	uint8 DefaultSearchPinConnection = 0;
+
 	/* Max search depth for inline objects in the Flow Editor. */
 	UPROPERTY(EditAnywhere, config, Category = "Search", meta = (ClampMin = 1))
 	int32 DefaultMaxSearchDepth = 1;
