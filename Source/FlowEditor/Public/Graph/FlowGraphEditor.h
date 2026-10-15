@@ -112,6 +112,19 @@ protected:
 	static bool HasEnabledPinBreakpoint(UFlowDebuggerSubsystem* InDebuggerSubsystem, const UEdGraphPin* Pin);
 
 private:
+	static TSet<UEdGraphNode*> ImportAndValidatePastedNodes(
+		UFlowGraph& FlowGraph,
+		const TArray<UFlowGraphNode*>& PasteTargetNodes,
+		UFlowGraphNode* PasteTargetNode,
+		FString& OutTextToImport,
+		TMap<int32, UFlowGraphNode*>& OutNodeCopyIndexMap);
+	void PreparePastedNodesForPaste(const TSet<UEdGraphNode*>& NodesToPaste, const FVector2f& Location);
+	static void AttachPastedSubNodes(
+		const TSet<UEdGraphNode*>& NodesToPaste,
+		const TMap<int32, UFlowGraphNode*>& NodeCopyIndexMap,
+		UFlowGraphNode* PasteTargetNode,
+		UFlowGraph& FlowGraph);
+
 	void AddInput() const;
 	bool CanAddInput() const;
 
