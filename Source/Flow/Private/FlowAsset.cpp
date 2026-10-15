@@ -1603,8 +1603,7 @@ FFlowAssetSaveData UFlowAsset::SaveInstance(TArray<FFlowAssetSaveData>& SavedFlo
 	OnSave();
 
 	// iterate nodes
-	TArray<UFlowNode*> NodesInExecutionOrder;
-	GetNodesInExecutionOrder<UFlowNode>(GetDefaultEntryNode(), NodesInExecutionOrder);
+	TArray<UFlowNode*> NodesInExecutionOrder = GatherNodesConnectedToAllInputs();
 	for (UFlowNode* Node : NodesInExecutionOrder)
 	{
 		if (Node && Node->ShouldSave())

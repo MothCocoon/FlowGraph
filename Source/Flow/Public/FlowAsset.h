@@ -249,7 +249,7 @@ protected:
 
 public:
 	/* Gathers all the nodes that are connected to the Start & Custom Inputs of the flow graph. */
-	TArray<UFlowNode*> GatherNodesConnectedToAllInputs() const;
+	virtual TArray<UFlowNode*> GatherNodesConnectedToAllInputs() const;
 
 	UFlowNode_CustomInput* TryFindCustomInputNodeByEventName(const FName& EventName) const;
 	UFlowNode_CustomOutput* TryFindCustomOutputNodeByEventName(const FName& EventName) const;
