@@ -353,18 +353,7 @@ EDataValidationResult UFlowAsset::ValidateAsset(FFlowMessageLog& MessageLog) con
 			MessageLog.Messages.Append(Node->ValidationLog.Messages);
 
 			// Validate AddOns
-			for (UFlowNodeAddOn* AddOn : Node->GetFlowNodeAddOnChildren())
-			{
-				if (IsValid(AddOn))
-				{
-					ValidateAddOnTree(*AddOn, MessageLog);
-				}
-				else
-				{
-					const FString ErrorMsg = FString::Format(*ValidationError_NullAddOnNodeInstance, {*NodeIt.Key.ToString()});
-					MessageLog.Error(*ErrorMsg, this);
-				}
-			}
+			ValidateAddOnChildren(*Node, MessageLog);
 		}
 		else
 		{
@@ -408,12 +397,41 @@ void UFlowAsset::ValidateAddOnTree(UFlowNodeAddOn& AddOn, FFlowMessageLog& Messa
 	AddOn.ValidateNode();
 	MessageLog.Messages.Append(AddOn.ValidationLog.Messages);
 
-	// Validate Children
-	for (UFlowNodeAddOn* Child : AddOn.GetFlowNodeAddOnChildren())
+	ValidateAddOnChildren(AddOn, MessageLog);
+}
+
+void UFlowAsset::ValidateAddOnChildren(UFlowNodeBase& OwnerNode, FFlowMessageLog& MessageLog) const
+{
+	const TArray<UFlowNodeAddOn*>& Children = OwnerNode.GetFlowNodeAddOnChildren();
+	for (UFlowNodeAddOn* Child : Children)
 	{
 		if (IsValid(Child))
 		{
+			TArray<UFlowNodeAddOn*> OtherChildren;
+			OtherChildren.Reserve(Children.Num() - 1);
+			for (UFlowNodeAddOn* OtherChild : Children)
+			{
+				if (IsValid(OtherChild) && OtherChild != Child)
+				{
+					OtherChildren.Add(OtherChild);
+				}
+			}
+
+			if (OwnerNode.CheckAcceptFlowNodeAddOnChild(Child, OtherChildren) == EFlowAddOnAcceptResult::Reject)
+			{
+				const FString ErrorMsg = FString::Printf(
+					TEXT("AddOn '%s' is not a valid child of '%s' with its current sibling set."),
+					*Child->GetClass()->GetName(),
+					*OwnerNode.GetClass()->GetName());
+				MessageLog.Error(*ErrorMsg, &OwnerNode);
+			}
+
 			ValidateAddOnTree(*Child, MessageLog);
+		}
+		else
+		{
+			const FString ErrorMsg = FString::Format(*ValidationError_NullAddOnNodeInstance, {*OwnerNode.GetGuid().ToString()});
+			MessageLog.Error(*ErrorMsg, this);
 		}
 	}
 }
