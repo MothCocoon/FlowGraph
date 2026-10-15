@@ -411,7 +411,7 @@ void UFlowAsset::ValidateAddOnTree(UFlowNodeAddOn& AddOn, FFlowMessageLog& Messa
 	ValidateAddOnChildren(AddOn, MessageLog);
 }
 
-void UFlowAsset::ValidateAddOnChildren(UFlowNodeBase& OwnerNode, FFlowMessageLog& MessageLog)
+void UFlowAsset::ValidateAddOnChildren(UFlowNodeBase& OwnerNode, FFlowMessageLog& MessageLog) const
 {
 	const TArray<UFlowNodeAddOn*>& Children = OwnerNode.GetFlowNodeAddOnChildren();
 	for (UFlowNodeAddOn* Child : Children)
