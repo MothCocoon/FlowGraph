@@ -4,6 +4,7 @@
 
 #include "Asset/FlowAssetEditor.h"
 #include "FlowEditorCommands.h"
+#include "Graph/Collapse/FlowCollapseToSubGraphTool.h"
 #include "Graph/FlowGraphSchema_Actions.h"
 #include "Graph/Nodes/FlowGraphNode.h"
 
@@ -173,6 +174,10 @@ void SFlowGraphEditor::BindGraphCommands()
 	CommandList->MapAction(GenericCommands.Duplicate,
 	                       FExecuteAction::CreateSP(this, &SFlowGraphEditor::DuplicateNodes),
 	                       FCanExecuteAction::CreateSP(this, &SFlowGraphEditor::CanDuplicateNodes));
+
+	CommandList->MapAction(FlowGraphCommands.CreateSubGraphFromSelection,
+	                       FExecuteAction::CreateSP(this, &SFlowGraphEditor::CreateSubGraphFromSelection),
+	                       FCanExecuteAction::CreateSP(this, &SFlowGraphEditor::CanCreateSubGraphFromSelection));
 
 	// Pin commands
 	CommandList->MapAction(FlowGraphCommands.ReconstructNode,
@@ -1118,6 +1123,16 @@ bool SFlowGraphEditor::CanReconstructNode() const
 	}
 
 	return false;
+}
+
+void SFlowGraphEditor::CreateSubGraphFromSelection()
+{
+	FFlowCollapseToSubGraphTool::Execute(*this);
+}
+
+bool SFlowGraphEditor::CanCreateSubGraphFromSelection() const
+{
+	return CanEdit() && !IsPIE() && IsTabFocused() && !GetSelectedFlowNodes().IsEmpty();
 }
 
 void SFlowGraphEditor::AddInput() const
