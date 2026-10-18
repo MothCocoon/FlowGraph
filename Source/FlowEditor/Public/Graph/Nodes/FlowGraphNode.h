@@ -299,6 +299,9 @@ public:
 	virtual FText GetDescription() const;
 
 	void AddSubNode(UFlowGraphNode* SubNode);
+	bool AddSubNodeForRegraph(UFlowGraphNode* SubNode, UEdGraph* ParentGraph);
+	void ReparentSubNodeForRegraph(UFlowGraphNode* SubNode);
+	void RemoveSubNodeForRegraph(UFlowGraphNode* SubNode);
 	void RemoveSubNode(UFlowGraphNode* SubNode);
 	virtual void RemoveAllSubNodes();
 	virtual void OnSubNodeRemoved(UFlowGraphNode* SubNode);

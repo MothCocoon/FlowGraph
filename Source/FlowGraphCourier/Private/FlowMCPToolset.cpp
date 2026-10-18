@@ -26,7 +26,7 @@
 #include "FlowGraphValidation.h"
 #include "FlowMCPMutationContext.h"
 #include "FlowNodeClassReplacement.h"
-#include "Graph/Collapse/FlowSubgraphSelection.h"
+#include "Graph/Extraction/FlowSubGraphExtractionByGuid.h"
 #include "Graph/Nodes/FlowGraphNode.h"
 #include "ObjectTools.h"
 #include "FlowNodeBlueprintCreator.h"
@@ -156,7 +156,7 @@ namespace
 	}
 
 	void CopySubgraphSelectionPlan(
-		const FlowSubgraphSelection::FSelectionPlanSummary& Source,
+		const FlowSubGraphExtraction::FExtractionPlanSummary& Source,
 		FFlowMCPFlowSubgraphSelectionPlan& Destination)
 	{
 		Destination.bCanApply = Source.bCanApply;
@@ -1000,8 +1000,8 @@ FFlowMCPPlanFlowSubgraphFromSelectionResult UFlowMCPToolset::PlanFlowSubgraphFro
 		return Result;
 	}
 
-	FlowSubgraphSelection::FSelectionPlanSummary PlanSummary;
-	if (!FlowSubgraphSelection::PlanSelection(
+	FlowSubGraphExtraction::FExtractionPlanSummary PlanSummary;
+	if (!FlowSubGraphExtraction::PlanExtractionByGuid(
 		FlowAsset,
 		SelectionGuids,
 		Request.NewAssetName,
@@ -1067,8 +1067,8 @@ FFlowMCPCreateFlowSubgraphFromSelectionResult UFlowMCPToolset::CreateFlowSubgrap
 		return Result;
 	}
 
-	FlowSubgraphSelection::FSelectionPlanSummary PlanSummary;
-	if (!FlowSubgraphSelection::PlanSelection(
+	FlowSubGraphExtraction::FExtractionPlanSummary PlanSummary;
+	if (!FlowSubGraphExtraction::PlanExtractionByGuid(
 		SourceAsset,
 		SelectionGuids,
 		Request.NewAssetName,
@@ -1099,7 +1099,7 @@ FFlowMCPCreateFlowSubgraphFromSelectionResult UFlowMCPToolset::CreateFlowSubgrap
 	MutationContext.Modify(SourceAsset);
 	UFlowAsset* NewAsset = nullptr;
 	UFlowGraphNode* SubgraphNode = nullptr;
-	if (!FlowSubgraphSelection::ApplySelection(
+	if (!FlowSubGraphExtraction::ApplyExtractionByGuid(
 		SourceAsset,
 		SelectionGuids,
 		Request.NewAssetName,

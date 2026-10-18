@@ -34,8 +34,9 @@ namespace FlowSubGraphExtraction
 		FString& OutError);
 
 	/**
-	 * Extracts the selection in an undoable transaction and saves both assets under revision control.
-	 * OutError may describe a save or revision control failure even when the extraction succeeded.
+	 * Extracts the selection into a new asset without saving it.
+	 * The caller owns the enclosing transaction, revision control and saving of both assets.
+	 * On failure OutNewAsset holds the partially built asset, if one was created, for the caller to discard.
 	 */
 	FLOWEDITOR_API bool ApplyExtractionByGuid(
 		UFlowAsset* SourceAsset,
