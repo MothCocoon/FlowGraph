@@ -863,24 +863,16 @@ TSet<UEdGraphNode*> SFlowGraphEditor::ImportAndValidatePastedNodes(FString& OutT
 	// Map source Guids to pasted nodes before pasted nodes receive new Guids.
 	TArray<UFlowGraphNode*> RejectedNodes;
 	TSet<UEdGraphNode*> RootSubNodesToPaste;
-	for (auto It = NodesToPaste.CreateIterator(); It; ++It)
+	for (UEdGraphNode* Node : NodesToPaste)
 	{
-		if (UFlowGraphNode* FlowGraphNode = Cast<UFlowGraphNode>(*It))
+		if (UFlowGraphNode* FlowGraphNode = Cast<UFlowGraphNode>(Node))
 		{
-			if (FlowGraphNode->CanPasteHere(FlowGraph))
-			{
-				OutSourceGuidToPastedNode.Add(FlowGraphNode->NodeGuid, FlowGraphNode);
+			OutSourceGuidToPastedNode.Add(FlowGraphNode->NodeGuid, FlowGraphNode);
 
-				// An AddOn copied without its parent needs the paste target.
-				if (FlowGraphNode->IsSubNode() && !FlowGraphNode->ParentGuidCopy.IsValid())
-				{
-					RootSubNodesToPaste.Add(FlowGraphNode);
-				}
-			}
-			else
+			// An AddOn copied without its parent needs the paste target.
+			if (FlowGraphNode->IsSubNode() && !FlowGraphNode->ParentGuidCopy.IsValid())
 			{
-				RejectedNodes.Add(FlowGraphNode);
-				It.RemoveCurrent();
+				RootSubNodesToPaste.Add(FlowGraphNode);
 			}
 		}
 	}
@@ -910,7 +902,7 @@ TSet<UEdGraphNode*> SFlowGraphEditor::ImportAndValidatePastedNodes(FString& OutT
 		}
 	}
 
-	// Destroy rejected imported objects and report the partial paste.
+	// Destroy rejected imported objects.
 	for (UFlowGraphNode* Node : RejectedNodes)
 	{
 		Node->DestroyNode();
@@ -918,9 +910,10 @@ TSet<UEdGraphNode*> SFlowGraphEditor::ImportAndValidatePastedNodes(FString& OutT
 		Node->MarkAsGarbage();
 	}
 
-	if (!RejectedNodes.IsEmpty())
+	// AddOns of nodes dropped by the clipboard import are rejected silently, the import handles reporting of those nodes.
+	if (!bCanPasteRootSubNodes)
 	{
-		FNotificationInfo Info(LOCTEXT("RejectedPastedNodes", "One or more copied nodes or add-ons are not allowed here and could not be pasted."));
+		FNotificationInfo Info(LOCTEXT("RejectedPastedAddOns", "Copied add-ons need exactly one selected node that accepts them and could not be pasted."));
 		Info.ExpireDuration = 3.0f;
 		Info.bUseLargeFont = false;
 		FSlateNotificationManager::Get().AddNotification(Info);
