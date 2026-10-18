@@ -455,7 +455,6 @@ public:
 
 public:
 	UFlowSubsystem* GetFlowSubsystem() const;
-	FName GetDisplayName() const;
 
 	UFlowNode_SubGraph* GetNodeOwningThisAssetInstance() const;
 	UFlowAsset* GetParentInstance() const;

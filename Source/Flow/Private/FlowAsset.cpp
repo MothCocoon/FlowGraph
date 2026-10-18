@@ -1375,11 +1375,6 @@ UFlowSubsystem* UFlowAsset::GetFlowSubsystem() const
 	return Cast<UFlowSubsystem>(GetOuter());
 }
 
-FName UFlowAsset::GetDisplayName() const
-{
-	return GetFName();
-}
-
 UFlowNode_SubGraph* UFlowAsset::GetNodeOwningThisAssetInstance() const
 {
 	return NodeOwningThisAssetInstance.Get();
