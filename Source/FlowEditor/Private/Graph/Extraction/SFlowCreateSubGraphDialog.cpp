@@ -51,7 +51,7 @@ void SFlowCreateSubGraphDialog::Construct(const FArguments& InArgs)
 		.Padding(0.0f, 0.0f, 0.0f, 4.0f)
 		[
 			SNew(STextBlock)
-			.Text(FText::Format(LOCTEXT("TargetFolder", "The sub-graph will be created in {0}"), FText::FromString(PackageFolder)))
+			.Text(FText::Format(LOCTEXT("TargetFolder", "The SubGraph will be created in {0}"), FText::FromString(PackageFolder)))
 			.AutoWrapText(true)
 		]
 

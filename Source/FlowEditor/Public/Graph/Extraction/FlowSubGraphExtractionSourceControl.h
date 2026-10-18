@@ -18,7 +18,7 @@ namespace FlowSubGraphExtraction
 		bool bEnabled = false;
 	};
 
-	/** Removes a newly created sub-graph asset after a failed extraction. */
+	/** Removes a newly created SubGraph asset after a failed extraction. */
 	FLOWEDITOR_API bool DiscardCreatedAsset(UFlowAsset* NewAsset);
 
 	/**

@@ -30,10 +30,10 @@ void FFlowSubGraphExtractionTool::Execute(SFlowGraphEditor& GraphEditor)
 	if (!Plan.CanApply())
 	{
 		FTextBuilder ErrorBuilder;
-		ErrorBuilder.AppendLine(LOCTEXT("CannotExtract", "This selection cannot be extracted into a sub-graph:"));
+		ErrorBuilder.AppendLine(LOCTEXT("CannotExtract", "This selection cannot be extracted into a SubGraph."));
 		for (const FText& Error : Plan.Errors)
 		{
-			ErrorBuilder.AppendLineFormat(LOCTEXT("ErrorBullet", "- {0}"), Error);
+			ErrorBuilder.AppendLineFormat(LOCTEXT("ErrorBullet", "• {0}"), Error);
 		}
 
 		FMessageDialog::Open(EAppMsgType::Ok, ErrorBuilder.ToText());

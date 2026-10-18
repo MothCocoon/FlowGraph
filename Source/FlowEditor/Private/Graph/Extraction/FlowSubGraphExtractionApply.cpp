@@ -315,7 +315,7 @@ namespace FlowSubGraphExtraction
 	bool FExtractionApply::CreateAsset()
 	{
 		// UFlowAsset::GetDefaultFlowAssetForSubgraphs is the framework's own hook for this decision. The base
-		// returns GetClass(), so the sub-graph keeps the source's class by default, but a subclass that is not
+		// returns GetClass(), so the SubGraph keeps the source's class by default, but a subclass that is not
 		// meaningful as a fragment can nominate a better one.
 		const TSubclassOf<UFlowAsset> NewAssetClass = SourceAsset.GetDefaultFlowAssetForSubgraphs();
 		const FString PackageFolder = FPackageName::GetLongPackagePath(SourceAsset.GetOutermost()->GetName());
@@ -324,7 +324,7 @@ namespace FlowSubGraphExtraction
 		NewAsset = Cast<UFlowAsset>(AssetTools.CreateAsset(NewAssetName, PackageFolder, NewAssetClass, FlowAssetFactory));
 		if (!IsValid(NewAsset))
 		{
-			return Fail(FText::Format(LOCTEXT("CreateAssetFailed", "Could not create '{0}' in {1}."),
+			return Fail(FText::Format(LOCTEXT("CreateAssetFailed", "Could not create {0} in {1}."),
 				FText::FromString(NewAssetName),
 				FText::FromString(PackageFolder)));
 		}
@@ -358,7 +358,7 @@ namespace FlowSubGraphExtraction
 			if (!ClonedByOriginalGuid.Contains(SelectedNode->NodeGuid))
 			{
 				return Fail(FText::Format(
-					LOCTEXT("NodeNotCloned", "'{0}' could not be cloned into the new sub-graph."),
+					LOCTEXT("NodeNotCloned", "{0}: could not be cloned into the new SubGraph."),
 					SelectedNode->GetNodeTitle(ENodeTitleType::ListView)));
 			}
 		}
@@ -385,7 +385,7 @@ namespace FlowSubGraphExtraction
 		StartNode = StartNodes.IsEmpty() ? nullptr : StartNodes[0];
 		if (!StartNode)
 		{
-			return Fail(LOCTEXT("NoStartNode", "The new sub-graph has no Start node."));
+			return Fail(LOCTEXT("NoStartNode", "The new SubGraph has no Start node."));
 		}
 
 		ClonedRegionOrigin = FVector2f(
@@ -398,7 +398,7 @@ namespace FlowSubGraphExtraction
 			ClonedRegionMaxX = FMath::Max(ClonedRegionMaxX, ClonedPair.Value->NodePosX);
 		}
 		NewGraphSchema = NewGraph->GetSchema();
-		return NewGraphSchema != nullptr || Fail(LOCTEXT("NoNewGraphSchema", "The new sub-graph has no graph schema."));
+		return NewGraphSchema != nullptr || Fail(LOCTEXT("NoNewGraphSchema", "The new SubGraph has no graph schema."));
 	}
 
 	bool FExtractionApply::ConnectEntry()
@@ -411,7 +411,7 @@ namespace FlowSubGraphExtraction
 		UEdGraphPin* StartOutputPin = Internal::FindFirstExecPin(*StartNode, EGPD_Output);
 		if (!ClonedEntryPin || !StartOutputPin || !NewGraphSchema->TryCreateConnection(StartOutputPin, ClonedEntryPin))
 		{
-			return Fail(LOCTEXT("EntryNotWired", "The selection's entry could not be connected to the new sub-graph's Start node."));
+			return Fail(LOCTEXT("EntryNotWired", "The selection's entry could not be connected to the new SubGraph's Start node."));
 		}
 		return true;
 	}
@@ -426,7 +426,7 @@ namespace FlowSubGraphExtraction
 			NewGraph, nullptr, UFlowNode_Finish::StaticClass(), FVector2f(ExitColumnPosX, NextExitNodePosY), false);
 		if (!FinishGraphNode)
 		{
-			return Fail(LOCTEXT("CreateFinishFailed", "The Finish node could not be created in the new sub-graph."));
+			return Fail(LOCTEXT("CreateFinishFailed", "The Finish node could not be created in the new SubGraph."));
 		}
 		NextExitNodePosY += Internal::InterfaceNodeSpacingY;
 
@@ -447,7 +447,7 @@ namespace FlowSubGraphExtraction
 		if (!ClonedInnerPin)
 		{
 			return Fail(FText::Format(
-				LOCTEXT("ExitPinNotCloned", "Exit '{0}' could not be found on its cloned node."),
+				LOCTEXT("ExitPinNotCloned", "Exit {0}: could not be found on its cloned node."),
 				FText::FromName(Exit.InterfaceName)));
 		}
 
@@ -463,7 +463,7 @@ namespace FlowSubGraphExtraction
 		if (!ExitNodeInputPin || !NewGraphSchema->TryCreateConnection(ClonedInnerPin, ExitNodeInputPin))
 		{
 			return Fail(FText::Format(
-				LOCTEXT("ExitNotWired", "Exit '{0}' could not be connected to its {1} node."),
+				LOCTEXT("ExitNotWired", "Exit {0}: could not be connected to its {1} node."),
 				FText::FromName(Exit.InterfaceName),
 				Exit.bUsesBuiltInPin ? LOCTEXT("FinishNodeLabel", "Finish") : LOCTEXT("CustomOutputNodeLabel", "Custom Output")));
 		}
@@ -491,7 +491,7 @@ namespace FlowSubGraphExtraction
 		if (!CustomOutputNode)
 		{
 			Fail(FText::Format(
-				LOCTEXT("CreateCustomOutputFailed", "Custom Output '{0}' could not be created in the new sub-graph."),
+				LOCTEXT("CreateCustomOutputFailed", "Custom Output {0}: could not be created in the new SubGraph."),
 				FText::FromName(Exit.InterfaceName)));
 			return nullptr;
 		}
@@ -562,7 +562,7 @@ namespace FlowSubGraphExtraction
 			if (!SubGraphOutputPin)
 			{
 				return Fail(FText::Format(
-					LOCTEXT("MissingSubGraphOutput", "The replacement Sub Graph node has no '{0}' output."),
+					LOCTEXT("MissingSubGraphOutput", "The replacement Sub Graph node has no output named {0}."),
 					FText::FromName(Exit.InterfaceName)));
 			}
 
@@ -571,7 +571,7 @@ namespace FlowSubGraphExtraction
 				if (!OuterPin || !SourceGraph->GetSchema()->TryCreateConnection(SubGraphOutputPin, OuterPin))
 				{
 					return Fail(FText::Format(
-						LOCTEXT("ReconnectSubGraphOutputFailed", "The replacement Sub Graph node's '{0}' output could not be reconnected in the source graph."),
+						LOCTEXT("ReconnectSubGraphOutputFailed", "Output {0} of the replacement Sub Graph node could not be reconnected in the source graph."),
 						FText::FromName(Exit.InterfaceName)));
 				}
 			}

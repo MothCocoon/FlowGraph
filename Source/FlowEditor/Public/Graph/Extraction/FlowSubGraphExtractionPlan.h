@@ -15,11 +15,11 @@ class UFlowGraphNode;
  * Extracts a selection of Flow graph nodes into a newly created Flow Asset, replacing the selection
  * with a SubGraph node that runs that asset.
  *
- * The sub-graph interface is derived from the connections that cross the selection boundary. A pin is
+ * The SubGraph interface is derived from the connections that cross the selection boundary. A pin is
  * on the boundary when at least one of its links terminates on a node outside the selection, which is
  * the same test FBlueprintEditor::CollapseNodesIntoGraph uses.
  *
- * Flow's sub-graph interface is not a Blueprint tunnel, and three of its runtime rules shape what can
+ * Flow's SubGraph interface is not a Blueprint tunnel, and three of its runtime rules shape what can
  * be extracted:
  *
  * 1. Only the Start pin instantiates the child. UFlowNode_SubGraph::ExecuteInput calls CreateSubFlow
@@ -33,9 +33,9 @@ class UFlowGraphNode;
  *    to a pin matching the original. Finish can be claimed only once because it is a single exec pin and
  *    an exec output drives exactly one target; later unnamed boundaries fall back to a node-derived name.
  *    A Finish node is always placed, and is simply left unconnected when nothing routes to it. Reaching
- *    a Finish is what ends the child instance, so a sub-graph with only Custom Outputs stays active
+ *    a Finish is what ends the child instance, so a SubGraph with only Custom Outputs stays active
  *    until the parent tears it down in UFlowNode_SubGraph::Cleanup. That is normal for a long-running
- *    sub-graph and matches shipped content.
+ *    SubGraph and matches shipped content.
  *
  * 3. Data pins cannot cross the boundary at all. The interface mirrors only the exec-only CustomInputs
  *    and CustomOutputs arrays, so a crossing data link is a hard error.
@@ -94,7 +94,7 @@ namespace FlowSubGraphExtraction
 		/** Collects valid top-level nodes. */
 		void GatherSelectedNodes(const TSet<UFlowGraphNode*>& InSelectedNodes);
 
-		/** Records errors for nodes that do not share a graph or cannot move into a sub-graph. */
+		/** Records errors for nodes that do not share a graph or cannot move into a SubGraph. */
 		void ValidateSelectedNodes();
 
 		/** Finds connections crossing the selection boundary and classifies them as entries or exits. */
@@ -113,7 +113,7 @@ namespace FlowSubGraphExtraction
 	/** Builds a read-only plan describing the boundary of the selection. Modifies nothing. */
 	FLOWEDITOR_API FExtractionPlan PlanExtraction(const TSet<UFlowGraphNode*>& SelectedNodes);
 
-	/** Name proposed for a generated sub-graph asset, starting with the project's required prefix. */
+	/** Name proposed for a generated SubGraph asset, starting with the project's required prefix. */
 	FLOWEDITOR_API FString GetDefaultNewAssetName();
 
 	/** Validates a proposed asset name, returning an empty text when it is usable. */

@@ -157,19 +157,19 @@ namespace FlowSubGraphExtraction
 			if (FlowNode->IsA<UFlowNode_CustomInput>() || FlowNode->IsA<UFlowNode_CustomOutput>())
 			{
 				Errors.Add(FText::Format(
-					LOCTEXT("InterfaceNodeCannotMove", "'{0}' defines the source asset's interface and must remain outside the selection."),
+					LOCTEXT("InterfaceNodeCannotMove", "{0}: defines the source asset's interface and must remain outside the selection."),
 					Internal::GetNodeTitleText(*SelectedNode)));
 			}
 			else if (FlowNode->IsA<UFlowNode_Finish>())
 			{
 				Errors.Add(FText::Format(
-					LOCTEXT("FinishNodeCannotMove", "'{0}' finishes the source asset and must remain outside the selection."),
+					LOCTEXT("FinishNodeCannotMove", "{0}: finishes the source asset and must remain outside the selection."),
 					Internal::GetNodeTitleText(*SelectedNode)));
 			}
 			else if (!SelectedNode->CanUserDeleteNode() || !SelectedNode->CanDuplicateNode())
 			{
 				Errors.Add(FText::Format(
-					LOCTEXT("NodeCannotMove", "'{0}' cannot be moved into a sub-graph."),
+					LOCTEXT("NodeCannotMove", "{0}: cannot be moved into a SubGraph."),
 					Internal::GetNodeTitleText(*SelectedNode)));
 			}
 		}
@@ -201,13 +201,13 @@ namespace FlowSubGraphExtraction
 					continue;
 				}
 
-				// A sub-graph's interface is exec-only. Data has to be routed through AssetParams and the
+				// A SubGraph's interface is exec-only. Data has to be routed through AssetParams and the
 				// output data pin declarations, which cannot be derived from the selection.
 				if (!FFlowPin::IsExecPinCategory(Pin->PinType.PinCategory))
 				{
 					Errors.Add(FText::Format(
-						LOCTEXT("DataPinCrossesBoundary", "The data pin '{0}' on '{1}' is connected outside the selection. Data cannot cross a sub-graph boundary."),
-						FText::FromName(Pin->PinName), Internal::GetNodeTitleText(*SelectedNode)));
+						LOCTEXT("DataPinCrossesBoundary", "{0}: data pin {1} is connected outside the selection. Data cannot cross a SubGraph boundary."),
+						Internal::GetNodeTitleText(*SelectedNode), FText::FromName(Pin->PinName)));
 					continue;
 				}
 
@@ -296,7 +296,7 @@ namespace FlowSubGraphExtraction
 	{
 		if (NewAssetName.IsEmpty())
 		{
-			return LOCTEXT("EmptyAssetName", "Enter a name for the sub-graph asset.");
+			return LOCTEXT("EmptyAssetName", "Enter a name for the SubGraph asset.");
 		}
 
 		const FString& RequiredPrefix = GetDefault<UFlowGraphSettings>()->SubGraphAssetNamePrefix;
@@ -304,7 +304,7 @@ namespace FlowSubGraphExtraction
 		{
 			if (!NewAssetName.StartsWith(RequiredPrefix))
 			{
-				return FText::Format(LOCTEXT("MissingPrefix", "The name must start with '{0}'."), FText::FromString(RequiredPrefix));
+				return FText::Format(LOCTEXT("MissingPrefix", "The name must start with the prefix {0}."), FText::FromString(RequiredPrefix));
 			}
 			if (NewAssetName.Len() <= RequiredPrefix.Len())
 			{
@@ -321,7 +321,7 @@ namespace FlowSubGraphExtraction
 		const FString PackageFolder = FPackageName::GetLongPackagePath(SourceAsset.GetOutermost()->GetName());
 		if (FPackageName::DoesPackageExist(PackageFolder / NewAssetName))
 		{
-			return FText::Format(LOCTEXT("AssetAlreadyExists", "'{0}' already exists in {1}."),
+			return FText::Format(LOCTEXT("AssetAlreadyExists", "{0} already exists in {1}."),
 				FText::FromString(NewAssetName),
 				FText::FromString(PackageFolder));
 		}

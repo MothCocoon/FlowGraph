@@ -8,7 +8,7 @@ class SEditableTextBox;
 class UFlowAsset;
 
 /**
- * Modal prompt for the name of a sub-graph asset generated from a node selection. Validates the name
+ * Modal prompt for the name of a SubGraph asset generated from a node selection. Validates the name
  * as it is typed, and lists any warnings the extraction plan raised so the designer can back out.
  */
 class FLOWEDITOR_API SFlowCreateSubGraphDialog : public SCompoundWidget

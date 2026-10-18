@@ -99,19 +99,19 @@ namespace FlowSubGraphExtraction
 
 		const TSharedRef<FNewChangelist> NewChangelistOperation = ISourceControlOperation::Create<FNewChangelist>();
 		NewChangelistOperation->SetDescription(FText::Format(
-			LOCTEXT("ChangelistDescription", "Create sub-graph {0} from a selection in {1}"),
+			LOCTEXT("ChangelistDescription", "Create SubGraph {0} from a selection in {1}"),
 			FText::FromString(NewAssetName),
 			FText::FromString(SourceAsset.GetName())));
 
 		if (SourceControlProvider.Execute(NewChangelistOperation, EConcurrency::Synchronous) != ECommandResult::Succeeded)
 		{
-			return LOCTEXT("NewChangelistFailed", "A changelist could not be created for the sub-graph assets.");
+			return LOCTEXT("NewChangelistFailed", "A changelist could not be created for the SubGraph assets.");
 		}
 
 		OutContext.Changelist = NewChangelistOperation->GetNewChangelist();
 		if (!OutContext.Changelist.IsValid())
 		{
-			return LOCTEXT("NoChangelistReturned", "Revision control created no changelist for the sub-graph assets.");
+			return LOCTEXT("NoChangelistReturned", "Revision control created no changelist for the SubGraph assets.");
 		}
 
 		OutContext.ChangelistIdentifier = OutContext.Changelist->GetIdentifier();
@@ -162,11 +162,11 @@ namespace FlowSubGraphExtraction
 		constexpr bool bOnlyDirty = false;
 		if (!UEditorLoadingAndSavingUtils::SavePackages({NewAssetPackage}, bOnlyDirty))
 		{
-			return LOCTEXT("SaveNewAssetFailed", "The generated sub-graph could not be saved; the source asset was not saved.");
+			return LOCTEXT("SaveNewAssetFailed", "The generated SubGraph could not be saved. The source asset was not saved.");
 		}
 		if (!UEditorLoadingAndSavingUtils::SavePackages({SourceAssetPackage}, bOnlyDirty))
 		{
-			return LOCTEXT("SaveSourceAssetFailed", "The sub-graph was saved, but the source asset could not be saved.");
+			return LOCTEXT("SaveSourceAssetFailed", "The SubGraph was saved, but the source asset could not be saved.");
 		}
 
 		// Saving has already checked out or marked both assets for add.
