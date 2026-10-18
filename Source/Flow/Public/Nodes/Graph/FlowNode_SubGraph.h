@@ -4,21 +4,15 @@
 #include "Interfaces/FlowGraphOutputDataReceiverInterface.h"
 #include "Interfaces/FlowPreloadableInterface.h"
 #include "Nodes/FlowNode.h"
-#include "Types/FlowDataPinValue.h"
 #include "Types/FlowOutputDataPinValues.h"
-#include "StructUtils/InstancedStruct.h"
 #include "FlowNode_SubGraph.generated.h"
 
 class UFlowAssetParams;
 
 /**
- * Instantiates a child Flow Asset and runs it inline.
- *
- * Fires its Start pin on the child asset and waits for the child to Finish before firing its own output.
- * Custom Input/Output nodes in the child asset add matching pins to this node.
- * Use to compose complex flows from reusable sub-graphs.
+ * Creates instance of provided Flow Asset and starts its execution.
  */
-UCLASS(NotBlueprintable, meta = (DisplayName = "Sub Graph", Keywords = "subgraph"))
+UCLASS(NotBlueprintable, meta = (DisplayName = "Sub Graph"))
 class FLOW_API UFlowNode_SubGraph
 	: public UFlowNode
 	, public IFlowPreloadableInterface
@@ -37,7 +31,6 @@ public:
 	static FFlowPin FinishPin;
 
 protected:
-	/* The Flow Asset to instantiate and run as a child graph. */
 	UPROPERTY(EditAnywhere, Category = "Graph")
 	TSoftObjectPtr<UFlowAsset> Asset;
 
@@ -45,25 +38,21 @@ protected:
 	UPROPERTY(EditAnywhere, Category = "Graph", meta = (DefaultForInputFlowPin, FlowPinType = "Object"))
 	TSoftObjectPtr<UFlowAssetParams> AssetParams;
 
-	/* Allow creating an instance of the same Flow Asset as the one containing this node.
-	 * Warning: enabling this can cause infinite recursion if the graph spawns itself unconditionally. */
+	/* Allow to create instance of the same Flow Asset as the asset containing this node.
+	 * Enabling it may cause an infinite loop, if graph would keep creating copies of itself. */
 	UPROPERTY(EditAnywhere, Category = "Graph")
-	bool bCanInstanceIdenticalAsset = false;
+	bool bCanInstanceIdenticalAsset;
 
 	UPROPERTY(SaveGame)
 	FString SavedAssetInstanceName;
 
-	/* Cached output data pin values received from the inner Flow Asset when it finishes.
-	 * Note - Not saved "yet", but should decide if we should include the
+	/* Cached output data pin values received from the inner Flow Asset when it finishes. 
+	 * Note - Not saved "yet", but should decide if we should include the  
 	 *        cached output values in the save state. */
 	UPROPERTY(Transient)
 	FFlowOutputDataPinValues CachedOutputDataPinValues;
 
 protected:
-	// IFlowGraphOutputDataReceiverInterface
-	virtual void ReceiveOutputDataSnapshot(const FFlowOutputDataPinValues& Snapshot) override;
-	// --
-
 	virtual bool CanBeAssetInstanced() const;
 
 public:
@@ -79,12 +68,15 @@ public:
 public:
 	virtual void ForceFinishNode() override;
 
-	virtual void OnLoad_Implementation() override;
-
-protected:
 	// IFlowDataPinValueSupplierInterface
 	virtual FFlowDataPinResult TrySupplyDataPin(const FName PinName) const override;
 	// --
+	
+	// IFlowGraphOutputDataReceiverInterface
+	virtual void ReceiveOutputDataSnapshot(const FFlowOutputDataPinValues& Snapshot) override;
+	// --
+
+	virtual void OnLoad_Implementation() override;
 
 #if WITH_EDITORONLY_DATA
 protected:
@@ -99,16 +91,6 @@ protected:
 
 #if WITH_EDITOR
 public:
-	/**
-	 * Assigns the child asset directly, for tooling that generates a sub-graph rather than going through
-	 * the details panel. Subscribes to the asset so an interface change still reconstructs this node.
-	 */
-	void SetAsset(UFlowAsset* InAsset)
-	{
-		Asset = InAsset;
-		SubscribeToAssetChanges();
-	}
-
 	virtual FText K2_GetNodeTitle_Implementation() const override;
 	virtual FString GetNodeDescription() const override;
 	virtual UObject* GetAssetToEdit() override;

@@ -6,10 +6,9 @@
 #include "FlowNode_Branch.generated.h"
 
 /**
- * Evaluates all attached predicate AddOns (IFlowPredicateInterface) and fires the True or False
- *  output pin based on the result.
+ * FEvaluates its AddOns that implement the IFlowPredicateInterface to determine the output pin to trigger.
  */
-UCLASS(MinimalApi, NotBlueprintable, meta = (DisplayName = "Branch", Keywords = "branch predicate"))
+UCLASS(MinimalApi, NotBlueprintable, meta = (DisplayName = "Branch"))
 class UFlowNode_Branch : public UFlowNode
 {
 	GENERATED_BODY()

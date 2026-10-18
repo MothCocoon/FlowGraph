@@ -7,10 +7,6 @@
 
 #include "FlowNodeAddOn_PredicateRequireGameplayTags.generated.h"
 
-/**
- * Checks a GameplayTag or GameplayTagContainer supplied on its data pin against a configured set of tag requirements,
- * evaluating true only if the requirements are satisfied.
- */
 UCLASS(MinimalApi, NotBlueprintable, meta = (DisplayName = "Require Gameplay Tags"))
 class UFlowNodeAddOn_PredicateRequireGameplayTags
 	: public UFlowNodeAddOn

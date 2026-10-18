@@ -98,7 +98,7 @@ bool UFlowNodeAddOn_PredicateCompareValues::IsNumericTypeName(
 	const FFlowPinConnectionPolicy& PinConnectionPolicy,
 	const FName& TypeName)
 {
-	return
+	return 
 		PinConnectionPolicy.GetAllSupportedIntegerTypes().Contains(TypeName) ||
 		PinConnectionPolicy.GetAllSupportedFloatTypes().Contains(TypeName);
 }
@@ -140,7 +140,7 @@ bool UFlowNodeAddOn_PredicateCompareValues::IsAnyStringLikeTypeName(
 	const FName& TypeName)
 {
 	// Special-casing NameLike, since the CompareValues predicate counts Enums as Names
-	return
+	return 
 		IsNameLikeType(TypeName) ||
 		PinConnectionPolicy.GetAllSupportedStringLikeTypes().Contains(TypeName);
 }
@@ -277,7 +277,7 @@ EDataValidationResult UFlowNodeAddOn_PredicateCompareValues::ValidateNode()
 	}
 
 	// Validate arithmetic operators are only used with numeric types
-	if (IsArithmeticOp() &&
+	if (IsArithmeticOp() && 
 		!(IsNumericTypeName(PinConnectionPolicy, LeftTypeName) && IsNumericTypeName(PinConnectionPolicy, RightTypeName)))
 	{
 		LogValidationError(FString::Printf(

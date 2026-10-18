@@ -8,10 +8,6 @@
 
 class UFlowNode;
 
-/**
- * Inverts the combined result of its attached child predicate AddOns, evaluating true only when they would otherwise
- * evaluate false.
- */
 UCLASS(MinimalApi, NotBlueprintable, meta = (DisplayName = "NOT"))
 class UFlowNodeAddOn_PredicateNOT
 	: public UFlowNodeAddOn

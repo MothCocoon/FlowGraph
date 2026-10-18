@@ -5,9 +5,7 @@
 #include "FlowNode_Counter.generated.h"
 
 /**
- * Counts the number of times its input pin is triggered and fires its output when the count reaches Goal.
- * Useful for gating flow until a fixed number of events have occurred (e.g. "after 3 enemies die").
- * Resets automatically via Cleanup.
+ * Counts how many times signal entered this node.
  */
 UCLASS(NotBlueprintable, meta = (DisplayName = "Counter"))
 class FLOW_API UFlowNode_Counter final : public UFlowNode
@@ -18,7 +16,6 @@ public:
 	UFlowNode_Counter();
 
 protected:
-	/* Number of times the input pin must be triggered before the output pin fires. */
 	UPROPERTY(EditAnywhere, Category = "Counter", meta = (ClampMin = 2))
 	int32 Goal = 2;
 

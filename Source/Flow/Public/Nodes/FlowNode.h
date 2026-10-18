@@ -71,12 +71,12 @@ public:
 #endif
 
 public:
-	// UObject
+	// UObject	
 	virtual void PostLoad() override;
 	// --
 
 #if WITH_EDITOR
-	// UObject
+	// UObject	
 	virtual void PostEditChangeProperty(FPropertyChangedEvent& PropertyChangedEvent) override;
 	// --
 #endif
@@ -162,7 +162,7 @@ public:
 protected:
 	UFUNCTION(BlueprintImplementableEvent, Category = "FlowNode", meta = (DisplayName = "Can Finish Graph"))
 	bool K2_CanFinishGraph() const;
-
+	
 	UFUNCTION(BlueprintImplementableEvent, Category = "FlowNode", meta = (DisplayName = "Can User Add Input"))
 	bool K2_CanUserAddInput() const;
 
@@ -229,7 +229,7 @@ protected:
 
 	/* Helper templates for Find*PinConnection* functions */
 	template <bool bExecIsCached>
-	bool FindFirstPinConnection(const FFlowPin& FlowPin, const TArray<FFlowPin>& FlowPinArray, FConnectedPin& FirstConnectedPin) const;
+	bool FindFirstPinConnection(const FFlowPin& FlowPin, const TArray<FFlowPin>& FlowPinArray, FConnectedPin& FirstConnectedPin) const;		
 	template <bool bExecIsCached>
 	bool FindPinConnections(const FFlowPin& FlowPin, const TArray<FFlowPin>& FlowPinArray, TArray<FConnectedPin>* ConnectedPins) const;
 
@@ -263,7 +263,7 @@ public:
 	TMap<FName, FFlowPinPropertySource> MapDataPinNameToPropertySource;
 
 #if WITH_EDITORONLY_DATA
-protected:
+protected:	
 	UPROPERTY(VisibleDefaultsOnly, AdvancedDisplay, Category = "FlowNode", meta = (GetByRef))
 	TArray<FFlowPin> AutoInputDataPins;
 
