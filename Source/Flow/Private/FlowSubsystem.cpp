@@ -266,6 +266,12 @@ UFlowAsset* UFlowSubsystem::CreateFlowInstance(const TWeakObjectPtr<UObject> Own
 	if (!LoadedFlowAsset->IsRuntimeGraphValid(ValidationError))
 	{
 		UE_LOG(LogFlow, Error, TEXT("Flow instance creation rejected: %s"), *ValidationError);
+
+#if WITH_EDITOR
+		FMessageLog("PIE").Error(FText::Format(LOCTEXT("FlowInstanceCreationRejected", "Flow instance creation rejected: {0}"), FText::FromString(ValidationError)))
+		                  ->AddToken(FUObjectToken::Create(LoadedFlowAsset));
+#endif
+
 		return nullptr;
 	}
 
