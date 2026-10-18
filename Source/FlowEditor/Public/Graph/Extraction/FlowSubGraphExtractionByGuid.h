@@ -33,6 +33,10 @@ namespace FlowSubGraphExtraction
 		FExtractionPlanSummary& OutPlan,
 		FString& OutError);
 
+	/**
+	 * Extracts the selection in an undoable transaction and saves both assets under revision control.
+	 * OutError may describe a save or revision control failure even when the extraction succeeded.
+	 */
 	FLOWEDITOR_API bool ApplyExtractionByGuid(
 		UFlowAsset* SourceAsset,
 		const TArray<FGuid>& SelectionGuids,

@@ -2,8 +2,8 @@
 #include "Graph/Extraction/FlowSubGraphExtractionByGuid.h"
 
 #include "FlowAsset.h"
-#include "Graph/Extraction/FlowSubGraphExtractionApply.h"
 #include "Graph/Extraction/FlowSubGraphExtractionPlan.h"
+#include "Graph/Extraction/FlowSubGraphExtractionTool.h"
 #include "Graph/Nodes/FlowGraphNode.h"
 #include "Nodes/FlowNode.h"
 #include "UObject/UObjectGlobals.h"
@@ -150,14 +150,16 @@ namespace FlowSubGraphExtraction
 			return false;
 		}
 
+		FText SaveError;
 		const FlowSubGraphExtraction::FExtractionResult Result =
-			FlowSubGraphExtraction::ApplyExtraction(Plan, *SourceAsset, NewAssetName);
+			FFlowSubGraphExtractionTool::ApplyAndSave(Plan, *SourceAsset, NewAssetName, SaveError);
 		if (!Result.Succeeded())
 		{
 			OutError = Result.Error.ToString();
 			return false;
 		}
 
+		OutError = SaveError.ToString();
 		OutNewAsset = Result.NewAsset;
 		OutSubGraphNode = Result.SubGraphNode;
 		return true;
