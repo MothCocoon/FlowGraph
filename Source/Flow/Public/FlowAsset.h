@@ -21,6 +21,7 @@
 
 #include "FlowAsset.generated.h"
 
+class UFlowNode_SubGraph;
 class UFlowNode_CustomOutput;
 class UFlowNode_CustomInput;
 struct FFlowPreloadPolicy;

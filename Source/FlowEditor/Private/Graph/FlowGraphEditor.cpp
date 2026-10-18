@@ -13,19 +13,20 @@
 #include "Editor/UnrealEdEngine.h"
 #include "Framework/Application/SlateApplication.h"
 #include "Framework/Commands/GenericCommands.h"
+#include "Framework/Notifications/NotificationManager.h"
 #include "GraphEditorActions.h"
 #include "HAL/PlatformApplicationMisc.h"
 #include "IDetailsView.h"
 #include "LevelEditor.h"
+#include "Misc/ScopeExit.h"
 #include "Modules/ModuleManager.h"
 #include "ScopedTransaction.h"
-#include "Runtime/Launch/Resources/Version.h"
 #include "ToolMenu.h"
 #include "ToolMenuDelegates.h"
 #include "ToolMenus.h"
 #include "UnrealEdGlobals.h"
 #include "Widgets/Docking/SDockTab.h"
-#include "Algo/AnyOf.h"
+#include "Widgets/Notifications/SNotificationList.h"
 
 #define LOCTEXT_NAMESPACE "FlowGraphEditor"
 
@@ -49,7 +50,7 @@ void SFlowGraphEditor::Construct(const FArguments& InArgs, const TSharedPtr<FFlo
 	Arguments._GraphEvents.OnSelectionChanged = FOnSelectionChanged::CreateSP(this, &SFlowGraphEditor::OnSelectedNodesChanged);
 	Arguments._GraphEvents.OnNodeDoubleClicked = FSingleNodeEvent::CreateSP(this, &SFlowGraphEditor::OnNodeDoubleClicked);
 	Arguments._GraphEvents.OnTextCommitted = FOnNodeTextCommitted::CreateSP(this, &SFlowGraphEditor::OnNodeTitleCommitted);
-	Arguments._GraphEvents.OnSpawnNodeByShortcutAtLocation = FOnSpawnNodeByShortcutAtLocation::CreateStatic(&SFlowGraphEditor::OnSpawnGraphNodeByShortcut, static_cast<UEdGraph*>(FlowAsset->GetGraph()));
+	Arguments._GraphEvents.OnSpawnNodeByShortcutAtLocation = FOnSpawnNodeByShortcutAtLocation::CreateStatic(&SFlowGraphEditor::OnSpawnGraphNodeByShortcut, FlowAsset->GetGraph());
 
 	SGraphEditor::Construct(Arguments);
 }
@@ -264,8 +265,8 @@ void SFlowGraphEditor::BindGraphCommands()
 	);
 
 	CommandList->MapAction(FlowGraphCommands.EnableAllBreakpoints,
-					   FExecuteAction::CreateSP(this, &SFlowGraphEditor::EnableAllBreakpoints),
-					   FCanExecuteAction::CreateSP(this, &SFlowGraphEditor::HasAnyDisabledBreakpoints));
+	                       FExecuteAction::CreateSP(this, &SFlowGraphEditor::EnableAllBreakpoints),
+	                       FCanExecuteAction::CreateSP(this, &SFlowGraphEditor::HasAnyDisabledBreakpoints));
 
 	CommandList->MapAction(FlowGraphCommands.DisableAllBreakpoints,
 	                       FExecuteAction::CreateSP(this, &SFlowGraphEditor::DisableAllBreakpoints),
@@ -500,7 +501,10 @@ TArray<UFlowGraphNode*> SFlowGraphEditor::GetSelectedFlowNodes() const
 	{
 		if (UFlowGraphNode* SelectedNode = Cast<UFlowGraphNode>(*NodeIt))
 		{
-			Result.Emplace(SelectedNode);
+			if (IsValid(SelectedNode))
+			{
+				Result.Emplace(SelectedNode);
+			}
 		}
 	}
 
@@ -699,8 +703,7 @@ void SFlowGraphEditor::CopySelectedNodes() const
 	{
 		if (UFlowGraphNode* FlowGraphNode = Cast<UFlowGraphNode>(*SelectedIter))
 		{
-			constexpr int32 RootEdNodeParentIndex = INDEX_NONE;
-			PrepareFlowGraphNodeForCopy(*FlowGraphNode, RootEdNodeParentIndex, NewSelectedNodes);
+			PrepareFlowGraphNodeForCopy(*FlowGraphNode, FGuid(), NewSelectedNodes);
 		}
 		else
 		{
@@ -722,27 +725,34 @@ void SFlowGraphEditor::CopySelectedNodes() const
 	}
 }
 
-void SFlowGraphEditor::PrepareFlowGraphNodeForCopy(UFlowGraphNode& FlowGraphNode, const int32 ParentEdNodeIndex, FGraphPanelSelectionSet& NewSelectedNodes)
+void SFlowGraphEditor::PrepareFlowGraphNodeForCopy(UFlowGraphNode& FlowGraphNode, const FGuid& ParentGuid, FGraphPanelSelectionSet& NewSelectedNodes)
 {
-	const int32 ThisFlowGraphNodeIndex = NewSelectedNodes.Num();
 	bool bAlreadyInSet = false;
 	NewSelectedNodes.Add(&FlowGraphNode, &bAlreadyInSet);
 
 	if (bAlreadyInSet)
 	{
-		return;
-	}
-
-	FlowGraphNode.PrepareForCopying();
-	FlowGraphNode.CopySubNodeParentIndex = ParentEdNodeIndex;
-	FlowGraphNode.CopySubNodeIndex = ThisFlowGraphNodeIndex;
-
-	// append all subnodes for selection
-	for (UFlowGraphNode* SubNode : FlowGraphNode.SubNodes)
-	{
-		if (SubNode)
+		// A subnode selected together with its parent is visited twice, in either order.
+		// Only the visit through the parent carries a valid ParentGuid, so the other visit must not overwrite it.
+		if (ParentGuid.IsValid())
 		{
-			PrepareFlowGraphNodeForCopy(*SubNode, ThisFlowGraphNodeIndex, NewSelectedNodes);
+			FlowGraphNode.ParentGuidCopy = ParentGuid;
+		}
+	}
+	else
+	{
+		// only valid for SubNodes
+		FlowGraphNode.ParentGuidCopy = ParentGuid;
+
+		FlowGraphNode.PrepareForCopying();
+
+		// Append all subnodes for selection.
+		for (UFlowGraphNode* SubNode : FlowGraphNode.SubNodes)
+		{
+			if (SubNode)
+			{
+				PrepareFlowGraphNodeForCopy(*SubNode, FlowGraphNode.NodeGuid, NewSelectedNodes);
+			}
 		}
 	}
 }
@@ -772,139 +782,65 @@ void SFlowGraphEditor::PasteNodes()
 
 void SFlowGraphEditor::PasteNodesHere(const FVector2f& Location)
 {
-	// Undo/Redo support
-	const FScopedTransaction Transaction(LOCTEXT("PasteNode", "Paste Node"));
+	// Start the transaction and protect the graph update lock.
+	FScopedTransaction Transaction(LOCTEXT("PasteNode", "Paste Node"));
 	UFlowGraph* FlowGraph = CastChecked<UFlowGraph>(FlowAsset->GetGraph());
 	FlowGraph->Modify();
 	FlowAsset->Modify();
 
 	FlowGraph->LockUpdates();
-
-	const TArray<UFlowGraphNode*> PasteTargetNodes = DerivePasteTargetNodesFromSelectedNodes();
-	if (Algo::AnyOf(PasteTargetNodes, [](const UFlowGraphNode* Node) { return Node && !Node->SubNodes.IsEmpty(); }))
+	bool bUpdatesLocked = true;
+	ON_SCOPE_EXIT
 	{
-		checkf(PasteTargetNodes.Num() <= 1, TEXT("This should be enforced in CanPasteNodes()"));
-	}
+		if (bUpdatesLocked)
+		{
+			FlowGraph->UnlockUpdates();
+		}
+	};
 
-	UFlowGraphNode* PasteTargetNode = !PasteTargetNodes.IsEmpty() ? PasteTargetNodes.Top() : nullptr;
+	// Parent for AddOns copied without their parent node.
+	// Unused when pasting base nodes or AddOns copied together with their parent.
+	const TArray<UFlowGraphNode*> SelectedNodes = GetSelectedFlowNodes();
+	UFlowGraphNode* AddOnPasteTarget = SelectedNodes.Num() == 1 ? SelectedNodes[0] : nullptr;
 
+	// Import clipboard nodes and reject incompatible nodes or AddOn trees.
 	FString TextToImport;
-	const TSet<UEdGraphNode*> NodesToPaste = ImportNodesToPasteFromClipboard(*FlowGraph, TextToImport);
+	TMap<FGuid, UFlowGraphNode*> SourceGuidToPastedNode;
+	const TSet<UEdGraphNode*> NodesToPaste = ImportAndValidatePastedNodes(
+		TextToImport,
+		SourceGuidToPastedNode,
+		AddOnPasteTarget);
 
-	// Clear the selection set (newly pasted stuff will be selected)
-	ClearSelectionSet();
-	FlowAssetEditor.Pin()->SetUISelectionState(NAME_None);
-
-	//Average position of nodes so we can move them while still maintaining relative distances to each other
-	FVector2D AvgNodePosition(0.0f, 0.0f);
-
-	// Number of nodes used to calculate AvgNodePosition
-	int32 AvgCount = 0;
-
-	for (TSet<UEdGraphNode*>::TConstIterator It(NodesToPaste); It; ++It)
+	if (NodesToPaste.IsEmpty())
 	{
-		UEdGraphNode* EdNode = *It;
-		UFlowGraphNode* FlowGraphNode = Cast<UFlowGraphNode>(EdNode);
-		if (EdNode && (FlowGraphNode == nullptr || !FlowGraphNode->IsSubNode()))
-		{
-			AvgNodePosition.X += EdNode->NodePosX;
-			AvgNodePosition.Y += EdNode->NodePosY;
-			++AvgCount;
-		}
+		// Nothing was pasted, so leave no empty step in the undo history.
+		Transaction.Cancel();
+		return;
 	}
 
-	if (AvgCount > 0)
-	{
-		float InvNumNodes = 1.0f / static_cast<float>(AvgCount);
-		AvgNodePosition.X *= InvNumNodes;
-		AvgNodePosition.Y *= InvNumNodes;
-	}
+	// Position nodes, assign new identities, and register runtime nodes.
+	PreparePastedNodesForPaste(NodesToPaste, Location);
 
-	TMap<int32, UFlowGraphNode*> EdNodeCopyIndexMap;
-	for (TSet<UEdGraphNode*>::TConstIterator It(NodesToPaste); It; ++It)
-	{
-		UEdGraphNode* PastedNode = *It;
+	// Reattach copied AddOns to the selected target or their copied parent.
+	AttachPastedSubNodes(NodesToPaste, SourceGuidToPastedNode, AddOnPasteTarget);
 
-		UFlowGraphNode* PastedFlowGraphNode = Cast<UFlowGraphNode>(PastedNode);
-		if (PastedFlowGraphNode)
-		{
-			EdNodeCopyIndexMap.Add(PastedFlowGraphNode->CopySubNodeIndex, PastedFlowGraphNode);
-		}
+	// Finalize the graph mutation before refreshing the editor UI.
+	FlowGraph->UpdateClassData();
+	FlowGraph->OnNodesPasted(TextToImport);
+	FlowGraph->UnlockUpdates();
+	bUpdatesLocked = false;
 
-		if (PastedNode && (PastedFlowGraphNode == nullptr || !PastedFlowGraphNode->IsSubNode()))
-		{
-			// Select the newly pasted stuff
-			constexpr bool bSelectNodes = true;
-			SetNodeSelection(PastedNode, bSelectNodes);
-
-			PastedNode->NodePosX = (PastedNode->NodePosX - AvgNodePosition.X) + Location.X;
-			PastedNode->NodePosY = (PastedNode->NodePosY - AvgNodePosition.Y) + Location.Y;
-
-			PastedNode->SnapToGrid(16);
-
-			// Give new node a different Guid from the old one
-			PastedNode->CreateNewGuid();
-		}
-
-		if (PastedFlowGraphNode)
-		{
-			if (UFlowNode* FlowNode = Cast<UFlowNode>(PastedFlowGraphNode->GetFlowNodeBase()))
-			{
-				// Only full FlowNodes are registered with the Asset
-				// (for now?  perhaps we register AddOns in the future?)
-				FlowAsset->RegisterNode(PastedNode->NodeGuid, FlowNode);
-			}
-
-			PastedFlowGraphNode->RemoveAllSubNodes();
-		}
-	}
-
-	for (TSet<UEdGraphNode*>::TConstIterator It(NodesToPaste); It; ++It)
-	{
-		UFlowGraphNode* PasteNode = Cast<UFlowGraphNode>(*It);
-		if (PasteNode && PasteNode->IsSubNode())
-		{
-			PasteNode->NodePosX = 0;
-			PasteNode->NodePosY = 0;
-
-			// remove subnode from graph, it will be referenced from parent node
-			PasteNode->DestroyNode();
-
-			if (PasteNode->CopySubNodeParentIndex == INDEX_NONE)
-			{
-				// INDEX_NONE parent index indicates we should set the parent to the PasteTargetNode
-				if (PasteTargetNode)
-				{
-					PasteTargetNode->AddSubNode(PasteNode, FlowGraph);
-				}
-			}
-			else if (UFlowGraphNode* PastedParentNode = EdNodeCopyIndexMap.FindRef(PasteNode->CopySubNodeParentIndex))
-			{
-				PastedParentNode->AddSubNode(PasteNode, FlowGraph);
-			}
-		}
-	}
-
-	if (FlowGraph)
-	{
-		FlowGraph->UpdateClassData();
-		FlowGraph->OnNodesPasted(TextToImport);
-		FlowGraph->UnlockUpdates();
-	}
-
-	// Update UI
 	NotifyGraphChanged();
 
 	if (UObject* GraphOwner = FlowGraph->GetOuter())
 	{
 		GraphOwner->PostEditChange();
-		GraphOwner->MarkPackageDirty();
+		(void)GraphOwner->MarkPackageDirty();
 	}
 }
 
 TSet<UEdGraphNode*> SFlowGraphEditor::ImportNodesToPasteFromClipboard(UFlowGraph& FlowGraph, FString& OutTextToImport)
 {
-	// Grab the text to paste from the clipboard.
 	FPlatformApplicationMisc::ClipboardPaste(OutTextToImport);
 
 	// Import the nodes
@@ -914,20 +850,164 @@ TSet<UEdGraphNode*> SFlowGraphEditor::ImportNodesToPasteFromClipboard(UFlowGraph
 	return NodesToPaste;
 }
 
-TArray<UFlowGraphNode*> SFlowGraphEditor::DerivePasteTargetNodesFromSelectedNodes() const
+TSet<UEdGraphNode*> SFlowGraphEditor::ImportAndValidatePastedNodes(FString& OutTextToImport, TMap<FGuid, UFlowGraphNode*>& OutSourceGuidToPastedNode, const UFlowGraphNode* AddOnPasteTarget) const
 {
-	TArray<UFlowGraphNode*> PasteTargetNodes;
-	const FGraphPanelSelectionSet SelectedNodes = GetSelectedNodes();
-	for (FGraphPanelSelectionSet::TConstIterator SelectedIter(SelectedNodes); SelectedIter; ++SelectedIter)
+	UFlowGraph* FlowGraph = CastChecked<UFlowGraph>(FlowAsset->GetGraph());
+
+	TSet<UEdGraphNode*> NodesToPaste = ImportNodesToPasteFromClipboard(*FlowGraph, OutTextToImport);
+	if (NodesToPaste.IsEmpty())
 	{
-		UFlowGraphNode* Node = Cast<UFlowGraphNode>(*SelectedIter);
-		if (IsValid(Node))
+		return NodesToPaste;
+	}
+
+	// Map source Guids to pasted nodes before pasted nodes receive new Guids.
+	TArray<UFlowGraphNode*> RejectedNodes;
+	TSet<UEdGraphNode*> RootSubNodesToPaste;
+	for (UEdGraphNode* Node : NodesToPaste)
+	{
+		if (UFlowGraphNode* FlowGraphNode = Cast<UFlowGraphNode>(Node))
 		{
-			PasteTargetNodes.Add(Node);
+			OutSourceGuidToPastedNode.Add(FlowGraphNode->NodeGuid, FlowGraphNode);
+
+			// An AddOn copied without its parent needs the paste target.
+			if (FlowGraphNode->IsSubNode() && !FlowGraphNode->ParentGuidCopy.IsValid())
+			{
+				RootSubNodesToPaste.Add(FlowGraphNode);
+			}
 		}
 	}
 
-	return PasteTargetNodes;
+	// Validate pasted sibling sets.
+	const bool bCanPasteRootSubNodes = RootSubNodesToPaste.IsEmpty() || (AddOnPasteTarget && CanPasteNodesAsSubNodes(RootSubNodesToPaste, *AddOnPasteTarget));
+
+	// Reject subnodes whose ancestor chain is broken or ends at a root AddOn that cannot be pasted.
+	for (auto It = OutSourceGuidToPastedNode.CreateIterator(); It; ++It)
+	{
+		if (It.Value()->IsSubNode())
+		{
+			// Walk up to the topmost pasted ancestor: a base node, a root AddOn, or nullptr for a rejected ancestor.
+			const UFlowGraphNode* Ancestor = It.Value();
+			while (Ancestor && Ancestor->IsSubNode() && Ancestor->ParentGuidCopy.IsValid())
+			{
+				Ancestor = OutSourceGuidToPastedNode.FindRef(Ancestor->ParentGuidCopy);
+			}
+
+			const bool bAccepted = Ancestor && (!Ancestor->IsSubNode() || bCanPasteRootSubNodes);
+			if (!bAccepted)
+			{
+				RejectedNodes.Add(It.Value());
+				NodesToPaste.Remove(It.Value());
+				It.RemoveCurrent();
+			}
+		}
+	}
+
+	// Destroy rejected imported objects.
+	for (UFlowGraphNode* Node : RejectedNodes)
+	{
+		Node->DestroyNode();
+		Node->Rename(nullptr, GetTransientPackage(), REN_NonTransactional | REN_DontCreateRedirectors);
+		Node->MarkAsGarbage();
+	}
+
+	// AddOns of nodes dropped by the clipboard import are rejected silently, the import handles reporting of those nodes.
+	if (!bCanPasteRootSubNodes)
+	{
+		FNotificationInfo Info(LOCTEXT("RejectedPastedAddOns", "Copied add-ons need exactly one selected node that accepts them and could not be pasted."));
+		Info.ExpireDuration = 3.0f;
+		Info.bUseLargeFont = false;
+		FSlateNotificationManager::Get().AddNotification(Info);
+	}
+
+	return NodesToPaste;
+}
+
+void SFlowGraphEditor::PreparePastedNodesForPaste(const TSet<UEdGraphNode*>& NodesToPaste, const FVector2f& Location)
+{
+	ClearSelectionSet();
+	FlowAssetEditor.Pin()->SetUISelectionState(NAME_None);
+
+	// Find the average position of top-level nodes to preserve their relative layout.
+	FVector2D AverageNodePosition(0.0f, 0.0f);
+	int32 AverageCount = 0;
+	for (UEdGraphNode* EdNode : NodesToPaste)
+	{
+		const UFlowGraphNode* FlowGraphNode = Cast<UFlowGraphNode>(EdNode);
+		if (EdNode && (FlowGraphNode == nullptr || !FlowGraphNode->IsSubNode()))
+		{
+			AverageNodePosition.X += EdNode->NodePosX;
+			AverageNodePosition.Y += EdNode->NodePosY;
+			++AverageCount;
+		}
+	}
+
+	if (AverageCount > 0)
+	{
+		const float InverseNodeCount = 1.0f / static_cast<float>(AverageCount);
+		AverageNodePosition.X *= InverseNodeCount;
+		AverageNodePosition.Y *= InverseNodeCount;
+	}
+
+	for (UEdGraphNode* PastedNode : NodesToPaste)
+	{
+		UFlowGraphNode* PastedFlowGraphNode = Cast<UFlowGraphNode>(PastedNode);
+		if (PastedNode && (PastedFlowGraphNode == nullptr || !PastedFlowGraphNode->IsSubNode()))
+		{
+			// Select the newly pasted stuff.
+			constexpr bool bSelectNodes = true;
+			SetNodeSelection(PastedNode, bSelectNodes);
+
+			PastedNode->NodePosX = (PastedNode->NodePosX - AverageNodePosition.X) + Location.X;
+			PastedNode->NodePosY = (PastedNode->NodePosY - AverageNodePosition.Y) + Location.Y;
+			PastedNode->SnapToGrid(16);
+
+			// Give the pasted node a different Guid from the original.
+			PastedNode->CreateNewGuid();
+		}
+
+		if (PastedFlowGraphNode)
+		{
+			if (UFlowNode* FlowNode = Cast<UFlowNode>(PastedFlowGraphNode->GetFlowNodeBase()))
+			{
+				// Only full FlowNodes are registered with the Asset (for now, AddOns are not).
+				FlowAsset->RegisterNode(PastedNode->NodeGuid, FlowNode);
+			}
+
+			PastedFlowGraphNode->RemoveAllSubNodes();
+		}
+	}
+}
+
+void SFlowGraphEditor::AttachPastedSubNodes(const TSet<UEdGraphNode*>& NodesToPaste, const TMap<FGuid, UFlowGraphNode*>& SourceGuidToPastedNode, UFlowGraphNode* AddOnPasteTarget)
+{
+	for (UEdGraphNode* EdNode : NodesToPaste)
+	{
+		UFlowGraphNode* PasteNode = Cast<UFlowGraphNode>(EdNode);
+		if (!PasteNode || !PasteNode->IsSubNode())
+		{
+			continue;
+		}
+
+		PasteNode->NodePosX = 0;
+		PasteNode->NodePosY = 0;
+
+		// Remove the subnode from the graph's node list, it was placed there temporarily during clipboard import.
+		// This node will be referenced by its parent (FlowNode or AddOn).
+		PasteNode->DestroyNode();
+
+		if (!PasteNode->ParentGuidCopy.IsValid())
+		{
+			// A subnode copied without its parent attaches to the selected paste target.
+			if (AddOnPasteTarget)
+			{
+				AddOnPasteTarget->AddSubNode(PasteNode);
+			}
+		}
+		else if (UFlowGraphNode* PastedParentNode = SourceGuidToPastedNode.FindRef(PasteNode->ParentGuidCopy))
+		{
+			PastedParentNode->AddSubNode(PasteNode);
+		}
+	}
 }
 
 bool SFlowGraphEditor::CanPasteNodes() const
@@ -940,83 +1020,14 @@ bool SFlowGraphEditor::CanPasteNodes() const
 	FString ClipboardContent;
 	FPlatformApplicationMisc::ClipboardPaste(ClipboardContent);
 
-	UFlowGraph* FlowGraph = CastChecked<UFlowGraph>(FlowAsset->GetGraph());
+	const UFlowGraph* FlowGraph = CastChecked<UFlowGraph>(FlowAsset->GetGraph());
 	if (!ensure(IsValid(FlowGraph)))
 	{
 		// We expect to have a legal FlowGraph pointer at this point
 		return false;
 	}
 
-	const bool bIsPastePossible = FEdGraphUtilities::CanImportNodesFromText(FlowGraph, ClipboardContent);
-	if (!bIsPastePossible)
-	{
-		return false;
-	}
-
-	// Disallow paste when multiple target nodes are selected, and if there are subnodes involved.
-	const TArray<UFlowGraphNode*> PasteTargetNodes = DerivePasteTargetNodesFromSelectedNodes();
-	const bool bHasSubNodes = Algo::AnyOf(PasteTargetNodes, [](const UFlowGraphNode* Node) { return Node && !Node->SubNodes.IsEmpty(); });
-
-	if (bHasSubNodes && PasteTargetNodes.Num() > 1)
-	{
-		// NOTE (gtaylor) It's possible we could support multi-paste, but we'd need to rework PasteNodesHere()
-		// to understand how to paste copies onto each target node.
-		return false;
-	}
-
-	FString TextToImport;
-	const TSet<UEdGraphNode*> NodesToPaste = ImportNodesToPasteFromClipboard(*FlowGraph, TextToImport);
-
-	if (NodesToPaste.IsEmpty())
-	{
-		// Must have at least one node to paste
-		return false;
-	}
-
-	ON_SCOPE_EXIT
-	{
-		// We need to clean up the nodes we built to test the paste operation
-		for (TSet<UEdGraphNode*>::TConstIterator It(NodesToPaste); It; ++It)
-		{
-			UEdGraphNode* NodeToPaste = *It;
-			if (IsValid(NodeToPaste))
-			{
-				NodeToPaste->ClearFlags(RF_Public);
-				NodeToPaste->SetFlags(RF_Transient);
-
-				const FString NewNameStr = MakeUniqueObjectName(NodeToPaste->GetOuter(), NodeToPaste->GetClass()).ToString();
-
-				// This will remove the node from its graph
-				NodeToPaste->DestroyNode();
-
-				// Rename and garbage the node so that it can't be found by name if the same clipboard is re-pasted
-#if ENGINE_MAJOR_VERSION == 5 && ENGINE_MINOR_VERSION < 8
-				NodeToPaste->Rename(*NewNameStr, nullptr, REN_NonTransactional | REN_DontCreateRedirectors | REN_ForceNoResetLoaders);
-#else
-				// from compilation warning
-				// "Rename will no longer call ResetLoaders making this flag no longer needed.
-				// Prefer REN_AllowPackageLinkerMismatch if you wish to intentionally allow the linker to contain references to objects whose names no longer match what was loaded from disk."
-				NodeToPaste->Rename(*NewNameStr, nullptr, REN_NonTransactional | REN_DontCreateRedirectors);
-#endif
-
-				NodeToPaste->MarkAsGarbage();
-			}
-		}
-	};
-
-	// If pasting onto a selected node, confirm that the paste operation is legal
-	if (bHasSubNodes && PasteTargetNodes.Num() >= 1)
-	{
-		checkf(PasteTargetNodes.Num() == 1, TEXT("This is enforced earlier in this function, just confirming the code stays that way here."));
-
-		const UFlowGraphNode* PasteTargetNode = PasteTargetNodes.Top();
-		if (!CanPasteNodesAsSubNodes(NodesToPaste, *PasteTargetNode))
-		{
-			return false;
-		}
-	}
-
-	return true;
+	return FEdGraphUtilities::CanImportNodesFromText(FlowGraph, ClipboardContent);
 }
 
 bool SFlowGraphEditor::CanPasteNodesAsSubNodes(const TSet<UEdGraphNode*>& NodesToPaste, const UFlowGraphNode& PasteTargetNode)
@@ -1024,29 +1035,23 @@ bool SFlowGraphEditor::CanPasteNodesAsSubNodes(const TSet<UEdGraphNode*>& NodesT
 	TSet<const UEdGraphNode*> AllRootSubNodesToPaste;
 	for (TSet<UEdGraphNode*>::TConstIterator It(NodesToPaste); It; ++It)
 	{
-		const UFlowGraphNode* NodeToPaste = Cast<UFlowGraphNode>(*It);
-		if (!ensure(IsValid(NodeToPaste)))
+		const UFlowGraphNode* FlowGraphNode = Cast<UFlowGraphNode>(*It);
+		if (!ensure(IsValid(FlowGraphNode)))
 		{
 			return false;
 		}
 
-		if (!NodeToPaste->IsSubNode())
+		// Only SubNodes can be pasted onto other nodes.
+		if (!FlowGraphNode->IsSubNode())
 		{
-			// Only SubNodes can be pasted onto other nodes
-
 			return false;
 		}
 
-		// Only concerned with the 'root' subnodes
-		// (we assume the rest of the subnode tree is valid when put into the copy buffer)
-		if (NodeToPaste->CopySubNodeParentIndex != INDEX_NONE)
+		// Only AddOns copied without their parent attach to the paste target.
+		if (!FlowGraphNode->ParentGuidCopy.IsValid())
 		{
-			// a non-INDEX_NONE parent index indicates the subnode is a non-root subnode in the NodesToPaste set
-
-			continue;
+			AllRootSubNodesToPaste.Add(FlowGraphNode);
 		}
-
-		AllRootSubNodesToPaste.Add(NodeToPaste);
 	}
 
 	for (TSet<const UEdGraphNode*>::TConstIterator It(AllRootSubNodesToPaste); It; ++It)
@@ -1056,7 +1061,6 @@ bool SFlowGraphEditor::CanPasteNodesAsSubNodes(const TSet<UEdGraphNode*>& NodesT
 		if (!PasteTargetNode.CanAcceptSubNodeAsChild(*NodeToPaste, AllRootSubNodesToPaste))
 		{
 			// This node cannot accept the SubNode as a child
-
 			return false;
 		}
 	}
