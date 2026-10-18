@@ -129,10 +129,9 @@ public:
 	explicit FFlowAssetToolbar(const TSharedPtr<FFlowAssetEditor> InAssetEditor, UToolMenu* ToolbarMenu);
 
 private:
-	void BuildAssetToolbar(UToolMenu* ToolbarMenu) const;
+	static void BuildAssetToolbar(UToolMenu* ToolbarMenu);
 	static TSharedRef<SWidget> MakeDiffMenu(const UFlowAssetEditorContext* InContext);
-
-	void BuildDebuggerToolbar(UToolMenu* ToolbarMenu) const;
+	static void BuildDebuggerToolbar(UToolMenu* ToolbarMenu);
 
 private:
 	TWeakPtr<FFlowAssetEditor> FlowAssetEditor;
