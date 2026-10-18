@@ -19,7 +19,7 @@ enum class EFlowLogVerbosity : uint8
 };
 
 /**
- * Adds message to log
+ * Adds message to developer log
  * Optionally shows message on screen
  */
 UCLASS(NotBlueprintable, meta = (DisplayName = "Log", Keywords = "print"))

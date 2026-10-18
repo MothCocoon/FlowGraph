@@ -27,7 +27,7 @@ void UFlowNode_Start::SetDataPinValueSupplier(IFlowDataPinValueSupplierInterface
 #if WITH_EDITOR
 bool UFlowNode_Start::TryAppendExternalInputPins(TArray<FFlowPin>& InOutPins) const
 {
-	// Add pins for all the Flow DataPin Properties
+	// Add pins for all of the Flow DataPin Properties
 	for (const FFlowNamedDataPinProperty& DataPinProperty : NamedProperties)
 	{
 		if (DataPinProperty.IsValid())
