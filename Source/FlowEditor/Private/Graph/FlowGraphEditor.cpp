@@ -193,7 +193,7 @@ void SFlowGraphEditor::BindGraphCommands()
 	                       FExecuteAction::CreateSP(this, &SFlowGraphEditor::RemovePin),
 	                       FCanExecuteAction::CreateSP(this, &SFlowGraphEditor::CanRemovePin));
 
-	// Organisation commands
+	// Organization commands
 	CommandList->MapAction(GraphEditorCommands.AlignNodesTop,
 						   FExecuteAction::CreateSP(this, &SFlowGraphEditor::OnAlignTop));
 

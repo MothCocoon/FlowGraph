@@ -545,7 +545,7 @@ void UFlowGraphNode::GetNodeContextMenuActions(class UToolMenu* Menu, class UGra
 		}
 
 		{
-			FToolMenuSection& Section = Menu->AddSection("FlowGraphNodeOrganisation", LOCTEXT("NodeOrganisation", "Organisation"));
+			FToolMenuSection& Section = Menu->AddSection("FlowGraphNodeOrganization", LOCTEXT("NodeOrganization", "Organization"));
 			Section.AddSubMenu("Alignment", LOCTEXT("AlignmentHeader", "Alignment"), FText(), FNewToolMenuDelegate::CreateLambda([](UToolMenu* SubMenu)
 			{
 				FToolMenuSection& SubMenuSection = SubMenu->AddSection("EdGraphSchemaAlignment", LOCTEXT("AlignHeader", "Align"));
