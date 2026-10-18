@@ -1038,6 +1038,34 @@ TSharedRef<SGraphNode> SFlowGraphNode::GetNodeUnderMouse(const FGeometry& MyGeom
 	}
 }
 
+int32 SFlowGraphNode::OnPaint(const FPaintArgs& Args, const FGeometry& AllottedGeometry, const FSlateRect& MyCullingRect,
+	FSlateWindowElementList& OutDrawElements, int32 LayerId, const FWidgetStyle& InWidgetStyle, const bool bParentEnabled) const
+{
+	if (FlowGraphNode && FlowGraphNode->IsSubNode() && IsFlowGraphNodeSelected(FlowGraphNode))
+	{
+		// Code copied from SGraphNode::DrawChildrenNodeShadow
+		const FVector2f NodeShadowSize = UE::Slate::CastToVector2f(GetDefault<UGraphEditorSettings>()->GetShadowDeltaSize());
+
+		// Exclude the subnode indent, so the halo wraps the node body only
+		const FMargin NodePadding = ComputeSubNodeChildIndentPaddingMargin();
+		const FVector2f BodySize(AllottedGeometry.GetLocalSize().X - NodePadding.Left - NodePadding.Right, AllottedGeometry.GetLocalSize().Y);
+		const FGeometry BodyGeometry = AllottedGeometry.MakeChild(BodySize, FSlateLayoutTransform(FVector2f(NodePadding.Left, 0.0f)));
+
+		FSlateDrawElement::MakeBox(
+			OutDrawElements,
+			LayerId,
+			BodyGeometry.ToInflatedPaintGeometry(NodeShadowSize),
+			GetShadowBrush(true),
+			ESlateDrawEffect::None,
+			InWidgetStyle.GetColorAndOpacityTint());
+
+		// Increase the layer so we draw on top of the highlight
+		++LayerId;
+	}
+
+	return SGraphNode::OnPaint(Args, AllottedGeometry, MyCullingRect, OutDrawElements, LayerId, InWidgetStyle, bParentEnabled);
+}
+
 FReply SFlowGraphNode::OnMouseButtonDown(const FGeometry& SenderGeometry, const FPointerEvent& MouseEvent)
 {
 	if (FlowGraphNode && FlowGraphNode->IsSubNode())
