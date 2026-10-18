@@ -419,6 +419,12 @@ void FFlowAssetEditor::BindToolbarCommands()
 	                           FExecuteAction::CreateSP(this, &FFlowAssetEditor::AutoFormatGraph),
 	                           FCanExecuteAction::CreateStatic(&FFlowAssetEditor::CanEdit));
 
+	ToolkitCommands->MapAction(ToolbarCommands.ContinueFlowExecution,
+	                           FExecuteAction::CreateSP(this, &FFlowAssetEditor::ContinueFlowExecution),
+	                           FCanExecuteAction::CreateSP(this, &FFlowAssetEditor::IsFlowExecutionHalted),
+	                           FIsActionChecked(),
+	                           FIsActionButtonVisible::CreateSP(this, &FFlowAssetEditor::IsFlowExecutionHalted));
+
 	// Engine's Play commands
 	ToolkitCommands->Append(FPlayWorldCommands::GlobalPlayWorldActions.ToSharedRef());
 }
