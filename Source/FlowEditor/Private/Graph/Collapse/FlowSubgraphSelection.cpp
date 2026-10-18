@@ -3,8 +3,8 @@
 #include "Graph/Collapse/FlowSubgraphSelection.h"
 
 #include "FlowAsset.h"
-#include "FlowCollapseToSubGraphApply.h"
-#include "FlowCollapseToSubGraphPlan.h"
+#include "Graph/Extraction/FlowSubGraphExtractionApply.h"
+#include "Graph/Extraction/FlowSubGraphExtractionPlan.h"
 #include "Graph/Nodes/FlowGraphNode.h"
 #include "Nodes/FlowNode.h"
 #include "UObject/UObjectGlobals.h"
@@ -51,7 +51,7 @@ namespace
 	}
 
 	void CopyPlan(
-		const FlowCollapseToSubGraph::FCollapsePlan& Source,
+		const FlowSubGraphExtraction::FExtractionPlan& Source,
 		FlowSubgraphSelection::FSelectionPlanSummary& Destination)
 	{
 		Destination.bCanApply = Source.CanApply();
@@ -67,11 +67,11 @@ namespace
 		{
 			Destination.Warnings.Add(Warning.ToString());
 		}
-		for (const FlowCollapseToSubGraph::FBoundaryPin& Entry : Source.Entries)
+		for (const FlowSubGraphExtraction::FBoundaryPin& Entry : Source.Entries)
 		{
 			Destination.InterfaceInputs.Add(Entry.InterfaceName.ToString());
 		}
-		for (const FlowCollapseToSubGraph::FBoundaryPin& Exit : Source.Exits)
+		for (const FlowSubGraphExtraction::FBoundaryPin& Exit : Source.Exits)
 		{
 			Destination.InterfaceOutputs.Add(Exit.InterfaceName.ToString());
 		}
@@ -96,7 +96,7 @@ namespace FlowSubgraphSelection
 			return false;
 		}
 
-		const FText NameError = FlowCollapseToSubGraph::ValidateNewAssetName(*SourceAsset, NewAssetName);
+		const FText NameError = FlowSubGraphExtraction::ValidateNewAssetName(*SourceAsset, NewAssetName);
 
 		TSet<UFlowGraphNode*> SelectedNodes;
 		if (!ResolveSelection(*SourceAsset, SelectionGuids, SelectedNodes, OutError))
@@ -104,8 +104,8 @@ namespace FlowSubgraphSelection
 			return false;
 		}
 
-		const FlowCollapseToSubGraph::FCollapsePlan Plan =
-			FlowCollapseToSubGraph::PlanCollapse(SelectedNodes);
+		const FlowSubGraphExtraction::FExtractionPlan Plan =
+			FlowSubGraphExtraction::PlanExtraction(SelectedNodes);
 		CopyPlan(Plan, OutPlan);
 		if (!NameError.IsEmpty())
 		{
@@ -140,8 +140,8 @@ namespace FlowSubgraphSelection
 			return false;
 		}
 
-		const FlowCollapseToSubGraph::FCollapsePlan Plan =
-			FlowCollapseToSubGraph::PlanCollapse(SelectedNodes);
+		const FlowSubGraphExtraction::FExtractionPlan Plan =
+			FlowSubGraphExtraction::PlanExtraction(SelectedNodes);
 		if (!Plan.CanApply())
 		{
 			for (const FText& Error : Plan.Errors)
@@ -151,8 +151,8 @@ namespace FlowSubgraphSelection
 			return false;
 		}
 
-		const FlowCollapseToSubGraph::FCollapseResult Result =
-			FlowCollapseToSubGraph::ApplyCollapse(Plan, *SourceAsset, NewAssetName);
+		const FlowSubGraphExtraction::FExtractionResult Result =
+			FlowSubGraphExtraction::ApplyExtraction(Plan, *SourceAsset, NewAssetName);
 		if (!Result.Succeeded())
 		{
 			OutError = Result.Error.ToString();
