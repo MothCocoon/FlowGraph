@@ -1,6 +1,5 @@
 // Copyright https://github.com/MothCocoon/FlowGraph/graphs/contributors
-
-#include "FlowCollapseToSubGraphSourceControl.h"
+#include "Graph/Extraction/FlowSubGraphExtractionSourceControl.h"
 
 #include "FlowAsset.h"
 
@@ -13,9 +12,9 @@
 #include "SourceControlOperations.h"
 #include "UObject/Package.h"
 
-#define LOCTEXT_NAMESPACE "FlowCollapseToSubGraph"
+#define LOCTEXT_NAMESPACE "FlowSubGraphExtraction"
 
-namespace FlowCollapseToSubGraph
+namespace FlowSubGraphExtraction
 {
 	bool DiscardCreatedAsset(UFlowAsset* NewAsset)
 	{
@@ -29,11 +28,11 @@ namespace FlowCollapseToSubGraph
 		return ObjectTools::ForceDeleteObjects(AssetsToDelete, bShowConfirmation) == AssetsToDelete.Num();
 	}
 
-	FText PrepareSourceControl(UFlowAsset& SourceAsset, const FString& NewAssetName, FSourceControlContext& OutContext)
+	FText PrepareSourceControl(const UFlowAsset& SourceAsset, const FString& NewAssetName, FSourceControlContext& OutContext)
 	{
 		OutContext = FSourceControlContext();
 
-		ISourceControlModule& SourceControlModule = ISourceControlModule::Get();
+		const ISourceControlModule& SourceControlModule = ISourceControlModule::Get();
 		if (!SourceControlModule.IsEnabled())
 		{
 			return FText::GetEmpty();
@@ -45,7 +44,7 @@ namespace FlowCollapseToSubGraph
 			return FText::GetEmpty();
 		}
 
-		UPackage* SourceAssetPackage = SourceAsset.GetPackage();
+		const UPackage* SourceAssetPackage = SourceAsset.GetPackage();
 		if (!SourceAssetPackage)
 		{
 			return LOCTEXT("NoSourcePackage", "The source asset has no package to check out.");
@@ -58,7 +57,34 @@ namespace FlowCollapseToSubGraph
 			return LOCTEXT("SourceStateFailed", "Revision control could not determine the source asset's state.");
 		}
 
+		// Providers without exclusive checkout (Git, Plastic without checkout prompts) keep tracked files writable.
+		const bool bNeedsCheckout = SourceControlProvider.UsesCheckout()
+			&& SourceState->IsSourceControlled()
+			&& !SourceState->IsCheckedOut()
+			&& !SourceState->IsAdded();
+		if (bNeedsCheckout && !SourceState->CanCheckout())
+		{
+			return LOCTEXT("SourceCannotCheckOut", "The source asset cannot be checked out. It may be locked by another user or not at the latest revision.");
+		}
+
 		OutContext.bEnabled = true;
+		const TArray<FString> SourceAssetFiles = { SourceAssetFile };
+
+		// Without changelists there is nothing to group the assets in.
+		// Saving marks the new asset for add.
+		if (!SourceControlProvider.UsesChangelists())
+		{
+			if (bNeedsCheckout && SourceControlProvider.Execute(
+				ISourceControlOperation::Create<FCheckOut>(),
+				SourceAssetFiles,
+				EConcurrency::Synchronous) != ECommandResult::Succeeded)
+			{
+				return LOCTEXT("SourceCheckoutWithoutChangelistFailed", "The source asset could not be checked out.");
+			}
+
+			return FText::GetEmpty();
+		}
+
 		if (SourceState->CanCheckIn())
 		{
 			OutContext.Changelist = SourceState->GetCheckInIdentifier();
@@ -73,24 +99,30 @@ namespace FlowCollapseToSubGraph
 
 		const TSharedRef<FNewChangelist> NewChangelistOperation = ISourceControlOperation::Create<FNewChangelist>();
 		NewChangelistOperation->SetDescription(FText::Format(
-			LOCTEXT("ChangelistDescription", "Create sub-graph {0} from a selection in {1}"),
+			LOCTEXT("ChangelistDescription", "Create SubGraph {0} from a selection in {1}"),
 			FText::FromString(NewAssetName),
 			FText::FromString(SourceAsset.GetName())));
 
 		if (SourceControlProvider.Execute(NewChangelistOperation, EConcurrency::Synchronous) != ECommandResult::Succeeded)
 		{
-			return LOCTEXT("NewChangelistFailed", "A changelist could not be created for the sub-graph assets.");
+			return LOCTEXT("NewChangelistFailed", "A changelist could not be created for the SubGraph assets.");
 		}
 
 		OutContext.Changelist = NewChangelistOperation->GetNewChangelist();
 		if (!OutContext.Changelist.IsValid())
 		{
-			return LOCTEXT("NoChangelistReturned", "Revision control created no changelist for the sub-graph assets.");
+			return LOCTEXT("NoChangelistReturned", "Revision control created no changelist for the SubGraph assets.");
 		}
 
 		OutContext.ChangelistIdentifier = OutContext.Changelist->GetIdentifier();
 
-		const TArray<FString> SourceAssetFiles = { SourceAssetFile };
+		// A source that needs no checkout is not opened yet (untracked, or writable without checkout).
+		// It joins the changelist after saving, together with the new asset.
+		if (!bNeedsCheckout)
+		{
+			return FText::GetEmpty();
+		}
+
 		const bool bCheckedOut = SourceControlProvider.Execute(
 			ISourceControlOperation::Create<FCheckOut>(),
 			OutContext.Changelist,
@@ -116,34 +148,32 @@ namespace FlowCollapseToSubGraph
 	}
 
 	FText SaveAndFinalizeSourceControl(
-		UFlowAsset& NewAsset,
-		UFlowAsset& SourceAsset,
+		const UFlowAsset& NewAsset,
+		const UFlowAsset& SourceAsset,
 		const FSourceControlContext& SourceControlContext)
 	{
 		UPackage* NewAssetPackage = NewAsset.GetPackage();
 		UPackage* SourceAssetPackage = SourceAsset.GetPackage();
 		if (!NewAssetPackage || !SourceAssetPackage)
 		{
-			return LOCTEXT("NoPackages", "The collapsed assets have no packages to save.");
+			return LOCTEXT("NoPackages", "The extracted assets have no packages to save.");
 		}
 
 		constexpr bool bOnlyDirty = false;
 		if (!UEditorLoadingAndSavingUtils::SavePackages({NewAssetPackage}, bOnlyDirty))
 		{
-			return LOCTEXT("SaveNewAssetFailed", "The generated sub-graph could not be saved; the source asset was not saved.");
+			return LOCTEXT("SaveNewAssetFailed", "The generated SubGraph could not be saved. The source asset was not saved.");
 		}
 		if (!UEditorLoadingAndSavingUtils::SavePackages({SourceAssetPackage}, bOnlyDirty))
 		{
-			return LOCTEXT("SaveSourceAssetFailed", "The sub-graph was saved, but the source asset could not be saved.");
+			return LOCTEXT("SaveSourceAssetFailed", "The SubGraph was saved, but the source asset could not be saved.");
 		}
 
-		if (!SourceControlContext.bEnabled)
+		// Saving has already checked out or marked both assets for add.
+		// Only providers with changelists have a further step.
+		if (!SourceControlContext.bEnabled || !SourceControlContext.Changelist.IsValid())
 		{
 			return FText::GetEmpty();
-		}
-		if (!SourceControlContext.Changelist.IsValid())
-		{
-			return LOCTEXT("InvalidTargetChangelist", "The sub-graph assets have no valid target changelist.");
 		}
 
 		ISourceControlProvider& SourceControlProvider = ISourceControlModule::Get().GetProvider();

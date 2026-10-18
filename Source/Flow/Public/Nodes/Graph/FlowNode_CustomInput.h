@@ -5,9 +5,7 @@
 #include "FlowNode_CustomInput.generated.h"
 
 /**
- * Defines a named input entry point for this sub-graph. When the parent SubGraph node receives
- * a signal on the matching named pin, execution resumes here. Useful for externally triggering
- * specific behaviors within a sub-graph (e.g. a "Cancel" signal from the parent encounter flow).
+ * Triggers output upon activation of Input (matching this EventName) on the SubGraph node containing this graph.
  */
 UCLASS(NotBlueprintable, meta = (DisplayName = "Custom Input"))
 class FLOW_API UFlowNode_CustomInput : public UFlowNode_CustomEventBase
@@ -24,7 +22,6 @@ public:
 
 #if WITH_EDITOR
 	virtual FText K2_GetNodeTitle_Implementation() const override;
-	virtual const FFlowAgentDoc& GetAgentDoc() const override;
 #endif
 
 #if WITH_EDITOR

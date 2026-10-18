@@ -1,9 +1,8 @@
 // Copyright https://github.com/MothCocoon/FlowGraph/graphs/contributors
-
-#include "SFlowCreateSubGraphDialog.h"
+#include "Graph/Extraction/SFlowCreateSubGraphDialog.h"
 
 #include "FlowAsset.h"
-#include "FlowCollapseToSubGraphPlan.h"
+#include "Graph/Extraction/FlowSubGraphExtractionPlan.h"
 
 #include "Framework/Application/SlateApplication.h"
 #include "Framework/Docking/TabManager.h"
@@ -23,7 +22,7 @@
 void SFlowCreateSubGraphDialog::Construct(const FArguments& InArgs)
 {
 	SourceAsset = InArgs._SourceAsset;
-	AssetName = FlowCollapseToSubGraph::GetRequiredAssetNamePrefix();
+	AssetName = FlowSubGraphExtraction::GetDefaultNewAssetName();
 
 	const FString PackageFolder = SourceAsset.Get()
 		? FPackageName::GetLongPackagePath(SourceAsset->GetOutermost()->GetName())
@@ -52,7 +51,7 @@ void SFlowCreateSubGraphDialog::Construct(const FArguments& InArgs)
 		.Padding(0.0f, 0.0f, 0.0f, 4.0f)
 		[
 			SNew(STextBlock)
-			.Text(FText::Format(LOCTEXT("TargetFolder", "The sub-graph will be created in {0}"), FText::FromString(PackageFolder)))
+			.Text(FText::Format(LOCTEXT("TargetFolder", "The SubGraph will be created in {0}"), FText::FromString(PackageFolder)))
 			.AutoWrapText(true)
 		]
 
@@ -120,7 +119,7 @@ void SFlowCreateSubGraphDialog::OnAssetNameChanged(const FText& NewName)
 	AssetName = NewName.ToString();
 
 	ValidationError = SourceAsset.Get()
-		? FlowCollapseToSubGraph::ValidateNewAssetName(*SourceAsset, AssetName)
+		? FlowSubGraphExtraction::ValidateNewAssetName(*SourceAsset, AssetName)
 		: LOCTEXT("NoSourceAsset", "No source asset.");
 
 	if (AssetNameTextBox.IsValid())
@@ -178,12 +177,12 @@ FReply SFlowCreateSubGraphDialog::OnCancelClicked()
 
 bool SFlowCreateSubGraphDialog::ShowModal(const UFlowAsset& SourceAsset, const TArray<FText>& Warnings, FString& OutAssetName)
 {
-	TSharedRef<SFlowCreateSubGraphDialog> Dialog = SNew(SFlowCreateSubGraphDialog)
+	const TSharedRef<SFlowCreateSubGraphDialog> Dialog = SNew(SFlowCreateSubGraphDialog)
 		.SourceAsset(&SourceAsset)
 		.Warnings(Warnings);
 
 	const TSharedRef<SWindow> Window = SNew(SWindow)
-		.Title(LOCTEXT("WindowTitle", "Create Sub-Graph from Selection"))
+		.Title(LOCTEXT("WindowTitle", "Extract to SubGraph"))
 		.SizingRule(ESizingRule::Autosized)
 		.SupportsMinimize(false)
 		.SupportsMaximize(false)

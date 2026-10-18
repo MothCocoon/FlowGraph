@@ -11,13 +11,13 @@ class UFlowAsset;
 class UFlowGraph;
 class UFlowGraphNode;
 
-namespace FlowCollapseToSubGraph
+namespace FlowSubGraphExtraction
 {
 	struct FBoundaryPin;
-	struct FCollapsePlan;
+	struct FExtractionPlan;
 
-	/** Outcome of a collapse. */
-	struct FCollapseResult
+	/** Outcome of an extraction. */
+	struct FExtractionResult
 	{
 		UFlowAsset* NewAsset = nullptr;
 		UFlowGraphNode* SubGraphNode = nullptr;
@@ -27,12 +27,12 @@ namespace FlowCollapseToSubGraph
 		bool Succeeded() const { return NewAsset != nullptr && Error.IsEmpty(); }
 	};
 
-	class FCollapseApply
+	class FLOWEDITOR_API FExtractionApply
 	{
 	public:
-		FCollapseApply(const FCollapsePlan& InPlan, UFlowAsset& InSourceAsset, const FString& InNewAssetName);
+		FExtractionApply(const FExtractionPlan& InPlan, UFlowAsset& InSourceAsset, const FString& InNewAssetName);
 
-		FCollapseResult Run();
+		FExtractionResult Run();
 
 	private:
 		bool Fail(const FText& Error);
@@ -50,10 +50,10 @@ namespace FlowCollapseToSubGraph
 		void FinalizeNewAsset() const;
 		void FinalizeSourceAsset() const;
 
-		const FCollapsePlan& Plan;
+		const FExtractionPlan& Plan;
 		UFlowAsset& SourceAsset;
 		const FString& NewAssetName;
-		FCollapseResult Result;
+		FExtractionResult Result;
 		UFlowGraph* SourceGraph = nullptr;
 		UFlowAsset* NewAsset = nullptr;
 		UFlowGraph* NewGraph = nullptr;
@@ -73,8 +73,5 @@ namespace FlowCollapseToSubGraph
 	 * The caller owns the enclosing FScopedTransaction. Note that the new asset is a separate package
 	 * and cannot be transacted away, so undo restores the source graph but leaves the new asset on disk.
 	 */
-	 FCollapseResult ApplyCollapse(
-		const FCollapsePlan& Plan,
-		UFlowAsset& SourceAsset,
-		const FString& NewAssetName);
+	FLOWEDITOR_API FExtractionResult ApplyExtraction(const FExtractionPlan& Plan, UFlowAsset& SourceAsset, const FString& NewAssetName);
 }

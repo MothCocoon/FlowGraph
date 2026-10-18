@@ -12,19 +12,19 @@ class UFlowAsset;
 class UFlowGraphNode;
 
 /**
- * Collapses a selection of Flow graph nodes into a newly created Flow Asset, replacing the selection
+ * Extracts a selection of Flow graph nodes into a newly created Flow Asset, replacing the selection
  * with a SubGraph node that runs that asset.
  *
- * The sub-graph interface is derived from the connections that cross the selection boundary. A pin is
+ * The SubGraph interface is derived from the connections that cross the selection boundary. A pin is
  * on the boundary when at least one of its links terminates on a node outside the selection, which is
- * the same test Blueprint's collapse uses (FBlueprintEditor::CollapseNodesIntoGraph).
+ * the same test FBlueprintEditor::CollapseNodesIntoGraph uses.
  *
- * Flow's sub-graph interface is not a Blueprint tunnel, and three of its runtime rules shape what can
- * be collapsed:
+ * Flow's SubGraph interface is not a Blueprint tunnel, and three of its runtime rules shape what can
+ * be extracted:
  *
  * 1. Only the Start pin instantiates the child. UFlowNode_SubGraph::ExecuteInput calls CreateSubFlow
  *    for Start alone; any other input pin routes to UFlowAsset::TriggerCustomInput_FromSubGraph, which
- *    requires an already-running instance. A collapsible selection therefore has exactly one incoming
+ *    requires an already-running instance. An extractable selection therefore has exactly one incoming
  *    execution boundary, and that boundary maps to Start.
  *
  * 2. The output interface is named after the pins it replaces. An exit crossing an unnamed default pin
@@ -33,14 +33,14 @@ class UFlowGraphNode;
  *    to a pin matching the original. Finish can be claimed only once because it is a single exec pin and
  *    an exec output drives exactly one target; later unnamed boundaries fall back to a node-derived name.
  *    A Finish node is always placed, and is simply left unconnected when nothing routes to it. Reaching
- *    a Finish is what ends the child instance, so a sub-graph with only Custom Outputs stays active
+ *    a Finish is what ends the child instance, so a SubGraph with only Custom Outputs stays active
  *    until the parent tears it down in UFlowNode_SubGraph::Cleanup. That is normal for a long-running
- *    sub-graph and matches shipped content.
+ *    SubGraph and matches shipped content.
  *
  * 3. Data pins cannot cross the boundary at all. The interface mirrors only the exec-only CustomInputs
  *    and CustomOutputs arrays, so a crossing data link is a hard error.
  */
-namespace FlowCollapseToSubGraph
+namespace FlowSubGraphExtraction
 {
 	/** A pin inside the selection that has at least one link leaving it. */
 	struct FBoundaryPin
@@ -48,7 +48,7 @@ namespace FlowCollapseToSubGraph
 		/** Pin on a selected node. Valid only while planning; the node is destroyed by Apply. */
 		UEdGraphPin* InnerPin = nullptr;
 
-		/** Pins on non-selected nodes that InnerPin links to. These survive the collapse. */
+		/** Pins on non-selected nodes that InnerPin links to. These survive the extraction. */
 		TArray<UEdGraphPin*> OuterPins;
 
 		/** Guid of the selected node owning InnerPin, used to find its clone in the new asset. */
@@ -65,13 +65,13 @@ namespace FlowCollapseToSubGraph
 	};
 
 	/**
-	 * A description of the collapse, produced before anything is modified so the caller can
+	 * A description of the extraction, produced before anything is modified so the caller can
 	 * refuse or warn without having touched the graph.
 	 */
-	struct FCollapsePlan
+	struct FLOWEDITOR_API FExtractionPlan
 	{
-		/** Builds and validates a collapse plan from the selected graph nodes. */
-		explicit FCollapsePlan(const TSet<UFlowGraphNode*>& InSelectedNodes);
+		/** Builds and validates an extraction plan from the selected graph nodes. */
+		explicit FExtractionPlan(const TSet<UFlowGraphNode*>& InSelectedNodes);
 
 		/** Nodes that will move into the new asset. */
 		TSet<UFlowGraphNode*> SelectedNodes;
@@ -82,7 +82,7 @@ namespace FlowCollapseToSubGraph
 		/** Boundary pins that execution leaves the selection through. */
 		TArray<FBoundaryPin> Exits;
 
-		/** Conditions that make the collapse impossible. Non-empty means the action must not run. */
+		/** Conditions that make the extraction impossible. Non-empty means the action must not run. */
 		TArray<FText> Errors;
 
 		/** Conditions the user should confirm before proceeding. */
@@ -94,7 +94,7 @@ namespace FlowCollapseToSubGraph
 		/** Collects valid top-level nodes. */
 		void GatherSelectedNodes(const TSet<UFlowGraphNode*>& InSelectedNodes);
 
-		/** Records errors for nodes that do not share a graph or cannot move into a sub-graph. */
+		/** Records errors for nodes that do not share a graph or cannot move into a SubGraph. */
 		void ValidateSelectedNodes();
 
 		/** Finds connections crossing the selection boundary and classifies them as entries or exits. */
@@ -111,11 +111,11 @@ namespace FlowCollapseToSubGraph
 	};
 
 	/** Builds a read-only plan describing the boundary of the selection. Modifies nothing. */
-	FCollapsePlan PlanCollapse(const TSet<UFlowGraphNode*>& SelectedNodes);
+	FLOWEDITOR_API FExtractionPlan PlanExtraction(const TSet<UFlowGraphNode*>& SelectedNodes);
 
-	/** Required prefix for a generated sub-graph asset. */
-	const FString& GetRequiredAssetNamePrefix();
+	/** Name proposed for a generated SubGraph asset, starting with the project's required prefix. */
+	FLOWEDITOR_API FString GetDefaultNewAssetName();
 
 	/** Validates a proposed asset name, returning an empty text when it is usable. */
-	FText ValidateNewAssetName(const UFlowAsset& SourceAsset, const FString& NewAssetName);
+	FLOWEDITOR_API FText ValidateNewAssetName(const UFlowAsset& SourceAsset, const FString& NewAssetName);
 }

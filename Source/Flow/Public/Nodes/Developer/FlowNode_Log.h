@@ -19,7 +19,7 @@ enum class EFlowLogVerbosity : uint8
 };
 
 /**
- * Adds message to developer log
+ * Adds message to log
  * Optionally shows message on screen
  */
 UCLASS(NotBlueprintable, meta = (DisplayName = "Log", Keywords = "print"))
@@ -63,8 +63,6 @@ public:
 	// --
 
 	virtual void UpdateNodeConfigText_Implementation() override;
-
-	virtual const FFlowAgentDoc& GetAgentDoc() const override;
 #endif
 
 	EFlowLogVerbosity GetVerbosity() const { return Verbosity; }

@@ -1,8 +1,8 @@
 // Copyright https://github.com/MothCocoon/FlowGraph/graphs/contributors
-
-#include "FlowCollapseToSubGraphPlan.h"
+#include "Graph/Extraction/FlowSubGraphExtractionPlan.h"
 
 #include "FlowAsset.h"
+#include "Graph/FlowGraphSettings.h"
 #include "Graph/Nodes/FlowGraphNode.h"
 #include "Nodes/FlowNode.h"
 #include "Nodes/FlowPin.h"
@@ -14,13 +14,13 @@
 #include "EdGraph/EdGraphPin.h"
 #include "Misc/PackageName.h"
 
-#define LOCTEXT_NAMESPACE "FlowCollapseToSubGraph"
+#define LOCTEXT_NAMESPACE "FlowSubGraphExtraction"
 
-namespace FlowCollapseToSubGraph
+namespace FlowSubGraphExtraction
 {
 	namespace Internal
 	{
-		const FString AssetNamePrefix = TEXT("Subgraph_");
+		const FString DefaultAssetBaseName = TEXT("NewGraph");
 
 		static FText GetNodeTitleText(const UEdGraphNode& Node)
 		{
@@ -101,12 +101,12 @@ namespace FlowCollapseToSubGraph
 		}
 	}
 
-	FCollapsePlan::FCollapsePlan(const TSet<UFlowGraphNode*>& InSelectedNodes)
+	FExtractionPlan::FExtractionPlan(const TSet<UFlowGraphNode*>& InSelectedNodes)
 	{
 		GatherSelectedNodes(InSelectedNodes);
 		if (SelectedNodes.IsEmpty())
 		{
-			Errors.Add(LOCTEXT("NothingSelected", "Select the nodes to collapse first."));
+			Errors.Add(LOCTEXT("NothingSelected", "Select the nodes to extract first."));
 			return;
 		}
 
@@ -118,7 +118,7 @@ namespace FlowCollapseToSubGraph
 		ConfigureExits();
 	}
 
-	void FCollapsePlan::GatherSelectedNodes(const TSet<UFlowGraphNode*>& InSelectedNodes)
+	void FExtractionPlan::GatherSelectedNodes(const TSet<UFlowGraphNode*>& InSelectedNodes)
 	{
 		for (UFlowGraphNode* SelectedNode : InSelectedNodes)
 		{
@@ -129,7 +129,7 @@ namespace FlowCollapseToSubGraph
 		}
 	}
 
-	void FCollapsePlan::ValidateSelectedNodes()
+	void FExtractionPlan::ValidateSelectedNodes()
 	{
 		const UEdGraph* CommonGraph = nullptr;
 		for (UFlowGraphNode* SelectedNode : SelectedNodes)
@@ -157,25 +157,25 @@ namespace FlowCollapseToSubGraph
 			if (FlowNode->IsA<UFlowNode_CustomInput>() || FlowNode->IsA<UFlowNode_CustomOutput>())
 			{
 				Errors.Add(FText::Format(
-					LOCTEXT("InterfaceNodeCannotMove", "'{0}' defines the source asset's interface and must remain outside the selection."),
+					LOCTEXT("InterfaceNodeCannotMove", "{0}: defines the source asset's interface and must remain outside the selection."),
 					Internal::GetNodeTitleText(*SelectedNode)));
 			}
 			else if (FlowNode->IsA<UFlowNode_Finish>())
 			{
 				Errors.Add(FText::Format(
-					LOCTEXT("FinishNodeCannotMove", "'{0}' finishes the source asset and must remain outside the selection."),
+					LOCTEXT("FinishNodeCannotMove", "{0}: finishes the source asset and must remain outside the selection."),
 					Internal::GetNodeTitleText(*SelectedNode)));
 			}
 			else if (!SelectedNode->CanUserDeleteNode() || !SelectedNode->CanDuplicateNode())
 			{
 				Errors.Add(FText::Format(
-					LOCTEXT("NodeCannotMove", "'{0}' cannot be moved into a sub-graph."),
+					LOCTEXT("NodeCannotMove", "{0}: cannot be moved into a SubGraph."),
 					Internal::GetNodeTitleText(*SelectedNode)));
 			}
 		}
 	}
 
-	void FCollapsePlan::GatherBoundaryPins()
+	void FExtractionPlan::GatherBoundaryPins()
 	{
 		for (UFlowGraphNode* SelectedNode : SelectedNodes)
 		{
@@ -189,7 +189,7 @@ namespace FlowCollapseToSubGraph
 				FBoundaryPin Boundary;
 				for (UEdGraphPin* LinkedPin : Pin->LinkedTo)
 				{
-					UFlowGraphNode* LinkedFlowNode = LinkedPin ? Cast<UFlowGraphNode>(LinkedPin->GetOwningNode()) : nullptr;
+					const UFlowGraphNode* LinkedFlowNode = LinkedPin ? Cast<UFlowGraphNode>(LinkedPin->GetOwningNode()) : nullptr;
 					if (LinkedPin && (!LinkedFlowNode || !SelectedNodes.Contains(LinkedFlowNode)))
 					{
 						Boundary.OuterPins.Add(LinkedPin);
@@ -201,13 +201,13 @@ namespace FlowCollapseToSubGraph
 					continue;
 				}
 
-				// A sub-graph's interface is exec-only. Data has to be routed through AssetParams and the
+				// A SubGraph's interface is exec-only. Data has to be routed through AssetParams and the
 				// output data pin declarations, which cannot be derived from the selection.
 				if (!FFlowPin::IsExecPinCategory(Pin->PinType.PinCategory))
 				{
 					Errors.Add(FText::Format(
-						LOCTEXT("DataPinCrossesBoundary", "The data pin '{0}' on '{1}' is connected outside the selection. Data cannot cross a sub-graph boundary."),
-						FText::FromName(Pin->PinName), Internal::GetNodeTitleText(*SelectedNode)));
+						LOCTEXT("DataPinCrossesBoundary", "{0}: data pin {1} is connected outside the selection. Data cannot cross a SubGraph boundary."),
+						Internal::GetNodeTitleText(*SelectedNode), FText::FromName(Pin->PinName)));
 					continue;
 				}
 
@@ -221,7 +221,7 @@ namespace FlowCollapseToSubGraph
 		}
 	}
 
-	void FCollapsePlan::ConfigureEntry()
+	void FExtractionPlan::ConfigureEntry()
 	{
 		int32 EntryConnectionCount = 0;
 		for (const FBoundaryPin& Entry : Entries)
@@ -245,7 +245,7 @@ namespace FlowCollapseToSubGraph
 	// routes to the built-in Finish instead. Only one exit can do that: Finish is a single exec output on
 	// the parent, and an exec output drives exactly one target, so a second unnamed exit would collide
 	// with the first and get its link broken. Later unnamed exits fall back to a name from their node.
-	void FCollapsePlan::ConfigureExits()
+	void FExtractionPlan::ConfigureExits()
 	{
 		TSet<FName> UsedOutputNames;
 		Internal::ReserveBuiltInPinNames(UsedOutputNames);
@@ -271,7 +271,7 @@ namespace FlowCollapseToSubGraph
 	}
 
 	/** Orders boundary pins top-to-bottom then left-to-right, so generated names read like the graph. */
-	void FCollapsePlan::SortBoundaryPinsByPosition(TArray<FBoundaryPin>& BoundaryPins)
+	void FExtractionPlan::SortBoundaryPinsByPosition(TArray<FBoundaryPin>& BoundaryPins)
 	{
 		BoundaryPins.Sort([](const FBoundaryPin& Left, const FBoundaryPin& Right)
 		{
@@ -287,24 +287,29 @@ namespace FlowCollapseToSubGraph
 		});
 	}
 
-	const FString& GetRequiredAssetNamePrefix()
+	FString GetDefaultNewAssetName()
 	{
-		return Internal::AssetNamePrefix;
+		return GetDefault<UFlowGraphSettings>()->SubGraphAssetNamePrefix + Internal::DefaultAssetBaseName;
 	}
 
 	FText ValidateNewAssetName(const UFlowAsset& SourceAsset, const FString& NewAssetName)
 	{
 		if (NewAssetName.IsEmpty())
 		{
-			return LOCTEXT("EmptyAssetName", "Enter a name for the sub-graph asset.");
+			return LOCTEXT("EmptyAssetName", "Enter a name for the SubGraph asset.");
 		}
-		if (!NewAssetName.StartsWith(Internal::AssetNamePrefix))
+
+		const FString& RequiredPrefix = GetDefault<UFlowGraphSettings>()->SubGraphAssetNamePrefix;
+		if (!RequiredPrefix.IsEmpty())
 		{
-			return FText::Format(LOCTEXT("MissingPrefix", "The name must start with '{0}'."), FText::FromString(Internal::AssetNamePrefix));
-		}
-		if (NewAssetName.Len() <= Internal::AssetNamePrefix.Len())
-		{
-			return LOCTEXT("PrefixOnly", "Add a name after the prefix.");
+			if (!NewAssetName.StartsWith(RequiredPrefix))
+			{
+				return FText::Format(LOCTEXT("MissingPrefix", "The name must start with the prefix {0}."), FText::FromString(RequiredPrefix));
+			}
+			if (NewAssetName.Len() <= RequiredPrefix.Len())
+			{
+				return LOCTEXT("PrefixOnly", "Add a name after the prefix.");
+			}
 		}
 
 		FText InvalidNameReason;
@@ -316,7 +321,7 @@ namespace FlowCollapseToSubGraph
 		const FString PackageFolder = FPackageName::GetLongPackagePath(SourceAsset.GetOutermost()->GetName());
 		if (FPackageName::DoesPackageExist(PackageFolder / NewAssetName))
 		{
-			return FText::Format(LOCTEXT("AssetAlreadyExists", "'{0}' already exists in {1}."),
+			return FText::Format(LOCTEXT("AssetAlreadyExists", "{0} already exists in {1}."),
 				FText::FromString(NewAssetName),
 				FText::FromString(PackageFolder));
 		}
@@ -324,9 +329,9 @@ namespace FlowCollapseToSubGraph
 		return FText::GetEmpty();
 	}
 
-	FCollapsePlan PlanCollapse(const TSet<UFlowGraphNode*>& SelectedNodes)
+	FExtractionPlan PlanExtraction(const TSet<UFlowGraphNode*>& SelectedNodes)
 	{
-		return FCollapsePlan(SelectedNodes);
+		return FExtractionPlan(SelectedNodes);
 	}
 }
 
