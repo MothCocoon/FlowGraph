@@ -1039,8 +1039,7 @@ TSharedRef<SGraphNode> SFlowGraphNode::GetNodeUnderMouse(const FGeometry& MyGeom
 }
 
 int32 SFlowGraphNode::OnPaint(const FPaintArgs& Args, const FGeometry& AllottedGeometry, const FSlateRect& MyCullingRect,
-	FSlateWindowElementList& OutDrawElements, int32 LayerId, const FWidgetStyle& InWidgetStyle,
-	bool bParentEnabled) const
+	FSlateWindowElementList& OutDrawElements, int32 LayerId, const FWidgetStyle& InWidgetStyle, const bool bParentEnabled) const
 {
 	if (FlowGraphNode && FlowGraphNode->IsSubNode() && IsFlowGraphNodeSelected(FlowGraphNode))
 	{
