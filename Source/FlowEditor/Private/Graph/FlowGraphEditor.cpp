@@ -21,7 +21,6 @@
 #include "Misc/ScopeExit.h"
 #include "Modules/ModuleManager.h"
 #include "ScopedTransaction.h"
-#include "Runtime/Launch/Resources/Version.h"
 #include "ToolMenu.h"
 #include "ToolMenuDelegates.h"
 #include "ToolMenus.h"
