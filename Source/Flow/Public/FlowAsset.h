@@ -21,6 +21,7 @@
 
 #include "FlowAsset.generated.h"
 
+class UFlowNode_SubGraph;
 class UFlowNode_CustomOutput;
 class UFlowNode_CustomInput;
 struct FFlowPreloadPolicy;
@@ -90,6 +91,8 @@ public:
 	static FString ValidationError_AddOnNodeClassNotAllowed;
 	static FString ValidationError_NullNodeInstance;
 	static FString ValidationError_NullAddOnNodeInstance;
+	static FString ValidationError_ConnectedToMissingNode;
+	static FString ValidationError_AdviseResave;
 
 private:
 	UPROPERTY()
@@ -121,6 +124,9 @@ public:
 	virtual EDataValidationResult ValidateAsset(FFlowMessageLog& MessageLog) const;
 
 private:
+	/* Validates every direct child attachment on OwnerNode and recursively validates child trees. */
+	void ValidateAddOnChildren(UFlowNodeBase& OwnerNode, FFlowMessageLog& MessageLog) const;
+
 	/* Recursively validates the given addon and its children. */
 	void ValidateAddOnTree(UFlowNodeAddOn& AddOn, FFlowMessageLog& MessageLog) const;
 #endif
@@ -254,6 +260,9 @@ public:
 #if WITH_EDITOR
 	const TArray<FName>& GetCustomInputs() const { return CustomInputs; }
 	const TArray<FName>& GetCustomOutputs() const { return CustomOutputs; }
+
+	// Rebuilds the editor-only interface arrays after procedural graph-node creation.
+	void RebuildCustomInterfaceLists();
 
 protected:
 	void AddCustomInput(const FName& EventName);

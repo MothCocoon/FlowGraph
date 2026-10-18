@@ -149,6 +149,7 @@ protected:
 
 	virtual void CreateWidgets();
 	virtual void CreateGraphWidget();
+	virtual void AutoFormatGraph();
 
 	static bool CanEdit();
 

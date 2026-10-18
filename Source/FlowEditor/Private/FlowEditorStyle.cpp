@@ -33,6 +33,7 @@ void FFlowEditorStyle::Initialize()
 
 	StyleSet->Set("FlowToolbar.RefreshAsset", new IMAGE_BRUSH_SVG( "Starship/Common/Apply", Icon20));
 	StyleSet->Set("FlowToolbar.ValidateAsset", new IMAGE_BRUSH_SVG( "Starship/Common/Debug", Icon20));
+	StyleSet->Set("FlowToolbar.AutoFormatGraph", new IMAGE_BRUSH_SVG("Starship/GraphEditors/StraightenConnections", Icon20));
 
 	StyleSet->Set("FlowToolbar.SearchInAsset", new IMAGE_BRUSH_SVG( "Starship/Common/Search", Icon20));
 	StyleSet->Set("FlowToolbar.EditAssetDefaults", new IMAGE_BRUSH_SVG("Starship/Common/Details", Icon20));
