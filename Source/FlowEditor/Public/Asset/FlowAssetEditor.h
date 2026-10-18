@@ -130,30 +130,27 @@ protected:
 	virtual void CreateToolbar();
 	virtual void BindToolbarCommands();
 	
-	virtual void RefreshAsset();
 	virtual void RefreshDetails();
+	void ShowAssetDefaults() const;
+
+	virtual void RefreshAsset();
+	virtual void ValidateAsset(FFlowMessageLog& MessageLog);
 
 private:
 	void ValidateAsset_Internal();
 
 protected:
-	virtual void ValidateAsset(FFlowMessageLog& MessageLog);
+	virtual void AutoFormatGraph();
+	
 	virtual void SearchInAsset();
 
-	void EditAssetDefaults_Clicked() const;
-
-	/* Continues execution halted at a Flow breakpoint. Only available while halted. */
 	static void ContinueFlowExecution();
-
-	/* Stops the play session halted at a Flow breakpoint. Only available while halted. */
 	static void StopFlowExecution();
-
 	static bool IsFlowExecutionHalted();
 	static class UFlowDebugEditorSubsystem* GetFlowDebugEditorSubsystem();
 
 	virtual void CreateWidgets();
 	virtual void CreateGraphWidget();
-	virtual void AutoFormatGraph();
 
 	static bool CanEdit();
 

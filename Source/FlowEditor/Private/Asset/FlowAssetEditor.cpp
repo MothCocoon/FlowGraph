@@ -398,7 +398,12 @@ void FFlowAssetEditor::BindToolbarCommands()
 	FFlowToolbarCommands::Register();
 	const FFlowToolbarCommands& ToolbarCommands = FFlowToolbarCommands::Get();
 
-	// Editing
+	// Flow Asset
+	ToolkitCommands->MapAction(ToolbarCommands.AssetDefaults,
+							   FExecuteAction::CreateSP(this, &FFlowAssetEditor::ShowAssetDefaults),
+							   FCanExecuteAction());
+	
+	// Automation
 	ToolkitCommands->MapAction(ToolbarCommands.RefreshAsset,
 	                           FExecuteAction::CreateSP(this, &FFlowAssetEditor::RefreshAsset),
 	                           FCanExecuteAction::CreateStatic(&FFlowAssetEditor::CanEdit));
@@ -407,18 +412,16 @@ void FFlowAssetEditor::BindToolbarCommands()
 	                           FExecuteAction::CreateSP(this, &FFlowAssetEditor::ValidateAsset_Internal),
 	                           FCanExecuteAction());
 
+	ToolkitCommands->MapAction(ToolbarCommands.AutoFormatGraph,
+						   FExecuteAction::CreateSP(this, &FFlowAssetEditor::AutoFormatGraph),
+						   FCanExecuteAction::CreateStatic(&FFlowAssetEditor::CanEdit));
+	
+	// View
 	ToolkitCommands->MapAction(ToolbarCommands.SearchInAsset,
 	                           FExecuteAction::CreateSP(this, &FFlowAssetEditor::SearchInAsset),
 	                           FCanExecuteAction());
 
-	ToolkitCommands->MapAction(ToolbarCommands.EditAssetDefaults,
-	                           FExecuteAction::CreateSP(this, &FFlowAssetEditor::EditAssetDefaults_Clicked),
-	                           FCanExecuteAction());
-
-	ToolkitCommands->MapAction(ToolbarCommands.AutoFormatGraph,
-	                           FExecuteAction::CreateSP(this, &FFlowAssetEditor::AutoFormatGraph),
-	                           FCanExecuteAction::CreateStatic(&FFlowAssetEditor::CanEdit));
-
+	// Debugger
 	ToolkitCommands->MapAction(ToolbarCommands.ContinueFlowExecution,
 	                           FExecuteAction::CreateStatic(&FFlowAssetEditor::ContinueFlowExecution),
 	                           FCanExecuteAction::CreateStatic(&FFlowAssetEditor::IsFlowExecutionHalted),
@@ -433,6 +436,102 @@ void FFlowAssetEditor::BindToolbarCommands()
 
 	// Engine's Play commands
 	ToolkitCommands->Append(FPlayWorldCommands::GlobalPlayWorldActions.ToSharedRef());
+}
+
+void FFlowAssetEditor::RefreshDetails()
+{
+	if (DetailsView.IsValid())
+	{
+		DetailsView->ForceRefresh();
+	}
+}
+
+void FFlowAssetEditor::ShowAssetDefaults() const
+{
+	DetailsView->SetObject(FlowAsset);
+}
+
+void FFlowAssetEditor::RefreshAsset()
+{
+	// attempt to refresh graph, fix common issues automatically
+	CastChecked<UFlowGraph>(FlowAsset->GetGraph())->RefreshGraph();
+}
+
+void FFlowAssetEditor::ValidateAsset(FFlowMessageLog& MessageLog)
+{
+	FlowAsset->ValidateAsset(MessageLog);
+}
+
+void FFlowAssetEditor::ValidateAsset_Internal()
+{
+	FFlowMessageLog LogResults;
+	ValidateAsset(LogResults);
+
+	// push messages to its window
+	ValidationLogListing->ClearMessages();
+	if (LogResults.Messages.Num() > 0)
+	{
+		TabManager->TryInvokeTab(ValidationLogTab);
+		ValidationLogListing->AddMessages(LogResults.Messages);
+	}
+
+	ValidationLogListing->OnDataChanged().Broadcast();
+
+	FlowAsset->GetGraph()->NotifyGraphChanged();
+}
+
+void FFlowAssetEditor::AutoFormatGraph()
+{
+	if (!FlowAsset || !GraphEditor.IsValid())
+	{
+		return;
+	}
+
+	const FScopedTransaction Transaction(LOCTEXT("AutoFormatGraph", "Auto-Format Flow Graph"));
+
+	TSet<FGuid> TargetGuids;
+	const TArray<UFlowGraphNode*> SelectedNodes = GraphEditor->GetSelectedFlowNodes();
+	if (SelectedNodes.Num() > 0)
+	{
+		for (const UFlowGraphNode* GraphNode : SelectedNodes)
+		{
+			if (GraphNode)
+			{
+				TargetGuids.Add(GraphNode->NodeGuid);
+			}
+		}
+	}
+
+	// Unselected nodes are measured too, the layout avoids them as obstacles
+	TMap<FGuid, FIntPoint> MeasuredNodeSizes;
+	for (const TPair<FGuid, UFlowNode*>& Pair : FlowAsset->GetNodes())
+	{
+		if (!Pair.Value)
+		{
+			continue;
+		}
+
+		const UEdGraphNode* GraphNode = Pair.Value->GetGraphNode();
+		FSlateRect Bounds;
+		if (GraphNode && GraphEditor->GetBoundsForNode(GraphNode, Bounds, 0.0f))
+		{
+			MeasuredNodeSizes.Add(Pair.Key, FIntPoint(
+									  FMath::CeilToInt(Bounds.Right - Bounds.Left),
+									  FMath::CeilToInt(Bounds.Bottom - Bounds.Top)));
+		}
+	}
+
+	TMap<FGuid, FIntPoint> Positions;
+	UFlowGraphEditorLayout::ComputeAutoFormatPositionsWithSizes(FlowAsset, TargetGuids, MeasuredNodeSizes, Positions);
+	UFlowGraphEditorLayout::ApplyPositionsToExistingGraphWithSizes(FlowAsset, Positions, MeasuredNodeSizes);
+
+	GraphEditor->NotifyGraphChanged();
+}
+
+void FFlowAssetEditor::SearchInAsset()
+{
+	TabManager->TryInvokeTab(SearchTab);
+	SearchBrowser->FocusForUse();
 }
 
 void FFlowAssetEditor::ContinueFlowExecution()
@@ -460,54 +559,6 @@ bool FFlowAssetEditor::IsFlowExecutionHalted()
 UFlowDebugEditorSubsystem* FFlowAssetEditor::GetFlowDebugEditorSubsystem()
 {
 	return GEngine ? GEngine->GetEngineSubsystem<UFlowDebugEditorSubsystem>() : nullptr;
-}
-
-void FFlowAssetEditor::RefreshAsset()
-{
-	// attempt to refresh graph, fix common issues automatically
-	CastChecked<UFlowGraph>(FlowAsset->GetGraph())->RefreshGraph();
-}
-
-void FFlowAssetEditor::RefreshDetails()
-{
-	if (DetailsView.IsValid())
-	{
-		DetailsView->ForceRefresh();
-	}
-}
-
-void FFlowAssetEditor::ValidateAsset_Internal()
-{
-	FFlowMessageLog LogResults;
-	ValidateAsset(LogResults);
-
-	// push messages to its window
-	ValidationLogListing->ClearMessages();
-	if (LogResults.Messages.Num() > 0)
-	{
-		TabManager->TryInvokeTab(ValidationLogTab);
-		ValidationLogListing->AddMessages(LogResults.Messages);
-	}
-
-	ValidationLogListing->OnDataChanged().Broadcast();
-
-	FlowAsset->GetGraph()->NotifyGraphChanged();
-}
-
-void FFlowAssetEditor::ValidateAsset(FFlowMessageLog& MessageLog)
-{
-	FlowAsset->ValidateAsset(MessageLog);
-}
-
-void FFlowAssetEditor::SearchInAsset()
-{
-	TabManager->TryInvokeTab(SearchTab);
-	SearchBrowser->FocusForUse();
-}
-
-void FFlowAssetEditor::EditAssetDefaults_Clicked() const
-{
-	DetailsView->SetObject(FlowAsset);
 }
 
 void FFlowAssetEditor::CreateWidgets()
@@ -556,54 +607,6 @@ void FFlowAssetEditor::CreateGraphWidget()
 {
 	SAssignNew(GraphEditor, SFlowGraphEditor, SharedThis(this))
 	.DetailsView(DetailsView);
-}
-
-void FFlowAssetEditor::AutoFormatGraph()
-{
-	if (!FlowAsset || !GraphEditor.IsValid())
-	{
-		return;
-	}
-
-	const FScopedTransaction Transaction(LOCTEXT("AutoFormatGraph", "Auto-Format Flow Graph"));
-
-	TSet<FGuid> TargetGuids;
-	const TArray<UFlowGraphNode*> SelectedNodes = GraphEditor->GetSelectedFlowNodes();
-	if (SelectedNodes.Num() > 0)
-	{
-		for (const UFlowGraphNode* GraphNode : SelectedNodes)
-		{
-			if (GraphNode)
-			{
-				TargetGuids.Add(GraphNode->NodeGuid);
-			}
-		}
-	}
-
-	// Unselected nodes are measured too, the layout avoids them as obstacles
-	TMap<FGuid, FIntPoint> MeasuredNodeSizes;
-	for (const TPair<FGuid, UFlowNode*>& Pair : FlowAsset->GetNodes())
-	{
-		if (!Pair.Value)
-		{
-			continue;
-		}
-
-		const UEdGraphNode* GraphNode = Pair.Value->GetGraphNode();
-		FSlateRect Bounds;
-		if (GraphNode && GraphEditor->GetBoundsForNode(GraphNode, Bounds, 0.0f))
-		{
-			MeasuredNodeSizes.Add(Pair.Key, FIntPoint(
-				                      FMath::CeilToInt(Bounds.Right - Bounds.Left),
-				                      FMath::CeilToInt(Bounds.Bottom - Bounds.Top)));
-		}
-	}
-
-	TMap<FGuid, FIntPoint> Positions;
-	UFlowGraphEditorLayout::ComputeAutoFormatPositionsWithSizes(FlowAsset, TargetGuids, MeasuredNodeSizes, Positions);
-	UFlowGraphEditorLayout::ApplyPositionsToExistingGraphWithSizes(FlowAsset, Positions, MeasuredNodeSizes);
-
-	GraphEditor->NotifyGraphChanged();
 }
 
 bool FFlowAssetEditor::CanEdit()

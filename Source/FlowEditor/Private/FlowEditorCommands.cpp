@@ -18,12 +18,13 @@ FFlowToolbarCommands::FFlowToolbarCommands()
 
 void FFlowToolbarCommands::RegisterCommands()
 {
+	UI_COMMAND(AssetDefaults, "Asset Defaults", "Edit default asset properties", EUserInterfaceActionType::Button, FInputChord());
 	UI_COMMAND(RefreshAsset, "Refresh", "Refresh asset and all nodes", EUserInterfaceActionType::Button, FInputChord());
 	UI_COMMAND(ValidateAsset, "Validate", "Validate asset and all nodes", EUserInterfaceActionType::Button, FInputChord());
 	UI_COMMAND(AutoFormatGraph, "Auto Format", "Auto format the graph layout (formats selected nodes, or all nodes if nothing is selected)", EUserInterfaceActionType::Button, FInputChord());
 
 	UI_COMMAND(SearchInAsset, "Search", "Search in the current Flow Graph", EUserInterfaceActionType::Button, FInputChord(EModifierKey::Control | EModifierKey::Shift, EKeys::F));
-	UI_COMMAND(EditAssetDefaults, "Asset Defaults", "Edit the FlowAsset default properties", EUserInterfaceActionType::Button, FInputChord());
+
 	UI_COMMAND(ContinueFlowExecution, "Continue", "Continue Flow execution from the breakpoint it is halted at", EUserInterfaceActionType::Button, FInputChord());
 	UI_COMMAND(StopFlowExecution, "Stop", "Stop the play session without executing the pin halted at", EUserInterfaceActionType::Button, FInputChord());
 }

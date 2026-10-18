@@ -358,22 +358,28 @@ FFlowAssetToolbar::FFlowAssetToolbar(const TSharedPtr<FFlowAssetEditor> InAssetE
 	BuildDebuggerToolbar(ToolbarMenu);
 }
 
-void FFlowAssetToolbar::BuildAssetToolbar(UToolMenu* ToolbarMenu) const
+void FFlowAssetToolbar::BuildAssetToolbar(UToolMenu* ToolbarMenu)
 {
 	{
 		FToolMenuSection& Section = ToolbarMenu->AddSection("FlowAsset");
 		Section.InsertPosition = FToolMenuInsert("Asset", EToolMenuInsertType::After);
 
+		Section.AddEntry(FToolMenuEntry::InitToolBarButton(FFlowToolbarCommands::Get().AssetDefaults));
+	}
+
+	{
+		FToolMenuSection& Section = ToolbarMenu->AddSection("Automation");
+		Section.InsertPosition = FToolMenuInsert("FlowAsset", EToolMenuInsertType::After);
+
 		// add buttons
 		Section.AddEntry(FToolMenuEntry::InitToolBarButton(FFlowToolbarCommands::Get().RefreshAsset));
 		Section.AddEntry(FToolMenuEntry::InitToolBarButton(FFlowToolbarCommands::Get().ValidateAsset));
 		Section.AddEntry(FToolMenuEntry::InitToolBarButton(FFlowToolbarCommands::Get().AutoFormatGraph));
-		Section.AddEntry(FToolMenuEntry::InitToolBarButton(FFlowToolbarCommands::Get().EditAssetDefaults));
 	}
 
 	{
 		FToolMenuSection& Section = ToolbarMenu->AddSection("View");
-		Section.InsertPosition = FToolMenuInsert("FlowAsset", EToolMenuInsertType::After);
+		Section.InsertPosition = FToolMenuInsert("Automation", EToolMenuInsertType::After);
 
 		// Visual Diff: menu to choose asset revision compared with the current one 
 		Section.AddDynamicEntry("SourceControlCommands", FNewToolMenuSectionDelegate::CreateLambda([](FToolMenuSection& InSection)
@@ -395,12 +401,7 @@ void FFlowAssetToolbar::BuildAssetToolbar(UToolMenu* ToolbarMenu) const
 			}
 		}));
 
-		Section.AddEntry(FToolMenuEntry::InitToolBarButton(
-			FFlowToolbarCommands::Get().SearchInAsset,
-			TAttribute<FText>(),
-			TAttribute<FText>(),
-			FSlateIcon(FAppStyle::GetAppStyleSetName(), "Kismet.Tabs.FindResults")
-		));
+		Section.AddEntry(FToolMenuEntry::InitToolBarButton(FFlowToolbarCommands::Get().SearchInAsset));
 	}
 }
 
@@ -458,7 +459,7 @@ TSharedRef<SWidget> FFlowAssetToolbar::MakeDiffMenu(const UFlowAssetEditorContex
 		if (FlowAsset)
 		{
 			FString Filename = SourceControlHelpers::PackageFilename(FlowAsset->GetPathName());
-			TWeakObjectPtr<UObject> AssetPtr = FlowAsset;
+			const TWeakObjectPtr<UObject> AssetPtr = FlowAsset;
 
 			// Add our async SCC task widget
 			return SNew(SAssetRevisionMenu, Filename)
@@ -478,7 +479,7 @@ TSharedRef<SWidget> FFlowAssetToolbar::MakeDiffMenu(const UFlowAssetEditorContex
 	return MenuBuilder.MakeWidget();
 }
 
-void FFlowAssetToolbar::BuildDebuggerToolbar(UToolMenu* ToolbarMenu) const
+void FFlowAssetToolbar::BuildDebuggerToolbar(UToolMenu* ToolbarMenu)
 {
 	FToolMenuSection& Section = ToolbarMenu->AddSection("Debug");
 	Section.InsertPosition = FToolMenuInsert("View", EToolMenuInsertType::After);

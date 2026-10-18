@@ -33,12 +33,12 @@ void FFlowEditorStyle::Initialize()
 	StyleSet->SetContentRoot(FPaths::EngineContentDir() / TEXT("Editor/Slate/"));
 	StyleSet->SetCoreContentRoot(FPaths::EngineContentDir() / TEXT("Slate/"));
 
-	StyleSet->Set("FlowToolbar.RefreshAsset", new IMAGE_BRUSH_SVG( "Starship/Common/Apply", Icon20));
-	StyleSet->Set("FlowToolbar.ValidateAsset", new IMAGE_BRUSH_SVG( "Starship/Common/Debug", Icon20));
+	StyleSet->Set("FlowToolbar.AssetDefaults", new IMAGE_BRUSH_SVG("Starship/Common/Details", Icon20));
+	StyleSet->Set("FlowToolbar.RefreshAsset", new IMAGE_BRUSH_SVG("Starship/Common/Apply", Icon20));
+	StyleSet->Set("FlowToolbar.ValidateAsset", new IMAGE_BRUSH_SVG("Starship/Common/Debug", Icon20));
 	StyleSet->Set("FlowToolbar.AutoFormatGraph", new IMAGE_BRUSH_SVG("Starship/GraphEditors/StraightenConnections", Icon20));
 
-	StyleSet->Set("FlowToolbar.SearchInAsset", new IMAGE_BRUSH_SVG( "Starship/Common/Search", Icon20));
-	StyleSet->Set("FlowToolbar.EditAssetDefaults", new IMAGE_BRUSH_SVG("Starship/Common/Details", Icon20));
+	StyleSet->Set("FlowToolbar.SearchInAsset", new CORE_IMAGE_BRUSH_SVG("Starship/Common/search", Icon20));
 
 	StyleSet->Set("FlowToolbar.ContinueFlowExecution", new IMAGE_BRUSH_SVG("Starship/Common/play", Icon20));
 	StyleSet->Set("FlowToolbar.StopFlowExecution", new CORE_IMAGE_BRUSH_SVG("Starship/Common/stop", Icon20));
