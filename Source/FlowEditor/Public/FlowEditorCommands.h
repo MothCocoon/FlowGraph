@@ -11,11 +11,15 @@ class FLOWEDITOR_API FFlowToolbarCommands : public TCommands<FFlowToolbarCommand
 public:
 	FFlowToolbarCommands();
 
+	TSharedPtr<FUICommandInfo> AssetDefaults;
 	TSharedPtr<FUICommandInfo> RefreshAsset;
 	TSharedPtr<FUICommandInfo> ValidateAsset;
+	TSharedPtr<FUICommandInfo> AutoFormatGraph;
 
 	TSharedPtr<FUICommandInfo> SearchInAsset;
-	TSharedPtr<FUICommandInfo> EditAssetDefaults;
+
+	TSharedPtr<FUICommandInfo> ContinueFlowExecution;
+	TSharedPtr<FUICommandInfo> StopFlowExecution;
 
 	virtual void RegisterCommands() override;
 };
@@ -35,6 +39,9 @@ public:
 	TSharedPtr<FUICommandInfo> AddInput;
 	TSharedPtr<FUICommandInfo> AddOutput;
 	TSharedPtr<FUICommandInfo> RemovePin;
+
+	// Organization
+	TSharedPtr<FUICommandInfo> ExtractToSubGraph;
 
 	// Pin Breakpoints
 	TSharedPtr<FUICommandInfo> AddPinBreakpoint;
@@ -71,6 +78,7 @@ public:
 
 	virtual void RegisterCommands() override;
 
+public:
 	TSharedPtr<const FInputChord> GetChordByClass(const UClass* NodeClass) const;
 	TSharedPtr<FEdGraphSchemaAction> GetActionByChord(const FInputChord& InChord) const;
 

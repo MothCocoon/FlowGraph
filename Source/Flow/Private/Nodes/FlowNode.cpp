@@ -4,6 +4,7 @@
 #include "AddOns/FlowNodeAddOn.h"
 #include "FlowAsset.h"
 #include "FlowSettings.h"
+#include "Interfaces/FlowExecutionGate.h"
 #include "Interfaces/FlowPreloadableInterface.h"
 #include "Interfaces/FlowNodeWithExternalDataPinSupplierInterface.h"
 #include "Policies/FlowPreloadHelper.h"
@@ -1374,9 +1375,12 @@ void UFlowNode::TriggerInput(const FName& PinName, const EFlowPinActivationType 
 		TArray<FPinRecord>& Records = InputRecords.FindOrAdd(PinName);
 		Records.Add(FPinRecord(FApp::GetCurrentTime(), ActivationType));
 
-		if (const UFlowAsset* FlowAssetTemplate = GetFlowAsset()->GetTemplateAsset())
+		// Halt here if a breakpoint covers this pin.
+		// In the case of an Abort while breaking we'll early-out of this function.
+		// We may eventually want to surface an Abort out of this function and early-out of callers as well.
+		if (FFlowExecutionGate::BreakIfRequested({this, PinName, EFlowBreakSite::InputTriggered}) == EFlowBreakAction::Abort)
 		{
-			(void)FlowAssetTemplate->OnPinTriggered.ExecuteIfBound(this, PinName);
+			return;
 		}
 #endif
 	}
@@ -1440,9 +1444,13 @@ void UFlowNode::TriggerOutput(const FName PinName, const bool bFinish /*= false*
 		TArray<FPinRecord>& Records = OutputRecords.FindOrAdd(PinName);
 		Records.Add(FPinRecord(FApp::GetCurrentTime(), ActivationType));
 
-		if (const UFlowAsset* FlowAssetTemplate = GetFlowAsset()->GetTemplateAsset())
+		// Halt here if a breakpoint covers this pin.
+		// In the case of an Abort while breaking we'll early-out of this function.
+		// We may eventually want to surface an Abort out of this function and early-out of callers as well.
+		// Note that Finish() has already run for a bFinish trigger, so the node is no longer active.
+		if (FFlowExecutionGate::BreakIfRequested({this, PinName, EFlowBreakSite::OutputTriggered}) == EFlowBreakAction::Abort)
 		{
-			FlowAssetTemplate->OnPinTriggered.ExecuteIfBound(this, PinName);
+			return;
 		}
 	}
 	else
