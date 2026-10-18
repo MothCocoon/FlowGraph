@@ -311,9 +311,13 @@ UEdGraphNode* FFlowGraphSchemaAction_NewComment::PerformAction(class UEdGraph* P
 	}
 
 	// register to the graph
-	CommentNode->CreateNewGuid();
-	constexpr bool bCreatedByUserAction = true;
-	ParentGraph->AddNode(CommentNode, bCreatedByUserAction, bSelectNewNode);
+	{
+		CommentNode->CreateNewGuid();
+
+		// start editing the comment text right after creation
+		constexpr bool bCreatedByUserAction = true;
+		ParentGraph->AddNode(CommentNode, bCreatedByUserAction, bSelectNewNode);
+	}
 
 	// set position
 	CommentNode->NodePosX = SpawnLocation.X;
