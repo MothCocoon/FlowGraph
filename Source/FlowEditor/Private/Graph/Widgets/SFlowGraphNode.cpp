@@ -1045,10 +1045,16 @@ int32 SFlowGraphNode::OnPaint(const FPaintArgs& Args, const FGeometry& AllottedG
 	{
 		// Code copied from SGraphNode::DrawChildrenNodeShadow
 		const FVector2f NodeShadowSize = UE::Slate::CastToVector2f(GetDefault<UGraphEditorSettings>()->GetShadowDeltaSize());
+
+		// Exclude the subnode indent, so the halo wraps the node body only
+		const FMargin NodePadding = ComputeSubNodeChildIndentPaddingMargin();
+		const FVector2f BodySize(AllottedGeometry.GetLocalSize().X - NodePadding.Left - NodePadding.Right, AllottedGeometry.GetLocalSize().Y);
+		const FGeometry BodyGeometry = AllottedGeometry.MakeChild(BodySize, FSlateLayoutTransform(FVector2f(NodePadding.Left, 0.0f)));
+
 		FSlateDrawElement::MakeBox(
 			OutDrawElements,
 			LayerId,
-			AllottedGeometry.ToInflatedPaintGeometry(NodeShadowSize),
+			BodyGeometry.ToInflatedPaintGeometry(NodeShadowSize),
 			GetShadowBrush(true),
 			ESlateDrawEffect::None,
 			InWidgetStyle.GetColorAndOpacityTint());
