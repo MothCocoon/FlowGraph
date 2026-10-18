@@ -8,9 +8,13 @@
 class UFlowAsset;
 class UFlowGraphNode;
 
-namespace FlowSubgraphSelection
+/**
+ * SubGraph extraction for procedural callers, such as editor tools, scripts and agents.
+ * Nodes are addressed by GUID, so no open graph editor or editor selection is needed.
+ */
+namespace FlowSubGraphExtraction
 {
-	struct FLOWEDITOR_API FSelectionPlanSummary
+	struct FLOWEDITOR_API FExtractionPlanSummary
 	{
 		bool bCanApply = false;
 		int32 SelectedNodeCount = 0;
@@ -22,19 +26,19 @@ namespace FlowSubgraphSelection
 		TArray<FString> InterfaceOutputs;
 	};
 
-	FLOWEDITOR_API bool PlanSelection(
-		UFlowAsset* SourceAsset,
+	FLOWEDITOR_API bool PlanExtractionByGuid(
+		const UFlowAsset* SourceAsset,
 		const TArray<FGuid>& SelectionGuids,
 		const FString& NewAssetName,
-		FSelectionPlanSummary& OutPlan,
+		FExtractionPlanSummary& OutPlan,
 		FString& OutError);
 
-	FLOWEDITOR_API bool ApplySelection(
+	FLOWEDITOR_API bool ApplyExtractionByGuid(
 		UFlowAsset* SourceAsset,
 		const TArray<FGuid>& SelectionGuids,
 		const FString& NewAssetName,
-		const FSelectionPlanSummary& PlanSummary,
+		const FExtractionPlanSummary& PlanSummary,
 		UFlowAsset*& OutNewAsset,
-		UFlowGraphNode*& OutSubgraphNode,
+		UFlowGraphNode*& OutSubGraphNode,
 		FString& OutError);
 }

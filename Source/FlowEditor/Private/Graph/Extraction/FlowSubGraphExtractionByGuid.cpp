@@ -1,6 +1,5 @@
 // Copyright https://github.com/MothCocoon/FlowGraph/graphs/contributors
-
-#include "Graph/Collapse/FlowSubgraphSelection.h"
+#include "Graph/Extraction/FlowSubGraphExtractionByGuid.h"
 
 #include "FlowAsset.h"
 #include "Graph/Extraction/FlowSubGraphExtractionApply.h"
@@ -12,7 +11,7 @@
 namespace
 {
 	bool ResolveSelection(
-		UFlowAsset& SourceAsset,
+		const UFlowAsset& SourceAsset,
 		const TArray<FGuid>& SelectionGuids,
 		TSet<UFlowGraphNode*>& OutSelectedNodes,
 		FString& OutError)
@@ -20,7 +19,7 @@ namespace
 		OutSelectedNodes.Reset();
 		for (const FGuid& SelectionGuid : SelectionGuids)
 		{
-			UFlowNode* FlowNode = SourceAsset.GetNode(SelectionGuid);
+			const UFlowNode* FlowNode = SourceAsset.GetNode(SelectionGuid);
 			if (!IsValid(FlowNode))
 			{
 				OutError = FString::Printf(
@@ -52,7 +51,7 @@ namespace
 
 	void CopyPlan(
 		const FlowSubGraphExtraction::FExtractionPlan& Source,
-		FlowSubgraphSelection::FSelectionPlanSummary& Destination)
+		FlowSubGraphExtraction::FExtractionPlanSummary& Destination)
 	{
 		Destination.bCanApply = Source.CanApply();
 		Destination.SelectedNodeCount = Source.SelectedNodes.Num();
@@ -78,16 +77,16 @@ namespace
 	}
 }
 
-namespace FlowSubgraphSelection
+namespace FlowSubGraphExtraction
 {
-	bool PlanSelection(
-		UFlowAsset* SourceAsset,
+	bool PlanExtractionByGuid(
+		const UFlowAsset* SourceAsset,
 		const TArray<FGuid>& SelectionGuids,
 		const FString& NewAssetName,
-		FSelectionPlanSummary& OutPlan,
+		FExtractionPlanSummary& OutPlan,
 		FString& OutError)
 	{
-		OutPlan = FSelectionPlanSummary();
+		OutPlan = FExtractionPlanSummary();
 		OutError.Reset();
 
 		if (!IsValid(SourceAsset))
@@ -115,22 +114,22 @@ namespace FlowSubgraphSelection
 		return true;
 	}
 
-	bool ApplySelection(
+	bool ApplyExtractionByGuid(
 		UFlowAsset* SourceAsset,
 		const TArray<FGuid>& SelectionGuids,
 		const FString& NewAssetName,
-		const FSelectionPlanSummary& PlanSummary,
+		const FExtractionPlanSummary& PlanSummary,
 		UFlowAsset*& OutNewAsset,
-		UFlowGraphNode*& OutSubgraphNode,
+		UFlowGraphNode*& OutSubGraphNode,
 		FString& OutError)
 	{
 		OutNewAsset = nullptr;
-		OutSubgraphNode = nullptr;
+		OutSubGraphNode = nullptr;
 		OutError.Reset();
 
 		if (!PlanSummary.bCanApply)
 		{
-			OutError = TEXT("The supplied subgraph selection plan cannot be applied.");
+			OutError = TEXT("The supplied SubGraph extraction plan cannot be applied.");
 			return false;
 		}
 
@@ -160,7 +159,7 @@ namespace FlowSubgraphSelection
 		}
 
 		OutNewAsset = Result.NewAsset;
-		OutSubgraphNode = Result.SubGraphNode;
+		OutSubGraphNode = Result.SubGraphNode;
 		return true;
 	}
 }
