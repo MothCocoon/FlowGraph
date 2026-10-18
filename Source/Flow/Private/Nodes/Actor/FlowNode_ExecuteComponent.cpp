@@ -567,21 +567,21 @@ EDataValidationResult UFlowNode_ExecuteComponent::ValidateNode()
 		}
 
 		// Check that the component implements the expected interfaces
-		if (!Cast<IFlowExternalExecutableInterface>(ExpectedComponent))
+		if (!ExpectedComponent->Implements<UFlowExternalExecutableInterface>())
 		{
 			ValidationLog.Error<UFlowNode>(TEXT("Expected component to implement IFlowExternalExecutableInterface"), this);
 
 			return EDataValidationResult::Invalid;
 		}
 
-		if (!Cast<IFlowCoreExecutableInterface>(ExpectedComponent))
+		if (!ExpectedComponent->Implements<UFlowCoreExecutableInterface>())
 		{
 			ValidationLog.Error<UFlowNode>(TEXT("Expected component to implement IFlowCoreExecutableInterface"), this);
 
 			return EDataValidationResult::Invalid;
 		}
 	}
-		
+
 	return FinalResult;
 }
 
