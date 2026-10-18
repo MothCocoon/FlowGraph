@@ -42,8 +42,6 @@ private:
 
 public:
 	static void SubscribeToAssetChanges();
-	/** Rebuilds cached native Flow node and AddOn classes after a class reload. */
-	static void RefreshNativeNodeCache();
 	static void GetPaletteActions(FGraphActionMenuBuilder& ActionMenuBuilder, const UFlowAsset* EditedFlowAsset, const FString& CategoryName);
 
 	// EdGraphSchema
@@ -150,6 +148,9 @@ private:
 	static void OnBlueprintPreCompile(UBlueprint* Blueprint);
 	static void OnBlueprintCompiled();
 	static void OnHotReload(EReloadCompleteReason ReloadCompleteReason);
+
+	/** Rebuilds cached native Flow node and AddOn classes after a class reload. */
+	static void RefreshNativeNodeCache();
 
 	static void GatherNativeNodesOrAddOns(const TSubclassOf<UFlowNodeBase>& FlowNodeBaseClass, TArray<UClass*>& InOutNodesOrAddOnsArray);
 	static void GatherNodes();
