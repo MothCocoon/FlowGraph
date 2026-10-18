@@ -194,6 +194,12 @@ void UFlowNode_SubGraph::OnLoad_Implementation()
 
 #if WITH_EDITOR
 
+void UFlowNode_SubGraph::SetAsset(UFlowAsset* InAsset)
+{
+	Asset = InAsset;
+	SubscribeToAssetChanges();
+}
+
 FText UFlowNode_SubGraph::K2_GetNodeTitle_Implementation() const
 {
 	if (GetDefault<UFlowSettings>()->bUseAdaptiveNodeTitles && !Asset.IsNull())

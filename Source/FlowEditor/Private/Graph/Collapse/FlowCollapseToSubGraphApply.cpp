@@ -6,7 +6,6 @@
 #include "Asset/FlowAssetFactory.h"
 #include "FlowAsset.h"
 #include "Graph/FlowGraph.h"
-#include "Graph/FlowGraphSchema.h"
 #include "Graph/FlowGraphSchema_Actions.h"
 #include "Graph/Nodes/FlowGraphNode.h"
 #include "Nodes/FlowNode.h"
