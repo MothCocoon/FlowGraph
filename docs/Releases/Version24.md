@@ -35,6 +35,7 @@ This is a BREAKING CHANGE if you have any custom UFlowGraphNode class. Updating 
     * Added an option to defer deinitialization of the Flow Asset instance (owned by the SubGraph node). The default behavior remains unchanged: the asset instance is fully removed when the SubGraph finishes its work. The new option keeps this instance until the owner of the SubGraph is destroyed. The new behavior can be activated globally by changing `SubGraphFinishPolicy` in the project settings, or by overriding `GetSubGraphFinishPolicy()` in a specific subclass of `UFlowAsset`. (based on a changelist by LindyHopperGT)
 * `PlayLevelSequence` node now supports multiplayer via a replicated binding on `AFlowLevelSequenceActor`. (contributed by LindyHopperGT)
 * `OnNotifyFromActor` now has `bExactMatch` flag allowing users to choose how the `NotifyTag` should be matched. It's similar to the `NotifyActor` node. (contributed by fede-Raider)
+* Added documentation methods for LLM agents. All nodes now implement `GetAgentDoc()`.
 
 ## Flow Node AddOns
 * Moved `NodeGuid` property to `UFlowNodeBase`, so now AddOns uses this for identification. (contributed by LindyHopperGT)
@@ -48,7 +49,10 @@ This is a BREAKING CHANGE if you have any custom UFlowGraphNode class. Updating 
     * Fixed populating the diff entry tree. The add-on hierarchy is now preserved when an add-on's direct parent has no changes but its grandparent does.
     * Fixed focusing a node in the graph when the user clicks a diff element belonging to an add-on.
     * Made Details views read-only.
-* Flow Asset validation is now called by the engine's Data Validation pipeline. (contributed by fede-Raider)
+* Flow Asset validation improvements.
+    * Validation logic is now called by the engine's Data Validation pipeline. (contributed by fede-Raider)
+    * Added check if pin connects to zombie nodes. (contributed by LindyHopperGT)
+    * Improved AddOn validation, i.e. checking it's allowed to place multiple AddOns of the same class to the node. (contributed by LindyHopperGT)
 
 ## Flow Component
 * Added `bMarkFlowCategoryImportant` option to force the "Flow" category to the top of the component's Details panel. Enabled by default. (contributed by Bargestt)
