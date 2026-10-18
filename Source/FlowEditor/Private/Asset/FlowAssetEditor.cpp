@@ -420,10 +420,10 @@ void FFlowAssetEditor::BindToolbarCommands()
 	                           FCanExecuteAction::CreateStatic(&FFlowAssetEditor::CanEdit));
 
 	ToolkitCommands->MapAction(ToolbarCommands.ContinueFlowExecution,
-	                           FExecuteAction::CreateSP(this, &FFlowAssetEditor::ContinueFlowExecution),
-	                           FCanExecuteAction::CreateSP(this, &FFlowAssetEditor::IsFlowExecutionHalted),
+	                           FExecuteAction::CreateStatic(&FFlowAssetEditor::ContinueFlowExecution),
+	                           FCanExecuteAction::CreateStatic(&FFlowAssetEditor::IsFlowExecutionHalted),
 	                           FIsActionChecked(),
-	                           FIsActionButtonVisible::CreateSP(this, &FFlowAssetEditor::IsFlowExecutionHalted));
+	                           FIsActionButtonVisible::CreateStatic(&FFlowAssetEditor::IsFlowExecutionHalted));
 
 	// Engine's Play commands
 	ToolkitCommands->Append(FPlayWorldCommands::GlobalPlayWorldActions.ToSharedRef());
@@ -437,7 +437,7 @@ void FFlowAssetEditor::ContinueFlowExecution()
 	}
 }
 
-bool FFlowAssetEditor::IsFlowExecutionHalted() const
+bool FFlowAssetEditor::IsFlowExecutionHalted()
 {
 	const UFlowDebugEditorSubsystem* DebugSubsystem = GetFlowDebugEditorSubsystem();
 	return DebugSubsystem && DebugSubsystem->IsHaltedAtBreakpoint();

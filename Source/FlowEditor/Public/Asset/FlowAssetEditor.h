@@ -143,8 +143,8 @@ protected:
 	void EditAssetDefaults_Clicked() const;
 
 	/* Continues execution halted at a Flow breakpoint. Only available while halted. */
-	void ContinueFlowExecution();
-	bool IsFlowExecutionHalted() const;
+	static void ContinueFlowExecution();
+	static bool IsFlowExecutionHalted();
 	static class UFlowDebugEditorSubsystem* GetFlowDebugEditorSubsystem();
 
 	virtual void CreateWidgets();
