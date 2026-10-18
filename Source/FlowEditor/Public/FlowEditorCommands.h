@@ -33,9 +33,6 @@ public:
 	// Context Pins
 	TSharedPtr<FUICommandInfo> ReconstructNode;
 
-	// Create From Selection
-	TSharedPtr<FUICommandInfo> CreateSubGraphFromSelection;
-
 	// Pins
 	TSharedPtr<FUICommandInfo> AddInput;
 	TSharedPtr<FUICommandInfo> AddOutput;

@@ -321,15 +321,6 @@ protected:
 	static FString NoActorsFound;
 
 #if WITH_EDITOR
-public:
-	// UObject interface
-	virtual EDataValidationResult IsDataValid(FDataValidationContext& Context) const override;
-	// --
-
-public:
-	// UObject interface
-	virtual EDataValidationResult IsDataValid(FDataValidationContext& Context) const override;
-	// --
 
 protected:
 	virtual EDataValidationResult ValidateNode() override;

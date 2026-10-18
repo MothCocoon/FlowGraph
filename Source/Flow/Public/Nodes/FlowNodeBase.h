@@ -151,19 +151,6 @@ public:
 	UFUNCTION(BlueprintPure, Category = "FlowNode")
 	virtual int32 GetRandomSeed() const PURE_VIRTUAL(GetRandomSeed, return 0;);
 
-	/* Stable identity persisted across saves. For UFlowNode, inherits from graph node; for
-	 * UFlowNodeAddOn, auto-minted in constructor. Used by Flow Courier to upsert/delete individual
-	 * addons. Name-keyed serialization means no CoreRedirect needed. */
-	UPROPERTY()
-	FGuid NodeGuid;
-
-public:
-	UFUNCTION(BlueprintCallable, Category = "FlowNode")
-	void SetGuid(const FGuid& NewGuid) { NodeGuid = NewGuid; }
-
-	UFUNCTION(BlueprintPure, Category = "FlowNode")
-	const FGuid& GetGuid() const { return NodeGuid; }
-
 //////////////////////////////////////////////////////////////////////////
 // Pins
 
