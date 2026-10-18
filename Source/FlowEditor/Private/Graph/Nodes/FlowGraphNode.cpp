@@ -726,6 +726,24 @@ FText UFlowGraphNode::GetTooltipText() const
 	return Tooltip;
 }
 
+UFlowGraph* UFlowGraphNode::GetFlowGraph() const
+{
+	return CastChecked<UFlowGraph>(GetGraph());
+}
+
+UFlowAsset* UFlowGraphNode::GetFlowAsset() const
+{
+	if (const UFlowGraph* FlowGraph = GetFlowGraph())
+	{
+		if (UFlowAsset* FlowAsset = FlowGraph->GetFlowAsset())
+		{
+			return FlowAsset;
+		}
+	}
+
+	return nullptr;
+}
+
 FString UFlowGraphNode::GetNodeDescription() const
 {
 	if (NodeInstance && (GEditor->PlayWorld == nullptr || GetDefault<UFlowGraphEditorSettings>()->bShowNodeDescriptionWhilePlaying))
@@ -1264,19 +1282,6 @@ void UFlowGraphNode::PostEditUndo()
 	}
 }
 
-UFlowAsset* UFlowGraphNode::GetFlowAsset() const
-{
-	if (const UFlowGraph* FlowGraph = GetFlowGraph())
-	{
-		if (UFlowAsset* FlowAsset = FlowGraph->GetFlowAsset())
-		{
-			return FlowAsset;
-		}
-	}
-
-	return nullptr;
-}
-
 void UFlowGraphNode::LogError(const FString& MessageToLog, const UFlowNodeBase* FlowNodeBase) const
 {
 	if (const UFlowAsset* FlowAsset = GetFlowAsset())
@@ -1352,11 +1357,6 @@ UEdGraphPin* UFlowGraphNode::GetOutputPin(int32 InputIndex) const
 	}
 
 	return nullptr;
-}
-
-UFlowGraph* UFlowGraphNode::GetFlowGraph() const
-{
-	return CastChecked<UFlowGraph>(GetGraph());
 }
 
 bool UFlowGraphNode::IsSubNode() const
@@ -1589,11 +1589,13 @@ void UFlowGraphNode::DiffSubNodes(const FText& NodeTypeDisplayName, const TArray
 	}
 }
 
-void UFlowGraphNode::AddSubNode(UFlowGraphNode* SubNode, class UEdGraph* ParentGraph)
+void UFlowGraphNode::AddSubNode(UFlowGraphNode* SubNode)
 {
 	const FScopedTransaction Transaction(LOCTEXT("AddNode", "Add Node"));
-	ParentGraph->Modify();
 	Modify();
+
+	UEdGraph* ParentGraph = GetGraph();
+	ParentGraph->Modify();
 
 	SubNode->SetFlags(RF_Transactional);
 
@@ -1710,7 +1712,6 @@ void UFlowGraphNode::DestroyNode()
 	if (ParentNode)
 	{
 		ParentNode->RemoveSubNode(this);
-
 		ParentNode->RebuildRuntimeAddOnsFromEditorSubNodes();
 	}
 	else
@@ -1718,8 +1719,7 @@ void UFlowGraphNode::DestroyNode()
 		RebuildRuntimeAddOnsFromEditorSubNodes();
 	}
 
-	UEdGraphNode::DestroyNode();
-
+	Super::DestroyNode();
 	bIsDestroyingNode = false;
 }
 
