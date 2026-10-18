@@ -145,10 +145,10 @@ namespace FlowSubGraphExtraction
 		/**
 		 * Clones the planned nodes into the new graph, preserving node Guids.
 		 *
-		 * Paste into the same graph has to re-Guid to avoid collisions, but a freshly created asset has
-		 * none, and a Flow node's Guid is its identity for its whole life. Preserving it keeps debugger
-		 * bookmarks, saved state and the Guid-keyed Connections map meaningful, and it is what lets the
-		 * boundary pins be matched back to their clones below.
+		 * Paste into the same graph has to re-Guid to avoid collisions, but a freshly created asset has none.
+		 * Preserved Guids let the boundary pins be matched back to their clones below.
+		 * They also carry node breakpoints over, as UFlowDebuggerSettings keys them by node Guid alone.
+		 * AddOns receive new Guids from UFlowGraphNode::AddSubNode.
 		 */
 		bool CloneSelectionIntoGraph(
 			const FExtractionPlan& Plan,
