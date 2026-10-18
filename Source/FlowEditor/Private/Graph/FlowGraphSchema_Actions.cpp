@@ -212,7 +212,7 @@ FText FFlowGraphSchemaAction_NewNode::GetNodeCategory(const UFlowNodeBase* Node,
 
 UEdGraphNode* FFlowSchemaAction_NewSubNode::PerformAction(class UEdGraph* ParentGraph, UEdGraphPin* FromPin, const FVector2f& Location, bool bSelectNewNode)
 {
-	ParentNode->AddSubNode(NodeTemplate, ParentGraph);
+	ParentNode->AddSubNode(NodeTemplate);
 	return nullptr;
 }
 
@@ -251,7 +251,7 @@ UFlowGraphNode* FFlowSchemaAction_NewSubNode::RecreateNode(UEdGraph* ParentGraph
 		OldInstance->DestroyNode();
 	}
 
-	ParentFlowGraphNode->AddSubNode(NewGraphNode, ParentGraph);
+	ParentFlowGraphNode->AddSubNode(NewGraphNode);
 
 	// call notifies
 	ParentGraph->NotifyGraphChanged();
@@ -311,8 +311,13 @@ UEdGraphNode* FFlowGraphSchemaAction_NewComment::PerformAction(class UEdGraph* P
 	}
 
 	// register to the graph
-	CommentNode->CreateNewGuid();
-	ParentGraph->AddNode(CommentNode, false, bSelectNewNode);
+	{
+		CommentNode->CreateNewGuid();
+
+		// start editing the comment text right after creation
+		constexpr bool bCreatedByUserAction = true;
+		ParentGraph->AddNode(CommentNode, bCreatedByUserAction, bSelectNewNode);
+	}
 
 	// set position
 	CommentNode->NodePosX = SpawnLocation.X;
