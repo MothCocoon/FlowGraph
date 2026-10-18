@@ -329,8 +329,9 @@ EDataValidationResult UFlowAsset::ValidateAsset(FFlowMessageLog& MessageLog) con
 			FText FailureReason;
 			if (!IsNodeOrAddOnClassAllowed(Node->GetClass(), &FailureReason))
 			{
-				const FString ErrorMsg = !FailureReason.IsEmpty() ? FailureReason.ToString()
-					: FString::Format(*ValidationError_NodeClassNotAllowed, {*Node->GetClass()->GetName()});
+				const FString ErrorMsg = !FailureReason.IsEmpty()
+					                         ? FailureReason.ToString()
+					                         : FString::Format(*ValidationError_NodeClassNotAllowed, {*Node->GetClass()->GetName()});
 
 				MessageLog.Error(*ErrorMsg, Node);
 			}
@@ -340,8 +341,8 @@ EDataValidationResult UFlowAsset::ValidateAsset(FFlowMessageLog& MessageLog) con
 			{
 				if (!Nodes.Contains(Connection.Value.NodeGuid))
 				{
-					const FString ErrorMsg = FString::Format(*ValidationError_ConnectedToMissingNode, 
-						{*Connection.Key.ToString(), *NodeIt.Key.ToString(), *Connection.Value.NodeGuid.ToString(), GetPathName(), ValidationError_AdviseResave});
+					const FString ErrorMsg = FString::Format(*ValidationError_ConnectedToMissingNode,
+					                                         {*Connection.Key.ToString(), *NodeIt.Key.ToString(), *Connection.Value.NodeGuid.ToString(), GetPathName(), ValidationError_AdviseResave});
 
 					MessageLog.Error(*ErrorMsg, Node);
 				}
@@ -666,7 +667,7 @@ int32 UFlowAsset::RepairDuplicateAddOnGuids() const
 			++NumRepaired;
 
 			UE_LOG(LogFlow, Log, TEXT("RepairDuplicateAddOnGuids: %s AddOn %s had duplicate Guid %s, re-minted to %s"),
-				*GetPathName(), *AddOn.GetName(), *OldGuid.ToString(), *NewGuid.ToString());
+			       *GetPathName(), *AddOn.GetName(), *OldGuid.ToString(), *NewGuid.ToString());
 		}
 
 		for (UFlowNodeAddOn* Child : AddOn.GetFlowNodeAddOnChildren())
@@ -1078,24 +1079,22 @@ bool UFlowAsset::IsRuntimeGraphValid(FString& OutErrorMessage) const
 	{
 		if (!NodePair.Key.IsValid())
 		{
-			OutErrorMessage = FString::Printf(TEXT("Flow asset '%s' contains a runtime node with an invalid map GUID."),
-				*GetPathName());
+			OutErrorMessage = FString::Printf(TEXT("Flow asset '%s' contains a runtime node with an invalid map GUID."), *GetPathName());
 			return false;
 		}
 
 		const UFlowNode* Node = NodePair.Value;
 		if (!IsValid(Node))
 		{
-			OutErrorMessage = FString::Printf(TEXT("Flow asset '%s' contains an invalid runtime node for GUID '%s'."),
-				*GetPathName(), *NodePair.Key.ToString());
+			OutErrorMessage = FString::Printf(TEXT("Flow asset '%s' contains an invalid runtime node for GUID '%s'."), *GetPathName(),
+			                                  *NodePair.Key.ToString());
 			return false;
 		}
 
 		if (Node->GetGuid() != NodePair.Key)
 		{
-			OutErrorMessage = FString::Printf(
-				TEXT("Flow asset '%s' maps GUID '%s' to node '%s' whose GUID is '%s'."),
-				*GetPathName(), *NodePair.Key.ToString(), *Node->GetPathName(), *Node->GetGuid().ToString());
+			OutErrorMessage = FString::Printf(TEXT("Flow asset '%s' maps GUID '%s' to node '%s' whose GUID is '%s'."), *GetPathName(),
+			                                  *NodePair.Key.ToString(), *Node->GetPathName(), *Node->GetGuid().ToString());
 			return false;
 		}
 
@@ -1104,9 +1103,8 @@ bool UFlowAsset::IsRuntimeGraphValid(FString& OutErrorMessage) const
 			const FGuid& ConnectedNodeGuid = ConnectionPair.Value.NodeGuid;
 			if (ConnectedNodeGuid.IsValid() && !IsValid(Nodes.FindRef(ConnectedNodeGuid)))
 			{
-				OutErrorMessage = FString::Printf(
-					TEXT("Flow asset '%s' node '%s' pin '%s' references missing runtime node '%s'."),
-					*GetPathName(), *NodePair.Key.ToString(), *ConnectionPair.Key.ToString(), *ConnectedNodeGuid.ToString());
+				OutErrorMessage = FString::Printf(TEXT("Flow asset '%s' node '%s' pin '%s' references missing runtime node '%s'."), *GetPathName(),
+				                                  *NodePair.Key.ToString(), *ConnectionPair.Key.ToString(), *ConnectedNodeGuid.ToString());
 				return false;
 			}
 		}
@@ -1115,16 +1113,9 @@ bool UFlowAsset::IsRuntimeGraphValid(FString& OutErrorMessage) const
 	return true;
 }
 
-bool UFlowAsset::InitializeInstance(const TWeakObjectPtr<UObject> InOwner, UFlowAsset& InTemplateAsset)
+void UFlowAsset::InitializeInstance(const TWeakObjectPtr<UObject> InOwner, UFlowAsset& InTemplateAsset)
 {
 	check(!IsInstanceInitialized());
-
-	FString ValidationError;
-	if (!IsRuntimeGraphValid(ValidationError))
-	{
-		UE_LOG(LogFlow, Error, TEXT("Flow instance initialization rejected: %s"), *ValidationError);
-		return false;
-	}
 
 	Owner = InOwner;
 	TemplateAsset = &InTemplateAsset;
@@ -1147,8 +1138,6 @@ bool UFlowAsset::InitializeInstance(const TWeakObjectPtr<UObject> InOwner, UFlow
 
 		NewNodeInstance->InitializeInstance();
 	}
-
-	return true;
 }
 
 FName UFlowAsset::GetInstanceName() const
@@ -1319,7 +1308,7 @@ void UFlowAsset::ResetNodes()
 void UFlowAsset::FinishFlow(const EFlowFinishPolicy InFinishPolicy, const bool bRemoveInstance)
 {
 	FinishFlowInstance(InFinishPolicy);
-	
+
 	if (bRemoveInstance)
 	{
 		DeinitializeInstance();
@@ -1616,8 +1605,8 @@ void UFlowAsset::CancelAndWarnForUnflushedDeferredTriggers()
 			if (TotalDroppedTriggers == 0 && !Triggers.IsEmpty())
 			{
 				UE_LOG(LogFlow, Warning, TEXT("FlowAsset '%s' is finishing with %d lingering deferred transition scope(s) — dropping them. "
-					"This is usually unexpected and may indicate a bug or abnormal termination."),
-				    *GetName(), DeferredTransitionScopes.Num());
+					       "This is usually unexpected and may indicate a bug or abnormal termination."),
+				       *GetName(), DeferredTransitionScopes.Num());
 			}
 
 			TotalDroppedTriggers += Triggers.Num();
@@ -1777,17 +1766,17 @@ void UFlowAsset::LogRuntimeMessage(EMessageSeverity::Type Severity, const FStrin
 		TSharedPtr<FTokenizedMessage> TokenizedMessage = nullptr;
 		switch (Severity)
 		{
-		case EMessageSeverity::Error:
-			TokenizedMessage = RuntimeLog.Get()->Error(*MessageToLog, Node);
-			break;
+			case EMessageSeverity::Error:
+				TokenizedMessage = RuntimeLog.Get()->Error(*MessageToLog, Node);
+				break;
 
-		case EMessageSeverity::Warning:
-			TokenizedMessage = RuntimeLog.Get()->Warning(*MessageToLog, Node);
-			break;
+			case EMessageSeverity::Warning:
+				TokenizedMessage = RuntimeLog.Get()->Warning(*MessageToLog, Node);
+				break;
 
-		default:
-			TokenizedMessage = RuntimeLog.Get()->Note(*MessageToLog, Node);
-			break;
+			default:
+				TokenizedMessage = RuntimeLog.Get()->Note(*MessageToLog, Node);
+				break;
 		}
 
 		BroadcastRuntimeMessageAdded(TokenizedMessage.ToSharedRef());
