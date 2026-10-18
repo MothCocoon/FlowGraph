@@ -12,6 +12,7 @@ namespace FlowSubGraphExtraction
 	/** Source-control destination selected before the source asset is saved. */
 	struct FSourceControlContext
 	{
+		/** Unset when the provider has no changelists. */
 		TSharedPtr<ISourceControlChangelist, ESPMode::ThreadSafe> Changelist;
 		FString ChangelistIdentifier;
 		bool bEnabled = false;
@@ -21,15 +22,16 @@ namespace FlowSubGraphExtraction
 	FLOWEDITOR_API bool DiscardCreatedAsset(UFlowAsset* NewAsset);
 
 	/**
-	 * Resolves the target changelist before either asset is saved. An existing source checkout is
-	 * preserved; otherwise a changelist is created and the source is checked out into it.
+	 * Makes the source asset writable and resolves the target changelist before either asset is saved.
+	 * The source is checked out only when the provider uses checkout and the file is not opened yet.
+	 * With a provider that uses changelists, an existing source changelist is preserved, otherwise a new one is created.
 	 */
 	FLOWEDITOR_API FText PrepareSourceControl(
 		const UFlowAsset& SourceAsset,
 		const FString& NewAssetName,
 		FSourceControlContext& OutContext);
 
-	/** Saves both assets and moves the generated file into the source asset's changelist. */
+	/** Saves both assets and, with a provider that uses changelists, moves both into the target changelist. */
 	FLOWEDITOR_API FText SaveAndFinalizeSourceControl(
 		const UFlowAsset& NewAsset,
 		const UFlowAsset& SourceAsset,
