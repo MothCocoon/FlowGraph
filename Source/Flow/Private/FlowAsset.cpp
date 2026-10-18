@@ -8,7 +8,6 @@
 #include "AddOns/FlowNodeAddOn.h"
 #include "Asset/FlowAssetParams.h"
 #include "Asset/FlowAssetParamsUtils.h"
-#include "Interfaces/FlowExecutionGate.h"
 #include "Interfaces/FlowGraphOutputDataReceiverInterface.h"
 #include "Types/FlowNamedDataPinProperty.h"
 #include "Nodes/FlowNodeBase.h"
@@ -45,6 +44,8 @@ FString UFlowAsset::ValidationError_NodeClassNotAllowed = TEXT("Node class {0} i
 FString UFlowAsset::ValidationError_AddOnNodeClassNotAllowed = TEXT("AddOn Node class {0} is not allowed in this asset.");
 FString UFlowAsset::ValidationError_NullNodeInstance = TEXT("Node with GUID {0} is NULL");
 FString UFlowAsset::ValidationError_NullAddOnNodeInstance = TEXT("Node with GUID {0} has NULL AddOn(s)");
+FString UFlowAsset::ValidationError_ConnectedToMissingNode = TEXT("Pin {0} on Node with GUID {1} is connected to Node with Guid {2}, which does not exist in {3}. {4}");
+FString UFlowAsset::ValidationError_AdviseResave = TEXT("Open the Flow Asset in editor and resave it.");
 #endif
 
 #include UE_INLINE_GENERATED_CPP_BY_NAME(FlowAsset)
@@ -317,42 +318,45 @@ EDataValidationResult UFlowAsset::IsDataValid(FDataValidationContext& Context) c
 EDataValidationResult UFlowAsset::ValidateAsset(FFlowMessageLog& MessageLog) const
 {
 	// validate runtime nodes
-	for (const TPair<FGuid, UFlowNode*>& Node : ObjectPtrDecay(Nodes))
+	for (const TPair<FGuid, UFlowNode*>& NodeIt : ObjectPtrDecay(Nodes))
 	{
-		if (IsValid(Node.Value))
-		{
-			FText FailureReason;
-			if (!IsNodeOrAddOnClassAllowed(Node.Value->GetClass(), &FailureReason))
-			{
-				const FString ErrorMsg =
-					FailureReason.IsEmpty()
-						? FString::Format(*ValidationError_NodeClassNotAllowed, {*Node.Value->GetClass()->GetName()})
-						: FailureReason.ToString();
+		UFlowNode* Node = NodeIt.Value;
 
-				MessageLog.Error(*ErrorMsg, Node.Value);
+		if (IsValid(Node))
+		{
+			// Check if this node class is still allowed in this asset class
+			FText FailureReason;
+			if (!IsNodeOrAddOnClassAllowed(Node->GetClass(), &FailureReason))
+			{
+				const FString ErrorMsg = !FailureReason.IsEmpty() ? FailureReason.ToString()
+					: FString::Format(*ValidationError_NodeClassNotAllowed, {*Node->GetClass()->GetName()});
+
+				MessageLog.Error(*ErrorMsg, Node);
 			}
 
-			Node.Value->ValidationLog.Messages.Empty();
-			Node.Value->ValidateNode();
-			MessageLog.Messages.Append(Node.Value->ValidationLog.Messages);
+			// Validate node connections
+			for (const TPair<FName, FConnectedPin>& Connection : Node->Connections)
+			{
+				if (!Nodes.Contains(Connection.Value.NodeGuid))
+				{
+					const FString ErrorMsg = FString::Format(*ValidationError_ConnectedToMissingNode, 
+						{*Connection.Key.ToString(), *NodeIt.Key.ToString(), *Connection.Value.NodeGuid.ToString(), GetPathName(), ValidationError_AdviseResave});
+
+					MessageLog.Error(*ErrorMsg, Node);
+				}
+			}
+
+			// Run node-specific validations
+			Node->ValidationLog.Messages.Empty();
+			Node->ValidateNode();
+			MessageLog.Messages.Append(Node->ValidationLog.Messages);
 
 			// Validate AddOns
-			for (UFlowNodeAddOn* AddOn : Node.Value->GetFlowNodeAddOnChildren())
-			{
-				if (IsValid(AddOn))
-				{
-					ValidateAddOnTree(*AddOn, MessageLog);
-				}
-				else
-				{
-					const FString ErrorMsg = FString::Format(*ValidationError_NullAddOnNodeInstance, {*Node.Key.ToString()});
-					MessageLog.Error(*ErrorMsg, this);
-				}
-			}
+			ValidateAddOnChildren(*Node, MessageLog);
 		}
 		else
 		{
-			const FString ErrorMsg = FString::Format(*ValidationError_NullNodeInstance, {*Node.Key.ToString()});
+			const FString ErrorMsg = FString::Format(*ValidationError_NullNodeInstance, {*NodeIt.Key.ToString()});
 			MessageLog.Error(*ErrorMsg, this);
 		}
 	}
@@ -392,12 +396,41 @@ void UFlowAsset::ValidateAddOnTree(UFlowNodeAddOn& AddOn, FFlowMessageLog& Messa
 	AddOn.ValidateNode();
 	MessageLog.Messages.Append(AddOn.ValidationLog.Messages);
 
-	// Validate Children
-	for (UFlowNodeAddOn* Child : AddOn.GetFlowNodeAddOnChildren())
+	ValidateAddOnChildren(AddOn, MessageLog);
+}
+
+void UFlowAsset::ValidateAddOnChildren(UFlowNodeBase& OwnerNode, FFlowMessageLog& MessageLog) const
+{
+	const TArray<UFlowNodeAddOn*>& Children = OwnerNode.GetFlowNodeAddOnChildren();
+	for (UFlowNodeAddOn* Child : Children)
 	{
 		if (IsValid(Child))
 		{
+			TArray<UFlowNodeAddOn*> OtherChildren;
+			OtherChildren.Reserve(Children.Num() - 1);
+			for (UFlowNodeAddOn* OtherChild : Children)
+			{
+				if (IsValid(OtherChild) && OtherChild != Child)
+				{
+					OtherChildren.Add(OtherChild);
+				}
+			}
+
+			if (OwnerNode.CheckAcceptFlowNodeAddOnChild(Child, OtherChildren) == EFlowAddOnAcceptResult::Reject)
+			{
+				const FString ErrorMsg = FString::Printf(
+					TEXT("AddOn '%s' is not a valid child of '%s' with its current sibling set."),
+					*Child->GetClass()->GetName(),
+					*OwnerNode.GetClass()->GetName());
+				MessageLog.Error(*ErrorMsg, &OwnerNode);
+			}
+
 			ValidateAddOnTree(*Child, MessageLog);
+		}
+		else
+		{
+			const FString ErrorMsg = FString::Format(*ValidationError_NullAddOnNodeInstance, {*OwnerNode.GetGuid().ToString()});
+			MessageLog.Error(*ErrorMsg, this);
 		}
 	}
 }
@@ -782,6 +815,30 @@ void UFlowAsset::RemoveCustomOutput(const FName& EventName)
 		CustomOutputs.Remove(EventName);
 	}
 }
+
+void UFlowAsset::RebuildCustomInterfaceLists()
+{
+	CustomInputs.Reset();
+	CustomOutputs.Reset();
+
+	for (const TPair<FGuid, UFlowNode*>& Pair : ObjectPtrDecay(Nodes))
+	{
+		if (const UFlowNode_CustomInput* InputNode = Cast<UFlowNode_CustomInput>(Pair.Value))
+		{
+			if (!InputNode->GetEventName().IsNone())
+			{
+				CustomInputs.AddUnique(InputNode->GetEventName());
+			}
+		}
+		else if (const UFlowNode_CustomOutput* OutputNode = Cast<UFlowNode_CustomOutput>(Pair.Value))
+		{
+			if (!OutputNode->GetEventName().IsNone())
+			{
+				CustomOutputs.AddUnique(OutputNode->GetEventName());
+			}
+		}
+	}
+}
 #endif // WITH_EDITOR
 
 #if WITH_EDITOR
@@ -1048,18 +1105,26 @@ void UFlowAsset::InitializeInstance(const TWeakObjectPtr<UObject> InOwner, UFlow
 
 	for (TPair<FGuid, TObjectPtr<UFlowNode>>& Node : Nodes)
 	{
-		UFlowNode* NewNodeInstance = NewObject<UFlowNode>(this, Node.Value->GetClass(), NAME_None, RF_Transient, Node.Value, false, nullptr);
-		Node.Value = NewNodeInstance;
-
-		if (UFlowNode_CustomInput* CustomInput = Cast<UFlowNode_CustomInput>(NewNodeInstance))
+		// Node can be null if its class has been removed.
+		if (IsValid(Node.Value))
 		{
-			if (!CustomInput->GetEventName().IsNone())
-			{
-				CustomInputNodes.Emplace(CustomInput);
-			}
-		}
+			UFlowNode* NewNodeInstance = NewObject<UFlowNode>(this, Node.Value->GetClass(), NAME_None, RF_Transient, Node.Value, false, nullptr);
+			Node.Value = NewNodeInstance;
 
-		NewNodeInstance->InitializeInstance();
+			if (UFlowNode_CustomInput* CustomInput = Cast<UFlowNode_CustomInput>(NewNodeInstance))
+			{
+				if (!CustomInput->GetEventName().IsNone())
+				{
+					CustomInputNodes.Emplace(CustomInput);
+				}
+			}
+
+			NewNodeInstance->InitializeInstance();
+		}
+		else
+		{
+			UE_LOG(LogFlow, Error, TEXT("Flow asset '%s' contains an invalid node for GUID '%s', node won't be instanced."), *InTemplateAsset.GetPathName(), *Node.Key.ToString());
+		}
 	}
 }
 
@@ -1382,12 +1447,7 @@ void UFlowAsset::TriggerCustomOutput(const FName& EventName)
 
 void UFlowAsset::TriggerInput(const FGuid& NodeGuid, const FName& PinName, const FConnectedPin& FromPin)
 {
-	if (FFlowExecutionGate::IsHalted())
-	{
-		// Halt always takes precedence for debugger correctness
-		EnqueueDeferredTrigger(NodeGuid, PinName, FromPin);
-	}
-	else if (ShouldDeferTriggers())
+	if (ShouldDeferTriggers())
 	{
 		// Defer only if we have an open the top scope
 		if (!DeferredTransitionScopes.IsEmpty() && DeferredTransitionScopes.Top()->IsOpen())
@@ -1428,12 +1488,8 @@ bool UFlowAsset::ShouldDeferTriggers() const
 
 void UFlowAsset::EnqueueDeferredTrigger(const FGuid& NodeGuid, const FName& PinName, const FConnectedPin& FromPin)
 {
-	if (DeferredTransitionScopes.IsEmpty() || !DeferredTransitionScopes.Top()->IsOpen())
-	{
-		// This should only occur when halted at an execution gate
-		check(FFlowExecutionGate::IsHalted());
-		PushDeferredTransitionScope();
-	}
+	// TriggerInput() is the only caller, and only enqueues while it holds an open top scope
+	check(!DeferredTransitionScopes.IsEmpty() && DeferredTransitionScopes.Top()->IsOpen());
 
 	// Always enqueue to the current innermost (top) scope
 	DeferredTransitionScopes.Top()->EnqueueDeferredTrigger(FFlowDeferredTriggerInput{NodeGuid, PinName, FromPin});
@@ -1459,18 +1515,14 @@ void UFlowAsset::PopDeferredTransitionScope(const TSharedPtr<FFlowDeferredTransi
 
 bool UFlowAsset::TryFlushAndRemoveDeferredTransitionScope(const TSharedPtr<FFlowDeferredTransitionScope>& ScopeToFlush)
 {
-	if (ScopeToFlush->TryFlushDeferredTriggers(*this))
+	if (!ScopeToFlush->TryFlushDeferredTriggers(*this))
 	{
-		// Remove the exact instance we were holding (handles nested push/pop cases)
-		DeferredTransitionScopes.RemoveSingle(ScopeToFlush);
-		return true;
-	}
-	else
-	{
-		// Flush was interrupted — should only happen due to execution gate halt
-		check(FFlowExecutionGate::IsHalted());
 		return false;
 	}
+
+	// Remove the exact instance we were holding (handles nested push/pop cases)
+	DeferredTransitionScopes.RemoveSingle(ScopeToFlush);
+	return true;
 }
 
 bool UFlowAsset::TryFlushAllDeferredTriggerScopes()
@@ -1482,10 +1534,10 @@ bool UFlowAsset::TryFlushAllDeferredTriggerScopes()
 			break;
 		}
 
-		// Keep flushing until stack is empty, or we hit an ExecutionGate halt
+		// Keep flushing until the stack is empty
 	}
 
-	check(DeferredTransitionScopes.IsEmpty() || FFlowExecutionGate::IsHalted());
+	check(DeferredTransitionScopes.IsEmpty());
 
 	return DeferredTransitionScopes.IsEmpty();
 }
@@ -1499,7 +1551,6 @@ void UFlowAsset::CancelAndWarnForUnflushedDeferredTriggers()
 {
 	// Aggressively drop any pending deferred triggers — graph is done
 	// In normal execution these should have been flushed via PopDeferredTransitionScope() in TriggerInputDirect
-	// In the debugger they should have been flushed by ResumePIE
 	// Remaining scopes here usually mean:
 	//   - early/abnormal termination (e.g. FinishFlowInstance called from unexpected place)
 	//   - exception/early return before Pop
