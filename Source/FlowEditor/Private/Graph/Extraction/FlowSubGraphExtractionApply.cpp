@@ -259,17 +259,27 @@ namespace FlowSubGraphExtraction
 
 	FExtractionResult FExtractionApply::Run()
 	{
-		if (!InitializeSource() ||
-			!CreateAsset() ||
-			!CloneNodes() ||
-			!PrepareLayout() ||
-			!ConnectEntry() ||
-			!BuildExits())
+		if (!InitializeSource())
 		{
 			return Result;
 		}
 
-		FinalizeNewAsset();
+		{
+			// The new asset is built outside the enclosing transaction.
+			// Otherwise undo would mark its objects as garbage and reset its graph to the constructed state without a schema.
+			TGuardValue<ITransaction*> SuppressTransaction(GUndo, nullptr);
+			if (!CreateAsset() ||
+				!CloneNodes() ||
+				!PrepareLayout() ||
+				!ConnectEntry() ||
+				!BuildExits())
+			{
+				return Result;
+			}
+
+			FinalizeNewAsset();
+		}
+
 		if (!ReplaceSourceSelection())
 		{
 			return Result;

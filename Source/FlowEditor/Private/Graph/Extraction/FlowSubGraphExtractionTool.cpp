@@ -46,6 +46,45 @@ void FFlowSubGraphExtractionTool::Execute(SFlowGraphEditor& GraphEditor)
 		return;
 	}
 
+	GraphEditor.FlowAssetEditor.Pin()->SetUISelectionState(NAME_None);
+	GraphEditor.ClearSelectionSet();
+
+	FText SaveError;
+	const FlowSubGraphExtraction::FExtractionResult Result = ApplyAndSave(Plan, *GraphEditor.FlowAsset, NewAssetName, SaveError);
+	GraphEditor.NotifyGraphChanged();
+
+	if (!Result.Succeeded())
+	{
+		for (UFlowGraphNode* SelectedNode : Plan.SelectedNodes)
+		{
+			if (IsValid(SelectedNode))
+			{
+				GraphEditor.SetNodeSelection(SelectedNode, true);
+			}
+		}
+
+		FMessageDialog::Open(EAppMsgType::Ok, Result.Error);
+		return;
+	}
+
+	check(IsValid(Result.SubGraphNode));
+	constexpr bool bSelectNode = true;
+	GraphEditor.SetNodeSelection(Result.SubGraphNode, bSelectNode);
+
+	if (!SaveError.IsEmpty())
+	{
+		FMessageDialog::Open(EAppMsgType::Ok, SaveError);
+	}
+}
+
+FlowSubGraphExtraction::FExtractionResult FFlowSubGraphExtractionTool::ApplyAndSave(
+	const FlowSubGraphExtraction::FExtractionPlan& Plan,
+	UFlowAsset& SourceAsset,
+	const FString& NewAssetName,
+	FText& OutSaveError)
+{
+	OutSaveError = FText::GetEmpty();
+
 	FlowSubGraphExtraction::FSourceControlContext SourceControlContext;
 	FText SourceControlPreparationError;
 	FlowSubGraphExtraction::FExtractionResult Result;
@@ -53,14 +92,11 @@ void FFlowSubGraphExtractionTool::Execute(SFlowGraphEditor& GraphEditor)
 		const FScopedTransaction Transaction(
 			LOCTEXT("ExtractToSubGraphTransaction", "Extract to SubGraph"));
 
-		GraphEditor.FlowAssetEditor.Pin()->SetUISelectionState(NAME_None);
-		GraphEditor.ClearSelectionSet();
-
-		Result = FlowSubGraphExtraction::ApplyExtraction(Plan, *GraphEditor.FlowAsset, NewAssetName);
+		Result = FlowSubGraphExtraction::ApplyExtraction(Plan, SourceAsset, NewAssetName);
 		if (Result.Succeeded())
 		{
 			SourceControlPreparationError = FlowSubGraphExtraction::PrepareSourceControl(
-				*GraphEditor.FlowAsset,
+				SourceAsset,
 				NewAssetName,
 				SourceControlContext);
 		}
@@ -73,15 +109,6 @@ void FFlowSubGraphExtractionTool::Execute(SFlowGraphEditor& GraphEditor)
 
 		// Ensure the created asset is discarded. Set to true if Result.NewAsset is invalid.
 		const bool bDiscardSucceeded = FlowSubGraphExtraction::DiscardCreatedAsset(Result.NewAsset);
-
-		GraphEditor.NotifyGraphChanged();
-		for (UFlowGraphNode* SelectedNode : Plan.SelectedNodes)
-		{
-			if (IsValid(SelectedNode))
-			{
-				GraphEditor.SetNodeSelection(SelectedNode, true);
-			}
-		}
 
 		FText FailureMessage = SourceControlPreparationError.IsEmpty() ? Result.Error : SourceControlPreparationError;
 		if (!bRollbackSucceeded)
@@ -98,24 +125,17 @@ void FFlowSubGraphExtractionTool::Execute(SFlowGraphEditor& GraphEditor)
 				FText::FromString(Result.NewAsset->GetPathName()));
 		}
 
-		FMessageDialog::Open(EAppMsgType::Ok, FailureMessage);
-		return;
+		Result.Error = FailureMessage;
+		Result.NewAsset = nullptr;
+		Result.SubGraphNode = nullptr;
+		return Result;
 	}
 
-	GraphEditor.NotifyGraphChanged();
-
-	check(IsValid(Result.SubGraphNode));
-	constexpr bool bSelectNode = true;
-	GraphEditor.SetNodeSelection(Result.SubGraphNode, bSelectNode);
-
-	const FText SourceControlError = FlowSubGraphExtraction::SaveAndFinalizeSourceControl(
+	OutSaveError = FlowSubGraphExtraction::SaveAndFinalizeSourceControl(
 		*Result.NewAsset,
-		*GraphEditor.FlowAsset,
+		SourceAsset,
 		SourceControlContext);
-	if (!SourceControlError.IsEmpty())
-	{
-		FMessageDialog::Open(EAppMsgType::Ok, SourceControlError);
-	}
+	return Result;
 }
 
 #undef LOCTEXT_NAMESPACE

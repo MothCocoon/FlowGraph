@@ -17,6 +17,8 @@ public:
 	TSharedPtr<FUICommandInfo> SearchInAsset;
 	TSharedPtr<FUICommandInfo> EditAssetDefaults;
 
+	TSharedPtr<FUICommandInfo> AutoFormatGraph;
+
 	virtual void RegisterCommands() override;
 };
 
@@ -35,7 +37,7 @@ public:
 	TSharedPtr<FUICommandInfo> AddInput;
 	TSharedPtr<FUICommandInfo> AddOutput;
 	TSharedPtr<FUICommandInfo> RemovePin;
-	
+
 	// Organization
 	TSharedPtr<FUICommandInfo> ExtractToSubGraph;
 
@@ -74,6 +76,7 @@ public:
 
 	virtual void RegisterCommands() override;
 
+public:
 	TSharedPtr<const FInputChord> GetChordByClass(const UClass* NodeClass) const;
 	TSharedPtr<FEdGraphSchemaAction> GetActionByChord(const FInputChord& InChord) const;
 
