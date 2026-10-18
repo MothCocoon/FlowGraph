@@ -425,6 +425,12 @@ void FFlowAssetEditor::BindToolbarCommands()
 	                           FIsActionChecked(),
 	                           FIsActionButtonVisible::CreateStatic(&FFlowAssetEditor::IsFlowExecutionHalted));
 
+	ToolkitCommands->MapAction(ToolbarCommands.StopFlowExecution,
+	                           FExecuteAction::CreateStatic(&FFlowAssetEditor::StopFlowExecution),
+	                           FCanExecuteAction::CreateStatic(&FFlowAssetEditor::IsFlowExecutionHalted),
+	                           FIsActionChecked(),
+	                           FIsActionButtonVisible::CreateStatic(&FFlowAssetEditor::IsFlowExecutionHalted));
+
 	// Engine's Play commands
 	ToolkitCommands->Append(FPlayWorldCommands::GlobalPlayWorldActions.ToSharedRef());
 }
@@ -434,6 +440,14 @@ void FFlowAssetEditor::ContinueFlowExecution()
 	if (UFlowDebugEditorSubsystem* DebugSubsystem = GetFlowDebugEditorSubsystem())
 	{
 		DebugSubsystem->RequestContinue();
+	}
+}
+
+void FFlowAssetEditor::StopFlowExecution()
+{
+	if (UFlowDebugEditorSubsystem* DebugSubsystem = GetFlowDebugEditorSubsystem())
+	{
+		DebugSubsystem->RequestStop();
 	}
 }
 

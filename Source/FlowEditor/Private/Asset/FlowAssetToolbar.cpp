@@ -488,14 +488,10 @@ void FFlowAssetToolbar::BuildDebuggerToolbar(UToolMenu* ToolbarMenu) const
 		const UFlowAssetEditorContext* Context = InSection.FindContext<UFlowAssetEditorContext>();
 		if (Context && Context->GetFlowAsset())
 		{
-			// First, and only visible while halted: the level toolbar's Resume does not work while a
-			// Flow breakpoint holds the game thread, so this is the way to continue.
-			InSection.AddEntry(FToolMenuEntry::InitToolBarButton(
-				FFlowToolbarCommands::Get().ContinueFlowExecution,
-				TAttribute<FText>(),
-				TAttribute<FText>(),
-				FSlateIcon(FAppStyle::GetAppStyleSetName(), "PlayWorld.PlayInViewport")
-			));
+			// First, and only visible while halted: the level toolbar's Resume and Stop do not work while a
+			// Flow breakpoint holds the game thread, so these are the way to continue or stop.
+			InSection.AddEntry(FToolMenuEntry::InitToolBarButton(FFlowToolbarCommands::Get().ContinueFlowExecution));
+			InSection.AddEntry(FToolMenuEntry::InitToolBarButton(FFlowToolbarCommands::Get().StopFlowExecution));
 
 			FPlayWorldCommands::BuildToolbar(InSection);
 

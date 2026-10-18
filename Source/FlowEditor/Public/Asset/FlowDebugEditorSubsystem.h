@@ -27,6 +27,11 @@ public:
 	 * Safe to call when nothing is halted. */
 	void RequestContinue() { ReleaseHalt(); }
 
+	/* Stops the play session while a Flow call stack is suspended at a breakpoint.
+	 * The halted stack unwinds without executing the pin it stopped at.
+	 * Safe to call when nothing is halted. */
+	void RequestStop();
+
 protected:
 	TMap<TWeakObjectPtr<UFlowAsset>, TSharedPtr<class IMessageLogListing>> RuntimeLogs;
 

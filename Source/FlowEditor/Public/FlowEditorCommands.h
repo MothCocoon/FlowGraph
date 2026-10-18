@@ -17,6 +17,7 @@ public:
 	TSharedPtr<FUICommandInfo> SearchInAsset;
 	TSharedPtr<FUICommandInfo> EditAssetDefaults;
 	TSharedPtr<FUICommandInfo> ContinueFlowExecution;
+	TSharedPtr<FUICommandInfo> StopFlowExecution;
 
 	TSharedPtr<FUICommandInfo> AutoFormatGraph;
 

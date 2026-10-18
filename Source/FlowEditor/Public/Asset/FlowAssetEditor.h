@@ -144,6 +144,10 @@ protected:
 
 	/* Continues execution halted at a Flow breakpoint. Only available while halted. */
 	static void ContinueFlowExecution();
+
+	/* Stops the play session halted at a Flow breakpoint. Only available while halted. */
+	static void StopFlowExecution();
+
 	static bool IsFlowExecutionHalted();
 	static class UFlowDebugEditorSubsystem* GetFlowDebugEditorSubsystem();
 
