@@ -133,6 +133,13 @@ EFlowBreakAction UFlowDebugEditorSubsystem::HaltUntilReleased(const FFlowBreakCo
 		return EFlowBreakAction::Continue;
 	}
 
+	if (GUnrealEd->ShouldEndPlayMap())
+	{
+		// The session is already being stopped, e.g. the PIE window was closed during an earlier halt in this call stack.
+		// Unwind instead of halting again on every remaining breakpoint.
+		return EFlowBreakAction::Abort;
+	}
+
 	{
 		TGuardValue<bool> HaltedGuard(bIsHaltedAtBreakpoint, true);
 		TGuardValue<bool> DebuggingGuard(GIntraFrameDebuggingGameThread, true);
