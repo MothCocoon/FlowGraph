@@ -30,7 +30,7 @@ void UFlowGraph::CreateGraph(UFlowAsset* InFlowAsset)
 	return CreateGraph(InFlowAsset, UFlowGraphSchema::StaticClass());
 }
 
-void UFlowGraph::CreateGraph(UFlowAsset* InFlowAsset, TSubclassOf<UFlowGraphSchema> FlowSchema, bool bCreateDefaultNodes)
+void UFlowGraph::CreateGraph(UFlowAsset* InFlowAsset, TSubclassOf<UFlowGraphSchema> FlowSchema)
 {
 	UFlowGraph* NewGraph = CastChecked<UFlowGraph>(FBlueprintEditorUtils::CreateNewGraph(InFlowAsset, NAME_None, StaticClass(), FlowSchema));
 	NewGraph->bAllowDeletion = false;
@@ -41,13 +41,12 @@ void UFlowGraph::CreateGraph(UFlowAsset* InFlowAsset, TSubclassOf<UFlowGraphSche
 	UFlowGraphSchema::GatherNodes();
 
 	InFlowAsset->FlowGraph = NewGraph;
+	InFlowAsset->OnValidateGraph.BindUObject(NewGraph, &UFlowGraph::ValidateGraphNodes);
 
-	if (bCreateDefaultNodes)
-	{
-		InFlowAsset->FlowGraph->GetSchema()->CreateDefaultNodesForGraph(*InFlowAsset->FlowGraph);
-	}
-  
-  InFlowAsset->OnValidateGraph.BindUObject(NewGraph, &UFlowGraph::ValidateGraphNodes);
+	// Policies are otherwise initialized only when the asset editor opens the graph.
+	// Nodes read them while being reconstructed, so this must precede creating any node.
+	InFlowAsset->SetupForEditing();
+
 	InFlowAsset->FlowGraph->GetSchema()->CreateDefaultNodesForGraph(*InFlowAsset->FlowGraph);
 }
 
@@ -133,12 +132,9 @@ void UFlowGraph::RecursivelyRefreshAddOns(UFlowGraphNode& FromFlowGraphNode)
 
 void UFlowGraph::NotifyGraphChanged()
 {
-	if (!IsLocked())
+	if (UFlowAsset* FlowAsset = GetFlowAsset())
 	{
-		if (UFlowAsset* FlowAsset = GetFlowAsset())
-		{
-			FlowAsset->HarvestNodeConnections();
-		}
+		FlowAsset->HarvestNodeConnections();
 	}
 
 	Super::NotifyGraphChanged();
@@ -526,13 +522,6 @@ void UFlowGraph::UnlockUpdates()
 
 	// Existing behavior
 	UpdateAsset();
-}
-
-void UFlowGraph::UnlockUpdatesWithoutReconcile()
-{
-	bLockUpdates = false;
-	PendingRerouteTypeFixups.Reset();
-	PendingNodeReconstructs.Reset();
 }
 
 void UFlowGraph::EnqueueRerouteTypeFixup(UFlowGraphNode_Reroute* RerouteNode)
