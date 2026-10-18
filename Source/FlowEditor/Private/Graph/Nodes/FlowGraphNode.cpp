@@ -1589,11 +1589,13 @@ void UFlowGraphNode::DiffSubNodes(const FText& NodeTypeDisplayName, const TArray
 	}
 }
 
-void UFlowGraphNode::AddSubNode(UFlowGraphNode* SubNode, class UEdGraph* ParentGraph)
+void UFlowGraphNode::AddSubNode(UFlowGraphNode* SubNode)
 {
 	const FScopedTransaction Transaction(LOCTEXT("AddNode", "Add Node"));
-	ParentGraph->Modify();
 	Modify();
+
+	UEdGraph* ParentGraph = GetGraph();
+	ParentGraph->Modify();
 
 	SubNode->SetFlags(RF_Transactional);
 
@@ -1710,7 +1712,6 @@ void UFlowGraphNode::DestroyNode()
 	if (ParentNode)
 	{
 		ParentNode->RemoveSubNode(this);
-
 		ParentNode->RebuildRuntimeAddOnsFromEditorSubNodes();
 	}
 	else
@@ -1718,8 +1719,7 @@ void UFlowGraphNode::DestroyNode()
 		RebuildRuntimeAddOnsFromEditorSubNodes();
 	}
 
-	UEdGraphNode::DestroyNode();
-
+	Super::DestroyNode();
 	bIsDestroyingNode = false;
 }
 

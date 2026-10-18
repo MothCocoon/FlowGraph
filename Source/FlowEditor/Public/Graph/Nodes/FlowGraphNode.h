@@ -301,7 +301,7 @@ public:
 
 	virtual FText GetDescription() const;
 
-	void AddSubNode(UFlowGraphNode* SubNode, class UEdGraph* ParentGraph);
+	void AddSubNode(UFlowGraphNode* SubNode);
 	void RemoveSubNode(UFlowGraphNode* SubNode);
 	virtual void RemoveAllSubNodes();
 	virtual void OnSubNodeRemoved(UFlowGraphNode* SubNode);

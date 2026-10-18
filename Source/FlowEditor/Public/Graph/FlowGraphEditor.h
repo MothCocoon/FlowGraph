@@ -98,7 +98,7 @@ protected:
 
 	void PreparePastedNodesForPaste(const TSet<UEdGraphNode*>& NodesToPaste, const FVector2f& Location);
 
-	static void AttachPastedSubNodes(UFlowGraph& FlowGraph, const TSet<UEdGraphNode*>& NodesToPaste,
+	static void AttachPastedSubNodes(const TSet<UEdGraphNode*>& NodesToPaste,
 									 const TMap<int32, UFlowGraphNode*>& NodeCopyIndexMap, UFlowGraphNode* PasteTargetNode);
 	
 public:	

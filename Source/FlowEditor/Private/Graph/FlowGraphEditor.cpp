@@ -51,7 +51,7 @@ void SFlowGraphEditor::Construct(const FArguments& InArgs, const TSharedPtr<FFlo
 	Arguments._GraphEvents.OnSelectionChanged = FOnSelectionChanged::CreateSP(this, &SFlowGraphEditor::OnSelectedNodesChanged);
 	Arguments._GraphEvents.OnNodeDoubleClicked = FSingleNodeEvent::CreateSP(this, &SFlowGraphEditor::OnNodeDoubleClicked);
 	Arguments._GraphEvents.OnTextCommitted = FOnNodeTextCommitted::CreateSP(this, &SFlowGraphEditor::OnNodeTitleCommitted);
-	Arguments._GraphEvents.OnSpawnNodeByShortcutAtLocation = FOnSpawnNodeByShortcutAtLocation::CreateStatic(&SFlowGraphEditor::OnSpawnGraphNodeByShortcut, static_cast<UEdGraph*>(FlowAsset->GetGraph()));
+	Arguments._GraphEvents.OnSpawnNodeByShortcutAtLocation = FOnSpawnNodeByShortcutAtLocation::CreateStatic(&SFlowGraphEditor::OnSpawnGraphNodeByShortcut, FlowAsset->GetGraph());
 
 	SGraphEditor::Construct(Arguments);
 }
@@ -820,7 +820,7 @@ void SFlowGraphEditor::PasteNodesHere(const FVector2f& Location)
 	PreparePastedNodesForPaste(NodesToPaste, Location);
 
 	// Reattach copied AddOns to the selected target or their copied parent.
-	AttachPastedSubNodes(*FlowGraph, NodesToPaste, NodeCopyIndexMap, SelectedNode);
+	AttachPastedSubNodes(NodesToPaste, NodeCopyIndexMap, SelectedNode);
 
 	// Finalize the graph mutation before refreshing the editor UI.
 	FlowGraph->UpdateClassData();
@@ -992,7 +992,7 @@ void SFlowGraphEditor::PreparePastedNodesForPaste(const TSet<UEdGraphNode*>& Nod
 	}
 }
 
-void SFlowGraphEditor::AttachPastedSubNodes(UFlowGraph& FlowGraph, const TSet<UEdGraphNode*>& NodesToPaste,
+void SFlowGraphEditor::AttachPastedSubNodes(const TSet<UEdGraphNode*>& NodesToPaste,
                                             const TMap<int32, UFlowGraphNode*>& NodeCopyIndexMap, UFlowGraphNode* PasteTargetNode)
 {
 	for (UEdGraphNode* EdNode : NodesToPaste)
@@ -1006,7 +1006,8 @@ void SFlowGraphEditor::AttachPastedSubNodes(UFlowGraph& FlowGraph, const TSet<UE
 		PasteNode->NodePosX = 0;
 		PasteNode->NodePosY = 0;
 
-		// Remove the subnode from the graph; it will be referenced by its parent.
+		// Remove the subnode from the graph's node list, it was placed there temporarily during clipboard import.
+		// This node will be referenced by its parent (FlowNode or AddOn).
 		PasteNode->DestroyNode();
 
 		if (PasteNode->CopySubNodeParentIndex == INDEX_NONE)
@@ -1014,12 +1015,12 @@ void SFlowGraphEditor::AttachPastedSubNodes(UFlowGraph& FlowGraph, const TSet<UE
 			// INDEX_NONE means attach this copied root to the selected paste target.
 			if (PasteTargetNode)
 			{
-				PasteTargetNode->AddSubNode(PasteNode, &FlowGraph);
+				PasteTargetNode->AddSubNode(PasteNode);
 			}
 		}
 		else if (UFlowGraphNode* PastedParentNode = NodeCopyIndexMap.FindRef(PasteNode->CopySubNodeParentIndex))
 		{
-			PastedParentNode->AddSubNode(PasteNode, &FlowGraph);
+			PastedParentNode->AddSubNode(PasteNode);
 		}
 	}
 }
