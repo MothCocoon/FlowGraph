@@ -91,6 +91,9 @@ protected:
 
 #if WITH_EDITOR
 public:
+	/* Used by utility extracting selected nodes to the SubGraph. */
+	void SetAsset(UFlowAsset* InAsset);
+
 	virtual FText K2_GetNodeTitle_Implementation() const override;
 	virtual FString GetNodeDescription() const override;
 	virtual UObject* GetAssetToEdit() override;

@@ -32,7 +32,7 @@ void UFlowNode_Timer::InitializeInstance()
 {
 	Super::InitializeInstance();
 
-	// Initialize to the configured value, 
+	// Initialize to the configured value,
 	// but we will overwrite this with the results of ResolveCompletionTime() when the timer is started
 	ResolvedCompletionTime = CompletionTime;
 }
