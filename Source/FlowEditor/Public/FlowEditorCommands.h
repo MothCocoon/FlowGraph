@@ -35,6 +35,9 @@ public:
 	TSharedPtr<FUICommandInfo> AddInput;
 	TSharedPtr<FUICommandInfo> AddOutput;
 	TSharedPtr<FUICommandInfo> RemovePin;
+	
+	// Organization
+	TSharedPtr<FUICommandInfo> ExtractToSubGraph;
 
 	// Pin Breakpoints
 	TSharedPtr<FUICommandInfo> AddPinBreakpoint;

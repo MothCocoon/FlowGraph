@@ -4,6 +4,7 @@
 
 #include "Asset/FlowAssetEditor.h"
 #include "FlowEditorCommands.h"
+#include "Graph/Extraction/FlowSubGraphExtractionTool.h"
 #include "Graph/FlowGraphSchema_Actions.h"
 #include "Graph/Nodes/FlowGraphNode.h"
 
@@ -192,6 +193,32 @@ void SFlowGraphEditor::BindGraphCommands()
 	                       FExecuteAction::CreateSP(this, &SFlowGraphEditor::RemovePin),
 	                       FCanExecuteAction::CreateSP(this, &SFlowGraphEditor::CanRemovePin));
 
+	// Organization commands
+	CommandList->MapAction(GraphEditorCommands.AlignNodesTop,
+						   FExecuteAction::CreateSP(this, &SFlowGraphEditor::OnAlignTop));
+
+	CommandList->MapAction(GraphEditorCommands.AlignNodesMiddle,
+						   FExecuteAction::CreateSP(this, &SFlowGraphEditor::OnAlignMiddle));
+
+	CommandList->MapAction(GraphEditorCommands.AlignNodesBottom,
+						   FExecuteAction::CreateSP(this, &SFlowGraphEditor::OnAlignBottom));
+
+	CommandList->MapAction(GraphEditorCommands.AlignNodesLeft,
+						   FExecuteAction::CreateSP(this, &SFlowGraphEditor::OnAlignLeft));
+
+	CommandList->MapAction(GraphEditorCommands.AlignNodesCenter,
+						   FExecuteAction::CreateSP(this, &SFlowGraphEditor::OnAlignCenter));
+
+	CommandList->MapAction(GraphEditorCommands.AlignNodesRight,
+						   FExecuteAction::CreateSP(this, &SFlowGraphEditor::OnAlignRight));
+
+	CommandList->MapAction(GraphEditorCommands.StraightenConnections,
+						   FExecuteAction::CreateSP(this, &SFlowGraphEditor::OnStraightenConnections));
+	
+	CommandList->MapAction(FlowGraphCommands.ExtractToSubGraph,
+					   FExecuteAction::CreateSP(this, &SFlowGraphEditor::CreateSubGraphFromSelection),
+					   FCanExecuteAction::CreateSP(this, &SFlowGraphEditor::CanCreateSubGraphFromSelection));
+
 	// Breakpoint commands
 	CommandList->MapAction(GraphEditorCommands.AddBreakpoint,
 	                       FExecuteAction::CreateSP(this, &SFlowGraphEditor::OnAddBreakpoint),
@@ -313,28 +340,6 @@ void SFlowGraphEditor::BindGraphCommands()
 	CommandList->MapAction(FlowGraphCommands.JumpToNodeDefinition,
 	                       FExecuteAction::CreateSP(this, &SFlowGraphEditor::JumpToNodeDefinition),
 	                       FCanExecuteAction::CreateSP(this, &SFlowGraphEditor::CanJumpToNodeDefinition));
-
-	// Organisation Commands
-	CommandList->MapAction(GraphEditorCommands.AlignNodesTop,
-	                       FExecuteAction::CreateSP(this, &SFlowGraphEditor::OnAlignTop));
-
-	CommandList->MapAction(GraphEditorCommands.AlignNodesMiddle,
-	                       FExecuteAction::CreateSP(this, &SFlowGraphEditor::OnAlignMiddle));
-
-	CommandList->MapAction(GraphEditorCommands.AlignNodesBottom,
-	                       FExecuteAction::CreateSP(this, &SFlowGraphEditor::OnAlignBottom));
-
-	CommandList->MapAction(GraphEditorCommands.AlignNodesLeft,
-	                       FExecuteAction::CreateSP(this, &SFlowGraphEditor::OnAlignLeft));
-
-	CommandList->MapAction(GraphEditorCommands.AlignNodesCenter,
-	                       FExecuteAction::CreateSP(this, &SFlowGraphEditor::OnAlignCenter));
-
-	CommandList->MapAction(GraphEditorCommands.AlignNodesRight,
-	                       FExecuteAction::CreateSP(this, &SFlowGraphEditor::OnAlignRight));
-
-	CommandList->MapAction(GraphEditorCommands.StraightenConnections,
-	                       FExecuteAction::CreateSP(this, &SFlowGraphEditor::OnStraightenConnections));
 }
 
 void SFlowGraphEditor::CreateDebugMenu()
@@ -1122,6 +1127,16 @@ bool SFlowGraphEditor::CanReconstructNode() const
 	}
 
 	return false;
+}
+
+void SFlowGraphEditor::CreateSubGraphFromSelection()
+{
+	FFlowSubGraphExtractionTool::Execute(*this);
+}
+
+bool SFlowGraphEditor::CanCreateSubGraphFromSelection() const
+{
+	return CanEdit() && !IsPIE() && IsTabFocused() && !GetSelectedFlowNodes().IsEmpty();
 }
 
 void SFlowGraphEditor::AddInput() const
