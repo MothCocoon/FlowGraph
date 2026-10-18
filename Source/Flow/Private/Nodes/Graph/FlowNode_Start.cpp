@@ -38,15 +38,6 @@ bool UFlowNode_Start::TryAppendExternalInputPins(TArray<FFlowPin>& InOutPins) co
 
 	return !NamedProperties.IsEmpty();
 }
-
-const FFlowAgentDoc& UFlowNode_Start::GetAgentDoc() const
-{
-	static const FFlowAgentDoc Doc = MakeAgentDoc(
-		/*Guidance*/ TEXT("Define named properties (inherited from Define Properties) to declare input data pins that receive values passed in by the parent SubGraph node or another external data pin supplier. There is exactly one Start node per graph and it cannot be deleted or duplicated."),
-		/*Tags*/     { TEXT("graph"), TEXT("start"), TEXT("datapin") },
-		/*Articles*/ {  });
-	return Doc;
-}
 #endif
 
 FFlowDataPinResult UFlowNode_Start::TrySupplyDataPin(const FName PinName) const

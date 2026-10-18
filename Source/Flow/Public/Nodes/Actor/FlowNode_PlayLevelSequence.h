@@ -144,7 +144,6 @@ public:
 	virtual FString GetNodeDescription() const override;
 	virtual FString GetStatusString() const override;
 	virtual UObject* GetAssetToEdit() override;
-	virtual const FFlowAgentDoc& GetAgentDoc() const override;
 	
 protected:	
 	virtual EDataValidationResult ValidateNode() override;

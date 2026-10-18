@@ -28,8 +28,6 @@ public:
 	// For configuration from connecting pins via UFlowGraphNode_Reroute
 	void ConfigureInputPin(const UFlowNode& ConnectedNode, const FEdGraphPinType& EdGraphPinType);
 	void ConfigureOutputPin(const UFlowNode& ConnectedNode, const FEdGraphPinType& EdGraphPinType);
-
-	virtual const FFlowAgentDoc& GetAgentDoc() const override;
 #endif
 
 #if WITH_EDITOR
