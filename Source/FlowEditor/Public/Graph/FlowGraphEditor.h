@@ -55,7 +55,7 @@ private:
 
 public:
 	virtual bool IsTabFocused() const;
-	
+
 	static bool CanEdit();
 	static bool IsPIE();
 	static bool IsPlaySessionPaused();
@@ -87,15 +87,26 @@ protected:
 
 	virtual void PasteNodes();
 
-	static bool CanPasteNodesAsSubNodes(const TSet<UEdGraphNode*>& NodesToPaste, const UFlowGraphNode& PasteTargetNode);
-	static TSet<UEdGraphNode*> ImportNodesToPasteFromClipboard(UFlowGraph& FlowGraph, FString& OutTextToImport);
-	TArray<UFlowGraphNode*> DerivePasteTargetNodesFromSelectedNodes() const;
-
 public:
 	virtual void PasteNodesHere(const FVector2f& Location);
+	
+protected:
+	static TSet<UEdGraphNode*> ImportNodesToPasteFromClipboard(UFlowGraph& FlowGraph, FString& OutTextToImport);
+	static TSet<UEdGraphNode*> ImportAndValidatePastedNodes(UFlowGraph& FlowGraph,
+														const TArray<UFlowGraphNode*>& PasteTargetNodes, const UFlowGraphNode* PasteTargetNode,
+														FString& OutTextToImport, TMap<int32, UFlowGraphNode*>& OutNodeCopyIndexMap);
+
+	void PreparePastedNodesForPaste(const TSet<UEdGraphNode*>& NodesToPaste, const FVector2f& Location);
+
+	static void AttachPastedSubNodes(UFlowGraph& FlowGraph, const TSet<UEdGraphNode*>& NodesToPaste,
+									 const TMap<int32, UFlowGraphNode*>& NodeCopyIndexMap, UFlowGraphNode* PasteTargetNode);
+	
+public:	
 	virtual bool CanPasteNodes() const;
 
 protected:
+	static bool CanPasteNodesAsSubNodes(const TSet<UEdGraphNode*>& NodesToPaste, const UFlowGraphNode& PasteTargetNode);
+	
 	virtual void DuplicateNodes();
 	virtual bool CanDuplicateNodes() const;
 
@@ -112,19 +123,6 @@ protected:
 	static bool HasEnabledPinBreakpoint(UFlowDebuggerSubsystem* InDebuggerSubsystem, const UEdGraphPin* Pin);
 
 private:
-	static TSet<UEdGraphNode*> ImportAndValidatePastedNodes(
-		UFlowGraph& FlowGraph,
-		const TArray<UFlowGraphNode*>& PasteTargetNodes,
-		UFlowGraphNode* PasteTargetNode,
-		FString& OutTextToImport,
-		TMap<int32, UFlowGraphNode*>& OutNodeCopyIndexMap);
-	void PreparePastedNodesForPaste(const TSet<UEdGraphNode*>& NodesToPaste, const FVector2f& Location);
-	static void AttachPastedSubNodes(
-		const TSet<UEdGraphNode*>& NodesToPaste,
-		const TMap<int32, UFlowGraphNode*>& NodeCopyIndexMap,
-		UFlowGraphNode* PasteTargetNode,
-		UFlowGraph& FlowGraph);
-
 	void AddInput() const;
 	bool CanAddInput() const;
 
