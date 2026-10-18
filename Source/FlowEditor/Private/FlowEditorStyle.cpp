@@ -9,6 +9,7 @@
 #define BOX_BRUSH( RelativePath, ... ) FSlateBoxBrush( StyleSet->RootToContentDir( RelativePath, TEXT(".png") ), __VA_ARGS__ )
 #define IMAGE_BRUSH( RelativePath, ... ) FSlateImageBrush( StyleSet->RootToContentDir( RelativePath, TEXT(".png") ), __VA_ARGS__ )
 #define IMAGE_BRUSH_SVG( RelativePath, ... ) FSlateVectorImageBrush(StyleSet->RootToContentDir(RelativePath, TEXT(".svg")), __VA_ARGS__)
+#define CORE_IMAGE_BRUSH_SVG( RelativePath, ... ) FSlateVectorImageBrush(StyleSet->RootToCoreContentDir(RelativePath, TEXT(".svg")), __VA_ARGS__)
 
 TSharedPtr<FSlateStyleSet> FFlowEditorStyle::StyleSet = nullptr;
 
@@ -30,12 +31,17 @@ void FFlowEditorStyle::Initialize()
 
 	// engine assets
 	StyleSet->SetContentRoot(FPaths::EngineContentDir() / TEXT("Editor/Slate/"));
+	StyleSet->SetCoreContentRoot(FPaths::EngineContentDir() / TEXT("Slate/"));
 
-	StyleSet->Set("FlowToolbar.RefreshAsset", new IMAGE_BRUSH_SVG( "Starship/Common/Apply", Icon20));
-	StyleSet->Set("FlowToolbar.ValidateAsset", new IMAGE_BRUSH_SVG( "Starship/Common/Debug", Icon20));
+	StyleSet->Set("FlowToolbar.AssetDefaults", new IMAGE_BRUSH_SVG("Starship/Common/Details", Icon20));
+	StyleSet->Set("FlowToolbar.RefreshAsset", new IMAGE_BRUSH_SVG("Starship/Common/Apply", Icon20));
+	StyleSet->Set("FlowToolbar.ValidateAsset", new IMAGE_BRUSH_SVG("Starship/Common/Debug", Icon20));
+	StyleSet->Set("FlowToolbar.AutoFormatGraph", new IMAGE_BRUSH_SVG("Starship/GraphEditors/StraightenConnections", Icon20));
 
-	StyleSet->Set("FlowToolbar.SearchInAsset", new IMAGE_BRUSH_SVG( "Starship/Common/Search", Icon20));
-	StyleSet->Set("FlowToolbar.EditAssetDefaults", new IMAGE_BRUSH_SVG("Starship/Common/Details", Icon20));
+	StyleSet->Set("FlowToolbar.SearchInAsset", new CORE_IMAGE_BRUSH_SVG("Starship/Common/search", Icon20));
+
+	StyleSet->Set("FlowToolbar.ContinueFlowExecution", new IMAGE_BRUSH_SVG("Starship/Common/play", Icon20));
+	StyleSet->Set("FlowToolbar.StopFlowExecution", new CORE_IMAGE_BRUSH_SVG("Starship/Common/stop", Icon20));
 
 	StyleSet->Set("FlowGraph.BreakpointEnabled", new IMAGE_BRUSH("Old/Kismet2/Breakpoint_Valid", FVector2D(24.0f, 24.0f)));
 	StyleSet->Set("FlowGraph.BreakpointDisabled", new IMAGE_BRUSH("Old/Kismet2/Breakpoint_Disabled", FVector2D(24.0f, 24.0f)));
@@ -69,3 +75,4 @@ void FFlowEditorStyle::Shutdown()
 #undef BOX_BRUSH
 #undef IMAGE_BRUSH
 #undef IMAGE_BRUSH_SVG
+#undef CORE_IMAGE_BRUSH_SVG

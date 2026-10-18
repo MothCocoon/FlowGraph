@@ -5,7 +5,7 @@
 #include "FlowNode_Reroute.generated.h"
 
 /**
- * Reroute.
+ * A reroute node (similar to Blueprint reroute nodes)
  */
 UCLASS(NotBlueprintable, meta = (DisplayName = "Reroute"))
 class FLOW_API UFlowNode_Reroute final : public UFlowNode
