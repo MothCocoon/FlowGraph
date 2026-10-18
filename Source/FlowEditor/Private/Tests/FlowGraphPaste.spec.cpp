@@ -46,6 +46,7 @@ public:
 
 	virtual bool IsTabFocused() const override { return true; }
 	using SFlowGraphEditor::CopySelectedNodes;
+	using SFlowGraphEditor::DuplicateNodes;
 };
 
 struct FTestGraph
@@ -88,7 +89,7 @@ struct FTestGraph
 	{
 		UFlowGraphNode* Node = NewObject<UFlowGraphNode>(Graph, NAME_None, RF_Transactional);
 		Node->SetNodeTemplate(NewObject<UFlowNodeAddOn>(Asset.Get(), AddOnClass, NAME_None, RF_Transactional));
-		Parent->AddSubNode(Node, Graph);
+		Parent->AddSubNode(Node);
 		return Node;
 	}
 
@@ -199,6 +200,26 @@ void FFlowGraphPasteSpec::Define()
 		TestEqual(TEXT("Pasting without a selected parent leaves the graph unchanged"), Target.Graph->Nodes.Num(), 1);
 	});
 
+	It("PasteRejectsAddOnWithMultipleSelectedParents", [this]()
+	{
+		FTestGraph Source;
+		FTestGraph Target;
+		UFlowGraphNode* Parent = Source.AddNode(UFlowNode_Branch::StaticClass());
+		UFlowGraphNode* Child = Source.AddSubNode(Parent, UFlowNodeAddOn_PredicateAND::StaticClass());
+		Source.Copy({Child});
+
+		// Both targets would accept the add-on on their own.
+		UFlowGraphNode* FirstTarget = Target.AddNode(UFlowNode_Branch::StaticClass());
+		UFlowGraphNode* SecondTarget = Target.AddNode(UFlowNode_Branch::StaticClass());
+		Target.Editor->SetNodeSelection(FirstTarget, true);
+		Target.Editor->SetNodeSelection(SecondTarget, true);
+		Target.Editor->PasteNodesHere(FVector2f::ZeroVector);
+
+		TestTrue(TEXT("The first selected node receives no add-ons"), FirstTarget->SubNodes.IsEmpty());
+		TestTrue(TEXT("The second selected node receives no add-ons"), SecondTarget->SubNodes.IsEmpty());
+		TestEqual(TEXT("An add-on is never left on the canvas"), Target.Graph->Nodes.Num(), 2);
+	});
+
 	It("PastePreservesACompatibleAddOnTree", [this]()
 	{
 		FTestGraph Source;
@@ -231,6 +252,100 @@ void FFlowGraphPasteSpec::Define()
 		Target.Editor->SetNodeSelection(SingleChildTarget, true);
 		Target.Editor->PasteNodesHere(FVector2f::ZeroVector);
 		TestTrue(TEXT("A one-child add-on rejects the two-child batch"), SingleChildTarget->SubNodes.IsEmpty());
+	});
+
+	It("PasteKeepsAddOnTreesOfMultipleSelectedNodes", [this]()
+	{
+		FTestGraph Graph;
+		UFlowGraphNode* FirstNode = Graph.AddNode(UFlowNode_Branch::StaticClass());
+		UFlowGraphNode* FirstChild = Graph.AddSubNode(FirstNode, UFlowNodeAddOn_PredicateAND::StaticClass());
+		Graph.AddSubNode(FirstChild, UFlowNodeAddOn_PredicateNOT::StaticClass());
+		UFlowGraphNode* SecondNode = Graph.AddNode(UFlowNode_Branch::StaticClass());
+		Graph.AddSubNode(SecondNode, UFlowNodeAddOn_PredicateAND::StaticClass());
+
+		// Copy leaves both source nodes selected, as with Ctrl+C followed by Ctrl+V.
+		Graph.Copy({FirstNode, SecondNode});
+		TestTrue(TEXT("Paste stays available with several selected nodes owning add-ons"), Graph.Editor->CanPasteNodes());
+		Graph.Editor->PasteNodesHere(FVector2f::ZeroVector);
+
+		TestEqual(TEXT("Both copied nodes are pasted"), Graph.Graph->Nodes.Num(), 4);
+		TestEqual(TEXT("The first selected node gets no extra add-ons"), FirstNode->SubNodes.Num(), 1);
+		TestEqual(TEXT("The second selected node gets no extra add-ons"), SecondNode->SubNodes.Num(), 1);
+
+		int32 PastedNodeCount = 0;
+		int32 NestedAddOnCount = 0;
+		for (UEdGraphNode* Node : Graph.Graph->Nodes)
+		{
+			const UFlowGraphNode* PastedNode = Cast<UFlowGraphNode>(Node);
+			if (PastedNode && PastedNode != FirstNode && PastedNode != SecondNode)
+			{
+				++PastedNodeCount;
+				TestEqual(TEXT("Each pasted node keeps its root add-on"), PastedNode->SubNodes.Num(), 1);
+				if (PastedNode->SubNodes.Num() == 1)
+				{
+					NestedAddOnCount += PastedNode->SubNodes[0]->SubNodes.Num();
+				}
+			}
+		}
+		TestEqual(TEXT("Two pasted Flow nodes are found"), PastedNodeCount, 2);
+		TestEqual(TEXT("The nested add-on is preserved"), NestedAddOnCount, 1);
+	});
+
+	It("DuplicateKeepsAddOnTreesOfMultipleSelectedNodes", [this]()
+	{
+		FTestGraph Graph;
+		UFlowGraphNode* FirstNode = Graph.AddNode(UFlowNode_Branch::StaticClass());
+		Graph.AddSubNode(FirstNode, UFlowNodeAddOn_PredicateAND::StaticClass());
+		UFlowGraphNode* SecondNode = Graph.AddNode(UFlowNode_Branch::StaticClass());
+		Graph.AddSubNode(SecondNode, UFlowNodeAddOn_PredicateAND::StaticClass());
+
+		Graph.Editor->SetNodeSelection(FirstNode, true);
+		Graph.Editor->SetNodeSelection(SecondNode, true);
+		Graph.Editor->DuplicateNodes();
+
+		TestEqual(TEXT("Both selected nodes are duplicated"), Graph.Graph->Nodes.Num(), 4);
+		TestEqual(TEXT("The first selected node gets no extra add-ons"), FirstNode->SubNodes.Num(), 1);
+		TestEqual(TEXT("The second selected node gets no extra add-ons"), SecondNode->SubNodes.Num(), 1);
+		for (UEdGraphNode* Node : Graph.Graph->Nodes)
+		{
+			if (const UFlowGraphNode* DuplicatedNode = Cast<UFlowGraphNode>(Node))
+			{
+				TestEqual(TEXT("Every node keeps exactly one add-on"), DuplicatedNode->SubNodes.Num(), 1);
+			}
+		}
+	});
+
+	It("PasteAttachesAddOnSelectedBeforeItsParentToPastedParent", [this]()
+	{
+		FTestGraph Source;
+		FTestGraph Target;
+		UFlowGraphNode* Parent = Source.AddNode(UFlowNode_Branch::StaticClass());
+		UFlowGraphNode* Child = Source.AddSubNode(Parent, UFlowNodeAddOn_PredicateAND::StaticClass());
+		Source.AddSubNode(Child, UFlowNodeAddOn_PredicateNOT::StaticClass());
+
+		// Selection keeps insertion order, so the add-on is visited before its parent during copy.
+		Source.Copy({Child, Parent});
+
+		// A single compatible selected node would receive the add-on if it were copied as a root add-on.
+		UFlowGraphNode* SelectedTarget = Target.AddNode(UFlowNode_Branch::StaticClass());
+		Target.Editor->SetNodeSelection(SelectedTarget, true);
+		Target.Editor->PasteNodesHere(FVector2f::ZeroVector);
+
+		TestTrue(TEXT("The selected target receives no add-ons"), SelectedTarget->SubNodes.IsEmpty());
+		TestEqual(TEXT("Only the copied parent is added to the canvas"), Target.Graph->Nodes.Num(), 2);
+
+		for (UEdGraphNode* Node : Target.Graph->Nodes)
+		{
+			const UFlowGraphNode* PastedParent = Cast<UFlowGraphNode>(Node);
+			if (PastedParent && PastedParent != SelectedTarget)
+			{
+				TestEqual(TEXT("The add-on is attached to the pasted parent"), PastedParent->SubNodes.Num(), 1);
+				if (PastedParent->SubNodes.Num() == 1)
+				{
+					TestEqual(TEXT("The nested add-on is preserved"), PastedParent->SubNodes[0]->SubNodes.Num(), 1);
+				}
+			}
+		}
 	});
 }
 

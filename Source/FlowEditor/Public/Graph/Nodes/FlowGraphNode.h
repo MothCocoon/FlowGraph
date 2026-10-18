@@ -249,13 +249,10 @@ public:
 	UPROPERTY()
 	bool bIsSubNode = false;
 	
-	/* Subnode's parent index assigned during copy operation to connect nodes again on paste. */
-	UPROPERTY()
-	int32 CopySubNodeParentIndex = INDEX_NONE;
-
-	/* Subnode index assigned during copy operation to connect nodes again on paste. */
-	UPROPERTY()
-	int32 CopySubNodeIndex = INDEX_NONE;
+	/* Guid of base Flow Node.
+	* Assigned during copy operation to connect nodes again on paste. */
+	UPROPERTY(SkipSerialization)
+	FGuid ParentGuidCopy;
 	
 private:
 	/* Parent UFlowGraphNode for this node
