@@ -58,7 +58,7 @@ private:
 
 public:
 	virtual bool IsTabFocused() const;
-	
+
 	static bool CanEdit();
 	static bool IsPIE();
 	static bool IsPlaySessionPaused();
@@ -82,7 +82,7 @@ protected:
 	virtual bool CanDeleteNodes() const;
 
 	virtual void CopySelectedNodes() const;
-	static void PrepareFlowGraphNodeForCopy(UFlowGraphNode& FlowGraphNode, const int32 ParentEdNodeIndex, FGraphPanelSelectionSet& NewSelectedNodes);
+	static void PrepareFlowGraphNodeForCopy(UFlowGraphNode& FlowGraphNode, const FGuid& ParentGuid, FGraphPanelSelectionSet& NewSelectedNodes);
 	virtual bool CanCopyNodes() const;
 
 	virtual void CutSelectedNodes();
@@ -90,15 +90,21 @@ protected:
 
 	virtual void PasteNodes();
 
-	static bool CanPasteNodesAsSubNodes(const TSet<UEdGraphNode*>& NodesToPaste, const UFlowGraphNode& PasteTargetNode);
-	static TSet<UEdGraphNode*> ImportNodesToPasteFromClipboard(UFlowGraph& FlowGraph, FString& OutTextToImport);
-	TArray<UFlowGraphNode*> DerivePasteTargetNodesFromSelectedNodes() const;
-
 public:
 	virtual void PasteNodesHere(const FVector2f& Location);
+
+protected:
+	static TSet<UEdGraphNode*> ImportNodesToPasteFromClipboard(UFlowGraph& FlowGraph, FString& OutTextToImport);
+	TSet<UEdGraphNode*> ImportAndValidatePastedNodes(FString& OutTextToImport, TMap<FGuid, UFlowGraphNode*>& OutSourceGuidToPastedNode, const UFlowGraphNode* AddOnPasteTarget) const;
+	void PreparePastedNodesForPaste(const TSet<UEdGraphNode*>& NodesToPaste, const FVector2f& Location);
+	static void AttachPastedSubNodes(const TSet<UEdGraphNode*>& NodesToPaste, const TMap<FGuid, UFlowGraphNode*>& SourceGuidToPastedNode, UFlowGraphNode* AddOnPasteTarget);
+
+public:
 	virtual bool CanPasteNodes() const;
 
 protected:
+	static bool CanPasteNodesAsSubNodes(const TSet<UEdGraphNode*>& NodesToPaste, const UFlowGraphNode& PasteTargetNode);
+
 	virtual void DuplicateNodes();
 	virtual bool CanDuplicateNodes() const;
 

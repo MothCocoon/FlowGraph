@@ -1106,18 +1106,26 @@ void UFlowAsset::InitializeInstance(const TWeakObjectPtr<UObject> InOwner, UFlow
 
 	for (TPair<FGuid, TObjectPtr<UFlowNode>>& Node : Nodes)
 	{
-		UFlowNode* NewNodeInstance = NewObject<UFlowNode>(this, Node.Value->GetClass(), NAME_None, RF_Transient, Node.Value, false, nullptr);
-		Node.Value = NewNodeInstance;
-
-		if (UFlowNode_CustomInput* CustomInput = Cast<UFlowNode_CustomInput>(NewNodeInstance))
+		// Node can be null if its class has been removed.
+		if (IsValid(Node.Value))
 		{
-			if (!CustomInput->GetEventName().IsNone())
-			{
-				CustomInputNodes.Emplace(CustomInput);
-			}
-		}
+			UFlowNode* NewNodeInstance = NewObject<UFlowNode>(this, Node.Value->GetClass(), NAME_None, RF_Transient, Node.Value, false, nullptr);
+			Node.Value = NewNodeInstance;
 
-		NewNodeInstance->InitializeInstance();
+			if (UFlowNode_CustomInput* CustomInput = Cast<UFlowNode_CustomInput>(NewNodeInstance))
+			{
+				if (!CustomInput->GetEventName().IsNone())
+				{
+					CustomInputNodes.Emplace(CustomInput);
+				}
+			}
+
+			NewNodeInstance->InitializeInstance();
+		}
+		else
+		{
+			UE_LOG(LogFlow, Error, TEXT("Flow asset '%s' contains an invalid node for GUID '%s', node won't be instanced."), *InTemplateAsset.GetPathName(), *Node.Key.ToString());
+		}
 	}
 }
 

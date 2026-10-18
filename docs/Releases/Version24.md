@@ -27,17 +27,22 @@ This is a BREAKING CHANGE if you have any custom UFlowGraphNode class. Updating 
 * `GetNodeTitle()` and `GetNodeDescription()` are now called on node instances only when displaying actual node instances. This allows us to preserve the default title and description for the archetype (e.g. in the node selection list). (contributed by LindyHopperGT)
 * Exposed `GetInputPins()` and `GetOutputPins()` to blueprints for automated tests. (contributed by omarchuk-gsc)
 * Editor-only properties of `FFlowPin` are now wrapped with `WITH_EDITORONLY_DATA`: display name and tooltip. (contributed by Bargestt)
+* Improved copy-pasting of AddOns.
+    * Reworked pasting so multiple nodes with AddOns can be copy-pasted. Previously, the editor could crash in some cases.
+    * Added validation of AddOn attachment during copy-paste. (contributed by LindyHopperGT)
+    * The graph update lock is now released when nothing is imported. (contributed by LindyHopperGT)
 
 ## Specific Nodes
 * `UFlowNode_SubGraph`
     * Added support for passing data from the finished SubGraph instance to the owning SubGraph node! (contributed by LindyHopperGT)
-    * Moved `TrySupplyDataPin` override in `UFlowNode_SubGraph` outside of the `WITH_EDITOR` directive. This fixes Flow Asset Params in packaged builds. (contributed by dyanikoglu)
+    * Moved the `TrySupplyDataPin` override in `UFlowNode_SubGraph` outside of the `WITH_EDITOR` directive. This fixes Flow Asset Params in packaged builds. (contributed by dyanikoglu)
     * Added an option to defer deinitialization of the Flow Asset instance (owned by the SubGraph node). The default behavior remains unchanged: the asset instance is fully removed when the SubGraph finishes its work. The new option keeps this instance until the owner of the SubGraph is destroyed. The new behavior can be activated globally by changing `SubGraphFinishPolicy` in the project settings, or by overriding `GetSubGraphFinishPolicy()` in a specific subclass of `UFlowAsset`. (based on a changelist by LindyHopperGT)
-* `PlayLevelSequence` node now supports multiplayer via a replicated binding on `AFlowLevelSequenceActor`. (contributed by LindyHopperGT)
-* `OnNotifyFromActor` now has `bExactMatch` flag allowing users to choose how the `NotifyTag` should be matched. It's similar to the `NotifyActor` node. (contributed by fede-Raider)
+* The `PlayLevelSequence` node now supports multiplayer via a replicated binding on `AFlowLevelSequenceActor`. (contributed by LindyHopperGT)
+* `OnNotifyFromActor` now has a `bExactMatch` flag, allowing users to choose how the `NotifyTag` should be matched. It's similar to the `NotifyActor` node. (contributed by fede-Raider)
+* Added documentation methods for LLM agents. All nodes now implement `GetAgentDoc()`.
 
 ## Flow Node AddOns
-* Moved `NodeGuid` property to `UFlowNodeBase`, so now AddOns uses this for identification. (contributed by LindyHopperGT)
+* Moved the `NodeGuid` property to `UFlowNodeBase`, so AddOns now use it for identification. (contributed by LindyHopperGT)
     * Added code to update legacy graphs to set `NodeGuid` on AddOns.
 
 ## Flow Asset
@@ -45,10 +50,13 @@ This is a BREAKING CHANGE if you have any custom UFlowGraphNode class. Updating 
     * Reintroduced graph orientation changing.
     * Added highlighting of all changed properties in the Details view (as well as the focused one).
     * Added linked scrolling between Details views.
-    * Fixed populating the diff entry tree. The add-on hierarchy is now preserved when an add-on's direct parent has no changes but its grandparent does.
-    * Fixed focusing a node in the graph when the user clicks a diff element belonging to an add-on.
+    * Fixed populating the diff entry tree. The AddOn hierarchy is now preserved when an AddOn's direct parent has no changes but its grandparent does.
+    * Fixed focusing a node in the graph when the user clicks a diff element belonging to an AddOn.
     * Made Details views read-only.
-* Flow Asset validation is now called by the engine's Data Validation pipeline. (contributed by fede-Raider)
+* Flow Asset validation improvements.
+    * Validation logic is now called by the engine's Data Validation pipeline. (contributed by fede-Raider)
+    * Added a check whether a pin connects to zombie nodes. (contributed by LindyHopperGT)
+    * Improved AddOn validation, i.e. checking whether it's allowed to place multiple AddOns of the same class on the node. (contributed by LindyHopperGT)
 
 ## Flow Component
 * Added `bMarkFlowCategoryImportant` option to force the "Flow" category to the top of the component's Details panel. Enabled by default. (contributed by Bargestt)
