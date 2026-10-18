@@ -783,7 +783,7 @@ void SFlowGraphEditor::PasteNodes()
 void SFlowGraphEditor::PasteNodesHere(const FVector2f& Location)
 {
 	// Start the transaction and protect the graph update lock.
-	const FScopedTransaction Transaction(LOCTEXT("PasteNode", "Paste Node"));
+	FScopedTransaction Transaction(LOCTEXT("PasteNode", "Paste Node"));
 	UFlowGraph* FlowGraph = CastChecked<UFlowGraph>(FlowAsset->GetGraph());
 	FlowGraph->Modify();
 	FlowAsset->Modify();
@@ -813,6 +813,8 @@ void SFlowGraphEditor::PasteNodesHere(const FVector2f& Location)
 
 	if (NodesToPaste.IsEmpty())
 	{
+		// Nothing was pasted, so leave no empty step in the undo history.
+		Transaction.Cancel();
 		return;
 	}
 
