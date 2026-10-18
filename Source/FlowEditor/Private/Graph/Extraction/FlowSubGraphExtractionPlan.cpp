@@ -2,6 +2,7 @@
 #include "Graph/Extraction/FlowSubGraphExtractionPlan.h"
 
 #include "FlowAsset.h"
+#include "Graph/FlowGraphSettings.h"
 #include "Graph/Nodes/FlowGraphNode.h"
 #include "Nodes/FlowNode.h"
 #include "Nodes/FlowPin.h"
@@ -19,7 +20,7 @@ namespace FlowSubGraphExtraction
 {
 	namespace Internal
 	{
-		const FString AssetNamePrefix = TEXT("Subgraph_");
+		const FString DefaultAssetBaseName = TEXT("NewGraph");
 
 		static FText GetNodeTitleText(const UEdGraphNode& Node)
 		{
@@ -286,9 +287,9 @@ namespace FlowSubGraphExtraction
 		});
 	}
 
-	const FString& GetRequiredAssetNamePrefix()
+	FString GetDefaultNewAssetName()
 	{
-		return Internal::AssetNamePrefix;
+		return GetDefault<UFlowGraphSettings>()->SubGraphAssetNamePrefix + Internal::DefaultAssetBaseName;
 	}
 
 	FText ValidateNewAssetName(const UFlowAsset& SourceAsset, const FString& NewAssetName)
@@ -297,13 +298,18 @@ namespace FlowSubGraphExtraction
 		{
 			return LOCTEXT("EmptyAssetName", "Enter a name for the sub-graph asset.");
 		}
-		if (!NewAssetName.StartsWith(Internal::AssetNamePrefix))
+
+		const FString& RequiredPrefix = GetDefault<UFlowGraphSettings>()->SubGraphAssetNamePrefix;
+		if (!RequiredPrefix.IsEmpty())
 		{
-			return FText::Format(LOCTEXT("MissingPrefix", "The name must start with '{0}'."), FText::FromString(Internal::AssetNamePrefix));
-		}
-		if (NewAssetName.Len() <= Internal::AssetNamePrefix.Len())
-		{
-			return LOCTEXT("PrefixOnly", "Add a name after the prefix.");
+			if (!NewAssetName.StartsWith(RequiredPrefix))
+			{
+				return FText::Format(LOCTEXT("MissingPrefix", "The name must start with '{0}'."), FText::FromString(RequiredPrefix));
+			}
+			if (NewAssetName.Len() <= RequiredPrefix.Len())
+			{
+				return LOCTEXT("PrefixOnly", "Add a name after the prefix.");
+			}
 		}
 
 		FText InvalidNameReason;

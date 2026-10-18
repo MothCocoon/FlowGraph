@@ -167,6 +167,11 @@ class FLOWEDITOR_API UFlowGraphSettings : public UDeveloperSettings
 	UPROPERTY(EditAnywhere, config, Category = "NodePopups")
 	FLinearColor NodePreloadedBackground;
 
+	/* Prefix required in the name of an asset created by "Extract to SubGraph".
+	 * No requirement if empty. */
+	UPROPERTY(EditAnywhere, config, Category = "SubGraph")
+	FString SubGraphAssetNamePrefix;
+
 	UPROPERTY(config, EditAnywhere, Category = "Wires")
 	EFlowConnectionDrawType ConnectionDrawType;
 

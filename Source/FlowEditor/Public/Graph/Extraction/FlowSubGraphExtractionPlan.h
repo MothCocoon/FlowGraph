@@ -113,8 +113,8 @@ namespace FlowSubGraphExtraction
 	/** Builds a read-only plan describing the boundary of the selection. Modifies nothing. */
 	FLOWEDITOR_API FExtractionPlan PlanExtraction(const TSet<UFlowGraphNode*>& SelectedNodes);
 
-	/** Required prefix for a generated sub-graph asset. */
-	FLOWEDITOR_API const FString& GetRequiredAssetNamePrefix();
+	/** Name proposed for a generated sub-graph asset, starting with the project's required prefix. */
+	FLOWEDITOR_API FString GetDefaultNewAssetName();
 
 	/** Validates a proposed asset name, returning an empty text when it is usable. */
 	FLOWEDITOR_API FText ValidateNewAssetName(const UFlowAsset& SourceAsset, const FString& NewAssetName);

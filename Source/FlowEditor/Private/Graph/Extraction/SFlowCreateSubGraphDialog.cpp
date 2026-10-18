@@ -22,7 +22,7 @@
 void SFlowCreateSubGraphDialog::Construct(const FArguments& InArgs)
 {
 	SourceAsset = InArgs._SourceAsset;
-	AssetName = FlowSubGraphExtraction::GetRequiredAssetNamePrefix();
+	AssetName = FlowSubGraphExtraction::GetDefaultNewAssetName();
 
 	const FString PackageFolder = SourceAsset.Get()
 		? FPackageName::GetLongPackagePath(SourceAsset->GetOutermost()->GetName())
