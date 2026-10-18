@@ -18,7 +18,7 @@ public:
 		TMap<FGuid, FIntPoint>& OutPositions);
 
 	static void Apply(
-		UFlowAsset* FlowAsset,
+		const UFlowAsset* FlowAsset,
 		const TMap<FGuid, FIntPoint>& Positions,
 		const TMap<FGuid, FIntPoint>& MeasuredNodeSizes);
 };

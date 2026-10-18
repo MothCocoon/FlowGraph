@@ -161,7 +161,7 @@ void FFlowGraphConnectionDrawingPolicy::DrawConnection(int32 LayerId, const FVec
 			DrawDefaultConnection(LayerId, Start, End, Params);
 			break;
 		case EFlowConnectionDrawType::Circuit:
-			DrawCircuitSpline(LayerId, Start, End, Params);	
+			DrawCircuitSpline(LayerId, Start, End, Params);
 			break;
 		default: ;
 	}
