@@ -53,7 +53,7 @@ void FFlowCollapseToSubGraphTool::Execute(SFlowGraphEditor& GraphEditor)
 	FlowCollapseToSubGraph::FCollapseResult Result;
 	{
 		const FScopedTransaction Transaction(
-			LOCTEXT("CreateSubGraphFromSelectionTransaction", "Create Sub-Graph from Selection"));
+			LOCTEXT("ExtractToSubGraphTransaction", "Extract to SubGraph"));
 
 		GraphEditor.FlowAssetEditor.Pin()->SetUISelectionState(NAME_None);
 		GraphEditor.ClearSelectionSet();

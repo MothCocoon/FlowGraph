@@ -183,7 +183,7 @@ bool SFlowCreateSubGraphDialog::ShowModal(const UFlowAsset& SourceAsset, const T
 		.Warnings(Warnings);
 
 	const TSharedRef<SWindow> Window = SNew(SWindow)
-		.Title(LOCTEXT("WindowTitle", "Create Sub-Graph from Selection"))
+		.Title(LOCTEXT("WindowTitle", "Extract to SubGraph"))
 		.SizingRule(ESizingRule::Autosized)
 		.SupportsMinimize(false)
 		.SupportsMaximize(false)

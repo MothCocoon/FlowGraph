@@ -545,8 +545,20 @@ void UFlowGraphNode::GetNodeContextMenuActions(class UToolMenu* Menu, class UGra
 		}
 
 		{
-			FToolMenuSection& Section = Menu->AddSection("FlowGraphNodeSubGraph", LOCTEXT("NodeSubGraphMenuHeader", "SubGraph"));
-			Section.AddMenuEntry(FlowGraphCommands.CreateSubGraphFromSelection);
+			FToolMenuSection& Section = Menu->AddSection("FlowGraphNodeOrganisation", LOCTEXT("NodeOrganisation", "Organisation"));
+			Section.AddSubMenu("Alignment", LOCTEXT("AlignmentHeader", "Alignment"), FText(), FNewToolMenuDelegate::CreateLambda([](UToolMenu* SubMenu)
+			{
+				FToolMenuSection& SubMenuSection = SubMenu->AddSection("EdGraphSchemaAlignment", LOCTEXT("AlignHeader", "Align"));
+				SubMenuSection.AddMenuEntry(FGraphEditorCommands::Get().AlignNodesTop);
+				SubMenuSection.AddMenuEntry(FGraphEditorCommands::Get().AlignNodesMiddle);
+				SubMenuSection.AddMenuEntry(FGraphEditorCommands::Get().AlignNodesBottom);
+				SubMenuSection.AddMenuEntry(FGraphEditorCommands::Get().AlignNodesLeft);
+				SubMenuSection.AddMenuEntry(FGraphEditorCommands::Get().AlignNodesCenter);
+				SubMenuSection.AddMenuEntry(FGraphEditorCommands::Get().AlignNodesRight);
+				SubMenuSection.AddMenuEntry(FGraphEditorCommands::Get().StraightenConnections);
+			}));
+
+			Section.AddMenuEntry(FlowGraphCommands.ExtractToSubGraph);
 		}
 
 		{
@@ -584,21 +596,6 @@ void UFlowGraphNode::GetNodeContextMenuActions(class UToolMenu* Menu, class UGra
 			{
 				Section.AddMenuEntry(FlowGraphCommands.JumpToNodeDefinition);
 			}
-		}
-
-		{
-			FToolMenuSection& Section = Menu->AddSection("FlowGraphNodeOrganisation", LOCTEXT("NodeOrganisation", "Organisation"));
-			Section.AddSubMenu("Alignment", LOCTEXT("AlignmentHeader", "Alignment"), FText(), FNewToolMenuDelegate::CreateLambda([](UToolMenu* SubMenu)
-			{
-				FToolMenuSection& SubMenuSection = SubMenu->AddSection("EdGraphSchemaAlignment", LOCTEXT("AlignHeader", "Align"));
-				SubMenuSection.AddMenuEntry(FGraphEditorCommands::Get().AlignNodesTop);
-				SubMenuSection.AddMenuEntry(FGraphEditorCommands::Get().AlignNodesMiddle);
-				SubMenuSection.AddMenuEntry(FGraphEditorCommands::Get().AlignNodesBottom);
-				SubMenuSection.AddMenuEntry(FGraphEditorCommands::Get().AlignNodesLeft);
-				SubMenuSection.AddMenuEntry(FGraphEditorCommands::Get().AlignNodesCenter);
-				SubMenuSection.AddMenuEntry(FGraphEditorCommands::Get().AlignNodesRight);
-				SubMenuSection.AddMenuEntry(FGraphEditorCommands::Get().StraightenConnections);
-			}));
 		}
 	}
 }
@@ -1139,15 +1136,15 @@ void UFlowGraphNode::GetPinHoverText(const UEdGraphPin& Pin, FString& HoverTextO
 
 					switch (PinRecords[i].ActivationType)
 					{
-					case EFlowPinActivationType::Default:
-						break;
-					case EFlowPinActivationType::Forced:
-						HoverTextOut.Append(FPinRecord::ForcedActivation);
-						break;
-					case EFlowPinActivationType::PassThrough:
-						HoverTextOut.Append(FPinRecord::PassThroughActivation);
-						break;
-					default:;
+						case EFlowPinActivationType::Default:
+							break;
+						case EFlowPinActivationType::Forced:
+							HoverTextOut.Append(FPinRecord::ForcedActivation);
+							break;
+						case EFlowPinActivationType::PassThrough:
+							HoverTextOut.Append(FPinRecord::PassThroughActivation);
+							break;
+						default: ;
 					}
 				}
 			}
@@ -1403,7 +1400,7 @@ UFlowGraphNode* UFlowGraphNode::GetRootFlowGraphNode() const
 	{
 		Root = Root->ParentNode;
 	}
-	
+
 	return Root;
 }
 
@@ -1952,7 +1949,7 @@ bool UFlowGraphNode::TryUpdateNodePins() const
 	check(IsValid(FlowNodeCDO));
 
 	// Fix up old pins on the CDO
-	UFlowNode* MutableCDO = const_cast<UFlowNode*>(FlowNodeCDO);	
+	UFlowNode* MutableCDO = const_cast<UFlowNode*>(FlowNodeCDO);
 	MutableCDO->EnsureAddOnFlowNodePointersForEditor();
 	MutableCDO->FixupDataPinTypes();
 
