@@ -416,7 +416,7 @@ void FFlowAssetEditor::BindToolbarCommands()
 
 	ToolkitCommands->MapAction(ToolbarCommands.AutoFormatGraph,
 						   FExecuteAction::CreateSP(this, &FFlowAssetEditor::AutoFormatGraph),
-						   FCanExecuteAction::CreateStatic(&FFlowAssetEditor::CanEdit));
+						   FCanExecuteAction::CreateSP(this, &FFlowAssetEditor::CanEdit));
 	
 	// View
 	ToolkitCommands->MapAction(ToolbarCommands.SearchInAsset,
