@@ -1,6 +1,5 @@
 // Copyright https://github.com/MothCocoon/FlowGraph/graphs/contributors
-
-#include "FlowCollapseToSubGraphPlan.h"
+#include "Graph/Extraction/FlowSubGraphExtractionPlan.h"
 
 #include "FlowAsset.h"
 #include "Graph/Nodes/FlowGraphNode.h"
@@ -14,9 +13,9 @@
 #include "EdGraph/EdGraphPin.h"
 #include "Misc/PackageName.h"
 
-#define LOCTEXT_NAMESPACE "FlowCollapseToSubGraph"
+#define LOCTEXT_NAMESPACE "FlowSubGraphExtraction"
 
-namespace FlowCollapseToSubGraph
+namespace FlowSubGraphExtraction
 {
 	namespace Internal
 	{
@@ -101,12 +100,12 @@ namespace FlowCollapseToSubGraph
 		}
 	}
 
-	FCollapsePlan::FCollapsePlan(const TSet<UFlowGraphNode*>& InSelectedNodes)
+	FExtractionPlan::FExtractionPlan(const TSet<UFlowGraphNode*>& InSelectedNodes)
 	{
 		GatherSelectedNodes(InSelectedNodes);
 		if (SelectedNodes.IsEmpty())
 		{
-			Errors.Add(LOCTEXT("NothingSelected", "Select the nodes to collapse first."));
+			Errors.Add(LOCTEXT("NothingSelected", "Select the nodes to extract first."));
 			return;
 		}
 
@@ -118,7 +117,7 @@ namespace FlowCollapseToSubGraph
 		ConfigureExits();
 	}
 
-	void FCollapsePlan::GatherSelectedNodes(const TSet<UFlowGraphNode*>& InSelectedNodes)
+	void FExtractionPlan::GatherSelectedNodes(const TSet<UFlowGraphNode*>& InSelectedNodes)
 	{
 		for (UFlowGraphNode* SelectedNode : InSelectedNodes)
 		{
@@ -129,7 +128,7 @@ namespace FlowCollapseToSubGraph
 		}
 	}
 
-	void FCollapsePlan::ValidateSelectedNodes()
+	void FExtractionPlan::ValidateSelectedNodes()
 	{
 		const UEdGraph* CommonGraph = nullptr;
 		for (UFlowGraphNode* SelectedNode : SelectedNodes)
@@ -175,7 +174,7 @@ namespace FlowCollapseToSubGraph
 		}
 	}
 
-	void FCollapsePlan::GatherBoundaryPins()
+	void FExtractionPlan::GatherBoundaryPins()
 	{
 		for (UFlowGraphNode* SelectedNode : SelectedNodes)
 		{
@@ -189,7 +188,7 @@ namespace FlowCollapseToSubGraph
 				FBoundaryPin Boundary;
 				for (UEdGraphPin* LinkedPin : Pin->LinkedTo)
 				{
-					UFlowGraphNode* LinkedFlowNode = LinkedPin ? Cast<UFlowGraphNode>(LinkedPin->GetOwningNode()) : nullptr;
+					const UFlowGraphNode* LinkedFlowNode = LinkedPin ? Cast<UFlowGraphNode>(LinkedPin->GetOwningNode()) : nullptr;
 					if (LinkedPin && (!LinkedFlowNode || !SelectedNodes.Contains(LinkedFlowNode)))
 					{
 						Boundary.OuterPins.Add(LinkedPin);
@@ -221,7 +220,7 @@ namespace FlowCollapseToSubGraph
 		}
 	}
 
-	void FCollapsePlan::ConfigureEntry()
+	void FExtractionPlan::ConfigureEntry()
 	{
 		int32 EntryConnectionCount = 0;
 		for (const FBoundaryPin& Entry : Entries)
@@ -245,7 +244,7 @@ namespace FlowCollapseToSubGraph
 	// routes to the built-in Finish instead. Only one exit can do that: Finish is a single exec output on
 	// the parent, and an exec output drives exactly one target, so a second unnamed exit would collide
 	// with the first and get its link broken. Later unnamed exits fall back to a name from their node.
-	void FCollapsePlan::ConfigureExits()
+	void FExtractionPlan::ConfigureExits()
 	{
 		TSet<FName> UsedOutputNames;
 		Internal::ReserveBuiltInPinNames(UsedOutputNames);
@@ -271,7 +270,7 @@ namespace FlowCollapseToSubGraph
 	}
 
 	/** Orders boundary pins top-to-bottom then left-to-right, so generated names read like the graph. */
-	void FCollapsePlan::SortBoundaryPinsByPosition(TArray<FBoundaryPin>& BoundaryPins)
+	void FExtractionPlan::SortBoundaryPinsByPosition(TArray<FBoundaryPin>& BoundaryPins)
 	{
 		BoundaryPins.Sort([](const FBoundaryPin& Left, const FBoundaryPin& Right)
 		{
@@ -324,9 +323,9 @@ namespace FlowCollapseToSubGraph
 		return FText::GetEmpty();
 	}
 
-	FCollapsePlan PlanCollapse(const TSet<UFlowGraphNode*>& SelectedNodes)
+	FExtractionPlan PlanExtraction(const TSet<UFlowGraphNode*>& SelectedNodes)
 	{
-		return FCollapsePlan(SelectedNodes);
+		return FExtractionPlan(SelectedNodes);
 	}
 }
 

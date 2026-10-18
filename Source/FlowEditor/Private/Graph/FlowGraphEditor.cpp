@@ -4,7 +4,7 @@
 
 #include "Asset/FlowAssetEditor.h"
 #include "FlowEditorCommands.h"
-#include "Graph/Collapse/FlowCollapseToSubGraphTool.h"
+#include "Graph/Extraction/FlowSubGraphExtractionTool.h"
 #include "Graph/FlowGraphSchema_Actions.h"
 #include "Graph/Nodes/FlowGraphNode.h"
 
@@ -1131,7 +1131,7 @@ bool SFlowGraphEditor::CanReconstructNode() const
 
 void SFlowGraphEditor::CreateSubGraphFromSelection()
 {
-	FFlowCollapseToSubGraphTool::Execute(*this);
+	FFlowSubGraphExtractionTool::Execute(*this);
 }
 
 bool SFlowGraphEditor::CanCreateSubGraphFromSelection() const

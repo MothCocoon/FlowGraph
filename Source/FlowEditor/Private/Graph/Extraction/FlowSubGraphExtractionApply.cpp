@@ -1,10 +1,9 @@
 // Copyright https://github.com/MothCocoon/FlowGraph/graphs/contributors
-
-#include "FlowCollapseToSubGraphApply.h"
-#include "FlowCollapseToSubGraphPlan.h"
+#include "Graph/Extraction/FlowSubGraphExtractionApply.h"
 
 #include "Asset/FlowAssetFactory.h"
 #include "FlowAsset.h"
+#include "Graph/Extraction/FlowSubGraphExtractionPlan.h"
 #include "Graph/FlowGraph.h"
 #include "Graph/FlowGraphSchema_Actions.h"
 #include "Graph/Nodes/FlowGraphNode.h"
@@ -23,16 +22,16 @@
 #include "Misc/PackageName.h"
 #include "Modules/ModuleManager.h"
 
-#define LOCTEXT_NAMESPACE "FlowCollapseToSubGraph"
+#define LOCTEXT_NAMESPACE "FlowSubGraphExtraction"
 
-namespace FlowCollapseToSubGraph
+namespace FlowSubGraphExtraction
 {
 	namespace Internal
 	{
-		/** Horizontal gap between the Start node and the collapsed region in the new graph. */
+		/** Horizontal gap between the Start node and the extracted region in the new graph. */
 		constexpr float ClonedRegionOffsetX = 400.0f;
 
-		/** Horizontal gap between the collapsed region and the Finish or Custom Output nodes. */
+		/** Horizontal gap between the extracted region and the Finish or Custom Output nodes. */
 		constexpr float ExitNodeOffsetX = 400.0f;
 
 		/** Vertical gap between stacked interface nodes. */
@@ -60,7 +59,7 @@ namespace FlowCollapseToSubGraph
 		}
 
 		/** Destroys a graph node and removes its runtime counterpart from the owning asset. */
-		void DestroyNodeAndUnregister(UFlowGraphNode& GraphNode, UFlowAsset& OwningAsset, UEdGraph& OwningGraph)
+		void DestroyNodeAndUnregister(UFlowGraphNode& GraphNode, UFlowAsset& OwningAsset, const UEdGraph& OwningGraph)
 		{
 			FGuid RuntimeNodeGuid;
 			if (const UFlowNode* FlowNode = Cast<UFlowNode>(GraphNode.GetFlowNodeBase()))
@@ -152,7 +151,7 @@ namespace FlowCollapseToSubGraph
 		 * boundary pins be matched back to their clones below.
 		 */
 		bool CloneSelectionIntoGraph(
-			const FCollapsePlan& Plan,
+			const FExtractionPlan& Plan,
 			UFlowAsset& NewAsset,
 			UFlowGraph& NewGraph,
 			TMap<FGuid, UFlowGraphNode*>& OutClonedByOriginalGuid)
@@ -248,8 +247,8 @@ namespace FlowCollapseToSubGraph
 		}
 	}
 
-	FCollapseApply::FCollapseApply(
-		const FCollapsePlan& InPlan,
+	FExtractionApply::FExtractionApply(
+		const FExtractionPlan& InPlan,
 		UFlowAsset& InSourceAsset,
 		const FString& InNewAssetName)
 		: Plan(InPlan)
@@ -258,7 +257,7 @@ namespace FlowCollapseToSubGraph
 	{
 	}
 
-	FCollapseResult FCollapseApply::Run()
+	FExtractionResult FExtractionApply::Run()
 	{
 		if (!InitializeSource() ||
 			!CreateAsset() ||
@@ -282,17 +281,17 @@ namespace FlowCollapseToSubGraph
 		return Result;
 	}
 
-	bool FCollapseApply::Fail(const FText& Error)
+	bool FExtractionApply::Fail(const FText& Error)
 	{
 		Result.Error = Error;
 		return false;
 	}
 
-	bool FCollapseApply::InitializeSource()
+	bool FExtractionApply::InitializeSource()
 	{
 		if (!Plan.CanApply())
 		{
-			return Fail(LOCTEXT("PlanNotApplicable", "The selection cannot be collapsed."));
+			return Fail(LOCTEXT("PlanNotApplicable", "The selection cannot be extracted."));
 		}
 
 		const FText NameError = ValidateNewAssetName(SourceAsset, NewAssetName);
@@ -313,7 +312,7 @@ namespace FlowCollapseToSubGraph
 		return true;
 	}
 
-	bool FCollapseApply::CreateAsset()
+	bool FExtractionApply::CreateAsset()
 	{
 		// UFlowAsset::GetDefaultFlowAssetForSubgraphs is the framework's own hook for this decision. The base
 		// returns GetClass(), so the sub-graph keeps the source's class by default, but a subclass that is not
@@ -335,7 +334,7 @@ namespace FlowCollapseToSubGraph
 		return IsValid(NewGraph) || Fail(LOCTEXT("NoNewGraph", "The new asset was created without a graph."));
 	}
 
-	bool FCollapseApply::CloneNodes()
+	bool FExtractionApply::CloneNodes()
 	{
 		// The lock only spans the bulk clone, which is what it exists for. It must be released before any
 		// interface node is created: UFlowGraphNode::CanReconstructNode returns false while the graph is
@@ -366,7 +365,7 @@ namespace FlowCollapseToSubGraph
 		return true;
 	}
 
-	bool FCollapseApply::PrepareLayout()
+	bool FExtractionApply::PrepareLayout()
 	{
 		// The factory seeds a Start node. If the selection brought its own, keep that one and drop the seed.
 		TArray<UFlowGraphNode*> StartNodes = Internal::FindGraphNodesOfClass(*NewGraph, *UFlowNode_Start::StaticClass());
@@ -402,12 +401,12 @@ namespace FlowCollapseToSubGraph
 		return NewGraphSchema != nullptr || Fail(LOCTEXT("NoNewGraphSchema", "The new sub-graph has no graph schema."));
 	}
 
-	bool FCollapseApply::ConnectEntry()
+	bool FExtractionApply::ConnectEntry()
 	{
 		check(!Plan.Entries.IsEmpty());
 
 		const FBoundaryPin& Entry = Plan.Entries[0];
-		UFlowGraphNode* ClonedEntryNode = ClonedByOriginalGuid.FindRef(Entry.InnerNodeGuid);
+		const UFlowGraphNode* ClonedEntryNode = ClonedByOriginalGuid.FindRef(Entry.InnerNodeGuid);
 		UEdGraphPin* ClonedEntryPin = ClonedEntryNode ? ClonedEntryNode->FindPin(Entry.InnerPinName, EGPD_Input) : nullptr;
 		UEdGraphPin* StartOutputPin = Internal::FindFirstExecPin(*StartNode, EGPD_Output);
 		if (!ClonedEntryPin || !StartOutputPin || !NewGraphSchema->TryCreateConnection(StartOutputPin, ClonedEntryPin))
@@ -417,7 +416,7 @@ namespace FlowCollapseToSubGraph
 		return true;
 	}
 
-	bool FCollapseApply::BuildExits()
+	bool FExtractionApply::BuildExits()
 	{
 		// A Finish node always exists. An exit leaving through an unnamed pin runs into it; everything else
 		// gets a Custom Output. When nothing routes to it, it stays unconnected for the designer to wire.
@@ -441,9 +440,9 @@ namespace FlowCollapseToSubGraph
 		return true;
 	}
 
-	bool FCollapseApply::BuildExit(const FBoundaryPin& Exit, const float ExitColumnPosX, float& NextExitNodePosY)
+	bool FExtractionApply::BuildExit(const FBoundaryPin& Exit, const float ExitColumnPosX, float& NextExitNodePosY)
 	{
-		UFlowGraphNode* ClonedNode = ClonedByOriginalGuid.FindRef(Exit.InnerNodeGuid);
+		const UFlowGraphNode* ClonedNode = ClonedByOriginalGuid.FindRef(Exit.InnerNodeGuid);
 		UEdGraphPin* ClonedInnerPin = ClonedNode ? ClonedNode->FindPin(Exit.InnerPinName, EGPD_Output) : nullptr;
 		if (!ClonedInnerPin)
 		{
@@ -471,7 +470,7 @@ namespace FlowCollapseToSubGraph
 		return true;
 	}
 
-	UFlowGraphNode* FCollapseApply::CreateCustomOutput(
+	UFlowGraphNode* FExtractionApply::CreateCustomOutput(
 		const FBoundaryPin& Exit,
 		const float ExitColumnPosX,
 		float& NextExitNodePosY)
@@ -503,7 +502,7 @@ namespace FlowCollapseToSubGraph
 		return GraphNode;
 	}
 
-	bool FCollapseApply::ReplaceSourceSelection()
+	bool FExtractionApply::ReplaceSourceSelection()
 	{
 		// Replace the selection in the source graph.
 		const FVector2f SubGraphNodePosition = Internal::ComputeSelectionCentroid(Plan.SelectedNodes);
@@ -534,7 +533,7 @@ namespace FlowCollapseToSubGraph
 		return ReconnectSourceEntry() && ReconnectSourceExits();
 	}
 
-	bool FCollapseApply::ReconnectSourceEntry()
+	bool FExtractionApply::ReconnectSourceEntry()
 	{
 		check(!Plan.Entries.IsEmpty());
 
@@ -555,7 +554,7 @@ namespace FlowCollapseToSubGraph
 		return true;
 	}
 
-	bool FCollapseApply::ReconnectSourceExits()
+	bool FExtractionApply::ReconnectSourceExits()
 	{
 		for (const FBoundaryPin& Exit : Plan.Exits)
 		{
@@ -580,25 +579,25 @@ namespace FlowCollapseToSubGraph
 		return true;
 	}
 
-	void FCollapseApply::FinalizeNewAsset() const
+	void FExtractionApply::FinalizeNewAsset() const
 	{
 		// The parent's SubGraph pins come from these arrays, not from the nodes, and nothing else populates them.
 		NewAsset->RebuildCustomInterfaceLists();
 		NewGraph->NotifyGraphChanged();
 		NewAsset->PostEditChange();
-		NewAsset->MarkPackageDirty();
+		(void)NewAsset->MarkPackageDirty();
 	}
 
-	void FCollapseApply::FinalizeSourceAsset() const
+	void FExtractionApply::FinalizeSourceAsset() const
 	{
 		SourceGraph->NotifyGraphChanged();
 		SourceAsset.PostEditChange();
-		SourceAsset.MarkPackageDirty();
+		(void)SourceAsset.MarkPackageDirty();
 	}
 
-	FCollapseResult ApplyCollapse(const FCollapsePlan& Plan, UFlowAsset& SourceAsset, const FString& NewAssetName)
+	FExtractionResult ApplyExtraction(const FExtractionPlan& Plan, UFlowAsset& SourceAsset, const FString& NewAssetName)
 	{
-		return FCollapseApply(Plan, SourceAsset, NewAssetName).Run();
+		return FExtractionApply(Plan, SourceAsset, NewAssetName).Run();
 	}
 }
 

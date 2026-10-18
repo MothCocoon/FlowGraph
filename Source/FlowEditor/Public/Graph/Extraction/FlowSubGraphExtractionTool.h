@@ -5,7 +5,7 @@
 
 class SFlowGraphEditor;
 
-class FLOWEDITOR_API FFlowCollapseToSubGraphTool
+class FLOWEDITOR_API FFlowSubGraphExtractionTool
 {
 public:
 	static void Execute(SFlowGraphEditor& GraphEditor);

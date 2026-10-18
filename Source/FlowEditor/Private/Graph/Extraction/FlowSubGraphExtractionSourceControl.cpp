@@ -1,6 +1,5 @@
 // Copyright https://github.com/MothCocoon/FlowGraph/graphs/contributors
-
-#include "FlowCollapseToSubGraphSourceControl.h"
+#include "Graph/Extraction/FlowSubGraphExtractionSourceControl.h"
 
 #include "FlowAsset.h"
 
@@ -13,9 +12,9 @@
 #include "SourceControlOperations.h"
 #include "UObject/Package.h"
 
-#define LOCTEXT_NAMESPACE "FlowCollapseToSubGraph"
+#define LOCTEXT_NAMESPACE "FlowSubGraphExtraction"
 
-namespace FlowCollapseToSubGraph
+namespace FlowSubGraphExtraction
 {
 	bool DiscardCreatedAsset(UFlowAsset* NewAsset)
 	{
@@ -29,11 +28,11 @@ namespace FlowCollapseToSubGraph
 		return ObjectTools::ForceDeleteObjects(AssetsToDelete, bShowConfirmation) == AssetsToDelete.Num();
 	}
 
-	FText PrepareSourceControl(UFlowAsset& SourceAsset, const FString& NewAssetName, FSourceControlContext& OutContext)
+	FText PrepareSourceControl(const UFlowAsset& SourceAsset, const FString& NewAssetName, FSourceControlContext& OutContext)
 	{
 		OutContext = FSourceControlContext();
 
-		ISourceControlModule& SourceControlModule = ISourceControlModule::Get();
+		const ISourceControlModule& SourceControlModule = ISourceControlModule::Get();
 		if (!SourceControlModule.IsEnabled())
 		{
 			return FText::GetEmpty();
@@ -45,7 +44,7 @@ namespace FlowCollapseToSubGraph
 			return FText::GetEmpty();
 		}
 
-		UPackage* SourceAssetPackage = SourceAsset.GetPackage();
+		const UPackage* SourceAssetPackage = SourceAsset.GetPackage();
 		if (!SourceAssetPackage)
 		{
 			return LOCTEXT("NoSourcePackage", "The source asset has no package to check out.");
@@ -116,15 +115,15 @@ namespace FlowCollapseToSubGraph
 	}
 
 	FText SaveAndFinalizeSourceControl(
-		UFlowAsset& NewAsset,
-		UFlowAsset& SourceAsset,
+		const UFlowAsset& NewAsset,
+		const UFlowAsset& SourceAsset,
 		const FSourceControlContext& SourceControlContext)
 	{
 		UPackage* NewAssetPackage = NewAsset.GetPackage();
 		UPackage* SourceAssetPackage = SourceAsset.GetPackage();
 		if (!NewAssetPackage || !SourceAssetPackage)
 		{
-			return LOCTEXT("NoPackages", "The collapsed assets have no packages to save.");
+			return LOCTEXT("NoPackages", "The extracted assets have no packages to save.");
 		}
 
 		constexpr bool bOnlyDirty = false;

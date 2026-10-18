@@ -1,22 +1,20 @@
 // Copyright https://github.com/MothCocoon/FlowGraph/graphs/contributors
-#include "Graph/Collapse/FlowCollapseToSubGraphTool.h"
+#include "Graph/Extraction/FlowSubGraphExtractionTool.h"
 
 #include "Asset/FlowAssetEditor.h"
-#include "FlowCollapseToSubGraphPlan.h"
-#include "FlowCollapseToSubGraphApply.h"
-#include "FlowCollapseToSubGraphSourceControl.h"
-#include "SFlowCreateSubGraphDialog.h"
+#include "Graph/Extraction/FlowSubGraphExtractionPlan.h"
+#include "Graph/Extraction/FlowSubGraphExtractionApply.h"
+#include "Graph/Extraction/FlowSubGraphExtractionSourceControl.h"
+#include "Graph/Extraction/SFlowCreateSubGraphDialog.h"
 #include "Graph/FlowGraphEditor.h"
 #include "Graph/Nodes/FlowGraphNode.h"
 
-#include "Editor/UnrealEdEngine.h"
 #include "Misc/MessageDialog.h"
 #include "ScopedTransaction.h"
-#include "UnrealEdGlobals.h"
 
-#define LOCTEXT_NAMESPACE "FlowCollapseToSubGraphTool"
+#define LOCTEXT_NAMESPACE "FlowSubGraphExtractionTool"
 
-void FFlowCollapseToSubGraphTool::Execute(SFlowGraphEditor& GraphEditor)
+void FFlowSubGraphExtractionTool::Execute(SFlowGraphEditor& GraphEditor)
 {
 	if (!GraphEditor.FlowAsset.IsValid())
 	{
@@ -28,11 +26,11 @@ void FFlowCollapseToSubGraphTool::Execute(SFlowGraphEditor& GraphEditor)
 	{
 		SelectedNodes.Add(SelectedNode);
 	}
-	const FlowCollapseToSubGraph::FCollapsePlan Plan = FlowCollapseToSubGraph::PlanCollapse(SelectedNodes);
+	const FlowSubGraphExtraction::FExtractionPlan Plan = FlowSubGraphExtraction::PlanExtraction(SelectedNodes);
 	if (!Plan.CanApply())
 	{
 		FTextBuilder ErrorBuilder;
-		ErrorBuilder.AppendLine(LOCTEXT("CannotCollapse", "This selection cannot be collapsed into a sub-graph:"));
+		ErrorBuilder.AppendLine(LOCTEXT("CannotExtract", "This selection cannot be extracted into a sub-graph:"));
 		for (const FText& Error : Plan.Errors)
 		{
 			ErrorBuilder.AppendLineFormat(LOCTEXT("ErrorBullet", "- {0}"), Error);
@@ -48,9 +46,9 @@ void FFlowCollapseToSubGraphTool::Execute(SFlowGraphEditor& GraphEditor)
 		return;
 	}
 
-	FlowCollapseToSubGraph::FSourceControlContext SourceControlContext;
+	FlowSubGraphExtraction::FSourceControlContext SourceControlContext;
 	FText SourceControlPreparationError;
-	FlowCollapseToSubGraph::FCollapseResult Result;
+	FlowSubGraphExtraction::FExtractionResult Result;
 	{
 		const FScopedTransaction Transaction(
 			LOCTEXT("ExtractToSubGraphTransaction", "Extract to SubGraph"));
@@ -58,10 +56,10 @@ void FFlowCollapseToSubGraphTool::Execute(SFlowGraphEditor& GraphEditor)
 		GraphEditor.FlowAssetEditor.Pin()->SetUISelectionState(NAME_None);
 		GraphEditor.ClearSelectionSet();
 
-		Result = FlowCollapseToSubGraph::ApplyCollapse(Plan, *GraphEditor.FlowAsset, NewAssetName);
+		Result = FlowSubGraphExtraction::ApplyExtraction(Plan, *GraphEditor.FlowAsset, NewAssetName);
 		if (Result.Succeeded())
 		{
-			SourceControlPreparationError = FlowCollapseToSubGraph::PrepareSourceControl(
+			SourceControlPreparationError = FlowSubGraphExtraction::PrepareSourceControl(
 				*GraphEditor.FlowAsset,
 				NewAssetName,
 				SourceControlContext);
@@ -74,7 +72,7 @@ void FFlowCollapseToSubGraphTool::Execute(SFlowGraphEditor& GraphEditor)
 		const bool bRollbackSucceeded = !Result.bTransactionRecorded || GEditor->UndoTransaction(false);
 
 		// Ensure the created asset is discarded. Set to true if Result.NewAsset is invalid.
-		const bool bDiscardSucceeded = FlowCollapseToSubGraph::DiscardCreatedAsset(Result.NewAsset);
+		const bool bDiscardSucceeded = FlowSubGraphExtraction::DiscardCreatedAsset(Result.NewAsset);
 
 		GraphEditor.NotifyGraphChanged();
 		for (UFlowGraphNode* SelectedNode : Plan.SelectedNodes)
@@ -89,13 +87,13 @@ void FFlowCollapseToSubGraphTool::Execute(SFlowGraphEditor& GraphEditor)
 		if (!bRollbackSucceeded)
 		{
 			FailureMessage = FText::Format(
-				LOCTEXT("CollapseRollbackFailed", "{0}\n\nThe source graph could not be restored automatically."),
+				LOCTEXT("ExtractionRollbackFailed", "{0}\n\nThe source graph could not be restored automatically."),
 				FailureMessage);
 		}
 		else if (!bDiscardSucceeded)
 		{
 			FailureMessage = FText::Format(
-				LOCTEXT("CollapseCleanupFailed", "{0}\n\nThe generated asset could not be removed automatically: {1}"),
+				LOCTEXT("ExtractionCleanupFailed", "{0}\n\nThe generated asset could not be removed automatically: {1}"),
 				FailureMessage,
 				FText::FromString(Result.NewAsset->GetPathName()));
 		}
@@ -110,7 +108,7 @@ void FFlowCollapseToSubGraphTool::Execute(SFlowGraphEditor& GraphEditor)
 	constexpr bool bSelectNode = true;
 	GraphEditor.SetNodeSelection(Result.SubGraphNode, bSelectNode);
 
-	const FText SourceControlError = FlowCollapseToSubGraph::SaveAndFinalizeSourceControl(
+	const FText SourceControlError = FlowSubGraphExtraction::SaveAndFinalizeSourceControl(
 		*Result.NewAsset,
 		*GraphEditor.FlowAsset,
 		SourceControlContext);

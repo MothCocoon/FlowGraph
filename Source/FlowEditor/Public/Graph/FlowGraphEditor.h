@@ -7,7 +7,7 @@
 #include "FlowGraph.h"
 
 class FFlowAssetEditor;
-class FFlowCollapseToSubGraphTool;
+class FFlowSubGraphExtractionTool;
 class IDetailsView;
 class UEdGraphPin;
 class UFlowDebuggerSubsystem;
@@ -18,7 +18,7 @@ struct FFlowBreakpoint;
  */
 class FLOWEDITOR_API SFlowGraphEditor : public SGraphEditor
 {
-	friend class FFlowCollapseToSubGraphTool;
+	friend class FFlowSubGraphExtractionTool;
 
 public:
 	SLATE_BEGIN_ARGS(SFlowGraphEditor)

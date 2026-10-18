@@ -1,9 +1,8 @@
 // Copyright https://github.com/MothCocoon/FlowGraph/graphs/contributors
-
-#include "SFlowCreateSubGraphDialog.h"
+#include "Graph/Extraction/SFlowCreateSubGraphDialog.h"
 
 #include "FlowAsset.h"
-#include "FlowCollapseToSubGraphPlan.h"
+#include "Graph/Extraction/FlowSubGraphExtractionPlan.h"
 
 #include "Framework/Application/SlateApplication.h"
 #include "Framework/Docking/TabManager.h"
@@ -23,7 +22,7 @@
 void SFlowCreateSubGraphDialog::Construct(const FArguments& InArgs)
 {
 	SourceAsset = InArgs._SourceAsset;
-	AssetName = FlowCollapseToSubGraph::GetRequiredAssetNamePrefix();
+	AssetName = FlowSubGraphExtraction::GetRequiredAssetNamePrefix();
 
 	const FString PackageFolder = SourceAsset.Get()
 		? FPackageName::GetLongPackagePath(SourceAsset->GetOutermost()->GetName())
@@ -120,7 +119,7 @@ void SFlowCreateSubGraphDialog::OnAssetNameChanged(const FText& NewName)
 	AssetName = NewName.ToString();
 
 	ValidationError = SourceAsset.Get()
-		? FlowCollapseToSubGraph::ValidateNewAssetName(*SourceAsset, AssetName)
+		? FlowSubGraphExtraction::ValidateNewAssetName(*SourceAsset, AssetName)
 		: LOCTEXT("NoSourceAsset", "No source asset.");
 
 	if (AssetNameTextBox.IsValid())
@@ -178,7 +177,7 @@ FReply SFlowCreateSubGraphDialog::OnCancelClicked()
 
 bool SFlowCreateSubGraphDialog::ShowModal(const UFlowAsset& SourceAsset, const TArray<FText>& Warnings, FString& OutAssetName)
 {
-	TSharedRef<SFlowCreateSubGraphDialog> Dialog = SNew(SFlowCreateSubGraphDialog)
+	const TSharedRef<SFlowCreateSubGraphDialog> Dialog = SNew(SFlowCreateSubGraphDialog)
 		.SourceAsset(&SourceAsset)
 		.Warnings(Warnings);
 

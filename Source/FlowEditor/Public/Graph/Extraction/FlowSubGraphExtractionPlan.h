@@ -12,19 +12,19 @@ class UFlowAsset;
 class UFlowGraphNode;
 
 /**
- * Collapses a selection of Flow graph nodes into a newly created Flow Asset, replacing the selection
+ * Extracts a selection of Flow graph nodes into a newly created Flow Asset, replacing the selection
  * with a SubGraph node that runs that asset.
  *
  * The sub-graph interface is derived from the connections that cross the selection boundary. A pin is
  * on the boundary when at least one of its links terminates on a node outside the selection, which is
- * the same test Blueprint's collapse uses (FBlueprintEditor::CollapseNodesIntoGraph).
+ * the same test FBlueprintEditor::CollapseNodesIntoGraph uses.
  *
  * Flow's sub-graph interface is not a Blueprint tunnel, and three of its runtime rules shape what can
- * be collapsed:
+ * be extracted:
  *
  * 1. Only the Start pin instantiates the child. UFlowNode_SubGraph::ExecuteInput calls CreateSubFlow
  *    for Start alone; any other input pin routes to UFlowAsset::TriggerCustomInput_FromSubGraph, which
- *    requires an already-running instance. A collapsible selection therefore has exactly one incoming
+ *    requires an already-running instance. An extractable selection therefore has exactly one incoming
  *    execution boundary, and that boundary maps to Start.
  *
  * 2. The output interface is named after the pins it replaces. An exit crossing an unnamed default pin
@@ -40,7 +40,7 @@ class UFlowGraphNode;
  * 3. Data pins cannot cross the boundary at all. The interface mirrors only the exec-only CustomInputs
  *    and CustomOutputs arrays, so a crossing data link is a hard error.
  */
-namespace FlowCollapseToSubGraph
+namespace FlowSubGraphExtraction
 {
 	/** A pin inside the selection that has at least one link leaving it. */
 	struct FBoundaryPin
@@ -48,7 +48,7 @@ namespace FlowCollapseToSubGraph
 		/** Pin on a selected node. Valid only while planning; the node is destroyed by Apply. */
 		UEdGraphPin* InnerPin = nullptr;
 
-		/** Pins on non-selected nodes that InnerPin links to. These survive the collapse. */
+		/** Pins on non-selected nodes that InnerPin links to. These survive the extraction. */
 		TArray<UEdGraphPin*> OuterPins;
 
 		/** Guid of the selected node owning InnerPin, used to find its clone in the new asset. */
@@ -65,13 +65,13 @@ namespace FlowCollapseToSubGraph
 	};
 
 	/**
-	 * A description of the collapse, produced before anything is modified so the caller can
+	 * A description of the extraction, produced before anything is modified so the caller can
 	 * refuse or warn without having touched the graph.
 	 */
-	struct FCollapsePlan
+	struct FLOWEDITOR_API FExtractionPlan
 	{
-		/** Builds and validates a collapse plan from the selected graph nodes. */
-		explicit FCollapsePlan(const TSet<UFlowGraphNode*>& InSelectedNodes);
+		/** Builds and validates an extraction plan from the selected graph nodes. */
+		explicit FExtractionPlan(const TSet<UFlowGraphNode*>& InSelectedNodes);
 
 		/** Nodes that will move into the new asset. */
 		TSet<UFlowGraphNode*> SelectedNodes;
@@ -82,7 +82,7 @@ namespace FlowCollapseToSubGraph
 		/** Boundary pins that execution leaves the selection through. */
 		TArray<FBoundaryPin> Exits;
 
-		/** Conditions that make the collapse impossible. Non-empty means the action must not run. */
+		/** Conditions that make the extraction impossible. Non-empty means the action must not run. */
 		TArray<FText> Errors;
 
 		/** Conditions the user should confirm before proceeding. */
@@ -111,11 +111,11 @@ namespace FlowCollapseToSubGraph
 	};
 
 	/** Builds a read-only plan describing the boundary of the selection. Modifies nothing. */
-	FCollapsePlan PlanCollapse(const TSet<UFlowGraphNode*>& SelectedNodes);
+	FLOWEDITOR_API FExtractionPlan PlanExtraction(const TSet<UFlowGraphNode*>& SelectedNodes);
 
 	/** Required prefix for a generated sub-graph asset. */
-	const FString& GetRequiredAssetNamePrefix();
+	FLOWEDITOR_API const FString& GetRequiredAssetNamePrefix();
 
 	/** Validates a proposed asset name, returning an empty text when it is usable. */
-	FText ValidateNewAssetName(const UFlowAsset& SourceAsset, const FString& NewAssetName);
+	FLOWEDITOR_API FText ValidateNewAssetName(const UFlowAsset& SourceAsset, const FString& NewAssetName);
 }

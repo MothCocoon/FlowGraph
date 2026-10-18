@@ -7,7 +7,7 @@
 class ISourceControlChangelist;
 class UFlowAsset;
 
-namespace FlowCollapseToSubGraph
+namespace FlowSubGraphExtraction
 {
 	/** Source-control destination selected before the source asset is saved. */
 	struct FSourceControlContext
@@ -17,21 +17,21 @@ namespace FlowCollapseToSubGraph
 		bool bEnabled = false;
 	};
 
-	/** Removes a newly created sub-graph asset after a failed collapse. */
-	bool DiscardCreatedAsset(UFlowAsset* NewAsset);
+	/** Removes a newly created sub-graph asset after a failed extraction. */
+	FLOWEDITOR_API bool DiscardCreatedAsset(UFlowAsset* NewAsset);
 
 	/**
 	 * Resolves the target changelist before either asset is saved. An existing source checkout is
 	 * preserved; otherwise a changelist is created and the source is checked out into it.
 	 */
-	FText PrepareSourceControl(
-		UFlowAsset& SourceAsset,
+	FLOWEDITOR_API FText PrepareSourceControl(
+		const UFlowAsset& SourceAsset,
 		const FString& NewAssetName,
 		FSourceControlContext& OutContext);
 
 	/** Saves both assets and moves the generated file into the source asset's changelist. */
-	FText SaveAndFinalizeSourceControl(
-		UFlowAsset& NewAsset,
-		UFlowAsset& SourceAsset,
+	FLOWEDITOR_API FText SaveAndFinalizeSourceControl(
+		const UFlowAsset& NewAsset,
+		const UFlowAsset& SourceAsset,
 		const FSourceControlContext& SourceControlContext);
 }
