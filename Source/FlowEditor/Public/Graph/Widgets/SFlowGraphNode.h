@@ -28,16 +28,16 @@ public:
 	void Construct(const FArguments& InArgs, UFlowGraphNode* InNode);
 
 	virtual ~SFlowGraphNode() override;
-	
-protected:
+
 	// SNodePanel::SNode
 	virtual void GetNodeInfoPopups(FNodeInfoContext* Context, TArray<FGraphInformationPopupInfo>& Popups) const override;
 	virtual const FSlateBrush* GetShadowBrush(bool bSelected) const override;
 	virtual void GetOverlayBrushes(bool bSelected, const FVector2f& WidgetSize, TArray<FOverlayBrushInfo>& Brushes) const override;
 	// --
 
+protected:
 	const FSlateBrush* GetSlateBrush(const FName BrushName, const FName StyleSetName) const;
-	
+
 	// SGraphNode
 	virtual void GetPinBrush(const bool bLeftSide, const float WidgetWidth, const int32 PinIndex, const struct FFlowBreakpoint* Breakpoint, TArray<FOverlayBrushInfo>& Brushes) const;
 
@@ -54,8 +54,9 @@ protected:
 	virtual void AddSubNode(TSharedPtr<SGraphNode> SubNodeWidget);
 	// --
 
-	// SGraphNode Interface
 	virtual TSharedPtr<SToolTip> GetComplexTooltip() override;
+
+public:
 	virtual void OnDragEnter(const FGeometry& MyGeometry, const FDragDropEvent& DragDropEvent) override;
 	virtual FReply OnDragOver(const FGeometry& MyGeometry, const FDragDropEvent& DragDropEvent) override;
 	virtual FReply OnDrop(const FGeometry& MyGeometry, const FDragDropEvent& DragDropEvent) override;
@@ -63,30 +64,43 @@ protected:
 	virtual void OnDragLeave(const FDragDropEvent& DragDropEvent) override;
 	virtual FReply OnMouseMove(const FGeometry& SenderGeometry, const FPointerEvent& MouseEvent) override;
 	virtual TSharedRef<SGraphNode> GetNodeUnderMouse(const FGeometry& MyGeometry, const FPointerEvent& MouseEvent) override;
+
+public:
 	virtual void SetOwner(const TSharedRef<SGraphPanel>& OwnerPanel) override;
+
+protected:
 	virtual void AddPin(const TSharedRef<SGraphPin>& PinToAdd) override;
 
+public:
 	virtual void UpdateGraphNode() override;
+
+protected:
 	virtual void UpdateErrorInfo() override;
 
 	virtual TSharedRef<SWidget> CreateTitleWidget(TSharedPtr<SNodeTitle> NodeTitle) override;
 	virtual TSharedRef<SWidget> CreateNodeContentArea() override;
 	virtual void CreateBelowPinControls(TSharedPtr<SVerticalBox> MainBox) override;
+
+public:
 	virtual const FSlateBrush* GetNodeBodyBrush() const override;
 
+protected:
 	virtual void CreateInputSideAddButton(TSharedPtr<SVerticalBox> OutputBox) override;
 	virtual void CreateOutputSideAddButton(TSharedPtr<SVerticalBox> OutputBox) override;
-	// --
 
-	// SWidget
+public:
+	virtual int32 OnPaint(const FPaintArgs& Args, const FGeometry& AllottedGeometry, const FSlateRect& MyCullingRect,
+	                      FSlateWindowElementList& OutDrawElements, int32 LayerId, const FWidgetStyle& InWidgetStyle, const bool bParentEnabled) const override;
+
 	virtual FReply OnMouseButtonDown(const FGeometry& SenderGeometry, const FPointerEvent& MouseEvent) override;
-	// --
 
-	FSlateColor GetNodeTitleColor() const;
-	FSlateColor GetNodeBodyColor() const;
-	FSlateColor GetNodeTitleIconColor() const;
-	FLinearColor GetNodeTitleTextColor() const;
-	TSharedPtr<SWidget> GetEnabledStateWidget() const;
+	virtual FSlateColor GetNodeTitleColor() const override;
+	virtual FSlateColor GetNodeBodyColor() const override;
+	virtual FSlateColor GetNodeTitleIconColor() const override;
+	virtual FLinearColor GetNodeTitleTextColor() const override;
+
+protected:
+	virtual TSharedPtr<SWidget> GetEnabledStateWidget() const override;
 
 	/* Variant of SGraphNode::AddPinButtonContent. */
 	virtual void AddPinButton(TSharedPtr<SVerticalBox> OutputBox, TSharedRef<SWidget> ButtonContent, const EEdGraphPinDirection Direction, FString DocumentationExcerpt = FString(), TSharedPtr<SToolTip> CustomTooltip = nullptr);
@@ -97,11 +111,11 @@ protected:
 protected:
 	/* Adds a sub node widget inside current node. */
 	void AddSubNodeWidget(const TSharedPtr<SGraphNode>& NewSubNodeWidget);
-	
+
 	/* Removes dragged subnodes from the current node,
 	 * bInOutReorderOperation reports if this is a simple "reorder" internally within the node or
 	 * if one or more of the removed SubNodes will be removed from the node completely. */
-	void RemoveDraggedSubNodes(const TArray< TSharedRef<SGraphNode> >& DraggedNodes, bool& bInOutReorderOperation) const;
+	void RemoveDraggedSubNodes(const TArray<TSharedRef<SGraphNode>>& DraggedNodes, bool& bInOutReorderOperation) const;
 
 	static bool ShouldDropDraggedNodesAsSubNodes(const TArray<TSharedRef<SGraphNode>>& DraggedNodes, const UFlowGraphNode* DropTargetNode);
 
