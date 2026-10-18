@@ -253,16 +253,6 @@ UFlowAsset* UFlowSubsystem::CreateFlowInstance(const TWeakObjectPtr<UObject> Own
 		return nullptr;
 	}
 
-	FString ValidationError;
-	if (!LoadedFlowAsset->IsRuntimeGraphValid(ValidationError))
-	{
-		UE_LOG(LogFlow, Error, TEXT("Flow instance creation rejected: %s"), *ValidationError);
-		return nullptr;
-	}
-
-	const bool bTemplateWasAlreadyInstanced = InstancedTemplates.Contains(LoadedFlowAsset);
-	AddInstancedTemplate(LoadedFlowAsset);
-
 #if WITH_EDITOR
 	if (GetWorld()->WorldType != EWorldType::Game)
 	{
@@ -271,6 +261,16 @@ UFlowAsset* UFlowSubsystem::CreateFlowInstance(const TWeakObjectPtr<UObject> Own
 	}
 #endif
 
+	// Validate after harvesting, so connections repaired from the editor graph are not rejected.
+	FString ValidationError;
+	if (!LoadedFlowAsset->IsRuntimeGraphValid(ValidationError))
+	{
+		UE_LOG(LogFlow, Error, TEXT("Flow instance creation rejected: %s"), *ValidationError);
+		return nullptr;
+	}
+
+	AddInstancedTemplate(LoadedFlowAsset);
+
 	// it won't be empty, if we're restoring Flow Asset instance from the SaveGame
 	if (NewInstanceName.IsEmpty())
 	{
@@ -278,15 +278,7 @@ UFlowAsset* UFlowSubsystem::CreateFlowInstance(const TWeakObjectPtr<UObject> Own
 	}
 
 	UFlowAsset* NewInstance = NewObject<UFlowAsset>(this, LoadedFlowAsset->GetClass(), *NewInstanceName, RF_Transient, LoadedFlowAsset, false, nullptr);
-	if (!NewInstance->InitializeInstance(Owner, *LoadedFlowAsset))
-	{
-		if (!bTemplateWasAlreadyInstanced)
-		{
-			RemoveInstancedTemplate(LoadedFlowAsset);
-		}
-
-		return nullptr;
-	}
+	NewInstance->InitializeInstance(Owner, *LoadedFlowAsset);
 
 	LoadedFlowAsset->AddInstance(NewInstance);
 
