@@ -539,10 +539,11 @@ void FFlowAssetEditor::AutoFormatGraph()
 		}
 	}
 
+	// Unselected nodes are measured too, the layout avoids them as obstacles
 	TMap<FGuid, FIntPoint> MeasuredNodeSizes;
 	for (const TPair<FGuid, UFlowNode*>& Pair : FlowAsset->GetNodes())
 	{
-		if (!Pair.Value || (!TargetGuids.IsEmpty() && !TargetGuids.Contains(Pair.Key)))
+		if (!Pair.Value)
 		{
 			continue;
 		}
