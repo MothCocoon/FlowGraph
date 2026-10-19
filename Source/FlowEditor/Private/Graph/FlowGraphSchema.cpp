@@ -1413,12 +1413,15 @@ void UFlowGraphSchema::GatherNativeNodesOrAddOns(const TSubclassOf<UFlowNodeBase
 	GetDerivedClasses(UFlowGraphNode::StaticClass(), GraphNodes);
 	for (UClass* GraphNodeClass : GraphNodes)
 	{
-		const UFlowGraphNode* GraphNodeCDO = GraphNodeClass->GetDefaultObject<UFlowGraphNode>();
-		for (UClass* AssignedClass : GraphNodeCDO->AssignedNodeClasses)
+		if (!EnumHasAnyFlags(GraphNodeClass->GetClassFlags(), CLASS_NewerVersionExists))
 		{
-			if (AssignedClass->IsChildOf(FlowNodeBaseClass))
+			const UFlowGraphNode* GraphNodeCDO = GraphNodeClass->GetDefaultObject<UFlowGraphNode>();
+			for (UClass* AssignedClass : GraphNodeCDO->AssignedNodeClasses)
 			{
-				GraphNodesByFlowNodes.Emplace(AssignedClass, GraphNodeClass);
+				if (AssignedClass->IsChildOf(FlowNodeBaseClass))
+				{
+					GraphNodesByFlowNodes.Emplace(AssignedClass, GraphNodeClass);
+				}
 			}
 		}
 	}
