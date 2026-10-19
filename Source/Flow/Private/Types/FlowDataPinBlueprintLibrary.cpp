@@ -16,7 +16,7 @@ namespace
 	TArray<TResult> GetAndFilterRootFlowParamsByType_Impl(
 		UObject* FlowAssetProvider,
 		const UScriptStruct* ValueType,
-		TFunctionRef<void(const FInstancedStruct& PinValue, TArray<TResult>& OutResults)> Unbox)
+		TFunctionRef<void(const TInstancedStruct<FFlowDataPinValue>& PinValue, TArray<TResult>& OutResults)> Unbox)
 	{
 		TArray<TResult> Results;
 
@@ -43,9 +43,7 @@ namespace
 			const UScriptStruct* EntryType = PropertyValue.GetScriptStruct();
 			if (IsValid(EntryType) && EntryType->IsChildOf(ValueType))
 			{
-				FInstancedStruct Entry;
-				Entry.InitializeAs(EntryType, PropertyValue.GetMemory());
-				Unbox(Entry, Results);
+				Unbox(PropertyValue, Results);
 			}
 		}
 
@@ -58,7 +56,7 @@ TArray<FInstancedStruct> UFlowDataPinBlueprintLibrary::GetRootFlowInstancedStruc
 	return GetAndFilterRootFlowParamsByType_Impl<FInstancedStruct>(
 		FlowAssetProvider,
 		FFlowDataPinValue_InstancedStruct::StaticStruct(),
-		[InnerType](const FInstancedStruct& PinValue, TArray<FInstancedStruct>& OutResults)
+		[InnerType](const TInstancedStruct<FFlowDataPinValue>& PinValue, TArray<FInstancedStruct>& OutResults)
 		{
 			const FFlowDataPinValue_InstancedStruct* Pin = PinValue.GetPtr<FFlowDataPinValue_InstancedStruct>();
 			if (!Pin)
@@ -88,7 +86,7 @@ TArray<UObject*> UFlowDataPinBlueprintLibrary::GetRootFlowObjectParamsByClass(UO
 	return GetAndFilterRootFlowParamsByType_Impl<UObject*>(
 		FlowAssetProvider,
 		FFlowDataPinValue_Object::StaticStruct(),
-		[ObjectClass](const FInstancedStruct& PinValue, TArray<UObject*>& OutResults)
+		[ObjectClass](const TInstancedStruct<FFlowDataPinValue>& PinValue, TArray<UObject*>& OutResults)
 		{
 			const FFlowDataPinValue_Object* Pin = PinValue.GetPtr<FFlowDataPinValue_Object>();
 			if (!Pin)
