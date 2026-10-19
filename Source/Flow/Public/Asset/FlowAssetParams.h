@@ -100,7 +100,7 @@ private:
 	FSimpleDelegate FlowDataPinValuesRebuildDelegate;
 	// --
 
-	/* Broadcasts when params have been reconciled with the start node. */
+	/* Broadcasts when Properties have changed after reconciling with the Start node or ParentParams. */
 	FSimpleMulticastDelegate OnAssetParamsReconciled;
 
 	/* Handle to remove the delegate instance on object destruction. */

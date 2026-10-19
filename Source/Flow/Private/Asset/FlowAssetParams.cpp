@@ -348,6 +348,11 @@ void UFlowAssetParams::HandleParentParamsReconciled()
 		UE_LOG(LogFlow, Error, TEXT("Failed to reconcile ParentParams during HandleParentParamsReconciled() for %s: %s"),
 			*GetPathName(), *UEnum::GetDisplayValueAsText(ReconcileResult).ToString());
 	}
+	else if (ReconcileResult == EFlowReconcilePropertiesResult::ParamsPropertiesUpdated && OnAssetParamsReconciled.IsBound())
+	{
+		// Forward to own children, so the change reaches every level of the hierarchy
+		OnAssetParamsReconciled.Broadcast();
+	}
 }
 
 EFlowReconcilePropertiesResult UFlowAssetParams::CheckForParentCycle() const
