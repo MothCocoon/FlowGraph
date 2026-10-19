@@ -22,6 +22,7 @@ class SGraphEditor;
 class UEdGraphNode;
 class UEdGraphPin;
 struct FSlateBrush;
+struct FPropertyAndParent;
 struct FPropertyChangedEvent;
 struct Rect;
 
@@ -156,6 +157,7 @@ protected:
 	virtual void CreateGraphWidget();
 
 	static bool CanEdit();
+	static bool IsPropertyVisible(const FPropertyAndParent& PropertyAndParent);
 
 public:
 	void SetUISelectionState(const FName SelectionOwner);

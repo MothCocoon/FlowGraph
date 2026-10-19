@@ -43,21 +43,6 @@
 
 #define LOCTEXT_NAMESPACE "FlowAssetEditor"
 
-namespace FlowAssetEditor_Private
-{
-	bool ShouldShowDetailsProperty(const FPropertyAndParent& PropertyAndParent)
-	{
-		const FName CategoryName = FObjectEditorUtils::GetCategoryFName(&PropertyAndParent.Property);
-		if (CategoryName == TEXT("FlowNode") || CategoryName == TEXT("FlowNodeAddOn"))
-		{
-			return false;
-		}
-
-		return PropertyAndParent.Property.GetFName() != TEXT("AddOns")
-			|| GetDefault<UFlowGraphEditorSettings>()->bMergeAddOnDetails;
-	}
-}
-
 const FName FFlowAssetEditor::DetailsTab(TEXT("Details"));
 const FName FFlowAssetEditor::GraphTab(TEXT("Graph"));
 const FName FFlowAssetEditor::PaletteTab(TEXT("Palette"));
@@ -600,7 +585,7 @@ void FFlowAssetEditor::CreateWidgets()
 		FPropertyEditorModule& PropertyModule = FModuleManager::LoadModuleChecked<FPropertyEditorModule>("PropertyEditor");
 		DetailsView = PropertyModule.CreateDetailView(Args);
 		DetailsView->SetIsPropertyEditingEnabledDelegate(FIsPropertyEditingEnabled::CreateStatic(&FFlowAssetEditor::CanEdit));
-		DetailsView->SetIsPropertyVisibleDelegate(FIsPropertyVisible::CreateStatic(&FlowAssetEditor_Private::ShouldShowDetailsProperty));
+		DetailsView->SetIsPropertyVisibleDelegate(FIsPropertyVisible::CreateStatic(&FFlowAssetEditor::IsPropertyVisible));
 		DetailsView->RegisterInstancedCustomPropertyTypeLayout(UFlowNodeAddOn::StaticClass()->GetFName(), FOnGetPropertyTypeCustomizationInstance::CreateStatic(&FFlowNodeAddOnCustomization::MakeInstance));
 		DetailsView->SetObject(FlowAsset);
 	}
@@ -640,6 +625,17 @@ void FFlowAssetEditor::CreateGraphWidget()
 bool FFlowAssetEditor::CanEdit()
 {
 	return GEditor->PlayWorld == nullptr;
+}
+
+bool FFlowAssetEditor::IsPropertyVisible(const FPropertyAndParent& PropertyAndParent)
+{
+	const FName CategoryName = FObjectEditorUtils::GetCategoryFName(&PropertyAndParent.Property);
+	if (CategoryName == TEXT("FlowNode") || CategoryName == TEXT("FlowNodeAddOn"))
+	{
+		return false;
+	}
+
+	return PropertyAndParent.Property.GetFName() != TEXT("AddOns") || GetDefault<UFlowGraphEditorSettings>()->bMergeAddOnDetails;
 }
 
 void FFlowAssetEditor::SetUISelectionState(const FName SelectionOwner)

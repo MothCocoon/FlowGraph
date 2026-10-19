@@ -742,8 +742,7 @@ FString UFlowNodeBase::GetAddOnDescriptions() const
 	FString Result;
 
 	for (const UFlowNodeBase* Addon : AddOns)
-	{
-		const FString& Description = Addon->GetNodeDescription();
+	{const FString& Description = Addon->GetNodeDescription();
 		if (!Description.IsEmpty())
 		{
 			Result.Append(Description).Append(LINE_TERMINATOR);
