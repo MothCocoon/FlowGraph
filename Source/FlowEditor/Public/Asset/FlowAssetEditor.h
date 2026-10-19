@@ -2,6 +2,7 @@
 #pragma once
 
 #include "EditorUndoClient.h"
+#include "Delegates/Delegate.h"
 #include "Misc/NotifyHook.h"
 #include "Toolkits/AssetEditorToolkit.h"
 #include "Toolkits/IToolkitHost.h"
@@ -21,6 +22,7 @@ class SGraphEditor;
 class UEdGraphNode;
 class UEdGraphPin;
 struct FSlateBrush;
+struct FPropertyAndParent;
 struct FPropertyChangedEvent;
 struct Rect;
 
@@ -65,6 +67,8 @@ protected:
 private:
 	/* The current UI selection state of this editor. */
 	FName CurrentUISelection;
+
+	FDelegateHandle FlowGraphEditorSettingsChangedHandle;
 
 public:
 	FFlowAssetEditor();
@@ -153,6 +157,7 @@ protected:
 	virtual void CreateGraphWidget();
 
 	static bool CanEdit();
+	static bool IsPropertyVisible(const FPropertyAndParent& PropertyAndParent);
 
 public:
 	void SetUISelectionState(const FName SelectionOwner);
