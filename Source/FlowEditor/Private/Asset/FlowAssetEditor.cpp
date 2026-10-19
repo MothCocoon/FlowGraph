@@ -635,7 +635,7 @@ bool FFlowAssetEditor::IsPropertyVisible(const FPropertyAndParent& PropertyAndPa
 		return false;
 	}
 
-	return PropertyAndParent.Property.GetFName() != TEXT("AddOns") || GetDefault<UFlowGraphEditorSettings>()->bMergeAddOnDetails;
+	return PropertyAndParent.Property.GetFName() != TEXT("AddOns") || GetDefault<UFlowGraphEditorSettings>()->bShowAddOnsInNodeDetails;
 }
 
 void FFlowAssetEditor::SetUISelectionState(const FName SelectionOwner)

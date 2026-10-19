@@ -47,8 +47,8 @@ public:
 	bool bShowAddonDescriptions;
 
 	/* Shows the editable AddOn hierarchy in the owning Flow Node's (or AddOn's) Details panel. */
-	UPROPERTY(EditAnywhere, config, Category = "Nodes", meta = (DisplayName = "Merge AddOn Details"))
-	bool bMergeAddOnDetails;
+	UPROPERTY(EditAnywhere, config, Category = "Nodes", meta = (DisplayName = "Show AddOns in Node Details"))
+	bool bShowAddOnsInNodeDetails;
 
 	/* Pin names will be displayed in a format that is easier to read, even if PinFriendlyName wasn't set. */
 	UPROPERTY(EditAnywhere, config, Category = "Nodes")

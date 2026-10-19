@@ -20,7 +20,7 @@ void FFlowNodeAddOn_Details::CustomizeDetails(IDetailLayoutBuilder& DetailLayout
 	// Merged AddOn list, shown on instances only
 	if (DetailLayout.HasClassDefaultObject() == false)
 	{
-		if (GetDefault<UFlowGraphEditorSettings>()->bMergeAddOnDetails)
+		if (GetDefault<UFlowGraphEditorSettings>()->bShowAddOnsInNodeDetails)
 		{
 			IDetailCategoryBuilder& AddOnDetailsCategory = DetailLayout.EditCategory(
 				TEXT("AddOnDetails"),

@@ -12,7 +12,7 @@ UFlowGraphEditorSettings::UFlowGraphEditorSettings()
 	, bShowNodeClass(false)
 	, bShowNodeDescriptionWhilePlaying(true)
 	, bShowAddonDescriptions(true)
-	, bMergeAddOnDetails(false)
+	, bShowAddOnsInNodeDetails(false)
 	, bEnforceFriendlyPinNames(false)
 	, bShowSubGraphPreview(true)
 	, bShowSubGraphPath(true)
@@ -32,7 +32,7 @@ void UFlowGraphEditorSettings::PostEditChangeProperty(FPropertyChangedEvent& Pro
 		GetDefault<UFlowGraphSchema>()->ForceVisualizationCacheClear();
 	}
 
-	if (PropertyChangedEvent.GetMemberPropertyName() == GET_MEMBER_NAME_CHECKED(UFlowGraphEditorSettings, bMergeAddOnDetails))
+	if (PropertyChangedEvent.GetMemberPropertyName() == GET_MEMBER_NAME_CHECKED(UFlowGraphEditorSettings, bShowAddOnsInNodeDetails))
 	{
 		SettingsChanged.Broadcast();
 	}
