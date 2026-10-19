@@ -46,6 +46,7 @@ TMap<FName, FAssetData> UFlowGraphSchema::BlueprintFlowNodeAddOns;
 TMap<TSubclassOf<UFlowNodeBase>, TSubclassOf<UEdGraphNode>> UFlowGraphSchema::GraphNodesByFlowNodes;
 
 bool UFlowGraphSchema::bBlueprintCompilationPending;
+bool UFlowGraphSchema::bGatherNodesPendingAfterPIE = false;
 int32 UFlowGraphSchema::CurrentCacheRefreshID = 0;
 
 FFlowGraphSchemaRefresh UFlowGraphSchema::OnNodeListChanged;
@@ -209,6 +210,7 @@ void UFlowGraphSchema::SubscribeToAssetChanges()
 	AssetRegistry.Get().OnAssetRenamed().AddStatic(&UFlowGraphSchema::OnAssetRenamed);
 
 	FCoreUObjectDelegates::ReloadCompleteDelegate.AddStatic(&UFlowGraphSchema::OnHotReload);
+	FEditorDelegates::ShutdownPIE.AddStatic(&UFlowGraphSchema::OnShutdownPIE);
 
 	if (GEditor)
 	{
@@ -1375,18 +1377,36 @@ void UFlowGraphSchema::OnHotReload(EReloadCompleteReason ReloadCompleteReason)
 	RefreshNativeNodeCache();
 }
 
-void UFlowGraphSchema::RefreshNativeNodeCache()
+void UFlowGraphSchema::OnShutdownPIE(const bool bIsSimulating)
 {
-	if ((GEditor && GEditor->PlayWorld) || GCompilingBlueprint)
+	if (bGatherNodesPendingAfterPIE)
 	{
-		return;
+		GatherNodes();
 	}
 
+	bGatherNodesPendingAfterPIE = false;
+}
+
+void UFlowGraphSchema::RefreshNativeNodeCache()
+{
+	// native classes are gathered immediately, so the cache never keeps classes replaced by the reload
 	NativeFlowNodes.Reset();
 	NativeFlowNodeAddOns.Reset();
 	GraphNodesByFlowNodes.Reset();
 
-	GatherNodes();
+	GatherNativeNodesOrAddOns(UFlowNode::StaticClass(), NativeFlowNodes);
+	GatherNativeNodesOrAddOns(UFlowNodeAddOn::StaticClass(), NativeFlowNodeAddOns);
+
+	// GatherNodes doesn't run during PIE.
+	// Blueprint nodes and display names are refreshed once PIE ends.
+	if (GEditor && GEditor->PlayWorld)
+	{
+		bGatherNodesPendingAfterPIE = true;
+	}
+	else
+	{
+		GatherNodes();
+	}
 }
 
 void UFlowGraphSchema::GatherNativeNodesOrAddOns(const TSubclassOf<UFlowNodeBase>& FlowNodeBaseClass, TArray<UClass*>& InOutNodesOrAddOnsArray)
