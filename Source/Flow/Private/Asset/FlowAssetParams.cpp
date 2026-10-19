@@ -180,14 +180,17 @@ EFlowReconcilePropertiesResult UFlowAssetParams::ReconcilePropertiesWithStartNod
 	if (FlowAssetLastSaveTimeStamp >= ParamsTimestamp ||
 		EFlowReconcilePropertiesResult_Classifiers::IsErrorResult(PropertiesMatchResult))
 	{
-		ConfigureFlowAssetParams(InOwnerFlowAsset, nullptr, MutablePropertiesFromStartNode);
-
-		if (OnAssetParamsReconciled.IsBound())
+		if (ConfigureFlowAssetParams(InOwnerFlowAsset, nullptr, MutablePropertiesFromStartNode))
 		{
-			OnAssetParamsReconciled.Broadcast();
+			if (OnAssetParamsReconciled.IsBound())
+			{
+				OnAssetParamsReconciled.Broadcast();
+			}
+
+			return EFlowReconcilePropertiesResult::ParamsPropertiesUpdated;
 		}
 
-		return EFlowReconcilePropertiesResult::ParamsPropertiesUpdated;
+		return EFlowReconcilePropertiesResult::NoChanges;
 	}
 
 	MutablePropertiesFromStartNode = Properties;
@@ -293,9 +296,7 @@ EFlowReconcilePropertiesResult UFlowAssetParams::ReconcilePropertiesWithParentPa
 		}
 	}
 
-	Properties = NewProperties;
-
-	ModifyAndRebuildPropertiesMap();
+	const bool bPropertiesChanged = ApplyProperties(NewProperties);
 
 	if (!OnParentAssetParamsReconciledHandle.IsValid())
 	{
@@ -304,17 +305,28 @@ EFlowReconcilePropertiesResult UFlowAssetParams::ReconcilePropertiesWithParentPa
 			&UFlowAssetParams::HandleParentParamsReconciled);
 	}
 
-	return EFlowReconcilePropertiesResult::ParamsPropertiesUpdated;
+	return bPropertiesChanged ? EFlowReconcilePropertiesResult::ParamsPropertiesUpdated : EFlowReconcilePropertiesResult::NoChanges;
 }
 
-void UFlowAssetParams::ConfigureFlowAssetParams(TSoftObjectPtr<UFlowAsset> OwnerAsset, TSoftObjectPtr<UFlowAssetParams> InParentParams, const TArray<FFlowNamedDataPinProperty>& InProperties)
+bool UFlowAssetParams::ConfigureFlowAssetParams(TSoftObjectPtr<UFlowAsset> OwnerAsset, TSoftObjectPtr<UFlowAssetParams> InParentParams, const TArray<FFlowNamedDataPinProperty>& InProperties)
 {
-	ParentParams.AssetPtr = InParentParams;
-	OwnerFlowAsset = OwnerAsset;
-	Properties = InProperties;
-	FFlowNamedDataPinProperty::ConfigurePropertiesForFlowAssetParams(Properties);
+	const bool bReferencesChanged = ParentParams.AssetPtr != InParentParams || OwnerFlowAsset != OwnerAsset;
+	if (bReferencesChanged)
+	{
+		Modify();
 
-	ModifyAndRebuildPropertiesMap();
+		ParentParams.AssetPtr = InParentParams;
+		OwnerFlowAsset = OwnerAsset;
+
+		MarkPackageDirty();
+	}
+
+	TArray<FFlowNamedDataPinProperty> NewProperties = InProperties;
+	FFlowNamedDataPinProperty::ConfigurePropertiesForFlowAssetParams(NewProperties);
+
+	const bool bPropertiesChanged = ApplyProperties(NewProperties);
+
+	return bReferencesChanged || bPropertiesChanged;
 }
 
 bool UFlowAssetParams::CanModifyFlowDataPinType() const
@@ -393,19 +405,60 @@ void UFlowAssetParams::ModifyAndRebuildPropertiesMap()
 
 void UFlowAssetParams::RebuildPropertiesMap()
 {
-	PropertyMap.Reset();
+	PropertyMap = BuildPropertyMap(Properties);
+}
 
-	for (const FFlowNamedDataPinProperty& Prop : Properties)
+bool UFlowAssetParams::ApplyProperties(const TArray<FFlowNamedDataPinProperty>& NewProperties)
+{
+	TMap<FName, TInstancedStruct<FFlowDataPinValue>> NewPropertyMap = BuildPropertyMap(NewProperties);
+
+	// Full struct comparison, so changes of bIsOverride and other flags are detected too
+	bool bPropertiesChanged = Properties.Num() != NewProperties.Num();
+	for (int32 Index = 0; !bPropertiesChanged && Index < Properties.Num(); ++Index)
+	{
+		bPropertiesChanged = !FFlowNamedDataPinProperty::StaticStruct()->CompareScriptStruct(&Properties[Index], &NewProperties[Index], PPF_None);
+	}
+
+	// PropertyMap can be stale even if Properties match, e.g. after editing a value in the details panel
+	bool bPropertyMapChanged = PropertyMap.Num() != NewPropertyMap.Num();
+	for (auto It = NewPropertyMap.CreateConstIterator(); !bPropertyMapChanged && It; ++It)
+	{
+		const TInstancedStruct<FFlowDataPinValue>* PreviousValue = PropertyMap.Find(It.Key());
+		bPropertyMapChanged = !PreviousValue || *PreviousValue != It.Value();
+	}
+
+	if (bPropertiesChanged || bPropertyMapChanged)
+	{
+		Modify();
+
+		Properties = NewProperties;
+		PropertyMap = MoveTemp(NewPropertyMap);
+
+		MarkPackageDirty();
+
+		return true;
+	}
+
+	return false;
+}
+
+TMap<FName, TInstancedStruct<FFlowDataPinValue>> UFlowAssetParams::BuildPropertyMap(const TArray<FFlowNamedDataPinProperty>& InProperties) const
+{
+	TMap<FName, TInstancedStruct<FFlowDataPinValue>> Result;
+
+	for (const FFlowNamedDataPinProperty& Prop : InProperties)
 	{
 		if (Prop.IsValid())
 		{
-			PropertyMap.Add(Prop.Name, Prop.DataPinValue);
+			Result.Add(Prop.Name, Prop.DataPinValue);
 		}
 		else
 		{
 			UE_LOG(LogFlow, Warning, TEXT("Skipping invalid property %s during rebuild for %s"), *Prop.Name.ToString(), *GetPathName());
 		}
 	}
+
+	return Result;
 }
 #endif
 

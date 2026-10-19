@@ -76,7 +76,8 @@ public:
 	/* Updates properties from ParentParams, handling inheritance and name enforcement. */
 	EFlowReconcilePropertiesResult ReconcilePropertiesWithParentParams();
 
-	void ConfigureFlowAssetParams(TSoftObjectPtr<UFlowAsset> OwnerAsset, TSoftObjectPtr<UFlowAssetParams> InParentParams, const TArray<FFlowNamedDataPinProperty>& InProperties);
+	/* Returns true if any of the configured values differed from the current state. */
+	bool ConfigureFlowAssetParams(TSoftObjectPtr<UFlowAsset> OwnerAsset, TSoftObjectPtr<UFlowAssetParams> InParentParams, const TArray<FFlowNamedDataPinProperty>& InProperties);
 
 	// IFlowDataPinValueOwnerInterface
 	virtual bool CanModifyFlowDataPinType() const override;
@@ -115,5 +116,12 @@ protected:
 
 	void ModifyAndRebuildPropertiesMap();
 	void RebuildPropertiesMap();
+
+	/* Sets Properties and the PropertyMap built from them.
+	* Modifies the asset only if either differs from the current state.
+	* Returns true if anything changed. */
+	bool ApplyProperties(const TArray<FFlowNamedDataPinProperty>& NewProperties);
+
+	TMap<FName, TInstancedStruct<FFlowDataPinValue>> BuildPropertyMap(const TArray<FFlowNamedDataPinProperty>& InProperties) const;
 #endif
 };
