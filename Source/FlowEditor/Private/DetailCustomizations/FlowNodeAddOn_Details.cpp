@@ -17,7 +17,7 @@
 
 void FFlowNodeAddOn_Details::CustomizeDetails(IDetailLayoutBuilder& DetailLayout)
 {
-	// hide class properties while editing node addon instance placed in the graph
+	// Merged AddOn list, shown on instances only
 	if (DetailLayout.HasClassDefaultObject() == false)
 	{
 		if (GetDefault<UFlowGraphEditorSettings>()->bMergeAddOnDetails)
@@ -27,9 +27,16 @@ void FFlowNodeAddOn_Details::CustomizeDetails(IDetailLayoutBuilder& DetailLayout
 				LOCTEXT("AddOnDetailsCategory", "AddOn Details"),
 				ECategoryPriority::Uncommon);
 
+			TArray<TWeakObjectPtr<UObject>> EditedObjects;
+			DetailLayout.GetObjectsBeingCustomized(EditedObjects);
+
 			TSharedRef<IPropertyHandle> AddOnsProperty = DetailLayout.GetProperty(TEXT("AddOns"), UFlowNodeBase::StaticClass());
 			IDetailPropertyRow& AddOnsRow = AddOnDetailsCategory.AddProperty(AddOnsProperty);
 			AddOnsRow.CustomWidget(true)
+				.Visibility(TAttribute<EVisibility>::CreateLambda([EditedObjects]()
+				{
+					return FFlowDetailsAddOnUI::GetAddOnsVisibility(EditedObjects);
+				}))
 				.NameContent()
 				[
 					SNew(STextBlock)

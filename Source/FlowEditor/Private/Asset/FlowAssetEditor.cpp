@@ -8,6 +8,7 @@
 #include "Asset/FlowDebugEditorSubsystem.h"
 #include "Asset/FlowAssetToolbar.h"
 #include "Asset/FlowMessageLogListing.h"
+#include "DetailCustomizations/FlowNodeAddOnCustomization.h"
 #include "Graph/FlowGraphEditor.h"
 #include "Graph/FlowGraphEditorSettings.h"
 #include "Graph/FlowGraphEditorLayout.h"
@@ -15,6 +16,7 @@
 #include "Graph/FlowGraphSchema.h"
 #include "Graph/Widgets/SFlowPalette.h"
 
+#include "AddOns/FlowNodeAddOn.h"
 #include "FlowAsset.h"
 
 #include "EdGraph/EdGraphNode.h"
@@ -334,10 +336,9 @@ void FFlowAssetEditor::InitFlowAssetEditor(const EToolkitMode::Type Mode, const 
 	GEditor->RegisterForUndo(this);
 
 	UFlowGraphSchema::SubscribeToAssetChanges();
-	FlowAsset->OnDetailsRefreshRequested.BindThreadSafeSP(this, &FFlowAssetEditor::RefreshDetails);
 
-	FlowGraphEditorSettingsChangedHandle = UFlowGraphEditorSettings::OnSettingsChanged().AddRaw(
-		this, &FFlowAssetEditor::RefreshDetails);
+	FlowAsset->OnDetailsRefreshRequested.BindThreadSafeSP(this, &FFlowAssetEditor::RefreshDetails);
+	FlowGraphEditorSettingsChangedHandle = UFlowGraphEditorSettings::OnSettingsChanged().AddRaw(this, &FFlowAssetEditor::RefreshDetails);
 
 	BindToolbarCommands();
 	CreateToolbar();
@@ -425,9 +426,9 @@ void FFlowAssetEditor::BindToolbarCommands()
 
 	// Flow Asset
 	ToolkitCommands->MapAction(ToolbarCommands.AssetDefaults,
-							   FExecuteAction::CreateSP(this, &FFlowAssetEditor::ShowAssetDefaults),
-							   FCanExecuteAction());
-	
+	                           FExecuteAction::CreateSP(this, &FFlowAssetEditor::ShowAssetDefaults),
+	                           FCanExecuteAction());
+
 	// Automation
 	ToolkitCommands->MapAction(ToolbarCommands.RefreshAsset,
 	                           FExecuteAction::CreateSP(this, &FFlowAssetEditor::RefreshAsset),
@@ -438,9 +439,9 @@ void FFlowAssetEditor::BindToolbarCommands()
 	                           FCanExecuteAction());
 
 	ToolkitCommands->MapAction(ToolbarCommands.AutoFormatGraph,
-						   FExecuteAction::CreateSP(this, &FFlowAssetEditor::AutoFormatGraph),
-						   FCanExecuteAction::CreateStatic(&FFlowAssetEditor::CanEdit));
-	
+	                           FExecuteAction::CreateSP(this, &FFlowAssetEditor::AutoFormatGraph),
+	                           FCanExecuteAction::CreateStatic(&FFlowAssetEditor::CanEdit));
+
 	// View
 	ToolkitCommands->MapAction(ToolbarCommands.SearchInAsset,
 	                           FExecuteAction::CreateSP(this, &FFlowAssetEditor::SearchInAsset),
@@ -541,8 +542,8 @@ void FFlowAssetEditor::AutoFormatGraph()
 		if (GraphNode && GraphEditor->GetBoundsForNode(GraphNode, Bounds, 0.0f))
 		{
 			MeasuredNodeSizes.Add(Pair.Key, FIntPoint(
-									  FMath::CeilToInt(Bounds.Right - Bounds.Left),
-									  FMath::CeilToInt(Bounds.Bottom - Bounds.Top)));
+				                      FMath::CeilToInt(Bounds.Right - Bounds.Left),
+				                      FMath::CeilToInt(Bounds.Bottom - Bounds.Top)));
 		}
 	}
 
@@ -599,8 +600,8 @@ void FFlowAssetEditor::CreateWidgets()
 		FPropertyEditorModule& PropertyModule = FModuleManager::LoadModuleChecked<FPropertyEditorModule>("PropertyEditor");
 		DetailsView = PropertyModule.CreateDetailView(Args);
 		DetailsView->SetIsPropertyEditingEnabledDelegate(FIsPropertyEditingEnabled::CreateStatic(&FFlowAssetEditor::CanEdit));
-		DetailsView->SetIsPropertyVisibleDelegate(
-			FIsPropertyVisible::CreateStatic(&FlowAssetEditor_Private::ShouldShowDetailsProperty));
+		DetailsView->SetIsPropertyVisibleDelegate(FIsPropertyVisible::CreateStatic(&FlowAssetEditor_Private::ShouldShowDetailsProperty));
+		DetailsView->RegisterInstancedCustomPropertyTypeLayout(UFlowNodeAddOn::StaticClass()->GetFName(), FOnGetPropertyTypeCustomizationInstance::CreateStatic(&FFlowNodeAddOnCustomization::MakeInstance));
 		DetailsView->SetObject(FlowAsset);
 	}
 
