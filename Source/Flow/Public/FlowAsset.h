@@ -248,7 +248,7 @@ protected:
 	TArray<FFlowNamedDataPinProperty> OutputDataPinDeclarations;
 
 public:
-	/* Gathers all the nodes that are connected to the Start & Custom Inputs of the flow graph. */
+	/* Gathers all the nodes that are connected to the Start & Custom Inputs. */
 	virtual TArray<UFlowNode*> GatherNodesConnectedToAllInputs() const;
 
 	UFlowNode_CustomInput* TryFindCustomInputNodeByEventName(const FName& EventName) const;
