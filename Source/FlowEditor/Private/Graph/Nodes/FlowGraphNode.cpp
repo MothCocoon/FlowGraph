@@ -1707,6 +1707,20 @@ void UFlowGraphNode::InsertSubNodeAt(UFlowGraphNode* SubNode, const int32 DropIn
 	RequestReconstructOnRootFlowNode();
 }
 
+void UFlowGraphNode::MoveSubNodesFrom(UFlowGraphNode& OtherNode)
+{
+	for (UFlowGraphNode* SubNode : OtherNode.SubNodes)
+	{
+		if (IsValid(SubNode))
+		{
+			SubNode->SetParentNodeForSubNode(this);
+			SubNodes.Add(SubNode);
+		}
+	}
+
+	OtherNode.SubNodes.Reset();
+}
+
 void UFlowGraphNode::DestroyNode()
 {
 	bIsDestroyingNode = true;
