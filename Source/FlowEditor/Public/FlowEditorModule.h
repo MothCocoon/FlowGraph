@@ -10,6 +10,7 @@
 
 class FSlateStyleSet;
 class FToolBarBuilder;
+class IPropertyTypeIdentifier;
 struct FGraphPanelPinConnectionFactory;
 
 class FFlowAssetEditor;
@@ -31,6 +32,7 @@ private:
 	TArray<TSharedRef<IAssetTypeActions>> RegisteredAssetActions;
 	TSet<FName> CustomClassLayouts;
 	TSet<FName> CustomStructLayouts;
+	TSharedPtr<IPropertyTypeIdentifier> FlowDataPinValueInstancedStructIdentifier;
 	TSharedPtr<class FFlowActorDetails> ActorDetails;
 
 	FDelegateHandle AssetUpdatedHandle;
