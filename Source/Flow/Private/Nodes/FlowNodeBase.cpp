@@ -613,6 +613,7 @@ FString UFlowNodeBase::GetStatusString() const
 #if WITH_EDITOR
 FString UFlowNodeBase::GetNodeCategory() const
 {
+	// Category declared in class metadata, for script-defined nodes (e.g. AngelScript) that have no UBlueprint to hold BlueprintCategory.
 	const FString& MetadataCategory = GetClass()->GetMetaData(TEXT("BlueprintCategoryName"));
 	if (!MetadataCategory.IsEmpty())
 	{
