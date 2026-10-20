@@ -202,7 +202,7 @@ public:
 
 protected:
 	/* Flow Node AddOn attachments. */
-	UPROPERTY(BlueprintReadOnly, Instanced, Category = "FlowNode")
+	UPROPERTY(VisibleInstanceOnly, EditFixedSize, BlueprintReadOnly, Instanced, Category = "AddOn Details", meta = (EditFixedOrder, NoResetToDefault))
 	TArray<TObjectPtr<UFlowNodeAddOn>> AddOns;
 
 protected:

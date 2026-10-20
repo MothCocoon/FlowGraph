@@ -89,4 +89,15 @@ TSharedRef<SWidget> FFlowDetailsAddOnUI::BuildAttachAddOnMenuContent(UEdGraph* G
 		];
 }
 
+EVisibility FFlowDetailsAddOnUI::GetAddOnsVisibility(const TArray<TWeakObjectPtr<UObject>>& Objects)
+{
+	const bool bHasAddOns = Objects.ContainsByPredicate([](const TWeakObjectPtr<UObject>& Object)
+	{
+		const UFlowNodeBase* FlowNodeBase = Cast<UFlowNodeBase>(Object.Get());
+		return FlowNodeBase && FlowNodeBase->GetFlowNodeAddOnChildren().Num() > 0;
+	});
+
+	return bHasAddOns ? EVisibility::Visible : EVisibility::Collapsed;
+}
+
 #undef LOCTEXT_NAMESPACE

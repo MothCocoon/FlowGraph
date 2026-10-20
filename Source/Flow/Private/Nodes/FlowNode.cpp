@@ -591,7 +591,7 @@ bool UFlowNode::TryGatherPropertyOwnersAndPopulateResult(
 		return false;
 	}
 
-	const FFlowDataPinValueOwner* ValueOwner;
+	const FFlowDataPinValueOwner* ValueOwner = nullptr;
 	FName PropertyNameToLookup;
 	const TArray<FFlowDataPinValueOwner>& ValueOwners = ValueOwnerCollection.GetValueOwners();
 

@@ -46,6 +46,7 @@ TMap<FName, FAssetData> UFlowGraphSchema::BlueprintFlowNodeAddOns;
 TMap<TSubclassOf<UFlowNodeBase>, TSubclassOf<UEdGraphNode>> UFlowGraphSchema::GraphNodesByFlowNodes;
 
 bool UFlowGraphSchema::bBlueprintCompilationPending;
+bool UFlowGraphSchema::bGatherNodesPendingAfterPIE = false;
 int32 UFlowGraphSchema::CurrentCacheRefreshID = 0;
 
 FFlowGraphSchemaRefresh UFlowGraphSchema::OnNodeListChanged;
@@ -209,6 +210,7 @@ void UFlowGraphSchema::SubscribeToAssetChanges()
 	AssetRegistry.Get().OnAssetRenamed().AddStatic(&UFlowGraphSchema::OnAssetRenamed);
 
 	FCoreUObjectDelegates::ReloadCompleteDelegate.AddStatic(&UFlowGraphSchema::OnHotReload);
+	FEditorDelegates::ShutdownPIE.AddStatic(&UFlowGraphSchema::OnShutdownPIE);
 
 	if (GEditor)
 	{
@@ -1372,7 +1374,39 @@ void UFlowGraphSchema::OnBlueprintCompiled()
 
 void UFlowGraphSchema::OnHotReload(EReloadCompleteReason ReloadCompleteReason)
 {
-	GatherNodes();
+	RefreshNativeNodeCache();
+}
+
+void UFlowGraphSchema::OnShutdownPIE(const bool bIsSimulating)
+{
+	if (bGatherNodesPendingAfterPIE)
+	{
+		GatherNodes();
+	}
+
+	bGatherNodesPendingAfterPIE = false;
+}
+
+void UFlowGraphSchema::RefreshNativeNodeCache()
+{
+	// native classes are gathered immediately, so the cache never keeps classes replaced by the reload
+	NativeFlowNodes.Reset();
+	NativeFlowNodeAddOns.Reset();
+	GraphNodesByFlowNodes.Reset();
+
+	GatherNativeNodesOrAddOns(UFlowNode::StaticClass(), NativeFlowNodes);
+	GatherNativeNodesOrAddOns(UFlowNodeAddOn::StaticClass(), NativeFlowNodeAddOns);
+
+	// GatherNodes doesn't run during PIE.
+	// Blueprint nodes and display names are refreshed once PIE ends.
+	if (GEditor && GEditor->PlayWorld)
+	{
+		bGatherNodesPendingAfterPIE = true;
+	}
+	else
+	{
+		GatherNodes();
+	}
 }
 
 void UFlowGraphSchema::GatherNativeNodesOrAddOns(const TSubclassOf<UFlowNodeBase>& FlowNodeBaseClass, TArray<UClass*>& InOutNodesOrAddOnsArray)
@@ -1387,7 +1421,9 @@ void UFlowGraphSchema::GatherNativeNodesOrAddOns(const TSubclassOf<UFlowNodeBase
 	GetDerivedClasses(FlowNodeBaseClass, FlowNodesOrAddOns);
 	for (UClass* Class : FlowNodesOrAddOns)
 	{
-		if (Class->ClassGeneratedBy == nullptr && IsFlowNodeOrAddOnPlaceable(Class))
+		if (Class->ClassGeneratedBy == nullptr
+			&& !EnumHasAnyFlags(Class->GetClassFlags(), CLASS_NewerVersionExists)
+			&& IsFlowNodeOrAddOnPlaceable(Class))
 		{
 			InOutNodesOrAddOnsArray.Emplace(Class);
 		}
@@ -1397,12 +1433,15 @@ void UFlowGraphSchema::GatherNativeNodesOrAddOns(const TSubclassOf<UFlowNodeBase
 	GetDerivedClasses(UFlowGraphNode::StaticClass(), GraphNodes);
 	for (UClass* GraphNodeClass : GraphNodes)
 	{
-		const UFlowGraphNode* GraphNodeCDO = GraphNodeClass->GetDefaultObject<UFlowGraphNode>();
-		for (UClass* AssignedClass : GraphNodeCDO->AssignedNodeClasses)
+		if (!EnumHasAnyFlags(GraphNodeClass->GetClassFlags(), CLASS_NewerVersionExists))
 		{
-			if (AssignedClass->IsChildOf(FlowNodeBaseClass))
+			const UFlowGraphNode* GraphNodeCDO = GraphNodeClass->GetDefaultObject<UFlowGraphNode>();
+			for (UClass* AssignedClass : GraphNodeCDO->AssignedNodeClasses)
 			{
-				GraphNodesByFlowNodes.Emplace(AssignedClass, GraphNodeClass);
+				if (AssignedClass->IsChildOf(FlowNodeBaseClass))
+				{
+					GraphNodesByFlowNodes.Emplace(AssignedClass, GraphNodeClass);
+				}
 			}
 		}
 	}
