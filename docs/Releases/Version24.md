@@ -4,7 +4,7 @@ title: Flow 2.4 (work in progress)
 
 This is the upcoming release. This page is updated regularly after changes are pushed to the repository.
 
-This release includes pull requests from the community: Bargestt (Vasilii Bulgakov), CyaDaPaKnat, dyanikoglu (Doğa Can Yanıkoğlu), fcarreiro (Facundo), fede-Raider (Federico Ciardi), LindyHopperGT (Riot Games), Maksym Kapelianovych, northstarswap, omarchuk-gsc.
+This release includes pull requests from the community: Bargestt (Vasilii Bulgakov), CyaDaPaKnat, dskliarov-gsc, dyanikoglu (Doğa Can Yanıkoğlu), fcarreiro (Facundo), fede-Raider (Federico Ciardi), LindyHopperGT (Riot Games), Maksym Kapelianovych, northstarswap, omarchuk-gsc.
 
 This is the first release for UE 5.9.
 
@@ -20,6 +20,7 @@ Version 2.2 came with a huge Data Pins refactor, and it requires data migration 
 This is a BREAKING CHANGE if you have any custom UFlowGraphNode class. Updating the code is trivial though.
 
 ## Flow Asset
+* Saving graph state to SaveGame now iterates nodes connected to Custom Inputs. Previously, the code only iterated over nodes connected to the Start node. (contributed by dskliarov-gsc)
 * New feature: Create a SubGraph asset from selected nodes! (contributed by LindyHopperGT)
     * You can find this new option in the node context menu, in the `Organization` section.
     * Creating a new asset was tested under Perforce and Git. It should work with other VCS but hasn't been tested yet.
@@ -42,6 +43,7 @@ This is a BREAKING CHANGE if you have any custom UFlowGraphNode class. Updating 
 * QoL fix: added editor customizations to avoid displaying the " - Flow DataPin Value" suffix on every Data Pin type in the Flow Asset editor.
 
 ## Flow Node
+* Added tooltip comparison when checking if Pins match. This fixes the automatic refresh of displayed tooltips after a tooltip has been modified. (contributed by CyaDaPaKnat)
 * Added the `Flow Identity` struct with a UI customization that filters actors in the world by actor and component class. (contributed by Bargestt)
     * This is used to provide a convenient actor picker on Flow Nodes.
     * The struct needs to be manually added to a Flow Node class and read by the node's logic.
@@ -64,6 +66,7 @@ This is a BREAKING CHANGE if you have any custom UFlowGraphNode class. Updating 
     * Nested AddOns now have a visible selection outline when selected through the graph details UI.
 * Added an optional mode to show all AddOn details in their Flow Node's details. (contributed by LindyHopperGT)
     * You need to enable `bShowAddOnsInNodeDetails` in Editor Preferences to activate this feature.
+* Fixed a case where changing the `UFlowGraphNode` class caused the loss of all AddOns.
 
 ## Specific Nodes
 * `UFlowNode_SubGraph`
