@@ -6,6 +6,7 @@
 #include "FlowAssetProviderInterface.generated.h"
 
 class UFlowAsset;
+class UFlowAssetParams;
 
 /**
  * Interface to define a UFlowAsset provider.
@@ -26,4 +27,8 @@ public:
 	UFUNCTION(BlueprintImplementableEvent, Category = FlowAssetParams, DisplayName = "ProvideFlowAsset")
 	UFlowAsset* K2_ProvideFlowAsset() const;
 	virtual UFlowAsset* ProvideFlowAsset() const;
+
+	/* Provide the resolved FlowAssetParams associated with this provider's root flow, if any. Returns nullptr by default. */
+	UFUNCTION(BlueprintNativeEvent, Category = FlowAssetParams)
+	UFlowAssetParams* GetRootFlowParams() const;
 };

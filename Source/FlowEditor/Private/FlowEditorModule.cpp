@@ -19,6 +19,7 @@
 #include "DetailCustomizations/FlowAssetDetails.h"
 #include "DetailCustomizations/FlowAssetParamsPtrCustomization.h"
 #include "DetailCustomizations/FlowComponentDetails.h"
+#include "DetailCustomizations/FlowDataPinValueInstancedStructCustomization.h"
 #include "DetailCustomizations/FlowDataPinValueOwnerCustomizations.h"
 #include "DetailCustomizations/FlowDataPinValueStandardCustomizations.h"
 #include "DetailCustomizations/FlowIdentityCustomization.h"
@@ -132,10 +133,10 @@ void FFlowEditorModule::ShutdownModule()
 
 	// unregister asset actions
 	UnregisterAssets();
-	
+
 	// unregister type customizations
 	UnregisterDetailCustomizations();
-	
+
 	// unregister actor customization
 	ActorDetails.Reset();
 
@@ -299,6 +300,12 @@ void FFlowEditorModule::RegisterDetailCustomizations()
 		RegisterCustomStructLayout(*FFlowNamedDataPinProperty::StaticStruct(), FOnGetPropertyTypeCustomizationInstance::CreateStatic(&FFlowNamedDataPinPropertyCustomization::MakeInstance));
 		RegisterCustomStructLayout(*FFlowPin::StaticStruct(), FOnGetPropertyTypeCustomizationInstance::CreateStatic(&FFlowPinCustomization::MakeInstance));
 
+		// FInstancedStruct layout belongs to StructUtilsEditor, the identifier narrows this one to Flow Data Pin Values
+		FlowDataPinValueInstancedStructIdentifier = MakeShared<FFlowDataPinValueInstancedStructIdentifier>();
+		PropertyModule.RegisterCustomPropertyTypeLayout(FInstancedStruct::StaticStruct()->GetFName(),
+		                                                FOnGetPropertyTypeCustomizationInstance::CreateStatic(&FFlowDataPinValueInstancedStructCustomization::MakeInstance),
+		                                                FlowDataPinValueInstancedStructIdentifier);
+
 		PropertyModule.NotifyCustomizationModuleChanged();
 	}
 }
@@ -324,6 +331,12 @@ void FFlowEditorModule::UnregisterDetailCustomizations() const
 			{
 				PropertyModule.UnregisterCustomPropertyTypeLayout(*It);
 			}
+		}
+
+		// Unregistering with a null identifier would remove the StructUtilsEditor layout instead
+		if (FlowDataPinValueInstancedStructIdentifier.IsValid())
+		{
+			PropertyModule.UnregisterCustomPropertyTypeLayout(FInstancedStruct::StaticStruct()->GetFName(), FlowDataPinValueInstancedStructIdentifier);
 		}
 
 		PropertyModule.NotifyCustomizationModuleChanged();
