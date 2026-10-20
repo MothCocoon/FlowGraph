@@ -702,8 +702,10 @@ TArray<UFlowNode*> UFlowAsset::GatherNodesConnectedToAllInputs() const
 	TArray<UFlowNode*> ConnectedNodes;
 
 	// Nodes connected to the Start node
-	UFlowNode* DefaultEntryNode = GetDefaultEntryNode();
-	GetNodesInExecutionOrder_Recursive(DefaultEntryNode, IteratedNodes, ConnectedNodes);
+	if (UFlowNode* DefaultEntryNode = GetDefaultEntryNode())
+	{
+		GetNodesInExecutionOrder_Recursive(DefaultEntryNode, IteratedNodes, ConnectedNodes);
+	}
 
 	// Nodes connected to Custom Input node(s)
 	for (const TPair<FGuid, UFlowNode*>& Node : ObjectPtrDecay(Nodes))
@@ -1620,8 +1622,7 @@ FFlowAssetSaveData UFlowAsset::SaveInstance(TArray<FFlowAssetSaveData>& SavedFlo
 	OnSave();
 
 	// iterate nodes
-	TArray<UFlowNode*> NodesInExecutionOrder;
-	GetNodesInExecutionOrder<UFlowNode>(GetDefaultEntryNode(), NodesInExecutionOrder);
+	TArray<UFlowNode*> NodesInExecutionOrder = GatherNodesConnectedToAllInputs();
 	for (UFlowNode* Node : NodesInExecutionOrder)
 	{
 		if (Node && Node->ShouldSave())
