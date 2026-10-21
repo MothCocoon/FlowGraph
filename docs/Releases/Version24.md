@@ -43,6 +43,7 @@ This is a BREAKING CHANGE if you have any custom UFlowGraphNode class. Updating 
 * QoL fix: added editor customizations to avoid displaying the " - Flow DataPin Value" suffix on every Data Pin type in the Flow Asset editor.
 
 ## Flow Node
+* Added initial implementation of network replication directly in Flow Nodes.
 * Added tooltip comparison when checking if Pins match. This fixes the automatic refresh of displayed tooltips after a tooltip has been modified. (contributed by CyaDaPaKnat)
 * Added the `Flow Identity` struct with a UI customization that filters actors in the world by actor and component class. (contributed by Bargestt)
     * This is used to provide a convenient actor picker on Flow Nodes.
