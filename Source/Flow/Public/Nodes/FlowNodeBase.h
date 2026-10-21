@@ -198,12 +198,15 @@ public:
 	static TArray<UFlowNodeBase*> BuildFlowNodeBaseAncestorChain(UFlowNodeBase& FromFlowNodeBase, bool bIncludeFromFlowNodeBase);
 
 //////////////////////////////////////////////////////////////////////////
-// AddOn support
+// AddOns
 
 protected:
 	/* Flow Node AddOn attachments. */
 	UPROPERTY(VisibleInstanceOnly, EditFixedSize, BlueprintReadOnly, Instanced, Category = "AddOn Details", meta = (EditFixedOrder, NoResetToDefault))
 	TArray<TObjectPtr<UFlowNodeAddOn>> AddOns;
+
+	/* Replaces AddOns copied from the template with new instances of them. */
+	void InstantiateAddOns();
 
 protected:
 	/* FlowNodes and AddOns may determine which AddOns are eligible to be their children.
@@ -267,6 +270,20 @@ public:
 	}
 
 	EFlowForEachAddOnFunctionReturnValue ForEachAddOnForClass(const UClass& InterfaceOrClass, const FFlowNodeAddOnFunction& Function, EFlowForEachAddOnChildRule AddOnChildRule = EFlowForEachAddOnChildRule::AllChildren) const;
+
+//////////////////////////////////////////////////////////////////////////
+// Network replication
+
+public:
+	/* Prepares an instance created on a client to receive replicated state.
+	 * Runs instead of InitializeInstance, which prepares the instance for executing the graph. */
+	virtual void InitializeReplica();
+	
+	/* Sends properties marked as UPROPERTY(Replicated) of the owning Flow Node and its AddOns to clients.
+	 * Call it on the server after changing these properties.
+	 * Changes of the activation state are sent without it. */
+	UFUNCTION(BlueprintCallable, Category = "FlowNode")
+	void MarkReplicatedPropertiesDirty();
 
 //////////////////////////////////////////////////////////////////////////
 // Data Pins

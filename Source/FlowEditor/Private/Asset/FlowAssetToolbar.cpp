@@ -117,8 +117,21 @@ void SFlowAssetInstanceList::RefreshInstances()
 	// add empty instance as default
 	Instances.Add(MakeShareable(new FObjectKey(nullptr)));
 
-	// gather all instances of given UFlowAsset
+	// gather all instances of given UFlowAsset, including replicas on clients
+	TArray<const UFlowAsset*> AllInstances;
 	for (const UFlowAsset* ActiveInstance : TemplateAsset->GetActiveInstances())
+	{
+		AllInstances.Add(ActiveInstance);
+	}
+	for (const TWeakObjectPtr<UFlowAsset>& ReplicaInstance : TemplateAsset->GetReplicaInstances())
+	{
+		if (const UFlowAsset* Replica = ReplicaInstance.Get())
+		{
+			AllInstances.Add(Replica);
+		}
+	}
+
+	for (const UFlowAsset* ActiveInstance : AllInstances)
 	{
 		Instances.Add(MakeShareable(new FObjectKey(ActiveInstance)));
 

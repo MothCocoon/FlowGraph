@@ -30,6 +30,9 @@ UFlowComponent::UFlowComponent(const FObjectInitializer& ObjectInitializer)
 	PrimaryComponentTick.bStartWithTickEnabled = false;
 
 	SetIsReplicatedByDefault(true);
+
+	// Flow Asset instances owned by this component replicate as its subobjects
+	bReplicateUsingRegisteredSubObjectList = true;
 }
 
 void UFlowComponent::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const

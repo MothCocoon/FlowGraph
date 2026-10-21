@@ -48,11 +48,35 @@ private:
 	UPROPERTY(EditAnywhere, Category = "Flow", meta = (EditCondition = "bPrintToScreen", EditConditionHides))
 	FColor TextColor = FColor::Yellow;
 
+	/* Prints the message also on clients.
+	 * Clients print the message only if it differs from the previous one. */
+	UPROPERTY(EditAnywhere, Category = "Flow")
+	bool bPrintOnClients = false;
+
+	/* Formatted message sent to clients. */
+	UPROPERTY(Transient, ReplicatedUsing = OnRep_ReplicatedMessage)
+	FString ReplicatedMessage;
+
+	void PrintMessage(const FString& InMessage) const;
+
+	UFUNCTION()
+	void OnRep_ReplicatedMessage();
+
 public:
+	// UObject
+	virtual void GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const override;
+	// --
+
 	// IFlowCoreExecutableInterface
 	virtual void ExecuteInput(const FName& PinName) override;
 	// --
 
+protected:
+	// UFlowNode
+	virtual bool ShouldReplicateProperties() const override { return bPrintOnClients; }
+	// --
+
+public:
 #if WITH_EDITOR
 	// UObject
 	virtual void PostEditChangeChainProperty(FPropertyChangedChainEvent& PropertyChangedEvent) override;

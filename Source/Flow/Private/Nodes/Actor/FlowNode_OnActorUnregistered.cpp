@@ -13,7 +13,7 @@ void UFlowNode_OnActorUnregistered::ObserveActor(TWeakObjectPtr<AActor> Actor, T
 
 void UFlowNode_OnActorUnregistered::ForgetActor(TWeakObjectPtr<AActor> Actor, TWeakObjectPtr<UFlowComponent> Component)
 {
-	if (ActivationState == EFlowNodeState::Active)
+	if (GetActivationState() == EFlowNodeState::Active)
 	{
 		OnEventReceived();
 	}

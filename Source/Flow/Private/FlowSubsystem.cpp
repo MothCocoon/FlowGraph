@@ -193,7 +193,7 @@ UFlowAsset* UFlowSubsystem::CreateSubFlow(UFlowNode_SubGraph* SubGraphNode, cons
 	if (!InstancedSubFlows.Contains(SubGraphNode))
 	{
 		const TWeakObjectPtr<UObject> Owner = SubGraphOwner ? SubGraphOwner->GetOwner() : nullptr;
-		AssetInstance = CreateFlowInstance(Owner, SubGraphNode->Asset.LoadSynchronous(), SavedInstanceName);
+		AssetInstance = CreateFlowInstance(Owner, SubGraphNode->Asset.LoadSynchronous(), SavedInstanceName, false);
 
 		if (AssetInstance)
 		{
@@ -211,6 +211,9 @@ UFlowAsset* UFlowSubsystem::CreateSubFlow(UFlowNode_SubGraph* SubGraphNode, cons
 		{
 			AssetInstance->NodeOwningThisAssetInstance = SubGraphNode;
 		}
+
+		// clients receive SubGraph instance from its activation, not from preload
+		AssetInstance->StartReplication();
 
 		SubGraphOwner->ActiveSubGraphs.Add(SubGraphNode, AssetInstance);
 
@@ -242,10 +245,15 @@ void UFlowSubsystem::FinishSubFlow(UFlowNode_SubGraph* SubGraphNode, const EFlow
 			// Make sure to set the NodeOwningThisAssetInstance after the FinishFlowInstance and DeinitializeInstance calls, as it may be needed there
 			AssetInstance->NodeOwningThisAssetInstance = nullptr;
 		}
+		else
+		{
+			// clients receive SubGraph instance only while it's active, the finished instance is kept on the server only
+			AssetInstance->StopReplication();
+		}
 	}
 }
 
-UFlowAsset* UFlowSubsystem::CreateFlowInstance(const TWeakObjectPtr<UObject> Owner, UFlowAsset* LoadedFlowAsset, FString NewInstanceName)
+UFlowAsset* UFlowSubsystem::CreateFlowInstance(const TWeakObjectPtr<UObject> Owner, UFlowAsset* LoadedFlowAsset, FString NewInstanceName, const bool bStartReplication)
 {
 	if (LoadedFlowAsset == nullptr)
 	{
@@ -270,6 +278,10 @@ UFlowAsset* UFlowSubsystem::CreateFlowInstance(const TWeakObjectPtr<UObject> Own
 
 	UFlowAsset* NewInstance = NewObject<UFlowAsset>(this, LoadedFlowAsset->GetClass(), *NewInstanceName, RF_Transient, LoadedFlowAsset, false, nullptr);
 	NewInstance->InitializeInstance(Owner, *LoadedFlowAsset);
+	if (bStartReplication)
+	{
+		NewInstance->StartReplication();
+	}
 
 	LoadedFlowAsset->AddInstance(NewInstance);
 

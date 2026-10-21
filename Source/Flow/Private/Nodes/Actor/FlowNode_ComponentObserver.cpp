@@ -157,7 +157,7 @@ FString UFlowNode_ComponentObserver::GetNodeDescription() const
 
 FString UFlowNode_ComponentObserver::GetStatusString() const
 {
-	if (ActivationState == EFlowNodeState::Active && RegisteredActors.Num() == 0)
+	if (GetActivationState() == EFlowNodeState::Active && RegisteredActors.Num() == 0)
 	{
 		return NoActorsFound;
 	}
