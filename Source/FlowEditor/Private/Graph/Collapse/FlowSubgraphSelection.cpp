@@ -1,13 +1,12 @@
 // Copyright https://github.com/MothCocoon/FlowGraph/graphs/contributors
 
-#include "Graph/Extraction/FlowSubgraphSelection.h"
+#include "Graph/Collapse/FlowSubgraphSelection.h"
 
 #include "FlowAsset.h"
 #include "Graph/Extraction/FlowSubGraphExtractionApply.h"
 #include "Graph/Extraction/FlowSubGraphExtractionPlan.h"
 #include "Graph/Nodes/FlowGraphNode.h"
 #include "Nodes/FlowNode.h"
-#include "ScopedTransaction.h"
 
 namespace
 {
@@ -151,7 +150,6 @@ namespace FlowSubgraphSelection
 			return false;
 		}
 
-		const FScopedTransaction Transaction(NSLOCTEXT("FlowSubgraphSelection", "ApplySelection", "Extract Flow Subgraph"));
 		const FlowSubGraphExtraction::FExtractionResult Result =
 			FlowSubGraphExtraction::ApplyExtraction(CurrentPlan, *SourceAsset, NewAssetName);
 		if (!Result.Succeeded())
