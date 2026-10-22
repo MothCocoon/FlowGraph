@@ -184,7 +184,9 @@ UFlowAsset* UFlowSubsystem::CreateSubFlow(UFlowNode_SubGraph* SubGraphNode, cons
 	// Preloaded instance is kept, as it hasn't started yet.
 	if (const UFlowAsset* PreviousInstance = InstancedSubFlows.FindRef(SubGraphNode))
 	{
-		if (PreviousInstance->HasStartedFlow() && !SubGraphOwner->ActiveSubGraphs.Contains(SubGraphNode))
+		if (PreviousInstance->HasStartedFlow()
+			&& (!SubGraphOwner || !SubGraphOwner->ActiveSubGraphs.Contains(SubGraphNode))
+			&& PreviousInstance->GetSubGraphFinishPolicy() != ESubGraphFinishPolicy::Reuse)
 		{
 			FinishSubFlow(SubGraphNode, EFlowFinishPolicy::Keep, true);
 		}
@@ -193,7 +195,8 @@ UFlowAsset* UFlowSubsystem::CreateSubFlow(UFlowNode_SubGraph* SubGraphNode, cons
 	if (!InstancedSubFlows.Contains(SubGraphNode))
 	{
 		const TWeakObjectPtr<UObject> Owner = SubGraphOwner ? SubGraphOwner->GetOwner() : nullptr;
-		AssetInstance = CreateFlowInstance(Owner, SubGraphNode->Asset.LoadSynchronous(), SavedInstanceName, false);
+		AssetInstance = CreateFlowInstance(
+			Owner, SubGraphNode->Asset.LoadSynchronous(), SavedInstanceName, /*bStartReplication=*/false, SubGraphOwner);
 
 		if (AssetInstance)
 		{
@@ -211,6 +214,7 @@ UFlowAsset* UFlowSubsystem::CreateSubFlow(UFlowNode_SubGraph* SubGraphNode, cons
 		{
 			AssetInstance->NodeOwningThisAssetInstance = SubGraphNode;
 		}
+		check(AssetInstance->NodeOwningThisAssetInstance == SubGraphNode);
 
 		// clients receive SubGraph instance from its activation, not from preload
 		AssetInstance->StartReplication();
@@ -229,12 +233,15 @@ UFlowAsset* UFlowSubsystem::CreateSubFlow(UFlowNode_SubGraph* SubGraphNode, cons
 
 void UFlowSubsystem::FinishSubFlow(UFlowNode_SubGraph* SubGraphNode, const EFlowFinishPolicy FinishPolicy, const bool bRemoveInstance)
 {
-	if (InstancedSubFlows.Contains(SubGraphNode))
+	if (IsValid(SubGraphNode) && InstancedSubFlows.Contains(SubGraphNode))
 	{
 		// The Flow Asset instantiated by SubGraph node 
 		UFlowAsset* AssetInstance = InstancedSubFlows[SubGraphNode];
 
-		SubGraphNode->GetFlowAsset()->ActiveSubGraphs.Remove(SubGraphNode);
+		if (UFlowAsset* SubGraphOwner = SubGraphNode->GetFlowAsset())
+		{
+			SubGraphOwner->ActiveSubGraphs.Remove(SubGraphNode);
+		}
 		AssetInstance->FinishFlowInstance(FinishPolicy);
 
 		if (bRemoveInstance)
@@ -242,7 +249,7 @@ void UFlowSubsystem::FinishSubFlow(UFlowNode_SubGraph* SubGraphNode, const EFlow
 			InstancedSubFlows.Remove(SubGraphNode);
 			AssetInstance->DeinitializeInstance();
 
-			// Make sure to set the NodeOwningThisAssetInstance after the FinishFlowInstance and DeinitializeInstance calls, as it may be needed there
+			// Keep the owning node available during finish and deinitialize callbacks.
 			AssetInstance->NodeOwningThisAssetInstance = nullptr;
 		}
 		else
@@ -253,7 +260,7 @@ void UFlowSubsystem::FinishSubFlow(UFlowNode_SubGraph* SubGraphNode, const EFlow
 	}
 }
 
-UFlowAsset* UFlowSubsystem::CreateFlowInstance(const TWeakObjectPtr<UObject> Owner, UFlowAsset* LoadedFlowAsset, FString NewInstanceName, const bool bStartReplication)
+UFlowAsset* UFlowSubsystem::CreateFlowInstance(const TWeakObjectPtr<UObject> Owner, UFlowAsset* LoadedFlowAsset, FString NewInstanceName, const bool bStartReplication, UFlowAsset* OwningFlowInstance)
 {
 	if (LoadedFlowAsset == nullptr)
 	{
@@ -277,6 +284,12 @@ UFlowAsset* UFlowSubsystem::CreateFlowInstance(const TWeakObjectPtr<UObject> Own
 	}
 
 	UFlowAsset* NewInstance = NewObject<UFlowAsset>(this, LoadedFlowAsset->GetClass(), *NewInstanceName, RF_Transient, LoadedFlowAsset, false, nullptr);
+	UFlowAsset* ResolvedRoot = IsValid(OwningFlowInstance) ? OwningFlowInstance->GetOwningRootFlowInstance() : nullptr;
+	if (!IsValid(ResolvedRoot))
+	{
+		ResolvedRoot = IsValid(OwningFlowInstance) ? OwningFlowInstance : NewInstance;
+	}
+	NewInstance->OwningRootFlowInstance = ResolvedRoot;
 	NewInstance->InitializeInstance(Owner, *LoadedFlowAsset);
 	if (bStartReplication)
 	{

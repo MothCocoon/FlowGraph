@@ -99,7 +99,7 @@ protected:
 public:
 	/* bStartReplication registers the instance as a replicated subobject of Owner right after creation.
 	 * SubGraph instance starts replication on its activation instead, so a preloaded instance isn't sent to clients. */
-	UFlowAsset* CreateFlowInstance(const TWeakObjectPtr<UObject> Owner, UFlowAsset* LoadedFlowAsset, FString NewInstanceName = FString(), const bool bStartReplication = true);
+	UFlowAsset* CreateFlowInstance(const TWeakObjectPtr<UObject> Owner, UFlowAsset* LoadedFlowAsset, FString NewInstanceName = FString(), const bool bStartReplication = true, UFlowAsset* OwningFlowInstance = nullptr);
 
 protected:
 	virtual void AddInstancedTemplate(UFlowAsset* Template);

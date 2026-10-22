@@ -25,6 +25,7 @@
 class UFlowNode_SubGraph;
 class UFlowNode_CustomOutput;
 class UFlowNode_CustomInput;
+class UFlowInjectComponentsManager;
 struct FFlowPreloadPolicy;
 struct FFlowPinConnectionPolicy;
 
@@ -482,6 +483,21 @@ public:
 	/* Returns nodes active in the past, done their work. */
 	UFUNCTION(BlueprintPure, Category = "Flow")
 	const TArray<UFlowNode*>& GetRecordedNodes() const { return RecordedNodes; }
+
+	UFUNCTION(BlueprintPure, Category = "Flow|Components")
+	UFlowAsset* GetOwningRootFlowInstance() const;
+
+	UFlowInjectComponentsManager* FindComponentInjectionManager() const;
+	UFlowInjectComponentsManager* FindComponentInjectionManagerInRootFlow() const;
+	UFlowInjectComponentsManager* GetOrCreateComponentInjectionManager();
+	UFlowInjectComponentsManager* GetOrCreateComponentInjectionManagerInRootFlow();
+
+private:
+	UPROPERTY(Transient)
+	TObjectPtr<UFlowAsset> OwningRootFlowInstance = nullptr;
+
+	UPROPERTY(Transient)
+	TObjectPtr<UFlowInjectComponentsManager> ComponentInjector = nullptr;
 
 //////////////////////////////////////////////////////////////////////////
 // Network replication
