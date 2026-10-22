@@ -18,7 +18,7 @@ class UEdGraphNode;
 class UStruct;
 
 /**
- * Set of data types for pin search filtering. 
+ * Set of data types for pin search filtering.
  */
 
 enum class EFlowSearchPinDirection : uint8
@@ -103,10 +103,10 @@ struct FLOWEDITOR_API FFlowSearchQuery
 
 	// Required for ThisAssetOnly / AllOfThisType. Ignored for AllFlowAssets.
 	TWeakObjectPtr<UFlowAsset> ContextAsset;
-	
+
 	// Narrow pin search results to specific attributes (e.g. connection state, direction).
 	FFlowSearchPinFilter PinFilter;
-	
+
 	// Callback for reporting asset search progress.
 	using FOnAssetSearchProgress = TFunction<void(int32 ProcessedAssets, int32 TotalAssets, const FString& CurrentAssetName)>;
 	FOnAssetSearchProgress OnAssetSearchProgress;

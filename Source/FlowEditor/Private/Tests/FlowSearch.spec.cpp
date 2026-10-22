@@ -89,7 +89,7 @@ void FFlowSearchSpec::Define()
 
 			FStrProperty* MessageProperty = FindFProperty<FStrProperty>(UFlowNode_Log::StaticClass(), TEXT("Message"));
 			if (!TestNotNull("Log node should expose its Message property", MessageProperty)) { return; }
-			MessageProperty->SetPropertyValue_InContainer(GraphNode->NodeTemplate, TEXT("PropertySearchMarker"));
+			MessageProperty->SetPropertyValue_InContainer(GraphNode->GetFlowNodeBase(), TEXT("PropertySearchMarker"));
 
 			FFlowSearchQuery Query;
 			Query.SearchText = TEXT("PropertySearchMarker");
@@ -110,8 +110,8 @@ void FFlowSearchSpec::Define()
 			UFlowGraphNode* ParentNode = AddNode(*Parent, UFlowNode_SubGraph::StaticClass());
 			UFlowGraphNode* ChildNode = AddNode(*Child, UFlowNode_SubGraph::StaticClass(), TEXT("CycleMarker"));
 			if (!TestNotNull("Parent subgraph node should be created", ParentNode) || !TestNotNull("Child subgraph node should be created", ChildNode)) { return; }
-			CastChecked<UFlowNode_SubGraph>(ParentNode->NodeTemplate)->SetAsset(Child);
-			CastChecked<UFlowNode_SubGraph>(ChildNode->NodeTemplate)->SetAsset(Parent);
+			CastChecked<UFlowNode_SubGraph>(ParentNode->GetFlowNodeBase())->SetAsset(Child);
+			CastChecked<UFlowNode_SubGraph>(ChildNode->GetFlowNodeBase())->SetAsset(Parent);
 
 			FFlowSearchQuery Query;
 			Query.SearchText = TEXT("CycleMarker");
