@@ -211,6 +211,8 @@ protected:
 
 	/* Search configuration. */
 	EFlowSearchFlags SearchFlags = EFlowSearchFlags::DefaultSearchFlags;
+	EFlowSearchPinDirection PinDirection = EFlowSearchPinDirection::Any;
+	EFlowSearchPinConnectionState PinConnection = EFlowSearchPinConnectionState::Any;
 
 	TSharedPtr<SSpinBox<int32>> MaxDepthSpinBox;
 	int32 MaxSearchDepth = 3;
