@@ -19,6 +19,9 @@
 #define LOCTEXT_NAMESPACE "FlowDataPinValueCustomization"
 
 static const TCHAR HiddenMeta[] = TEXT("Hidden");
+static const FName BaseStructMeta = TEXT("BaseStruct");
+static const FName BaseStructFunctionMeta = TEXT("BaseStructFunction");
+static const FName ExcludeBaseStructMeta = TEXT("ExcludeBaseStruct");
 
 FText FFlowDataPinValueCustomization::GetMultiTypeTooltip()
 {
@@ -217,6 +220,8 @@ void FFlowDataPinValueCustomization::BuildSingleBranch(IDetailChildrenBuilder& S
 		return;
 	}
 
+	ApplyInstancedStructMetaData(ValueToShow.ToSharedRef());
+
 	IDetailPropertyRow& Row = StructBuilder.AddProperty(ValueToShow.ToSharedRef());
 	Row.ShouldAutoExpand(true);
 }
@@ -230,8 +235,25 @@ void FFlowDataPinValueCustomization::BuildArrayBranch(IDetailChildrenBuilder& St
 
 	if (bArraySupported && ValuesHandle.IsValid() && ValuesHandle->AsArray())
 	{
-		IDetailPropertyRow& Row = StructBuilder.AddProperty(ValuesHandle.ToSharedRef());
-		Row.ShouldAutoExpand(true);
+		if (DataPinType && DataPinType->GetPinTypeName() == FFlowPinType_InstancedStruct::GetPinTypeNameStatic())
+		{
+			BuildVisibilityAwareArray(StructBuilder,
+				ValuesHandle,
+				[this](TSharedRef<IPropertyHandle> ElementHandle, int32, IDetailChildrenBuilder& ChildBuilder,
+					const TAttribute<EVisibility>& RowVisibility)
+				{
+					ApplyInstancedStructMetaData(ElementHandle);
+					IDetailPropertyRow& Row = ChildBuilder.AddProperty(ElementHandle);
+					Row.Visibility(RowVisibility);
+					Row.ShouldAutoExpand(true);
+				},
+				TAttribute<EVisibility>::CreateSP(this, &FFlowDataPinValueCustomization::GetArrayModeVisibility));
+		}
+		else
+		{
+			IDetailPropertyRow& Row = StructBuilder.AddProperty(ValuesHandle.ToSharedRef());
+			Row.ShouldAutoExpand(true);
+		}
 	}
 }
 
@@ -278,6 +300,23 @@ void FFlowDataPinValueCustomization::CacheHandles(const TSharedRef<IPropertyHand
 		if (DataPinType)
 		{
 			ValuesHandle = DataPinType->GetValuesHandle(PropertyHandle);
+		}
+	}
+}
+
+void FFlowDataPinValueCustomization::ApplyInstancedStructMetaData(
+	const TSharedRef<IPropertyHandle>& ElementHandle) const
+{
+	if (!DataPinType || DataPinType->GetPinTypeName() != FFlowPinType_InstancedStruct::GetPinTypeNameStatic())
+	{
+		return;
+	}
+
+	for (const FName MetaDataName : { BaseStructMeta, BaseStructFunctionMeta, ExcludeBaseStructMeta })
+	{
+		if (StructPropertyHandle->HasMetaData(MetaDataName))
+		{
+			ElementHandle->SetInstanceMetaData(MetaDataName, StructPropertyHandle->GetMetaData(MetaDataName));
 		}
 	}
 }

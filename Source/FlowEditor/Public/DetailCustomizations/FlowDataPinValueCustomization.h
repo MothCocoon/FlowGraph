@@ -107,6 +107,7 @@ protected:
 	// Caching
 	void CacheHandles(const TSharedRef<IPropertyHandle>& PropertyHandle,
 		IPropertyTypeCustomizationUtils& StructCustomizationUtils);
+	void ApplyInstancedStructMetaData(const TSharedRef<IPropertyHandle>& ElementHandle) const;
 	void CacheOwnerInterface();
 	void CacheArraySupported();
 

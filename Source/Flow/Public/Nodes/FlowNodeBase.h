@@ -2,6 +2,7 @@
 #pragma once
 
 #include "Runtime/Engine/Public/DrawDebugHelpers.h"
+#include "Layout/Margin.h"
 #include "Templates/SubclassOf.h"
 
 #include "Interfaces/FlowCoreExecutableInterface.h"
@@ -519,6 +520,12 @@ public:
 	 * @return Returns true if the Node wants to display an icon in the top-right corner.
 	 */
 	virtual bool GetCornerIcon(FName& OutBrushName, FName& OutStyleSetName) const { return false; }
+
+	/** The title border padding used when a node does not override its margin. */
+	static FMargin GetDefaultTitleBorderMargin() { return FMargin(10.0f, 5.0f, 30.0f, 3.0f); }
+
+	/** Returns the title border padding for this node instance. */
+	virtual FMargin GetTitleBorderMargin() const { return GetDefaultTitleBorderMargin(); }
 
 	/** Returns the agent-facing guidance authored on this class or supplied by a native override. */
 	virtual const FFlowAgentDoc& GetAgentDoc() const { return AgentDoc; }
