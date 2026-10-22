@@ -210,6 +210,10 @@ class FLOWEDITOR_API UFlowGraphSettings : public UDeveloperSettings
 	UPROPERTY(EditAnywhere, config, Category = "Wires", meta = (ClampMin = 0.0f))
 	float SelectedWireThickness;
 
+	/* Trigger validation on asset save */
+	UPROPERTY(EditAnywhere, config, Category = "Assets")
+	bool bValidateAssetOnSave;
+
 public:
 	virtual FName GetCategoryName() const override { return FName("Flow Graph"); }
 	virtual FText GetSectionText() const override { return INVTEXT("Graph Settings"); }

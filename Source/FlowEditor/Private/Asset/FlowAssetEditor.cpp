@@ -12,6 +12,7 @@
 #include "Graph/FlowGraphEditor.h"
 #include "Graph/FlowGraphEditorSettings.h"
 #include "Graph/FlowGraphEditorLayout.h"
+#include "Graph/FlowGraphSettings.h"
 #include "Graph/Nodes/FlowGraphNode.h"
 #include "Graph/FlowGraphSchema.h"
 #include "Graph/Widgets/SFlowPalette.h"
@@ -200,6 +201,11 @@ void FFlowAssetEditor::SaveAsset_Execute()
 	DoPreSaveAssetUpdate();
 
 	FAssetEditorToolkit::SaveAsset_Execute();
+
+	if (ShouldValidateOnSave())
+	{
+		ValidateAsset_Internal();
+	}
 }
 
 void FFlowAssetEditor::SaveAssetAs_Execute()
@@ -207,6 +213,13 @@ void FFlowAssetEditor::SaveAssetAs_Execute()
 	DoPreSaveAssetUpdate();
 
 	FAssetEditorToolkit::SaveAssetAs_Execute();
+}
+
+void FFlowAssetEditor::OnAssetsSavedAs(const TArray<UObject*>& SavedObjects)
+{
+	FAssetEditorToolkit::OnAssetsSavedAs(SavedObjects);
+
+	TryValidateSavedAssets(SavedObjects);
 }
 
 void FFlowAssetEditor::DoPreSaveAssetUpdate() const
@@ -620,6 +633,34 @@ void FFlowAssetEditor::CreateGraphWidget()
 {
 	SAssignNew(GraphEditor, SFlowGraphEditor, SharedThis(this))
 	.DetailsView(DetailsView);
+}
+
+void FFlowAssetEditor::TryValidateSavedAssets(const TArray<UObject*>& SavedObjects) const
+{
+	if (!ShouldValidateOnSave())
+	{
+		return;
+	}
+
+	for (UObject* SavedObject : SavedObjects)
+	{
+		IAssetEditorInstance* EditorInstance = GEditor->GetEditorSubsystem<UAssetEditorSubsystem>()->FindEditorForAsset(SavedObject, false);
+		if (!EditorInstance)
+		{
+			continue;
+		}
+
+		if (FFlowAssetEditor* FlowEditor = static_cast<FFlowAssetEditor*>(EditorInstance))
+		{
+			FlowEditor->ValidateAsset_Internal();
+		}
+	}
+}
+
+bool FFlowAssetEditor::ShouldValidateOnSave()
+{
+	const UFlowGraphSettings* GraphSettings = GetDefault<UFlowGraphSettings>();
+	return GraphSettings && GraphSettings->bValidateAssetOnSave;
 }
 
 bool FFlowAssetEditor::CanEdit()

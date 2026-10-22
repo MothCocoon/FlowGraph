@@ -112,6 +112,7 @@ public:
 	virtual void PostRegenerateMenusAndToolbars() override;
 	virtual void SaveAsset_Execute() override;
 	virtual void SaveAssetAs_Execute() override;
+	virtual void OnAssetsSavedAs(const TArray<UObject*>& SavedObjects) override;
 	// --
 
 	bool IsTabFocused(const FTabId& TabId) const;
@@ -155,6 +156,10 @@ protected:
 
 	virtual void CreateWidgets();
 	virtual void CreateGraphWidget();
+	
+	void TryValidateSavedAssets(const TArray<UObject*>& SavedObjects) const;
+
+	static bool ShouldValidateOnSave();
 
 	static bool CanEdit();
 	static bool IsPropertyVisible(const FPropertyAndParent& PropertyAndParent);
