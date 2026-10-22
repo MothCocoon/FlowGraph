@@ -76,6 +76,14 @@ public:
 	UPROPERTY(EditAnywhere, config, Category = "Identity")
 	int32 FlowIdentity_MinWindowWidth = 400;
 
+	/* Default search filter flags for the Flow Editor. */
+	UPROPERTY(VisibleAnywhere, config, Category = "Search", meta = (Bitmask, BitmaskEnum = "/Script/Flow.EFlowSearchFlags"))
+	uint32 DefaultSearchFlags = static_cast<uint32>(EFlowSearchFlags::DefaultSearchFlags);
+
+	/* Max search depth for inline objects in the Flow Editor. */
+	UPROPERTY(EditAnywhere, config, Category = "Search", meta = (ClampMin = 1))
+	int32 DefaultMaxSearchDepth = 1;
+
 	UPROPERTY(EditAnywhere, config, Category = "Wires")
 	bool bHighlightInputWiresOfSelectedNodes;
 
@@ -83,18 +91,10 @@ public:
 	bool bHighlightOutputWiresOfSelectedNodes;
 
 	UPROPERTY(VisibleAnywhere, config, Category = "Search")
-	uint8 DefaultSearchPinConnection = 0;
-
-	/* Default search filter flags for the Flow Editor. */
-	UPROPERTY(VisibleAnywhere, config, Category = "Search", meta = (Bitmask, BitmaskEnum = "/Script/Flow.EFlowSearchFlags"))
-	uint32 DefaultSearchFlags = uint32(EFlowSearchFlags::DefaultSearchFlags);
-
-	UPROPERTY(VisibleAnywhere, config, Category = "Search")
 	uint8 DefaultSearchPinDirection = 0;
 
-	/* Max search depth for inline objects in the Flow Editor. */
-	UPROPERTY(EditAnywhere, config, Category = "Search", meta = (ClampMin = 1))
-	int32 DefaultMaxSearchDepth = 1;
+	UPROPERTY(VisibleAnywhere, config, Category = "Search")
+	uint8 DefaultSearchPinConnection = 0;
 
 public:
 	virtual FName GetCategoryName() const override { return FName("Flow Graph"); }
