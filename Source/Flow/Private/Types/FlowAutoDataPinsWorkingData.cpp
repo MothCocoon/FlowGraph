@@ -4,6 +4,7 @@
 
 #include "FlowLogChannels.h"
 #include "Nodes/FlowNode.h"
+#include "Nodes/FlowNodeBase.h"
 #include "Types/FlowDataPinValue.h"
 #include "Types/FlowNamedDataPinProperty.h"
 #include "Types/FlowStructUtils.h"
@@ -248,11 +249,17 @@ void FFlowAutoDataPinsWorkingData::AddInputDataPinsToMapAndDisambiguate(
 		return;
 	}
 
+	TSet<FName> DistinctPinNames;
+	ApplyInputPinMergePoliciesAndCreateDistinctNames(
+		InOutAutoInputPinsNext, InOutMap, InOutDeferredPatches, DistinctPinNames);
+
+	DisambiguateMergeableInputPinCollisions(InOutAutoInputPinsNext, DistinctPinNames);
+
 	// Pass 1: count each base/original name (array order deterministic)
 	TMap<FName, int32> NameCounts;
 	for (const FFlowPinSourceData& Pin : InOutAutoInputPinsNext)
 	{
-		if (!Pin.FlowPin.IsExecPin())
+		if (!Pin.FlowPin.IsExecPin() && Pin.bAllowMergeInputPin)
 		{
 			NameCounts.FindOrAdd(Pin.FlowPin.PinName)++;
 		}
@@ -265,6 +272,13 @@ void FFlowAutoDataPinsWorkingData::AddInputDataPinsToMapAndDisambiguate(
 	{
 		const FName BaseName = KVP.Key;
 		const int32 Count = KVP.Value;
+
+		if (DistinctPinNames.Contains(BaseName))
+		{
+			NamesRequiringDisambiguation.Add(BaseName);
+
+			continue;
+		}
 
 		if (Count <= 1)
 		{
@@ -302,9 +316,11 @@ void FFlowAutoDataPinsWorkingData::AddInputDataPinsToMapAndDisambiguate(
 
 	// Collect names that will remain unchanged (for collision avoidance during renaming)
 	TSet<FName> ReservedFinalNames;
+	ReservedFinalNames.Append(DistinctPinNames);
+
 	for (const FFlowPinSourceData& Pin : InOutAutoInputPinsNext)
 	{
-		if (Pin.FlowPin.IsExecPin())
+		if (Pin.FlowPin.IsExecPin() || !Pin.bAllowMergeInputPin)
 		{
 			continue;
 		}
@@ -332,7 +348,7 @@ void FFlowAutoDataPinsWorkingData::AddInputDataPinsToMapAndDisambiguate(
 
 	for (FFlowPinSourceData& Pin : InOutAutoInputPinsNext)
 	{
-		if (Pin.FlowPin.IsExecPin())
+		if (Pin.FlowPin.IsExecPin() || !Pin.bAllowMergeInputPin)
 		{
 			continue;
 		}
@@ -344,10 +360,7 @@ void FFlowAutoDataPinsWorkingData::AddInputDataPinsToMapAndDisambiguate(
 			// No rename required (either unique, or duplicate but mergeable by type signature).
 			// Preserve name so FlowNode-level "merge by name" remains.
 
-			if (!Pin.ValueOwner.IsDefaultValueOwner())
-			{
-				AddPinMappingToMap(InOutMap, Pin.FlowPin.PinName, Pin.FlowPin.PinName, Pin.ValueOwner);
-			}
+			AddPinMappingToMap(InOutMap, Pin.FlowPin.PinName, Pin.OriginalPinName, Pin.ValueOwner);
 
 			AppendDeferredPatchIfNeeded(InOutDeferredPatches, Pin);
 			continue;
@@ -367,7 +380,127 @@ void FFlowAutoDataPinsWorkingData::AddInputDataPinsToMapAndDisambiguate(
 
 		// IMPORTANT: for disambiguated pins, ALWAYS add a mapping entry (even for default owner),
 		// because runtime fallback inference assumes "PinName == PropertyName on owner 0".
-		AddPinMappingToMap(InOutMap, Pin.FlowPin.PinName, OriginalName, Pin.ValueOwner);
+		AddPinMappingToMap(InOutMap, Pin.FlowPin.PinName, Pin.OriginalPinName, Pin.ValueOwner);
+	}
+}
+
+FName FFlowAutoDataPinsWorkingData::MakeDistinctInputPinName(const FGuid& OwnerGuid, const FName& LocalPinName)
+{
+	return FName(*FString::Printf(TEXT("FlowDistinctInput_%s_%s"),
+		*OwnerGuid.ToString(EGuidFormats::Digits), *LocalPinName.ToString()));
+}
+
+void FFlowAutoDataPinsWorkingData::ApplyInputPinMergePoliciesAndCreateDistinctNames(
+	TArray<FFlowPinSourceData>& InOutAutoInputPinsNext,
+	TMap<FName, FFlowPinPropertySource>& InOutMap,
+	TArray<FDeferredValuePinNamePatch>& InOutDeferredPatches,
+	TSet<FName>& OutDistinctPinNames)
+{
+	for (FFlowPinSourceData& Pin : InOutAutoInputPinsNext)
+	{
+		Pin.bAllowMergeInputPin = Pin.ValueOwner.OwnerInterface->AllowMergeInputPin(Pin.FlowPin);
+		if (Pin.bAllowMergeInputPin)
+		{
+			continue;
+		}
+
+		if (Pin.FlowPin.IsExecPin())
+		{
+			UE_LOG(LogFlow, Error, TEXT("Distinct exec input pin %s requested by %s; distinct exec pins are unsupported."),
+				*Pin.OriginalPinName.ToString(), *Pin.ValueOwner.GetValueOwnerName().ToString());
+			Pin.bAllowMergeInputPin = true;
+			continue;
+		}
+
+		const UFlowNodeBase* ValueOwner = Cast<UFlowNodeBase>(Pin.ValueOwner.GetValueOwnerAsObject());
+		if (!ValueOwner || !ValueOwner->GetGuid().IsValid())
+		{
+			UE_LOG(LogFlow, Error, TEXT("Distinct input data pin %s has no valid owner identity on %s."),
+				*Pin.OriginalPinName.ToString(), *Pin.ValueOwner.GetValueOwnerName().ToString());
+			Pin.bAllowMergeInputPin = true;
+			continue;
+		}
+
+		const FName DistinctPinName = MakeDistinctInputPinName(ValueOwner->GetGuid(), Pin.OriginalPinName);
+		if (OutDistinctPinNames.Contains(DistinctPinName))
+		{
+			UE_LOG(LogFlow, Error, TEXT("Distinct input pin name collision for %s on %s."),
+				*Pin.OriginalPinName.ToString(), *Pin.ValueOwner.GetValueOwnerName().ToString());
+			Pin.bAllowMergeInputPin = true;
+			continue;
+		}
+
+		Pin.FlowPin.PinName = DistinctPinName;
+		OutDistinctPinNames.Add(DistinctPinName);
+		AddPinMappingToMap(InOutMap, DistinctPinName, Pin.OriginalPinName, Pin.ValueOwner);
+		AppendDeferredPatchIfNeeded(InOutDeferredPatches, Pin);
+	}
+
+	// Keep the GUID-based pin identities, but make same-name distinct inputs visibly different.
+	TMap<FName, int32> DistinctPinCountsByOriginalName;
+	for (const FFlowPinSourceData& Pin : InOutAutoInputPinsNext)
+	{
+		if (!Pin.FlowPin.IsExecPin() && !Pin.bAllowMergeInputPin)
+		{
+			DistinctPinCountsByOriginalName.FindOrAdd(Pin.OriginalPinName)++;
+		}
+	}
+
+	TMap<FName, uint32> NextDistinctPinIndexByOriginalName;
+	for (FFlowPinSourceData& Pin : InOutAutoInputPinsNext)
+	{
+		if (Pin.FlowPin.IsExecPin() || Pin.bAllowMergeInputPin ||
+			DistinctPinCountsByOriginalName.FindRef(Pin.OriginalPinName) <= 1)
+		{
+			continue;
+		}
+
+		uint32& LogicalDuplicateIndex = NextDistinctPinIndexByOriginalName.FindOrAdd(Pin.OriginalPinName);
+		++LogicalDuplicateIndex;
+
+		ApplyDuplicatePresentation(Pin, LogicalDuplicateIndex);
+		AppendPinSourceToTooltip(Pin);
+	}
+}
+
+void FFlowAutoDataPinsWorkingData::DisambiguateMergeableInputPinCollisions(
+	TArray<FFlowPinSourceData>& InOutAutoInputPinsNext,
+	const TSet<FName>& DistinctPinNames)
+{
+	TSet<FName> ReservedInputNames = DistinctPinNames;
+	for (const FFlowPinSourceData& Pin : InOutAutoInputPinsNext)
+	{
+		if (!Pin.FlowPin.IsExecPin() && Pin.bAllowMergeInputPin)
+		{
+			ReservedInputNames.Add(Pin.FlowPin.PinName);
+		}
+	}
+
+	TMap<FName, FName> LegacyNamesForDistinctCollisions;
+	for (FFlowPinSourceData& Pin : InOutAutoInputPinsNext)
+	{
+		if (Pin.FlowPin.IsExecPin() || !Pin.bAllowMergeInputPin || !DistinctPinNames.Contains(Pin.FlowPin.PinName))
+		{
+			continue;
+		}
+
+		const FName OriginalName = Pin.FlowPin.PinName;
+		FName* LegacyName = LegacyNamesForDistinctCollisions.Find(OriginalName);
+		if (!LegacyName)
+		{
+			uint32 Suffix = 1;
+			FName CandidateName;
+			do
+			{
+				CandidateName = FName(FString::Printf(TEXT("%s_Legacy_%u"), *OriginalName.ToString(), Suffix++));
+			}
+			while (ReservedInputNames.Contains(CandidateName));
+
+			LegacyName = &LegacyNamesForDistinctCollisions.Add(OriginalName, CandidateName);
+			ReservedInputNames.Add(CandidateName);
+		}
+
+		Pin.FlowPin.PinName = *LegacyName;
 	}
 }
 

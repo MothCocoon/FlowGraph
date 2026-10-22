@@ -675,6 +675,37 @@ FText UFlowNodeBase::GetNodeToolTip() const
 	}
 }
 
+FString UFlowNodeBase::GetInheritedNodeKeywords(const UClass* NodeClass)
+{
+	static const FName NAME_Keywords(TEXT("Keywords"));
+	static const TCHAR* Delimiters[] = { TEXT(" "), TEXT(","), TEXT("\t") };
+
+	TArray<FString> Keywords;
+	for (const UClass* Class = NodeClass; Class; Class = Class->GetSuperClass())
+	{
+		TArray<FString> ClassKeywords;
+		Class->GetMetaData(NAME_Keywords).ParseIntoArray(ClassKeywords, Delimiters, UE_ARRAY_COUNT(Delimiters));
+		for (FString& Keyword : ClassKeywords)
+		{
+			const bool bAlreadyAdded = Keywords.ContainsByPredicate([&Keyword](const FString& Existing)
+			{
+				return Existing.Equals(Keyword, ESearchCase::IgnoreCase);
+			});
+			if (!bAlreadyAdded)
+			{
+				Keywords.Add(MoveTemp(Keyword));
+			}
+		}
+
+		if (Class == UFlowNodeBase::StaticClass() || !Class->IsChildOf<UFlowNodeBase>())
+		{
+			break;
+		}
+	}
+
+	return FString::Join(Keywords, TEXT(" "));
+}
+
 FText UFlowNodeBase::GetGeneratedDisplayName() const
 {
 	static const FName NAME_GeneratedDisplayName(TEXT("GeneratedDisplayName"));

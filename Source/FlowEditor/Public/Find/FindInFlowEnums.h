@@ -22,10 +22,11 @@ enum class EFlowSearchFlags : uint32
 	PropertyValues = 1 << 7 UMETA(DisplayName = "Property Values"),
 	AddOns = 1 << 8 UMETA(DisplayName = "Add-Ons"),
 	Subgraphs = 1 << 9 UMETA(DisplayName = "Subgraphs"),
+	PinNames = 1 << 10 UMETA(DisplayName = "Pin Names"),
 
 	All = 
 		Titles | Tooltips | Classes | Comments | Descriptions | ConfigText |
-		PropertyNames | PropertyValues | AddOns | Subgraphs UMETA(Hidden),
+		PropertyNames | PropertyValues | AddOns | Subgraphs | PinNames UMETA(Hidden),
 
 	// Default mask — used at startup and for "reset"
 	DefaultSearchFlags = All UMETA(Hidden),

@@ -39,7 +39,7 @@ struct FLOWEDITOR_API FFlowGraphSchemaAction_NewNode : public FEdGraphSchemaActi
 	}
 
 	explicit FFlowGraphSchemaAction_NewNode(const UFlowNodeBase* Node, const UFlowGraphSettings& GraphSettings)
-		: FEdGraphSchemaAction(GetNodeCategory(Node, GraphSettings), Node->GetNodeTitle(), Node->GetNodeToolTip(), 0, FText::FromString(Node->GetClass()->GetMetaData("Keywords")))
+		: FEdGraphSchemaAction(GetNodeCategory(Node, GraphSettings), Node->GetNodeTitle(), Node->GetNodeToolTip(), 0, FText::FromString(UFlowNodeBase::GetInheritedNodeKeywords(Node->GetClass())))
 		, NodeClass(Node->GetClass())
 	{
 	}
@@ -79,8 +79,9 @@ struct FLOWEDITOR_API FFlowSchemaAction_NewSubNode : public FEdGraphSchemaAction
 	{
 	}
 
-	FFlowSchemaAction_NewSubNode(FText InNodeCategory, FText InMenuDesc, FText InToolTip, const int32 InGrouping)
-		: FEdGraphSchemaAction(MoveTemp(InNodeCategory), MoveTemp(InMenuDesc), MoveTemp(InToolTip), InGrouping)
+	FFlowSchemaAction_NewSubNode(FText InNodeCategory, FText InMenuDesc, FText InToolTip, const int32 InGrouping, FText InKeywords)
+		: FEdGraphSchemaAction(MoveTemp(InNodeCategory), MoveTemp(InMenuDesc), MoveTemp(InToolTip), InGrouping,
+			MoveTemp(InKeywords))
 		, NodeTemplate(nullptr)
 		, ParentNode(nullptr)
 	{
@@ -94,7 +95,7 @@ struct FLOWEDITOR_API FFlowSchemaAction_NewSubNode : public FEdGraphSchemaAction
 
 	static UFlowGraphNode* RecreateNode(UEdGraph* ParentGraph, UEdGraphNode* OldInstance, UFlowGraphNode* ParentFlowGraphNode, UFlowNodeAddOn* FlowNodeAddOn);
 
-	static TSharedPtr<FFlowSchemaAction_NewSubNode> AddNewSubNodeAction(FGraphActionListBuilderBase& ContextMenuBuilder, const FText& Category, const FText& MenuDesc, const FText& Tooltip);
+	static TSharedPtr<FFlowSchemaAction_NewSubNode> AddNewSubNodeAction(FGraphActionListBuilderBase& ContextMenuBuilder, const FText& Category, const FText& MenuDesc, const FText& Tooltip, const FText& Keywords);
 };
 
 /**

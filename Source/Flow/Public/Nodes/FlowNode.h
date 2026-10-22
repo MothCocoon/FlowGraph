@@ -153,6 +153,10 @@ public:
 	virtual TArray<FFlowPin> GetContextOutputs() const override;
 	// --
 
+	//~Begin UFlowNodeBase Interface
+	virtual void GetCatalogPins(TArray<FFlowPin>& OutInputPins, TArray<FFlowPin>& OutOutputPins) const override;
+	//~End UFlowNodeBase Interface
+
 	virtual bool CanUserAddInput() const;
 	virtual bool CanUserAddOutput() const;
 
@@ -318,6 +322,10 @@ protected:
 	static FString NoActorsFound;
 
 #if WITH_EDITOR
+public:
+	// UObject
+	virtual EDataValidationResult IsDataValid(FDataValidationContext& Context) const override;
+	// --
 
 protected:
 	virtual EDataValidationResult ValidateNode() override;

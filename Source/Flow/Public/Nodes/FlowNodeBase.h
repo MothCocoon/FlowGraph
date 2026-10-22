@@ -103,11 +103,29 @@ public:
 	FGuid NodeGuid;
 
 	UFUNCTION(BlueprintCallable, Category = "FlowNode")
-	void SetGuid(const FGuid& NewGuid) { NodeGuid = NewGuid; }
+	void SetGuid(const FGuid& NewGuid)
+	{
+#if WITH_EDITOR
+		if (NodeGuid.IsValid() && NodeGuid != NewGuid && !PreviousGuidForPinRemapping.IsValid())
+		{
+			PreviousGuidForPinRemapping = NodeGuid;
+		}
+#endif
+		NodeGuid = NewGuid;
+	}
 
 	UFUNCTION(BlueprintPure, Category = "FlowNode")
 	const FGuid& GetGuid() const { return NodeGuid; }
 
+#if WITH_EDITOR
+	const FGuid& GetPreviousGuidForPinRemapping() const { return PreviousGuidForPinRemapping; }
+	void ClearPreviousGuidForPinRemapping() { PreviousGuidForPinRemapping.Invalidate(); }
+
+private:
+	FGuid PreviousGuidForPinRemapping;
+#endif
+
+public:
 	// UObject
 	virtual UWorld* GetWorld() const override;
 	// --
@@ -425,6 +443,7 @@ protected:
 
 	FFlowNodeEvent OnReconstructionRequested;
 	FFlowNodeEvent OnAddOnRequestedParentReconstruction;
+	friend class FScopedFlowNodeReconstructionRequestDeferral;
 #endif // WITH_EDITORONLY_DATA
 
 #if WITH_EDITOR
@@ -500,6 +519,11 @@ public:
 
 	virtual FText GetNodeTitle() const;
 	virtual FText GetNodeToolTip() const;
+
+	static FString GetInheritedNodeKeywords(const UClass* NodeClass);
+	bool IsDeprecated() const { return bNodeDeprecated; }
+	const TSubclassOf<UFlowNode>& GetReplacedByClass() const { return ReplacedBy; }
+	virtual void GetCatalogPins(TArray<FFlowPin>& OutInputPins, TArray<FFlowPin>& OutOutputPins) const {}
 
 	FText GetGeneratedDisplayName() const;
 
