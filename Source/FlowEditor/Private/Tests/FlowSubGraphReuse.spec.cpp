@@ -26,6 +26,17 @@
 
 #include "FlowSubGraphReuseTestTypes.h"
 
+namespace
+{
+	void AddNodeToTemplate(UFlowAsset& Template, const FGuid& NodeGuid, UFlowNode* Node)
+	{
+		const FMapProperty* NodesProperty = FindFProperty<FMapProperty>(UFlowAsset::StaticClass(), TEXT("Nodes"));
+		TMap<FGuid, TObjectPtr<UFlowNode>>& Nodes =
+			*NodesProperty->ContainerPtrToValuePtr<TMap<FGuid, TObjectPtr<UFlowNode>>>(&Template);
+		Nodes.Add(NodeGuid, Node);
+	}
+}
+
 struct FFlowSubGraphReuseGameInstanceAccess : UGameInstance
 {
 	static void SetWorldContext(UGameInstance& Instance, FWorldContext* Context)
@@ -56,8 +67,8 @@ BEGIN_DEFINE_SPEC(FFlowSubGraphReuseSpec, "FlowEditor.SubGraphReuse",
 		const FGuid ChildFinishGuid = FGuid::NewGuid();
 		UFlowSubGraphReuseTestStartNode* ChildStart = NewObject<UFlowSubGraphReuseTestStartNode>(Template);
 		UFlowSubGraphReuseTestFinishNode* ChildFinish = NewObject<UFlowSubGraphReuseTestFinishNode>(Template);
-		Template->RegisterNode(ChildStartGuid, ChildStart);
-		Template->RegisterNode(ChildFinishGuid, ChildFinish);
+		AddNodeToTemplate(*Template, ChildStartGuid, ChildStart);
+		AddNodeToTemplate(*Template, ChildFinishGuid, ChildFinish);
 
 		TMap<FName, FConnectedPin> ChildStartConnections;
 		ChildStartConnections.Add(UFlowNode::DefaultOutputPin.PinName,
@@ -195,7 +206,7 @@ void FFlowSubGraphReuseSpec::Define()
 		ChildTemplate.Reset(CreateChildTemplate(UFlowAsset::StaticClass()));
 
 		const FGuid ParentStartGuid = FGuid::NewGuid();
-		ParentTemplate->RegisterNode(ParentStartGuid,
+		AddNodeToTemplate(*ParentTemplate.Get(), ParentStartGuid,
 			NewObject<UFlowNode_Start>(ParentTemplate.Get()));
 
 		UFlowNode_SubGraph* ParentSubGraph = NewObject<UFlowNode_SubGraph>(ParentTemplate.Get());
@@ -204,7 +215,7 @@ void FFlowSubGraphReuseSpec::Define()
 			UFlowNode::StaticClass(), TEXT("OutputPins"));
 		TArray<FFlowPin>& OutputPins = *OutputPinsProperty->ContainerPtrToValuePtr<TArray<FFlowPin>>(ParentSubGraph);
 		OutputPins.Add(FFlowPreloadHelper::OUTPIN_Preloaded);
-		ParentTemplate->RegisterNode(FGuid::NewGuid(), ParentSubGraph);
+		AddNodeToTemplate(*ParentTemplate.Get(), FGuid::NewGuid(), ParentSubGraph);
 
 		OwnerActor = World->SpawnActor<AActor>();
 		RootInstance.Reset(Subsystem->CreateRootFlow(OwnerActor, ParentTemplate.Get()));
@@ -542,10 +553,10 @@ void FFlowSubGraphReuseSpec::Define()
 		TestNotEqual(TEXT("Override policy creates a new instance"), SecondInstance, FirstInstance);
 	});
 
-	It("uses the project default for a child asset without a policy override", [this]()
+	It("uses the upstream project default for a child asset without a policy override", [this]()
 	{
-		TestEqual(TEXT("Flow project default is Reuse"),
-			GetDefault<UFlowSettings>()->SubGraphFinishPolicy, ESubGraphFinishPolicy::Reuse);
+		TestEqual(TEXT("Flow project default is Deinitialize"),
+			GetDefault<UFlowSettings>()->SubGraphFinishPolicy, ESubGraphFinishPolicy::Deinitialize);
 
 		UFlowAsset* FirstInstance = StartSubFlow();
 		if (!TestNotNull(TEXT("First child instance"), FirstInstance))
@@ -555,7 +566,7 @@ void FFlowSubGraphReuseSpec::Define()
 
 		TStrongObjectPtr<UFlowAsset> FirstInstanceKeepAlive(FirstInstance);
 		FinishSubFlow(FirstInstance);
-		TestTrue(TEXT("Default Reuse keeps the first instance initialized"), FirstInstance->IsInstanceInitialized());
+		TestFalse(TEXT("Default Deinitialize releases the first instance"), FirstInstance->IsInstanceInitialized());
 
 		UFlowAsset* SecondInstance = StartSubFlow();
 		if (!TestNotNull(TEXT("Second child instance"), SecondInstance))
@@ -563,7 +574,7 @@ void FFlowSubGraphReuseSpec::Define()
 			return;
 		}
 
-		TestEqual(TEXT("Project default reuses the same child instance"), SecondInstance, FirstInstance);
+		TestNotEqual(TEXT("Project default creates a new child instance"), SecondInstance, FirstInstance);
 	});
 }
 

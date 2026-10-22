@@ -20,6 +20,17 @@
 #include "UObject/UnrealType.h"
 #include "UObject/WeakObjectPtrTemplates.h"
 
+namespace
+{
+	void AddNodeToTemplate(UFlowAsset& Template, const FGuid& NodeGuid, UFlowNode* Node)
+	{
+		const FMapProperty* NodesProperty = FindFProperty<FMapProperty>(UFlowAsset::StaticClass(), TEXT("Nodes"));
+		TMap<FGuid, TObjectPtr<UFlowNode>>& Nodes =
+			*NodesProperty->ContainerPtrToValuePtr<TMap<FGuid, TObjectPtr<UFlowNode>>>(&Template);
+		Nodes.Add(NodeGuid, Node);
+	}
+}
+
 struct FFlowSharedComponentGameInstanceAccess : UGameInstance
 {
 	static void SetWorldContext(UGameInstance& Instance, FWorldContext* Context)
@@ -53,7 +64,7 @@ bool FFlowSharedComponentManagerSpec::HasInjectionManagerWithOuter(UObject& Oute
 	ForEachObjectWithOuter(&Outer, [&bFound](UObject* Object)
 	{
 		bFound |= Object->IsA<UFlowInjectComponentsManager>();
-	}, false);
+	}, EGetObjectsFlags::None);
 	return bFound;
 }
 
@@ -356,7 +367,7 @@ void FFlowSharedComponentManagerSpec::Define()
 	It("never creates a manager for an instance that does not inject", [this]()
 	{
 		TStrongObjectPtr<UFlowAsset> NodeTemplate(NewObject<UFlowAsset>());
-		NodeTemplate->RegisterNode(FGuid::NewGuid(), NewObject<UFlowNode_Start>(NodeTemplate.Get()));
+		AddNodeToTemplate(*NodeTemplate.Get(), FGuid::NewGuid(), NewObject<UFlowNode_Start>(NodeTemplate.Get()));
 		UFlowAsset* Instance = Subsystem->CreateFlowInstance(Actor, NodeTemplate.Get());
 		if (!TestNotNull(TEXT("Instance created"), Instance))
 		{
