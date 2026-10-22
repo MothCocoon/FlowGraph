@@ -163,6 +163,19 @@ bool UFlowAsset::IsNodeOrAddOnClassAllowed(const UClass* FlowNodeOrAddOnClass, F
 		return false;
 	}
 
+	if (FlowNodeOrAddOnClass->HasAnyClassFlags(CLASS_Abstract | CLASS_Deprecated | CLASS_NewerVersionExists))
+	{
+		if (OutOptionalFailureReason)
+		{
+			*OutOptionalFailureReason = FText::Format(
+				NSLOCTEXT("FlowAsset", "UnsaveableNodeClass",
+					"Class '{0}' cannot be saved because it is abstract, deprecated, or superseded. "
+					"Replace this node or add-on before cooking; its saved reference would be null."),
+				FText::FromString(FlowNodeOrAddOnClass->GetPathName()));
+		}
+		return false;
+	}
+
 	if (!CanFlowNodeClassBeUsedByFlowAsset(*FlowNodeOrAddOnClass))
 	{
 		return false;

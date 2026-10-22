@@ -25,6 +25,26 @@ FNativeFlowAssetEvent UFlowSubsystem::OnInstancedTemplateRemoved;
 
 #define LOCTEXT_NAMESPACE "FlowSubsystem"
 
+namespace
+{
+	bool HasValidNodesForInstancing(const UFlowAsset& Asset, const UFlowAsset& Template, const UObject* Owner)
+	{
+		for (const TPair<FGuid, UFlowNode*>& Node : Asset.GetNodes())
+		{
+			if (!IsValid(Node.Value))
+			{
+				UE_LOG(LogFlow, Error,
+					TEXT("Flow instance creation rejected an invalid node. Template: '%s', Asset: '%s', "
+						"Node GUID: '%s', Owner: '%s'. Repair and recook the graph; it will not execute."),
+					*Template.GetPathName(), *Asset.GetPathName(), *Node.Key.ToString(), *GetPathNameSafe(Owner));
+				return false;
+			}
+		}
+
+		return true;
+	}
+}
+
 UFlowSubsystem::UFlowSubsystem()
 	: LoadedSaveGame(nullptr)
 {
@@ -255,11 +275,12 @@ void UFlowSubsystem::FinishSubFlow(UFlowNode_SubGraph* SubGraphNode, const EFlow
 
 UFlowAsset* UFlowSubsystem::CreateFlowInstance(const TWeakObjectPtr<UObject> Owner, UFlowAsset* LoadedFlowAsset, FString NewInstanceName, const bool bStartReplication)
 {
-	if (LoadedFlowAsset == nullptr)
+	if (!IsValid(LoadedFlowAsset) || !HasValidNodesForInstancing(*LoadedFlowAsset, *LoadedFlowAsset, Owner.Get()))
 	{
 		return nullptr;
 	}
 
+	const bool bTemplateAlreadyInstanced = InstancedTemplates.Contains(LoadedFlowAsset);
 	AddInstancedTemplate(LoadedFlowAsset);
 
 #if WITH_EDITOR
@@ -277,6 +298,15 @@ UFlowAsset* UFlowSubsystem::CreateFlowInstance(const TWeakObjectPtr<UObject> Own
 	}
 
 	UFlowAsset* NewInstance = NewObject<UFlowAsset>(this, LoadedFlowAsset->GetClass(), *NewInstanceName, RF_Transient, LoadedFlowAsset, false, nullptr);
+	if (!HasValidNodesForInstancing(*NewInstance, *LoadedFlowAsset, Owner.Get()))
+	{
+		if (!bTemplateAlreadyInstanced)
+		{
+			RemoveInstancedTemplate(LoadedFlowAsset);
+		}
+		return nullptr;
+	}
+
 	NewInstance->InitializeInstance(Owner, *LoadedFlowAsset);
 	if (bStartReplication)
 	{
