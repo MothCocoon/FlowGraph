@@ -153,6 +153,13 @@ UFlowGraphNode* FFlowGraphSchemaAction_NewNode::RecreateNode(UEdGraph* ParentGra
 		OldInstance->DestroyNode();
 	}
 
+	// move AddOns from the old node
+	// Done after destroying the old node, since it rebuilds runtime AddOns of the shared FlowNode from its SubNodes.
+	if (UFlowGraphNode* OldFlowGraphNode = Cast<UFlowGraphNode>(OldInstance))
+	{
+		NewGraphNode->MoveSubNodesFrom(*OldFlowGraphNode);
+	}
+
 	// call notifies
 	NewGraphNode->PostPlacedNewNode();
 	ParentGraph->NotifyGraphChanged();
@@ -245,13 +252,29 @@ UFlowGraphNode* FFlowSchemaAction_NewSubNode::RecreateNode(UEdGraph* ParentGraph
 	FlowNodeAddOn->SetGraphNode(NewGraphNode);
 	NewGraphNode->SetNodeTemplate(FlowNodeAddOn);
 
+	UFlowGraphNode* OldFlowGraphNode = Cast<UFlowGraphNode>(OldInstance);
+	const int32 OldSubNodeIndex = ParentFlowGraphNode->SubNodes.IndexOfByKey(OldFlowGraphNode);
+
 	// remove leftover
 	if (OldInstance)
 	{
 		OldInstance->DestroyNode();
 	}
 
+	// move nested AddOns from the old node
+	if (OldFlowGraphNode)
+	{
+		NewGraphNode->MoveSubNodesFrom(*OldFlowGraphNode);
+	}
+
 	ParentFlowGraphNode->AddSubNode(NewGraphNode);
+
+	// keep the position of the old node among parent's SubNodes
+	if (OldSubNodeIndex != INDEX_NONE)
+	{
+		ParentFlowGraphNode->SubNodes.RemoveSingle(NewGraphNode);
+		ParentFlowGraphNode->SubNodes.Insert(NewGraphNode, OldSubNodeIndex);
+	}
 
 	// call notifies
 	ParentGraph->NotifyGraphChanged();

@@ -54,6 +54,8 @@ public:
 	/* (optional) */
 	FLOW_API virtual bool TryConvertValuesToString(FString& OutString) const { return false; }
 
+	FLOW_API virtual bool GetDebugString(FString& OutString) const { return TryConvertValuesToString(OutString); }
+
 	/* Resolve the registered data pin type. */
 	FLOW_API const FFlowPinType* LookupPinType() const;
 

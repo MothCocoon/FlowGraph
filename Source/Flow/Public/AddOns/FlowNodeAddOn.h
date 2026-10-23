@@ -72,6 +72,10 @@ public:
 	FLOW_API virtual void DeinitializeInstance() override;
 	// --
 
+	// UFlowNodeBase
+	FLOW_API virtual void InitializeReplica() override;
+	// --
+
 	// UFlowNodeAddOn
 
 	/* The FlowNode that contains this AddOn.

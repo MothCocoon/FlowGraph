@@ -1184,7 +1184,7 @@ void UFlowGraphNode::GetPinHoverText(const UEdGraphPin& Pin, FString& HoverTextO
 		if (FlowPinType::IsSuccess(DataResult.Result) && DataResult.ResultValue.IsValid())
 		{
 			const FFlowDataPinValue& Value = DataResult.ResultValue.Get<FFlowDataPinValue>();
-			if (!Value.TryConvertValuesToString(ValueString))
+			if (!Value.GetDebugString(ValueString))
 			{
 				ValueString = TEXT("<unformattable>");
 			}
@@ -1714,6 +1714,20 @@ void UFlowGraphNode::InsertSubNodeAt(UFlowGraphNode* SubNode, const int32 DropIn
 	RequestReconstructOnRootFlowNode();
 }
 
+void UFlowGraphNode::MoveSubNodesFrom(UFlowGraphNode& OtherNode)
+{
+	for (UFlowGraphNode* SubNode : OtherNode.SubNodes)
+	{
+		if (IsValid(SubNode))
+		{
+			SubNode->SetParentNodeForSubNode(this);
+			SubNodes.Add(SubNode);
+		}
+	}
+
+	OtherNode.SubNodes.Reset();
+}
+
 void UFlowGraphNode::DestroyNode()
 {
 	bIsDestroyingNode = true;
@@ -1905,7 +1919,9 @@ bool CheckPinsMatch(const TArray<UEdGraphPin*>& GraphPins, const TArray<FFlowPin
 	{
 		if (!GraphPins.ContainsByPredicate([&FlowNodePin](const UEdGraphPin* GraphNodePin)
 		{
-			return GraphNodePin->PinName == FlowNodePin.PinName && GraphNodePin->PinFriendlyName.EqualTo(FlowNodePin.PinFriendlyName);
+			return GraphNodePin->PinName == FlowNodePin.PinName 
+				&& GraphNodePin->PinFriendlyName.EqualTo(FlowNodePin.PinFriendlyName)
+				&& GraphNodePin->PinToolTip == FlowNodePin.PinToolTip;
 		}))
 		{
 			// Could not match the pin from the flow node with any of the EdPins array.

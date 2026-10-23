@@ -73,6 +73,7 @@ public:
 public:
 	// UObject
 	virtual void PostLoad() override;
+	virtual void GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const override;
 	// --
 
 #if WITH_EDITOR
@@ -326,6 +327,17 @@ protected:
 //////////////////////////////////////////////////////////////////////////
 // Executing node instance
 
+protected:
+#if !UE_BUILD_SHIPPING
+	TMap<FName, FPinRecordBuffer> InputRecords;
+	TMap<FName, FPinRecordBuffer> OutputRecords;
+#endif
+	
+	/* True, if this node or any of its AddOns has a custom property marked as UPROPERTY(Replicated). */
+	bool bHasReplicatedProperties = false;
+
+	virtual bool ShouldReplicateProperties() const { return true; }
+
 public:
 	// IFlowCoreExecutableInterface
 	virtual void InitializeInstance() override;
@@ -336,20 +348,20 @@ public:
 	virtual void ExecuteInput(const FName& PinName) override;
 	// --
 
-protected:
-	UPROPERTY(SaveGame)
+private:
+	UPROPERTY(SaveGame, ReplicatedUsing = OnRep_ActivationState)
 	EFlowNodeState ActivationState = EFlowNodeState::NeverActivated;
 
 public:
+	void SetActivationState(const EFlowNodeState NewActivationState);
 	EFlowNodeState GetActivationState() const { return ActivationState; }
 	bool HasFinished() const { return EFlowNodeState_Classifiers::IsFinishedState(ActivationState); }
 
-#if !UE_BUILD_SHIPPING
-
 protected:
-	TMap<FName, FPinRecordBuffer> InputRecords;
-	TMap<FName, FPinRecordBuffer> OutputRecords;
-#endif
+	/* Called on clients after ActivationState replicated from the server changed. */
+	UFUNCTION(BlueprintNativeEvent, Category = "FlowNode")
+	void OnRep_ActivationState(const EFlowNodeState PreviousActivationState);
+	virtual void OnRep_ActivationState_Implementation(const EFlowNodeState PreviousActivationState) {}
 
 protected:
 	/* Trigger execution of input pin. */

@@ -3,6 +3,7 @@
 
 #include "AddOns/FlowNodeAddOn.h"
 #include "FlowAsset.h"
+#include "FlowNodeReplication.h"
 #include "FlowSettings.h"
 #include "Interfaces/FlowExecutionGate.h"
 #include "Interfaces/FlowPreloadableInterface.h"
@@ -123,6 +124,13 @@ void UFlowNode::PostLoad()
 	{
 		FixupDataPinTypes();
 	}
+}
+
+void UFlowNode::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const
+{
+	Super::GetLifetimeReplicatedProps(OutLifetimeProps);
+
+	// Node isn't a replicated object, Flow Asset instance sends its replicated properties through FlowNodeReplication
 }
 
 bool UFlowNode::IsSupportedInputPinName(const FName& PinName) const
@@ -591,7 +599,7 @@ bool UFlowNode::TryGatherPropertyOwnersAndPopulateResult(
 		return false;
 	}
 
-	const FFlowDataPinValueOwner* ValueOwner;
+	const FFlowDataPinValueOwner* ValueOwner = nullptr;
 	FName PropertyNameToLookup;
 	const TArray<FFlowDataPinValueOwner>& ValueOwners = ValueOwnerCollection.GetValueOwners();
 
@@ -1198,6 +1206,8 @@ void UFlowNode::InitializeInstance()
 	Super::InitializeInstance();
 
 	TryInitializePreloadHelper();
+
+	bHasReplicatedProperties = ShouldReplicateProperties() && FlowNodeReplication::HasReplicatedProperties(*this);
 }
 
 void UFlowNode::DeinitializeInstance()
@@ -1238,6 +1248,15 @@ void UFlowNode::ExecuteInput(const FName& PinName)
 	}
 
 	Super::ExecuteInput(PinName);
+}
+
+void UFlowNode::SetActivationState(const EFlowNodeState NewActivationState)
+{
+	if (ActivationState != NewActivationState)
+	{
+		ActivationState = NewActivationState;
+		MarkReplicatedPropertiesDirty();
+	}
 }
 
 bool UFlowNode::DispatchExecuteInputToPreloadHelper(const FName& PinName)
@@ -1367,7 +1386,7 @@ void UFlowNode::TriggerInput(const FName& PinName, const EFlowPinActivationType 
 				OnActivate();
 			}
 
-			ActivationState = EFlowNodeState::Active;
+			SetActivationState(EFlowNodeState::Active);
 		}
 
 #if !UE_BUILD_SHIPPING
@@ -1483,11 +1502,11 @@ void UFlowNode::Deactivate()
 
 	if (GetFlowAsset()->FinishPolicy == EFlowFinishPolicy::Abort)
 	{
-		ActivationState = EFlowNodeState::Aborted;
+		SetActivationState(EFlowNodeState::Aborted);
 	}
 	else
 	{
-		ActivationState = EFlowNodeState::Completed;
+		SetActivationState(EFlowNodeState::Completed);
 	}
 
 	Cleanup();
@@ -1495,7 +1514,7 @@ void UFlowNode::Deactivate()
 
 void UFlowNode::ResetRecords()
 {
-	ActivationState = EFlowNodeState::NeverActivated;
+	SetActivationState(EFlowNodeState::NeverActivated);
 
 #if !UE_BUILD_SHIPPING
 	InputRecords.Empty();
@@ -1523,6 +1542,9 @@ void UFlowNode::LoadInstance(const FFlowNodeSaveData& NodeRecord)
 	{
 		FlowAsset->OnActivationStateLoaded(this);
 	}
+
+	// ActivationState was restored by serialization, bypassing SetActivationState
+	MarkReplicatedPropertiesDirty();
 
 	switch (SignalMode)
 	{
