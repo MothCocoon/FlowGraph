@@ -1340,7 +1340,6 @@ bool UFlowNode::TryInitializePreloadHelper()
 	}
 
 	FlowAsset->EnsurePreloadPolicyInitialized();
-
 	const FFlowPreloadPolicy& PreloadPolicy = FlowAsset->GetPreloadPolicy();
 
 	const UScriptStruct* HelperType = PreloadPolicy.GetPreloadHelperStructType(*this);
