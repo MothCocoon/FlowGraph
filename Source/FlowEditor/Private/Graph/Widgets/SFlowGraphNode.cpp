@@ -204,7 +204,17 @@ void SFlowGraphNode::GetOverlayBrushes(bool bSelected, const FVector2f& WidgetSi
 	}
 }
 
-const FSlateBrush* SFlowGraphNode::GetSlateBrush(const FName BrushName, const FName StyleSetName) const
+FMargin SFlowGraphNode::GetTitleBorderMargin() const
+{
+	if (const UFlowNodeBase* FlowNodeBase = IsValid(FlowGraphNode) ? FlowGraphNode->GetFlowNodeBase() : nullptr)
+	{
+		return FlowNodeBase->GetTitleBorderMargin();
+	}
+
+	return UFlowNodeBase::GetDefaultTitleBorderMargin();
+}
+
+const FSlateBrush* SFlowGraphNode::GetSlateBrush(const FName BrushName, const FName StyleSetName)
 {
 	if (!StyleSetName.IsNone())
 	{
@@ -311,8 +321,7 @@ void SFlowGraphNode::UpdateGraphNode()
 			[
 				SNew(SBorder)
 				.BorderImage(FFlowEditorStyle::GetBrush("Flow.Node.Title"))
-				// The extra margin on the right is for making the color spill stretch well past the node title
-				.Padding(FMargin(10, 5, 30, 3))
+				.Padding(TAttribute<FMargin>(this, &SFlowGraphNode::GetTitleBorderMargin))
 				.BorderBackgroundColor(this, &SFlowGraphNode::GetBorderBackgroundColor)
 				[
 					SNew(SHorizontalBox)
@@ -945,7 +954,9 @@ void SFlowGraphNode::AddSubNode(const TSharedPtr<SGraphNode> SubNodeWidget)
 {
 	SubNodes.Add(SubNodeWidget);
 
-	SubNodeBox->AddSlot().AutoHeight().HAlign(HAlign_Fill)
+	SubNodeBox->AddSlot()
+		.AutoHeight()
+		.HAlign(HAlign_Fill)
 		[
 			SubNodeWidget.ToSharedRef()
 		];
@@ -1233,8 +1244,8 @@ FReply SFlowGraphNode::OnDrop(const FGeometry& MyGeometry, const FDragDropEvent&
 	const bool bShouldDropAsSubNodesOfDropTargetNode = bReorderOperation || ShouldDropDraggedNodesAsSubNodes(DraggedNodes, DropTargetNode);
 
 	// Decide the new parent insertion target (either the hovered node, or its parent for sibling insert)
-	UFlowGraphNode* DropTargetParentNode = nullptr;
-	UFlowGraphNode* SiblingInsertBeforeNode = nullptr;
+	UFlowGraphNode* DropTargetParentNode;
+	UFlowGraphNode* SiblingInsertBeforeNode;
 
 	if (bShouldDropAsSubNodesOfDropTargetNode)
 	{

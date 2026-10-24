@@ -63,27 +63,27 @@ public:
 		FDetailWidgetRow& HeaderRow,
 		IPropertyTypeCustomizationUtils& StructCustomizationUtils) override;
 
-	virtual void CustomizeChildren(TSharedRef<IPropertyHandle> InStructPropertyHandle,
+	virtual void CustomizeChildren(const TSharedRef<IPropertyHandle> InStructPropertyHandle,
 		IDetailChildrenBuilder& StructBuilder,
 		IPropertyTypeCustomizationUtils& StructCustomizationUtils) override;
 
 protected:
 	// Build flow
-	virtual void BuildValueRows(TSharedRef<IPropertyHandle> InStructPropertyHandle,
+	virtual void BuildValueRows(const TSharedRef<IPropertyHandle> InStructPropertyHandle,
 		IDetailChildrenBuilder& StructBuilder,
 		IPropertyTypeCustomizationUtils& StructCustomizationUtils);
 
 	virtual void BuildSingleBranch(IDetailChildrenBuilder& StructBuilder);
 	virtual void BuildArrayBranch(IDetailChildrenBuilder& StructBuilder); // Skips if !bArraySupported
 
-	void EnsureSingleElementExists();
-	void RequestRefresh();
+	void EnsureSingleElementExists() const;
+	void RequestRefresh() const;
 
 	// Mode / State
 	EFlowDataMultiType GetCurrentMultiType() const;
 	EVisibility GetSingleModeVisibility() const;
 	EVisibility GetArrayModeVisibility() const;
-	void TrimArrayToSingle();
+	void TrimArrayToSingle() const;
 
 	// Appearance
 	FFlowDataPinValue* GetFlowDataPinValueBeingEdited() const
@@ -97,28 +97,30 @@ protected:
 	bool GetInputPinCheckboxEnabled() const;
 
 	// MultiType UI Helpers
-	TSharedRef<SWidget> GenerateMultiTypeWidget(TSharedPtr<int32> Item) const;
+	static TSharedRef<SWidget> GenerateMultiTypeWidget(TSharedPtr<int32> Item);
 	FText GetSelectedMultiTypeText() const;
 
 	// Change Handlers
 	void OnMultiTypeChanged(TSharedPtr<int32> NewSelection, ESelectInfo::Type SelectInfo);
-	void OnInputPinChanged(ECheckBoxState NewState);
+	void OnInputPinChanged(const ECheckBoxState NewState) const;
 
 	// Caching
 	void CacheHandles(const TSharedRef<IPropertyHandle>& PropertyHandle,
 		IPropertyTypeCustomizationUtils& StructCustomizationUtils);
+	void ApplyInstancedStructMetaData(const TSharedRef<IPropertyHandle>& ElementHandle) const;
+	const UScriptStruct* ResolveBaseStructFunction() const;
 	void CacheOwnerInterface();
 	void CacheArraySupported();
 
 	// Shared Helpers ------------------------------------------------------
 	void BuildVisibilityAwareArray(IDetailChildrenBuilder& StructBuilder,
-		TSharedPtr<IPropertyHandle> ArrayHandle,
+		const TSharedPtr<IPropertyHandle>& ArrayHandle,
 		TFunction<void(TSharedRef<IPropertyHandle>, int32, IDetailChildrenBuilder&, const TAttribute<EVisibility>&)> Generator,
-		TAttribute<EVisibility> VisibilityAttribute);
+		TAttribute<EVisibility> VisibilityAttribute) const;
 
-	void ValidateArrayElements(TSharedPtr<IPropertyHandle> ArrayHandle,
-		TFunction<bool(TSharedPtr<IPropertyHandle>)> IsValidPredicate,
-		TFunction<void(TSharedPtr<IPropertyHandle>)> InvalidateAction);
+	static void ValidateArrayElements(const TSharedPtr<IPropertyHandle>& ArrayHandle,
+	                                  const TFunction<bool(TSharedPtr<IPropertyHandle>)>& IsValidPredicate,
+	                                  const TFunction<void(TSharedPtr<IPropertyHandle>)>& InvalidateAction);
 
 	// Tooltips (centralized)
 	static FText GetMultiTypeTooltip();
