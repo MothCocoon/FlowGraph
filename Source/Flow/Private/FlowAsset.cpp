@@ -319,6 +319,11 @@ bool UFlowAsset::IsFlowNodeClassInDeniedClasses(const UClass& FlowNodeClass) con
 	return false;
 }
 
+bool UFlowAsset::ShouldValidateOnSave() const
+{
+	return GetDefault<UFlowSettings>()->bValidateAssetOnSave;
+}
+
 EDataValidationResult UFlowAsset::IsDataValid(FDataValidationContext& Context) const
 {
 	FFlowMessageLog LogResults;
@@ -334,6 +339,9 @@ EDataValidationResult UFlowAsset::IsDataValid(FDataValidationContext& Context) c
 
 EDataValidationResult UFlowAsset::ValidateAsset(FFlowMessageLog& MessageLog) const
 {
+	// A node may report Invalid with warnings only or no messages
+	EDataValidationResult NodesResult = EDataValidationResult::NotValidated;
+
 	// validate runtime nodes
 	for (const TPair<FGuid, UFlowNode*>& NodeIt : ObjectPtrDecay(Nodes))
 	{
@@ -347,7 +355,6 @@ EDataValidationResult UFlowAsset::ValidateAsset(FFlowMessageLog& MessageLog) con
 			{
 				const FString ErrorMsg = !FailureReason.IsEmpty() ? FailureReason.ToString()
 					: FString::Format(*ValidationError_NodeClassNotAllowed, {*Node->GetClass()->GetName()});
-
 				MessageLog.Error(*ErrorMsg, Node);
 			}
 
@@ -363,13 +370,11 @@ EDataValidationResult UFlowAsset::ValidateAsset(FFlowMessageLog& MessageLog) con
 				}
 			}
 
-			// Run node-specific validations
-			Node->ValidationLog.Messages.Empty();
-			Node->ValidateNode();
-			MessageLog.Messages.Append(Node->ValidationLog.Messages);
+			// Validate node itself
+			NodesResult = CombineDataValidationResults(NodesResult, ValidateNode(*Node, MessageLog));
 
-			// Validate AddOns
-			ValidateAddOnChildren(*Node, MessageLog);
+			// Validate node AddOns
+			NodesResult = CombineDataValidationResults(NodesResult, ValidateAddOnChildren(*Node, MessageLog));
 		}
 		else
 		{
@@ -390,16 +395,25 @@ EDataValidationResult UFlowAsset::ValidateAsset(FFlowMessageLog& MessageLog) con
 		}
 	}
 
+	if (NodesResult == EDataValidationResult::Invalid)
+	{
+		return EDataValidationResult::Invalid;
+	}
+
 	// otherwise, the asset is considered valid (even with warnings or notes)
 	return EDataValidationResult::Valid;
 }
 
-bool UFlowAsset::ShouldValidateOnSave() const
+EDataValidationResult UFlowAsset::ValidateNode(UFlowNodeBase& FlowNodeBase, FFlowMessageLog& MessageLog)
 {
-	return GetDefault<UFlowSettings>()->bValidateAssetOnSave;
+	FlowNodeBase.ValidationLog.Messages.Empty();
+	const EDataValidationResult NodeResult = FlowNodeBase.ValidateNode();
+	MessageLog.Messages.Append(FlowNodeBase.ValidationLog.Messages);
+
+	return NodeResult;
 }
 
-void UFlowAsset::ValidateAddOnTree(UFlowNodeAddOn& AddOn, FFlowMessageLog& MessageLog) const
+EDataValidationResult UFlowAsset::ValidateAddOnTree(UFlowNodeAddOn& AddOn, FFlowMessageLog& MessageLog) const
 {
 	// Filter unauthorized addon nodes
 	FText FailureReason;
@@ -414,15 +428,15 @@ void UFlowAsset::ValidateAddOnTree(UFlowNodeAddOn& AddOn, FFlowMessageLog& Messa
 	}
 
 	// Validate AddOn
-	AddOn.ValidationLog.Messages.Empty();
-	AddOn.ValidateNode();
-	MessageLog.Messages.Append(AddOn.ValidationLog.Messages);
+	const EDataValidationResult AddOnResult = ValidateNode(AddOn, MessageLog);
 
-	ValidateAddOnChildren(AddOn, MessageLog);
+	return CombineDataValidationResults(AddOnResult, ValidateAddOnChildren(AddOn, MessageLog));
 }
 
-void UFlowAsset::ValidateAddOnChildren(UFlowNodeBase& OwnerNode, FFlowMessageLog& MessageLog) const
+EDataValidationResult UFlowAsset::ValidateAddOnChildren(UFlowNodeBase& OwnerNode, FFlowMessageLog& MessageLog) const
 {
+	EDataValidationResult ChildrenResult = EDataValidationResult::NotValidated;
+
 	const TArray<UFlowNodeAddOn*>& Children = OwnerNode.GetFlowNodeAddOnChildren();
 	for (UFlowNodeAddOn* Child : Children)
 	{
@@ -447,7 +461,7 @@ void UFlowAsset::ValidateAddOnChildren(UFlowNodeBase& OwnerNode, FFlowMessageLog
 				MessageLog.Error(*ErrorMsg, &OwnerNode);
 			}
 
-			ValidateAddOnTree(*Child, MessageLog);
+			ChildrenResult = CombineDataValidationResults(ChildrenResult, ValidateAddOnTree(*Child, MessageLog));
 		}
 		else
 		{
@@ -455,6 +469,8 @@ void UFlowAsset::ValidateAddOnChildren(UFlowNodeBase& OwnerNode, FFlowMessageLog
 			MessageLog.Error(*ErrorMsg, this);
 		}
 	}
+
+	return ChildrenResult;
 }
 
 UFlowNode* UFlowAsset::CreateNode(const UClass* NodeClass, UEdGraphNode* GraphNode)

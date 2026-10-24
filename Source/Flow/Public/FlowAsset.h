@@ -108,7 +108,7 @@ public:
 	UEdGraph* GetGraph() const { return FlowGraph; }
 	virtual TSubclassOf<UFlowAsset> GetDefaultFlowAssetForSubgraphs() const { return GetClass(); }
 
-public:	
+public:
 	/* Returns whether the node class is allowed in this flow asset. */
 	bool IsNodeOrAddOnClassAllowed(const UClass* FlowNodeClass, FText* OutOptionalFailureReason = nullptr) const;
 
@@ -121,19 +121,21 @@ protected:
 	bool IsFlowNodeClassInDeniedClasses(const UClass& FlowNodeClass) const;
 
 public:
+	/* Allow subclasses to override the project-wide validation on save. */
+	virtual bool ShouldValidateOnSave() const;
+	
 	FFlowGraphValidationEvent OnValidateGraph;
 	virtual EDataValidationResult IsDataValid(FDataValidationContext& Context) const override;
 	virtual EDataValidationResult ValidateAsset(FFlowMessageLog& MessageLog) const;
 
-	/* Allow subclasses to override the project-wide validation on save. */
-	virtual bool ShouldValidateOnSave() const;
-
 private:
+	static EDataValidationResult ValidateNode(UFlowNodeBase& FlowNodeBase, FFlowMessageLog& MessageLog);
+
 	/* Validates every direct child attachment on OwnerNode and recursively validates child trees. */
-	void ValidateAddOnChildren(UFlowNodeBase& OwnerNode, FFlowMessageLog& MessageLog) const;
+	EDataValidationResult ValidateAddOnChildren(UFlowNodeBase& OwnerNode, FFlowMessageLog& MessageLog) const;
 
 	/* Recursively validates the given addon and its children. */
-	void ValidateAddOnTree(UFlowNodeAddOn& AddOn, FFlowMessageLog& MessageLog) const;
+	EDataValidationResult ValidateAddOnTree(UFlowNodeAddOn& AddOn, FFlowMessageLog& MessageLog) const;
 #endif
 
 //////////////////////////////////////////////////////////////////////////
