@@ -1138,8 +1138,11 @@ void UFlowAsset::SetupForEditing()
 }
 #endif // WITH_EDITOR
 
-bool UFlowAsset::CanBeInstanced(const UObject* InOwner) const
+bool UFlowAsset::CanBeInstanced(const UFlowAsset& InTemplateAsset, const UObject* InOwner) const
 {
+	// Called for the template and again for its new instance.
+	// Use the (this != &InTemplateAsset) comparison if you need to test the new instance.
+
 	if (GetDefault<UFlowSettings>()->bRejectFlowInstancesWithInvalidNodes)
 	{
 		for (const TPair<FGuid, UFlowNode*>& Node : ObjectPtrDecay(Nodes))
@@ -1147,9 +1150,9 @@ bool UFlowAsset::CanBeInstanced(const UObject* InOwner) const
 			if (!IsValid(Node.Value))
 			{
 				UE_LOG(LogFlow, Error,
-					TEXT("Flow instance creation rejected an invalid node. Asset: '%s', Node GUID: '%s', Owner: '%s'. "
-						"Repair and recook the graph; it will not execute."),
-					*GetPathName(), *Node.Key.ToString(), *GetPathNameSafe(InOwner));
+					TEXT("Flow instance creation rejected an invalid node. Template: '%s', Asset: '%s', "
+						"Node GUID: '%s', Owner: '%s'. Repair and recook the graph; it will not execute."),
+					*InTemplateAsset.GetPathName(), *GetPathName(), *Node.Key.ToString(), *GetPathNameSafe(InOwner));
 				return false;
 			}
 		}
