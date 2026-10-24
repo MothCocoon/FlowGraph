@@ -5,18 +5,23 @@
 #include "FlowEditorCommands.h"
 
 #include "Asset/FlowAssetEditorContext.h"
+#include "Asset/FlowDebugEditorSubsystem.h"
 #include "Asset/FlowAssetToolbar.h"
 #include "Asset/FlowMessageLogListing.h"
+#include "DetailCustomizations/FlowNodeAddOnCustomization.h"
 #include "Graph/FlowGraphEditor.h"
+#include "Graph/FlowGraphEditorSettings.h"
 #include "Graph/FlowGraphEditorLayout.h"
 #include "Graph/Nodes/FlowGraphNode.h"
 #include "Graph/FlowGraphSchema.h"
 #include "Graph/Widgets/SFlowPalette.h"
 
+#include "AddOns/FlowNodeAddOn.h"
 #include "FlowAsset.h"
 
 #include "EdGraph/EdGraphNode.h"
 #include "Editor.h"
+#include "Engine/Engine.h"
 #include "EditorClassUtils.h"
 #include "GraphEditor.h"
 #include "IDetailsView.h"
@@ -24,6 +29,7 @@
 #include "Kismet2/DebuggerCommands.h"
 #include "MessageLogModule.h"
 #include "Modules/ModuleManager.h"
+#include "ObjectEditorUtils.h"
 #include "PropertyEditorModule.h"
 #include "ScopedTransaction.h"
 #include "ToolMenus.h"
@@ -51,6 +57,11 @@ FFlowAssetEditor::FFlowAssetEditor()
 
 FFlowAssetEditor::~FFlowAssetEditor()
 {
+	if (FlowGraphEditorSettingsChangedHandle.IsValid())
+	{
+		UFlowGraphEditorSettings::OnSettingsChanged().Remove(FlowGraphEditorSettingsChangedHandle);
+	}
+
 	GEditor->UnregisterForUndo(this);
 }
 
@@ -310,7 +321,9 @@ void FFlowAssetEditor::InitFlowAssetEditor(const EToolkitMode::Type Mode, const 
 	GEditor->RegisterForUndo(this);
 
 	UFlowGraphSchema::SubscribeToAssetChanges();
+
 	FlowAsset->OnDetailsRefreshRequested.BindThreadSafeSP(this, &FFlowAssetEditor::RefreshDetails);
+	FlowGraphEditorSettingsChangedHandle = UFlowGraphEditorSettings::OnSettingsChanged().AddRaw(this, &FFlowAssetEditor::RefreshDetails);
 
 	BindToolbarCommands();
 	CreateToolbar();
@@ -396,7 +409,12 @@ void FFlowAssetEditor::BindToolbarCommands()
 	FFlowToolbarCommands::Register();
 	const FFlowToolbarCommands& ToolbarCommands = FFlowToolbarCommands::Get();
 
-	// Editing
+	// Flow Asset
+	ToolkitCommands->MapAction(ToolbarCommands.AssetDefaults,
+	                           FExecuteAction::CreateSP(this, &FFlowAssetEditor::ShowAssetDefaults),
+	                           FCanExecuteAction());
+
+	// Automation
 	ToolkitCommands->MapAction(ToolbarCommands.RefreshAsset,
 	                           FExecuteAction::CreateSP(this, &FFlowAssetEditor::RefreshAsset),
 	                           FCanExecuteAction::CreateStatic(&FFlowAssetEditor::CanEdit));
@@ -405,26 +423,30 @@ void FFlowAssetEditor::BindToolbarCommands()
 	                           FExecuteAction::CreateSP(this, &FFlowAssetEditor::ValidateAsset_Internal),
 	                           FCanExecuteAction());
 
-	ToolkitCommands->MapAction(ToolbarCommands.SearchInAsset,
-	                           FExecuteAction::CreateSP(this, &FFlowAssetEditor::SearchInAsset),
-	                           FCanExecuteAction());
-
-	ToolkitCommands->MapAction(ToolbarCommands.EditAssetDefaults,
-	                           FExecuteAction::CreateSP(this, &FFlowAssetEditor::EditAssetDefaults_Clicked),
-	                           FCanExecuteAction());
-
 	ToolkitCommands->MapAction(ToolbarCommands.AutoFormatGraph,
 	                           FExecuteAction::CreateSP(this, &FFlowAssetEditor::AutoFormatGraph),
 	                           FCanExecuteAction::CreateStatic(&FFlowAssetEditor::CanEdit));
 
+	// View
+	ToolkitCommands->MapAction(ToolbarCommands.SearchInAsset,
+	                           FExecuteAction::CreateSP(this, &FFlowAssetEditor::SearchInAsset),
+	                           FCanExecuteAction());
+
+	// Debugger
+	ToolkitCommands->MapAction(ToolbarCommands.ContinueFlowExecution,
+	                           FExecuteAction::CreateStatic(&FFlowAssetEditor::ContinueFlowExecution),
+	                           FCanExecuteAction::CreateStatic(&FFlowAssetEditor::IsFlowExecutionHalted),
+	                           FIsActionChecked(),
+	                           FIsActionButtonVisible::CreateStatic(&FFlowAssetEditor::IsFlowExecutionHalted));
+
+	ToolkitCommands->MapAction(ToolbarCommands.StopFlowExecution,
+	                           FExecuteAction::CreateStatic(&FFlowAssetEditor::StopFlowExecution),
+	                           FCanExecuteAction::CreateStatic(&FFlowAssetEditor::IsFlowExecutionHalted),
+	                           FIsActionChecked(),
+	                           FIsActionButtonVisible::CreateStatic(&FFlowAssetEditor::IsFlowExecutionHalted));
+
 	// Engine's Play commands
 	ToolkitCommands->Append(FPlayWorldCommands::GlobalPlayWorldActions.ToSharedRef());
-}
-
-void FFlowAssetEditor::RefreshAsset()
-{
-	// attempt to refresh graph, fix common issues automatically
-	CastChecked<UFlowGraph>(FlowAsset->GetGraph())->RefreshGraph();
 }
 
 void FFlowAssetEditor::RefreshDetails()
@@ -433,6 +455,22 @@ void FFlowAssetEditor::RefreshDetails()
 	{
 		DetailsView->ForceRefresh();
 	}
+}
+
+void FFlowAssetEditor::ShowAssetDefaults() const
+{
+	DetailsView->SetObject(FlowAsset);
+}
+
+void FFlowAssetEditor::RefreshAsset()
+{
+	// attempt to refresh graph, fix common issues automatically
+	CastChecked<UFlowGraph>(FlowAsset->GetGraph())->RefreshGraph();
+}
+
+void FFlowAssetEditor::ValidateAsset(FFlowMessageLog& MessageLog)
+{
+	FlowAsset->ValidateAsset(MessageLog);
 }
 
 void FFlowAssetEditor::ValidateAsset_Internal()
@@ -451,70 +489,6 @@ void FFlowAssetEditor::ValidateAsset_Internal()
 	ValidationLogListing->OnDataChanged().Broadcast();
 
 	FlowAsset->GetGraph()->NotifyGraphChanged();
-}
-
-void FFlowAssetEditor::ValidateAsset(FFlowMessageLog& MessageLog)
-{
-	FlowAsset->ValidateAsset(MessageLog);
-}
-
-void FFlowAssetEditor::SearchInAsset()
-{
-	TabManager->TryInvokeTab(SearchTab);
-	SearchBrowser->FocusForUse();
-}
-
-void FFlowAssetEditor::EditAssetDefaults_Clicked() const
-{
-	DetailsView->SetObject(FlowAsset);
-}
-
-void FFlowAssetEditor::CreateWidgets()
-{
-	// Details View
-	{
-		FDetailsViewArgs Args;
-		Args.bHideSelectionTip = true;
-		Args.bShowPropertyMatrixButton = false;
-		Args.DefaultsOnlyVisibility = EEditDefaultsOnlyNodeVisibility::Hide;
-		Args.NotifyHook = this;
-
-		FPropertyEditorModule& PropertyModule = FModuleManager::LoadModuleChecked<FPropertyEditorModule>("PropertyEditor");
-		DetailsView = PropertyModule.CreateDetailView(Args);
-		DetailsView->SetIsPropertyEditingEnabledDelegate(FIsPropertyEditingEnabled::CreateStatic(&FFlowAssetEditor::CanEdit));
-		DetailsView->SetObject(FlowAsset);
-	}
-
-	// Graph
-	CreateGraphWidget();
-	GraphEditor->OnSelectionChangedEvent.BindRaw(this, &FFlowAssetEditor::OnSelectedNodesChanged);
-
-	// Palette
-	Palette = SNew(SFlowPalette, SharedThis(this));
-
-	// Search
-#if ENABLE_SEARCH_IN_ASSET_EDITOR
-	SearchBrowser = SNew(SSearchBrowser, GetFlowAsset());
-#else
-	SearchBrowser = SNew(SFindInFlow, SharedThis(this));
-#endif
-
-	// Logs
-	FMessageLogModule& MessageLogModule = FModuleManager::LoadModuleChecked<FMessageLogModule>("MessageLog");
-	{
-		RuntimeLogListing = FFlowMessageLogListing::GetLogListing(FlowAsset, EFlowLogType::Runtime);
-		RuntimeLog = MessageLogModule.CreateLogListingWidget(RuntimeLogListing.ToSharedRef());
-	}
-	{
-		ValidationLogListing = FFlowMessageLogListing::GetLogListing(FlowAsset, EFlowLogType::Validation);
-		ValidationLog = MessageLogModule.CreateLogListingWidget(ValidationLogListing.ToSharedRef());
-	}
-}
-
-void FFlowAssetEditor::CreateGraphWidget()
-{
-	SAssignNew(GraphEditor, SFlowGraphEditor, SharedThis(this))
-	.DetailsView(DetailsView);
 }
 
 void FFlowAssetEditor::AutoFormatGraph()
@@ -565,9 +539,103 @@ void FFlowAssetEditor::AutoFormatGraph()
 	GraphEditor->NotifyGraphChanged();
 }
 
+void FFlowAssetEditor::SearchInAsset()
+{
+	TabManager->TryInvokeTab(SearchTab);
+	SearchBrowser->FocusForUse();
+}
+
+void FFlowAssetEditor::ContinueFlowExecution()
+{
+	if (UFlowDebugEditorSubsystem* DebugSubsystem = GetFlowDebugEditorSubsystem())
+	{
+		DebugSubsystem->RequestContinue();
+	}
+}
+
+void FFlowAssetEditor::StopFlowExecution()
+{
+	if (UFlowDebugEditorSubsystem* DebugSubsystem = GetFlowDebugEditorSubsystem())
+	{
+		DebugSubsystem->RequestStop();
+	}
+}
+
+bool FFlowAssetEditor::IsFlowExecutionHalted()
+{
+	const UFlowDebugEditorSubsystem* DebugSubsystem = GetFlowDebugEditorSubsystem();
+	return DebugSubsystem && DebugSubsystem->IsHaltedAtBreakpoint();
+}
+
+UFlowDebugEditorSubsystem* FFlowAssetEditor::GetFlowDebugEditorSubsystem()
+{
+	return GEngine ? GEngine->GetEngineSubsystem<UFlowDebugEditorSubsystem>() : nullptr;
+}
+
+void FFlowAssetEditor::CreateWidgets()
+{
+	// Details View
+	{
+		FDetailsViewArgs Args;
+		Args.bHideSelectionTip = true;
+		Args.bShowPropertyMatrixButton = false;
+		Args.DefaultsOnlyVisibility = EEditDefaultsOnlyNodeVisibility::Hide;
+		Args.NotifyHook = this;
+
+		FPropertyEditorModule& PropertyModule = FModuleManager::LoadModuleChecked<FPropertyEditorModule>("PropertyEditor");
+		DetailsView = PropertyModule.CreateDetailView(Args);
+		DetailsView->SetIsPropertyEditingEnabledDelegate(FIsPropertyEditingEnabled::CreateStatic(&FFlowAssetEditor::CanEdit));
+		DetailsView->SetIsPropertyVisibleDelegate(FIsPropertyVisible::CreateStatic(&FFlowAssetEditor::IsPropertyVisible));
+		DetailsView->RegisterInstancedCustomPropertyTypeLayout(UFlowNodeAddOn::StaticClass()->GetFName(), FOnGetPropertyTypeCustomizationInstance::CreateStatic(&FFlowNodeAddOnCustomization::MakeInstance));
+		DetailsView->SetObject(FlowAsset);
+	}
+
+	// Graph
+	CreateGraphWidget();
+	GraphEditor->OnSelectionChangedEvent.BindRaw(this, &FFlowAssetEditor::OnSelectedNodesChanged);
+
+	// Palette
+	Palette = SNew(SFlowPalette, SharedThis(this));
+
+	// Search
+#if ENABLE_SEARCH_IN_ASSET_EDITOR
+	SearchBrowser = SNew(SSearchBrowser, GetFlowAsset());
+#else
+	SearchBrowser = SNew(SFindInFlow, SharedThis(this));
+#endif
+
+	// Logs
+	FMessageLogModule& MessageLogModule = FModuleManager::LoadModuleChecked<FMessageLogModule>("MessageLog");
+	{
+		RuntimeLogListing = FFlowMessageLogListing::GetLogListing(FlowAsset, EFlowLogType::Runtime);
+		RuntimeLog = MessageLogModule.CreateLogListingWidget(RuntimeLogListing.ToSharedRef());
+	}
+	{
+		ValidationLogListing = FFlowMessageLogListing::GetLogListing(FlowAsset, EFlowLogType::Validation);
+		ValidationLog = MessageLogModule.CreateLogListingWidget(ValidationLogListing.ToSharedRef());
+	}
+}
+
+void FFlowAssetEditor::CreateGraphWidget()
+{
+	SAssignNew(GraphEditor, SFlowGraphEditor, SharedThis(this))
+	.DetailsView(DetailsView);
+}
+
 bool FFlowAssetEditor::CanEdit()
 {
 	return GEditor->PlayWorld == nullptr;
+}
+
+bool FFlowAssetEditor::IsPropertyVisible(const FPropertyAndParent& PropertyAndParent)
+{
+	const FName CategoryName = FObjectEditorUtils::GetCategoryFName(&PropertyAndParent.Property);
+	if (CategoryName == TEXT("FlowNode") || CategoryName == TEXT("FlowNodeAddOn"))
+	{
+		return false;
+	}
+
+	return PropertyAndParent.Property.GetFName() != TEXT("AddOns") || GetDefault<UFlowGraphEditorSettings>()->bShowAddOnsInNodeDetails;
 }
 
 void FFlowAssetEditor::SetUISelectionState(const FName SelectionOwner)

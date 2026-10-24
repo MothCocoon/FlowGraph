@@ -1125,14 +1125,21 @@ void UFlowGraphNode::GetPinHoverText(const UEdGraphPin& Pin, FString& HoverTextO
 				HoverTextOut.Append(LINE_TERMINATOR).Append(LINE_TERMINATOR);
 			}
 
-			const TArray<FPinRecord>& PinRecords = InspectedNodeInstance->GetPinRecords(Pin.PinName, Pin.Direction);
+			int32 TotalPinRecords = 0;
+			const TArray<FPinRecord>& PinRecords = InspectedNodeInstance->GetPinRecords(Pin.PinName, Pin.Direction, TotalPinRecords);
+			const int32 StartIndexOffset = TotalPinRecords > PinRecords.Num() ? TotalPinRecords - PinRecords.Num() : 0;
 			if (PinRecords.Num() > 0)
 			{
 				HoverTextOut.Append(FPinRecord::PinActivations);
+				if (StartIndexOffset > 0)
+				{
+					HoverTextOut.Append(LINE_TERMINATOR);
+					HoverTextOut.Appendf(TEXT("... [%d lines hidden] ..."), StartIndexOffset);
+				}
 				for (int32 i = 0; i < PinRecords.Num(); i++)
 				{
 					HoverTextOut.Append(LINE_TERMINATOR);
-					HoverTextOut.Appendf(TEXT("%d) %s"), i + 1, *PinRecords[i].HumanReadableTime);
+					HoverTextOut.Appendf(TEXT("%d) %s"), StartIndexOffset + i + 1, *PinRecords[i].HumanReadableTime);
 
 					switch (PinRecords[i].ActivationType)
 					{
@@ -1177,7 +1184,7 @@ void UFlowGraphNode::GetPinHoverText(const UEdGraphPin& Pin, FString& HoverTextO
 		if (FlowPinType::IsSuccess(DataResult.Result) && DataResult.ResultValue.IsValid())
 		{
 			const FFlowDataPinValue& Value = DataResult.ResultValue.Get<FFlowDataPinValue>();
-			if (!Value.TryConvertValuesToString(ValueString))
+			if (!Value.GetDebugString(ValueString))
 			{
 				ValueString = TEXT("<unformattable>");
 			}
@@ -1707,6 +1714,20 @@ void UFlowGraphNode::InsertSubNodeAt(UFlowGraphNode* SubNode, const int32 DropIn
 	RequestReconstructOnRootFlowNode();
 }
 
+void UFlowGraphNode::MoveSubNodesFrom(UFlowGraphNode& OtherNode)
+{
+	for (UFlowGraphNode* SubNode : OtherNode.SubNodes)
+	{
+		if (IsValid(SubNode))
+		{
+			SubNode->SetParentNodeForSubNode(this);
+			SubNodes.Add(SubNode);
+		}
+	}
+
+	OtherNode.SubNodes.Reset();
+}
+
 void UFlowGraphNode::DestroyNode()
 {
 	bIsDestroyingNode = true;
@@ -1898,7 +1919,9 @@ bool CheckPinsMatch(const TArray<UEdGraphPin*>& GraphPins, const TArray<FFlowPin
 	{
 		if (!GraphPins.ContainsByPredicate([&FlowNodePin](const UEdGraphPin* GraphNodePin)
 		{
-			return GraphNodePin->PinName == FlowNodePin.PinName && GraphNodePin->PinFriendlyName.EqualTo(FlowNodePin.PinFriendlyName);
+			return GraphNodePin->PinName == FlowNodePin.PinName 
+				&& GraphNodePin->PinFriendlyName.EqualTo(FlowNodePin.PinFriendlyName)
+				&& GraphNodePin->PinToolTip == FlowNodePin.PinToolTip;
 		}))
 		{
 			// Could not match the pin from the flow node with any of the EdPins array.

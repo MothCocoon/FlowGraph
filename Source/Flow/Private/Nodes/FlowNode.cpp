@@ -3,7 +3,9 @@
 
 #include "AddOns/FlowNodeAddOn.h"
 #include "FlowAsset.h"
+#include "FlowNodeReplication.h"
 #include "FlowSettings.h"
+#include "Interfaces/FlowExecutionGate.h"
 #include "Interfaces/FlowPreloadableInterface.h"
 #include "Interfaces/FlowNodeWithExternalDataPinSupplierInterface.h"
 #include "Policies/FlowPreloadHelper.h"
@@ -122,6 +124,13 @@ void UFlowNode::PostLoad()
 	{
 		FixupDataPinTypes();
 	}
+}
+
+void UFlowNode::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const
+{
+	Super::GetLifetimeReplicatedProps(OutLifetimeProps);
+
+	// Node isn't a replicated object, Flow Asset instance sends its replicated properties through FlowNodeReplication
 }
 
 bool UFlowNode::IsSupportedInputPinName(const FName& PinName) const
@@ -596,7 +605,7 @@ bool UFlowNode::TryGatherPropertyOwnersAndPopulateResult(
 		return false;
 	}
 
-	const FFlowDataPinValueOwner* ValueOwner;
+	const FFlowDataPinValueOwner* ValueOwner = nullptr;
 	FName PropertyNameToLookup;
 	const TArray<FFlowDataPinValueOwner>& ValueOwners = ValueOwnerCollection.GetValueOwners();
 
@@ -1203,6 +1212,8 @@ void UFlowNode::InitializeInstance()
 	Super::InitializeInstance();
 
 	TryInitializePreloadHelper();
+
+	bHasReplicatedProperties = ShouldReplicateProperties() && FlowNodeReplication::HasReplicatedProperties(*this);
 }
 
 void UFlowNode::DeinitializeInstance()
@@ -1243,6 +1254,15 @@ void UFlowNode::ExecuteInput(const FName& PinName)
 	}
 
 	Super::ExecuteInput(PinName);
+}
+
+void UFlowNode::SetActivationState(const EFlowNodeState NewActivationState)
+{
+	if (ActivationState != NewActivationState)
+	{
+		ActivationState = NewActivationState;
+		MarkReplicatedPropertiesDirty();
+	}
 }
 
 bool UFlowNode::DispatchExecuteInputToPreloadHelper(const FName& PinName)
@@ -1372,17 +1392,20 @@ void UFlowNode::TriggerInput(const FName& PinName, const EFlowPinActivationType 
 				OnActivate();
 			}
 
-			ActivationState = EFlowNodeState::Active;
+			SetActivationState(EFlowNodeState::Active);
 		}
 
 #if !UE_BUILD_SHIPPING
 		// record for debugging
-		TArray<FPinRecord>& Records = InputRecords.FindOrAdd(PinName);
-		Records.Add(FPinRecord(FApp::GetCurrentTime(), ActivationType));
+		FPinRecordBuffer& Records = InputRecords.FindOrAdd(PinName);
+		Records.Add(PinName, FPinRecord(FApp::GetCurrentTime(), ActivationType));
 
-		if (const UFlowAsset* FlowAssetTemplate = GetFlowAsset()->GetTemplateAsset())
+		// Halt here if a breakpoint covers this pin.
+		// In the case of an Abort while breaking we'll early-out of this function.
+		// We may eventually want to surface an Abort out of this function and early-out of callers as well.
+		if (FFlowExecutionGate::BreakIfRequested({this, PinName, EFlowBreakSite::InputTriggered}) == EFlowBreakAction::Abort)
 		{
-			(void)FlowAssetTemplate->OnPinTriggered.ExecuteIfBound(this, PinName);
+			return;
 		}
 #endif
 	}
@@ -1443,12 +1466,16 @@ void UFlowNode::TriggerOutput(const FName PinName, const bool bFinish /*= false*
 	if (OutputPins.Contains(PinName))
 	{
 		// record for debugging, even if nothing is connected to this pin
-		TArray<FPinRecord>& Records = OutputRecords.FindOrAdd(PinName);
-		Records.Add(FPinRecord(FApp::GetCurrentTime(), ActivationType));
+		FPinRecordBuffer& Records = OutputRecords.FindOrAdd(PinName);
+		Records.Add(PinName, FPinRecord(FApp::GetCurrentTime(), ActivationType));
 
-		if (const UFlowAsset* FlowAssetTemplate = GetFlowAsset()->GetTemplateAsset())
+		// Halt here if a breakpoint covers this pin.
+		// In the case of an Abort while breaking we'll early-out of this function.
+		// We may eventually want to surface an Abort out of this function and early-out of callers as well.
+		// Note that Finish() has already run for a bFinish trigger, so the node is no longer active.
+		if (FFlowExecutionGate::BreakIfRequested({this, PinName, EFlowBreakSite::OutputTriggered}) == EFlowBreakAction::Abort)
 		{
-			FlowAssetTemplate->OnPinTriggered.ExecuteIfBound(this, PinName);
+			return;
 		}
 	}
 	else
@@ -1481,11 +1508,11 @@ void UFlowNode::Deactivate()
 
 	if (GetFlowAsset()->FinishPolicy == EFlowFinishPolicy::Abort)
 	{
-		ActivationState = EFlowNodeState::Aborted;
+		SetActivationState(EFlowNodeState::Aborted);
 	}
 	else
 	{
-		ActivationState = EFlowNodeState::Completed;
+		SetActivationState(EFlowNodeState::Completed);
 	}
 
 	Cleanup();
@@ -1493,7 +1520,7 @@ void UFlowNode::Deactivate()
 
 void UFlowNode::ResetRecords()
 {
-	ActivationState = EFlowNodeState::NeverActivated;
+	SetActivationState(EFlowNodeState::NeverActivated);
 
 #if !UE_BUILD_SHIPPING
 	InputRecords.Empty();
@@ -1521,6 +1548,9 @@ void UFlowNode::LoadInstance(const FFlowNodeSaveData& NodeRecord)
 	{
 		FlowAsset->OnActivationStateLoaded(this);
 	}
+
+	// ActivationState was restored by serialization, bypassing SetActivationState
+	MarkReplicatedPropertiesDirty();
 
 	switch (SignalMode)
 	{
@@ -1573,22 +1603,31 @@ bool UFlowNode::ShouldSave_Implementation()
 TMap<uint8, FPinRecord> UFlowNode::GetWireRecords() const
 {
 	TMap<uint8, FPinRecord> Result;
-	for (const TPair<FName, TArray<FPinRecord>>& Record : OutputRecords)
+	for (const TPair<FName, FPinRecordBuffer>& Record : OutputRecords)
 	{
 		Result.Emplace(OutputPins.IndexOfByKey(Record.Key), Record.Value.Last());
 	}
 	return Result;
 }
 
-TArray<FPinRecord> UFlowNode::GetPinRecords(const FName& PinName, const EEdGraphPinDirection PinDirection) const
+TArray<FPinRecord> UFlowNode::GetPinRecords(const FName& PinName, const EEdGraphPinDirection PinDirection, int32& OutTotalPinRecords) const
 {
 	switch (PinDirection)
 	{
 		case EGPD_Input:
-			return InputRecords.FindRef(PinName);
+		{
+			const FPinRecordBuffer& Buffer = InputRecords.FindRef(PinName);
+			OutTotalPinRecords = Buffer.TotalPinRecords;
+			return Buffer.GetArray();
+		}
 		case EGPD_Output:
-			return OutputRecords.FindRef(PinName);
+		{
+			const FPinRecordBuffer& Buffer = OutputRecords.FindRef(PinName);
+			OutTotalPinRecords = Buffer.TotalPinRecords;
+			return Buffer.GetArray();
+		}
 		default:
+			OutTotalPinRecords = 0;
 			return TArray<FPinRecord>();
 	}
 }

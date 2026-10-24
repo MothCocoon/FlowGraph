@@ -1,6 +1,7 @@
 // Copyright https://github.com/MothCocoon/FlowGraph/graphs/contributors
 #pragma once
 
+#include "Delegates/DelegateCombinations.h"
 #include "Engine/DeveloperSettings.h"
 #include "Find/FindInFlowEnums.h"
 
@@ -44,6 +45,10 @@ public:
 	/* Display descriptions from attached addons in node descriptions. */
 	UPROPERTY(EditAnywhere, config, Category = "Nodes")
 	bool bShowAddonDescriptions;
+
+	/* Shows the editable AddOn hierarchy in the owning Flow Node's (or AddOn's) Details panel. */
+	UPROPERTY(EditAnywhere, config, Category = "Nodes", meta = (DisplayName = "Show AddOns in Node Details"))
+	bool bShowAddOnsInNodeDetails;
 
 	/* Pin names will be displayed in a format that is easier to read, even if PinFriendlyName wasn't set. */
 	UPROPERTY(EditAnywhere, config, Category = "Nodes")
@@ -94,4 +99,10 @@ public:
 public:
 	virtual FName GetCategoryName() const override { return FName("Flow Graph"); }
 	virtual FText GetSectionText() const override { return INVTEXT("User Settings"); }
+
+	DECLARE_MULTICAST_DELEGATE(FOnSettingsChanged);
+	static FOnSettingsChanged& OnSettingsChanged();
+
+private:
+	static FOnSettingsChanged SettingsChanged;
 };

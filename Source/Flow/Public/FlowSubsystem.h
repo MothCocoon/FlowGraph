@@ -97,19 +97,14 @@ protected:
 	void FinishSubFlow(UFlowNode_SubGraph* SubGraphNode, const EFlowFinishPolicy FinishPolicy, const bool bRemoveInstance);
 
 public:
-	UFlowAsset* CreateFlowInstance(const TWeakObjectPtr<UObject> Owner, UFlowAsset* LoadedFlowAsset, FString NewInstanceName = FString());
+	/* bStartReplication registers the instance as a replicated subobject of Owner right after creation.
+	 * SubGraph instance starts replication on its activation instead, so a preloaded instance isn't sent to clients. */
+	UFlowAsset* CreateFlowInstance(const TWeakObjectPtr<UObject> Owner, UFlowAsset* LoadedFlowAsset, FString NewInstanceName = FString(), const bool bStartReplication = true);
 
 protected:
 	virtual void AddInstancedTemplate(UFlowAsset* Template);
 	virtual void RemoveInstancedTemplate(UFlowAsset* Template);
 
-public:
-	/* Try to flush (and clear) all Deferred Trigger scopes.
-	 * (can fail to flush all if a FFlowExecutionGate causes a new halt) */
-	bool TryFlushAllDeferredTriggerScopes() const;
-
-	/* Clear (do not trigger) any remaining deferred transitions. (for shutdown cases) */
-	void ClearAllDeferredTriggerScopes();
 
 public:
 	/* Returns all assets instanced by object from another system like World Settings */

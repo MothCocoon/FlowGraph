@@ -48,6 +48,7 @@ public:
 #if WITH_EDITOR
 	virtual void PostLoad() override;
 	virtual void PreSaveRoot(FObjectPreSaveRootContext ObjectSaveContext) override;
+	virtual void BeginDestroy() override;
 #endif
 	virtual void Serialize(FArchive& Ar) override;
 	// --
@@ -75,7 +76,8 @@ public:
 	/* Updates properties from ParentParams, handling inheritance and name enforcement. */
 	EFlowReconcilePropertiesResult ReconcilePropertiesWithParentParams();
 
-	void ConfigureFlowAssetParams(TSoftObjectPtr<UFlowAsset> OwnerAsset, TSoftObjectPtr<UFlowAssetParams> InParentParams, const TArray<FFlowNamedDataPinProperty>& InProperties);
+	/* Returns true if any of the configured values differed from the current state. */
+	bool ConfigureFlowAssetParams(TSoftObjectPtr<UFlowAsset> OwnerAsset, TSoftObjectPtr<UFlowAssetParams> InParentParams, const TArray<FFlowNamedDataPinProperty>& InProperties);
 
 	// IFlowDataPinValueOwnerInterface
 	virtual bool CanModifyFlowDataPinType() const override;
@@ -99,11 +101,27 @@ private:
 	FSimpleDelegate FlowDataPinValuesRebuildDelegate;
 	// --
 
+	/* Broadcasts when Properties have changed after reconciling with the Start node or ParentParams. */
+	FSimpleMulticastDelegate OnAssetParamsReconciled;
+
+	/* Handle to remove the delegate instance on object destruction. */
+	FDelegateHandle OnParentAssetParamsReconciledHandle;
+
+	/* Void wrapper added as a delegate instance. */
+	void HandleParentParamsReconciled();
+
 protected:
 
 	EFlowReconcilePropertiesResult CheckForParentCycle() const;
 
 	void ModifyAndRebuildPropertiesMap();
 	void RebuildPropertiesMap();
+
+	/* Sets Properties and the PropertyMap built from them.
+	* Modifies the asset only if either differs from the current state.
+	* Returns true if anything changed. */
+	bool ApplyProperties(const TArray<FFlowNamedDataPinProperty>& NewProperties);
+
+	TMap<FName, TInstancedStruct<FFlowDataPinValue>> BuildPropertyMap(const TArray<FFlowNamedDataPinProperty>& InProperties) const;
 #endif
 };

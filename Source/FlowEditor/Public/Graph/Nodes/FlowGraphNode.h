@@ -310,6 +310,10 @@ public:
 	virtual int32 FindSubNodeDropIndex(UFlowGraphNode* SubNode) const;
 	virtual void InsertSubNodeAt(UFlowGraphNode* SubNode, const int32 DropIndex);
 
+	/* Moves all SubNodes of the given node to this node
+	 * Used when replacing a graph node with one of a different class. */
+	void MoveSubNodesFrom(UFlowGraphNode& OtherNode);
+
 	virtual bool IsSubNode() const;
 
 	virtual void InitializeInstance();

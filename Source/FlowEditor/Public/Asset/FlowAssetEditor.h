@@ -2,6 +2,7 @@
 #pragma once
 
 #include "EditorUndoClient.h"
+#include "Delegates/Delegate.h"
 #include "Misc/NotifyHook.h"
 #include "Toolkits/AssetEditorToolkit.h"
 #include "Toolkits/IToolkitHost.h"
@@ -21,6 +22,7 @@ class SGraphEditor;
 class UEdGraphNode;
 class UEdGraphPin;
 struct FSlateBrush;
+struct FPropertyAndParent;
 struct FPropertyChangedEvent;
 struct Rect;
 
@@ -65,6 +67,8 @@ protected:
 private:
 	/* The current UI selection state of this editor. */
 	FName CurrentUISelection;
+
+	FDelegateHandle FlowGraphEditorSettingsChangedHandle;
 
 public:
 	FFlowAssetEditor();
@@ -130,23 +134,30 @@ protected:
 	virtual void CreateToolbar();
 	virtual void BindToolbarCommands();
 	
-	virtual void RefreshAsset();
 	virtual void RefreshDetails();
+	void ShowAssetDefaults() const;
+
+	virtual void RefreshAsset();
+	virtual void ValidateAsset(FFlowMessageLog& MessageLog);
 
 private:
 	void ValidateAsset_Internal();
 
 protected:
-	virtual void ValidateAsset(FFlowMessageLog& MessageLog);
+	virtual void AutoFormatGraph();
+	
 	virtual void SearchInAsset();
 
-	void EditAssetDefaults_Clicked() const;
+	static void ContinueFlowExecution();
+	static void StopFlowExecution();
+	static bool IsFlowExecutionHalted();
+	static class UFlowDebugEditorSubsystem* GetFlowDebugEditorSubsystem();
 
 	virtual void CreateWidgets();
 	virtual void CreateGraphWidget();
-	virtual void AutoFormatGraph();
 
 	static bool CanEdit();
+	static bool IsPropertyVisible(const FPropertyAndParent& PropertyAndParent);
 
 public:
 	void SetUISelectionState(const FName SelectionOwner);

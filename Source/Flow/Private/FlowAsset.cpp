@@ -8,7 +8,6 @@
 #include "AddOns/FlowNodeAddOn.h"
 #include "Asset/FlowAssetParams.h"
 #include "Asset/FlowAssetParamsUtils.h"
-#include "Interfaces/FlowExecutionGate.h"
 #include "Interfaces/FlowGraphOutputDataReceiverInterface.h"
 #include "Types/FlowNamedDataPinProperty.h"
 #include "Nodes/FlowNodeBase.h"
@@ -22,7 +21,11 @@
 #include "Types/FlowDataPinValue.h"
 #include "Types/FlowStructUtils.h"
 
+#include "Components/ActorComponent.h"
 #include "Engine/World.h"
+#include "GameFramework/Actor.h"
+#include "Net/UnrealNetwork.h"
+#include "Net/Core/PushModel/PushModel.h"
 #include "Serialization/MemoryReader.h"
 #include "Serialization/MemoryWriter.h"
 #include "Algo/AnyOf.h"
@@ -715,8 +718,10 @@ TArray<UFlowNode*> UFlowAsset::GatherNodesConnectedToAllInputs() const
 	TArray<UFlowNode*> ConnectedNodes;
 
 	// Nodes connected to the Start node
-	UFlowNode* DefaultEntryNode = GetDefaultEntryNode();
-	GetNodesInExecutionOrder_Recursive(DefaultEntryNode, IteratedNodes, ConnectedNodes);
+	if (UFlowNode* DefaultEntryNode = GetDefaultEntryNode())
+	{
+		GetNodesInExecutionOrder_Recursive(DefaultEntryNode, IteratedNodes, ConnectedNodes);
+	}
 
 	// Nodes connected to Custom Input node(s)
 	for (const TPair<FGuid, UFlowNode*>& Node : ObjectPtrDecay(Nodes))
@@ -1062,6 +1067,29 @@ void UFlowAsset::ClearInstances()
 }
 
 #if WITH_EDITOR
+void UFlowAsset::AddReplicaInstance(UFlowAsset* Instance)
+{
+	// Replicas destroyed without PreDestroyFromReplication, i.e. on ending PIE, leave empty entries
+	ReplicaInstances.RemoveAll([](const TWeakObjectPtr<UFlowAsset>& ReplicaInstance)
+	{
+		return !ReplicaInstance.IsValid();
+	});
+
+	ReplicaInstances.Add(Instance);
+	BroadcastDebuggerRefresh();
+}
+
+void UFlowAsset::RemoveReplicaInstance(UFlowAsset* Instance)
+{
+	if (InspectedInstance.IsValid() && InspectedInstance.Get() == Instance)
+	{
+		SetInspectedInstance(nullptr);
+	}
+
+	ReplicaInstances.Remove(Instance);
+	BroadcastDebuggerRefresh();
+}
+
 void UFlowAsset::SetInspectedInstance(TWeakObjectPtr<const UFlowAsset> NewInspectedInstance)
 {
 	if (NewInspectedInstance.IsValid())
@@ -1075,6 +1103,9 @@ void UFlowAsset::SetInspectedInstance(TWeakObjectPtr<const UFlowAsset> NewInspec
 		bool bIsNewInstancePresent = Algo::AnyOf(ActiveInstances, [NewInspectedInstance](const UFlowAsset* ActiveInstance)
 		{
 			return ActiveInstance && ActiveInstance == NewInspectedInstance;
+		}) || Algo::AnyOf(ReplicaInstances, [NewInspectedInstance](const TWeakObjectPtr<UFlowAsset>& ReplicaInstance)
+		{
+			return ReplicaInstance.Get() == NewInspectedInstance.Get();
 		});
 
 		if (!ensureMsgf(bIsNewInstancePresent, TEXT("Trying to set %s as InspectedInstance, but it is not one of the ActiveInstances"), *NewInspectedInstance->GetName()))
@@ -1337,6 +1368,8 @@ void UFlowAsset::DeinitializeInstance()
 
 	if (IsInstanceInitialized())
 	{
+		StopReplication();
+
 		for (const TPair<FGuid, UFlowNode*>& Node : ObjectPtrDecay(Nodes))
 		{
 			if (IsValid(Node.Value))
@@ -1378,6 +1411,249 @@ UFlowAsset* UFlowAsset::GetParentInstance() const
 TWeakObjectPtr<UFlowAsset> UFlowAsset::GetFlowInstance(UFlowNode_SubGraph* SubGraphNode) const
 {
 	return ActiveSubGraphs.FindRef(SubGraphNode);
+}
+
+void UFlowAsset::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const
+{
+	Super::GetLifetimeReplicatedProps(OutLifetimeProps);
+
+#if WITH_PUSH_MODEL
+	FDoRepLifetimeParams InitialOnlyParams;
+	InitialOnlyParams.bIsPushBased = true;
+	InitialOnlyParams.Condition = COND_InitialOnly;
+
+	DOREPLIFETIME_WITH_PARAMS_FAST(ThisClass, TemplateAsset, InitialOnlyParams);
+	DOREPLIFETIME_WITH_PARAMS_FAST(ThisClass, Owner, InitialOnlyParams);
+	DOREPLIFETIME_WITH_PARAMS_FAST(ThisClass, ReplicatedParentInstance, InitialOnlyParams);
+	DOREPLIFETIME_WITH_PARAMS_FAST(ThisClass, OwningSubGraphNodeGuid, InitialOnlyParams);
+
+	FDoRepLifetimeParams Params;
+	Params.bIsPushBased = true;
+
+	DOREPLIFETIME_WITH_PARAMS_FAST(ThisClass, ReplicatedNodeStates, Params);
+#else
+	DOREPLIFETIME_CONDITION(ThisClass, TemplateAsset, COND_InitialOnly);
+	DOREPLIFETIME_CONDITION(ThisClass, Owner, COND_InitialOnly);
+	DOREPLIFETIME_CONDITION(ThisClass, ReplicatedParentInstance, COND_InitialOnly);
+	DOREPLIFETIME_CONDITION(ThisClass, OwningSubGraphNodeGuid, COND_InitialOnly);
+
+	DOREPLIFETIME(ThisClass, ReplicatedNodeStates);
+#endif
+}
+
+void UFlowAsset::PostInitProperties()
+{
+	Super::PostInitProperties();
+
+	// Instances copy this pointer from their template
+	ReplicatedNodeStates.OwningAsset = this;
+}
+
+void UFlowAsset::PreDestroyFromReplication()
+{
+	// The last state sent by the server in the same frame as removing this instance might not arrive
+	for (const TPair<FGuid, UFlowNode*>& Node : ObjectPtrDecay(Nodes))
+	{
+		if (IsValid(Node.Value) && Node.Value->GetActivationState() == EFlowNodeState::Active)
+		{
+			Node.Value->ActivationState = EFlowNodeState::Completed;
+			Node.Value->OnRep_ActivationState(EFlowNodeState::Active);
+		}
+	}
+
+	if (UFlowAsset* ParentInstance = ReplicatedParentInstance.Get())
+	{
+		// Replica of the next run of the same SubGraph node might be linked already
+		if (ParentInstance->ActiveSubGraphs.FindRef(NodeOwningThisAssetInstance).Get() == this)
+		{
+			ParentInstance->ActiveSubGraphs.Remove(NodeOwningThisAssetInstance);
+		}
+	}
+
+#if WITH_EDITOR
+	if (bReplicaInitialized && IsValid(TemplateAsset))
+	{
+		TemplateAsset->RemoveReplicaInstance(this);
+	}
+#endif
+
+	Super::PreDestroyFromReplication();
+}
+
+void UFlowAsset::StartReplication()
+{
+	if (ShouldReplicate() && !bReplicatedToClients)
+	{
+		if (AActor* OwnerActor = Cast<AActor>(Owner.Get()))
+		{
+			if (OwnerActor->GetIsReplicated() && (OwnerActor->IsNetMode(NM_DedicatedServer) || OwnerActor->IsNetMode(NM_ListenServer)))
+			{
+				OwnerActor->AddReplicatedSubObject(this);
+				bReplicatedToClients = true;
+			}
+		}
+		else if (UActorComponent* OwnerComponent = Cast<UActorComponent>(Owner.Get()))
+		{
+			if (OwnerComponent->GetIsReplicated() && (OwnerComponent->IsNetMode(NM_DedicatedServer) || OwnerComponent->IsNetMode(NM_ListenServer)))
+			{
+				OwnerComponent->AddReplicatedSubObject(this);
+				bReplicatedToClients = true;
+			}
+		}
+
+		if (bReplicatedToClients)
+		{
+			if (const UFlowNode_SubGraph* OwningSubGraphNode = NodeOwningThisAssetInstance.Get())
+			{
+				ReplicatedParentInstance = OwningSubGraphNode->GetFlowAsset();
+				OwningSubGraphNodeGuid = OwningSubGraphNode->GetGuid();
+			}
+
+#if WITH_PUSH_MODEL
+			MARK_PROPERTY_DIRTY_FROM_NAME(UFlowAsset, TemplateAsset, this);
+			MARK_PROPERTY_DIRTY_FROM_NAME(UFlowAsset, Owner, this);
+			MARK_PROPERTY_DIRTY_FROM_NAME(UFlowAsset, ReplicatedParentInstance, this);
+			MARK_PROPERTY_DIRTY_FROM_NAME(UFlowAsset, OwningSubGraphNodeGuid, this);
+#endif
+		}
+	}
+}
+
+void UFlowAsset::StopReplication()
+{
+	if (bReplicatedToClients)
+	{
+		if (AActor* OwnerActor = Cast<AActor>(Owner.Get()))
+		{
+			OwnerActor->DestroyReplicatedSubObjectOnRemotePeers(this);
+		}
+		else if (UActorComponent* OwnerComponent = Cast<UActorComponent>(Owner.Get()))
+		{
+			OwnerComponent->DestroyReplicatedSubObjectOnRemotePeers(this);
+		}
+
+		bReplicatedToClients = false;
+	}
+}
+
+void UFlowAsset::OnRep_TemplateAsset()
+{
+	if (!bReplicaInitialized && IsValid(TemplateAsset))
+	{
+		bReplicaInitialized = true;
+
+#if WITH_EDITOR
+		TemplateAsset->AddReplicaInstance(this);
+#endif
+
+		LinkReplicaToParent();
+
+		for (const TWeakObjectPtr<UFlowAsset>& ChildInstance : ReplicaChildrenAwaitingTemplate)
+		{
+			if (UFlowAsset* Child = ChildInstance.Get())
+			{
+				Child->LinkReplicaToParent();
+			}
+		}
+		ReplicaChildrenAwaitingTemplate.Empty();
+
+		for (const FFlowNodeReplicatedState& Item : ReplicatedNodeStates.Items)
+		{
+			ApplyReplicatedNodeState(Item);
+		}
+	}
+}
+
+
+void UFlowAsset::OnRep_ReplicatedParentInstance()
+{
+	LinkReplicaToParent();
+}
+
+void UFlowAsset::LinkReplicaToParent()
+{
+	if (!NodeOwningThisAssetInstance.IsValid())
+	{
+		if (UFlowAsset* ParentInstance = ReplicatedParentInstance.Get())
+		{
+			// The SubGraph node of the parent can be created only from its TemplateAsset
+			if (ParentInstance->bReplicaInitialized)
+			{
+				if (UFlowNode_SubGraph* SubGraphNode = Cast<UFlowNode_SubGraph>(ParentInstance->GetOrCreateReplicaNode(OwningSubGraphNodeGuid)))
+				{
+					NodeOwningThisAssetInstance = SubGraphNode;
+					ParentInstance->ActiveSubGraphs.Add(SubGraphNode, this);
+				}
+			}
+			else
+			{
+				ParentInstance->ReplicaChildrenAwaitingTemplate.AddUnique(this);
+			}
+		}
+	}
+}
+
+UFlowNode* UFlowAsset::GetOrCreateReplicaNode(const FGuid& NodeGuid)
+{
+	UFlowNode* Node = Nodes.FindRef(NodeGuid);
+
+	if (Node == nullptr && IsValid(TemplateAsset))
+	{
+		// Node can be null if its class has been removed.
+		UFlowNode* TemplateNode = TemplateAsset->Nodes.FindRef(NodeGuid);
+		if (IsValid(TemplateNode))
+		{
+			Node = NewObject<UFlowNode>(this, TemplateNode->GetClass(), NAME_None, RF_Transient, TemplateNode, false, nullptr);
+			Nodes.Add(NodeGuid, Node);
+
+			Node->InitializeReplica();
+		}
+	}
+
+	return Node;
+}
+
+void UFlowAsset::WriteReplicatedNodeState(UFlowNode& Node)
+{
+	if (bReplicatedToClients && Node.bHasReplicatedProperties)
+	{
+		const FGuid& NodeGuid = Node.GetGuid();
+		FFlowNodeReplicatedState* Item = ReplicatedNodeStates.Items.FindByPredicate([&NodeGuid](const FFlowNodeReplicatedState& Existing)
+		{
+			return Existing.NodeGuid == NodeGuid;
+		});
+
+		if (Item == nullptr)
+		{
+			Item = &ReplicatedNodeStates.Items.AddDefaulted_GetRef();
+			Item->NodeGuid = NodeGuid;
+		}
+
+		FlowNodeReplication::WriteReplicatedProperties(Node, Item->CustomData);
+
+		// Legacy replication and Iris both limit the number of replicated array elements to uint16
+		if (Item->CustomData.Num() > MAX_uint16)
+		{
+			UE_LOG(LogFlow, Error, TEXT("Replicated properties of node %s in %s take %d bytes, above the limit of %d bytes. Clients won't receive them."), *Node.GetName(), *GetName(), Item->CustomData.Num(), MAX_uint16);
+		}
+
+		ReplicatedNodeStates.MarkItemDirty(*Item);
+#if WITH_PUSH_MODEL
+		MARK_PROPERTY_DIRTY_FROM_NAME(UFlowAsset, ReplicatedNodeStates, this);
+#endif
+	}
+}
+
+void UFlowAsset::ApplyReplicatedNodeState(const FFlowNodeReplicatedState& Item)
+{
+	// States received before TemplateAsset are applied by OnRep_TemplateAsset
+	if (bReplicaInitialized)
+	{
+		if (UFlowNode* Node = GetOrCreateReplicaNode(Item.NodeGuid))
+		{
+			FlowNodeReplication::ReadReplicatedProperties(*Node, Item.CustomData);
+		}
+	}
 }
 
 void UFlowAsset::InitializePreloadPolicy()
@@ -1460,12 +1736,7 @@ void UFlowAsset::TriggerCustomOutput(const FName& EventName)
 
 void UFlowAsset::TriggerInput(const FGuid& NodeGuid, const FName& PinName, const FConnectedPin& FromPin)
 {
-	if (FFlowExecutionGate::IsHalted())
-	{
-		// Halt always takes precedence for debugger correctness
-		EnqueueDeferredTrigger(NodeGuid, PinName, FromPin);
-	}
-	else if (ShouldDeferTriggers())
+	if (ShouldDeferTriggers())
 	{
 		// Defer only if we have an open the top scope
 		if (!DeferredTransitionScopes.IsEmpty() && DeferredTransitionScopes.Top()->IsOpen())
@@ -1506,12 +1777,8 @@ bool UFlowAsset::ShouldDeferTriggers() const
 
 void UFlowAsset::EnqueueDeferredTrigger(const FGuid& NodeGuid, const FName& PinName, const FConnectedPin& FromPin)
 {
-	if (DeferredTransitionScopes.IsEmpty() || !DeferredTransitionScopes.Top()->IsOpen())
-	{
-		// This should only occur when halted at an execution gate
-		check(FFlowExecutionGate::IsHalted());
-		PushDeferredTransitionScope();
-	}
+	// TriggerInput() is the only caller, and only enqueues while it holds an open top scope
+	check(!DeferredTransitionScopes.IsEmpty() && DeferredTransitionScopes.Top()->IsOpen());
 
 	// Always enqueue to the current innermost (top) scope
 	DeferredTransitionScopes.Top()->EnqueueDeferredTrigger(FFlowDeferredTriggerInput{NodeGuid, PinName, FromPin});
@@ -1537,18 +1804,14 @@ void UFlowAsset::PopDeferredTransitionScope(const TSharedPtr<FFlowDeferredTransi
 
 bool UFlowAsset::TryFlushAndRemoveDeferredTransitionScope(const TSharedPtr<FFlowDeferredTransitionScope>& ScopeToFlush)
 {
-	if (ScopeToFlush->TryFlushDeferredTriggers(*this))
+	if (!ScopeToFlush->TryFlushDeferredTriggers(*this))
 	{
-		// Remove the exact instance we were holding (handles nested push/pop cases)
-		DeferredTransitionScopes.RemoveSingle(ScopeToFlush);
-		return true;
-	}
-	else
-	{
-		// Flush was interrupted — should only happen due to execution gate halt
-		check(FFlowExecutionGate::IsHalted());
 		return false;
 	}
+
+	// Remove the exact instance we were holding (handles nested push/pop cases)
+	DeferredTransitionScopes.RemoveSingle(ScopeToFlush);
+	return true;
 }
 
 bool UFlowAsset::TryFlushAllDeferredTriggerScopes()
@@ -1560,10 +1823,10 @@ bool UFlowAsset::TryFlushAllDeferredTriggerScopes()
 			break;
 		}
 
-		// Keep flushing until stack is empty, or we hit an ExecutionGate halt
+		// Keep flushing until the stack is empty
 	}
 
-	check(DeferredTransitionScopes.IsEmpty() || FFlowExecutionGate::IsHalted());
+	check(DeferredTransitionScopes.IsEmpty());
 
 	return DeferredTransitionScopes.IsEmpty();
 }
@@ -1577,7 +1840,6 @@ void UFlowAsset::CancelAndWarnForUnflushedDeferredTriggers()
 {
 	// Aggressively drop any pending deferred triggers — graph is done
 	// In normal execution these should have been flushed via PopDeferredTransitionScope() in TriggerInputDirect
-	// In the debugger they should have been flushed by ResumePIE
 	// Remaining scopes here usually mean:
 	//   - early/abnormal termination (e.g. FinishFlowInstance called from unexpected place)
 	//   - exception/early return before Pop
@@ -1647,8 +1909,7 @@ FFlowAssetSaveData UFlowAsset::SaveInstance(TArray<FFlowAssetSaveData>& SavedFlo
 	OnSave();
 
 	// iterate nodes
-	TArray<UFlowNode*> NodesInExecutionOrder;
-	GetNodesInExecutionOrder<UFlowNode>(GetDefaultEntryNode(), NodesInExecutionOrder);
+	TArray<UFlowNode*> NodesInExecutionOrder = GatherNodesConnectedToAllInputs();
 	for (UFlowNode* Node : NodesInExecutionOrder)
 	{
 		if (Node && Node->ShouldSave())

@@ -15,38 +15,6 @@
 #define LOCTEXT_NAMESPACE "FlowPin"
 
 //////////////////////////////////////////////////////////////////////////
-// Pin Record
-
-#if !UE_BUILD_SHIPPING
-FString FPinRecord::PinActivations = TEXT("Pin activations");
-FString FPinRecord::ForcedActivation = TEXT(" (forced activation)");
-FString FPinRecord::PassThroughActivation = TEXT(" (pass-through activation)");
-
-FPinRecord::FPinRecord()
-	: Time(0.0f)
-	, HumanReadableTime(FString())
-	, ActivationType(EFlowPinActivationType::Default)
-{
-}
-
-FPinRecord::FPinRecord(const double InTime, const EFlowPinActivationType InActivationType)
-	: Time(InTime)
-	, ActivationType(InActivationType)
-{
-	const FDateTime SystemTime(FDateTime::Now());
-	HumanReadableTime = DoubleDigit(SystemTime.GetHour()) + TEXT(".")
-		+ DoubleDigit(SystemTime.GetMinute()) + TEXT(".")
-		+ DoubleDigit(SystemTime.GetSecond()) + TEXT(":")
-		+ DoubleDigit(SystemTime.GetMillisecond()).Left(3);
-}
-
-FORCEINLINE FString FPinRecord::DoubleDigit(const int32 Number)
-{
-	return Number > 9 ? FString::FromInt(Number) : TEXT("0") + FString::FromInt(Number);
-}
-#endif
-
-//////////////////////////////////////////////////////////////////////////
 // Flow Pin
 
 bool FFlowPin::IsExecPin() const
@@ -258,5 +226,121 @@ bool FFlowPin::ValidateEnum(const UEnum& EnumType)
 	return bAllValid;
 }
 #endif //WITH_EDITOR
+
+//////////////////////////////////////////////////////////////////////////
+// Pin Record
+
+#if !UE_BUILD_SHIPPING
+FString FPinRecord::PinActivations = TEXT("Pin activations");
+FString FPinRecord::ForcedActivation = TEXT(" (forced activation)");
+FString FPinRecord::PassThroughActivation = TEXT(" (pass-through activation)");
+
+FPinRecord::FPinRecord()
+	: Time(0.0f)
+	, HumanReadableTime(FString())
+	, ActivationType(EFlowPinActivationType::Default)
+{
+}
+
+FPinRecord::FPinRecord(const double InTime, const EFlowPinActivationType InActivationType)
+	: Time(InTime)
+	, ActivationType(InActivationType)
+{
+	const FDateTime SystemTime(FDateTime::Now());
+	HumanReadableTime = DoubleDigit(SystemTime.GetHour()) + TEXT(".")
+		+ DoubleDigit(SystemTime.GetMinute()) + TEXT(".")
+		+ DoubleDigit(SystemTime.GetSecond()) + TEXT(":")
+		+ DoubleDigit(SystemTime.GetMillisecond()).Left(3);
+}
+
+FORCEINLINE FString FPinRecord::DoubleDigit(const int32 Number)
+{
+	return Number > 9 ? FString::FromInt(Number) : TEXT("0") + FString::FromInt(Number);
+}
+
+FPinRecordBuffer::FPinRecordBuffer()
+{
+}
+
+void FPinRecordBuffer::Add(const FName& PinName, const FPinRecord& NewRecord)
+{
+	RecentPinRecords[NextPinRecordIndex] = NewRecord;
+	const FPinRecord& CurrentRecord = RecentPinRecords[NextPinRecordIndex];
+	NextPinRecordIndex = RecentPinRecords.GetNextIndex(NextPinRecordIndex);
+	TotalPinRecords++;
+	Log(PinName, CurrentRecord);
+}
+
+void FPinRecordBuffer::Add(const FName& PinName, FPinRecord&& NewRecord)
+{
+	RecentPinRecords[NextPinRecordIndex] = MoveTemp(NewRecord);
+	const FPinRecord& CurrentRecord = RecentPinRecords[NextPinRecordIndex];
+	NextPinRecordIndex = RecentPinRecords.GetNextIndex(NextPinRecordIndex);
+	TotalPinRecords++;
+	Log(PinName, CurrentRecord);
+}
+
+TArray<FPinRecord> FPinRecordBuffer::GetArray() const
+{
+    TArray<FPinRecord> Results;
+	uint32 Count = FMath::Min(TotalPinRecords, RecentPinRecordsCapacity);
+	if (Count <= 0)
+	{
+		return Results;
+	}
+
+	Results.Reserve(Count);
+
+	// If buffer is full, the oldest is at NextPinRecordIndex
+	// If buffer is not full, the oldest is at index 0
+	const uint32 StartIndex = (TotalPinRecords >= RecentPinRecordsCapacity) ? NextPinRecordIndex : 0;
+	for (uint32 ProcessedRecordsCount = 0, CurrentIndex = StartIndex;
+		ProcessedRecordsCount < Count;
+		ProcessedRecordsCount++, CurrentIndex = RecentPinRecords.GetNextIndex(CurrentIndex))
+	{
+		Results.Add(RecentPinRecords[CurrentIndex]);
+	}
+
+	return Results;
+}
+
+FPinRecord& FPinRecordBuffer::Last()
+{
+	const uint32 Index = RecentPinRecords.GetPreviousIndex(NextPinRecordIndex);
+	RangeCheck(Index);
+	return RecentPinRecords[Index];
+}
+
+const FPinRecord& FPinRecordBuffer::Last() const
+{
+	return const_cast<FPinRecordBuffer*>(this)->Last();
+}
+
+void FPinRecordBuffer::RangeCheck(const uint32 Index) const
+{
+	checkf(Index < RecentPinRecords.Capacity(),TEXT("Buffer index out of bounds: %lld into an buffer of size %lld"),static_cast<long long>(Index), static_cast<long long>(RecentPinRecords.Capacity()));
+}
+
+bool FPinRecordBuffer::IsValidIndex(const uint32 Index) const
+{
+	return Index < RecentPinRecords.Capacity();
+}
+
+uint32 FPinRecordBuffer::Capacity() const
+{
+	return RecentPinRecords.Capacity();
+}
+
+void FPinRecordBuffer::Log(const FName& PinName, const FPinRecord& Record)
+{
+	UE_LOG(LogFlow, VeryVerbose, TEXT("%s: %s: %s%s")
+		, *PinName.ToString()
+		, *FPinRecord::PinActivations
+		, *Record.HumanReadableTime
+		, Record.ActivationType == EFlowPinActivationType::Forced ? *FPinRecord::ForcedActivation
+		: Record.ActivationType == EFlowPinActivationType::PassThrough ? *FPinRecord::PassThroughActivation
+		: TEXT(""));
+}
+#endif
 
 #undef LOCTEXT_NAMESPACE

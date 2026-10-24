@@ -3,6 +3,7 @@
 #include "Graph/FlowGraphEditor.h"
 
 #include "Asset/FlowAssetEditor.h"
+#include "Asset/FlowAssetEditorContext.h"
 #include "FlowEditorCommands.h"
 #include "Graph/Extraction/FlowSubGraphExtractionTool.h"
 #include "Graph/FlowGraphSchema_Actions.h"
@@ -344,14 +345,22 @@ void SFlowGraphEditor::BindGraphCommands()
 
 void SFlowGraphEditor::CreateDebugMenu()
 {
-	const FNewToolMenuDelegate AddDebugSection = FNewToolMenuDelegate::CreateLambda([this](UToolMenu* InMenu)
+	// The main menu is shared by every open Flow Asset Editor, so commands are resolved from the editor the menu is opened in
+	const FNewToolMenuDelegate AddDebugSection = FNewToolMenuDelegate::CreateLambda([](UToolMenu* InMenu)
 	{
-		FToolMenuSection& Section = InMenu->AddSection("Breakpoints", LOCTEXT("Breakpoints", "Breakpoints"));
-		const FFlowGraphCommands& FlowGraphCommands = FFlowGraphCommands::Get();
+		const UFlowAssetEditorContext* Context = InMenu->FindContext<UFlowAssetEditorContext>();
+		const TSharedPtr<FFlowAssetEditor> AssetEditor = Context ? Context->FlowAssetEditor.Pin() : nullptr;
+		const TSharedPtr<SFlowGraphEditor> GraphEditor = AssetEditor.IsValid() ? AssetEditor->GetFlowGraph() : nullptr;
 
-		Section.AddMenuEntryWithCommandList(FlowGraphCommands.EnableAllBreakpoints, CommandList);
-		Section.AddMenuEntryWithCommandList(FlowGraphCommands.DisableAllBreakpoints, CommandList);
-		Section.AddMenuEntryWithCommandList(FlowGraphCommands.RemoveAllBreakpoints, CommandList);
+		if (GraphEditor.IsValid())
+		{
+			FToolMenuSection& Section = InMenu->AddSection("Breakpoints", LOCTEXT("Breakpoints", "Breakpoints"));
+			const FFlowGraphCommands& FlowGraphCommands = FFlowGraphCommands::Get();
+
+			Section.AddMenuEntryWithCommandList(FlowGraphCommands.EnableAllBreakpoints, GraphEditor->CommandList);
+			Section.AddMenuEntryWithCommandList(FlowGraphCommands.DisableAllBreakpoints, GraphEditor->CommandList);
+			Section.AddMenuEntryWithCommandList(FlowGraphCommands.RemoveAllBreakpoints, GraphEditor->CommandList);
+		}
 	});
 
 	FToolMenuSection& MainSection = UToolMenus::Get()->ExtendMenu("AssetEditor.FlowEditor.MainMenu")->FindOrAddSection(NAME_None);
