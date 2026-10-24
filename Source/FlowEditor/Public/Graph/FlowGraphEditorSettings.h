@@ -84,17 +84,17 @@ public:
 	UPROPERTY(EditAnywhere, config, Category = "Search", meta = (ClampMin = 1))
 	int32 DefaultMaxSearchDepth = 1;
 
+	UPROPERTY(VisibleAnywhere, config, Category = "Search")
+	EFlowSearchPinDirection DefaultSearchPinDirection = EFlowSearchPinDirection::Any;
+
+	UPROPERTY(VisibleAnywhere, config, Category = "Search")
+	EFlowSearchPinConnectionState DefaultSearchPinConnection = EFlowSearchPinConnectionState::Any;
+
 	UPROPERTY(EditAnywhere, config, Category = "Wires")
 	bool bHighlightInputWiresOfSelectedNodes;
 
 	UPROPERTY(EditAnywhere, config, Category = "Wires")
 	bool bHighlightOutputWiresOfSelectedNodes;
-
-	UPROPERTY(VisibleAnywhere, config, Category = "Search")
-	uint8 DefaultSearchPinDirection = 0;
-
-	UPROPERTY(VisibleAnywhere, config, Category = "Search")
-	uint8 DefaultSearchPinConnection = 0;
 
 public:
 	virtual FName GetCategoryName() const override { return FName("Flow Graph"); }

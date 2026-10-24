@@ -20,20 +20,6 @@ class UStruct;
  * Set of data types for pin search filtering.
  */
 
-enum class EFlowSearchPinDirection : uint8
-{
-	Any,
-	Input,
-	Output,
-};
-
-enum class EFlowSearchPinConnectionState : uint8
-{
-	Any,
-	Connected,
-	Unconnected,
-};
-
 struct FLOWEDITOR_API FFlowSearchPinFilter
 {
 	EFlowSearchPinDirection Direction = EFlowSearchPinDirection::Any;

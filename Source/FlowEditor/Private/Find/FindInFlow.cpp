@@ -223,8 +223,8 @@ void SFindInFlow::Construct(const FArguments& InArgs, const TSharedPtr<class FFl
 	{
 		MaxSearchDepth = Settings->DefaultMaxSearchDepth;
 		SearchFlags = static_cast<EFlowSearchFlags>(Settings->DefaultSearchFlags);
-		PinDirection = static_cast<EFlowSearchPinDirection>(Settings->DefaultSearchPinDirection);
-		PinConnection = static_cast<EFlowSearchPinConnectionState>(Settings->DefaultSearchPinConnection);
+		PinDirection = Settings->DefaultSearchPinDirection;
+		PinConnection = Settings->DefaultSearchPinConnection;
 		if (!EnumHasAnyFlags(SearchFlags, EFlowSearchFlags::PinNames))
 		{
 			PinDirection = EFlowSearchPinDirection::Any;
@@ -321,8 +321,8 @@ void SFindInFlow::Construct(const FArguments& InArgs, const TSharedPtr<class FFl
 														PinConnection = EFlowSearchPinConnectionState::Any;
 														if (UFlowGraphEditorSettings* GraphEditorSettings = GetMutableDefault<UFlowGraphEditorSettings>())
 														{
-															GraphEditorSettings->DefaultSearchPinDirection = 0;
-															GraphEditorSettings->DefaultSearchPinConnection = 0;
+															GraphEditorSettings->DefaultSearchPinDirection = EFlowSearchPinDirection::Any;
+															GraphEditorSettings->DefaultSearchPinConnection = EFlowSearchPinConnectionState::Any;
 															GraphEditorSettings->SaveConfig();
 														}
 													}
@@ -344,7 +344,7 @@ void SFindInFlow::Construct(const FArguments& InArgs, const TSharedPtr<class FFl
 									SNew(STextBlock)
 										.Text_Lambda([this]()
 											{
-												int32 ActiveCount = FMath::CountBits(static_cast<uint32>(SearchFlags));
+												const int32 ActiveCount = FMath::CountBits(static_cast<uint32>(SearchFlags));
 												return FText::Format(LOCTEXT("ActiveFilters", "{0} Active"), FText::AsNumber(ActiveCount));
 											})
 								]
@@ -589,7 +589,7 @@ void SFindInFlow::OnPinDirectionChanged(EFlowSearchPinDirection NewDirection)
 	PinDirection = NewDirection;
 	if (UFlowGraphEditorSettings* GraphEditorSettings = GetMutableDefault<UFlowGraphEditorSettings>())
 	{
-		GraphEditorSettings->DefaultSearchPinDirection = static_cast<uint8>(NewDirection);
+		GraphEditorSettings->DefaultSearchPinDirection = NewDirection;
 		GraphEditorSettings->SaveConfig();
 	}
 	InitiateSearch();
@@ -600,7 +600,7 @@ void SFindInFlow::OnPinConnectionChanged(EFlowSearchPinConnectionState NewConnec
 	PinConnection = NewConnection;
 	if (UFlowGraphEditorSettings* GraphEditorSettings = GetMutableDefault<UFlowGraphEditorSettings>())
 	{
-		GraphEditorSettings->DefaultSearchPinConnection = static_cast<uint8>(NewConnection);
+		GraphEditorSettings->DefaultSearchPinConnection = NewConnection;
 		GraphEditorSettings->SaveConfig();
 	}
 	InitiateSearch();
