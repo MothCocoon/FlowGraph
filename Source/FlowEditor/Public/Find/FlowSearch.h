@@ -1,0 +1,228 @@
+// Copyright https://github.com/MothCocoon/FlowGraph/graphs/contributors
+#pragma once
+
+#include "UObject/SoftObjectPath.h"
+#include "Containers/Array.h"
+#include "Containers/Map.h"
+#include "Containers/Set.h"
+#include "Misc/Guid.h"
+#include "Templates/Function.h"
+#include "Templates/SharedPointer.h"
+#include "UObject/WeakObjectPtr.h"
+
+#include "Find/FindInFlowEnums.h"
+
+class UFlowAsset;
+class UEdGraphNode;
+class UStruct;
+
+/**
+ * Set of data types for pin search filtering.
+ */
+
+struct FLOWEDITOR_API FFlowSearchPinFilter
+{
+	EFlowSearchPinDirection Direction = EFlowSearchPinDirection::Any;
+	EFlowSearchPinConnectionState ConnectionState = EFlowSearchPinConnectionState::Any;
+};
+
+/**
+ * One SubGraph node crossed by search recursion.
+ */
+struct FLOWEDITOR_API FFlowSearchSubgraphLink
+{
+	// Asset that contains the SubGraph node.
+	FSoftObjectPath OwnerAssetPath;
+
+	// Graph node Guid of the SubGraph node.
+	FGuid SubGraphNodeGuid;
+};
+
+struct FLOWEDITOR_API FFlowSearchMatchedPin
+{
+	FName PinName;
+	EFlowSearchPinDirection Direction = EFlowSearchPinDirection::Any;
+	bool bConnected = false;
+};
+
+/**
+ * A single node hit returned by FFlowSearch::Search.
+ * Contains enough information for an agent or test to identify and act on the result
+ * without touching any Slate or editor-UI types.
+ */
+struct FLOWEDITOR_API FFlowSearchResultItem
+{
+	// Soft path to the asset that owns this node.
+	FSoftObjectPath AssetPath;
+
+	// Runtime GUID of the matched node. Invalid when the result is an asset-level placeholder.
+	FGuid NodeGuid;
+
+	// Display title of the node (UEdGraphNode::GetNodeTitle(ListView), falls back to class name).
+	FString NodeTitle;
+
+	// C++ class name of the underlying UFlowNodeBase (GetClass()->GetName()).
+	FString NodeTypeName;
+
+	// Which search flag categories actually produced a hit for this node.
+	EFlowSearchFlags MatchedFlags = EFlowSearchFlags::None;
+
+	// Matched pins, if any. Only populated when the search flags include EFlowSearchFlags::Pins.
+	TArray<FFlowSearchMatchedPin> MatchedPins;
+
+	// A representative "Key: Value" snippet from the first matched property, for agent display.
+	FString MatchedSnippet;
+
+	// True when this result was found inside a subgraph (Depth > 0 during recursion).
+	bool bIsSubGraphNode = false;
+
+	// When bIsSubGraphNode is true: the asset that contains the FlowNode_SubGraph entry point.
+	FSoftObjectPath SubgraphOwnerAssetPath;
+
+	// SubGraph nodes leading from the searched asset to AssetPath, outermost first.
+	// Empty for a node found directly in a searched asset.
+	TArray<FFlowSearchSubgraphLink> SubgraphPath;
+};
+
+/**
+ * Headless search query. Mirrors the inputs the SFindInFlow widget exposes.
+ * ContextAsset is required for ThisAssetOnly and AllOfThisType scopes; ignored for AllFlowAssets.
+ */
+struct FLOWEDITOR_API FFlowSearchQuery
+{
+	// Whitespace-delimited tokens; all tokens must match (AND semantics, case-insensitive).
+	FString SearchText;
+
+	// Which node fields to search.
+	EFlowSearchFlags Flags = EFlowSearchFlags::DefaultSearchFlags;
+
+	// How broadly to search.
+	EFlowSearchScope Scope = EFlowSearchScope::ThisAssetOnly;
+
+	// Max recursion depth into inline UObject properties (default matches widget default of 3).
+	int32 MaxDepth = 3;
+
+	// Required for ThisAssetOnly / AllOfThisType. Ignored for AllFlowAssets.
+	TWeakObjectPtr<UFlowAsset> ContextAsset;
+
+	// Narrow pin search results to specific attributes (e.g. connection state, direction).
+	FFlowSearchPinFilter PinFilter;
+
+	// Callback for reporting asset search progress.
+	using FOnAssetSearchProgress = TFunction<void(int32 ProcessedAssets, int32 TotalAssets, const FString& CurrentAssetName)>;
+	FOnAssetSearchProgress OnAssetSearchProgress;
+};
+
+/**
+ * Shared cache of per-node category-string maps (flag -> set of strings).
+ * Built lazily by FFlowSearch::Search and invalidated when a FlowAsset changes.
+ * Lives here (service layer) so both FFlowSearch and SFindInFlow share one cache
+ * without SFindInFlow needing to know about the service internals.
+ */
+/**
+ * Searchable strings of one node, together with the search settings they were collected for.
+ */
+struct FLOWEDITOR_API FFindInFlowCacheEntry
+{
+	EFlowSearchFlags Flags = EFlowSearchFlags::None;
+	int32 MaxDepth = 0;
+	TMap<EFlowSearchFlags, TSet<FString>> CategoryStrings;
+};
+
+struct FLOWEDITOR_API FFindInFlowCache
+{
+	/* Removes all cached data for the changed flow asset. */
+	static void OnFlowAssetChanged(const UFlowAsset& ChangedFlowAsset);
+
+	/* Category-string map keyed by editor graph node pointer. */
+	static TMap<TWeakObjectPtr<UEdGraphNode>, FFindInFlowCacheEntry> CategoryStringCache;
+};
+
+/**
+ * Stateless, headless search service. Owns the full search algorithm previously embedded in SFindInFlow.
+ * No Slate, no FFlowAssetEditor coupling, no INI reads.
+ * All configuration is passed in via FFlowSearchQuery.
+ *
+ * SFindInFlow wraps this with UI state and result-tree presentation.
+ * Editor integrations can wrap it without coupling search behavior to Slate.
+ * FlowSearch.spec.cpp tests it directly without an editor session.
+ */
+class FLOWEDITOR_API FFlowSearch
+{
+public:
+	/**
+	 * Run a search and append hits to OutResults.
+	 * Returns true if at least one result was appended.
+	 * Empty SearchText returns false immediately (no results).
+	 */
+	static bool Search(const FFlowSearchQuery& Query, TArray<FFlowSearchResultItem>& OutResults);
+
+private:
+	/**
+	 * Per-search traversal state. Passed by reference through the recursion so the service
+	 * remains stateless at the class level.
+	 */
+	struct FSearchContext
+	{
+		TArray<FString> Tokens;         // Upper-cased AND tokens
+		EFlowSearchFlags Flags;
+		int32 MaxDepth;
+		FFlowSearchPinFilter PinFilter;
+		TSet<UFlowAsset*> VisitedAssets; // Cycle guard for subgraph recursion
+		TArray<FFlowSearchSubgraphLink> SubgraphPath; // SubGraph nodes on the current recursion branch
+	};
+
+	static bool ProcessAsset(
+		UFlowAsset* Asset,
+		FSearchContext& Context,
+		bool bIsSubGraphNode,
+		const FSoftObjectPath& SubgraphOwnerPath,
+		TArray<FFlowSearchResultItem>& OutResults);
+
+	static bool RecurseIntoSubgraphsIfEnabled(
+		UEdGraphNode* EdNode,
+		const FSoftObjectPath& OwnerAssetPath,
+		FSearchContext& Context,
+		TArray<FFlowSearchResultItem>& OutResults);
+
+	/**
+	 * Builds a per-node category->strings map. Result is cached keyed by EdGraphNode pointer
+	 * (same cache SFindInFlow used) to avoid rebuilding on repeated searches.
+	 */
+	static const TMap<EFlowSearchFlags, TSet<FString>>* BuildCategoryStrings(
+		UEdGraphNode* EdNode,
+		const FSearchContext& Context);
+
+	static void UpdateCategoryStringsForEdGraphNode(
+		const UEdGraphNode& EdGraphNode,
+		const FSearchContext& Context,
+		TMap<EFlowSearchFlags, TSet<FString>>& OutMap);
+
+	static void UpdateCategoryStringsForFlowNodeBase(
+		const class UFlowNodeBase& FlowNodeBase,
+		const FSearchContext& Context,
+		int32 Depth,
+		TMap<EFlowSearchFlags, TSet<FString>>& OutMap);
+
+	static void AppendPropertyValues(
+		const void* Container,
+		const UStruct* Struct,
+		const UObject* ParentObject,
+		const FSearchContext& Context,
+		int32 Depth,
+		TMap<EFlowSearchFlags, TSet<FString>>& OutMap);
+
+	static bool FindMatchingPins(
+		const UEdGraphNode& EdNode,
+		const TArray<FString>& Tokens,
+		const FFlowSearchPinFilter& Filter,
+		TArray<FFlowSearchMatchedPin>& OutMatchedPins);
+
+	static bool StringMatchesTokens(const TArray<FString>& Tokens, const FString& Str);
+	static bool StringSetMatchesTokens(const TArray<FString>& Tokens, const TSet<FString>& StringSet);
+
+	/* Returns the first "Key: Value" snippet from a matched property, or empty string. */
+	static FString BuildMatchedSnippet(const TMap<EFlowSearchFlags, TSet<FString>>& CategoryStrings,
+	                                   const EFlowSearchFlags MatchedFlags,
+	                                   const TArray<FString>& Tokens);
+};

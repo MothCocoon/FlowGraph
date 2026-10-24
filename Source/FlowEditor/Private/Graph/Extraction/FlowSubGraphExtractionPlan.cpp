@@ -74,8 +74,7 @@ namespace FlowSubGraphExtraction
 
 		/**
 		 * True when a pin carries no name of its own, i.e. it is one of the unnamed defaults every Flow node
-		 * gets. Such a pin has nothing meaningful to call an interface pin after, so it maps to the built-in
-		 * Start or Finish instead of inventing a custom event.
+		 * gets. Its output interface name falls back to the node's title.
 		 */
 		bool IsUnnamedExecPin(const FName PinName)
 		{
@@ -241,27 +240,16 @@ namespace FlowSubGraphExtraction
 		Entries[0].bUsesBuiltInPin = true;
 	}
 
-	// An exit leaving through an unnamed default pin has nothing to call a Custom Output after, so it
-	// routes to the built-in Finish instead. Only one exit can do that: Finish is a single exec output on
-	// the parent, and an exec output drives exactly one target, so a second unnamed exit would collide
-	// with the first and get its link broken. Later unnamed exits fall back to a name from their node.
+	// Ordinary exits must not finish the child instance and cancel other active branches.
+	// Use Custom Outputs, falling back to node titles for unnamed pins.
 	void FExtractionPlan::ConfigureExits()
 	{
 		TSet<FName> UsedOutputNames;
 		Internal::ReserveBuiltInPinNames(UsedOutputNames);
-		bool bFinishPinClaimed = false;
 		for (FBoundaryPin& Exit : Exits)
 		{
-			if (!bFinishPinClaimed && Internal::IsUnnamedExecPin(Exit.InnerPinName))
-			{
-				Exit.InterfaceName = UFlowNode_SubGraph::FinishPin.PinName;
-				Exit.bUsesBuiltInPin = true;
-				bFinishPinClaimed = true;
-			}
-			else
-			{
-				Exit.InterfaceName = Internal::MakeUniqueInterfaceName(Internal::DeriveBoundaryBaseName(Exit), UsedOutputNames);
-			}
+			Exit.InterfaceName = Internal::MakeUniqueInterfaceName(Internal::DeriveBoundaryBaseName(Exit), UsedOutputNames);
+			Exit.bUsesBuiltInPin = false;
 		}
 
 		if (Exits.IsEmpty())

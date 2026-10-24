@@ -1,6 +1,6 @@
 // Copyright https://github.com/MothCocoon/FlowGraph/graphs/contributors
-
 #include "Find/FindInFlow.h"
+
 #include "Asset/FlowAssetEditor.h"
 #include "Find/SFindInFlowFilterPopup.h"
 #include "Graph/FlowGraphEditorSettings.h"
@@ -10,10 +10,8 @@
 #include "FlowEditorModule.h"
 #include "Nodes/FlowNode.h"
 #include "Nodes/FlowNodeBase.h"
-#include "AddOns/FlowNodeAddOn.h"
 #include "Nodes/Graph/FlowNode_SubGraph.h"
 
-#include "AssetRegistry/AssetRegistryModule.h"
 #include "AssetRegistry/ARFilter.h"
 #include "EdGraph/EdGraph.h"
 #include "EdGraph/EdGraphNode.h"
@@ -37,12 +35,13 @@
 #include "Types/SlateStructs.h"
 #include "UObject/Class.h"
 #include "UObject/ObjectPtr.h"
-#include "UObject/TopLevelAssetPath.h"
 #include "Widgets/Images/SImage.h"
-#include "Widgets/Input/SSearchBox.h"
-#include "Widgets/Input/SComboBox.h"
-#include "Widgets/Input/SSpinBox.h"
 #include "Widgets/Input/SButton.h"
+#include "Widgets/Input/SComboBox.h"
+#include "Widgets/Input/SComboButton.h"
+#include "Widgets/Input/SSearchBox.h"
+#include "Widgets/Input/SSegmentedControl.h"
+#include "Widgets/Input/SSpinBox.h"
 #include "Widgets/Layout/SBorder.h"
 #include "Widgets/Layout/SBox.h"
 #include "Widgets/SBoxPanel.h"
@@ -53,41 +52,6 @@
 #define LOCTEXT_NAMESPACE "FindInFlow"
 
 //////////////////////////////////////////////////////////////////////////
-// FFindInFlowCache
-
-TMap<TWeakObjectPtr<UEdGraphNode>, TMap<EFlowSearchFlags, TSet<FString>>> FFindInFlowCache::CategoryStringCache;
-
-void FFindInFlowCache::OnFlowAssetChanged(UFlowAsset& ChangedFlowAsset)
-{
-	TArray<TWeakObjectPtr<UEdGraphNode>> EntriesToRemove;
-
-	for (const auto& KV : CategoryStringCache)
-	{
-		const TWeakObjectPtr<UEdGraphNode>& EdNodePtr = KV.Key;
-
-		UEdGraphNode* EdNode = EdNodePtr.Get();
-
-		if (!IsValid(EdNode))
-		{
-			EntriesToRemove.Add(EdNodePtr);
-
-			continue;
-		}
-
-		UEdGraph* EdGraph = ChangedFlowAsset.GetGraph();
-		if (EdGraph->Nodes.Contains(EdNode))
-		{
-			EntriesToRemove.Add(EdNodePtr);
-		}
-	}
-
-	for (const TWeakObjectPtr<UEdGraphNode>& EdNodePtr : EntriesToRemove)
-	{
-		CategoryStringCache.Remove(EdNodePtr);
-	}
-}
-
-//////////////////////////////////////////////////////////////////////////
 // FFindInFlowResult
 
 FFindInFlowResult::FFindInFlowResult(const FString& InValue, UFlowAsset* InOwningFlowAsset)
@@ -96,7 +60,7 @@ FFindInFlowResult::FFindInFlowResult(const FString& InValue, UFlowAsset* InOwnin
 {
 }
 
-FFindInFlowResult::FFindInFlowResult(const FString& InValue, TSharedPtr<FFindInFlowResult> InParent, UEdGraphNode* InNode, bool bInIsSubGraphNode, UFlowAsset* InOwningFlowAsset)
+FFindInFlowResult::FFindInFlowResult(const FString& InValue, const TSharedPtr<FFindInFlowResult>& InParent, UEdGraphNode* InNode, const bool bInIsSubGraphNode, UFlowAsset* InOwningFlowAsset)
 	: Value(InValue)
 	, GraphNode(InNode)
 	, OwningFlowAsset(InOwningFlowAsset)
@@ -105,7 +69,7 @@ FFindInFlowResult::FFindInFlowResult(const FString& InValue, TSharedPtr<FFindInF
 {
 }
 
-TSharedRef<SWidget> FFindInFlowResult::CreateIcon() const
+TSharedRef<SWidget> FFindInFlowResult::CreateIcon()
 {
 	const FSlateColor IconColor = FSlateColor::UseForeground();
 	const FSlateBrush* Brush = FAppStyle::GetBrush(TEXT("GraphEditor.FIB_Event"));
@@ -115,16 +79,16 @@ TSharedRef<SWidget> FFindInFlowResult::CreateIcon() const
 		.ColorAndOpacity(IconColor);
 }
 
-FReply FFindInFlowResult::OnClick(TWeakPtr<class FFlowAssetEditor> FlowAssetEditorPtr)
+FReply FFindInFlowResult::OnClick(TWeakPtr<class FFlowAssetEditor> FlowAssetEditorPtr) const
 {
 	if (GraphNode.IsValid())
 	{
-		if (UEdGraph* Graph = GraphNode->GetGraph())
+		if (const UEdGraph* Graph = GraphNode->GetGraph())
 		{
 			if (UFlowAsset* Asset = Cast<UFlowAsset>(Graph->GetOuter()))
 			{
 				GEditor->GetEditorSubsystem<UAssetEditorSubsystem>()->OpenEditorForAsset(Asset);
-				if (TSharedPtr<FFlowAssetEditor> Editor = FFlowGraphUtils::GetFlowAssetEditor(Graph))
+				if (const TSharedPtr<FFlowAssetEditor> Editor = FFlowGraphUtils::GetFlowAssetEditor(Graph))
 				{
 					Editor->JumpToNode(GraphNode.Get());
 				}
@@ -149,7 +113,7 @@ FReply FFindInFlowResult::OnDoubleClick() const
 				if (UObject* Target = SubGraph->GetAssetToEdit())
 				{
 					GEditor->GetEditorSubsystem<UAssetEditorSubsystem>()->OpenEditorForAsset(Target);
-					if (TSharedPtr<FFlowAssetEditor> Editor = FFlowGraphUtils::GetFlowAssetEditor(GraphNode->GetGraph()))
+					if (const TSharedPtr<FFlowAssetEditor> Editor = FFlowGraphUtils::GetFlowAssetEditor(GraphNode->GetGraph()))
 					{
 						Editor->JumpToNode(GraphNode.Get());
 					}
@@ -185,7 +149,7 @@ FString FFindInFlowResult::GetNodeTypeText() const
 
 	if (const UFlowGraphNode* FlowGraphNode = Cast<UFlowGraphNode>(GraphNode.Get()))
 	{
-		if (UFlowNodeBase* Base = FlowGraphNode->GetFlowNodeBase())
+		if (const UFlowNodeBase* Base = FlowGraphNode->GetFlowNodeBase())
 		{
 			return Base->GetClass()->GetDisplayNameText().ToString();
 		}
@@ -225,7 +189,7 @@ FText FFindInFlowResult::GetMatchedCategoriesText() const
 
 	TArray<FText> DisplayNames;
 
-	for (EFlowSearchFlags Flag : MakeFlagsRange(EFlowSearchFlags::All))
+	for (const EFlowSearchFlags Flag : MakeFlagsRange(EFlowSearchFlags::All))
 	{
 		if (EnumHasAnyFlags(MatchedFlags, Flag))
 		{
@@ -248,7 +212,7 @@ FText FFindInFlowResult::GetMatchedCategoriesText() const
 //////////////////////////////////////////////////////////////////////////
 // SFindInFlow
 
-void SFindInFlow::Construct(const FArguments& InArgs, TSharedPtr<class FFlowAssetEditor> InFlowAssetEditor)
+void SFindInFlow::Construct(const FArguments& InArgs, const TSharedPtr<class FFlowAssetEditor>& InFlowAssetEditor)
 {
 	FlowAssetEditorPtr = InFlowAssetEditor;
 	SearchResults.Setup();
@@ -259,11 +223,13 @@ void SFindInFlow::Construct(const FArguments& InArgs, TSharedPtr<class FFlowAsse
 	{
 		MaxSearchDepth = Settings->DefaultMaxSearchDepth;
 		SearchFlags = static_cast<EFlowSearchFlags>(Settings->DefaultSearchFlags);
+		PinDirection = Settings->DefaultSearchPinDirection;
+		PinConnection = Settings->DefaultSearchPinConnection;
 	}
 
 	// Populate scope options
 	FLOW_ASSERT_ENUM_MAX(EFlowSearchScope, 3);
-	for (EFlowSearchScope Scope : TEnumRange<EFlowSearchScope>())
+	for (const EFlowSearchScope Scope : TEnumRange<EFlowSearchScope>())
 	{
 		if (FlowEnum::IsValidEnumValue(Scope))
 		{
@@ -289,9 +255,9 @@ void SFindInFlow::Construct(const FArguments& InArgs, TSharedPtr<class FFlowAsse
 	SAssignNew(TreeView, STreeViewType)
 		.TreeItemsSource(&SearchResults.ItemsFound)
 		.OnGenerateRow(this, &SFindInFlow::OnGenerateRow)
-		.OnGetChildren(this, &SFindInFlow::OnGetChildren)
+		.OnGetChildren_Static(&SFindInFlow::OnGetChildren)
 		.OnSelectionChanged(this, &SFindInFlow::OnTreeSelectionChanged)
-		.OnMouseButtonDoubleClick(this, &SFindInFlow::OnTreeSelectionDoubleClicked);
+		.OnMouseButtonDoubleClick_Static(&SFindInFlow::OnTreeSelectionDoubleClicked);
 
 	ChildSlot
 		[
@@ -331,22 +297,17 @@ void SFindInFlow::Construct(const FArguments& InArgs, TSharedPtr<class FFlowAsse
 								.ToolTipText(LOCTEXT("EditFiltersTooltip", "Edit search filters"))
 								.OnClicked_Lambda([this]()
 									{
-										const FFindInFlowApplyDelegate OnSaveAsDefault = FFindInFlowApplyDelegate::CreateLambda([this](EFlowSearchFlags Flags)
-											{
-												if (UFlowGraphEditorSettings* GraphEditorSettings = GetMutableDefault<UFlowGraphEditorSettings>())
-												{
-													GraphEditorSettings->DefaultSearchFlags = static_cast<uint32>(Flags);
-													GraphEditorSettings->SaveConfig();
-												}
-											});
-
 										const TSharedRef<SFindInFlowFilterPopup> FilterPopup = SNew(SFindInFlowFilterPopup)
 											.OnApply(FFindInFlowApplyDelegate::CreateLambda([this](const EFlowSearchFlags NewSearchFlags)
 												{
 													SearchFlags = NewSearchFlags;
+													if (UFlowGraphEditorSettings* GraphEditorSettings = GetMutableDefault<UFlowGraphEditorSettings>())
+													{
+														GraphEditorSettings->DefaultSearchFlags = static_cast<uint32>(NewSearchFlags);
+														GraphEditorSettings->SaveConfig();
+													}
 													InitiateSearch();
 												}))
-											.OnSaveAsDefault(OnSaveAsDefault)
 											.InitialFlags(SearchFlags);
 
 										FSlateApplication::Get().PushMenu(
@@ -362,7 +323,7 @@ void SFindInFlow::Construct(const FArguments& InArgs, TSharedPtr<class FFlowAsse
 									SNew(STextBlock)
 										.Text_Lambda([this]()
 											{
-												int32 ActiveCount = FMath::CountBits(static_cast<uint32>(SearchFlags));
+												const int32 ActiveCount = FMath::CountBits(static_cast<uint32>(SearchFlags));
 												return FText::Format(LOCTEXT("ActiveFilters", "{0} Active"), FText::AsNumber(ActiveCount));
 											})
 								]
@@ -372,9 +333,24 @@ void SFindInFlow::Construct(const FArguments& InArgs, TSharedPtr<class FFlowAsse
 						.VAlign(VAlign_Center)
 						.Padding(4, 0)
 						[
+							SNew(SComboButton)
+								.IsEnabled(this, &SFindInFlow::ArePinFiltersEnabled)
+								.ToolTipText(this, &SFindInFlow::GetPinFilterToolTip)
+								.OnGetMenuContent(this, &SFindInFlow::MakePinFilterMenu)
+								.ButtonContent()
+								[
+									SNew(STextBlock)
+										.Text(this, &SFindInFlow::GetPinFilterSummaryText)
+								]
+						]
+					+ SHorizontalBox::Slot()
+						.AutoWidth()
+						.VAlign(VAlign_Center)
+						.Padding(4, 0)
+						[
 							SNew(SComboBox<TSharedPtr<EFlowSearchScope>>)
 								.OptionsSource(&ScopeOptionList)
-								.OnGenerateWidget(this, &SFindInFlow::GenerateScopeWidget)
+								.OnGenerateWidget_Static(&SFindInFlow::GenerateScopeWidget)
 								.OnSelectionChanged(this, &SFindInFlow::OnScopeChanged)
 								[
 									SNew(STextBlock).Text(this, &SFindInFlow::GetCurrentScopeText)
@@ -440,7 +416,7 @@ void SFindInFlow::OnScopeChanged(TSharedPtr<EFlowSearchScope> NewSelection, ESel
 	SearchScope = *NewSelection;
 }
 
-void SFindInFlow::OnMaxDepthChanged(int32 NewDepth)
+void SFindInFlow::OnMaxDepthChanged(const int32 NewDepth)
 {
 	MaxSearchDepth = NewDepth;
 
@@ -452,7 +428,7 @@ void SFindInFlow::OnMaxDepthChanged(int32 NewDepth)
 	}
 }
 
-TSharedRef<SWidget> SFindInFlow::GenerateScopeWidget(TSharedPtr<EFlowSearchScope> Item) const
+TSharedRef<SWidget> SFindInFlow::GenerateScopeWidget(TSharedPtr<EFlowSearchScope> Item)
 {
 	return SNew(STextBlock)
 		.Text(UEnum::GetDisplayValueAsText(*Item.Get()));
@@ -461,6 +437,152 @@ TSharedRef<SWidget> SFindInFlow::GenerateScopeWidget(TSharedPtr<EFlowSearchScope
 FText SFindInFlow::GetCurrentScopeText() const
 {
 	return UEnum::GetDisplayValueAsText(*SelectedScopeOption.Get());
+}
+
+TSharedRef<SWidget> SFindInFlow::MakePinFilterMenu()
+{
+	return SNew(SBorder)
+		.BorderImage(FAppStyle::GetBrush("Menu.Background"))
+		.Padding(10.0f)
+		[
+			SNew(SVerticalBox)
+			+ SVerticalBox::Slot()
+			.AutoHeight()
+			.Padding(0, 0, 0, 8)
+			[
+				SNew(STextBlock)
+				.Text(LOCTEXT("PinFiltersTitle", "Pin Filters"))
+				.Font(FAppStyle::GetFontStyle("NormalFontBold"))
+			]
+			+ SVerticalBox::Slot()
+			.AutoHeight()
+			.Padding(0, 2)
+			[
+				SNew(SHorizontalBox)
+				+ SHorizontalBox::Slot()
+				.AutoWidth()
+				.VAlign(VAlign_Center)
+				[
+					SNew(SBox)
+					.WidthOverride(82.0f)
+					[
+						SNew(STextBlock)
+						.Text(LOCTEXT("PinDirectionLabel", "Direction"))
+					]
+				]
+				+ SHorizontalBox::Slot()
+				.AutoWidth()
+				[
+					SNew(SSegmentedControl<EFlowSearchPinDirection>)
+					.Value_Lambda([this]() { return PinDirection; })
+					.OnValueChanged(this, &SFindInFlow::OnPinDirectionChanged)
+					+ SSegmentedControl<EFlowSearchPinDirection>::Slot(EFlowSearchPinDirection::Any)
+						.Text(LOCTEXT("PinDirectionAny", "Any"))
+						.ToolTip(LOCTEXT("PinDirectionAnyTooltip", "Match input and output pin names."))
+					+ SSegmentedControl<EFlowSearchPinDirection>::Slot(EFlowSearchPinDirection::Input)
+						.Text(LOCTEXT("PinDirectionInput", "Input"))
+						.ToolTip(LOCTEXT("PinDirectionInputTooltip", "Match input pin names only."))
+					+ SSegmentedControl<EFlowSearchPinDirection>::Slot(EFlowSearchPinDirection::Output)
+						.Text(LOCTEXT("PinDirectionOutput", "Output"))
+						.ToolTip(LOCTEXT("PinDirectionOutputTooltip", "Match output pin names only."))
+				]
+			]
+			+ SVerticalBox::Slot()
+			.AutoHeight()
+			.Padding(0, 2)
+			[
+				SNew(SHorizontalBox)
+				+ SHorizontalBox::Slot()
+				.AutoWidth()
+				.VAlign(VAlign_Center)
+				[
+					SNew(SBox)
+					.WidthOverride(82.0f)
+					[
+						SNew(STextBlock)
+						.Text(LOCTEXT("PinConnectivityLabel", "Connectivity"))
+					]
+				]
+				+ SHorizontalBox::Slot()
+				.AutoWidth()
+				[
+					SNew(SSegmentedControl<EFlowSearchPinConnectionState>)
+					.Value_Lambda([this]() { return PinConnection; })
+					.OnValueChanged(this, &SFindInFlow::OnPinConnectionChanged)
+					+ SSegmentedControl<EFlowSearchPinConnectionState>::Slot(EFlowSearchPinConnectionState::Any)
+						.Text(LOCTEXT("PinConnectionAny", "Any"))
+						.ToolTip(LOCTEXT("PinConnectionAnyTooltip", "Match connected and unconnected pin names."))
+					+ SSegmentedControl<EFlowSearchPinConnectionState>::Slot(EFlowSearchPinConnectionState::Connected)
+						.Text(LOCTEXT("PinConnectionConnected", "Connected"))
+						.ToolTip(LOCTEXT("PinConnectionConnectedTooltip", "Match connected pin names only."))
+					+ SSegmentedControl<EFlowSearchPinConnectionState>::Slot(EFlowSearchPinConnectionState::Unconnected)
+						.Text(LOCTEXT("PinConnectionUnconnected", "Unconnected"))
+						.ToolTip(LOCTEXT("PinConnectionUnconnectedTooltip", "Match unconnected pin names only."))
+				]
+			]
+		];
+}
+
+FText SFindInFlow::GetPinFilterSummaryText() const
+{
+	TArray<FText> ActiveFilters;
+	if (PinDirection == EFlowSearchPinDirection::Input)
+	{
+		ActiveFilters.Add(LOCTEXT("PinDirectionInputSummary", "Input"));
+	}
+	else if (PinDirection == EFlowSearchPinDirection::Output)
+	{
+		ActiveFilters.Add(LOCTEXT("PinDirectionOutputSummary", "Output"));
+	}
+
+	if (PinConnection == EFlowSearchPinConnectionState::Connected)
+	{
+		ActiveFilters.Add(LOCTEXT("PinConnectionConnectedSummary", "Connected"));
+	}
+	else if (PinConnection == EFlowSearchPinConnectionState::Unconnected)
+	{
+		ActiveFilters.Add(LOCTEXT("PinConnectionUnconnectedSummary", "Unconnected"));
+	}
+
+	if (ActiveFilters.IsEmpty())
+	{
+		return LOCTEXT("PinsAnySummary", "Pins: Any");
+	}
+	return FText::Format(LOCTEXT("PinsSummary", "Pins: {0}"), FText::Join(LOCTEXT("PinsSummaryDelimiter", ", "), ActiveFilters));
+}
+
+FText SFindInFlow::GetPinFilterToolTip() const
+{
+	return ArePinFiltersEnabled()
+		? LOCTEXT("PinFiltersTooltip", "Filter Pin Names matches by direction and connectivity.")
+		: LOCTEXT("PinFiltersDisabledTooltip", "Enable the Pin Names search category to use pin filters.");
+}
+
+bool SFindInFlow::ArePinFiltersEnabled() const
+{
+	return EnumHasAnyFlags(SearchFlags, EFlowSearchFlags::PinNames);
+}
+
+void SFindInFlow::OnPinDirectionChanged(EFlowSearchPinDirection NewDirection)
+{
+	PinDirection = NewDirection;
+	if (UFlowGraphEditorSettings* GraphEditorSettings = GetMutableDefault<UFlowGraphEditorSettings>())
+	{
+		GraphEditorSettings->DefaultSearchPinDirection = NewDirection;
+		GraphEditorSettings->SaveConfig();
+	}
+	InitiateSearch();
+}
+
+void SFindInFlow::OnPinConnectionChanged(EFlowSearchPinConnectionState NewConnection)
+{
+	PinConnection = NewConnection;
+	if (UFlowGraphEditorSettings* GraphEditorSettings = GetMutableDefault<UFlowGraphEditorSettings>())
+	{
+		GraphEditorSettings->DefaultSearchPinConnection = NewConnection;
+		GraphEditorSettings->SaveConfig();
+	}
+	InitiateSearch();
 }
 
 void SFindInFlow::InitiateSearch()
@@ -472,7 +594,6 @@ void SFindInFlow::InitiateSearch()
 	}
 
 	SearchResults.Reset();
-
 	HighlightText = FText::FromString(SearchValue);
 	TreeView->RequestTreeRefresh();
 
@@ -481,14 +602,7 @@ void SFindInFlow::InitiateSearch()
 		return;
 	}
 
-	TArray<FString> Tokens;
-	SearchValue.ParseIntoArray(Tokens, TEXT(" "), true);
-	for (FString& Token : Tokens)
-	{
-		Token = Token.ToUpper();
-	}
-
-	TSharedPtr<FFlowAssetEditor> Editor = FlowAssetEditorPtr.Pin();
+	const TSharedPtr<FFlowAssetEditor> Editor = FlowAssetEditorPtr.Pin();
 	if (!Editor.IsValid())
 	{
 		return;
@@ -500,406 +614,128 @@ void SFindInFlow::InitiateSearch()
 		return;
 	}
 
-	constexpr int32 Depth = 0;
-	switch (SearchScope)
+	if (GCompilingBlueprint && SearchScope != EFlowSearchScope::ThisAssetOnly)
 	{
-	case EFlowSearchScope::ThisAssetOnly:
-		{
-			FSearchResult AssetRoot = MakeShareable(new FFindInFlowResult(CurrentAsset->GetName(), CurrentAsset));
-			ProcessAsset(CurrentAsset, AssetRoot, Tokens, Depth);
-
-			if (AssetRoot->Children.Num() > 0)
-			{
-				SearchResults.ItemsFound.Add(AssetRoot);
-
-				// Auto-expand the current asset's results
-				TreeView->SetItemExpansion(AssetRoot, true);
-			}
-		}
-		break;
-
-	case EFlowSearchScope::AllOfThisType:
-	case EFlowSearchScope::AllFlowAssets:
-		{
-			FAssetRegistryModule& Registry = FModuleManager::LoadModuleChecked<FAssetRegistryModule>("AssetRegistry");
-			TArray<FAssetData> Assets;
-			FARFilter Filter;
-			Filter.bRecursiveClasses = true;
-
-			if (SearchScope == EFlowSearchScope::AllFlowAssets)
-			{
-				Filter.ClassPaths.Add(FTopLevelAssetPath(UFlowAsset::StaticClass()->GetClassPathName()));
-			}
-			else
-			{
-				Filter.ClassPaths.Add(FTopLevelAssetPath(CurrentAsset->GetClass()->GetClassPathName()));
-			}
-
-			Registry.Get().GetAssets(Filter, Assets);
-
-			FScopedSlowTask Task(Assets.Num(), LOCTEXT("SearchingAssets", "Searching Flow Assets..."));
-			Task.MakeDialog();
-
-			int32 CurrentAssetIndex = 0;
-
-			for (const FAssetData& Data : Assets)
-			{
-				UFlowAsset* Asset = Cast<UFlowAsset>(Data.GetAsset());
-				if (!IsValid(Asset))
-				{
-					continue;
-				}
-
-				CurrentAssetIndex++;
-
-				Task.EnterProgressFrame(1, FText::Format(LOCTEXT("SearchingAsset", "Searching {0}/{1}: {2}..."), CurrentAssetIndex, Assets.Num(), FText::FromString(Asset->GetName())));
-
-				FSearchResult AssetRoot = MakeShareable(new FFindInFlowResult(Asset->GetName(), Asset));
-				ProcessAsset(Asset, AssetRoot, Tokens, Depth);
-
-				if (AssetRoot->Children.Num() > 0)
-				{
-					SearchResults.ItemsFound.Add(AssetRoot);
-
-					// Auto-expand only the current asset
-					if (Asset == CurrentAsset)
-					{
-						TreeView->SetItemExpansion(AssetRoot, true);
-					}
-				}
-			}
-		}
-		break;
-
-	default:
-		checkNoEntry();
-		break;
+		const FSearchResult CompilePending = MakeShareable(new FFindInFlowResult(TEXT("Search deferred while Blueprints are compiling")));
+		SearchResults.ItemsFound.Add(CompilePending);
+		TreeView->RequestTreeRefresh();
+		return;
 	}
 
-	// Add "No results" placeholder if nothing found
+	FFlowSearchQuery Query;
+	Query.SearchText   = SearchValue;
+	Query.Flags        = SearchFlags;
+	Query.Scope        = SearchScope;
+	Query.MaxDepth     = MaxSearchDepth;
+	Query.ContextAsset = CurrentAsset;
+	Query.PinFilter.Direction = PinDirection;
+	Query.PinFilter.ConnectionState = PinConnection;
+
+	FScopedSlowTask SearchTask(1.0f, LOCTEXT("FlowSearchSlowTask", "Searching Flow assets..."));
+	SearchTask.MakeDialogDelayed(0.5f);
+	float LastReportedProgress = 0.0f;
+	Query.OnAssetSearchProgress = [&SearchTask, &LastReportedProgress](int32 ProcessedAssets, int32 TotalAssets, const FString& CurrentAssetName)
+	{
+		const float CurrentProgress = TotalAssets > 0
+			? FMath::Clamp(static_cast<float>(ProcessedAssets) / static_cast<float>(TotalAssets), 0.0f, 1.0f)
+			: LastReportedProgress;
+		const float ProgressDelta = FMath::Max(CurrentProgress - LastReportedProgress, 0.0f);
+		LastReportedProgress = CurrentProgress;
+		SearchTask.EnterProgressFrame(ProgressDelta, CurrentAssetName.IsEmpty()
+			? LOCTEXT("FlowSearchProgress", "Searching Flow assets...")
+			: FText::Format(LOCTEXT("FlowSearchProgressAsset", "Searching {0}..."), FText::FromString(CurrentAssetName)));
+	};
+
+	TArray<FFlowSearchResultItem> RawResults;
+	FFlowSearch::Search(Query, RawResults);
+
+	// Each result goes under the root of its searched asset, nested in one row per SubGraph node on its path.
+	TMap<FSoftObjectPath, FSearchResult> AssetRoots;
+	TMap<TPair<FFindInFlowResult*, FGuid>, FSearchResult> SubgraphRows;
+	for (const FFlowSearchResultItem& Item : RawResults)
+	{
+		const FSoftObjectPath& RootAssetPath = Item.SubgraphPath.IsEmpty() ? Item.AssetPath : Item.SubgraphPath[0].OwnerAssetPath;
+		FSearchResult& AssetRoot = AssetRoots.FindOrAdd(RootAssetPath);
+		if (!AssetRoot.IsValid())
+		{
+			UFlowAsset* Asset = Cast<UFlowAsset>(RootAssetPath.TryLoad());
+			const FString AssetName = Asset ? Asset->GetName() : RootAssetPath.GetAssetName();
+			AssetRoot = MakeShareable(new FFindInFlowResult(AssetName, Asset));
+		}
+
+		FSearchResult ParentRow = AssetRoot;
+		for (int32 LinkIndex = 0; LinkIndex < Item.SubgraphPath.Num(); ++LinkIndex)
+		{
+			const FFlowSearchSubgraphLink& Link = Item.SubgraphPath[LinkIndex];
+			FSearchResult& SubgraphRow = SubgraphRows.FindOrAdd(MakeTuple(ParentRow.Get(), Link.SubGraphNodeGuid));
+			if (!SubgraphRow.IsValid())
+			{
+				const FSoftObjectPath& SubAssetPath = Item.SubgraphPath.IsValidIndex(LinkIndex + 1)
+					? Item.SubgraphPath[LinkIndex + 1].OwnerAssetPath
+					: Item.AssetPath;
+				UFlowAsset* SubAsset = Cast<UFlowAsset>(SubAssetPath.TryLoad());
+				const FString SubAssetName = SubAsset ? SubAsset->GetName() : SubAssetPath.GetAssetName();
+				UEdGraphNode* SubGraphNode = FindGraphNode(Cast<UFlowAsset>(Link.OwnerAssetPath.TryLoad()), Link.SubGraphNodeGuid);
+
+				SubgraphRow = MakeShareable(new FFindInFlowResult(SubAssetName + TEXT(" (SubGraph)"), ParentRow, SubGraphNode, true, SubAsset));
+				ParentRow->Children.Add(SubgraphRow);
+			}
+			ParentRow = SubgraphRow;
+		}
+
+		FSearchResult ResultItem = MakeResultItem(Item);
+		ResultItem->Parent = ParentRow;
+		ParentRow->Children.Add(ResultItem);
+	}
+
+	for (TPair<FSoftObjectPath, FSearchResult>& AssetRoot : AssetRoots)
+	{
+		SearchResults.ItemsFound.Add(AssetRoot.Value);
+
+		// Auto-expand the current asset's group.
+		if (AssetRoot.Key == FSoftObjectPath(CurrentAsset))
+		{
+			TreeView->SetItemExpansion(AssetRoot.Value, true);
+		}
+	}
+
 	if (SearchResults.ItemsFound.IsEmpty())
 	{
-		FSearchResult NoResults = MakeShareable(new FFindInFlowResult(TEXT("No results found")));
+		const FSearchResult NoResults = MakeShareable(new FFindInFlowResult(TEXT("No results found")));
 		SearchResults.ItemsFound.Add(NoResults);
 	}
 
 	TreeView->RequestTreeRefresh();
 }
 
-bool SFindInFlow::ProcessAsset(UFlowAsset* Asset, FSearchResult ParentResult, const TArray<FString>& Tokens, int32 Depth)
+SFindInFlow::FSearchResult SFindInFlow::MakeResultItem(const FFlowSearchResultItem& Item)
 {
-	if (!Asset || !Asset->GetGraph() || Depth >= MaxSearchDepth || SearchResults.VisitedAssets.Contains(Asset))
-	{
-		return false;
-	}
+	UFlowAsset* Asset   = Cast<UFlowAsset>(Item.AssetPath.TryLoad());
+	UEdGraphNode* EdNode = FindGraphNode(Asset, Item.NodeGuid);
 
-	SearchResults.VisitedAssets.Add(Asset);
-	
-	bool bAnyMatches = false;
-
-	for (UEdGraphNode* EdNode : Asset->GetGraph()->Nodes)
-	{
-		const TMap<EFlowSearchFlags, TSet<FString>>* CategoryStrings = BuildCategoryStrings(EdNode, Depth);
-
-		if (!CategoryStrings)
-		{
-			continue;
-		}
-
-		EFlowSearchFlags NodeMatchedFlags = EFlowSearchFlags::None;
-
-		for (const TPair<EFlowSearchFlags, TSet<FString>>& Pair : *CategoryStrings)
-		{
-			const TSet<FString>& StringSet = Pair.Value;
-			if (EnumHasAnyFlags(SearchFlags, Pair.Key) && StringSetMatchesSearchTokens(Tokens, StringSet))
-			{
-				EnumAddFlags(NodeMatchedFlags, Pair.Key);
-			}
-		}
-
-		if (NodeMatchedFlags != EFlowSearchFlags::None)
-		{
-			FString Title = EdNode->GetNodeTitle(ENodeTitleType::ListView).ToString();
-			if (Title.IsEmpty())
-			{
-				Title = EdNode->GetClass()->GetName();
-			}
-
-			FSearchResult Result = MakeShareable(new FFindInFlowResult(Title, ParentResult, EdNode, Depth > 0, Asset));
-			Result->MatchedFlags = NodeMatchedFlags;
-			ParentResult->Children.Add(Result);
-
-			bAnyMatches = true;
-		}
-
-		bAnyMatches |= RecurseIntoSubgraphsIfEnabled(EdNode, ParentResult, Tokens, Depth);
-	}
-
-	return bAnyMatches;
+	FSearchResult Result = MakeShareable(new FFindInFlowResult(Item.NodeTitle, nullptr, EdNode, Item.bIsSubGraphNode, Asset));
+	Result->MatchedFlags          = Item.MatchedFlags;
+	Result->MatchedPropertySnippet = Item.MatchedSnippet;
+	return Result;
 }
 
-bool SFindInFlow::RecurseIntoSubgraphsIfEnabled(UEdGraphNode* EdNode, FSearchResult ParentResult, const TArray<FString>& Tokens, int32 Depth)
+UEdGraphNode* SFindInFlow::FindGraphNode(const UFlowAsset* Asset, const FGuid& NodeGuid)
 {
-	if (!EnumHasAnyFlags(SearchFlags, EFlowSearchFlags::Subgraphs))
+	if (Asset && Asset->GetGraph())
 	{
-		return false;
-	}
-
-	UFlowGraphNode* FlowGraphNode = Cast<UFlowGraphNode>(EdNode);
-	if (!FlowGraphNode || !FlowGraphNode->GetFlowNodeBase())
-	{
-		return false;
-	}
-
-	UFlowNode_SubGraph* SubGraph = Cast<UFlowNode_SubGraph>(FlowGraphNode->GetFlowNodeBase());
-	if (!SubGraph)
-	{
-		return false;
-	}
-
-	UFlowAsset* SubAsset = Cast<UFlowAsset>(SubGraph->GetAssetToEdit());
-	if (!SubAsset)
-	{
-		return false;
-	}
-
-	const FString SubgraphStr =
-		SearchResults.VisitedAssets.Contains(SubAsset) ?
-		TEXT(" (repeat subgraph)") :
-		TEXT(" (Subgraph)");
-
-	const FString SubTitle = SubAsset->GetName() + SubgraphStr;
-	FSearchResult SubResult = MakeShareable(new FFindInFlowResult(SubTitle, ParentResult, EdNode, true, SubAsset));
-
-	// Subgraphs don't count against depth
-	if (ProcessAsset(SubAsset, SubResult, Tokens, Depth))
-	{
-		ParentResult->Children.Add(SubResult);
-
-		return true;
-	}
-
-	return false;
-}
-
-const TMap<EFlowSearchFlags, TSet<FString>>* SFindInFlow::BuildCategoryStrings(UEdGraphNode* EdNode, int32 Depth) const
-{
-	if (!IsValid(EdNode))
-	{
-		return nullptr;
-	}
-
-	// Check cache first
-	if (const TMap<EFlowSearchFlags, TSet<FString>>* Cached = FFindInFlowCache::CategoryStringCache.Find(EdNode))
-	{
-		return Cached;
-	}
-
-	TMap<EFlowSearchFlags, TSet<FString>> NewResultMap;
-
-	UpdateSearchFlagToStringMapForEdGraphNode(*EdNode, NewResultMap, Depth);
-
-	UFlowGraphNode* FlowGraphNode = Cast<UFlowGraphNode>(EdNode);
-	if (IsValid(FlowGraphNode))
-	{
-		UFlowNodeBase* FlowNodeBase = FlowGraphNode->GetFlowNodeBase();
-		if (IsValid(FlowNodeBase))
+		for (UEdGraphNode* Node : Asset->GetGraph()->Nodes)
 		{
-			UpdateSearchFlagToStringMapForFlowNodeBase(*FlowNodeBase, NewResultMap, Depth);
-		}
-	}
-
-	// Now add the new map to the search cache
-	const TMap<EFlowSearchFlags, TSet<FString>>* AddedResultMap = &FFindInFlowCache::CategoryStringCache.Add(EdNode, NewResultMap);
-	return AddedResultMap;
-}
-
-void SFindInFlow::UpdateSearchFlagToStringMapForEdGraphNode(const UEdGraphNode& EdGraphNode, TMap<EFlowSearchFlags, TSet<FString>>& SearchFlagToStringMap, int32 Depth) const
-{
-	// Comments
-	if (EnumHasAnyFlags(SearchFlags, EFlowSearchFlags::Comments))
-	{
-		TSet<FString>& CommentsSet = SearchFlagToStringMap.FindOrAdd(EFlowSearchFlags::Comments);
-		CommentsSet.Add(EdGraphNode.NodeComment);
-	}
-}
-
-void SFindInFlow::UpdateSearchFlagToStringMapForFlowNodeBase(const UFlowNodeBase& FlowNodeBase, TMap<EFlowSearchFlags, TSet<FString>>& SearchFlagToStringMap, int32 Depth) const
-{
-	// Node Titles
-	if (EnumHasAnyFlags(SearchFlags, EFlowSearchFlags::Titles))
-	{
-		TSet<FString>& TitlesSet = SearchFlagToStringMap.FindOrAdd(EFlowSearchFlags::Titles);
-		TitlesSet.Add(FlowNodeBase.GetNodeTitle().ToString());
-	}
-
-	// Tooltips
-	if (EnumHasAnyFlags(SearchFlags, EFlowSearchFlags::Tooltips))
-	{
-		TSet<FString>& TooltipsSet = SearchFlagToStringMap.FindOrAdd(EFlowSearchFlags::Tooltips);
-		TooltipsSet.Add(FlowNodeBase.GetNodeToolTip().ToString());
-	}
-
-	// Classes
-	if (EnumHasAnyFlags(SearchFlags, EFlowSearchFlags::Classes))
-	{
-		TSet<FString>& ClassesSet = SearchFlagToStringMap.FindOrAdd(EFlowSearchFlags::Classes);
-
-		const FString DisplayName = FlowNodeBase.GetClass()->GetDisplayNameText().ToString();
-		ClassesSet.Add(DisplayName);
-
-		const FString NativeName = FlowNodeBase.GetClass()->GetName();
-		ClassesSet.Add(NativeName);
-	}
-
-	// Descriptions
-	if (EnumHasAnyFlags(SearchFlags, EFlowSearchFlags::Descriptions))
-	{
-		TSet<FString>& DescriptionsSet = SearchFlagToStringMap.FindOrAdd(EFlowSearchFlags::Descriptions);
-
-		DescriptionsSet.Add(FlowNodeBase.GetNodeDescription());
-	}
-
-	// Config Text
-	if (EnumHasAnyFlags(SearchFlags, EFlowSearchFlags::ConfigText))
-	{
-		TSet<FString>& ConfigSet = SearchFlagToStringMap.FindOrAdd(EFlowSearchFlags::ConfigText);
-		ConfigSet.Add(FlowNodeBase.GetNodeConfigText().ToString());
-	}
-
-	// Property-based scouring
-	if (EnumHasAnyFlags(SearchFlags, EFlowSearchFlags::PropertiesFlags))
-	{
-		AppendPropertyValues(&FlowNodeBase, FlowNodeBase.GetClass(), &FlowNodeBase, SearchFlagToStringMap, Depth);
-	}
-
-	// AddOns
-	if (EnumHasAnyFlags(SearchFlags, EFlowSearchFlags::AddOns))
-	{
-		FlowNodeBase.ForEachAddOnConst([this, &SearchFlagToStringMap, &Depth](const UFlowNodeAddOn& AddOn)
+			if (Node && Node->NodeGuid == NodeGuid)
 			{
-				// No depth penalty for AddOns
-				UpdateSearchFlagToStringMapForFlowNodeBase(AddOn, SearchFlagToStringMap, Depth);
-
-				return EFlowForEachAddOnFunctionReturnValue::Continue;
-			});
-	}
-}
-
-void SFindInFlow::AppendPropertyValues(const void* Container, const UStruct* Struct, const UObject* ParentObject, TMap<EFlowSearchFlags, TSet<FString>>& SearchFlagToStringMap, int32 Depth) const
-{
-	int32 MaxDepth = 1;
-	if (const UFlowGraphEditorSettings* Settings = GetDefault<UFlowGraphEditorSettings>())
-	{
-		MaxDepth = Settings->DefaultMaxSearchDepth;
-	}
-
-	if (!Container || !Struct || !ParentObject || Depth >= MaxDepth)
-	{
-		return;
-	}
-
-	for (TFieldIterator<FProperty> It(Struct, EFieldIteratorFlags::IncludeSuper); It; ++It)
-	{
-		FProperty* Prop = *It;
-		if (!Prop->HasAnyPropertyFlags(CPF_Edit | CPF_SimpleDisplay | CPF_AdvancedDisplay | CPF_BlueprintVisible | CPF_Config))
-		{
-			continue;
-		}
-
-		const void* ValuePtr = Prop->ContainerPtrToValuePtr<void>(Container);
-
-		if (EnumHasAnyFlags(SearchFlags, EFlowSearchFlags::PropertyNames))
-		{
-			TSet<FString>& PropertyNamesSet = SearchFlagToStringMap.FindOrAdd(EFlowSearchFlags::PropertyNames);
-
-			const FString DisplayName = Prop->GetMetaData(TEXT("DisplayName"));
-
-			if (!DisplayName.IsEmpty())
-			{
-				PropertyNamesSet.Add(DisplayName);
-			}
-
-			PropertyNamesSet.Add(Prop->GetName());
-		}
-
-		if (EnumHasAnyFlags(SearchFlags, EFlowSearchFlags::PropertyValues))
-		{
-			TSet<FString>& PropertyValuesSet = SearchFlagToStringMap.FindOrAdd(EFlowSearchFlags::PropertyValues);
-
-			FString ValueStr;
-			UObject* MutableParentObject = const_cast<UObject*>(ParentObject);
-			Prop->ExportText_InContainer(0, ValueStr, Container, nullptr, MutableParentObject, PPF_None);
-			ValueStr = ValueStr.Replace(TEXT("\""), TEXT("")).TrimStartAndEnd();
-
-			PropertyValuesSet.Add(ValueStr);
-		}
-
-		if (EnumHasAnyFlags(SearchFlags, EFlowSearchFlags::Tooltips))
-		{
-			TSet<FString>& TooltipsSet = SearchFlagToStringMap.FindOrAdd(EFlowSearchFlags::Tooltips);
-			TooltipsSet.Add(Prop->GetMetaData(TEXT("ToolTip")));
-		}
-
-		if (FStructProperty* StructProp = CastField<FStructProperty>(Prop))
-		{
-			// Recurse into structs (no depth penalty)
-			AppendPropertyValues(ValuePtr, StructProp->Struct, ParentObject, SearchFlagToStringMap, Depth);
-		}
-		else if (FObjectProperty* ObjProp = CastField<FObjectProperty>(Prop))
-		{
-			// Recurse into inline objects (incurs a depth penalty)
-			UObject* Obj = ObjProp->GetObjectPropertyValue(ValuePtr);
-			if (IsValid(Obj) && !Obj->HasAnyFlags(RF_ClassDefaultObject))
-			{
-				AppendPropertyValues(Obj, Obj->GetClass(), Obj, SearchFlagToStringMap, Depth + 1);
+				return Node;
 			}
 		}
 	}
+
+	return nullptr;
 }
 
-bool SFindInFlow::StringMatchesSearchTokens(const TArray<FString>& Tokens, const FString& ComparisonString)
-{
-	int32 MatchedTokenCount = 0;
-	const int32 TotalTokenCount = Tokens.Num();
-
-	// Must match all tokens
-	for (const FString& Token : Tokens)
-	{
-		if (ComparisonString.Contains(Token))
-		{
-			++MatchedTokenCount;
-		}
-		else
-		{
-			break;
-		}
-	}
-
-	if (MatchedTokenCount == TotalTokenCount)
-	{
-		return true;
-	}
-	else
-	{
-		return false;
-	}
-}
-
-bool SFindInFlow::StringSetMatchesSearchTokens(const TArray<FString>& Tokens, const TSet<FString>& StringSet)
-{
-	for (const FString& StringFromSet : StringSet)
-	{
-		if (StringMatchesSearchTokens(Tokens, StringFromSet))
-		{
-			return true;
-		}
-	}
-
-	return false;
-}
-
-TSharedRef<ITableRow> SFindInFlow::OnGenerateRow(FSearchResult InItem, const TSharedRef<STableViewBase>& OwnerTable)
+TSharedRef<ITableRow> SFindInFlow::OnGenerateRow(FSearchResult InItem, const TSharedRef<STableViewBase>& OwnerTable) const
 {
 	return SNew(STableRow<FSearchResult>, OwnerTable)
 		.ToolTip(SNew(SToolTip).Text(InItem->GetToolTipText()))
@@ -945,11 +781,11 @@ void SFindInFlow::OnGetChildren(FSearchResult InItem, TArray<FSearchResult>& Out
 	OutChildren = InItem->Children;
 }
 
-void SFindInFlow::OnTreeSelectionChanged(FSearchResult Item, ESelectInfo::Type)
+void SFindInFlow::OnTreeSelectionChanged(FSearchResult Item, ESelectInfo::Type) const
 {
 	if (Item.IsValid())
 	{
-		Item->OnClick(FlowAssetEditorPtr);
+		(void)Item->OnClick(FlowAssetEditorPtr);
 	}
 }
 
@@ -957,7 +793,7 @@ void SFindInFlow::OnTreeSelectionDoubleClicked(FSearchResult Item)
 {
 	if (Item.IsValid())
 	{
-		Item->OnDoubleClick();
+		(void)Item->OnDoubleClick();
 	}
 }
 

@@ -22,10 +22,11 @@ enum class EFlowSearchFlags : uint32
 	PropertyValues = 1 << 7 UMETA(DisplayName = "Property Values"),
 	AddOns = 1 << 8 UMETA(DisplayName = "Add-Ons"),
 	Subgraphs = 1 << 9 UMETA(DisplayName = "Subgraphs"),
+	PinNames = 1 << 10 UMETA(DisplayName = "Pin Names"),
 
 	All = 
 		Titles | Tooltips | Classes | Comments | Descriptions | ConfigText |
-		PropertyNames | PropertyValues | AddOns | Subgraphs UMETA(Hidden),
+		PropertyNames | PropertyValues | AddOns | Subgraphs | PinNames UMETA(Hidden),
 
 	// Default mask — used at startup and for "reset"
 	DefaultSearchFlags = All UMETA(Hidden),
@@ -48,3 +49,25 @@ enum class EFlowSearchScope : uint8
 	Min = 0 UMETA(Hidden),
 };
 FLOW_ENUM_RANGE_VALUES(EFlowSearchScope);
+
+/**
+ * Pin direction accepted by a pin name match.
+ */
+UENUM()
+enum class EFlowSearchPinDirection : uint8
+{
+	Any,
+	Input,
+	Output,
+};
+
+/**
+ * Pin connection state accepted by a pin name match.
+ */
+UENUM()
+enum class EFlowSearchPinConnectionState : uint8
+{
+	Any,
+	Connected,
+	Unconnected,
+};
