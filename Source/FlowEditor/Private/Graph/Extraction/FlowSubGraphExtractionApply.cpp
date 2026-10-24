@@ -428,8 +428,8 @@ namespace FlowSubGraphExtraction
 
 	bool FExtractionApply::BuildExits()
 	{
-		// A Finish node always exists. An exit leaving through an unnamed pin runs into it; everything else
-		// gets a Custom Output. When nothing routes to it, it stays unconnected for the designer to wire.
+		// Leave Finish unconnected for the designer to wire. Ordinary exits use Custom Outputs so they
+		// cannot terminate the child instance while another branch is still active.
 		const float ExitColumnPosX = static_cast<float>(ClonedRegionMaxX) + Internal::ExitNodeOffsetX;
 		float NextExitNodePosY = ClonedRegionOrigin.Y;
 		FinishGraphNode = FFlowGraphSchemaAction_NewNode::CreateNode(

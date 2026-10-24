@@ -1,10 +1,10 @@
 // Copyright https://github.com/MothCocoon/FlowGraph/graphs/contributors
-
 #include "FlowAsset.h"
 
 #include "FlowLogChannels.h"
 #include "FlowSettings.h"
 #include "FlowSubsystem.h"
+#include "Types/FlowInjectComponentsManager.h"
 #include "AddOns/FlowNodeAddOn.h"
 #include "Asset/FlowAssetParams.h"
 #include "Asset/FlowAssetParamsUtils.h"
@@ -160,6 +160,19 @@ bool UFlowAsset::IsNodeOrAddOnClassAllowed(const UClass* FlowNodeOrAddOnClass, F
 {
 	if (!IsValid(FlowNodeOrAddOnClass))
 	{
+		return false;
+	}
+
+	if (FlowNodeOrAddOnClass->HasAnyClassFlags(CLASS_Abstract | CLASS_Deprecated | CLASS_NewerVersionExists))
+	{
+		if (OutOptionalFailureReason)
+		{
+			*OutOptionalFailureReason = FText::Format(
+				NSLOCTEXT("FlowAsset", "UnsaveableNodeClass",
+					"Class '{0}' cannot be saved because it is abstract, deprecated, or superseded. "
+					"Replace this node or add-on before cooking; its saved reference would be null."),
+				FText::FromString(FlowNodeOrAddOnClass->GetPathName()));
+		}
 		return false;
 	}
 
@@ -381,6 +394,11 @@ EDataValidationResult UFlowAsset::ValidateAsset(FFlowMessageLog& MessageLog) con
 	return EDataValidationResult::Valid;
 }
 
+bool UFlowAsset::ShouldValidateOnSave() const
+{
+	return GetDefault<UFlowSettings>()->bValidateAssetOnSave;
+}
+
 void UFlowAsset::ValidateAddOnTree(UFlowNodeAddOn& AddOn, FFlowMessageLog& MessageLog) const
 {
 	// Filter unauthorized addon nodes
@@ -453,7 +471,7 @@ void UFlowAsset::RegisterNode(const FGuid& NewGuid, UFlowNode* NewNode)
 	NewNode->SetGuid(NewGuid);
 	Nodes.Emplace(NewGuid, NewNode);
 
-	HarvestNodeConnections();
+	HarvestNodeConnections(NewNode);
 
 	if (NewNode->TryUpdateAutoDataPins())
 	{
@@ -504,7 +522,18 @@ void UFlowAsset::HarvestNodeConnections(UFlowNode* TargetNode)
 		bool bNodeDirty = false;
 
 		TMap<FName, FConnectedPin> FoundConnections;
-		const TArray<UEdGraphPin*>& GraphNodePins = FlowNode->GetGraphNode()->Pins;
+		const UEdGraphNode* EdGraphNode = FlowNode->GetGraphNode();
+
+		if (!IsValid(EdGraphNode))
+		{
+			// A node may exist in Nodes map without a GraphNode if the importer has populated
+			// the asset before RegraphFlowAsset has finished linking runtime nodes to their
+			// editor counterparts.
+			// Such nodes have no pins to harvest yet. Skip them.
+			continue;
+		}
+
+		const TArray<UEdGraphPin*>& GraphNodePins = EdGraphNode->Pins;
 
 		for (const UEdGraphPin* ThisPin : GraphNodePins)
 		{
@@ -1125,12 +1154,40 @@ void UFlowAsset::SetupForEditing()
 }
 #endif // WITH_EDITOR
 
+bool UFlowAsset::CanBeInstanced(const UFlowAsset& InTemplateAsset, const UObject* InOwner) const
+{
+	// Called for the template and again for its new instance.
+	// Use the (this != &InTemplateAsset) comparison if you need to test the new instance.
+
+	if (GetDefault<UFlowSettings>()->bRejectFlowInstancesWithInvalidNodes)
+	{
+		for (const TPair<FGuid, UFlowNode*>& Node : ObjectPtrDecay(Nodes))
+		{
+			if (!IsValid(Node.Value))
+			{
+				UE_LOG(LogFlow, Error,
+					TEXT("Flow instance creation rejected an invalid node. Template: '%s', Asset: '%s', "
+						"Node GUID: '%s', Owner: '%s'. Repair and recook the graph; it will not execute."),
+					*InTemplateAsset.GetPathName(), *GetPathName(), *Node.Key.ToString(), *GetPathNameSafe(InOwner));
+				return false;
+			}
+		}
+	}
+
+	return true;
+}
+
 void UFlowAsset::InitializeInstance(const TWeakObjectPtr<UObject> InOwner, UFlowAsset& InTemplateAsset)
 {
 	check(!IsInstanceInitialized());
 
 	Owner = InOwner;
 	TemplateAsset = &InTemplateAsset;
+	// UFlowSubsystem::CreateFlowInstance assigns the root first; callers that initialize directly become their own root.
+	if (!IsValid(OwningRootFlowInstance))
+	{
+		OwningRootFlowInstance = this;
+	}
 
 	// Initialize any customizable Policies before we instantiate nodes
 	InitializePreloadPolicy();
@@ -1158,6 +1215,40 @@ void UFlowAsset::InitializeInstance(const TWeakObjectPtr<UObject> InOwner, UFlow
 			UE_LOG(LogFlow, Error, TEXT("Flow asset '%s' contains an invalid node for GUID '%s', node won't be instanced."), *InTemplateAsset.GetPathName(), *Node.Key.ToString());
 		}
 	}
+}
+
+UFlowAsset* UFlowAsset::GetOwningRootFlowInstance() const
+{
+	return OwningRootFlowInstance.Get();
+}
+
+UFlowInjectComponentsManager* UFlowAsset::GetOrCreateComponentInjectionManager()
+{
+	if (!IsValid(ComponentInjector))
+	{
+		ComponentInjector = NewObject<UFlowInjectComponentsManager>(this);
+		ComponentInjector->InitializeRuntime();
+	}
+	return ComponentInjector;
+}
+
+UFlowInjectComponentsManager* UFlowAsset::GetOrCreateComponentInjectionManagerInRootFlow() const
+{
+	UFlowAsset* Root = GetOwningRootFlowInstance();
+	checkf(IsValid(Root), TEXT("Root component manager access requires a runtime Flow instance."));
+	return Root->GetOrCreateComponentInjectionManager();
+}
+
+
+UFlowInjectComponentsManager* UFlowAsset::FindComponentInjectionManager() const
+{
+	return IsValid(ComponentInjector) ? ComponentInjector.Get() : nullptr;
+}
+
+UFlowInjectComponentsManager* UFlowAsset::FindComponentInjectionManagerInRootFlow() const
+{
+	const UFlowAsset* Root = GetOwningRootFlowInstance();
+	return IsValid(Root) ? Root->FindComponentInjectionManager() : nullptr;
 }
 
 FName UFlowAsset::GetInstanceName() const
@@ -1372,6 +1463,20 @@ void UFlowAsset::DeinitializeInstance()
 			GetFlowSubsystem()->RemoveInstancedTemplate(TemplateAsset);
 		}
 
+		// Unregister this child flow as a user of all components tracked by the root's manager.
+		UFlowInjectComponentsManager* RootManager = FindComponentInjectionManagerInRootFlow();
+		if (IsValid(RootManager) && RootManager != ComponentInjector)
+		{
+			RootManager->UnregisterAllComponentUsers(*this);
+		}
+
+		// Shut down only our own manager, which may be distinct from the root's manager.
+		if (IsValid(ComponentInjector))
+		{
+			ComponentInjector->ShutdownRuntime();
+			ComponentInjector = nullptr;
+		}
+		OwningRootFlowInstance = nullptr;
 		TemplateAsset = nullptr;
 	}
 }
@@ -1644,6 +1749,14 @@ void UFlowAsset::ApplyReplicatedNodeState(const FFlowNodeReplicatedState& Item)
 	}
 }
 
+void UFlowAsset::EnsurePreloadPolicyInitialized()
+{
+	if (!PreloadPolicy.IsValid())
+	{
+		InitializePreloadPolicy();
+	}
+}
+
 void UFlowAsset::InitializePreloadPolicy()
 {
 	if (PreloadPolicy.IsValid())
@@ -1765,7 +1878,7 @@ bool UFlowAsset::ShouldDeferTriggers() const
 
 void UFlowAsset::EnqueueDeferredTrigger(const FGuid& NodeGuid, const FName& PinName, const FConnectedPin& FromPin)
 {
-	// TriggerInput() is the only caller, and only enqueues while it holds an open top scope
+	// TriggerInput() is the only caller, and only enqueues while the top scope is open
 	check(!DeferredTransitionScopes.IsEmpty() && DeferredTransitionScopes.Top()->IsOpen());
 
 	// Always enqueue to the current innermost (top) scope

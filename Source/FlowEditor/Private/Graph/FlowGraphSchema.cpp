@@ -1276,8 +1276,8 @@ void UFlowGraphSchema::GetGraphNodeContextActions(FGraphContextMenuBuilder& Cont
 				ContextMenuBuilder,
 				FText::FromString(NodeCategoryString),
 				FlowNodeBase->GetNodeTitle(),
-				FlowNodeBase->GetNodeToolTip());
-
+				FlowNodeBase->GetNodeToolTip(),
+				FText::FromString(UFlowNodeBase::GetInheritedNodeKeywords(FlowNodeBase->GetClass())));
 		AddOpAction->ParentNode = Cast<UFlowGraphNode>(ContextMenuBuilder.SelectedObjects[0]);
 		AddOpAction->NodeTemplate = OpNode;
 	}

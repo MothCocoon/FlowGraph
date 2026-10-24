@@ -56,8 +56,8 @@ struct FFlowDataPinValueOwner
 		return NAME_None;
 	}
 
-	UObject* GetValueOwnerAsObject();
-	const UObject* GetValueOwnerAsObject() const;
+	FLOW_API UObject* GetValueOwnerAsObject();
+	FLOW_API const UObject* GetValueOwnerAsObject() const;
 
 	bool IsValid() const
 	{
@@ -99,14 +99,17 @@ struct FFlowPinSourceData
 {
 	FFlowPinSourceData(const FFlowPin& InFlowPin, const FFlowDataPinValueOwner& InValueOwner, const FFlowDataPinValue* InDataPinValue = nullptr)
 		: FlowPin(InFlowPin)
+		, OriginalPinName(InFlowPin.PinName)
 		, ValueOwner(InValueOwner)
 		, DataPinValue(InDataPinValue)
 	{
 	}
 
 	FFlowPin FlowPin;
+	FName OriginalPinName;
 	FFlowDataPinValueOwner ValueOwner;
 	const FFlowDataPinValue* DataPinValue = nullptr;
+	bool bAllowMergeInputPin = true;
 };
 
 /**
@@ -149,6 +152,9 @@ public:
 
 	FLOW_API void AddFlowDataPinsForClassProperties(FFlowDataPinValueOwner& ValueOwner);
 
+	/** Stable input identity shared by pin generation and editor copy reconstruction. */
+	FLOW_API static FName MakeDistinctInputPinName(const FGuid& OwnerGuid, const FName& LocalPinName);
+
 	static void BuildNextFlowPinArray(const TArray<FFlowPinSourceData>& PinSourceDatas, TArray<FFlowPin>& OutFlowPins);
 
 	static bool CheckIfProposedPinsMatchPreviousPins(const TArray<FFlowPin>& PrevPins, const TArray<FFlowPin>& ProposedPins);
@@ -172,11 +178,21 @@ protected:
 		TArray<FDeferredValuePinNamePatch>& InOutPatches,
 		const FFlowPinSourceData& PinSourceData);
 
-	/* Input pins: map + disambiguate only when same-name pins have mismatched type signatures. */
+	/* Input pins: honor owner merge policies, then disambiguate legacy mismatched-type duplicates. */
 	static void AddInputDataPinsToMapAndDisambiguate(
 		TArray<FFlowPinSourceData>& InOutAutoInputPinsNext,
 		TMap<FName, FFlowPinPropertySource>& InOutMap,
 		TArray<FDeferredValuePinNamePatch>& InOutDeferredPatches);
+
+	static void ApplyInputPinMergePoliciesAndCreateDistinctNames(
+		TArray<FFlowPinSourceData>& InOutAutoInputPinsNext,
+		TMap<FName, FFlowPinPropertySource>& InOutMap,
+		TArray<FDeferredValuePinNamePatch>& InOutDeferredPatches,
+		TSet<FName>& OutDistinctPinNames);
+
+	static void DisambiguateMergeableInputPinCollisions(
+		TArray<FFlowPinSourceData>& InOutAutoInputPinsNext,
+		const TSet<FName>& DistinctPinNames);
 
 	static bool AreFlowPinTypeSignaturesEquivalent(const FFlowPin& A, const FFlowPin& B);
 

@@ -37,7 +37,7 @@ public:
 	UPROPERTY(EditAnywhere, config, Category = "Default Policies", DisplayName = "Preload Policy", NoClear, meta = (ExcludeBaseStruct, BaseStruct = "/Script/Flow.FlowPreloadPolicy"))
 	FInstancedStruct PreloadPolicy;
 
-	/* What happens to the Flow Asset instance created by SubGraph node after the SubGraph finished.
+	/* What happens after a SubGraph finishes: Deinitialize removes its instance, Keep retains it until rerun or owner deinitialization, and Reuse restarts the same instance on rerun.
 	 * Flow Asset class can override it. */
 	UPROPERTY(Config, EditAnywhere, Category = "Flow")
 	ESubGraphFinishPolicy SubGraphFinishPolicy;
@@ -46,6 +46,12 @@ public:
      * If False, use legacy behavior for backward compatability. */
 	UPROPERTY(Config, EditAnywhere, Category = "Flow")
 	bool bDeferTriggeredOutputsWhileTriggering;
+
+	/* If True, a Flow Asset containing an invalid node won't be instanced.
+	 * If False, invalid nodes are skipped and the rest of the graph runs, as in legacy behavior.
+	 * Keep False in a released game, if its cooked graphs might already contain invalid nodes. */
+	UPROPERTY(Config, EditAnywhere, Category = "Flow")
+	bool bRejectFlowInstancesWithInvalidNodes = false;
 
 	/* If enabled, runtime logs will be added when a flow node signal mode is set to Disabled. */
 	UPROPERTY(Config, EditAnywhere, Category = "Flow")
@@ -76,6 +82,13 @@ public:
 
 	UPROPERTY(Config, EditAnywhere, Category = "SaveSystem")
 	bool bWarnAboutMissingIdentityTags;
+
+#if WITH_EDITORONLY_DATA
+	/* Trigger validation on asset save.
+	 * Flow Asset class can override it. */
+	UPROPERTY(Config, EditAnywhere, Category = "Validation")
+	bool bValidateAssetOnSave = true;
+#endif
 
 public:
 	UClass* GetDefaultExpectedOwnerClass() const;

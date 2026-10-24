@@ -444,6 +444,12 @@ void UFlowNode::RemoveUserOutput(const FName& PinName)
 	}
 }
 
+void UFlowNode::GetCatalogPins(TArray<FFlowPin>& OutInputPins, TArray<FFlowPin>& OutOutputPins) const
+{
+	OutInputPins = InputPins;
+	OutOutputPins = OutputPins;
+}
+
 bool UFlowNode::TryUpdateAutoDataPins()
 {
 	FFlowAutoDataPinsWorkingData WorkingData(AutoInputDataPins, AutoOutputDataPins);
@@ -599,7 +605,7 @@ bool UFlowNode::TryGatherPropertyOwnersAndPopulateResult(
 		return false;
 	}
 
-	const FFlowDataPinValueOwner* ValueOwner = nullptr;
+	const FFlowDataPinValueOwner* ValueOwner;
 	FName PropertyNameToLookup;
 	const TArray<FFlowDataPinValueOwner>& ValueOwners = ValueOwnerCollection.GetValueOwners();
 
@@ -1332,13 +1338,14 @@ bool UFlowNode::TryInitializePreloadHelper()
 		return false;
 	}
 
-	const UFlowAsset* FlowAsset = GetFlowAsset();
+	UFlowAsset* FlowAsset = GetFlowAsset();
 	if (!IsValid(FlowAsset))
 	{
 		LogError(TEXT("IFlowPreloadableInterface node has no valid FlowAsset during InitializeInstance — PreloadHelper will not be created."));
 		return false;
 	}
 
+	FlowAsset->EnsurePreloadPolicyInitialized();
 	const FFlowPreloadPolicy& PreloadPolicy = FlowAsset->GetPreloadPolicy();
 
 	const UScriptStruct* HelperType = PreloadPolicy.GetPreloadHelperStructType(*this);
@@ -1500,7 +1507,10 @@ void UFlowNode::Deactivate()
 		return;
 	}
 
-	if (GetFlowAsset()->FinishPolicy == EFlowFinishPolicy::Abort)
+	const UFlowAsset* FlowAsset = GetFlowAsset();
+	ensureMsgf(IsValid(FlowAsset), TEXT("Flow Node is orphaned and could not retrieve its Flow Asset"));
+
+	if (IsValid(FlowAsset) && FlowAsset->FinishPolicy == EFlowFinishPolicy::Abort)
 	{
 		SetActivationState(EFlowNodeState::Aborted);
 	}
