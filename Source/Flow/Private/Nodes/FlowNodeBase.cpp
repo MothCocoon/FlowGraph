@@ -1257,7 +1257,7 @@ FFlowDataPinResult_InstancedStruct UFlowNodeBase::TryResolveDataPinAsInstancedSt
 FFlowDataPinResult_Object UFlowNodeBase::TryResolveDataPinAsObject(const FName& PinName) const
 {
 	FFlowDataPinResult_Object ResolveResult;
-	TObjectPtr<UObject> Value = nullptr;
+	TObjectPtr<UObject> Value;
 	ResolveResult.Result = TryResolveDataPinValue<FFlowPinType_Object>(PinName, Value);
 	ResolveResult.Value = Value;
 	return ResolveResult;
@@ -1266,7 +1266,7 @@ FFlowDataPinResult_Object UFlowNodeBase::TryResolveDataPinAsObject(const FName& 
 FFlowDataPinResult_Class UFlowNodeBase::TryResolveDataPinAsClass(const FName& PinName) const
 {
 	FFlowDataPinResult_Class ResolveResult;
-	TObjectPtr<UClass> Value = nullptr;
+	TObjectPtr<UClass> Value;
 	ResolveResult.Result = TryResolveDataPinValue<FFlowPinType_Class>(PinName, Value);
 	ResolveResult.SetValueFromObjectPtr(Value);
 	return ResolveResult;

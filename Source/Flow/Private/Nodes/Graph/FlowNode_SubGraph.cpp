@@ -155,7 +155,7 @@ FFlowDataPinResult UFlowNode_SubGraph::TrySupplyDataPin(const FName PinName) con
 		if (bHasAssetParams)
 		{
 			// If not connected, we can source the value from the asset data params (if available)
-			TObjectPtr<UObject> Value = nullptr;
+			TObjectPtr<UObject> Value;
 			const EFlowDataPinResolveResult ResultEnum = Super::TryResolveDataPinValue<FFlowPinType_Object>(AssetParams_MemberName, Value);
 			if (FlowPinType::IsSuccess(ResultEnum) && IsValid(Value))
 			{
