@@ -1,5 +1,4 @@
 // Copyright https://github.com/MothCocoon/FlowGraph/graphs/contributors
-
 #include "Types/FlowPinTypeNamesStandard.h"
 
 const TSet<FName> FFlowPinTypeNamesStandard::AllStandardTypeNames =

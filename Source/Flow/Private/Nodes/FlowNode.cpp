@@ -45,58 +45,29 @@ UFlowNode::UFlowNode()
 	OutputPins = {DefaultOutputPin};
 }
 
+bool UFlowNode::IsSupportedInputPinName(const FName& PinName) const
+{
+	const FFlowPin* InputPin = FindInputPinByName(PinName);
+
+	if (AddOns.IsEmpty())
+	{
+		checkf(InputPin, TEXT("Only AddOns should introduce unknown Pins to a FlowNode, so if we have no AddOns, we should have no unknown pins"));
+		return true;
+	}
+
+	return (InputPin != nullptr);
+}
+
 #if WITH_EDITOR
-void UFlowNode::PostEditChangeProperty(FPropertyChangedEvent& PropertyChangedEvent)
+void UFlowNode::SetupForEditing(UEdGraphNode& EdGraphNode)
 {
-	Super::PostEditChangeProperty(PropertyChangedEvent);
+	Super::SetupForEditing(EdGraphNode);
 
-	if (!PropertyChangedEvent.Property)
-	{
-		return;
-	}
+	// Ensure AddOn editor pointers are correct as soon as we're prepared for editing.
+	EnsureAddOnFlowNodePointersForEditor();
 
-	const FName PropertyName = PropertyChangedEvent.GetPropertyName();
-	const FName MemberPropertyName = PropertyChangedEvent.GetMemberPropertyName();
-	if (PropertyName == GET_MEMBER_NAME_CHECKED(UFlowNode, InputPins) || PropertyName == GET_MEMBER_NAME_CHECKED(UFlowNode, OutputPins)
-		|| MemberPropertyName == GET_MEMBER_NAME_CHECKED(UFlowNode, InputPins) || MemberPropertyName == GET_MEMBER_NAME_CHECKED(UFlowNode, OutputPins))
-	{
-		// Potentially need to rebuild the pins from this node
-		OnReconstructionRequested.ExecuteIfBound();
-	}
-}
-
-EDataValidationResult UFlowNode::ValidateNode()
-{
-	EDataValidationResult ValidationResult = Super::ValidateNode();
-
-	// Validate that output and input pins have unique names
-	TSet<FName> UniquePinNames;
-	ValidateFlowPinArrayIsUnique(InputPins, UniquePinNames, ValidationResult);
-	ValidateFlowPinArrayIsUnique(OutputPins, UniquePinNames, ValidationResult);
-
-	return ValidationResult;
-}
-
-void UFlowNode::ValidateFlowPinArrayIsUnique(const TArray<FFlowPin>& FlowPins, TSet<FName>& InOutUniquePinNames, EDataValidationResult& InOutResult)
-{
-	for (const FFlowPin& FlowPin : FlowPins)
-	{
-		const FName& ThisPinName = FlowPin.PinName;
-		if (InOutUniquePinNames.Contains(ThisPinName))
-		{
-			ValidationLog.Warning<UFlowNode>(
-				*FString::Printf(
-					TEXT("All pin names on a flow node must be unique, pin name %s is duplicated"),
-					*ThisPinName.ToString()),
-				this);
-
-			InOutResult = EDataValidationResult::Invalid;
-		}
-		else
-		{
-			InOutUniquePinNames.Add(FlowPin.PinName);
-		}
-	}
+	// Initialize the preload helper in editor
+	TryInitializePreloadHelper();
 }
 
 void UFlowNode::EnsureAddOnFlowNodePointersForEditor()
@@ -133,18 +104,26 @@ void UFlowNode::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetim
 	// Node isn't a replicated object, Flow Asset instance sends its replicated properties through FlowNodeReplication
 }
 
-bool UFlowNode::IsSupportedInputPinName(const FName& PinName) const
+#if WITH_EDITOR
+void UFlowNode::PostEditChangeProperty(FPropertyChangedEvent& PropertyChangedEvent)
 {
-	const FFlowPin* InputPin = FindInputPinByName(PinName);
+	Super::PostEditChangeProperty(PropertyChangedEvent);
 
-	if (AddOns.IsEmpty())
+	if (!PropertyChangedEvent.Property)
 	{
-		checkf(InputPin, TEXT("Only AddOns should introduce unknown Pins to a FlowNode, so if we have no AddOns, we should have no unknown pins"));
-		return true;
+		return;
 	}
 
-	return (InputPin != nullptr);
+	const FName PropertyName = PropertyChangedEvent.GetPropertyName();
+	const FName MemberPropertyName = PropertyChangedEvent.GetMemberPropertyName();
+	if (PropertyName == GET_MEMBER_NAME_CHECKED(UFlowNode, InputPins) || PropertyName == GET_MEMBER_NAME_CHECKED(UFlowNode, OutputPins)
+		|| MemberPropertyName == GET_MEMBER_NAME_CHECKED(UFlowNode, InputPins) || MemberPropertyName == GET_MEMBER_NAME_CHECKED(UFlowNode, OutputPins))
+	{
+		// Potentially need to rebuild the pins from this node
+		OnReconstructionRequested.ExecuteIfBound();
+	}
 }
+#endif
 
 void UFlowNode::AddInputPins(const TArray<FFlowPin>& Pins)
 {
@@ -163,17 +142,6 @@ void UFlowNode::AddOutputPins(const TArray<FFlowPin>& Pins)
 }
 
 #if WITH_EDITOR
-
-void UFlowNode::SetupForEditing(UEdGraphNode& EdGraphNode)
-{
-	Super::SetupForEditing(EdGraphNode);
-
-	// Ensure AddOn editor pointers are correct as soon as we're prepared for editing.
-	EnsureAddOnFlowNodePointersForEditor();
-
-	// Initialize the preload helper in editor
-	TryInitializePreloadHelper();
-}
 
 bool UFlowNode::RebuildPinArray(const TArray<FName>& NewPinNames, TArray<FFlowPin>& InOutPins, const FFlowPin& DefaultPin)
 {
@@ -450,6 +418,448 @@ void UFlowNode::GetCatalogPins(TArray<FFlowPin>& OutInputPins, TArray<FFlowPin>&
 	OutOutputPins = OutputPins;
 }
 
+void UFlowNode::SetConnections(const TMap<FName, FConnectedPin>& InConnections)
+{
+	const TMap<FName, FConnectedPin> OldConnections = Connections;
+
+	// Early-out if maps are identical (cheap check first, then deep equality).
+	// Note: TMap equality operator exists for comparable value types; keep explicit check to be safe.
+	if (OldConnections.Num() == InConnections.Num())
+	{
+		bool bAllEqual = true;
+		for (const TPair<FName, FConnectedPin>& OldConnection : OldConnections)
+		{
+			const FConnectedPin* Other = InConnections.Find(OldConnection.Key);
+			if (!Other || *Other != OldConnection.Value)
+			{
+				bAllEqual = false;
+				break;
+			}
+		}
+
+		if (bAllEqual)
+		{
+			return;
+		}
+	}
+
+	Connections = InConnections;
+
+	// Compute per-pin deltas and broadcast to self + addons
+	TArray<FFlowPinConnectionChange> Changes;
+	BuildConnectionChangeList(*GetFlowAsset(), OldConnections, Connections, Changes);
+
+	if (!Changes.IsEmpty())
+	{
+		BroadcastEditorPinConnectionsChanged(Changes);
+	}
+}
+#endif
+
+TSet<UFlowNode*> UFlowNode::GatherConnectedNodes() const
+{
+	TSet<UFlowNode*> Result;
+	for (const TPair<FName, FConnectedPin>& Connection : Connections)
+	{
+		Result.Emplace(GetFlowAsset()->GetNode(Connection.Value.NodeGuid));
+	}
+
+	return Result;
+}
+
+FName UFlowNode::GetPinConnectedToNode(const FGuid& OtherNodeGuid)
+{
+	for (const TPair<FName, FConnectedPin>& Connection : Connections)
+	{
+		if (Connection.Value.NodeGuid == OtherNodeGuid)
+		{
+			return Connection.Key;
+		}
+	}
+
+	return NAME_None;
+}
+
+bool UFlowNode::IsInputConnected(const FName& PinName, bool bErrorIfPinNotFound) const
+{
+	// TODO (gtaylor) Maybe we make a blueprint accessible version with the FConnectedPin array access
+	constexpr TArray<FConnectedPin>* ConnectedPins = nullptr;
+	return FindInputPinConnections(PinName, bErrorIfPinNotFound, ConnectedPins);
+}
+
+bool UFlowNode::IsOutputConnected(const FName& PinName, bool bErrorIfPinNotFound) const
+{
+	// TODO (gtaylor) Maybe we make a blueprint accessible version with the FConnectedPin array access
+	constexpr TArray<FConnectedPin>* ConnectedPins = nullptr;
+	return FindOutputPinConnections(PinName, bErrorIfPinNotFound, ConnectedPins);
+}
+
+bool UFlowNode::FindFirstInputPinConnection(const FName& PinName, bool bErrorIfPinNotFound, FConnectedPin& FirstConnectedPin) const
+{
+	if (const FFlowPin* FlowPin = FindInputPinByName(PinName))
+	{
+		return FindFirstInputPinConnection(*FlowPin, FirstConnectedPin);
+	}
+
+	if (bErrorIfPinNotFound)
+	{
+		LogError(FString::Printf(TEXT("Unknown input pin %s"), *PinName.ToString()), EFlowOnScreenMessageType::Temporary);
+	}
+
+	return false;
+}
+
+bool UFlowNode::FindFirstOutputPinConnection(const FName& PinName, bool bErrorIfPinNotFound, FConnectedPin& FirstConnectedPin) const
+{
+	if (const FFlowPin* FlowPin = FindOutputPinByName(PinName))
+	{
+		return FindFirstOutputPinConnection(*FlowPin, FirstConnectedPin);
+	}
+
+	if (bErrorIfPinNotFound)
+	{
+		LogError(FString::Printf(TEXT("Unknown output pin %s"), *PinName.ToString()), EFlowOnScreenMessageType::Temporary);
+	}
+
+	return false;
+}
+
+bool UFlowNode::FindFirstInputPinConnection(const FFlowPin& FlowPin, FConnectedPin& FirstConnectedPin) const
+{
+	// Exec Input pins - not cached
+	// Data Input pins - cached
+	constexpr bool bIsExecCached = false;
+	return FindFirstPinConnection<bIsExecCached>(FlowPin, InputPins, FirstConnectedPin);
+}
+
+bool UFlowNode::FindFirstOutputPinConnection(const FFlowPin& FlowPin, FConnectedPin& FirstConnectedPin) const
+{
+	// Exec Output pins - cached
+	// Data Output pins - not cached
+	constexpr bool bIsExecCached = true;
+	return FindFirstPinConnection<bIsExecCached>(FlowPin, OutputPins, FirstConnectedPin);
+}
+
+bool UFlowNode::FindInputPinConnections(const FName& PinName, bool bErrorIfPinNotFound, TArray<FConnectedPin>* ConnectedPins) const
+{
+	if (const FFlowPin* FlowPin = FindInputPinByName(PinName))
+	{
+		return FindInputPinConnections(*FlowPin, ConnectedPins);
+	}
+
+	if (bErrorIfPinNotFound)
+	{
+		LogError(FString::Printf(TEXT("Unknown input pin %s"), *PinName.ToString()), EFlowOnScreenMessageType::Temporary);
+	}
+
+	return false;
+}
+
+bool UFlowNode::FindOutputPinConnections(const FName& PinName, bool bErrorIfPinNotFound, TArray<FConnectedPin>* ConnectedPins) const
+{
+	if (const FFlowPin* FlowPin = FindOutputPinByName(PinName))
+	{
+		return FindOutputPinConnections(*FlowPin, ConnectedPins);
+	}
+
+	if (bErrorIfPinNotFound)
+	{
+		LogError(FString::Printf(TEXT("Unknown output pin %s"), *PinName.ToString()), EFlowOnScreenMessageType::Temporary);
+	}
+
+	return false;
+}
+
+bool UFlowNode::FindInputPinConnections(const FFlowPin& FlowPin, TArray<FConnectedPin>* ConnectedPins) const
+{
+	// Exec Input pins - not cached
+	// Data Input pins - cached
+	constexpr bool bIsExecCached = false;
+	return FindPinConnections<bIsExecCached>(FlowPin, InputPins, ConnectedPins);
+}
+
+bool UFlowNode::FindOutputPinConnections(const FFlowPin& FlowPin, TArray<FConnectedPin>* ConnectedPins) const
+{
+	// Exec Output pins - cached
+	// Data Output pins - not cached
+	constexpr bool bIsExecCached = true;
+	return FindPinConnections<bIsExecCached>(FlowPin, OutputPins, ConnectedPins);
+}
+
+FFlowPin* UFlowNode::FindInputPinByName(const FName& PinName)
+{
+	if (FFlowPin* FlowPin = FindFlowPinByName(PinName, InputPins))
+	{
+		return FlowPin;
+	}
+
+	return nullptr;
+}
+
+FFlowPin* UFlowNode::FindOutputPinByName(const FName& PinName)
+{
+	if (FFlowPin* FlowPin = FindFlowPinByName(PinName, OutputPins))
+	{
+		return FlowPin;
+	}
+
+	return nullptr;
+}
+
+void UFlowNode::RecursiveFindNodesByClass(UFlowNode* Node, const TSubclassOf<UFlowNode> Class, uint8 Depth, TArray<UFlowNode*>& OutNodes)
+{
+	if (Node)
+	{
+		// Record the node if it is the desired type
+		if (Node->GetClass() == Class)
+		{
+			OutNodes.AddUnique(Node);
+		}
+
+		if (OutNodes.Num() == Depth)
+		{
+			return;
+		}
+
+		// Recurse
+		for (UFlowNode* ConnectedNode : Node->GatherConnectedNodes())
+		{
+			RecursiveFindNodesByClass(ConnectedNode, Class, Depth, OutNodes);
+		}
+	}
+}
+
+bool UFlowNode::FindConnectedNodeForPinCached(const FName& FlowPinName, FConnectedPin& ConnectedPin) const
+{
+	// NOTE (gtaylor) The Connections array only caches:
+	// - exec output pins
+	// - data input pins
+	// In both cases, there must be only one connection (due to schema rules in Flow).
+	// For the opposite direction (exec inputs, data outputs) the uncached version must be used.
+	if (const FConnectedPin* FoundConnectedPin = Connections.Find(FlowPinName))
+	{
+		ConnectedPin = *FoundConnectedPin;
+		return true;
+	}
+
+	return false;
+}
+
+bool UFlowNode::FindConnectedNodeForPinUncached(const FName& PinName, TArray<FConnectedPin>* ConnectedPins) const
+{
+	const UFlowAsset* FlowAsset = GetFlowAsset();
+
+	if (!IsValid(FlowAsset))
+	{
+		return false;
+	}
+
+	check(!ConnectedPins || ConnectedPins->IsEmpty());
+
+	for (const TPair<FGuid, UFlowNode*>& Pair : ObjectPtrDecay(FlowAsset->Nodes))
+	{
+		const UFlowNode* ConnectedFromFlowNode = Pair.Value;
+
+		if (!IsValid(ConnectedFromFlowNode))
+		{
+			continue;
+		}
+
+		for (const TPair<FName, FConnectedPin>& Connection : ConnectedFromFlowNode->Connections)
+		{
+			const FConnectedPin& ConnectedPinStruct = Connection.Value;
+
+			if (ConnectedPinStruct.NodeGuid == NodeGuid && ConnectedPinStruct.PinName == PinName)
+			{
+				if (ConnectedPins)
+				{
+					ConnectedPins->Add(ConnectedPinStruct);
+				}
+				else
+				{
+					// Early return if not collecting the ConnectedPins, since only connected true/false matters
+					return true;
+				}
+			}
+		}
+	}
+
+	if (ConnectedPins && !ConnectedPins->IsEmpty())
+	{
+		return true;
+	}
+
+	return false;
+}
+
+template <bool bExecIsCached>
+bool UFlowNode::FindFirstPinConnection(
+	const FFlowPin& FlowPin,
+	const TArray<FFlowPin>& FlowPinArray,
+	FConnectedPin& FirstConnectedPin) const
+{
+	if (!FlowPinArray.Contains(FlowPin.PinName))
+	{
+		return false;
+	}
+
+	const bool bUseCachedPath = (bExecIsCached == FlowPin.IsExecPin());
+	if (bUseCachedPath)
+	{
+		// Cached category: fast lookup (0/1 connection)
+		return FindConnectedNodeForPinCached(FlowPin.PinName, FirstConnectedPin);
+	}
+	else
+	{
+		// NOTE (gtaylor) For optimal perf, you should use the array signature when asking for uncached path
+		// (aka optimal use should use this branch)
+		TArray<FConnectedPin> ConnectedPins;
+		if (FindConnectedNodeForPinUncached(FlowPin.PinName, &ConnectedPins))
+		{
+			check(ConnectedPins.Num() > 0);
+			FirstConnectedPin = ConnectedPins[0];
+			return true;
+		}
+		else
+		{
+			return false;
+		}
+	}
+}
+
+template <bool bExecIsCached>
+bool UFlowNode::FindPinConnections(const FFlowPin& FlowPin, const TArray<FFlowPin>& FlowPinArray, TArray<FConnectedPin>* ConnectedPins) const
+{
+	if (!FlowPinArray.Contains(FlowPin.PinName))
+	{
+		return false;
+	}
+
+	const bool bUseCachedPath = bExecIsCached == FlowPin.IsExecPin();
+	if (bUseCachedPath)
+	{
+		// NOTE (gtaylor) For optimal perf, you should use the non-array signature when asking for cached path
+		// (aka optimal use should use this branch)
+		FConnectedPin ConnectedPin;
+		const bool bFoundPin = FindConnectedNodeForPinCached(FlowPin.PinName, ConnectedPin);
+		if (bFoundPin && ConnectedPins)
+		{
+			ConnectedPins->Add(ConnectedPin);
+		}
+
+		return bFoundPin;
+	}
+	else
+	{
+		// We don't cache the output data pins for fast lookup in Connections, so use the slow path for them:
+
+		return FindConnectedNodeForPinUncached(FlowPin.PinName, ConnectedPins);
+	}
+}
+
+TArray<FConnectedPin> UFlowNode::GetKnownConnectionsToPin(const FConnectedPin& Pin) const
+{
+	TArray<FConnectedPin> ConnectedPins;
+
+	if (Pin.NodeGuid == NodeGuid)
+	{
+		const FConnectedPin& Connection = Connections.FindRef(Pin.PinName);
+		if (Connection.NodeGuid.IsValid())
+		{
+			ConnectedPins.Add(Connection);
+		}
+	}
+	else
+	{
+		for (const TPair<FName, FConnectedPin>& Connection : Connections)
+		{
+			if (Connection.Value.NodeGuid == Pin.NodeGuid && Connection.Value.PinName == Pin.PinName)
+			{
+				ConnectedPins.Emplace(NodeGuid, Connection.Key);
+			}
+		}
+	}
+	
+	return ConnectedPins;
+}
+
+#if WITH_EDITOR
+void UFlowNode::BuildConnectionChangeList(
+	const UFlowAsset& FlowAsset,
+	const TMap<FName, FConnectedPin>& OldConnections,
+	const TMap<FName, FConnectedPin>& NewConnections,
+	TArray<FFlowPinConnectionChange>& OutChanges)
+{
+	OutChanges.Reset();
+
+	// Gather union of keys
+	TSet<FName> Keys;
+	Keys.Reserve(OldConnections.Num() + NewConnections.Num());
+
+	for (const TPair<FName, FConnectedPin>& KVP : OldConnections)
+	{
+		Keys.Add(KVP.Key);
+	}
+
+	for (const TPair<FName, FConnectedPin>& KVP : NewConnections)
+	{
+		Keys.Add(KVP.Key);
+	}
+
+	for (const FName& PinName : Keys)
+	{
+		const FConnectedPin* OldConnectedPin = OldConnections.Find(PinName);
+		const FConnectedPin* NewConnectedPin = NewConnections.Find(PinName);
+
+		const bool bHadOld = (OldConnectedPin != nullptr);
+		const bool bHasNew = (NewConnectedPin != nullptr);
+
+		// If present in both and equal => no change
+		if (bHadOld && bHasNew && (*OldConnectedPin == *NewConnectedPin))
+		{
+			continue;
+		}
+
+		UFlowNode* OldConnectedNode = nullptr;
+		FName OldConnectedPinName;
+		if (bHadOld)
+		{
+			OldConnectedNode = FlowAsset.GetNode(OldConnectedPin->NodeGuid);
+			OldConnectedPinName = OldConnectedPin->PinName;
+		}
+
+		UFlowNode* NewConnectedNode = nullptr;
+		FName NewConnectedPinName;
+		if (bHasNew)
+		{
+			NewConnectedNode = FlowAsset.GetNode(NewConnectedPin->NodeGuid);
+			NewConnectedPinName = NewConnectedPin->PinName;
+		}
+
+		FFlowPinConnectionChange Change =
+			FFlowPinConnectionChange(
+				PinName,
+				OldConnectedNode,
+				OldConnectedPinName,
+				NewConnectedNode,
+				NewConnectedPinName);
+
+		OutChanges.Add(MoveTemp(Change));
+	}
+}
+
+void UFlowNode::BroadcastEditorPinConnectionsChanged(const TArray<FFlowPinConnectionChange>& Changes)
+{
+	OnEditorPinConnectionsChanged(Changes);
+
+	ForEachAddOn([&Changes](UFlowNodeAddOn& AddOn) -> EFlowForEachAddOnFunctionReturnValue
+		{
+			AddOn.OnEditorPinConnectionsChanged(Changes);
+
+			return EFlowForEachAddOnFunctionReturnValue::Continue;
+		});
+}
+
 bool UFlowNode::TryUpdateAutoDataPins()
 {
 	FFlowAutoDataPinsWorkingData WorkingData(AutoInputDataPins, AutoOutputDataPins);
@@ -569,6 +979,26 @@ FFlowDataPinResult UFlowNode::TrySupplyDataPin(const FName PinName) const
 	return FFlowDataPinResult(EFlowDataPinResolveResult::FailedUnknownPin);
 }
 
+void UFlowNode::TryAddSupplierDataToArray(const FFlowPinValueSupplierData& InOutSupplierData, TFlowPinValueSupplierDataArray& InOutPinValueSupplierDatas)
+{
+	// If the connected node can supply data pin values, insert it into the top of the priority queue
+	const UFlowNode* SupplierFlowNode = CastChecked<UFlowNode>(InOutSupplierData.PinValueSupplier);
+	if (InOutSupplierData.PinValueSupplier && SupplierFlowNode->CanSupplyDataPinValues())
+	{
+		InOutPinValueSupplierDatas.Add(InOutSupplierData);
+	}
+
+	// Exception case for nodes with external suppliers, recurse here to crawl further
+	// to the external supplier's connected pin as our most preferred source (see block comment above).
+	if (const IFlowNodeWithExternalDataPinSupplierInterface* HasExternalPinSupplierInterface = Cast<IFlowNodeWithExternalDataPinSupplierInterface>(SupplierFlowNode))
+	{
+		if (const UFlowNode* ExternalDataPinSupplierFlowNode = Cast<UFlowNode>(HasExternalPinSupplierInterface->GetExternalDataPinSupplier()))
+		{
+			ExternalDataPinSupplierFlowNode->TryGetFlowDataPinSupplierDatasForPinName(InOutSupplierData.SupplierPinName, InOutPinValueSupplierDatas);
+		}
+	}
+}
+
 void UFlowNode::GatherDataPinValueOwnerCollection(FFlowDataPinValueOwnerCollection& ValueOwnerCollection) const
 {
 	// When called in the editor, 'this' may mutate to disambiguate generated data pins
@@ -593,7 +1023,7 @@ bool UFlowNode::TryGatherPropertyOwnersAndPopulateResult(
 {
 	// Gather all potential UObject instances that might own properties
 	// mapped to data pins on this node (usually the node itself + any referenced objects)
-	FFlowDataPinValueOwnerCollection ValueOwnerCollection; 
+	FFlowDataPinValueOwnerCollection ValueOwnerCollection;
 	GatherDataPinValueOwnerCollection(ValueOwnerCollection);
 
 	// Early out if we have no possible owners at all
@@ -629,7 +1059,7 @@ bool UFlowNode::TryGatherPropertyOwnersAndPopulateResult(
 			return false;
 		}
 	}
-	else 
+	else
 	{
 		check(!ValueOwners.IsEmpty());
 
@@ -658,7 +1088,6 @@ bool UFlowNode::TryGatherPropertyOwnersAndPopulateResult(
 
 	return false;
 }
-// --
 
 bool UFlowNode::TryGetFlowDataPinSupplierDatasForPinName(const FName& PinName, TFlowPinValueSupplierDataArray& InOutPinValueSupplierDatas) const
 {
@@ -668,7 +1097,7 @@ bool UFlowNode::TryGetFlowDataPinSupplierDatasForPinName(const FName& PinName, T
 	// It works in two modes:
 	// - Standard case - Add a connected node as the priority supplier, and this node as the default value supplier
 	// - Exception case - for External data supplied nodes, we recurse (below) to crawl further and add the supplier
-	//   for the external supplier's node.  In practice, this is a node (A) connected to a Start node, which is 
+	//   for the external supplier's node.  In practice, this is a node (A) connected to a Start node, which is
 	//   supplied by its outer SubGraph node, which sources its values from the nodes that are connected to the external inputs
 	//   that the subgraph node added as inputs for its instanced subgraph).  The external supplier's value has top priority,
 	//   then it falls to the standard case sources (as above).
@@ -704,26 +1133,6 @@ bool UFlowNode::TryGetFlowDataPinSupplierDatasForPinName(const FName& PinName, T
 	}
 
 	return !InOutPinValueSupplierDatas.IsEmpty();
-}
-
-void UFlowNode::TryAddSupplierDataToArray(const FFlowPinValueSupplierData& InOutSupplierData, TFlowPinValueSupplierDataArray& InOutPinValueSupplierDatas)
-{
-	// If the connected node can supply data pin values, insert it into the top of the priority queue
-	const UFlowNode* SupplierFlowNode = CastChecked<UFlowNode>(InOutSupplierData.PinValueSupplier);
-	if (InOutSupplierData.PinValueSupplier && SupplierFlowNode->CanSupplyDataPinValues())
-	{
-		InOutPinValueSupplierDatas.Add(InOutSupplierData);
-	}
-
-	// Exception case for nodes with external suppliers, recurse here to crawl further 
-	// to the external supplier's connected pin as our most preferred source (see block comment above).
-	if (const IFlowNodeWithExternalDataPinSupplierInterface* HasExternalPinSupplierInterface = Cast<IFlowNodeWithExternalDataPinSupplierInterface>(SupplierFlowNode))
-	{
-		if (const UFlowNode* ExternalDataPinSupplierFlowNode = Cast<UFlowNode>(HasExternalPinSupplierInterface->GetExternalDataPinSupplier()))
-		{
-			ExternalDataPinSupplierFlowNode->TryGetFlowDataPinSupplierDatasForPinName(InOutSupplierData.SupplierPinName, InOutPinValueSupplierDatas);
-		}
-	}
 }
 
 // #FlowDataPinLegacy
@@ -765,447 +1174,40 @@ void UFlowNode::FixupDataPinTypesForPin(FFlowPin& MutableDataPin)
 // --
 
 #if WITH_EDITOR
-
-void UFlowNode::BuildConnectionChangeList(
-	const UFlowAsset& FlowAsset,
-	const TMap<FName, FConnectedPin>& OldConnections,
-	const TMap<FName, FConnectedPin>& NewConnections,
-	TArray<FFlowPinConnectionChange>& OutChanges)
+EDataValidationResult UFlowNode::ValidateNode()
 {
-	OutChanges.Reset();
+	EDataValidationResult ValidationResult = Super::ValidateNode();
 
-	// Gather union of keys
-	TSet<FName> Keys;
-	Keys.Reserve(OldConnections.Num() + NewConnections.Num());
+	// Validate that output and input pins have unique names
+	TSet<FName> UniquePinNames;
+	ValidateFlowPinArrayIsUnique(InputPins, UniquePinNames, ValidationResult);
+	ValidateFlowPinArrayIsUnique(OutputPins, UniquePinNames, ValidationResult);
 
-	for (const TPair<FName, FConnectedPin>& KVP : OldConnections)
+	return ValidationResult;
+}
+
+void UFlowNode::ValidateFlowPinArrayIsUnique(const TArray<FFlowPin>& FlowPins, TSet<FName>& InOutUniquePinNames, EDataValidationResult& InOutResult)
+{
+	for (const FFlowPin& FlowPin : FlowPins)
 	{
-		Keys.Add(KVP.Key);
-	}
-
-	for (const TPair<FName, FConnectedPin>& KVP : NewConnections)
-	{
-		Keys.Add(KVP.Key);
-	}
-
-	for (const FName& PinName : Keys)
-	{
-		const FConnectedPin* OldConnectedPin = OldConnections.Find(PinName);
-		const FConnectedPin* NewConnectedPin = NewConnections.Find(PinName);
-
-		const bool bHadOld = (OldConnectedPin != nullptr);
-		const bool bHasNew = (NewConnectedPin != nullptr);
-
-		// If present in both and equal => no change
-		if (bHadOld && bHasNew && (*OldConnectedPin == *NewConnectedPin))
+		const FName& ThisPinName = FlowPin.PinName;
+		if (InOutUniquePinNames.Contains(ThisPinName))
 		{
-			continue;
-		}
+			ValidationLog.Warning<UFlowNode>(
+				*FString::Printf(
+					TEXT("All pin names on a flow node must be unique, pin name %s is duplicated"),
+					*ThisPinName.ToString()),
+				this);
 
-		UFlowNode* OldConnectedNode = nullptr;
-		FName OldConnectedPinName;
-		if (bHadOld)
-		{
-			OldConnectedNode = FlowAsset.GetNode(OldConnectedPin->NodeGuid);
-			OldConnectedPinName = OldConnectedPin->PinName;
-		}
-
-		UFlowNode* NewConnectedNode = nullptr;
-		FName NewConnectedPinName;
-		if (bHasNew)
-		{
-			NewConnectedNode = FlowAsset.GetNode(NewConnectedPin->NodeGuid);
-			NewConnectedPinName = NewConnectedPin->PinName;
-		}
-
-		FFlowPinConnectionChange Change =
-			FFlowPinConnectionChange(
-				PinName,
-				OldConnectedNode,
-				OldConnectedPinName,
-				NewConnectedNode,
-				NewConnectedPinName);
-
-		OutChanges.Add(MoveTemp(Change));
-	}
-}
-
-void UFlowNode::BroadcastEditorPinConnectionsChanged(const TArray<FFlowPinConnectionChange>& Changes)
-{
-	OnEditorPinConnectionsChanged(Changes);
-
-	ForEachAddOn([&Changes](UFlowNodeAddOn& AddOn) -> EFlowForEachAddOnFunctionReturnValue
-		{
-			AddOn.OnEditorPinConnectionsChanged(Changes);
-
-			return EFlowForEachAddOnFunctionReturnValue::Continue;
-		});
-}
-
-void UFlowNode::SetConnections(const TMap<FName, FConnectedPin>& InConnections)
-{
-	const TMap<FName, FConnectedPin> OldConnections = Connections;
-
-	// Early-out if maps are identical (cheap check first, then deep equality).
-	// Note: TMap equality operator exists for comparable value types; keep explicit check to be safe.
-	if (OldConnections.Num() == InConnections.Num())
-	{
-		bool bAllEqual = true;
-		for (const TPair<FName, FConnectedPin>& OldConnection : OldConnections)
-		{
-			const FConnectedPin* Other = InConnections.Find(OldConnection.Key);
-			if (!Other || *Other != OldConnection.Value)
-			{
-				bAllEqual = false;
-				break;
-			}
-		}
-
-		if (bAllEqual)
-		{
-			return;
-		}
-	}
-
-	Connections = InConnections;
-
-	// Compute per-pin deltas and broadcast to self + addons
-	TArray<FFlowPinConnectionChange> Changes;
-	BuildConnectionChangeList(*GetFlowAsset(), OldConnections, Connections, Changes);
-
-	if (!Changes.IsEmpty())
-	{
-		BroadcastEditorPinConnectionsChanged(Changes);
-	}
-}
-#endif
-
-TSet<UFlowNode*> UFlowNode::GatherConnectedNodes() const
-{
-	TSet<UFlowNode*> Result;
-	for (const TPair<FName, FConnectedPin>& Connection : Connections)
-	{
-		Result.Emplace(GetFlowAsset()->GetNode(Connection.Value.NodeGuid));
-	}
-
-	return Result;
-}
-
-FName UFlowNode::GetPinConnectedToNode(const FGuid& OtherNodeGuid)
-{
-	for (const TPair<FName, FConnectedPin>& Connection : Connections)
-	{
-		if (Connection.Value.NodeGuid == OtherNodeGuid)
-		{
-			return Connection.Key;
-		}
-	}
-
-	return NAME_None;
-}
-
-bool UFlowNode::IsInputConnected(const FName& PinName, bool bErrorIfPinNotFound) const
-{
-	// TODO (gtaylor) Maybe we make a blueprint accessible version with the FConnectedPin array access
-	constexpr TArray<FConnectedPin>* ConnectedPins = nullptr;
-	return FindInputPinConnections(PinName, bErrorIfPinNotFound, ConnectedPins);
-}
-
-bool UFlowNode::IsOutputConnected(const FName& PinName, bool bErrorIfPinNotFound) const
-{
-	// TODO (gtaylor) Maybe we make a blueprint accessible version with the FConnectedPin array access
-	constexpr TArray<FConnectedPin>* ConnectedPins = nullptr;
-	return FindOutputPinConnections(PinName, bErrorIfPinNotFound, ConnectedPins);
-}
-
-bool UFlowNode::FindFirstInputPinConnection(const FName& PinName, bool bErrorIfPinNotFound, FConnectedPin& FirstConnectedPin) const
-{
-	if (const FFlowPin* FlowPin = FindInputPinByName(PinName))
-	{
-		return FindFirstInputPinConnection(*FlowPin, FirstConnectedPin);
-	}
-
-	if (bErrorIfPinNotFound)
-	{
-		LogError(FString::Printf(TEXT("Unknown input pin %s"), *PinName.ToString()), EFlowOnScreenMessageType::Temporary);
-	}
-
-	return false;
-}
-
-bool UFlowNode::FindInputPinConnections(const FName& PinName, bool bErrorIfPinNotFound, TArray<FConnectedPin>* ConnectedPins) const
-{
-	if (const FFlowPin* FlowPin = FindInputPinByName(PinName))
-	{
-		return FindInputPinConnections(*FlowPin, ConnectedPins);
-	}
-
-	if (bErrorIfPinNotFound)
-	{
-		LogError(FString::Printf(TEXT("Unknown input pin %s"), *PinName.ToString()), EFlowOnScreenMessageType::Temporary);
-	}
-
-	return false;
-}
-
-bool UFlowNode::FindFirstOutputPinConnection(const FName& PinName, bool bErrorIfPinNotFound, FConnectedPin& FirstConnectedPin) const
-{
-	if (const FFlowPin* FlowPin = FindOutputPinByName(PinName))
-	{
-		return FindFirstOutputPinConnection(*FlowPin, FirstConnectedPin);
-	}
-
-	if (bErrorIfPinNotFound)
-	{
-		LogError(FString::Printf(TEXT("Unknown output pin %s"), *PinName.ToString()), EFlowOnScreenMessageType::Temporary);
-	}
-
-	return false;
-}
-
-bool UFlowNode::FindOutputPinConnections(const FName& PinName, bool bErrorIfPinNotFound, TArray<FConnectedPin>* ConnectedPins) const
-{
-	if (const FFlowPin* FlowPin = FindOutputPinByName(PinName))
-	{
-		return FindOutputPinConnections(*FlowPin, ConnectedPins);
-	}
-
-	if (bErrorIfPinNotFound)
-	{
-		LogError(FString::Printf(TEXT("Unknown output pin %s"), *PinName.ToString()), EFlowOnScreenMessageType::Temporary);
-	}
-
-	return false;
-}
-
-template <bool bExecIsCached>
-bool UFlowNode::FindFirstPinConnection(
-	const FFlowPin& FlowPin,
-	const TArray<FFlowPin>& FlowPinArray,
-	FConnectedPin& FirstConnectedPin) const
-{
-	if (!FlowPinArray.Contains(FlowPin.PinName))
-	{
-		return false;
-	}
-
-	const bool bUseCachedPath = (bExecIsCached == FlowPin.IsExecPin());
-	if (bUseCachedPath)
-	{
-		// Cached category: fast lookup (0/1 connection)
-		return FindConnectedNodeForPinCached(FlowPin.PinName, FirstConnectedPin);
-	}
-	else
-	{
-		// NOTE (gtaylor) For optimal perf, you should use the array signature when asking for uncached path
-		// (aka optimal use should use this branch)
-		TArray<FConnectedPin> ConnectedPins;
-		if (FindConnectedNodeForPinUncached(FlowPin.PinName, &ConnectedPins))
-		{
-			check(ConnectedPins.Num() > 0);
-			FirstConnectedPin = ConnectedPins[0];
-			return true;
+			InOutResult = EDataValidationResult::Invalid;
 		}
 		else
 		{
-			return false;
+			InOutUniquePinNames.Add(FlowPin.PinName);
 		}
 	}
 }
-
-template <bool bExecIsCached>
-bool UFlowNode::FindPinConnections(const FFlowPin& FlowPin, const TArray<FFlowPin>& FlowPinArray, TArray<FConnectedPin>* ConnectedPins) const
-{
-	if (!FlowPinArray.Contains(FlowPin.PinName))
-	{
-		return false;
-	}
-
-	const bool bUseCachedPath = bExecIsCached == FlowPin.IsExecPin();
-	if (bUseCachedPath)
-	{
-		// NOTE (gtaylor) For optimal perf, you should use the non-array signature when asking for cached path
-		// (aka optimal use should use this branch)
-		FConnectedPin ConnectedPin;
-		const bool bFoundPin = FindConnectedNodeForPinCached(FlowPin.PinName, ConnectedPin);
-		if (bFoundPin && ConnectedPins)
-		{
-			ConnectedPins->Add(ConnectedPin);
-		}
-
-		return bFoundPin;
-	}
-	else
-	{
-		// We don't cache the output data pins for fast lookup in Connections, so use the slow path for them:
-
-		return FindConnectedNodeForPinUncached(FlowPin.PinName, ConnectedPins);
-	}
-}
-
-bool UFlowNode::FindFirstInputPinConnection(const FFlowPin& FlowPin, FConnectedPin& FirstConnectedPin) const
-{
-	// Exec Input pins - not cached
-	// Data Input pins - cached
-	constexpr bool bIsExecCached = false;
-	return FindFirstPinConnection<bIsExecCached>(FlowPin, InputPins, FirstConnectedPin);
-}
-
-bool UFlowNode::FindInputPinConnections(const FFlowPin& FlowPin, TArray<FConnectedPin>* ConnectedPins) const
-{
-	// Exec Input pins - not cached
-	// Data Input pins - cached
-	constexpr bool bIsExecCached = false;
-	return FindPinConnections<bIsExecCached>(FlowPin, InputPins, ConnectedPins);
-}
-
-bool UFlowNode::FindFirstOutputPinConnection(const FFlowPin& FlowPin, FConnectedPin& FirstConnectedPin) const
-{
-	// Exec Output pins - cached
-	// Data Output pins - not cached
-	constexpr bool bIsExecCached = true;
-	return FindFirstPinConnection<bIsExecCached>(FlowPin, OutputPins, FirstConnectedPin);
-}
-
-bool UFlowNode::FindOutputPinConnections(const FFlowPin& FlowPin, TArray<FConnectedPin>* ConnectedPins) const
-{
-	// Exec Output pins - cached
-	// Data Output pins - not cached
-	constexpr bool bIsExecCached = true;
-	return FindPinConnections<bIsExecCached>(FlowPin, OutputPins, ConnectedPins);
-}
-
-FFlowPin* UFlowNode::FindInputPinByName(const FName& PinName)
-{
-	if (FFlowPin* FlowPin = FindFlowPinByName(PinName, InputPins))
-	{
-		return FlowPin;
-	}
-
-	return nullptr;
-}
-
-FFlowPin* UFlowNode::FindOutputPinByName(const FName& PinName)
-{
-	if (FFlowPin* FlowPin = FindFlowPinByName(PinName, OutputPins))
-	{
-		return FlowPin;
-	}
-
-	return nullptr;
-}
-
-bool UFlowNode::FindConnectedNodeForPinCached(const FName& FlowPinName, FConnectedPin& ConnectedPin) const
-{
-	// NOTE (gtaylor) The Connections array only caches:
-	// - exec output pins
-	// - data input pins
-	// In both cases, there must be only one connection (due to schema rules in Flow).
-	// For the opposite direction (exec inputs, data outputs) the uncached version must be used.
-	if (const FConnectedPin* FoundConnectedPin = Connections.Find(FlowPinName))
-	{
-		ConnectedPin = *FoundConnectedPin;
-		return true;
-	}
-
-	return false;
-}
-
-bool UFlowNode::FindConnectedNodeForPinUncached(const FName& PinName, TArray<FConnectedPin>* ConnectedPins) const
-{
-	const UFlowAsset* FlowAsset = GetFlowAsset();
-
-	if (!IsValid(FlowAsset))
-	{
-		return false;
-	}
-
-	check(!ConnectedPins || ConnectedPins->IsEmpty());
-
-	for (const TPair<FGuid, UFlowNode*>& Pair : ObjectPtrDecay(FlowAsset->Nodes))
-	{
-		const UFlowNode* ConnectedFromFlowNode = Pair.Value;
-
-		if (!IsValid(ConnectedFromFlowNode))
-		{
-			continue;
-		}
-
-		for (const TPair<FName, FConnectedPin>& Connection : ConnectedFromFlowNode->Connections)
-		{
-			const FConnectedPin& ConnectedPinStruct = Connection.Value;
-
-			if (ConnectedPinStruct.NodeGuid == NodeGuid && ConnectedPinStruct.PinName == PinName)
-			{
-				if (ConnectedPins)
-				{
-					ConnectedPins->Add(ConnectedPinStruct);
-				}
-				else
-				{
-					// Early return if not collecting the ConnectedPins, since only connected true/false matters
-					return true;
-				}
-			}
-		}
-	}
-
-	if (ConnectedPins && !ConnectedPins->IsEmpty())
-	{
-		return true;
-	}
-
-	return false;
-}
-
-TArray<FConnectedPin> UFlowNode::GetKnownConnectionsToPin(const FConnectedPin& Pin) const
-{
-	TArray<FConnectedPin> ConnectedPins;
-
-	if (Pin.NodeGuid == NodeGuid)
-	{
-		const FConnectedPin& Connection = Connections.FindRef(Pin.PinName);
-		if (Connection.NodeGuid.IsValid())
-		{
-			ConnectedPins.Add(Connection);
-		}
-	}
-	else
-	{
-		for (const TPair<FName, FConnectedPin>& Connection : Connections)
-		{
-			if (Connection.Value.NodeGuid == Pin.NodeGuid && Connection.Value.PinName == Pin.PinName)
-			{
-				ConnectedPins.Emplace(NodeGuid, Connection.Key);
-			}
-		}
-	}
-	
-	return ConnectedPins;
-}
-
-void UFlowNode::RecursiveFindNodesByClass(UFlowNode* Node, const TSubclassOf<UFlowNode> Class, uint8 Depth, TArray<UFlowNode*>& OutNodes)
-{
-	if (Node)
-	{
-		// Record the node if it is the desired type
-		if (Node->GetClass() == Class)
-		{
-			OutNodes.AddUnique(Node);
-		}
-
-		if (OutNodes.Num() == Depth)
-		{
-			return;
-		}
-
-		// Recurse
-		for (UFlowNode* ConnectedNode : Node->GatherConnectedNodes())
-		{
-			RecursiveFindNodesByClass(ConnectedNode, Class, Depth, OutNodes);
-		}
-	}
-}
+#endif
 
 void UFlowNode::InitializeInstance()
 {
@@ -1263,117 +1265,6 @@ void UFlowNode::SetActivationState(const EFlowNodeState NewActivationState)
 		ActivationState = NewActivationState;
 		MarkReplicatedPropertiesDirty();
 	}
-}
-
-bool UFlowNode::DispatchExecuteInputToPreloadHelper(const FName& PinName)
-{
-	FLOW_ASSERT_ENUM_MAX(EFlowPreloadInputResult, 2);
-
-	if (FFlowPreloadHelper* Helper = PreloadHelper.GetMutablePtr())
-	{
-		return Helper->OnNodeExecuteInput(*this, PinName) == EFlowPreloadInputResult::Handled;
-	}
-
-	return false;
-}
-
-bool UFlowNode::IsContentPreloaded() const
-{
-	if (const FFlowPreloadHelper* Helper = PreloadHelper.GetPtr())
-	{
-		return Helper->IsContentPreloaded();
-	}
-
-	return false;
-}
-
-void UFlowNode::NotifyPreloadComplete()
-{
-	FLOW_ASSERT_ENUM_MAX(EFlowPreloadResult, 2);
-
-	if (FFlowPreloadHelper* Helper = PreloadHelper.GetMutablePtr())
-	{
-		if (Helper->OnPreloadComplete(*this) == EFlowPreloadResult::Completed)
-		{
-			TriggerOutput(FFlowPreloadHelper::OUTPIN_Preloaded.PinName, false);
-		}
-	}
-}
-
-void UFlowNode::TriggerPreload()
-{
-	if (!IsContentPreloaded())
-	{
-		if (FFlowPreloadHelper* Helper = PreloadHelper.GetMutablePtr())
-		{
-			Helper->TriggerPreload(*this);
-		}
-	}
-}
-
-void UFlowNode::TriggerFlush()
-{
-	if (FFlowPreloadHelper* Helper = PreloadHelper.GetMutablePtr())
-	{
-		Helper->TriggerFlush(*this);
-	}
-}
-
-bool UFlowNode::TryInitializePreloadHelper()
-{
-	// Allocate a helper if the node itself or any of its addons implements IFlowPreloadableInterface.
-	bool bIsPreloadable = IFlowPreloadableInterface::ImplementsInterfaceSafe(this);
-
-	if (!bIsPreloadable)
-	{
-		ForEachAddOnForClass<UFlowPreloadableInterface>([&bIsPreloadable](UFlowNodeAddOn& /*AddOn*/)
-		{
-			bIsPreloadable = true;
-			return EFlowForEachAddOnFunctionReturnValue::BreakWithSuccess;
-		});
-	}
-
-	if (!bIsPreloadable)
-	{
-		return false;
-	}
-
-	UFlowAsset* FlowAsset = GetFlowAsset();
-	if (!IsValid(FlowAsset))
-	{
-		LogError(TEXT("IFlowPreloadableInterface node has no valid FlowAsset during InitializeInstance — PreloadHelper will not be created."));
-		return false;
-	}
-
-	FlowAsset->EnsurePreloadPolicyInitialized();
-	const FFlowPreloadPolicy& PreloadPolicy = FlowAsset->GetPreloadPolicy();
-
-	const UScriptStruct* HelperType = PreloadPolicy.GetPreloadHelperStructType(*this);
-	if (!IsValid(HelperType))
-	{
-		LogError(TEXT("FFlowPreloadPolicy::GetPreloadHelperStructType returned null — PreloadHelper will not be created."));
-		return false;
-	}
-
-	PreloadHelper.InitializeAsScriptStruct(HelperType);
-
-	if (FFlowPreloadHelper* Helper = PreloadHelper.GetMutablePtr())
-	{
-		Helper->OnNodeInitializeInstance(*this);
-		return true;
-	}
-
-	return false;
-}
-
-void UFlowNode::DeinitializePreloadHelper()
-{
-	if (FFlowPreloadHelper* Helper = PreloadHelper.GetMutablePtr())
-	{
-		Helper->OnNodeDeinitializeInstance(*this);
-	}
-
-	PreloadHelper.Reset();
 }
 
 void UFlowNode::TriggerInput(const FName& PinName, const EFlowPinActivationType ActivationType /*= Default*/)
@@ -1440,6 +1331,29 @@ void UFlowNode::TriggerInput(const FName& PinName, const EFlowPinActivationType 
 	}
 }
 
+void UFlowNode::Deactivate()
+{
+	if (SignalMode == EFlowSignalMode::PassThrough)
+	{
+		// there is nothing to deactivate, node was never active
+		return;
+	}
+
+	const UFlowAsset* FlowAsset = GetFlowAsset();
+	ensureMsgf(IsValid(FlowAsset), TEXT("Flow Node is orphaned and could not retrieve its Flow Asset"));
+
+	if (IsValid(FlowAsset) && FlowAsset->FinishPolicy == EFlowFinishPolicy::Abort)
+	{
+		SetActivationState(EFlowNodeState::Aborted);
+	}
+	else
+	{
+		SetActivationState(EFlowNodeState::Completed);
+	}
+
+	Cleanup();
+}
+
 void UFlowNode::TriggerFirstOutput(const bool bFinish)
 {
 	if (OutputPins.Num() > 0)
@@ -1499,29 +1413,6 @@ void UFlowNode::Finish()
 	GetFlowAsset()->FinishNode(this);
 }
 
-void UFlowNode::Deactivate()
-{
-	if (SignalMode == EFlowSignalMode::PassThrough)
-	{
-		// there is nothing to deactivate, node was never active
-		return;
-	}
-
-	const UFlowAsset* FlowAsset = GetFlowAsset();
-	ensureMsgf(IsValid(FlowAsset), TEXT("Flow Node is orphaned and could not retrieve its Flow Asset"));
-
-	if (IsValid(FlowAsset) && FlowAsset->FinishPolicy == EFlowFinishPolicy::Abort)
-	{
-		SetActivationState(EFlowNodeState::Aborted);
-	}
-	else
-	{
-		SetActivationState(EFlowNodeState::Completed);
-	}
-
-	Cleanup();
-}
-
 void UFlowNode::ResetRecords()
 {
 	SetActivationState(EFlowNodeState::NeverActivated);
@@ -1530,6 +1421,117 @@ void UFlowNode::ResetRecords()
 	InputRecords.Empty();
 	OutputRecords.Empty();
 #endif
+}
+
+void UFlowNode::TriggerPreload()
+{
+	if (!IsContentPreloaded())
+	{
+		if (FFlowPreloadHelper* Helper = PreloadHelper.GetMutablePtr())
+		{
+			Helper->TriggerPreload(*this);
+		}
+	}
+}
+
+void UFlowNode::TriggerFlush()
+{
+	if (FFlowPreloadHelper* Helper = PreloadHelper.GetMutablePtr())
+	{
+		Helper->TriggerFlush(*this);
+	}
+}
+
+bool UFlowNode::IsContentPreloaded() const
+{
+	if (const FFlowPreloadHelper* Helper = PreloadHelper.GetPtr())
+	{
+		return Helper->IsContentPreloaded();
+	}
+
+	return false;
+}
+
+void UFlowNode::NotifyPreloadComplete()
+{
+	FLOW_ASSERT_ENUM_MAX(EFlowPreloadResult, 2);
+
+	if (FFlowPreloadHelper* Helper = PreloadHelper.GetMutablePtr())
+	{
+		if (Helper->OnPreloadComplete(*this) == EFlowPreloadResult::Completed)
+		{
+			TriggerOutput(FFlowPreloadHelper::OUTPIN_Preloaded.PinName, false);
+		}
+	}
+}
+
+bool UFlowNode::TryInitializePreloadHelper()
+{
+	// Allocate a helper if the node itself or any of its addons implements IFlowPreloadableInterface.
+	bool bIsPreloadable = IFlowPreloadableInterface::ImplementsInterfaceSafe(this);
+
+	if (!bIsPreloadable)
+	{
+		ForEachAddOnForClass<UFlowPreloadableInterface>([&bIsPreloadable](UFlowNodeAddOn& /*AddOn*/)
+		{
+			bIsPreloadable = true;
+			return EFlowForEachAddOnFunctionReturnValue::BreakWithSuccess;
+		});
+	}
+
+	if (!bIsPreloadable)
+	{
+		return false;
+	}
+
+	UFlowAsset* FlowAsset = GetFlowAsset();
+	if (!IsValid(FlowAsset))
+	{
+		LogError(TEXT("IFlowPreloadableInterface node has no valid FlowAsset during InitializeInstance — PreloadHelper will not be created."));
+		return false;
+	}
+
+	FlowAsset->EnsurePreloadPolicyInitialized();
+	const FFlowPreloadPolicy& PreloadPolicy = FlowAsset->GetPreloadPolicy();
+
+	const UScriptStruct* HelperType = PreloadPolicy.GetPreloadHelperStructType(*this);
+	if (!IsValid(HelperType))
+	{
+		LogError(TEXT("FFlowPreloadPolicy::GetPreloadHelperStructType returned null — PreloadHelper will not be created."));
+		return false;
+	}
+
+	PreloadHelper.InitializeAsScriptStruct(HelperType);
+
+	if (FFlowPreloadHelper* Helper = PreloadHelper.GetMutablePtr())
+	{
+		Helper->OnNodeInitializeInstance(*this);
+		return true;
+	}
+
+	return false;
+}
+
+void UFlowNode::DeinitializePreloadHelper()
+{
+	if (FFlowPreloadHelper* Helper = PreloadHelper.GetMutablePtr())
+	{
+		Helper->OnNodeDeinitializeInstance(*this);
+	}
+
+	PreloadHelper.Reset();
+}
+
+bool UFlowNode::DispatchExecuteInputToPreloadHelper(const FName& PinName)
+{
+	FLOW_ASSERT_ENUM_MAX(EFlowPreloadInputResult, 2);
+
+	if (FFlowPreloadHelper* Helper = PreloadHelper.GetMutablePtr())
+	{
+		return Helper->OnNodeExecuteInput(*this, PinName) == EFlowPreloadInputResult::Handled;
+	}
+
+	return false;
 }
 
 void UFlowNode::SaveInstance(FFlowNodeSaveData& NodeRecord)
@@ -1604,6 +1606,16 @@ bool UFlowNode::ShouldSave_Implementation()
 }
 
 #if WITH_EDITOR
+UFlowNode* UFlowNode::GetInspectedInstance() const
+{
+	if (const UFlowAsset* FlowInstance = GetFlowAsset()->GetInspectedInstance())
+	{
+		return FlowInstance->GetNode(GetGuid());
+	}
+
+	return nullptr;
+}
+
 TMap<uint8, FPinRecord> UFlowNode::GetWireRecords() const
 {
 	TMap<uint8, FPinRecord> Result;
@@ -1638,42 +1650,6 @@ TArray<FPinRecord> UFlowNode::GetPinRecords(const FName& PinName, const EEdGraph
 
 #endif
 
-FString UFlowNode::GetIdentityTagDescription(const FGameplayTag& Tag)
-{
-	return Tag.IsValid() ? Tag.ToString() : MissingIdentityTag;
-}
-
-FString UFlowNode::GetIdentityTagsDescription(const FGameplayTagContainer& Tags)
-{
-	return Tags.IsEmpty() ? MissingIdentityTag : FString::JoinBy(Tags, LINE_TERMINATOR, [](const FGameplayTag& Tag) { return Tag.ToString(); });
-}
-
-FString UFlowNode::GetNotifyTagsDescription(const FGameplayTagContainer& Tags)
-{
-	return Tags.IsEmpty() ? MissingNotifyTag : FString::JoinBy(Tags, LINE_TERMINATOR, [](const FGameplayTag& Tag) { return Tag.ToString(); });
-}
-
-FString UFlowNode::GetClassDescription(const TSubclassOf<UObject> Class)
-{
-	return Class ? Class->GetName() : MissingClass;
-}
-
-FString UFlowNode::GetProgressAsString(const float Value)
-{
-	return FString::Printf(TEXT("%.*f"), 2, Value);
-}
-
-#if WITH_EDITOR
-UFlowNode* UFlowNode::GetInspectedInstance() const
-{
-	if (const UFlowAsset* FlowInstance = GetFlowAsset()->GetInspectedInstance())
-	{
-		return FlowInstance->GetNode(GetGuid());
-	}
-
-	return nullptr;
-}
-
 FString UFlowNode::GetStatusStringForNodeAndAddOns() const
 {
 	FString CombinedStatusString = GetStatusString();
@@ -1700,6 +1676,7 @@ FString UFlowNode::GetStatusStringForNodeAndAddOns() const
 	return CombinedStatusString;
 }
 
+#if WITH_EDITOR
 bool UFlowNode::GetStatusBackgroundColor(FLinearColor& OutColor) const
 {
 	return K2_GetStatusBackgroundColor(OutColor);
@@ -1720,3 +1697,28 @@ AActor* UFlowNode::GetActorToFocus()
 	return K2_GetActorToFocus();
 }
 #endif
+
+FString UFlowNode::GetIdentityTagDescription(const FGameplayTag& Tag)
+{
+	return Tag.IsValid() ? Tag.ToString() : MissingIdentityTag;
+}
+
+FString UFlowNode::GetIdentityTagsDescription(const FGameplayTagContainer& Tags)
+{
+	return Tags.IsEmpty() ? MissingIdentityTag : FString::JoinBy(Tags, LINE_TERMINATOR, [](const FGameplayTag& Tag) { return Tag.ToString(); });
+}
+
+FString UFlowNode::GetNotifyTagsDescription(const FGameplayTagContainer& Tags)
+{
+	return Tags.IsEmpty() ? MissingNotifyTag : FString::JoinBy(Tags, LINE_TERMINATOR, [](const FGameplayTag& Tag) { return Tag.ToString(); });
+}
+
+FString UFlowNode::GetClassDescription(const TSubclassOf<UObject> Class)
+{
+	return Class ? Class->GetName() : MissingClass;
+}
+
+FString UFlowNode::GetProgressAsString(const float Value)
+{
+	return FString::Printf(TEXT("%.*f"), 2, Value);
+}

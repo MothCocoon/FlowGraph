@@ -1,6 +1,6 @@
 // Copyright https://github.com/MothCocoon/FlowGraph/graphs/contributors
-
 #include "Types/FlowPinTypesStandard.h"
+
 #include "Types/FlowClassUtils.h"
 #include "Nodes/FlowNode.h"
 #include "Types/FlowDataPinValuesStandard.h"
@@ -36,159 +36,112 @@ const FFlowPinTypeName FFlowPinType_InstancedStruct::PinTypeNameInstancedStruct 
 const FFlowPinTypeName FFlowPinType_Object::PinTypeNameObject = FFlowPinTypeName(FFlowPinTypeNamesStandard::PinTypeNameObject);
 const FFlowPinTypeName FFlowPinType_Class::PinTypeNameClass = FFlowPinTypeName(FFlowPinTypeNamesStandard::PinTypeNameClass);
 
+#if WITH_EDITOR
+bool FFlowPinType_Exec::ResolveAndFormatPinValue(const UFlowNodeBase& Node, const FName& PinName, FFormatArgumentValue& OutValue) const
+{
+	OutValue = FFormatArgumentValue(FText::FromString(TEXT("Exec")));
+	return true;
+}
+
+bool FFlowPinType_Bool::ResolveAndFormatPinValue(const UFlowNodeBase& Node, const FName& PinName, FFormatArgumentValue& OutValue) const
+{
+	return FlowPinType::ResolveAndFormatArray<FFlowPinType_Bool>(Node, PinName, OutValue, [](const bool& Value) { return Value ? TEXT("true") : TEXT("false"); });
+}
+#endif
+
 bool FFlowPinType_Bool::PopulateResult(const UObject& PropertyOwnerObject, const UFlowNode& Node, const FName& PropertyName, FFlowDataPinResult& OutResult) const
 {
 	return FlowPinType::PopulateResultTemplate<FFlowPinType_Bool>(PropertyOwnerObject, Node, PropertyName, OutResult);
 }
+
+#if WITH_EDITOR
+bool FFlowPinType_Int::ResolveAndFormatPinValue(const UFlowNodeBase& Node, const FName& PinName, FFormatArgumentValue& OutValue) const
+{
+	return FlowPinType::ResolveAndFormatArray<FFlowPinType_Int>(Node, PinName, OutValue, [](const int32& Value) { return FString::FromInt(Value); });
+}
+#endif
 
 bool FFlowPinType_Int::PopulateResult(const UObject& PropertyOwnerObject, const UFlowNode& Node, const FName& PropertyName, FFlowDataPinResult& OutResult) const
 {
 	return FlowPinType::PopulateResultTemplate<FFlowPinType_Int>(PropertyOwnerObject, Node, PropertyName, OutResult);
 }
 
+#if WITH_EDITOR
+bool FFlowPinType_Int64::ResolveAndFormatPinValue(const UFlowNodeBase& Node, const FName& PinName, FFormatArgumentValue& OutValue) const
+{
+	return FlowPinType::ResolveAndFormatArray<FFlowPinType_Int64>(Node, PinName, OutValue, [](const int64& Value) { return FString::Printf(TEXT("%lld"), Value); });
+}
+#endif
+
 bool FFlowPinType_Int64::PopulateResult(const UObject& PropertyOwnerObject, const UFlowNode& Node, const FName& PropertyName, FFlowDataPinResult& OutResult) const
 {
 	return FlowPinType::PopulateResultTemplate<FFlowPinType_Int64>(PropertyOwnerObject, Node, PropertyName, OutResult);
 }
+
+#if WITH_EDITOR
+bool FFlowPinType_Float::ResolveAndFormatPinValue(const UFlowNodeBase& Node, const FName& PinName, FFormatArgumentValue& OutValue) const
+{
+	return FlowPinType::ResolveAndFormatArray<FFlowPinType_Float>(Node, PinName, OutValue, [](const float& Value) { return FString::SanitizeFloat(Value); });
+}
+#endif
 
 bool FFlowPinType_Float::PopulateResult(const UObject& PropertyOwnerObject, const UFlowNode& Node, const FName& PropertyName, FFlowDataPinResult& OutResult) const
 {
 	return FlowPinType::PopulateResultTemplate<FFlowPinType_Float>(PropertyOwnerObject, Node, PropertyName, OutResult);
 }
 
+#if WITH_EDITOR
+bool FFlowPinType_Double::ResolveAndFormatPinValue(const UFlowNodeBase& Node, const FName& PinName, FFormatArgumentValue& OutValue) const
+{
+	return FlowPinType::ResolveAndFormatArray<FFlowPinType_Double>(Node, PinName, OutValue, [](const double& Value) { return FString::SanitizeFloat(Value); });
+}
+#endif
+
 bool FFlowPinType_Double::PopulateResult(const UObject& PropertyOwnerObject, const UFlowNode& Node, const FName& PropertyName, FFlowDataPinResult& OutResult) const
 {
 	return FlowPinType::PopulateResultTemplate<FFlowPinType_Double>(PropertyOwnerObject, Node, PropertyName, OutResult);
 }
 
-bool FFlowPinType_Enum::PopulateResult(const UObject& PropertyOwnerObject, const UFlowNode& Node, const FName& PropertyName, FFlowDataPinResult& OutResult) const
+#if WITH_EDITOR
+bool FFlowPinType_Name::ResolveAndFormatPinValue(const UFlowNodeBase& Node, const FName& PinName, FFormatArgumentValue& OutValue) const
 {
-	using TFlowPinType = FFlowPinType_Enum;
-	using TValue = TFlowPinType::ValueType;
-	using TWrapper = TFlowPinType::WrapperType;
-	using Traits = FlowPinType::FFlowDataPinValueTraits<TFlowPinType>;
-
-	TInstancedStruct<FFlowDataPinValue> ValueStruct;
-	const FProperty* FoundProperty = nullptr;
-
-	const IFlowDataPinValueOwnerInterface* PropertyOwnerInterface = CastChecked<IFlowDataPinValueOwnerInterface>(&PropertyOwnerObject);
-	if (!PropertyOwnerInterface->TryFindPropertyByPinName(PropertyName, FoundProperty, ValueStruct))
-	{
-		OutResult.Result = EFlowDataPinResolveResult::FailedUnknownPin;
-		return false;
-	}
-
-	if (ValueStruct.IsValid() && ValueStruct.Get<FFlowDataPinValue>().GetPinTypeName() == TFlowPinType::GetPinTypeNameStatic())
-	{
-		OutResult.ResultValue = ValueStruct;
-		OutResult.Result = EFlowDataPinResolveResult::Success;
-		return true;
-	}
-
-	TArray<TValue> Values;
-	TSoftObjectPtr<UEnum> EnumClass;
-	if (FlowPinType::IsSuccess(Traits::ExtractFromProperty(FoundProperty, &PropertyOwnerObject, Values, EnumClass)))
-	{
-		OutResult.ResultValue = TInstancedStruct<TWrapper>::Make(EnumClass, Values);
-		OutResult.Result = EFlowDataPinResolveResult::Success;
-		return true;
-	}
-
-	OutResult.Result = EFlowDataPinResolveResult::FailedMismatchedType;
-	return false;
+	return FlowPinType::ResolveAndFormatArray<FFlowPinType_Name>(Node, PinName, OutValue, [](const FName& Value) { return Value.ToString(); });
 }
+#endif
 
 bool FFlowPinType_Name::PopulateResult(const UObject& PropertyOwnerObject, const UFlowNode& Node, const FName& PropertyName, FFlowDataPinResult& OutResult) const
 {
 	return FlowPinType::PopulateResultTemplate<FFlowPinType_Name>(PropertyOwnerObject, Node, PropertyName, OutResult);
 }
 
+#if WITH_EDITOR
+bool FFlowPinType_String::ResolveAndFormatPinValue(const UFlowNodeBase& Node, const FName& PinName, FFormatArgumentValue& OutValue) const
+{
+	return FlowPinType::ResolveAndFormatArray<FFlowPinType_String>(Node, PinName, OutValue, [](const FString& Value) { return Value; });
+}
+#endif
+
 bool FFlowPinType_String::PopulateResult(const UObject& PropertyOwnerObject, const UFlowNode& Node, const FName& PropertyName, FFlowDataPinResult& OutResult) const
 {
 	return FlowPinType::PopulateResultTemplate<FFlowPinType_String>(PropertyOwnerObject, Node, PropertyName, OutResult);
 }
+
+#if WITH_EDITOR
+bool FFlowPinType_Text::ResolveAndFormatPinValue(const UFlowNodeBase& Node, const FName& PinName, FFormatArgumentValue& OutValue) const
+{
+	return FlowPinType::ResolveAndFormatArray<FFlowPinType_Text>(Node, PinName, OutValue, [](const FText& Value) { return Value.ToString(); });
+}
+#endif
 
 bool FFlowPinType_Text::PopulateResult(const UObject& PropertyOwnerObject, const UFlowNode& Node, const FName& PropertyName, FFlowDataPinResult& OutResult) const
 {
 	return FlowPinType::PopulateResultTemplate<FFlowPinType_Text>(PropertyOwnerObject, Node, PropertyName, OutResult);
 }
 
-bool FFlowPinType_Vector::PopulateResult(const UObject& PropertyOwnerObject, const UFlowNode& Node, const FName& PropertyName, FFlowDataPinResult& OutResult) const
-{
-	return FlowPinType::PopulateResultTemplate<FFlowPinType_Vector>(PropertyOwnerObject, Node, PropertyName, OutResult);
-}
-
-bool FFlowPinType_Rotator::PopulateResult(const UObject& PropertyOwnerObject, const UFlowNode& Node, const FName& PropertyName, FFlowDataPinResult& OutResult) const
-{
-	return FlowPinType::PopulateResultTemplate<FFlowPinType_Rotator>(PropertyOwnerObject, Node, PropertyName, OutResult);
-}
-
-bool FFlowPinType_Transform::PopulateResult(const UObject& PropertyOwnerObject, const UFlowNode& Node, const FName& PropertyName, FFlowDataPinResult& OutResult) const
-{
-	return FlowPinType::PopulateResultTemplate<FFlowPinType_Transform>(PropertyOwnerObject, Node, PropertyName, OutResult);
-}
-
-bool FFlowPinType_GameplayTag::PopulateResult(const UObject& PropertyOwnerObject, const UFlowNode& Node, const FName& PropertyName, FFlowDataPinResult& OutResult) const
-{
-	return FlowPinType::PopulateResultTemplate<FFlowPinType_GameplayTag>(PropertyOwnerObject, Node, PropertyName, OutResult);
-}
-
-bool FFlowPinType_GameplayTagContainer::PopulateResult(const UObject& PropertyOwnerObject, const UFlowNode& Node, const FName& PropertyName, FFlowDataPinResult& OutResult) const
-{
-	return FlowPinType::PopulateResultTemplate<FFlowPinType_GameplayTagContainer>(PropertyOwnerObject, Node, PropertyName, OutResult);
-}
-
-bool FFlowPinType_InstancedStruct::PopulateResult(const UObject& PropertyOwnerObject, const UFlowNode& Node, const FName& PropertyName, FFlowDataPinResult& OutResult) const
-{
-	return FlowPinType::PopulateResultTemplate<FFlowPinType_InstancedStruct>(PropertyOwnerObject, Node, PropertyName, OutResult);
-}
-
-bool FFlowPinType_Object::PopulateResult(const UObject& PropertyOwnerObject, const UFlowNode& Node, const FName& PropertyName, FFlowDataPinResult& OutResult) const
-{
-	return FlowPinType::PopulateResultTemplate<FFlowPinType_Object>(PropertyOwnerObject, Node, PropertyName, OutResult);
-}
-
-bool FFlowPinType_Class::PopulateResult(const UObject& PropertyOwnerObject, const UFlowNode& Node, const FName& PropertyName, FFlowDataPinResult& OutResult) const
-{
-	return FlowPinType::PopulateResultTemplate<FFlowPinType_Class>(PropertyOwnerObject, Node, PropertyName, OutResult);
-}
-
 #if WITH_EDITOR
-
-UObject* FFlowPinType_Vector::GetPinSubCategoryObjectFromProperty(const FProperty* Property, void const* InContainer, const FFlowDataPinValue* Wrapper) const
+bool FFlowPinType_Enum::ResolveAndFormatPinValue(const UFlowNodeBase& Node, const FName& PinName, FFormatArgumentValue& OutValue) const
 {
-	static UObject* PinSubCategoryObject = TBaseStructure<FVector>::Get();
-	return PinSubCategoryObject;
-}
-
-UObject* FFlowPinType_Rotator::GetPinSubCategoryObjectFromProperty(const FProperty* Property, void const* InContainer, const FFlowDataPinValue* Wrapper) const
-{
-	static UObject* PinSubCategoryObject = TBaseStructure<FRotator>::Get();
-	return PinSubCategoryObject;
-}
-
-UObject* FFlowPinType_Transform::GetPinSubCategoryObjectFromProperty(const FProperty* Property, void const* InContainer, const FFlowDataPinValue* Wrapper) const
-{
-	static UObject* PinSubCategoryObject = TBaseStructure<FTransform>::Get();
-	return PinSubCategoryObject;
-}
-
-UObject* FFlowPinType_GameplayTag::GetPinSubCategoryObjectFromProperty(const FProperty* Property, void const* InContainer, const FFlowDataPinValue* Wrapper) const
-{
-	static UObject* PinSubCategoryObject = TBaseStructure<FGameplayTag>::Get();
-	return PinSubCategoryObject;
-}
-
-UObject* FFlowPinType_GameplayTagContainer::GetPinSubCategoryObjectFromProperty(const FProperty* Property, void const* InContainer, const FFlowDataPinValue* Wrapper) const
-{
-	static UObject* PinSubCategoryObject = TBaseStructure<FGameplayTagContainer>::Get();
-	return PinSubCategoryObject;
-}
-
-UObject* FFlowPinType_InstancedStruct::GetPinSubCategoryObjectFromProperty(const FProperty* Property, void const* InContainer, const FFlowDataPinValue* Wrapper) const
-{
-	static UObject* PinSubCategoryObject = TBaseStructure<FInstancedStruct>::Get();
-	return PinSubCategoryObject;
+	return FlowPinType::ResolveAndFormatArray<FFlowPinType_Enum>(Node, PinName, OutValue, [](const FName& Value) { return Value.ToString(); });
 }
 
 UObject* FFlowPinType_Enum::GetPinSubCategoryObjectFromProperty(const FProperty* Property, void const* InContainer, const FFlowDataPinValue* Wrapper) const
@@ -241,60 +194,157 @@ UObject* FFlowPinType_Enum::GetPinSubCategoryObjectFromProperty(const FProperty*
 
 	return EnumClass;
 }
+#endif
 
-UClass* FFlowPinType_Object::TryGetObjectClassFromProperty(const FProperty& MetaDataProperty)
+bool FFlowPinType_Enum::PopulateResult(const UObject& PropertyOwnerObject, const UFlowNode& Node, const FName& PropertyName, FFlowDataPinResult& OutResult) const
 {
-	if (UClass* MetaClass = FFlowPinType_Object::TryGetMetaClassFromProperty(MetaDataProperty))
+	using TFlowPinType = FFlowPinType_Enum;
+	using TValue = TFlowPinType::ValueType;
+	using TWrapper = TFlowPinType::WrapperType;
+	using Traits = FlowPinType::FFlowDataPinValueTraits<TFlowPinType>;
+
+	TInstancedStruct<FFlowDataPinValue> ValueStruct;
+	const FProperty* FoundProperty = nullptr;
+
+	const IFlowDataPinValueOwnerInterface* PropertyOwnerInterface = CastChecked<IFlowDataPinValueOwnerInterface>(&PropertyOwnerObject);
+	if (!PropertyOwnerInterface->TryFindPropertyByPinName(PropertyName, FoundProperty, ValueStruct))
 	{
-		return MetaClass;
+		OutResult.Result = EFlowDataPinResolveResult::FailedUnknownPin;
+		return false;
 	}
 
-	// FSoftObjectPath can use the "AllowedClasses" to define what classes are allowed for the object.
-	// Using the "AllowedClasses" metadata tag, but we only support a single class, due to singular return value for this function.
-	const FString AllowedClassesString = MetaDataProperty.GetMetaData("AllowedClasses");
-	const TArray<UClass*> AllowedClasses = FlowClassUtils::GetClassesFromMetadataString(AllowedClassesString);
-
-	if (AllowedClasses.Num() > 1)
+	if (ValueStruct.IsValid() && ValueStruct.Get<FFlowDataPinValue>().GetPinTypeName() == TFlowPinType::GetPinTypeNameStatic())
 	{
-		UE_LOG(LogFlow, Error, TEXT("Only a single AllowedClasses entry is allowed for flow data pin properties (multiple found: %s) for property %s"), *AllowedClassesString, *MetaDataProperty.GetName());
-
-		return nullptr;
+		OutResult.ResultValue = ValueStruct;
+		OutResult.Result = EFlowDataPinResolveResult::Success;
+		return true;
 	}
 
-	if (AllowedClasses.IsEmpty())
+	TArray<TValue> Values;
+	TSoftObjectPtr<UEnum> EnumClass;
+	if (FlowPinType::IsSuccess(Traits::ExtractFromProperty(FoundProperty, &PropertyOwnerObject, Values, EnumClass)))
 	{
-		return nullptr;
+		OutResult.ResultValue = TInstancedStruct<TWrapper>::Make(EnumClass, Values);
+		OutResult.Result = EFlowDataPinResolveResult::Success;
+		return true;
 	}
 
-	if (UClass* AllowedClass = AllowedClasses[0])
-	{
-		return AllowedClass;
-	}
-	else
-	{
-		UE_LOG(LogFlow, Error, TEXT("Could not resolve AllowedClasses '%s' for property %s"), *AllowedClassesString, *MetaDataProperty.GetName());
-	}
-
-	return nullptr;
+	OutResult.Result = EFlowDataPinResolveResult::FailedMismatchedType;
+	return false;
 }
 
-UClass* FFlowPinType_Object::TryGetMetaClassFromProperty(const FProperty& MetaDataProperty)
+#if WITH_EDITOR
+bool FFlowPinType_Vector::ResolveAndFormatPinValue(const UFlowNodeBase& Node, const FName& PinName, FFormatArgumentValue& OutValue) const
 {
-	const FString& MetaClassName = MetaDataProperty.GetMetaData("MetaClass");
+	return FlowPinType::ResolveAndFormatArray<FFlowPinType_Vector>(Node, PinName, OutValue, [](const FVector& Value) { return Value.ToString(); });
+}
 
-	if (!MetaClassName.IsEmpty())
-	{
-		if (UClass* FoundClass = FEditorClassUtils::GetClassFromString(MetaClassName))
-		{
-			return FoundClass;
-		}
-		else
-		{
-			UE_LOG(LogFlow, Error, TEXT("Could not resolve MetaClass named %s for property %s"), *MetaClassName, *MetaDataProperty.GetName());
-		}
-	}
+UObject* FFlowPinType_Vector::GetPinSubCategoryObjectFromProperty(const FProperty* Property, void const* InContainer, const FFlowDataPinValue* Wrapper) const
+{
+	static UObject* PinSubCategoryObject = TBaseStructure<FVector>::Get();
+	return PinSubCategoryObject;
+}
+#endif
 
-	return nullptr;
+bool FFlowPinType_Vector::PopulateResult(const UObject& PropertyOwnerObject, const UFlowNode& Node, const FName& PropertyName, FFlowDataPinResult& OutResult) const
+{
+	return FlowPinType::PopulateResultTemplate<FFlowPinType_Vector>(PropertyOwnerObject, Node, PropertyName, OutResult);
+}
+
+#if WITH_EDITOR
+bool FFlowPinType_Rotator::ResolveAndFormatPinValue(const UFlowNodeBase& Node, const FName& PinName, FFormatArgumentValue& OutValue) const
+{
+	return FlowPinType::ResolveAndFormatArray<FFlowPinType_Rotator>(Node, PinName, OutValue, [](const FRotator& Value) { return Value.ToString(); });
+}
+
+UObject* FFlowPinType_Rotator::GetPinSubCategoryObjectFromProperty(const FProperty* Property, void const* InContainer, const FFlowDataPinValue* Wrapper) const
+{
+	static UObject* PinSubCategoryObject = TBaseStructure<FRotator>::Get();
+	return PinSubCategoryObject;
+}
+#endif
+
+bool FFlowPinType_Rotator::PopulateResult(const UObject& PropertyOwnerObject, const UFlowNode& Node, const FName& PropertyName, FFlowDataPinResult& OutResult) const
+{
+	return FlowPinType::PopulateResultTemplate<FFlowPinType_Rotator>(PropertyOwnerObject, Node, PropertyName, OutResult);
+}
+
+#if WITH_EDITOR
+bool FFlowPinType_Transform::ResolveAndFormatPinValue(const UFlowNodeBase& Node, const FName& PinName, FFormatArgumentValue& OutValue) const
+{
+	return FlowPinType::ResolveAndFormatArray<FFlowPinType_Transform>(Node, PinName, OutValue, [](const FTransform& Value) { return Value.ToString(); });
+}
+
+UObject* FFlowPinType_Transform::GetPinSubCategoryObjectFromProperty(const FProperty* Property, void const* InContainer, const FFlowDataPinValue* Wrapper) const
+{
+	static UObject* PinSubCategoryObject = TBaseStructure<FTransform>::Get();
+	return PinSubCategoryObject;
+}
+#endif
+
+bool FFlowPinType_Transform::PopulateResult(const UObject& PropertyOwnerObject, const UFlowNode& Node, const FName& PropertyName, FFlowDataPinResult& OutResult) const
+{
+	return FlowPinType::PopulateResultTemplate<FFlowPinType_Transform>(PropertyOwnerObject, Node, PropertyName, OutResult);
+}
+
+#if WITH_EDITOR
+bool FFlowPinType_GameplayTag::ResolveAndFormatPinValue(const UFlowNodeBase& Node, const FName& PinName, FFormatArgumentValue& OutValue) const
+{
+	return FlowPinType::ResolveAndFormatArray<FFlowPinType_GameplayTag>(Node, PinName, OutValue, [](const FGameplayTag& Value) { return Value.ToString(); });
+}
+
+UObject* FFlowPinType_GameplayTag::GetPinSubCategoryObjectFromProperty(const FProperty* Property, void const* InContainer, const FFlowDataPinValue* Wrapper) const
+{
+	static UObject* PinSubCategoryObject = TBaseStructure<FGameplayTag>::Get();
+	return PinSubCategoryObject;
+}
+#endif
+
+bool FFlowPinType_GameplayTag::PopulateResult(const UObject& PropertyOwnerObject, const UFlowNode& Node, const FName& PropertyName, FFlowDataPinResult& OutResult) const
+{
+	return FlowPinType::PopulateResultTemplate<FFlowPinType_GameplayTag>(PropertyOwnerObject, Node, PropertyName, OutResult);
+}
+
+#if WITH_EDITOR
+bool FFlowPinType_GameplayTagContainer::ResolveAndFormatPinValue(const UFlowNodeBase& Node, const FName& PinName, FFormatArgumentValue& OutValue) const
+{
+	return FlowPinType::ResolveAndFormatArray<FFlowPinType_GameplayTagContainer>(Node, PinName, OutValue, [](const FGameplayTagContainer& Value) { return Value.ToString(); });
+}
+
+UObject* FFlowPinType_GameplayTagContainer::GetPinSubCategoryObjectFromProperty(const FProperty* Property, void const* InContainer, const FFlowDataPinValue* Wrapper) const
+{
+	static UObject* PinSubCategoryObject = TBaseStructure<FGameplayTagContainer>::Get();
+	return PinSubCategoryObject;
+}
+#endif
+
+bool FFlowPinType_GameplayTagContainer::PopulateResult(const UObject& PropertyOwnerObject, const UFlowNode& Node, const FName& PropertyName, FFlowDataPinResult& OutResult) const
+{
+	return FlowPinType::PopulateResultTemplate<FFlowPinType_GameplayTagContainer>(PropertyOwnerObject, Node, PropertyName, OutResult);
+}
+
+#if WITH_EDITOR
+bool FFlowPinType_InstancedStruct::ResolveAndFormatPinValue(const UFlowNodeBase& Node, const FName& PinName, FFormatArgumentValue& OutValue) const
+{
+	return FlowPinType::ResolveAndFormatArray<FFlowPinType_InstancedStruct>(Node, PinName, OutValue, [](const FInstancedStruct& Value) { return Value.GetScriptStruct() ? Value.GetScriptStruct()->GetName() : TEXT("None"); });
+}
+
+UObject* FFlowPinType_InstancedStruct::GetPinSubCategoryObjectFromProperty(const FProperty* Property, void const* InContainer, const FFlowDataPinValue* Wrapper) const
+{
+	static UObject* PinSubCategoryObject = TBaseStructure<FInstancedStruct>::Get();
+	return PinSubCategoryObject;
+}
+#endif
+
+bool FFlowPinType_InstancedStruct::PopulateResult(const UObject& PropertyOwnerObject, const UFlowNode& Node, const FName& PropertyName, FFlowDataPinResult& OutResult) const
+{
+	return FlowPinType::PopulateResultTemplate<FFlowPinType_InstancedStruct>(PropertyOwnerObject, Node, PropertyName, OutResult);
+}
+
+#if WITH_EDITOR
+bool FFlowPinType_Object::ResolveAndFormatPinValue(const UFlowNodeBase& Node, const FName& PinName, FFormatArgumentValue& OutValue) const
+{
+	return FlowPinType::ResolveAndFormatArray<FFlowPinType_Object>(Node, PinName, OutValue, [](const UObject* Value) { return Value ? Value->GetName() : TEXT("None"); });
 }
 
 UObject* FFlowPinType_Object::GetPinSubCategoryObjectFromProperty(const FProperty* Property, void const* InContainer, const FFlowDataPinValue* Wrapper) const
@@ -362,6 +412,73 @@ UObject* FFlowPinType_Object::GetPinSubCategoryObjectFromProperty(const FPropert
 	return Class;
 }
 
+UClass* FFlowPinType_Object::TryGetObjectClassFromProperty(const FProperty& MetaDataProperty)
+{
+	if (UClass* MetaClass = FFlowPinType_Object::TryGetMetaClassFromProperty(MetaDataProperty))
+	{
+		return MetaClass;
+	}
+
+	// FSoftObjectPath can use the "AllowedClasses" to define what classes are allowed for the object.
+	// Using the "AllowedClasses" metadata tag, but we only support a single class, due to singular return value for this function.
+	const FString AllowedClassesString = MetaDataProperty.GetMetaData("AllowedClasses");
+	const TArray<UClass*> AllowedClasses = FlowClassUtils::GetClassesFromMetadataString(AllowedClassesString);
+
+	if (AllowedClasses.Num() > 1)
+	{
+		UE_LOG(LogFlow, Error, TEXT("Only a single AllowedClasses entry is allowed for flow data pin properties (multiple found: %s) for property %s"), *AllowedClassesString, *MetaDataProperty.GetName());
+
+		return nullptr;
+	}
+
+	if (AllowedClasses.IsEmpty())
+	{
+		return nullptr;
+	}
+
+	if (UClass* AllowedClass = AllowedClasses[0])
+	{
+		return AllowedClass;
+	}
+	else
+	{
+		UE_LOG(LogFlow, Error, TEXT("Could not resolve AllowedClasses '%s' for property %s"), *AllowedClassesString, *MetaDataProperty.GetName());
+	}
+
+	return nullptr;
+}
+
+UClass* FFlowPinType_Object::TryGetMetaClassFromProperty(const FProperty& MetaDataProperty)
+{
+	const FString& MetaClassName = MetaDataProperty.GetMetaData("MetaClass");
+
+	if (!MetaClassName.IsEmpty())
+	{
+		if (UClass* FoundClass = FEditorClassUtils::GetClassFromString(MetaClassName))
+		{
+			return FoundClass;
+		}
+		else
+		{
+			UE_LOG(LogFlow, Error, TEXT("Could not resolve MetaClass named %s for property %s"), *MetaClassName, *MetaDataProperty.GetName());
+		}
+	}
+
+	return nullptr;
+}
+#endif
+
+bool FFlowPinType_Object::PopulateResult(const UObject& PropertyOwnerObject, const UFlowNode& Node, const FName& PropertyName, FFlowDataPinResult& OutResult) const
+{
+	return FlowPinType::PopulateResultTemplate<FFlowPinType_Object>(PropertyOwnerObject, Node, PropertyName, OutResult);
+}
+
+#if WITH_EDITOR
+bool FFlowPinType_Class::ResolveAndFormatPinValue(const UFlowNodeBase& Node, const FName& PinName, FFormatArgumentValue& OutValue) const
+{
+	return FlowPinType::ResolveAndFormatArray<FFlowPinType_Class>(Node, PinName, OutValue, [](const UClass* Value) { return Value ? Value->GetName() : TEXT("None"); });
+}
+
 UObject* FFlowPinType_Class::GetPinSubCategoryObjectFromProperty(const FProperty* Property, void const* InContainer, const FFlowDataPinValue* Wrapper) const
 {
 	UClass* Class = nullptr;
@@ -410,95 +527,9 @@ UObject* FFlowPinType_Class::GetPinSubCategoryObjectFromProperty(const FProperty
 
 	return Class;
 }
-
-bool FFlowPinType_Exec::ResolveAndFormatPinValue(const UFlowNodeBase& Node, const FName& PinName, FFormatArgumentValue& OutValue) const
-{
-	OutValue = FFormatArgumentValue(FText::FromString(TEXT("Exec")));
-	return true;
-}
-
-bool FFlowPinType_Bool::ResolveAndFormatPinValue(const UFlowNodeBase& Node, const FName& PinName, FFormatArgumentValue& OutValue) const
-{
-	return FlowPinType::ResolveAndFormatArray<FFlowPinType_Bool>(Node, PinName, OutValue, [](const bool& Value) { return Value ? TEXT("true") : TEXT("false"); });
-}
-
-bool FFlowPinType_Int::ResolveAndFormatPinValue(const UFlowNodeBase& Node, const FName& PinName, FFormatArgumentValue& OutValue) const
-{
-	return FlowPinType::ResolveAndFormatArray<FFlowPinType_Int>(Node, PinName, OutValue, [](const int32& Value) { return FString::FromInt(Value); });
-}
-
-bool FFlowPinType_Int64::ResolveAndFormatPinValue(const UFlowNodeBase& Node, const FName& PinName, FFormatArgumentValue& OutValue) const
-{
-	return FlowPinType::ResolveAndFormatArray<FFlowPinType_Int64>(Node, PinName, OutValue, [](const int64& Value) { return FString::Printf(TEXT("%lld"), Value); });
-}
-
-bool FFlowPinType_Float::ResolveAndFormatPinValue(const UFlowNodeBase& Node, const FName& PinName, FFormatArgumentValue& OutValue) const
-{
-	return FlowPinType::ResolveAndFormatArray<FFlowPinType_Float>(Node, PinName, OutValue, [](const float& Value) { return FString::SanitizeFloat(Value); });
-}
-
-bool FFlowPinType_Double::ResolveAndFormatPinValue(const UFlowNodeBase& Node, const FName& PinName, FFormatArgumentValue& OutValue) const
-{
-	return FlowPinType::ResolveAndFormatArray<FFlowPinType_Double>(Node, PinName, OutValue, [](const double& Value) { return FString::SanitizeFloat(Value); });
-}
-
-bool FFlowPinType_Enum::ResolveAndFormatPinValue(const UFlowNodeBase& Node, const FName& PinName, FFormatArgumentValue& OutValue) const
-{
-	return FlowPinType::ResolveAndFormatArray<FFlowPinType_Enum>(Node, PinName, OutValue, [](const FName& Value) { return Value.ToString(); });
-}
-
-bool FFlowPinType_Name::ResolveAndFormatPinValue(const UFlowNodeBase& Node, const FName& PinName, FFormatArgumentValue& OutValue) const
-{
-	return FlowPinType::ResolveAndFormatArray<FFlowPinType_Name>(Node, PinName, OutValue, [](const FName& Value) { return Value.ToString(); });
-}
-
-bool FFlowPinType_String::ResolveAndFormatPinValue(const UFlowNodeBase& Node, const FName& PinName, FFormatArgumentValue& OutValue) const
-{
-	return FlowPinType::ResolveAndFormatArray<FFlowPinType_String>(Node, PinName, OutValue, [](const FString& Value) { return Value; });
-}
-
-bool FFlowPinType_Text::ResolveAndFormatPinValue(const UFlowNodeBase& Node, const FName& PinName, FFormatArgumentValue& OutValue) const
-{
-	return FlowPinType::ResolveAndFormatArray<FFlowPinType_Text>(Node, PinName, OutValue, [](const FText& Value) { return Value.ToString(); });
-}
-
-bool FFlowPinType_Vector::ResolveAndFormatPinValue(const UFlowNodeBase& Node, const FName& PinName, FFormatArgumentValue& OutValue) const
-{
-	return FlowPinType::ResolveAndFormatArray<FFlowPinType_Vector>(Node, PinName, OutValue, [](const FVector& Value) { return Value.ToString(); });
-}
-
-bool FFlowPinType_Rotator::ResolveAndFormatPinValue(const UFlowNodeBase& Node, const FName& PinName, FFormatArgumentValue& OutValue) const
-{
-	return FlowPinType::ResolveAndFormatArray<FFlowPinType_Rotator>(Node, PinName, OutValue, [](const FRotator& Value) { return Value.ToString(); });
-}
-
-bool FFlowPinType_Transform::ResolveAndFormatPinValue(const UFlowNodeBase& Node, const FName& PinName, FFormatArgumentValue& OutValue) const
-{
-	return FlowPinType::ResolveAndFormatArray<FFlowPinType_Transform>(Node, PinName, OutValue, [](const FTransform& Value) { return Value.ToString(); });
-}
-
-bool FFlowPinType_GameplayTag::ResolveAndFormatPinValue(const UFlowNodeBase& Node, const FName& PinName, FFormatArgumentValue& OutValue) const
-{
-	return FlowPinType::ResolveAndFormatArray<FFlowPinType_GameplayTag>(Node, PinName, OutValue, [](const FGameplayTag& Value) { return Value.ToString(); });
-}
-
-bool FFlowPinType_GameplayTagContainer::ResolveAndFormatPinValue(const UFlowNodeBase& Node, const FName& PinName, FFormatArgumentValue& OutValue) const
-{
-	return FlowPinType::ResolveAndFormatArray<FFlowPinType_GameplayTagContainer>(Node, PinName, OutValue, [](const FGameplayTagContainer& Value) { return Value.ToString(); });
-}
-
-bool FFlowPinType_InstancedStruct::ResolveAndFormatPinValue(const UFlowNodeBase& Node, const FName& PinName, FFormatArgumentValue& OutValue) const
-{
-	return FlowPinType::ResolveAndFormatArray<FFlowPinType_InstancedStruct>(Node, PinName, OutValue, [](const FInstancedStruct& Value) { return Value.GetScriptStruct() ? Value.GetScriptStruct()->GetName() : TEXT("None"); });
-}
-
-bool FFlowPinType_Object::ResolveAndFormatPinValue(const UFlowNodeBase& Node, const FName& PinName, FFormatArgumentValue& OutValue) const
-{
-	return FlowPinType::ResolveAndFormatArray<FFlowPinType_Object>(Node, PinName, OutValue, [](const UObject* Value) { return Value ? Value->GetName() : TEXT("None"); });
-}
-
-bool FFlowPinType_Class::ResolveAndFormatPinValue(const UFlowNodeBase& Node, const FName& PinName, FFormatArgumentValue& OutValue) const
-{
-	return FlowPinType::ResolveAndFormatArray<FFlowPinType_Class>(Node, PinName, OutValue, [](const UClass* Value) { return Value ? Value->GetName() : TEXT("None"); });
-}
 #endif
+
+bool FFlowPinType_Class::PopulateResult(const UObject& PropertyOwnerObject, const UFlowNode& Node, const FName& PropertyName, FFlowDataPinResult& OutResult) const
+{
+	return FlowPinType::PopulateResultTemplate<FFlowPinType_Class>(PropertyOwnerObject, Node, PropertyName, OutResult);
+}

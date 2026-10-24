@@ -1,5 +1,4 @@
 // Copyright https://github.com/MothCocoon/FlowGraph/graphs/contributors
-
 #include "Graph/FlowGraphConnectionDrawingPolicy.h"
 
 #include "Graph/FlowGraph.h"
@@ -167,101 +166,6 @@ void FFlowGraphConnectionDrawingPolicy::DrawConnection(int32 LayerId, const FVec
 	}
 }
 
-void FFlowGraphConnectionDrawingPolicy::DrawDefaultConnection(int32 LayerId, const FVector2f& Start, const FVector2f& End, const FConnectionParams& Params)
-{
-	using namespace FlowGraphConnectionDrawing;
-
-	const bool bIsBackwards = End.X < Start.X - BackwardsThresholdX;
-
-	const bool bTouchesReroute =
-		(Params.AssociatedPin1 != nullptr && IsValid(Cast<UFlowGraphNode_Reroute>(Params.AssociatedPin1->GetOwningNode()))) ||
-		(Params.AssociatedPin2 != nullptr && IsValid(Cast<UFlowGraphNode_Reroute>(Params.AssociatedPin2->GetOwningNode())));
-
-	FNodeExtent OutputNodeExtent;
-	FNodeExtent InputNodeExtent;
-
-	if (!bIsBackwards || bTouchesReroute
-		|| !TryGetOwningNodeExtent(Params.AssociatedPin1, OutputNodeExtent)
-		|| !TryGetOwningNodeExtent(Params.AssociatedPin2, InputNodeExtent)
-		|| (OutputNodeExtent.Left < InputNodeExtent.Right && InputNodeExtent.Left < OutputNodeExtent.Right))
-	{
-		FConnectionDrawingPolicy::DrawConnection(LayerId, Start, End, Params);
-		return;
-	}
-
-	// Decided by node position rather than the specific pins being connected, so every backward connection
-	// between the same pair of nodes curves the same way regardless of which pins on them it links. If the
-	// output node sits lower than the input node, routing below both (as usual) would send the wire the long way
-	// around; route above them instead. Ties (equal centers) fall back to curving downward.
-	const bool bCurveUpward = OutputNodeExtent.Top > InputNodeExtent.Top;
-
-	// Fan out multiple backward connections leaving different transitions on the same node: the closer the
-	// output pin sits to the node edge the route runs alongside, the further out the route is pushed, so their
-	// straight runs land at different heights instead of overlapping. That edge is the bottom when curving
-	// downward and the top when curving upward, so which edge the depth is measured from has to flip with bCurveUpward.
-	const float OutputPinDepth = bCurveUpward
-		? FMath::Max(OutputNodeExtent.Bottom - Start.Y, 0.0f)
-		: FMath::Max(Start.Y - OutputNodeExtent.Top, 0.0f);
-	const float FanOutOffset = OutputPinDepth * FanOutFactor;
-
-	float RouteY;
-	float RouteVerticalTravel;
-
-	if (bCurveUpward)
-	{
-		RouteY = FMath::Min(OutputNodeExtent.Top, InputNodeExtent.Top) - RouteClearance * ZoomFactor - FanOutOffset;
-		RouteVerticalTravel = FMath::Max(FMath::Max(Start.Y, End.Y) - RouteY, 0.0f);
-	}
-	else
-	{
-		RouteY = FMath::Max(OutputNodeExtent.Bottom, InputNodeExtent.Bottom) + RouteClearance * ZoomFactor + FanOutOffset;
-		RouteVerticalTravel = FMath::Max(RouteY - FMath::Min(Start.Y, End.Y), 0.0f);
-	}
-
-	const float HorizontalDistance = FMath::Abs(Start.X - End.X);
-
-	// Tangent magnitude for the straight run's own ends: capped by the horizontal distance between the pins,
-	// since both of its tangents point the same way (see StraightParams below) and an oversized value here can
-	// make the run's parametrization double back on itself over a short distance.
-	const float StraightTangentSize = FMath::Max(FMath::Min(FMath::Clamp(RouteVerticalTravel, MinStraightTangentSize * ZoomFactor, MaxStraightTangentSize * ZoomFactor), HorizontalDistance), 1.0f);
-
-	// Tangent magnitude for the two elbows. See ElbowExcursionCompensation above for why this needs to be several
-	// times larger than the visual bow it produces. A vertical run's Y is linear regardless of tangent magnitude
-	// (see the derivation there too), so this works the same whether the elbow curves down out of the output pin
-	// (bCurveUpward false) or up out of it (bCurveUpward true).
-	const float ElbowTangentSize = FMath::Clamp(RouteVerticalTravel, MinElbowOutset * ZoomFactor, MaxElbowOutset * ZoomFactor) * ElbowExcursionCompensation;
-
-	const FVector2f OutputElbowPoint(Start.X, RouteY);
-	const FVector2f InputElbowPoint(End.X, RouteY);
-
-	const FVector2f ElbowRightward(ElbowTangentSize, 0.0f);
-	const FVector2f ElbowLeftward(-ElbowTangentSize, 0.0f);
-	const FVector2f StraightLeftward(-StraightTangentSize, 0.0f);
-
-	// Only the straight run in the middle draws bubbles, so a backwards connection does not restart its bubble
-	// animation three times per wire.
-	FConnectionParams OutputElbowParams = Params;
-	OutputElbowParams.bDrawBubbles = false;
-	OutputElbowParams.StartTangent = ElbowRightward;
-	OutputElbowParams.EndTangent = ElbowLeftward;
-
-	FConnectionParams StraightParams = Params;
-	StraightParams.StartTangent = StraightLeftward;
-	StraightParams.EndTangent = StraightLeftward;
-
-	FConnectionParams InputElbowParams = Params;
-	InputElbowParams.bDrawBubbles = false;
-	InputElbowParams.StartTangent = ElbowLeftward;
-	InputElbowParams.EndTangent = ElbowRightward;
-
-	// Call the base FConnectionDrawingPolicy explicitly for each segment, deliberately bypassing both this
-	// class's own Default/Circuit switch and its own backwards-routing (segments are not themselves backwards),
-	// so relinking, slice-line cutting and hover deemphasis keep working per segment.
-	FConnectionDrawingPolicy::DrawConnection(LayerId, Start, OutputElbowPoint, OutputElbowParams);
-	FConnectionDrawingPolicy::DrawConnection(LayerId, OutputElbowPoint, InputElbowPoint, StraightParams);
-	FConnectionDrawingPolicy::DrawConnection(LayerId, InputElbowPoint, End, InputElbowParams);
-}
-
 // Give specific editor modes a chance to highlight this connection or darken non-interesting connections
 void FFlowGraphConnectionDrawingPolicy::DetermineWiringStyle(UEdGraphPin* OutputPin, UEdGraphPin* InputPin, FConnectionParams& Params)
 {
@@ -372,38 +276,6 @@ void FFlowGraphConnectionDrawingPolicy::Draw(TMap<TSharedRef<SWidget>, FArranged
 	CurrentArrangedNodes = nullptr;
 }
 
-bool FFlowGraphConnectionDrawingPolicy::TryGetOwningNodeExtent(const UEdGraphPin* Pin, FNodeExtent& OutExtent) const
-{
-	if (Pin == nullptr || CurrentArrangedNodes == nullptr)
-	{
-		return false;
-	}
-
-	const int32* NodeIndex = NodeToArrangedIndexMap.Find(Pin->GetOwningNode());
-	if (NodeIndex == nullptr || !CurrentArrangedNodes->IsValidIndex(*NodeIndex))
-	{
-		return false;
-	}
-
-	const FArrangedWidget& ArrangedNode = (*CurrentArrangedNodes)[*NodeIndex];
-
-	// Nodes culled off-screen are arranged with zero-size synthesized geometry (see SGraphPanel::OnPaint), which
-	// would otherwise collapse the node's right and bottom edges to their left and top edges. Fall back to the
-	// widget's (zoom-scaled) desired size in that case; the left and top edge positions are unaffected, since only
-	// the synthesized size (not position) is wrong for a culled node.
-	const FVector2D DrawSize = ArrangedNode.Geometry.GetDrawSize();
-	const FVector2D DesiredSize = ArrangedNode.Widget->GetDesiredSize() * ZoomFactor;
-	const float NodeWidth = FMath::Max(DrawSize.X, DesiredSize.X);
-	const float NodeHeight = FMath::Max(DrawSize.Y, DesiredSize.Y);
-
-	OutExtent.Left = ArrangedNode.Geometry.AbsolutePosition.X;
-	OutExtent.Right = OutExtent.Left + NodeWidth;
-	OutExtent.Top = ArrangedNode.Geometry.AbsolutePosition.Y;
-	OutExtent.Bottom = OutExtent.Top + NodeHeight;
-
-	return true;
-}
-
 void FFlowGraphConnectionDrawingPolicy::DrawCircuitSpline(const int32& LayerId, const FVector2f& Start, const FVector2f& End, const FConnectionParams& Params) const
 {
 	const FVector2f StartingPoint = FVector2f(Start.X + GetDefault<UFlowGraphSettings>()->CircuitConnectionSpacing.X, Start.Y);
@@ -484,6 +356,101 @@ FVector2f FFlowGraphConnectionDrawingPolicy::GetControlPoint(const FVector2f& So
 	}
 
 	return FVector2f(Target.X, Source.Y - SlopeHeight);
+}
+
+void FFlowGraphConnectionDrawingPolicy::DrawDefaultConnection(int32 LayerId, const FVector2f& Start, const FVector2f& End, const FConnectionParams& Params)
+{
+	using namespace FlowGraphConnectionDrawing;
+
+	const bool bIsBackwards = End.X < Start.X - BackwardsThresholdX;
+
+	const bool bTouchesReroute =
+		(Params.AssociatedPin1 != nullptr && IsValid(Cast<UFlowGraphNode_Reroute>(Params.AssociatedPin1->GetOwningNode()))) ||
+		(Params.AssociatedPin2 != nullptr && IsValid(Cast<UFlowGraphNode_Reroute>(Params.AssociatedPin2->GetOwningNode())));
+
+	FNodeExtent OutputNodeExtent;
+	FNodeExtent InputNodeExtent;
+
+	if (!bIsBackwards || bTouchesReroute
+		|| !TryGetOwningNodeExtent(Params.AssociatedPin1, OutputNodeExtent)
+		|| !TryGetOwningNodeExtent(Params.AssociatedPin2, InputNodeExtent)
+		|| (OutputNodeExtent.Left < InputNodeExtent.Right && InputNodeExtent.Left < OutputNodeExtent.Right))
+	{
+		FConnectionDrawingPolicy::DrawConnection(LayerId, Start, End, Params);
+		return;
+	}
+
+	// Decided by node position rather than the specific pins being connected, so every backward connection
+	// between the same pair of nodes curves the same way regardless of which pins on them it links. If the
+	// output node sits lower than the input node, routing below both (as usual) would send the wire the long way
+	// around; route above them instead. Ties (equal centers) fall back to curving downward.
+	const bool bCurveUpward = OutputNodeExtent.Top > InputNodeExtent.Top;
+
+	// Fan out multiple backward connections leaving different transitions on the same node: the closer the
+	// output pin sits to the node edge the route runs alongside, the further out the route is pushed, so their
+	// straight runs land at different heights instead of overlapping. That edge is the bottom when curving
+	// downward and the top when curving upward, so which edge the depth is measured from has to flip with bCurveUpward.
+	const float OutputPinDepth = bCurveUpward
+		? FMath::Max(OutputNodeExtent.Bottom - Start.Y, 0.0f)
+		: FMath::Max(Start.Y - OutputNodeExtent.Top, 0.0f);
+	const float FanOutOffset = OutputPinDepth * FanOutFactor;
+
+	float RouteY;
+	float RouteVerticalTravel;
+
+	if (bCurveUpward)
+	{
+		RouteY = FMath::Min(OutputNodeExtent.Top, InputNodeExtent.Top) - RouteClearance * ZoomFactor - FanOutOffset;
+		RouteVerticalTravel = FMath::Max(FMath::Max(Start.Y, End.Y) - RouteY, 0.0f);
+	}
+	else
+	{
+		RouteY = FMath::Max(OutputNodeExtent.Bottom, InputNodeExtent.Bottom) + RouteClearance * ZoomFactor + FanOutOffset;
+		RouteVerticalTravel = FMath::Max(RouteY - FMath::Min(Start.Y, End.Y), 0.0f);
+	}
+
+	const float HorizontalDistance = FMath::Abs(Start.X - End.X);
+
+	// Tangent magnitude for the straight run's own ends: capped by the horizontal distance between the pins,
+	// since both of its tangents point the same way (see StraightParams below) and an oversized value here can
+	// make the run's parametrization double back on itself over a short distance.
+	const float StraightTangentSize = FMath::Max(FMath::Min(FMath::Clamp(RouteVerticalTravel, MinStraightTangentSize * ZoomFactor, MaxStraightTangentSize * ZoomFactor), HorizontalDistance), 1.0f);
+
+	// Tangent magnitude for the two elbows. See ElbowExcursionCompensation above for why this needs to be several
+	// times larger than the visual bow it produces. A vertical run's Y is linear regardless of tangent magnitude
+	// (see the derivation there too), so this works the same whether the elbow curves down out of the output pin
+	// (bCurveUpward false) or up out of it (bCurveUpward true).
+	const float ElbowTangentSize = FMath::Clamp(RouteVerticalTravel, MinElbowOutset * ZoomFactor, MaxElbowOutset * ZoomFactor) * ElbowExcursionCompensation;
+
+	const FVector2f OutputElbowPoint(Start.X, RouteY);
+	const FVector2f InputElbowPoint(End.X, RouteY);
+
+	const FVector2f ElbowRightward(ElbowTangentSize, 0.0f);
+	const FVector2f ElbowLeftward(-ElbowTangentSize, 0.0f);
+	const FVector2f StraightLeftward(-StraightTangentSize, 0.0f);
+
+	// Only the straight run in the middle draws bubbles, so a backwards connection does not restart its bubble
+	// animation three times per wire.
+	FConnectionParams OutputElbowParams = Params;
+	OutputElbowParams.bDrawBubbles = false;
+	OutputElbowParams.StartTangent = ElbowRightward;
+	OutputElbowParams.EndTangent = ElbowLeftward;
+
+	FConnectionParams StraightParams = Params;
+	StraightParams.StartTangent = StraightLeftward;
+	StraightParams.EndTangent = StraightLeftward;
+
+	FConnectionParams InputElbowParams = Params;
+	InputElbowParams.bDrawBubbles = false;
+	InputElbowParams.StartTangent = ElbowLeftward;
+	InputElbowParams.EndTangent = ElbowRightward;
+
+	// Call the base FConnectionDrawingPolicy explicitly for each segment, deliberately bypassing both this
+	// class's own Default/Circuit switch and its own backwards-routing (segments are not themselves backwards),
+	// so relinking, slice-line cutting and hover deemphasis keep working per segment.
+	FConnectionDrawingPolicy::DrawConnection(LayerId, Start, OutputElbowPoint, OutputElbowParams);
+	FConnectionDrawingPolicy::DrawConnection(LayerId, OutputElbowPoint, InputElbowPoint, StraightParams);
+	FConnectionDrawingPolicy::DrawConnection(LayerId, InputElbowPoint, End, InputElbowParams);
 }
 
 bool FFlowGraphConnectionDrawingPolicy::ShouldChangeTangentForReroute(UFlowGraphNode_Reroute* Reroute)
@@ -569,5 +536,37 @@ bool FFlowGraphConnectionDrawingPolicy::GetAverageConnectedPosition(UFlowGraphNo
 	{
 		return false;
 	}
+}
+
+bool FFlowGraphConnectionDrawingPolicy::TryGetOwningNodeExtent(const UEdGraphPin* Pin, FNodeExtent& OutExtent) const
+{
+	if (Pin == nullptr || CurrentArrangedNodes == nullptr)
+	{
+		return false;
+	}
+
+	const int32* NodeIndex = NodeToArrangedIndexMap.Find(Pin->GetOwningNode());
+	if (NodeIndex == nullptr || !CurrentArrangedNodes->IsValidIndex(*NodeIndex))
+	{
+		return false;
+	}
+
+	const FArrangedWidget& ArrangedNode = (*CurrentArrangedNodes)[*NodeIndex];
+
+	// Nodes culled off-screen are arranged with zero-size synthesized geometry (see SGraphPanel::OnPaint), which
+	// would otherwise collapse the node's right and bottom edges to their left and top edges. Fall back to the
+	// widget's (zoom-scaled) desired size in that case; the left and top edge positions are unaffected, since only
+	// the synthesized size (not position) is wrong for a culled node.
+	const FVector2D DrawSize = ArrangedNode.Geometry.GetDrawSize();
+	const FVector2D DesiredSize = ArrangedNode.Widget->GetDesiredSize() * ZoomFactor;
+	const float NodeWidth = FMath::Max(DrawSize.X, DesiredSize.X);
+	const float NodeHeight = FMath::Max(DrawSize.Y, DesiredSize.Y);
+
+	OutExtent.Left = ArrangedNode.Geometry.AbsolutePosition.X;
+	OutExtent.Right = OutExtent.Left + NodeWidth;
+	OutExtent.Top = ArrangedNode.Geometry.AbsolutePosition.Y;
+	OutExtent.Bottom = OutExtent.Top + NodeHeight;
+
+	return true;
 }
 

@@ -38,5 +38,5 @@ protected:
 	/* Cached resolved component.
 	 * Resolved at runtime by calling TryResolveComponent. */
 	UPROPERTY(Transient)
-	TObjectPtr<UActorComponent> ResolvedComponent = nullptr;
+	TObjectPtr<UActorComponent> ResolvedComponent;
 };

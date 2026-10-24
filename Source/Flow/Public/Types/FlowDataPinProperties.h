@@ -36,7 +36,7 @@ public:
 
 public:
 
-	FFlowDataPinOutputProperty_Bool() { }
+	FFlowDataPinOutputProperty_Bool() = default;
 	explicit FFlowDataPinOutputProperty_Bool(const bool InValue) : Value(InValue) { }
 };
 
@@ -54,7 +54,7 @@ public:
 
 public:
 
-	FFlowDataPinOutputProperty_Int64() { }
+	FFlowDataPinOutputProperty_Int64() = default;
 	explicit FFlowDataPinOutputProperty_Int64(const int64 InValue) : Value(InValue) { }
 };
 
@@ -71,7 +71,7 @@ public:
 	int32 Value = 0;
 
 public:
-	FFlowDataPinOutputProperty_Int32() { }
+	FFlowDataPinOutputProperty_Int32() = default;
 	explicit FFlowDataPinOutputProperty_Int32(const int32 InValue) : Value(InValue) { }
 };
 
@@ -88,7 +88,7 @@ public:
 	double Value = 0;
 
 public:
-	FFlowDataPinOutputProperty_Double() { }
+	FFlowDataPinOutputProperty_Double() = default;
 	explicit FFlowDataPinOutputProperty_Double(const double InValue) : Value(InValue) { }
 };
 
@@ -105,7 +105,7 @@ public:
 	float Value = 0.0f;
 
 public:
-	FFlowDataPinOutputProperty_Float() { }
+	FFlowDataPinOutputProperty_Float() = default;
 	explicit FFlowDataPinOutputProperty_Float(const float InValue) : Value(InValue) { }
 };
 
@@ -122,7 +122,7 @@ public:
 	FName Value = NAME_None;
 
 public:
-	FFlowDataPinOutputProperty_Name() { }
+	FFlowDataPinOutputProperty_Name() = default;
 	explicit FFlowDataPinOutputProperty_Name(const FName& InValue) : Value(InValue) { }
 };
 
@@ -139,7 +139,7 @@ public:
 	FString Value;
 
 public:
-	FFlowDataPinOutputProperty_String() { }
+	FFlowDataPinOutputProperty_String() = default;
 	explicit FFlowDataPinOutputProperty_String(const FString& InValue) : Value(InValue) { }
 };
 
@@ -158,7 +158,7 @@ public:
 
 public:
 
-	FFlowDataPinOutputProperty_Text() { }
+	FFlowDataPinOutputProperty_Text() = default;
 	explicit FFlowDataPinOutputProperty_Text(const FText& InValue) : Value(InValue) { }
 };
 
@@ -177,7 +177,7 @@ public:
 
 	/* Class for this enum. */
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = DataPins)
-	TObjectPtr<UEnum> EnumClass = nullptr;
+	TObjectPtr<UEnum> EnumClass;
 
 #if WITH_EDITORONLY_DATA
 	/* Name of enum defined in c++ code, will take priority over asset from EnumType property.
@@ -188,7 +188,7 @@ public:
 #endif
 
 public:
-	FFlowDataPinOutputProperty_Enum() { }
+	FFlowDataPinOutputProperty_Enum() = default;
 	FFlowDataPinOutputProperty_Enum(const FName& InValue, UEnum* InEnumClass)
 		: Value(InValue)
 		, EnumClass(InEnumClass)
@@ -209,7 +209,7 @@ public:
 	FVector Value = FVector::ZeroVector;
 
 public:
-	FFlowDataPinOutputProperty_Vector() {}
+	FFlowDataPinOutputProperty_Vector() = default;
 	explicit FFlowDataPinOutputProperty_Vector(const FVector& InValue) : Value(InValue) { }
 };
 
@@ -226,7 +226,7 @@ public:
 	FRotator Value = FRotator::ZeroRotator;
 
 public:
-	FFlowDataPinOutputProperty_Rotator() {}
+	FFlowDataPinOutputProperty_Rotator() = default;
 	explicit FFlowDataPinOutputProperty_Rotator(const FRotator& InValue) : Value(InValue) { }
 };
 
@@ -243,7 +243,7 @@ public:
 	FTransform Value;
 
 public:
-	FFlowDataPinOutputProperty_Transform() {}
+	FFlowDataPinOutputProperty_Transform() = default;
 	explicit FFlowDataPinOutputProperty_Transform(const FTransform& InValue) : Value(InValue) { }
 };
 
@@ -260,7 +260,7 @@ public:
 	FGameplayTag Value;
 
 public:
-	FFlowDataPinOutputProperty_GameplayTag() {}
+	FFlowDataPinOutputProperty_GameplayTag() = default;
 	explicit FFlowDataPinOutputProperty_GameplayTag(const FGameplayTag& InValue) : Value(InValue) { }
 };
 
@@ -277,7 +277,7 @@ public:
 	FGameplayTagContainer Value;
 
 public:
-	FFlowDataPinOutputProperty_GameplayTagContainer() {}
+	FFlowDataPinOutputProperty_GameplayTagContainer() = default;
 	explicit FFlowDataPinOutputProperty_GameplayTagContainer(const FGameplayTagContainer& InValue) : Value(InValue) { }
 };
 
@@ -294,7 +294,7 @@ public:
 	FInstancedStruct Value;
 
 public:
-	FFlowDataPinOutputProperty_InstancedStruct() {}
+	FFlowDataPinOutputProperty_InstancedStruct() = default;
 	explicit FFlowDataPinOutputProperty_InstancedStruct(const FInstancedStruct& InValue) : Value(InValue) { }
 };
 
@@ -316,11 +316,11 @@ public:
 
 	/* Object reference if the object is a non-instanced UObject type (ie, not EditInlineNew). */
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = DataPins, DisplayName = "Value (reference)", meta = (EditCondition = "InlineValue == nullptr"))
-	TObjectPtr<UObject> ReferenceValue = nullptr;
+	TObjectPtr<UObject> ReferenceValue;
 
 	/* Object reference if the object is an instanced UObject type (ie, EditInlineNew). */
 	UPROPERTY(EditAnywhere, Instanced, BlueprintReadWrite, Category = DataPins, DisplayName = "Value (inline)", meta = (EditCondition = "ReferenceValue == nullptr"))
-	TObjectPtr<UObject> InlineValue = nullptr;
+	TObjectPtr<UObject> InlineValue;
 
 #if WITH_EDITORONLY_DATA
 	UPROPERTY(EditAnywhere, Category = DataPins, meta = (AllowAbstract))
@@ -328,7 +328,7 @@ public:
 #endif
 
 public:
-	FFlowDataPinOutputProperty_Object() {}
+	FFlowDataPinOutputProperty_Object() = default;
 	FLOW_API explicit FFlowDataPinOutputProperty_Object(UObject* InValue, UClass* InClassFilter = nullptr);
 
 	UObject* GetObjectValue() const { return ReferenceValue ? ReferenceValue : InlineValue; }
@@ -354,7 +354,7 @@ public:
 #endif
 
 public:
-	FFlowDataPinOutputProperty_Class() {}
+	FFlowDataPinOutputProperty_Class() = default;
 
 	explicit FFlowDataPinOutputProperty_Class(const FSoftClassPath& InValue, UClass* InClassFilter = nullptr)
 		: Value(InValue)
@@ -418,7 +418,7 @@ struct FFlowDataPinInputProperty_Name : public FFlowDataPinOutputProperty_Name
 {
 	GENERATED_BODY()
 
-	FFlowDataPinInputProperty_Name() : Super() { }
+	FFlowDataPinInputProperty_Name() = default;
 	explicit FFlowDataPinInputProperty_Name(const FName& InValue) : Super(InValue) { }
 };
 
@@ -427,7 +427,7 @@ struct FFlowDataPinInputProperty_String : public FFlowDataPinOutputProperty_Stri
 {
 	GENERATED_BODY()
 
-	FFlowDataPinInputProperty_String() : Super() { }
+	FFlowDataPinInputProperty_String() = default;
 	explicit FFlowDataPinInputProperty_String(const FString& InValue) : Super(InValue) { }
 };
 
@@ -436,7 +436,7 @@ struct FFlowDataPinInputProperty_Text : public FFlowDataPinOutputProperty_Text
 {
 	GENERATED_BODY()
 
-	FFlowDataPinInputProperty_Text() : Super() { }
+	FFlowDataPinInputProperty_Text() = default;
 	explicit FFlowDataPinInputProperty_Text(const FText& InValue) : Super(InValue) { }
 };
 
@@ -445,7 +445,7 @@ struct FFlowDataPinInputProperty_Enum : public FFlowDataPinOutputProperty_Enum
 {
 	GENERATED_BODY()
 
-	FFlowDataPinInputProperty_Enum() : Super() { }
+	FFlowDataPinInputProperty_Enum() = default;
 	FFlowDataPinInputProperty_Enum(const FName& InValue, UEnum* InEnumClass) : Super(InValue, InEnumClass) { }
 };
 
@@ -454,7 +454,7 @@ struct FFlowDataPinInputProperty_Vector : public FFlowDataPinOutputProperty_Vect
 {
 	GENERATED_BODY()
 
-	FFlowDataPinInputProperty_Vector() : Super() { }
+	FFlowDataPinInputProperty_Vector() = default;
 	explicit FFlowDataPinInputProperty_Vector(const FVector& InValue) : Super(InValue) { }
 };
 
@@ -463,7 +463,7 @@ struct FFlowDataPinInputProperty_Rotator : public FFlowDataPinOutputProperty_Rot
 {
 	GENERATED_BODY()
 
-	FFlowDataPinInputProperty_Rotator() : Super() { }
+	FFlowDataPinInputProperty_Rotator() = default;
 	explicit FFlowDataPinInputProperty_Rotator(const FRotator& InValue) : Super(InValue) { }
 };
 
@@ -472,7 +472,7 @@ struct FFlowDataPinInputProperty_Transform : public FFlowDataPinOutputProperty_T
 {
 	GENERATED_BODY()
 
-	FFlowDataPinInputProperty_Transform() : Super() { }
+	FFlowDataPinInputProperty_Transform() = default;
 	explicit FFlowDataPinInputProperty_Transform(const FTransform& InValue) : Super(InValue) { }
 };
 
@@ -481,7 +481,7 @@ struct FFlowDataPinInputProperty_GameplayTag : public FFlowDataPinOutputProperty
 {
 	GENERATED_BODY()
 
-	FFlowDataPinInputProperty_GameplayTag() : Super() { }
+	FFlowDataPinInputProperty_GameplayTag() = default;
 	explicit FFlowDataPinInputProperty_GameplayTag(const FGameplayTag& InValue) : Super(InValue) { }
 };
 
@@ -490,7 +490,7 @@ struct FFlowDataPinInputProperty_GameplayTagContainer : public FFlowDataPinOutpu
 {
 	GENERATED_BODY()
 
-	FFlowDataPinInputProperty_GameplayTagContainer() : Super() { }
+	FFlowDataPinInputProperty_GameplayTagContainer() = default;
 	explicit FFlowDataPinInputProperty_GameplayTagContainer(const FGameplayTagContainer& InValue) : Super(InValue) { }
 };
 
@@ -499,7 +499,7 @@ struct FFlowDataPinInputProperty_InstancedStruct : public FFlowDataPinOutputProp
 {
 	GENERATED_BODY()
 
-	FFlowDataPinInputProperty_InstancedStruct() : Super() { }
+	FFlowDataPinInputProperty_InstancedStruct() = default;
 	explicit FFlowDataPinInputProperty_InstancedStruct(const FInstancedStruct& InValue) : Super(InValue) { }
 };
 
@@ -508,7 +508,7 @@ struct FFlowDataPinInputProperty_Object : public FFlowDataPinOutputProperty_Obje
 {
 	GENERATED_BODY()
 
-	FFlowDataPinInputProperty_Object() : Super() { }
+	FFlowDataPinInputProperty_Object() = default;
 	FFlowDataPinInputProperty_Object(UObject* InValue, UClass* InClassFilter) : Super(InValue, InClassFilter) { }
 };
 
@@ -517,6 +517,6 @@ struct FFlowDataPinInputProperty_Class : public FFlowDataPinOutputProperty_Class
 {
 	GENERATED_BODY()
 
-	FFlowDataPinInputProperty_Class() : Super() { }
+	FFlowDataPinInputProperty_Class() = default;
 	FFlowDataPinInputProperty_Class(const FSoftClassPath& InValue, UClass* InClassFilter) : Super(InValue, InClassFilter) { }
 };

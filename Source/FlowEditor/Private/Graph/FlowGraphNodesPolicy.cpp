@@ -1,12 +1,11 @@
 // Copyright https://github.com/MothCocoon/FlowGraph/graphs/contributors
-
 #include "Graph/FlowGraphNodesPolicy.h"
+
 #include "Nodes/FlowNodeBase.h"
 #include "Graph/FlowGraphSettings.h"
 
 #include UE_INLINE_GENERATED_CPP_BY_NAME(FlowGraphNodesPolicy)
 
-#if WITH_EDITOR
 EFlowGraphPolicyResult FFlowGraphNodesPolicy::IsNodeAllowedByPolicy(const UFlowNodeBase* FlowNodeBase) const
 {
 	if (!IsValid(FlowNodeBase))
@@ -51,4 +50,3 @@ bool FFlowGraphNodesPolicy::IsAnySubcategory(const FString& CheckCategory, const
 
 	return false;
 }
-#endif

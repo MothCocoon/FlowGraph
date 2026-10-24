@@ -1,15 +1,12 @@
 // Copyright https://github.com/MothCocoon/FlowGraph/graphs/contributors
+#include "UnrealExtensions/IFlowCuratedNamePropertyCustomization.h"
 
 // NOTE (gtaylor) This class is planned for submission to Epic to include in baseline UE.
 // If/when that happens, we will want to remove this version and update to the latest one in the PropertyModule
 
-#include "UnrealExtensions/IFlowCuratedNamePropertyCustomization.h"
-
 #include "DetailLayoutBuilder.h"
 #include "DetailWidgetRow.h"
-#include "EditorClassUtils.h"
 #include "IDetailPropertyRow.h"
-#include "IDetailChildrenBuilder.h"
 #include "Internationalization/Text.h"
 #include "IPropertyUtilities.h"
 #include "PropertyHandle.h"
@@ -17,35 +14,6 @@
 #include "Widgets/Text/STextBlock.h"
 
 TSharedPtr<FText> IFlowCuratedNamePropertyCustomization::NoneAsText = nullptr;
-
-void IFlowCuratedNamePropertyCustomization::Initialize()
-{
-	// Cache off "None" as a sharable FText, for use later
-	if (!NoneAsText.IsValid())
-	{
-		NoneAsText = MakeShared<FText>(FText::FromName(NAME_None));
-	}
-
-	// Cache the Name property handle
-	check(StructPropertyHandle.IsValid());
-	CachedNameHandle = GetCuratedNamePropertyHandle();
-	check(CachedNameHandle->IsValidHandle());
-
-	// Initial setup the CachedTextSelected and CachedTextList
-	//  (via SetCuratedNameWithSideEffects)
-	check(!CachedTextSelected.IsValid());
-	check(CachedTextList.IsEmpty());
-
-	FName CuratedName;
-	if (TryGetCuratedName(CuratedName))
-	{
-		const bool bChangedValue = TrySetCuratedNameWithSideEffects(CuratedName);
-
-		check(bChangedValue);
-		check(CachedTextSelected.IsValid());
-		check(CachedTextList.Num() == 1);
-	}
-}
 
 void IFlowCuratedNamePropertyCustomization::CreateHeaderRowWidget(FDetailWidgetRow& HeaderRow, IPropertyTypeCustomizationUtils& StructCustomizationUtils)
 {
@@ -95,38 +63,33 @@ void IFlowCuratedNamePropertyCustomization::CreateHeaderRowWidget(FDetailWidgetR
 	HeaderRow.IsEnabled(IsEnabledAttribute);
 }
 
-bool IFlowCuratedNamePropertyCustomization::CustomIsResetToDefaultVisibleImpl(TSharedPtr<IPropertyHandle> Property) const
+void IFlowCuratedNamePropertyCustomization::Initialize()
 {
+	// Cache off "None" as a sharable FText, for use later
+	if (!NoneAsText.IsValid())
+	{
+		NoneAsText = MakeShared<FText>(FText::FromName(NAME_None));
+	}
+
+	// Cache the Name property handle
+	check(StructPropertyHandle.IsValid());
+	CachedNameHandle = GetCuratedNamePropertyHandle();
+	check(CachedNameHandle->IsValidHandle());
+
+	// Initial setup the CachedTextSelected and CachedTextList
+	//  (via SetCuratedNameWithSideEffects)
+	check(!CachedTextSelected.IsValid());
+	check(CachedTextList.IsEmpty());
+
 	FName CuratedName;
-	if (!TryGetCuratedName(CuratedName))
+	if (TryGetCuratedName(CuratedName))
 	{
-		return false;
+		const bool bChangedValue = TrySetCuratedNameWithSideEffects(CuratedName);
+
+		check(bChangedValue);
+		check(CachedTextSelected.IsValid());
+		check(CachedTextList.Num() == 1);
 	}
-
-	return !CuratedName.IsNone();
-}
-
-void IFlowCuratedNamePropertyCustomization::CustomResetToDefaultImpl(TSharedPtr<IPropertyHandle> Property)
-{
-	if (TrySetCuratedNameWithSideEffects(NAME_None))
-	{
-		RepaintTextListWidget();
-	}
-}
-
-bool IFlowCuratedNamePropertyCustomization::CustomIsEnabledImpl() const
-{
-	if (StructPropertyHandle->IsEditConst())
-	{
-		return false;
-	}
-
-	if (CachedPropertyUtils && !CachedPropertyUtils->IsPropertyEditingEnabled())
-	{
-		return false;
-	}
-
-	return true;
 }
 
 bool IFlowCuratedNamePropertyCustomization::TrySetCuratedNameWithSideEffects(const FName& NewName)
@@ -255,6 +218,15 @@ void IFlowCuratedNamePropertyCustomization::OnTextSelected(TSharedPtr<FText> New
 	}
 }
 
+void IFlowCuratedNamePropertyCustomization::RepaintTextListWidget() const
+{
+	if (TextListWidget.IsValid())
+	{
+		// Prod UDE to refresh the widget to show the new change
+		TextListWidget->Invalidate(EInvalidateWidgetReason::Paint);
+	}
+}
+
 TSharedPtr<FText> IFlowCuratedNamePropertyCustomization::FindCachedOrCreateText(const FName& NewName)
 {
 	if (NewName.IsNone())
@@ -278,6 +250,11 @@ TSharedPtr<FText> IFlowCuratedNamePropertyCustomization::FindCachedOrCreateText(
 	return Result;
 }
 
+void IFlowCuratedNamePropertyCustomization::AddToCachedTextList(TSharedPtr<FText> Text)
+{
+	CachedTextList.AddUnique(Text);
+}
+
 void IFlowCuratedNamePropertyCustomization::InsertAtHeadOfCachedTextList(TSharedPtr<FText> Text)
 {
 	CachedTextList.Remove(Text);
@@ -285,16 +262,36 @@ void IFlowCuratedNamePropertyCustomization::InsertAtHeadOfCachedTextList(TShared
 	CachedTextList.Insert(Text, 0);
 }
 
-void IFlowCuratedNamePropertyCustomization::AddToCachedTextList(TSharedPtr<FText> Text)
+bool IFlowCuratedNamePropertyCustomization::CustomIsResetToDefaultVisibleImpl(TSharedPtr<IPropertyHandle> Property) const
 {
-	CachedTextList.AddUnique(Text);
+	FName CuratedName;
+	if (!TryGetCuratedName(CuratedName))
+	{
+		return false;
+	}
+
+	return !CuratedName.IsNone();
 }
 
-void IFlowCuratedNamePropertyCustomization::RepaintTextListWidget() const
+void IFlowCuratedNamePropertyCustomization::CustomResetToDefaultImpl(TSharedPtr<IPropertyHandle> Property)
 {
-	if (TextListWidget.IsValid())
+	if (TrySetCuratedNameWithSideEffects(NAME_None))
 	{
-		// Prod UDE to refresh the widget to show the new change
-		TextListWidget->Invalidate(EInvalidateWidgetReason::Paint);
+		RepaintTextListWidget();
 	}
+}
+
+bool IFlowCuratedNamePropertyCustomization::CustomIsEnabledImpl() const
+{
+	if (StructPropertyHandle->IsEditConst())
+	{
+		return false;
+	}
+
+	if (CachedPropertyUtils && !CachedPropertyUtils->IsPropertyEditingEnabled())
+	{
+		return false;
+	}
+
+	return true;
 }

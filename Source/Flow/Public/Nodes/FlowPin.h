@@ -20,7 +20,7 @@ struct FLOW_API FFlowPin
 
 	/* A logical name, used during execution of pin. */
 	UPROPERTY(EditDefaultsOnly, Category = FlowPin)
-	FName PinName;
+	FName PinName = NAME_None;
 
 #if WITH_EDITORONLY_DATA
 	/* Optional Display Name, you can use it to override PinName without the need to update graph connections. */
@@ -49,10 +49,7 @@ protected:
 	TWeakObjectPtr<UObject> PinSubCategoryObject;
 
 public:
-	FFlowPin()
-		: PinName(NAME_None)
-	{
-	}
+	FFlowPin() = default;
 
 	FFlowPin(const FFlowPin& InFlowPin) = default;
 	FFlowPin(FFlowPin&& InFlowPin) = default;
@@ -320,32 +317,19 @@ struct FLOW_API FFlowPinHandle
 
 	/* Update SFlowPinHandleBase code if this property name would be ever changed. */
 	UPROPERTY()
-	FName PinName;
-
-	FFlowPinHandle()
-		: PinName(NAME_None)
-	{
-	}
+	FName PinName = NAME_None;
 };
 
 USTRUCT(BlueprintType)
 struct FLOW_API FFlowInputPinHandle : public FFlowPinHandle
 {
 	GENERATED_BODY()
-
-	FFlowInputPinHandle()
-	{
-	}
 };
 
 USTRUCT(BlueprintType)
 struct FLOW_API FFlowOutputPinHandle : public FFlowPinHandle
 {
 	GENERATED_BODY()
-
-	FFlowOutputPinHandle()
-	{
-	}
 };
 
 /**
@@ -360,13 +344,9 @@ struct FLOW_API FConnectedPin
 	FGuid NodeGuid;
 
 	UPROPERTY()
-	FName PinName;
+	FName PinName = NAME_None;
 
-	FConnectedPin()
-		: NodeGuid(FGuid())
-		, PinName(NAME_None)
-	{
-	}
+	FConnectedPin() = default;
 
 	FConnectedPin(const FGuid InNodeId, const FName& InPinName)
 		: NodeGuid(InNodeId)
@@ -404,15 +384,15 @@ enum class EFlowPinActivationType : uint8
 #if !UE_BUILD_SHIPPING
 struct FLOW_API FPinRecord
 {
-	double Time;
+	double Time = 0.0f;
 	FString HumanReadableTime;
-	EFlowPinActivationType ActivationType;
+	EFlowPinActivationType ActivationType = EFlowPinActivationType::Default;
 
 	static FString PinActivations;
 	static FString ForcedActivation;
 	static FString PassThroughActivation;
 
-	FPinRecord();
+	FPinRecord() = default;
 	FPinRecord(const double InTime, const EFlowPinActivationType InActivationType);
 
 private:
@@ -425,8 +405,6 @@ struct FLOW_API FPinRecordBuffer
 	TCircularBuffer<FPinRecord> RecentPinRecords = TCircularBuffer<FPinRecord>(RecentPinRecordsCapacity);
 	uint32 NextPinRecordIndex = 0;
 	uint32 TotalPinRecords = 0;
-
-	FPinRecordBuffer();
 
 public:
 	void Add(const FName& PinName, const FPinRecord& NewRecord);

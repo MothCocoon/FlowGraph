@@ -52,7 +52,7 @@ struct FLOWEDITOR_API FFlowDiffPanel
 	void FocusDiff(const UEdGraphNode& Node) const;
 
 	/* The Flow Asset that owns the graph we are showing. */
-	const UFlowAsset* FlowAsset;
+	const UFlowAsset* FlowAsset = nullptr;
 
 	/* The box around the graph editor, used to change the content when new graphs are set. */
 	TSharedPtr<SBox> GraphEditorBox;
@@ -69,7 +69,7 @@ struct FLOWEDITOR_API FFlowDiffPanel
 	FRevisionInfo RevisionInfo;
 
 	/* True if we should show a name identifying which asset this panel is displaying. */
-	bool bShowAssetName;
+	bool bShowAssetName = false;
 
 	/* The widget that contains the revision info in graph mode. */
 	TSharedPtr<SWidget> OverlayGraphRevisionInfo;
@@ -166,14 +166,8 @@ protected:
 
 	struct FDiffControl
 	{
-		FDiffControl()
-			: Widget()
-			, DiffControl(nullptr)
-		{
-		}
-
 		TSharedPtr<SWidget> Widget;
-		TSharedPtr<class IDiffControl> DiffControl;
+		TSharedPtr<class IDiffControl> DiffControl = nullptr;
 	};
 
 	FDiffControl GenerateDetailsPanel();

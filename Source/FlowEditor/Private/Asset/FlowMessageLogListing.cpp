@@ -1,5 +1,4 @@
 // Copyright https://github.com/MothCocoon/FlowGraph/graphs/contributors
-
 #include "Asset/FlowMessageLogListing.h"
 
 #include "MessageLogModule.h"
@@ -37,6 +36,20 @@ TSharedRef<IMessageLogListing> FFlowMessageLogListing::RegisterLogListing(const 
 	return MessageLogModule.GetLogListing(LogName);
 }
 
+FName FFlowMessageLogListing::GetListingName(const UFlowAsset* InFlowAsset, const EFlowLogType Type)
+{
+	FName LogListingName;
+	if (InFlowAsset)
+	{
+		LogListingName = *FString::Printf(TEXT("%s::%s::%s"), *GetLogLabel(Type), *InFlowAsset->GetName(), *InFlowAsset->AssetGuid.ToString());
+	}
+	else
+	{
+		LogListingName = "FlowGraph";
+	}
+	return LogListingName;
+}
+
 TSharedRef<IMessageLogListing> FFlowMessageLogListing::GetLogListing(const UFlowAsset* InFlowAsset, const EFlowLogType Type)
 {
 	FMessageLogModule& MessageLogModule = FModuleManager::LoadModuleChecked<FMessageLogModule>("MessageLog");
@@ -55,20 +68,6 @@ FString FFlowMessageLogListing::GetLogLabel(const EFlowLogType Type)
 {
 	const FString TypeAsString = StaticEnum<EFlowLogType>()->GetNameStringByIndex(static_cast<int32>(Type));
 	return FString::Printf(TEXT("Flow%sLog"), *TypeAsString);
-}
-
-FName FFlowMessageLogListing::GetListingName(const UFlowAsset* InFlowAsset, const EFlowLogType Type)
-{
-	FName LogListingName;
-	if (InFlowAsset)
-	{
-		LogListingName = *FString::Printf(TEXT("%s::%s::%s"), *GetLogLabel(Type), *InFlowAsset->GetName(), *InFlowAsset->AssetGuid.ToString());
-	}
-	else
-	{
-		LogListingName = "FlowGraph";
-	}
-	return LogListingName;
 }
 
 #undef LOCTEXT_NAMESPACE

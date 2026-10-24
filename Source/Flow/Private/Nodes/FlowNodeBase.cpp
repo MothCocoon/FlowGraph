@@ -138,11 +138,6 @@ void UFlowNodeBase::ExecuteInputForSelfAndAddOns(const FName& PinName)
 	}
 }
 
-void UFlowNodeBase::TriggerOutputPin(const FFlowOutputPinHandle Pin, const bool bFinish, const EFlowPinActivationType ActivationType)
-{
-	TriggerOutput(Pin.PinName, bFinish, ActivationType);
-}
-
 void UFlowNodeBase::TriggerOutput(const FString& PinName, const bool bFinish)
 {
 	TriggerOutput(FName(PinName), bFinish);
@@ -156,6 +151,11 @@ void UFlowNodeBase::TriggerOutput(const FText& PinName, const bool bFinish)
 void UFlowNodeBase::TriggerOutput(const TCHAR* PinName, const bool bFinish)
 {
 	TriggerOutput(FName(PinName), bFinish);
+}
+
+void UFlowNodeBase::TriggerOutputPin(const FFlowOutputPinHandle Pin, const bool bFinish, const EFlowPinActivationType ActivationType)
+{
+	TriggerOutput(Pin.PinName, bFinish, ActivationType);
 }
 
 const FFlowPin* UFlowNodeBase::FindFlowPinByName(const FName& PinName, const TArray<FFlowPin>& FlowPins)
@@ -224,27 +224,6 @@ TArray<FFlowPin> UFlowNodeBase::GetContextOutputs() const
 }
 
 #endif
-
-void UFlowNodeBase::LogValidationError(const FString& Message)
-{
-#if WITH_EDITOR
-	ValidationLog.Error<UFlowNodeBase>(*Message, this);
-#endif
-}
-
-void UFlowNodeBase::LogValidationWarning(const FString& Message)
-{
-#if WITH_EDITOR
-	ValidationLog.Warning<UFlowNodeBase>(*Message, this);
-#endif
-}
-
-void UFlowNodeBase::LogValidationNote(const FString& Message)
-{
-#if WITH_EDITOR
-	ValidationLog.Note<UFlowNodeBase>(*Message, this);
-#endif
-}
 
 UFlowAsset* UFlowNodeBase::GetFlowAsset() const
 {
@@ -565,6 +544,256 @@ EFlowForEachAddOnFunctionReturnValue UFlowNodeBase::ForEachAddOnForClass(
 	return ReturnValue;
 }
 
+void UFlowNodeBase::InitializeReplica()
+{
+	InstantiateAddOns();
+
+	for (UFlowNodeAddOn* AddOn : AddOns)
+	{
+		AddOn->InitializeReplica();
+	}
+}
+
+void UFlowNodeBase::MarkReplicatedPropertiesDirty()
+{
+	if (UFlowNode* FlowNode = GetFlowNodeSelfOrOwner())
+	{
+		if (UFlowAsset* FlowAsset = FlowNode->GetFlowAsset())
+		{
+			FlowAsset->WriteReplicatedNodeState(*FlowNode);
+		}
+	}
+}
+
+#if WITH_EDITOR
+bool UFlowNodeBase::CanModifyFlowDataPinType() const
+{
+	return !IsPlacedInFlowAsset() || IsFlowNamedPropertiesSupplier();
+}
+
+bool UFlowNodeBase::ShowFlowDataPinValueInputPinCheckbox() const
+{
+	const bool bIsPlacedInFlowAsset = IsPlacedInFlowAsset();
+	return !bIsPlacedInFlowAsset;
+}
+
+bool UFlowNodeBase::ShowFlowDataPinValueClassFilter(const FFlowDataPinValue* Value) const
+{
+	const bool bIsPlacedInFlowAsset = IsPlacedInFlowAsset();
+	const bool bIsFlowNamedPropertiesSupplier = IsFlowNamedPropertiesSupplier();
+	return !bIsPlacedInFlowAsset || bIsFlowNamedPropertiesSupplier;
+}
+
+bool UFlowNodeBase::CanEditFlowDataPinValueClassFilter(const FFlowDataPinValue* Value) const
+{
+	const bool bIsPlacedInFlowAsset = IsPlacedInFlowAsset();
+	const bool bIsFlowNamedPropertiesSupplier = IsFlowNamedPropertiesSupplier();
+	return !bIsPlacedInFlowAsset || bIsFlowNamedPropertiesSupplier;
+}
+
+bool UFlowNodeBase::IsPlacedInFlowAsset() const
+{
+	return GetFlowAsset() != nullptr;
+}
+
+bool UFlowNodeBase::IsFlowNamedPropertiesSupplier() const
+{
+	return Implements<UFlowNamedPropertiesSupplierInterface>();
+}
+#endif
+
+FFlowDataPinResult UFlowNodeBase::TryResolveDataPin(FName PinName) const
+{
+	FFlowDataPinResult DataPinResult(EFlowDataPinResolveResult::Success);
+
+	const UFlowNode* FlowNode = GetFlowNodeSelfOrOwner();
+	UFlowNode::TFlowPinValueSupplierDataArray PinValueSupplierData;
+	if (!FlowNode->TryGetFlowDataPinSupplierDatasForPinName(PinName, PinValueSupplierData))
+	{
+		// If we could not build the PinValueDataSuppliers array,
+		// then the pin must be disconnected and have no default value available.
+		DataPinResult.Result = EFlowDataPinResolveResult::FailedWithError;
+
+		LogError(FString::Printf(TEXT("DataPin named '%s' could not be supplied with a value."), *PinName.ToString()), EFlowOnScreenMessageType::Temporary);
+
+		return DataPinResult;
+	}
+
+	// Iterate over the suppliers in inverse order
+	for (int32 Index = PinValueSupplierData.Num() - 1; Index >= 0; --Index)
+	{
+		const FFlowPinValueSupplierData& SupplierData = PinValueSupplierData[Index];
+
+		DataPinResult = SupplierData.PinValueSupplier->TrySupplyDataPin(SupplierData.SupplierPinName);
+
+		if (FlowPinType::IsSuccess(DataPinResult.Result))
+		{
+			return DataPinResult;
+		}
+	}
+
+	return DataPinResult;
+}
+
+// #FlowDataPinLegacy
+FFlowDataPinResult_Bool UFlowNodeBase::TryResolveDataPinAsBool(const FName& PinName) const
+{
+	FFlowDataPinResult_Bool BoolResolveResult;
+	BoolResolveResult.Result = TryResolveDataPinValue<FFlowPinType_Bool>(PinName, BoolResolveResult.Value);
+	return BoolResolveResult;
+}
+
+FFlowDataPinResult_Int UFlowNodeBase::TryResolveDataPinAsInt(const FName& PinName) const
+{
+	FFlowDataPinResult_Int ResolveResult;
+	int32 Value = 0;
+	ResolveResult.Result = TryResolveDataPinValue<FFlowPinType_Int>(PinName, Value);
+	ResolveResult.Value = Value;
+	return ResolveResult;
+}
+
+FFlowDataPinResult_Float UFlowNodeBase::TryResolveDataPinAsFloat(const FName& PinName) const
+{
+	FFlowDataPinResult_Float ResolveResult;
+	float Value = 0.0f;
+	ResolveResult.Result = TryResolveDataPinValue<FFlowPinType_Float>(PinName, Value);
+	ResolveResult.Value = Value;
+	return ResolveResult;
+}
+
+FFlowDataPinResult_Name UFlowNodeBase::TryResolveDataPinAsName(const FName& PinName) const
+{
+	FFlowDataPinResult_Name ResolveResult;
+	ResolveResult.Result = TryResolveDataPinValue<FFlowPinType_Name>(PinName, ResolveResult.Value);
+	return ResolveResult;
+}
+
+FFlowDataPinResult_String UFlowNodeBase::TryResolveDataPinAsString(const FName& PinName) const
+{
+	FFlowDataPinResult_String ResolveResult;
+	ResolveResult.Result = TryResolveDataPinValue<FFlowPinType_String>(PinName, ResolveResult.Value);
+	return ResolveResult;
+}
+
+FFlowDataPinResult_Text UFlowNodeBase::TryResolveDataPinAsText(const FName& PinName) const
+{
+	FFlowDataPinResult_Text ResolveResult;
+	ResolveResult.Result = TryResolveDataPinValue<FFlowPinType_Text>(PinName, ResolveResult.Value);
+	return ResolveResult;
+}
+
+FFlowDataPinResult_Enum UFlowNodeBase::TryResolveDataPinAsEnum(const FName& PinName) const
+{
+	const FFlowDataPinResult DataPinResult = TryResolveDataPin(PinName);
+	if (!FlowPinType::IsSuccess(DataPinResult.Result))
+	{
+		return FFlowDataPinResult_Enum(DataPinResult.Result);
+	}
+
+	const FFlowDataPinValue_Enum& Wrapper = DataPinResult.ResultValue.Get<FFlowDataPinValue_Enum>();
+
+	if (Wrapper.Values.IsEmpty())
+	{
+		return FFlowDataPinResult_Enum(EFlowDataPinResolveResult::FailedInsufficientValues);
+	}
+
+	const FFlowDataPinResult_Enum ResolveResult(Wrapper.Values[0], Wrapper.EnumClass.LoadSynchronous());
+	return ResolveResult;
+}
+
+FFlowDataPinResult_Vector UFlowNodeBase::TryResolveDataPinAsVector(const FName& PinName) const
+{
+	FFlowDataPinResult_Vector ResolveResult;
+	ResolveResult.Result = TryResolveDataPinValue<FFlowPinType_Vector>(PinName, ResolveResult.Value);
+	return ResolveResult;
+}
+
+FFlowDataPinResult_Rotator UFlowNodeBase::TryResolveDataPinAsRotator(const FName& PinName) const
+{
+	FFlowDataPinResult_Rotator ResolveResult;
+	ResolveResult.Result = TryResolveDataPinValue<FFlowPinType_Rotator>(PinName, ResolveResult.Value);
+	return ResolveResult;
+}
+
+FFlowDataPinResult_Transform UFlowNodeBase::TryResolveDataPinAsTransform(const FName& PinName) const
+{
+	FFlowDataPinResult_Transform ResolveResult;
+	ResolveResult.Result = TryResolveDataPinValue<FFlowPinType_Transform>(PinName, ResolveResult.Value);
+	return ResolveResult;
+}
+
+FFlowDataPinResult_GameplayTag UFlowNodeBase::TryResolveDataPinAsGameplayTag(const FName& PinName) const
+{
+	FFlowDataPinResult_GameplayTag ResolveResult;
+	ResolveResult.Result = TryResolveDataPinValue<FFlowPinType_GameplayTag>(PinName, ResolveResult.Value);
+	return ResolveResult;
+}
+
+FFlowDataPinResult_GameplayTagContainer UFlowNodeBase::TryResolveDataPinAsGameplayTagContainer(const FName& PinName) const
+{
+	FFlowDataPinResult_GameplayTagContainer ResolveResult;
+	ResolveResult.Result = TryResolveDataPinValue<FFlowPinType_GameplayTagContainer>(PinName, ResolveResult.Value);
+	return ResolveResult;
+}
+
+FFlowDataPinResult_InstancedStruct UFlowNodeBase::TryResolveDataPinAsInstancedStruct(const FName& PinName) const
+{
+	FFlowDataPinResult_InstancedStruct ResolveResult;
+	ResolveResult.Result = TryResolveDataPinValue<FFlowPinType_InstancedStruct>(PinName, ResolveResult.Value);
+	return ResolveResult;
+}
+
+FFlowDataPinResult_Object UFlowNodeBase::TryResolveDataPinAsObject(const FName& PinName) const
+{
+	FFlowDataPinResult_Object ResolveResult;
+	TObjectPtr<UObject> Value;
+	ResolveResult.Result = TryResolveDataPinValue<FFlowPinType_Object>(PinName, Value);
+	ResolveResult.Value = Value;
+	return ResolveResult;
+}
+
+FFlowDataPinResult_Class UFlowNodeBase::TryResolveDataPinAsClass(const FName& PinName) const
+{
+	FFlowDataPinResult_Class ResolveResult;
+	TObjectPtr<UClass> Value;
+	ResolveResult.Result = TryResolveDataPinValue<FFlowPinType_Class>(PinName, Value);
+	ResolveResult.SetValueFromObjectPtr(Value);
+	return ResolveResult;
+}
+
+// --
+
+bool UFlowNodeBase::TryAddValueToFormatNamedArguments(const FFlowNamedDataPinProperty& NamedDataPinProperty, FFormatNamedArguments& InOutArguments) const
+{
+	if (NamedDataPinProperty.Name.IsNone() || !NamedDataPinProperty.DataPinValue.IsValid())
+	{
+		return false;
+	}
+
+	const FFlowDataPinValue& DataPinValue = NamedDataPinProperty.DataPinValue.Get();
+
+	const FFlowPinTypeName PinTypeName = DataPinValue.GetPinTypeName();
+	if (PinTypeName.IsNone())
+	{
+		return false;
+	}
+
+	const FFlowPinType* PinType = FFlowPinType::LookupPinType(PinTypeName);
+	if (!PinType)
+	{
+		return false;
+	}
+
+	FFormatArgumentValue FormatValue;
+	if (PinType->ResolveAndFormatPinValue(*this, NamedDataPinProperty.Name, FormatValue))
+	{
+		InOutArguments.Add(NamedDataPinProperty.Name.ToString(), FormatValue);
+		return true;
+	}
+
+	return false;
+}
+
 #if WITH_EDITOR
 void UFlowNodeBase::PostLoad()
 {
@@ -786,84 +1015,7 @@ void UFlowNodeBase::EnsureNodeDisplayStyle()
 		Modify();
 	}
 }
-
-FString UFlowNodeBase::GetNodeDescription() const
-{
-	return K2_GetNodeDescription();
-}
-
-FString UFlowNodeBase::GetAddOnDescriptions() const
-{
-	FString Result;
-
-	for (const UFlowNodeBase* Addon : AddOns)
-	{
-		const FString& Description = Addon->GetNodeDescription();
-		if (!Description.IsEmpty())
-		{
-			Result.Append(Description).Append(LINE_TERMINATOR);
-		}
-	}
-
-	return Result;
-}
-
-bool UFlowNodeBase::CanModifyFlowDataPinType() const
-{
-	return !IsPlacedInFlowAsset() || IsFlowNamedPropertiesSupplier();
-}
-
-bool UFlowNodeBase::ShowFlowDataPinValueInputPinCheckbox() const
-{
-	const bool bIsPlacedInFlowAsset = IsPlacedInFlowAsset();
-	return !bIsPlacedInFlowAsset;
-}
-
-bool UFlowNodeBase::ShowFlowDataPinValueClassFilter(const FFlowDataPinValue* Value) const
-{
-	const bool bIsPlacedInFlowAsset = IsPlacedInFlowAsset();
-	const bool bIsFlowNamedPropertiesSupplier = IsFlowNamedPropertiesSupplier();
-	return !bIsPlacedInFlowAsset || bIsFlowNamedPropertiesSupplier;
-}
-
-bool UFlowNodeBase::CanEditFlowDataPinValueClassFilter(const FFlowDataPinValue* Value) const
-{
-	const bool bIsPlacedInFlowAsset = IsPlacedInFlowAsset();
-	const bool bIsFlowNamedPropertiesSupplier = IsFlowNamedPropertiesSupplier();
-	return !bIsPlacedInFlowAsset || bIsFlowNamedPropertiesSupplier;
-}
-
-bool UFlowNodeBase::IsPlacedInFlowAsset() const
-{
-	return GetFlowAsset() != nullptr;
-}
-
-bool UFlowNodeBase::IsFlowNamedPropertiesSupplier() const
-{
-	return Implements<UFlowNamedPropertiesSupplierInterface>();
-}
 #endif
-
-void UFlowNodeBase::InitializeReplica()
-{
-	InstantiateAddOns();
-
-	for (UFlowNodeAddOn* AddOn : AddOns)
-	{
-		AddOn->InitializeReplica();
-	}
-}
-
-void UFlowNodeBase::MarkReplicatedPropertiesDirty()
-{
-	if (UFlowNode* FlowNode = GetFlowNodeSelfOrOwner())
-	{
-		if (UFlowAsset* FlowAsset = FlowNode->GetFlowAsset())
-		{
-			FlowAsset->WriteReplicatedNodeState(*FlowNode);
-		}
-	}
-}
 
 FText UFlowNodeBase::K2_GetNodeTitle_Implementation() const
 {
@@ -954,6 +1106,29 @@ void UFlowNodeBase::SetNodeConfigText(const FText& NodeConfigText)
 void UFlowNodeBase::UpdateNodeConfigText_Implementation()
 {
 }
+
+#if WITH_EDITOR
+FString UFlowNodeBase::GetNodeDescription() const
+{
+	return K2_GetNodeDescription();
+}
+
+FString UFlowNodeBase::GetAddOnDescriptions() const
+{
+	FString Result;
+
+	for (const UFlowNodeBase* Addon : AddOns)
+	{
+		const FString& Description = Addon->GetNodeDescription();
+		if (!Description.IsEmpty())
+		{
+			Result.Append(Description).Append(LINE_TERMINATOR);
+		}
+	}
+
+	return Result;
+}
+#endif
 
 void UFlowNodeBase::LogError(FString Message, const EFlowOnScreenMessageType OnScreenMessageType) const
 {
@@ -1082,194 +1257,23 @@ EDataValidationResult UFlowNodeBase::ValidateNode()
 }
 #endif
 
-bool UFlowNodeBase::TryAddValueToFormatNamedArguments(const FFlowNamedDataPinProperty& NamedDataPinProperty, FFormatNamedArguments& InOutArguments) const
+void UFlowNodeBase::LogValidationError(const FString& Message)
 {
-	if (NamedDataPinProperty.Name.IsNone() || !NamedDataPinProperty.DataPinValue.IsValid())
-	{
-		return false;
-	}
-
-	const FFlowDataPinValue& DataPinValue = NamedDataPinProperty.DataPinValue.Get();
-
-	const FFlowPinTypeName PinTypeName = DataPinValue.GetPinTypeName();
-	if (PinTypeName.IsNone())
-	{
-		return false;
-	}
-
-	const FFlowPinType* PinType = FFlowPinType::LookupPinType(PinTypeName);
-	if (!PinType)
-	{
-		return false;
-	}
-
-	FFormatArgumentValue FormatValue;
-	if (PinType->ResolveAndFormatPinValue(*this, NamedDataPinProperty.Name, FormatValue))
-	{
-		InOutArguments.Add(NamedDataPinProperty.Name.ToString(), FormatValue);
-		return true;
-	}
-
-	return false;
+#if WITH_EDITOR
+	ValidationLog.Error<UFlowNodeBase>(*Message, this);
+#endif
 }
 
-FFlowDataPinResult UFlowNodeBase::TryResolveDataPin(FName PinName) const
+void UFlowNodeBase::LogValidationWarning(const FString& Message)
 {
-	FFlowDataPinResult DataPinResult(EFlowDataPinResolveResult::Success);
-
-	const UFlowNode* FlowNode = GetFlowNodeSelfOrOwner();
-	UFlowNode::TFlowPinValueSupplierDataArray PinValueSupplierData;
-	if (!FlowNode->TryGetFlowDataPinSupplierDatasForPinName(PinName, PinValueSupplierData))
-	{
-		// If we could not build the PinValueDataSuppliers array, 
-		// then the pin must be disconnected and have no default value available.
-		DataPinResult.Result = EFlowDataPinResolveResult::FailedWithError;
-
-		LogError(FString::Printf(TEXT("DataPin named '%s' could not be supplied with a value."), *PinName.ToString()), EFlowOnScreenMessageType::Temporary);
-
-		return DataPinResult;
-	}
-
-	// Iterate over the suppliers in inverse order
-	for (int32 Index = PinValueSupplierData.Num() - 1; Index >= 0; --Index)
-	{
-		const FFlowPinValueSupplierData& SupplierData = PinValueSupplierData[Index];
-
-		DataPinResult = SupplierData.PinValueSupplier->TrySupplyDataPin(SupplierData.SupplierPinName);
-
-		if (FlowPinType::IsSuccess(DataPinResult.Result))
-		{
-			return DataPinResult;
-		}
-	}
-
-	return DataPinResult;
+#if WITH_EDITOR
+	ValidationLog.Warning<UFlowNodeBase>(*Message, this);
+#endif
 }
 
-// #FlowDataPinLegacy
-FFlowDataPinResult_Bool UFlowNodeBase::TryResolveDataPinAsBool(const FName& PinName) const
+void UFlowNodeBase::LogValidationNote(const FString& Message)
 {
-	FFlowDataPinResult_Bool BoolResolveResult;
-	BoolResolveResult.Result = TryResolveDataPinValue<FFlowPinType_Bool>(PinName, BoolResolveResult.Value);
-	return BoolResolveResult;
+#if WITH_EDITOR
+	ValidationLog.Note<UFlowNodeBase>(*Message, this);
+#endif
 }
-
-FFlowDataPinResult_Int UFlowNodeBase::TryResolveDataPinAsInt(const FName& PinName) const
-{
-	FFlowDataPinResult_Int ResolveResult;
-	int32 Value = 0;
-	ResolveResult.Result = TryResolveDataPinValue<FFlowPinType_Int>(PinName, Value);
-	ResolveResult.Value = Value;
-	return ResolveResult;
-}
-
-FFlowDataPinResult_Float UFlowNodeBase::TryResolveDataPinAsFloat(const FName& PinName) const
-{
-	FFlowDataPinResult_Float ResolveResult;
-	float Value = 0.0f;
-	ResolveResult.Result = TryResolveDataPinValue<FFlowPinType_Float>(PinName, Value);
-	ResolveResult.Value = Value;
-	return ResolveResult;
-}
-
-FFlowDataPinResult_Name UFlowNodeBase::TryResolveDataPinAsName(const FName& PinName) const
-{
-	FFlowDataPinResult_Name ResolveResult;
-	ResolveResult.Result = TryResolveDataPinValue<FFlowPinType_Name>(PinName, ResolveResult.Value);
-	return ResolveResult;
-}
-
-FFlowDataPinResult_String UFlowNodeBase::TryResolveDataPinAsString(const FName& PinName) const
-{
-	FFlowDataPinResult_String ResolveResult;
-	ResolveResult.Result = TryResolveDataPinValue<FFlowPinType_String>(PinName, ResolveResult.Value);
-	return ResolveResult;
-}
-
-FFlowDataPinResult_Text UFlowNodeBase::TryResolveDataPinAsText(const FName& PinName) const
-{
-	FFlowDataPinResult_Text ResolveResult;
-	ResolveResult.Result = TryResolveDataPinValue<FFlowPinType_Text>(PinName, ResolveResult.Value);
-	return ResolveResult;
-}
-
-FFlowDataPinResult_Enum UFlowNodeBase::TryResolveDataPinAsEnum(const FName& PinName) const
-{
-	const FFlowDataPinResult DataPinResult = TryResolveDataPin(PinName);
-	if (!FlowPinType::IsSuccess(DataPinResult.Result))
-	{
-		return FFlowDataPinResult_Enum(DataPinResult.Result);
-	}
-
-	const FFlowDataPinValue_Enum& Wrapper = DataPinResult.ResultValue.Get<FFlowDataPinValue_Enum>();
-
-	if (Wrapper.Values.IsEmpty())
-	{
-		return FFlowDataPinResult_Enum(EFlowDataPinResolveResult::FailedInsufficientValues);
-	}
-
-	const FFlowDataPinResult_Enum ResolveResult(Wrapper.Values[0], Wrapper.EnumClass.LoadSynchronous());
-	return ResolveResult;
-}
-
-FFlowDataPinResult_Vector UFlowNodeBase::TryResolveDataPinAsVector(const FName& PinName) const
-{
-	FFlowDataPinResult_Vector ResolveResult;
-	ResolveResult.Result = TryResolveDataPinValue<FFlowPinType_Vector>(PinName, ResolveResult.Value);
-	return ResolveResult;
-}
-
-FFlowDataPinResult_Rotator UFlowNodeBase::TryResolveDataPinAsRotator(const FName& PinName) const
-{
-	FFlowDataPinResult_Rotator ResolveResult;
-	ResolveResult.Result = TryResolveDataPinValue<FFlowPinType_Rotator>(PinName, ResolveResult.Value);
-	return ResolveResult;
-}
-
-FFlowDataPinResult_Transform UFlowNodeBase::TryResolveDataPinAsTransform(const FName& PinName) const
-{
-	FFlowDataPinResult_Transform ResolveResult;
-	ResolveResult.Result = TryResolveDataPinValue<FFlowPinType_Transform>(PinName, ResolveResult.Value);
-	return ResolveResult;
-}
-
-FFlowDataPinResult_GameplayTag UFlowNodeBase::TryResolveDataPinAsGameplayTag(const FName& PinName) const
-{
-	FFlowDataPinResult_GameplayTag ResolveResult;
-	ResolveResult.Result = TryResolveDataPinValue<FFlowPinType_GameplayTag>(PinName, ResolveResult.Value);
-	return ResolveResult;
-}
-
-FFlowDataPinResult_GameplayTagContainer UFlowNodeBase::TryResolveDataPinAsGameplayTagContainer(const FName& PinName) const
-{
-	FFlowDataPinResult_GameplayTagContainer ResolveResult;
-	ResolveResult.Result = TryResolveDataPinValue<FFlowPinType_GameplayTagContainer>(PinName, ResolveResult.Value);
-	return ResolveResult;
-}
-
-FFlowDataPinResult_InstancedStruct UFlowNodeBase::TryResolveDataPinAsInstancedStruct(const FName& PinName) const
-{
-	FFlowDataPinResult_InstancedStruct ResolveResult;
-	ResolveResult.Result = TryResolveDataPinValue<FFlowPinType_InstancedStruct>(PinName, ResolveResult.Value);
-	return ResolveResult;
-}
-
-FFlowDataPinResult_Object UFlowNodeBase::TryResolveDataPinAsObject(const FName& PinName) const
-{
-	FFlowDataPinResult_Object ResolveResult;
-	TObjectPtr<UObject> Value = nullptr;
-	ResolveResult.Result = TryResolveDataPinValue<FFlowPinType_Object>(PinName, Value);
-	ResolveResult.Value = Value;
-	return ResolveResult;
-}
-
-FFlowDataPinResult_Class UFlowNodeBase::TryResolveDataPinAsClass(const FName& PinName) const
-{
-	FFlowDataPinResult_Class ResolveResult;
-	TObjectPtr<UClass> Value = nullptr;
-	ResolveResult.Result = TryResolveDataPinValue<FFlowPinType_Class>(PinName, Value);
-	ResolveResult.SetValueFromObjectPtr(Value);
-	return ResolveResult;
-}
-
-// --

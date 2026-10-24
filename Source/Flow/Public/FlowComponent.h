@@ -24,7 +24,7 @@ struct FNotifyTagReplication
 	UPROPERTY()
 	FGameplayTag NotifyTag;
 
-	FNotifyTagReplication() {}
+	FNotifyTagReplication() = default;
 
 	FNotifyTagReplication(const FGameplayTag& InActorTag, const FGameplayTag& InNotifyTag)
 		: ActorTag(InActorTag)
@@ -60,6 +60,12 @@ public:
 	virtual void BeginPlay() override;
 	virtual void EndPlay(const EEndPlayReason::Type EndPlayReason) override;
 
+protected:
+	void RegisterWithFlowSubsystem();
+	void UnregisterWithFlowSubsystem();
+	virtual void BeginRootFlow(const bool bComponentLoadedFromSaveGame);
+	
+public:	
 	UFUNCTION(BlueprintCallable, Category = "Flow")
 	void AddIdentityTag(const FGameplayTag Tag, const EFlowNetMode NetMode = EFlowNetMode::Authority);
 
@@ -71,11 +77,6 @@ public:
 
 	UFUNCTION(BlueprintCallable, Category = "Flow")
 	void RemoveIdentityTags(FGameplayTagContainer Tags, const EFlowNetMode NetMode = EFlowNetMode::Authority);
-
-protected:
-	void RegisterWithFlowSubsystem();
-	void UnregisterWithFlowSubsystem();
-	virtual void BeginRootFlow(bool bComponentLoadedFromSaveGame);
 
 private:
 	UFUNCTION()
@@ -174,15 +175,15 @@ public:
 
 	/* If true, component will start Root Flow on Begin Play. */
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "RootFlow")
-	bool bAutoStartRootFlow;
+	bool bAutoStartRootFlow = true;
 
 	/* Networking mode for creating this Root Flow. */
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "RootFlow")
-	EFlowNetMode RootFlowMode;
+	EFlowNetMode RootFlowMode = EFlowNetMode::Authority;
 
 	/* If false, another Root Flow instance won't be created from this component, if this Flow Asset is already instantiated. */
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "RootFlow")
-	bool bAllowMultipleInstances;
+	bool bAllowMultipleInstances = true;
 
 	UPROPERTY(SaveGame)
 	FString SavedAssetInstanceName;

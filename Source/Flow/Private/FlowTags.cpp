@@ -1,5 +1,4 @@
 // Copyright https://github.com/MothCocoon/FlowGraph/graphs/contributors
-
 #include "FlowTags.h"
 
 UE_DEFINE_GAMEPLAY_TAG(FlowNodeStyle::CategoryName, "Flow.NodeStyle");

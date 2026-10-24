@@ -22,7 +22,7 @@ class FLOWEDITOR_API UFlowGraph : public UEdGraph
 protected:
 	/* Graph version number. */
 	UPROPERTY()
-	int32 GraphVersion;
+	int32 GraphVersion = 0;
 
 	static constexpr int32 CurrentGraphVersion = 2;
 

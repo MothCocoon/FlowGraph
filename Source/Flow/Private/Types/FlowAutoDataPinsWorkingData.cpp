@@ -1,5 +1,4 @@
 // Copyright https://github.com/MothCocoon/FlowGraph/graphs/contributors
-
 #include "Types/FlowAutoDataPinsWorkingData.h"
 
 #include "FlowLogChannels.h"
@@ -8,6 +7,22 @@
 #include "Types/FlowDataPinValue.h"
 #include "Types/FlowNamedDataPinProperty.h"
 #include "Types/FlowStructUtils.h"
+
+UObject* FFlowDataPinValueOwner::GetValueOwnerAsObject()
+{
+	return CastChecked<UObject>(OwnerInterface, ECastCheckedType::NullAllowed);
+}
+
+const UObject* FFlowDataPinValueOwner::GetValueOwnerAsObject() const
+{
+	return CastChecked<UObject>(OwnerInterface, ECastCheckedType::NullAllowed);
+}
+
+void FFlowDataPinValueOwnerCollection::AddValueOwner(IFlowDataPinValueOwnerInterface& ValueOwnerInterface)
+{
+	const int32 ValueOwnerIndex = ValueOwners.Num();
+	ValueOwners.Add(FFlowDataPinValueOwner(ValueOwnerInterface, ValueOwnerIndex));
+}
 
 #if WITH_EDITOR
 
@@ -27,6 +42,33 @@ void FFlowAutoDataPinsWorkingData::Build(UFlowNode& FlowNode, FBuildResult& OutB
 	BuildNextFlowPinArray(OutputPinsLocal, OutBuildResult.AutoOutputPins);
 }
 
+void FFlowAutoDataPinsWorkingData::AddFlowDataPinsForClassProperties(FFlowDataPinValueOwner& ValueOwner)
+{
+	const UObject* ValueOwnerAsObject = ValueOwner.GetValueOwnerAsObject();
+	const UClass* Class = ValueOwnerAsObject->GetClass();
+
+	for (TFieldIterator<FProperty> PropertyIt(Class); PropertyIt; ++PropertyIt)
+	{
+		AddFlowDataPinForProperty(*PropertyIt, ValueOwner);
+	}
+}
+
+FName FFlowAutoDataPinsWorkingData::MakeDistinctInputPinName(const FGuid& OwnerGuid, const FName& LocalPinName)
+{
+	return FName(*FString::Printf(TEXT("FlowDistinctInput_%s_%s"),
+		*OwnerGuid.ToString(EGuidFormats::Digits), *LocalPinName.ToString()));
+}
+
+void FFlowAutoDataPinsWorkingData::BuildNextFlowPinArray(const TArray<FFlowPinSourceData>& PinSourceDatas, TArray<FFlowPin>& OutFlowPins)
+{
+	OutFlowPins.Reset();
+
+	for (const FFlowPinSourceData& PinSourceData : PinSourceDatas)
+	{
+		OutFlowPins.Add(PinSourceData.FlowPin);
+	}
+}
+
 bool FFlowAutoDataPinsWorkingData::CheckIfProposedPinsMatchPreviousPins(const TArray<FFlowPin>& PrevPins, const TArray<FFlowPin>& ProposedPins)
 {
 	if (PrevPins.Num() != ProposedPins.Num())
@@ -43,11 +85,6 @@ bool FFlowAutoDataPinsWorkingData::CheckIfProposedPinsMatchPreviousPins(const TA
 	}
 
 	return true;
-}
-
-bool FFlowAutoDataPinsWorkingData::ArePropertySourcesEqual(const FFlowPinPropertySource& A, const FFlowPinPropertySource& B)
-{
-	return A.PropertyName == B.PropertyName && A.ValueOwnerIndex == B.ValueOwnerIndex;
 }
 
 bool FFlowAutoDataPinsWorkingData::CheckIfProposedMapMatchesPreviousMap(
@@ -69,27 +106,6 @@ bool FFlowAutoDataPinsWorkingData::CheckIfProposedMapMatchesPreviousMap(
 	}
 
 	return true;
-}
-
-void FFlowAutoDataPinsWorkingData::BuildNextFlowPinArray(const TArray<FFlowPinSourceData>& PinSourceDatas, TArray<FFlowPin>& OutFlowPins)
-{
-	OutFlowPins.Reset();
-
-	for (const FFlowPinSourceData& PinSourceData : PinSourceDatas)
-	{
-		OutFlowPins.Add(PinSourceData.FlowPin);
-	}
-}
-
-void FFlowAutoDataPinsWorkingData::AddFlowDataPinsForClassProperties(FFlowDataPinValueOwner& ValueOwner)
-{
-	const UObject* ValueOwnerAsObject = ValueOwner.GetValueOwnerAsObject();
-	const UClass* Class = ValueOwnerAsObject->GetClass();
-
-	for (TFieldIterator<FProperty> PropertyIt(Class); PropertyIt; ++PropertyIt)
-	{
-		AddFlowDataPinForProperty(*PropertyIt, ValueOwner);
-	}
 }
 
 void FFlowAutoDataPinsWorkingData::AddFlowDataPinForProperty(FProperty* Property, FFlowDataPinValueOwner& ValueOwner)
@@ -198,6 +214,11 @@ void FFlowAutoDataPinsWorkingData::AddFlowDataPinForProperty(FProperty* Property
 	// IMPORTANT: wrapper patching is deferred until commit time to avoid dirtying assets on a no-op regen.
 }
 
+bool FFlowAutoDataPinsWorkingData::ArePropertySourcesEqual(const FFlowPinPropertySource& A, const FFlowPinPropertySource& B)
+{
+	return A.PropertyName == B.PropertyName && A.ValueOwnerIndex == B.ValueOwnerIndex;
+}
+
 void FFlowAutoDataPinsWorkingData::AddPinMappingToMap(
 	TMap<FName, FFlowPinPropertySource>& InOutMap,
 	const FName& FinalPinName,
@@ -225,18 +246,6 @@ void FFlowAutoDataPinsWorkingData::AppendDeferredPatchIfNeeded(
 	Patch.DataPinValue = PinSourceData.DataPinValue;
 	Patch.NewPinName = PinSourceData.FlowPin.PinName;
 	InOutPatches.Add(Patch);
-}
-
-bool FFlowAutoDataPinsWorkingData::AreFlowPinTypeSignaturesEquivalent(const FFlowPin& A, const FFlowPin& B)
-{
-	// Type signature equivalence (matches your requirement for "same type"):
-	// - ContainerType
-	// - PinTypeName
-	// - PinSubCategoryObject
-	return
-		A.ContainerType == B.ContainerType &&
-		A.GetPinTypeName() == B.GetPinTypeName() &&
-		A.GetPinSubCategoryObject() == B.GetPinSubCategoryObject();
 }
 
 void FFlowAutoDataPinsWorkingData::AddInputDataPinsToMapAndDisambiguate(
@@ -384,12 +393,6 @@ void FFlowAutoDataPinsWorkingData::AddInputDataPinsToMapAndDisambiguate(
 	}
 }
 
-FName FFlowAutoDataPinsWorkingData::MakeDistinctInputPinName(const FGuid& OwnerGuid, const FName& LocalPinName)
-{
-	return FName(*FString::Printf(TEXT("FlowDistinctInput_%s_%s"),
-		*OwnerGuid.ToString(EGuidFormats::Digits), *LocalPinName.ToString()));
-}
-
 void FFlowAutoDataPinsWorkingData::ApplyInputPinMergePoliciesAndCreateDistinctNames(
 	TArray<FFlowPinSourceData>& InOutAutoInputPinsNext,
 	TMap<FName, FFlowPinPropertySource>& InOutMap,
@@ -502,6 +505,18 @@ void FFlowAutoDataPinsWorkingData::DisambiguateMergeableInputPinCollisions(
 
 		Pin.FlowPin.PinName = *LegacyName;
 	}
+}
+
+bool FFlowAutoDataPinsWorkingData::AreFlowPinTypeSignaturesEquivalent(const FFlowPin& A, const FFlowPin& B)
+{
+	// Type signature equivalence (matches your requirement for "same type"):
+	// - ContainerType
+	// - PinTypeName
+	// - PinSubCategoryObject
+	return
+		A.ContainerType == B.ContainerType &&
+		A.GetPinTypeName() == B.GetPinTypeName() &&
+		A.GetPinSubCategoryObject() == B.GetPinSubCategoryObject();
 }
 
 void FFlowAutoDataPinsWorkingData::AddOutputDataPinsToMapAndDisambiguate(
@@ -648,19 +663,3 @@ void FFlowAutoDataPinsWorkingData::AppendPinSourceToTooltip(FFlowPinSourceData& 
 }
 
 #endif
-
-UObject* FFlowDataPinValueOwner::GetValueOwnerAsObject()
-{
-	return CastChecked<UObject>(OwnerInterface, ECastCheckedType::NullAllowed);
-}
-
-const UObject* FFlowDataPinValueOwner::GetValueOwnerAsObject() const
-{
-	return CastChecked<UObject>(OwnerInterface, ECastCheckedType::NullAllowed);
-}
-
-void FFlowDataPinValueOwnerCollection::AddValueOwner(IFlowDataPinValueOwnerInterface& ValueOwnerInterface)
-{
-	const int32 ValueOwnerIndex = ValueOwners.Num();
-	ValueOwners.Add(FFlowDataPinValueOwner(ValueOwnerInterface, ValueOwnerIndex));
-}

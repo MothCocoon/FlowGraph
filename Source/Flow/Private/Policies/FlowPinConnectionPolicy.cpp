@@ -1,15 +1,11 @@
 // Copyright https://github.com/MothCocoon/FlowGraph/graphs/contributors
-
 #include "Policies/FlowPinConnectionPolicy.h"
+
 #include "Nodes/FlowPin.h"
 #include "Types/FlowPinTypeNamesStandard.h"
 #include "FlowAsset.h"
 
 #include UE_INLINE_GENERATED_CPP_BY_NAME(FlowPinConnectionPolicy)
-
-FFlowPinConnectionPolicy::FFlowPinConnectionPolicy()
-{
-}
 
 const FFlowPinTypeMatchPolicy* FFlowPinConnectionPolicy::TryFindPinTypeMatchPolicy(const FName& PinTypeName) const
 {

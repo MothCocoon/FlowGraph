@@ -1,4 +1,4 @@
-﻿// Copyright https://github.com/MothCocoon/FlowGraph/graphs/contributors
+// Copyright https://github.com/MothCocoon/FlowGraph/graphs/contributors
 using UnrealBuildTool;
 
 public class FlowDebugger : ModuleRules

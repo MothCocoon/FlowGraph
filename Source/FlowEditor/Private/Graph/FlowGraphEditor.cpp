@@ -1,5 +1,4 @@
 // Copyright https://github.com/MothCocoon/FlowGraph/graphs/contributors
-
 #include "Graph/FlowGraphEditor.h"
 
 #include "Asset/FlowAssetEditor.h"
@@ -35,7 +34,8 @@
 void SFlowGraphEditor::Construct(const FArguments& InArgs, const TSharedPtr<FFlowAssetEditor> InAssetEditor)
 {
 	FlowAssetEditor = InAssetEditor;
-	FlowAsset = FlowAssetEditor.Pin()->GetFlowAsset();
+	UFlowAsset* FlowAssetPtr =InAssetEditor->GetFlowAsset();
+	FlowAsset = FlowAssetPtr;
 	DetailsView = InArgs._DetailsView;
 	bCanEditInPIE = InArgs._CanEditInPIE;
 
@@ -47,78 +47,46 @@ void SFlowGraphEditor::Construct(const FArguments& InArgs, const TSharedPtr<FFlo
 	SGraphEditor::FArguments Arguments;
 	Arguments._AdditionalCommands = CommandList;
 	Arguments._Appearance = TAttribute<FGraphAppearanceInfo>::CreateSP(this, &SFlowGraphEditor::GetGraphAppearanceInfo);
-	Arguments._GraphToEdit = FlowAsset->GetGraph();
+	Arguments._GraphToEdit = FlowAssetPtr->GetGraph();
 	Arguments._GraphEvents = InArgs._GraphEvents;
 	Arguments._AutoExpandActionMenu = true;
 	Arguments._GraphEvents.OnSelectionChanged = FOnSelectionChanged::CreateSP(this, &SFlowGraphEditor::OnSelectedNodesChanged);
 	Arguments._GraphEvents.OnNodeDoubleClicked = FSingleNodeEvent::CreateSP(this, &SFlowGraphEditor::OnNodeDoubleClicked);
 	Arguments._GraphEvents.OnTextCommitted = FOnNodeTextCommitted::CreateSP(this, &SFlowGraphEditor::OnNodeTitleCommitted);
-	Arguments._GraphEvents.OnSpawnNodeByShortcutAtLocation = FOnSpawnNodeByShortcutAtLocation::CreateStatic(&SFlowGraphEditor::OnSpawnGraphNodeByShortcut, FlowAsset->GetGraph());
+	Arguments._GraphEvents.OnSpawnNodeByShortcutAtLocation = FOnSpawnNodeByShortcutAtLocation::CreateStatic(&SFlowGraphEditor::OnSpawnGraphNodeByShortcut, FlowAssetPtr->GetGraph());
 
 	SGraphEditor::Construct(Arguments);
 }
 
-bool SFlowGraphEditor::GetValidExecBreakpointPinContext(const UEdGraphPin* Pin, FGuid& OutNodeGuid, FName& OutPinName)
+void SFlowGraphEditor::CreateDebugMenu()
 {
-	if (!Pin)
+	// The main menu is shared by every open Flow Asset Editor, so commands are resolved from the editor the menu is opened in
+	const FNewToolMenuDelegate AddDebugSection = FNewToolMenuDelegate::CreateLambda([](UToolMenu* InMenu)
 	{
-		return false;
-	}
+		const UFlowAssetEditorContext* Context = InMenu->FindContext<UFlowAssetEditorContext>();
+		const TSharedPtr<FFlowAssetEditor> AssetEditor = Context ? Context->FlowAssetEditor.Pin() : nullptr;
+		const TSharedPtr<SFlowGraphEditor> GraphEditor = AssetEditor.IsValid() ? AssetEditor->GetFlowGraph() : nullptr;
 
-	if (!FFlowPin::IsExecPinCategory(Pin->PinType.PinCategory))
-	{
-		return false;
-	}
+		if (GraphEditor.IsValid())
+		{
+			FToolMenuSection& Section = InMenu->AddSection("Breakpoints", LOCTEXT("Breakpoints", "Breakpoints"));
+			const FFlowGraphCommands& FlowGraphCommands = FFlowGraphCommands::Get();
 
-	// - If the owning node is not a UFlowGraphNode, allow it.
-	// - If it is a UFlowGraphNode, require it to allow breakpoints.
-	const UEdGraphNode* EdNode = Pin->GetOwningNode();
-	if (!EdNode)
-	{
-		return false;
-	}
+			Section.AddMenuEntryWithCommandList(FlowGraphCommands.EnableAllBreakpoints, GraphEditor->CommandList);
+			Section.AddMenuEntryWithCommandList(FlowGraphCommands.DisableAllBreakpoints, GraphEditor->CommandList);
+			Section.AddMenuEntryWithCommandList(FlowGraphCommands.RemoveAllBreakpoints, GraphEditor->CommandList);
+		}
+	});
 
-	const UFlowGraphNode* FlowNode = Cast<const UFlowGraphNode>(EdNode);
-	if (FlowNode && !FlowNode->CanPlaceBreakpoints())
-	{
-		return false;
-	}
+	FToolMenuSection& MainSection = UToolMenus::Get()->ExtendMenu("AssetEditor.FlowEditor.MainMenu")->FindOrAddSection(NAME_None);
+	FToolMenuEntry& DebugEntry = MainSection.AddSubMenu(
+		"Debug",
+		LOCTEXT("Debug", "Debug"),
+		LOCTEXT("DebugTooltip", "Open the debug menu"),
+		AddDebugSection
+	);
 
-	OutNodeGuid = EdNode->NodeGuid;
-	OutPinName = Pin->PinName;
-	return true;
-}
-
-const FFlowBreakpoint* SFlowGraphEditor::FindPinBreakpoint(UFlowDebuggerSubsystem* InDebuggerSubsystem, const UEdGraphPin* Pin)
-{
-	if (!InDebuggerSubsystem)
-	{
-		return nullptr;
-	}
-
-	FGuid NodeGuid;
-	FName PinName;
-	if (!GetValidExecBreakpointPinContext(Pin, NodeGuid, PinName))
-	{
-		return nullptr;
-	}
-
-	return InDebuggerSubsystem->FindBreakpoint(NodeGuid, PinName);
-}
-
-bool SFlowGraphEditor::HasPinBreakpoint(UFlowDebuggerSubsystem* InDebuggerSubsystem, const UEdGraphPin* Pin)
-{
-	return FindPinBreakpoint(InDebuggerSubsystem, Pin) != nullptr;
-}
-
-bool SFlowGraphEditor::HasEnabledPinBreakpoint(UFlowDebuggerSubsystem* InDebuggerSubsystem, const UEdGraphPin* Pin)
-{
-	if (const FFlowBreakpoint* BP = FindPinBreakpoint(InDebuggerSubsystem, Pin))
-	{
-		return BP->IsEnabled();
-	}
-
-	return false;
+	DebugEntry.InsertPosition = FToolMenuInsert("Edit", EToolMenuInsertType::After);
 }
 
 void SFlowGraphEditor::BindGraphCommands()
@@ -342,37 +310,6 @@ void SFlowGraphEditor::BindGraphCommands()
 	CommandList->MapAction(FlowGraphCommands.JumpToNodeDefinition,
 	                       FExecuteAction::CreateSP(this, &SFlowGraphEditor::JumpToNodeDefinition),
 	                       FCanExecuteAction::CreateSP(this, &SFlowGraphEditor::CanJumpToNodeDefinition));
-}
-
-void SFlowGraphEditor::CreateDebugMenu()
-{
-	// The main menu is shared by every open Flow Asset Editor, so commands are resolved from the editor the menu is opened in
-	const FNewToolMenuDelegate AddDebugSection = FNewToolMenuDelegate::CreateLambda([](UToolMenu* InMenu)
-	{
-		const UFlowAssetEditorContext* Context = InMenu->FindContext<UFlowAssetEditorContext>();
-		const TSharedPtr<FFlowAssetEditor> AssetEditor = Context ? Context->FlowAssetEditor.Pin() : nullptr;
-		const TSharedPtr<SFlowGraphEditor> GraphEditor = AssetEditor.IsValid() ? AssetEditor->GetFlowGraph() : nullptr;
-
-		if (GraphEditor.IsValid())
-		{
-			FToolMenuSection& Section = InMenu->AddSection("Breakpoints", LOCTEXT("Breakpoints", "Breakpoints"));
-			const FFlowGraphCommands& FlowGraphCommands = FFlowGraphCommands::Get();
-
-			Section.AddMenuEntryWithCommandList(FlowGraphCommands.EnableAllBreakpoints, GraphEditor->CommandList);
-			Section.AddMenuEntryWithCommandList(FlowGraphCommands.DisableAllBreakpoints, GraphEditor->CommandList);
-			Section.AddMenuEntryWithCommandList(FlowGraphCommands.RemoveAllBreakpoints, GraphEditor->CommandList);
-		}
-	});
-
-	FToolMenuSection& MainSection = UToolMenus::Get()->ExtendMenu("AssetEditor.FlowEditor.MainMenu")->FindOrAddSection(NAME_None);
-	FToolMenuEntry& DebugEntry = MainSection.AddSubMenu(
-		"Debug",
-		LOCTEXT("Debug", "Debug"),
-		LOCTEXT("DebugTooltip", "Open the debug menu"),
-		AddDebugSection
-	);
-
-	DebugEntry.InsertPosition = FToolMenuInsert("Edit", EToolMenuInsertType::After);
 }
 
 FGraphAppearanceInfo SFlowGraphEditor::GetGraphAppearanceInfo() const
@@ -600,19 +537,21 @@ void SFlowGraphEditor::DeleteSelectedNodes()
 {
 	const FScopedTransaction Transaction(LOCTEXT("DeleteSelectedNode", "Delete Selected Node"));
 	GetCurrentGraph()->Modify();
-	FlowAsset->Modify();
+	UFlowAsset* FlowAssetPtr =FlowAsset.Get();
+	FlowAssetPtr->Modify();
 
 	const FGraphPanelSelectionSet SelectedNodes = GetSelectedNodes();
 	FlowAssetEditor.Pin()->SetUISelectionState(NAME_None);
 
+	UFlowDebuggerSubsystem* DebuggerSubsystemPtr =DebuggerSubsystem.Get();
 	for (FGraphPanelSelectionSet::TConstIterator NodeIt(SelectedNodes); NodeIt; ++NodeIt)
 	{
 		UEdGraphNode* Node = CastChecked<UEdGraphNode>(*NodeIt);
 		if (Node->CanUserDeleteNode())
 		{
-			if (DebuggerSubsystem.IsValid())
+			if (DebuggerSubsystemPtr)
 			{
-				DebuggerSubsystem->RemoveAllBreakpoints(Node->NodeGuid);
+				DebuggerSubsystemPtr->RemoveAllBreakpoints(Node->NodeGuid);
 			}
 
 			if (const UFlowGraphNode* FlowGraphNode = Cast<UFlowGraphNode>(Node))
@@ -628,7 +567,7 @@ void SFlowGraphEditor::DeleteSelectedNodes()
 					GetCurrentGraph()->GetSchema()->BreakNodeLinks(*Node);
 					Node->DestroyNode();
 
-					FlowAsset->UnregisterNode(FlowNode->GetGuid());
+					FlowAssetPtr->UnregisterNode(FlowNode->GetGuid());
 					continue;
 				}
 			}
@@ -693,19 +632,6 @@ bool SFlowGraphEditor::CanDeleteNodes() const
 	}
 
 	return false;
-}
-
-void SFlowGraphEditor::CutSelectedNodes()
-{
-	CopySelectedNodes();
-
-	// Cut should only delete nodes that can be duplicated
-	DeleteSelectedDuplicableNodes();
-}
-
-bool SFlowGraphEditor::CanCutNodes() const
-{
-	return CanCopyNodes() && CanDeleteNodes();
 }
 
 void SFlowGraphEditor::CopySelectedNodes() const
@@ -790,6 +716,19 @@ bool SFlowGraphEditor::CanCopyNodes() const
 	return false;
 }
 
+void SFlowGraphEditor::CutSelectedNodes()
+{
+	CopySelectedNodes();
+
+	// Cut should only delete nodes that can be duplicated
+	DeleteSelectedDuplicableNodes();
+}
+
+bool SFlowGraphEditor::CanCutNodes() const
+{
+	return CanCopyNodes() && CanDeleteNodes();
+}
+
 void SFlowGraphEditor::PasteNodes()
 {
 	PasteNodesHere(GetPasteLocation2f());
@@ -799,9 +738,10 @@ void SFlowGraphEditor::PasteNodesHere(const FVector2f& Location)
 {
 	// Start the transaction and protect the graph update lock.
 	FScopedTransaction Transaction(LOCTEXT("PasteNode", "Paste Node"));
-	UFlowGraph* FlowGraph = CastChecked<UFlowGraph>(FlowAsset->GetGraph());
+	UFlowAsset* FlowAssetPtr =FlowAsset.Get();
+	UFlowGraph* FlowGraph = CastChecked<UFlowGraph>(FlowAssetPtr->GetGraph());
 	FlowGraph->Modify();
-	FlowAsset->Modify();
+	FlowAssetPtr->Modify();
 
 	FlowGraph->LockUpdates();
 	bool bUpdatesLocked = true;
@@ -963,6 +903,7 @@ void SFlowGraphEditor::PreparePastedNodesForPaste(const TSet<UEdGraphNode*>& Nod
 		AverageNodePosition.Y *= InverseNodeCount;
 	}
 
+	UFlowAsset* FlowAssetPtr =FlowAsset.Get();
 	for (UEdGraphNode* PastedNode : NodesToPaste)
 	{
 		UFlowGraphNode* PastedFlowGraphNode = Cast<UFlowGraphNode>(PastedNode);
@@ -985,7 +926,7 @@ void SFlowGraphEditor::PreparePastedNodesForPaste(const TSet<UEdGraphNode*>& Nod
 			if (UFlowNode* FlowNode = Cast<UFlowNode>(PastedFlowGraphNode->GetFlowNodeBase()))
 			{
 				// Only full FlowNodes are registered with the Asset (for now, AddOns are not).
-				FlowAsset->RegisterNode(PastedNode->NodeGuid, FlowNode);
+				FlowAssetPtr->RegisterNode(PastedNode->NodeGuid, FlowNode);
 			}
 
 			PastedFlowGraphNode->RemoveAllSubNodes();
@@ -1149,6 +1090,69 @@ bool SFlowGraphEditor::CanExtractToSubGraph() const
 	return CanEdit() && !IsPIE() && IsTabFocused() && !GetSelectedFlowNodes().IsEmpty();
 }
 
+bool SFlowGraphEditor::GetValidExecBreakpointPinContext(const UEdGraphPin* Pin, FGuid& OutNodeGuid, FName& OutPinName)
+{
+	if (!Pin)
+	{
+		return false;
+	}
+
+	if (!FFlowPin::IsExecPinCategory(Pin->PinType.PinCategory))
+	{
+		return false;
+	}
+
+	// - If the owning node is not a UFlowGraphNode, allow it.
+	// - If it is a UFlowGraphNode, require it to allow breakpoints.
+	const UEdGraphNode* EdNode = Pin->GetOwningNode();
+	if (!EdNode)
+	{
+		return false;
+	}
+
+	const UFlowGraphNode* FlowNode = Cast<const UFlowGraphNode>(EdNode);
+	if (FlowNode && !FlowNode->CanPlaceBreakpoints())
+	{
+		return false;
+	}
+
+	OutNodeGuid = EdNode->NodeGuid;
+	OutPinName = Pin->PinName;
+	return true;
+}
+
+const FFlowBreakpoint* SFlowGraphEditor::FindPinBreakpoint(UFlowDebuggerSubsystem* InDebuggerSubsystem, const UEdGraphPin* Pin)
+{
+	if (!InDebuggerSubsystem)
+	{
+		return nullptr;
+	}
+
+	FGuid NodeGuid;
+	FName PinName;
+	if (!GetValidExecBreakpointPinContext(Pin, NodeGuid, PinName))
+	{
+		return nullptr;
+	}
+
+	return InDebuggerSubsystem->FindBreakpoint(NodeGuid, PinName);
+}
+
+bool SFlowGraphEditor::HasPinBreakpoint(UFlowDebuggerSubsystem* InDebuggerSubsystem, const UEdGraphPin* Pin)
+{
+	return FindPinBreakpoint(InDebuggerSubsystem, Pin) != nullptr;
+}
+
+bool SFlowGraphEditor::HasEnabledPinBreakpoint(UFlowDebuggerSubsystem* InDebuggerSubsystem, const UEdGraphPin* Pin)
+{
+	if (const FFlowBreakpoint* BP = FindPinBreakpoint(InDebuggerSubsystem, Pin))
+	{
+		return BP->IsEnabled();
+	}
+
+	return false;
+}
+
 void SFlowGraphEditor::AddInput() const
 {
 	for (UFlowGraphNode* SelectedNode : GetSelectedFlowNodes())
@@ -1239,19 +1243,23 @@ bool SFlowGraphEditor::CanRemovePin()
 
 void SFlowGraphEditor::OnAddBreakpoint() const
 {
-	check(DebuggerSubsystem.IsValid());
+	UFlowDebuggerSubsystem* DebuggerSubsystemPtr =DebuggerSubsystem.Get();
+	check(DebuggerSubsystemPtr);
+
 	for (const UFlowGraphNode* SelectedNode : GetSelectedFlowNodes())
 	{
 		if (SelectedNode->CanPlaceBreakpoints())
 		{
-			DebuggerSubsystem->AddBreakpoint(SelectedNode->NodeGuid);
+			DebuggerSubsystemPtr->AddBreakpoint(SelectedNode->NodeGuid);
 		}
 	}
 }
 
 void SFlowGraphEditor::OnAddPinBreakpoint()
 {
-	check(DebuggerSubsystem.IsValid());
+	UFlowDebuggerSubsystem* DebuggerSubsystemPtr =DebuggerSubsystem.Get();
+	check(DebuggerSubsystemPtr);
+
 	if (const UEdGraphPin* Pin = GetGraphPinForMenu())
 	{
 		FGuid NodeGuid;
@@ -1261,18 +1269,20 @@ void SFlowGraphEditor::OnAddPinBreakpoint()
 			return;
 		}
 
-		DebuggerSubsystem->AddBreakpoint(NodeGuid, PinName);
+		DebuggerSubsystemPtr->AddBreakpoint(NodeGuid, PinName);
 	}
 }
 
 bool SFlowGraphEditor::CanAddBreakpoint() const
 {
-	check(DebuggerSubsystem.IsValid());
+	UFlowDebuggerSubsystem* DebuggerSubsystemPtr =DebuggerSubsystem.Get();
+	check(DebuggerSubsystemPtr);
+
 	for (const UFlowGraphNode* SelectedNode : GetSelectedFlowNodes())
 	{
 		if (SelectedNode->CanPlaceBreakpoints())
 		{
-			if (DebuggerSubsystem->FindBreakpoint(SelectedNode->NodeGuid) == nullptr)
+			if (DebuggerSubsystemPtr->FindBreakpoint(SelectedNode->NodeGuid) == nullptr)
 			{
 				return true;
 			}
@@ -1284,7 +1294,9 @@ bool SFlowGraphEditor::CanAddBreakpoint() const
 
 bool SFlowGraphEditor::CanAddPinBreakpoint()
 {
-	check(DebuggerSubsystem.IsValid());
+	UFlowDebuggerSubsystem* DebuggerSubsystemPtr =DebuggerSubsystem.Get();
+	check(DebuggerSubsystemPtr);
+
 	if (const UEdGraphPin* Pin = GetGraphPinForMenu())
 	{
 		FGuid NodeGuid;
@@ -1294,7 +1306,7 @@ bool SFlowGraphEditor::CanAddPinBreakpoint()
 			return false;
 		}
 
-		return DebuggerSubsystem->FindBreakpoint(NodeGuid, PinName) == nullptr;
+		return DebuggerSubsystemPtr->FindBreakpoint(NodeGuid, PinName) == nullptr;
 	}
 
 	return false;
@@ -1302,19 +1314,23 @@ bool SFlowGraphEditor::CanAddPinBreakpoint()
 
 void SFlowGraphEditor::OnRemoveBreakpoint() const
 {
-	check(DebuggerSubsystem.IsValid());
+	UFlowDebuggerSubsystem* DebuggerSubsystemPtr =DebuggerSubsystem.Get();
+	check(DebuggerSubsystemPtr);
+
 	for (const UFlowGraphNode* SelectedNode : GetSelectedFlowNodes())
 	{
 		if (SelectedNode->CanPlaceBreakpoints())
 		{
-			DebuggerSubsystem->RemoveNodeBreakpoint(SelectedNode->NodeGuid);
+			DebuggerSubsystemPtr->RemoveNodeBreakpoint(SelectedNode->NodeGuid);
 		}
 	}
 }
 
 void SFlowGraphEditor::OnRemovePinBreakpoint()
 {
-	check(DebuggerSubsystem.IsValid());
+	UFlowDebuggerSubsystem* DebuggerSubsystemPtr =DebuggerSubsystem.Get();
+	check(DebuggerSubsystemPtr);
+
 	if (const UEdGraphPin* Pin = GetGraphPinForMenu())
 	{
 		FGuid NodeGuid;
@@ -1324,18 +1340,20 @@ void SFlowGraphEditor::OnRemovePinBreakpoint()
 			return;
 		}
 
-		DebuggerSubsystem->RemovePinBreakpoint(NodeGuid, PinName);
+		DebuggerSubsystemPtr->RemovePinBreakpoint(NodeGuid, PinName);
 	}
 }
 
 bool SFlowGraphEditor::CanRemoveBreakpoint() const
 {
-	check(DebuggerSubsystem.IsValid());
+	UFlowDebuggerSubsystem* DebuggerSubsystemPtr =DebuggerSubsystem.Get();
+	check(DebuggerSubsystemPtr);
+
 	for (const UFlowGraphNode* SelectedNode : GetSelectedFlowNodes())
 	{
 		if (SelectedNode->CanPlaceBreakpoints())
 		{
-			if (DebuggerSubsystem->FindBreakpoint(SelectedNode->NodeGuid) != nullptr)
+			if (DebuggerSubsystemPtr->FindBreakpoint(SelectedNode->NodeGuid) != nullptr)
 			{
 				return true;
 			}
@@ -1347,25 +1365,31 @@ bool SFlowGraphEditor::CanRemoveBreakpoint() const
 
 bool SFlowGraphEditor::CanRemovePinBreakpoint()
 {
-	check(DebuggerSubsystem.IsValid());
-	return HasPinBreakpoint(DebuggerSubsystem.Get(), GetGraphPinForMenu());
+	UFlowDebuggerSubsystem* DebuggerSubsystemPtr =DebuggerSubsystem.Get();
+	check(DebuggerSubsystemPtr);
+
+	return HasPinBreakpoint(DebuggerSubsystemPtr,GetGraphPinForMenu());
 }
 
 void SFlowGraphEditor::OnEnableBreakpoint() const
 {
-	check(DebuggerSubsystem.IsValid());
+	UFlowDebuggerSubsystem* DebuggerSubsystemPtr =DebuggerSubsystem.Get();
+	check(DebuggerSubsystemPtr);
+
 	for (const UFlowGraphNode* SelectedNode : GetSelectedFlowNodes())
 	{
 		if (SelectedNode->CanPlaceBreakpoints())
 		{
-			DebuggerSubsystem->SetBreakpointEnabled(SelectedNode->NodeGuid, true);
+			DebuggerSubsystemPtr->SetBreakpointEnabled(SelectedNode->NodeGuid, true);
 		}
 	}
 }
 
 void SFlowGraphEditor::OnEnablePinBreakpoint()
 {
-	check(DebuggerSubsystem.IsValid());
+	UFlowDebuggerSubsystem* DebuggerSubsystemPtr =DebuggerSubsystem.Get();
+	check(DebuggerSubsystemPtr);
+
 	if (const UEdGraphPin* Pin = GetGraphPinForMenu())
 	{
 		FGuid NodeGuid;
@@ -1375,17 +1399,20 @@ void SFlowGraphEditor::OnEnablePinBreakpoint()
 			return;
 		}
 
-		DebuggerSubsystem->SetBreakpointEnabled(NodeGuid, PinName, true);
+		DebuggerSubsystemPtr->SetBreakpointEnabled(NodeGuid, PinName, true);
 	}
 }
 
 bool SFlowGraphEditor::CanEnableBreakpoint() const
 {
+	UFlowDebuggerSubsystem* DebuggerSubsystemPtr =DebuggerSubsystem.Get();
+	check(DebuggerSubsystemPtr);
+
 	for (const UFlowGraphNode* SelectedNode : GetSelectedFlowNodes())
 	{
 		if (SelectedNode->CanPlaceBreakpoints())
 		{
-			const FFlowBreakpoint* Breakpoint = DebuggerSubsystem->FindBreakpoint(SelectedNode->NodeGuid);
+			const FFlowBreakpoint* Breakpoint = DebuggerSubsystemPtr->FindBreakpoint(SelectedNode->NodeGuid);
 			if (Breakpoint && !Breakpoint->IsEnabled())
 			{
 				return true;
@@ -1398,25 +1425,30 @@ bool SFlowGraphEditor::CanEnableBreakpoint() const
 
 bool SFlowGraphEditor::CanEnablePinBreakpoint()
 {
-	return HasPinBreakpoint(DebuggerSubsystem.Get(), GetGraphPinForMenu())
-		&& !HasEnabledPinBreakpoint(DebuggerSubsystem.Get(), GetGraphPinForMenu());
+	UFlowDebuggerSubsystem* DebuggerSubsystemPtr =DebuggerSubsystem.Get();
+	return HasPinBreakpoint(DebuggerSubsystemPtr,GetGraphPinForMenu())
+		&& !HasEnabledPinBreakpoint(DebuggerSubsystemPtr,GetGraphPinForMenu());
 }
 
 void SFlowGraphEditor::OnDisableBreakpoint() const
 {
-	check(DebuggerSubsystem.IsValid());
+	UFlowDebuggerSubsystem* DebuggerSubsystemPtr =DebuggerSubsystem.Get();
+	check(DebuggerSubsystemPtr);
+
 	for (const UFlowGraphNode* SelectedNode : GetSelectedFlowNodes())
 	{
 		if (SelectedNode->CanPlaceBreakpoints())
 		{
-			DebuggerSubsystem->SetBreakpointEnabled(SelectedNode->NodeGuid, false);
+			DebuggerSubsystemPtr->SetBreakpointEnabled(SelectedNode->NodeGuid, false);
 		}
 	}
 }
 
 void SFlowGraphEditor::OnDisablePinBreakpoint()
 {
-	check(DebuggerSubsystem.IsValid());
+	UFlowDebuggerSubsystem* DebuggerSubsystemPtr =DebuggerSubsystem.Get();
+	check(DebuggerSubsystemPtr);
+
 	if (const UEdGraphPin* Pin = GetGraphPinForMenu())
 	{
 		FGuid NodeGuid;
@@ -1426,18 +1458,20 @@ void SFlowGraphEditor::OnDisablePinBreakpoint()
 			return;
 		}
 
-		DebuggerSubsystem->SetBreakpointEnabled(NodeGuid, PinName, false);
+		DebuggerSubsystemPtr->SetBreakpointEnabled(NodeGuid, PinName, false);
 	}
 }
 
 bool SFlowGraphEditor::CanDisableBreakpoint() const
 {
-	check(DebuggerSubsystem.IsValid());
+	UFlowDebuggerSubsystem* DebuggerSubsystemPtr =DebuggerSubsystem.Get();
+	check(DebuggerSubsystemPtr);
+
 	for (const UFlowGraphNode* SelectedNode : GetSelectedFlowNodes())
 	{
 		if (SelectedNode->CanPlaceBreakpoints())
 		{
-			const FFlowBreakpoint* Breakpoint = DebuggerSubsystem->FindBreakpoint(SelectedNode->NodeGuid);
+			const FFlowBreakpoint* Breakpoint = DebuggerSubsystemPtr->FindBreakpoint(SelectedNode->NodeGuid);
 			if (Breakpoint && Breakpoint->IsEnabled())
 			{
 				return true;
@@ -1450,25 +1484,31 @@ bool SFlowGraphEditor::CanDisableBreakpoint() const
 
 bool SFlowGraphEditor::CanDisablePinBreakpoint()
 {
-	check(DebuggerSubsystem.IsValid());
-	return HasEnabledPinBreakpoint(DebuggerSubsystem.Get(), GetGraphPinForMenu());
+	UFlowDebuggerSubsystem* DebuggerSubsystemPtr =DebuggerSubsystem.Get();
+	check(DebuggerSubsystemPtr);
+
+	return HasEnabledPinBreakpoint(DebuggerSubsystemPtr,GetGraphPinForMenu());
 }
 
 void SFlowGraphEditor::OnToggleBreakpoint() const
 {
-	check(DebuggerSubsystem.IsValid());
+	UFlowDebuggerSubsystem* DebuggerSubsystemPtr =DebuggerSubsystem.Get();
+	check(DebuggerSubsystemPtr);
+
 	for (const UFlowGraphNode* SelectedNode : GetSelectedFlowNodes())
 	{
 		if (SelectedNode->CanPlaceBreakpoints())
 		{
-			DebuggerSubsystem->ToggleBreakpoint(SelectedNode->NodeGuid);
+			DebuggerSubsystemPtr->ToggleBreakpoint(SelectedNode->NodeGuid);
 		}
 	}
 }
 
 void SFlowGraphEditor::OnTogglePinBreakpoint()
 {
-	check(DebuggerSubsystem.IsValid());
+	UFlowDebuggerSubsystem* DebuggerSubsystemPtr =DebuggerSubsystem.Get();
+	check(DebuggerSubsystemPtr);
+
 	if (const UEdGraphPin* Pin = GetGraphPinForMenu())
 	{
 		FGuid NodeGuid;
@@ -1478,7 +1518,7 @@ void SFlowGraphEditor::OnTogglePinBreakpoint()
 			return;
 		}
 
-		DebuggerSubsystem->ToggleBreakpoint(NodeGuid, PinName);
+		DebuggerSubsystemPtr->ToggleBreakpoint(NodeGuid, PinName);
 	}
 }
 
@@ -1509,41 +1549,41 @@ bool SFlowGraphEditor::CanTogglePinBreakpoint()
 
 void SFlowGraphEditor::EnableAllBreakpoints() const
 {
-	if (DebuggerSubsystem.IsValid())
+	if (UFlowDebuggerSubsystem* DebuggerSubsystemPtr =DebuggerSubsystem.Get())
 	{
-		DebuggerSubsystem->SetAllBreakpointsEnabled(FlowAsset, true);
+		DebuggerSubsystemPtr->SetAllBreakpointsEnabled(FlowAsset, true);
 	}
 }
 
 bool SFlowGraphEditor::HasAnyDisabledBreakpoints() const
 {
-	return DebuggerSubsystem.IsValid() ? DebuggerSubsystem->HasAnyBreakpointsDisabled(FlowAsset) : false;
+	return DebuggerSubsystem.IsValid() && UFlowDebuggerSubsystem::HasAnyBreakpointsDisabled(FlowAsset);
 }
 
 void SFlowGraphEditor::DisableAllBreakpoints() const
 {
-	if (DebuggerSubsystem.IsValid())
+	if (UFlowDebuggerSubsystem* DebuggerSubsystemPtr =DebuggerSubsystem.Get())
 	{
-		DebuggerSubsystem->SetAllBreakpointsEnabled(FlowAsset, false);
+		DebuggerSubsystemPtr->SetAllBreakpointsEnabled(FlowAsset, false);
 	}
 }
 
 bool SFlowGraphEditor::HasAnyEnabledBreakpoints() const
 {
-	return DebuggerSubsystem.IsValid() ? DebuggerSubsystem->HasAnyBreakpointsEnabled(FlowAsset) : false;
+	return DebuggerSubsystem.IsValid() && UFlowDebuggerSubsystem::HasAnyBreakpointsEnabled(FlowAsset);
 }
 
 void SFlowGraphEditor::RemoveAllBreakpoints() const
 {
-	if (DebuggerSubsystem.IsValid())
+	if (UFlowDebuggerSubsystem* DebuggerSubsystemPtr =DebuggerSubsystem.Get())
 	{
-		DebuggerSubsystem->RemoveAllBreakpoints(FlowAsset);
+		DebuggerSubsystemPtr->RemoveAllBreakpoints(FlowAsset);
 	}
 }
 
 bool SFlowGraphEditor::HasAnyBreakpoints() const
 {
-	return DebuggerSubsystem.IsValid() ? DebuggerSubsystem->HasAnyBreakpoints(FlowAsset) : false;
+	return DebuggerSubsystem.IsValid() && UFlowDebuggerSubsystem::HasAnyBreakpoints(FlowAsset);
 }
 
 void SFlowGraphEditor::SetSignalMode(const EFlowSignalMode Mode) const

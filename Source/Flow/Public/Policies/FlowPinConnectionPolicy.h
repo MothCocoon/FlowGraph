@@ -25,8 +25,6 @@ protected:
 	TMap<FName, FFlowPinTypeMatchPolicy> PinTypeMatchPolicies;
 
 public:
-	FFlowPinConnectionPolicy();
-
 //////////////////////////////////////////////////////////////////////////
 // Runtime-available queries (used by CompareValues predicate and others)
 

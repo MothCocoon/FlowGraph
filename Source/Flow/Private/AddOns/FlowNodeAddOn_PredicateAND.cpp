@@ -1,5 +1,4 @@
 // Copyright https://github.com/MothCocoon/FlowGraph/graphs/contributors
-
 #include "AddOns/FlowNodeAddOn_PredicateAND.h"
 
 #include UE_INLINE_GENERATED_CPP_BY_NAME(FlowNodeAddOn_PredicateAND)

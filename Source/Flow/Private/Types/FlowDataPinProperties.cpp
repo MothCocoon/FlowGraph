@@ -1,7 +1,7 @@
 // Copyright https://github.com/MothCocoon/FlowGraph/graphs/contributors
+#include "Types/FlowDataPinProperties.h"
 
 // #FlowDataPinLegacy
-#include "Types/FlowDataPinProperties.h"
 #include "UObject/Class.h"
 #include "UObject/UObjectIterator.h"
 

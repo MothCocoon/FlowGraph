@@ -1,6 +1,6 @@
 // Copyright https://github.com/MothCocoon/FlowGraph/graphs/contributors
-
 #include "LevelSequence/FlowLevelSequencePlayer.h"
+
 #include "LevelSequence/FlowLevelSequenceActor.h"
 #include "Nodes/FlowNode.h"
 
@@ -8,12 +8,6 @@
 #include "Runtime/Launch/Resources/Version.h"
 
 #include UE_INLINE_GENERATED_CPP_BY_NAME(FlowLevelSequencePlayer)
-
-UFlowLevelSequencePlayer::UFlowLevelSequencePlayer(const FObjectInitializer& ObjectInitializer)
-	: Super(ObjectInitializer)
-	, FlowEventReceiver(nullptr)
-{
-}
 
 UFlowLevelSequencePlayer* UFlowLevelSequencePlayer::CreateFlowLevelSequencePlayer(
 	const UObject* WorldContextObject,

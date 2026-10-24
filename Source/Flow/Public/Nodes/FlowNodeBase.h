@@ -432,7 +432,7 @@ protected:
 
 	/* If this node is deprecated, it might be replaced by another node. */
 	UPROPERTY(EditDefaultsOnly, Category = "FlowNode")
-	TSubclassOf<UFlowNode> ReplacedBy;
+	TSoftClassPtr<UFlowNode> ReplacedBy;
 
 	friend class FScopedFlowNodeReconstructionRequestDeferral;
 	FFlowNodeEvent OnReconstructionRequested;
@@ -514,7 +514,7 @@ public:
 	virtual FText GetNodeToolTip() const;
 
 	bool IsDeprecated() const { return bNodeDeprecated; }
-	const TSubclassOf<UFlowNode>& GetReplacedByClass() const { return ReplacedBy; }
+	const TSoftClassPtr<UFlowNode>& GetReplacedByClass() const { return ReplacedBy; }
 
 	FText GetGeneratedDisplayName() const;
 	static FString GetInheritedNodeKeywords(const UClass* NodeClass);

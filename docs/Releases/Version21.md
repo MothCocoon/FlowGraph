@@ -89,6 +89,3 @@ Flow Solo (sample project) releases
     * Changes to identity tags while offline (NM_Standalone) did not replicate to clients if they went online at some later point.
     * Changes to identity tags on the server before BeginPlay was called on the Flow Component would never replicate to clients.
     * Multiple calls to `AddIdentityTag(s)` or `RemoveIdentityTag(s)` within a single net update did not get replicated properly. It would only replicate the last of each respective operation.
-
-
-

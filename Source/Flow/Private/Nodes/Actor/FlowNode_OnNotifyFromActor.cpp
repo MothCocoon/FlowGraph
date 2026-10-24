@@ -17,14 +17,17 @@ void UFlowNode_OnNotifyFromActor::ObserveActor(TWeakObjectPtr<AActor> Actor, TWe
 	if (!RegisteredActors.Contains(Actor))
 	{
 		RegisteredActors.Emplace(Actor, Component);
-		Component->OnNotifyFromComponent.AddUObject(this, &UFlowNode_OnNotifyFromActor::OnNotifyFromComponent);
-
-		if (bRetroactive)
+		if (UFlowComponent* FlowComponent = Component.Get())
 		{
-			const FGameplayTagContainer& RecentlySentNotifyTags = Component->GetRecentlySentNotifyTags();
-			if (bExactMatch ? RecentlySentNotifyTags.HasAnyExact(NotifyTags) : RecentlySentNotifyTags.HasAny(NotifyTags))
+			FlowComponent->OnNotifyFromComponent.AddUObject(this, &UFlowNode_OnNotifyFromActor::OnNotifyFromComponent);
+
+			if (bRetroactive)
 			{
-				OnEventReceived();
+				const FGameplayTagContainer& RecentlySentNotifyTags = FlowComponent->GetRecentlySentNotifyTags();
+				if (bExactMatch ? RecentlySentNotifyTags.HasAnyExact(NotifyTags) : RecentlySentNotifyTags.HasAny(NotifyTags))
+				{
+					OnEventReceived();
+				}
 			}
 		}
 	}

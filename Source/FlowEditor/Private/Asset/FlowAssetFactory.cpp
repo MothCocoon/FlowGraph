@@ -1,6 +1,6 @@
 // Copyright https://github.com/MothCocoon/FlowGraph/graphs/contributors
-
 #include "Asset/FlowAssetFactory.h"
+
 #include "FlowAsset.h"
 #include "Graph/FlowGraph.h"
 #include "Graph/FlowGraphSettings.h"
@@ -16,20 +16,14 @@
 class FAssetClassParentFilter final : public IClassViewerFilter
 {
 public:
-	FAssetClassParentFilter()
-		: DisallowedClassFlags(CLASS_None)
-		, bDisallowBlueprintBase(false)
-	{
-	}
-
 	/** All children of these classes will be included unless filtered out by another setting. */
 	TSet<const UClass*> AllowedChildrenOfClasses;
 
 	/** Disallowed class flags. */
-	EClassFlags DisallowedClassFlags;
+	EClassFlags DisallowedClassFlags = CLASS_None;
 
 	/** Disallow blueprint base classes. */
-	bool bDisallowBlueprintBase;
+	bool bDisallowBlueprintBase = false;
 
 	virtual bool IsClassAllowed(const FClassViewerInitializationOptions& InInitOptions, const UClass* InClass, const TSharedRef<FClassViewerFilterFuncs> InFilterFuncs) override
 	{
@@ -74,9 +68,26 @@ bool UFlowAssetFactory::ConfigureProperties()
 	return ConfigurePropertiesInternal(TitleText);
 }
 
+UObject* UFlowAssetFactory::FactoryCreateNew(UClass* Class, UObject* InParent, FName Name, EObjectFlags Flags, UObject* Context, FFeedbackContext* Warn)
+{
+	UFlowAsset* NewFlowAsset;
+	if (AssetClass)
+	{
+		NewFlowAsset = NewObject<UFlowAsset>(InParent, AssetClass, Name, Flags | RF_Transactional, Context);
+	}
+	else
+	{
+		// if we have no asset class, use the passed-in class instead
+		NewFlowAsset = NewObject<UFlowAsset>(InParent, Class, Name, Flags | RF_Transactional, Context);
+	}
+
+	UFlowGraph::CreateGraph(NewFlowAsset);
+	return NewFlowAsset;
+}
+
 bool UFlowAssetFactory::ConfigurePropertiesInternal(const FText& TitleText)
 {
-	const TSoftClassPtr<UFlowAsset> DefaultClass = GetDefault<UFlowGraphSettings>()->DefaultFlowAssetClass; 
+	const TSoftClassPtr<UFlowAsset> DefaultClass = GetDefault<UFlowGraphSettings>()->DefaultFlowAssetClass;
 	if (!DefaultClass.IsNull())
 	{
 		AssetClass = DefaultClass.LoadSynchronous();
@@ -108,23 +119,6 @@ bool UFlowAssetFactory::ConfigurePropertiesInternal(const FText& TitleText)
 	}
 
 	return bPressedOk;
-}
-
-UObject* UFlowAssetFactory::FactoryCreateNew(UClass* Class, UObject* InParent, FName Name, EObjectFlags Flags, UObject* Context, FFeedbackContext* Warn)
-{
-	UFlowAsset* NewFlowAsset;
-	if (AssetClass)
-	{
-		NewFlowAsset = NewObject<UFlowAsset>(InParent, AssetClass, Name, Flags | RF_Transactional, Context);
-	}
-	else
-	{
-		// if we have no asset class, use the passed-in class instead
-		NewFlowAsset = NewObject<UFlowAsset>(InParent, Class, Name, Flags | RF_Transactional, Context);
-	}
-
-	UFlowGraph::CreateGraph(NewFlowAsset);
-	return NewFlowAsset;
 }
 
 #undef LOCTEXT_NAMESPACE

@@ -1,5 +1,4 @@
 // Copyright https://github.com/MothCocoon/FlowGraph/graphs/contributors
-
 #pragma once
 
 #include "AddOns/FlowNodeAddOn.h"
@@ -23,9 +22,7 @@ public:
 	UPROPERTY()
 	FFlowDataPinValue_Int Value;
 
-#if WITH_EDITOR
 	virtual bool AllowMergeInputPin(const FFlowPin&) const override { return false; }
-#endif
 };
 
 UCLASS(Hidden, NotBlueprintable, NotPlaceable, meta = (ExcludeFromFlowCatalog))

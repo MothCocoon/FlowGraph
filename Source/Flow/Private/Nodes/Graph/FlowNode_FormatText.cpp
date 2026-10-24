@@ -19,43 +19,6 @@ UFlowNode_FormatText::UFlowNode_FormatText()
 	OutputPins.Add(FFlowPin(OUTPIN_TextOutput, FFlowPinType_Text::GetPinTypeNameStatic()));
 }
 
-FFlowDataPinResult UFlowNode_FormatText::TrySupplyDataPin(const FName PinName) const
-{
-	if (PinName == OUTPIN_TextOutput)
-	{
-		FText FormattedText;
-		const EFlowDataPinResolveResult FormatResult = TryResolveFormattedText(PinName, FormattedText);
-
-		if (FlowPinType::IsSuccess(FormatResult))
-		{
-			return FFlowDataPinResult(FFlowDataPinValue_Text(FormattedText));
-		}
-		else
-		{
-			return FFlowDataPinResult(FormatResult);
-		}
-	}
-
-	return Super::TrySupplyDataPin(PinName);
-}
-
-EFlowDataPinResolveResult UFlowNode_FormatText::TryResolveFormattedText(const FName& PinName, FText& OutFormattedText) const
-{
-	FText ResolvedFormatText = FormatText;
-	TryResolveDataPinValue<FFlowPinType_Text>(GET_MEMBER_NAME_CHECKED(ThisClass, FormatText), ResolvedFormatText);
-
-	if (TryFormatTextWithNamedPropertiesAsParameters(ResolvedFormatText, OutFormattedText))
-	{
-		return EFlowDataPinResolveResult::Success;
-	}
-	else
-	{
-		LogError(FString::Printf(TEXT("Could not format text '%s' with properties as parameters"), *ResolvedFormatText.ToString()), EFlowOnScreenMessageType::Temporary);
-
-		return EFlowDataPinResolveResult::FailedWithError;
-	}
-}
-
 #if WITH_EDITOR
 void UFlowNode_FormatText::PostEditChangeChainProperty(FPropertyChangedChainEvent& PropertyChainEvent)
 {
@@ -83,6 +46,43 @@ void UFlowNode_FormatText::UpdateNodeConfigText_Implementation()
 }
 
 #endif
+
+EFlowDataPinResolveResult UFlowNode_FormatText::TryResolveFormattedText(const FName& PinName, FText& OutFormattedText) const
+{
+	FText ResolvedFormatText = FormatText;
+	TryResolveDataPinValue<FFlowPinType_Text>(GET_MEMBER_NAME_CHECKED(ThisClass, FormatText), ResolvedFormatText);
+
+	if (TryFormatTextWithNamedPropertiesAsParameters(ResolvedFormatText, OutFormattedText))
+	{
+		return EFlowDataPinResolveResult::Success;
+	}
+	else
+	{
+		LogError(FString::Printf(TEXT("Could not format text '%s' with properties as parameters"), *ResolvedFormatText.ToString()), EFlowOnScreenMessageType::Temporary);
+
+		return EFlowDataPinResolveResult::FailedWithError;
+	}
+}
+
+FFlowDataPinResult UFlowNode_FormatText::TrySupplyDataPin(const FName PinName) const
+{
+	if (PinName == OUTPIN_TextOutput)
+	{
+		FText FormattedText;
+		const EFlowDataPinResolveResult FormatResult = TryResolveFormattedText(PinName, FormattedText);
+
+		if (FlowPinType::IsSuccess(FormatResult))
+		{
+			return FFlowDataPinResult(FFlowDataPinValue_Text(FormattedText));
+		}
+		else
+		{
+			return FFlowDataPinResult(FormatResult);
+		}
+	}
+
+	return Super::TrySupplyDataPin(PinName);
+}
 
 #undef LOCTEXT_NAMESPACE
 

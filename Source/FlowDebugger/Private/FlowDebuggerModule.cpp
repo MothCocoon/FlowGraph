@@ -1,5 +1,4 @@
-﻿// Copyright https://github.com/MothCocoon/FlowGraph/graphs/contributors
-
+// Copyright https://github.com/MothCocoon/FlowGraph/graphs/contributors
 #include "FlowDebuggerModule.h"
 
 #include "Modules/ModuleManager.h"

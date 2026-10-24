@@ -1,6 +1,6 @@
 // Copyright https://github.com/MothCocoon/FlowGraph/graphs/contributors
-
 #include "Types/FlowActorOwnerComponentRef.h"
+
 #include "Components/ActorComponent.h"
 #include "GameFramework/Actor.h"
 #include "Misc/RuntimeErrors.h"
@@ -28,6 +28,11 @@ void FFlowActorOwnerComponentRef::SetResolvedComponentDirect(UActorComponent& Co
 	ResolvedComponent = &Component;
 }
 
+bool FFlowActorOwnerComponentRef::IsResolved() const
+{
+	return IsValid(ResolvedComponent);
+}
+
 UActorComponent* FFlowActorOwnerComponentRef::TryResolveComponentByName(const AActor& InActor, const FName& InComponentName)
 {
 	constexpr bool bIncludeFromChildActors = false;
@@ -50,10 +55,5 @@ UActorComponent* FFlowActorOwnerComponentRef::TryResolveComponentByName(const AA
 		});
 
 	return FoundComponent;
-}
-
-bool FFlowActorOwnerComponentRef::IsResolved() const
-{
-	return IsValid(ResolvedComponent);
 }
 

@@ -1,4 +1,4 @@
-﻿// Copyright https://github.com/MothCocoon/FlowGraph/graphs/contributors
+// Copyright https://github.com/MothCocoon/FlowGraph/graphs/contributors
 #pragma once
 
 #include "Engine/DeveloperSettings.h"
@@ -15,8 +15,6 @@ class FLOWDEBUGGER_API UFlowDebuggerSettings : public UDeveloperSettings
 	GENERATED_BODY()
 
 public:
-	UFlowDebuggerSettings();
-
 	UPROPERTY(config)
 	TMap<FGuid, FNodeBreakpoint> NodeBreakpoints;
 };

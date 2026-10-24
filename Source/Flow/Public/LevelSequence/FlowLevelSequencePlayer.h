@@ -13,7 +13,7 @@ class UFlowNode;
 UCLASS()
 class FLOW_API UFlowLevelSequencePlayer : public ULevelSequencePlayer
 {
-	GENERATED_UCLASS_BODY()
+	GENERATED_BODY()
 
 private:
 	/* Most likely this is a UFlowNode_PlayLevelSequence or its child. */

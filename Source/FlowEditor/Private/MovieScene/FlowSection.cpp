@@ -1,6 +1,6 @@
 // Copyright https://github.com/MothCocoon/FlowGraph/graphs/contributors
-
 #include "MovieScene/FlowSection.h"
+
 #include "MovieScene/MovieSceneFlowRepeaterSection.h"
 #include "MovieScene/MovieSceneFlowTriggerSection.h"
 
@@ -15,18 +15,6 @@
 #include "TimeToPixel.h"
 
 #define LOCTEXT_NAMESPACE "FlowSection"
-
-bool FFlowSectionBase::IsSectionSelected() const
-{
-	const TSharedPtr<ISequencer> SequencerPtr = Sequencer.Pin();
-
-	TArray<UMovieSceneTrack*> SelectedTracks;
-	SequencerPtr->GetSelectedTracks(SelectedTracks);
-
-	const UMovieSceneSection* Section = WeakSection.Get();
-	UMovieSceneTrack* Track = Section ? CastChecked<UMovieSceneTrack>(Section->GetOuter()) : nullptr;
-	return Track && SelectedTracks.Contains(Track);
-}
 
 void FFlowSectionBase::PaintEventName(FSequencerSectionPainter& Painter, int32 LayerId, const FString& InEventString, float PixelPos, bool bIsEventValid) const
 {
@@ -94,6 +82,18 @@ void FFlowSectionBase::PaintEventName(FSequencerSectionPainter& Painter, int32 L
 		Painter.bParentEnabled ? ESlateDrawEffect::None : ESlateDrawEffect::DisabledEffect,
 		DrawColor
 	);
+}
+
+bool FFlowSectionBase::IsSectionSelected() const
+{
+	const TSharedPtr<ISequencer> SequencerPtr = Sequencer.Pin();
+
+	TArray<UMovieSceneTrack*> SelectedTracks;
+	SequencerPtr->GetSelectedTracks(SelectedTracks);
+
+	const UMovieSceneSection* Section = WeakSection.Get();
+	UMovieSceneTrack* Track = Section ? CastChecked<UMovieSceneTrack>(Section->GetOuter()) : nullptr;
+	return Track && SelectedTracks.Contains(Track);
 }
 
 int32 FFlowSection::OnPaintSection(FSequencerSectionPainter& Painter) const

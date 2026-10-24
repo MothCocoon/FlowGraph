@@ -1,6 +1,6 @@
 // Copyright https://github.com/MothCocoon/FlowGraph/graphs/contributors
-
 #include "Types/FlowPinType.h"
+
 #include "Types/FlowDataPinValue.h"
 #include "Types/FlowStructUtils.h"
 #include "Nodes/FlowNode.h"
@@ -40,6 +40,11 @@ bool FFlowPinType::PopulateResult(const UObject& PropertyOwnerObject, const UFlo
 }
 
 #if WITH_EDITOR
+TSharedPtr<IPropertyHandle> FFlowPinType::GetValuesHandle(const TSharedRef<IPropertyHandle>& FlowDataPinValuePropertyHandle) const
+{
+	return FlowDataPinValuePropertyHandle.Get().GetChildHandle(TEXT("Values"));
+}
+
 FFlowPin FFlowPinType::CreateFlowPinFromProperty(const FProperty& Property, void const* InContainer) const
 {
 	FFlowPin NewFlowPin;
@@ -92,10 +97,5 @@ FFlowPin FFlowPinType::CreateFlowPinFromValueWrapper(const FName& PinName, const
 	NewFlowPin.SetPinTypeName(GetPinTypeName());
 
 	return NewFlowPin;
-}
-
-TSharedPtr<IPropertyHandle> FFlowPinType::GetValuesHandle(const TSharedRef<IPropertyHandle>& FlowDataPinValuePropertyHandle) const
-{
-	return FlowDataPinValuePropertyHandle.Get().GetChildHandle(TEXT("Values"));
 }
 #endif

@@ -1,6 +1,6 @@
 // Copyright https://github.com/MothCocoon/FlowGraph/graphs/contributors
-
 #include "Asset/FlowDebugEditorSubsystem.h"
+
 #include "Asset/FlowAssetEditor.h"
 #include "Asset/FlowMessageLogListing.h"
 #include "Graph/FlowGraph.h"
@@ -34,6 +34,17 @@ UFlowDebugEditorSubsystem::UFlowDebugEditorSubsystem()
 	FEditorDelegates::EndPIE.AddUObject(this, &ThisClass::OnEndPIE);
 
 	OnDebuggerBreakpointHit.AddUObject(this, &ThisClass::OnBreakpointHit);
+}
+
+void UFlowDebugEditorSubsystem::RequestStop()
+{
+	if (bIsHaltedAtBreakpoint && GUnrealEd)
+	{
+		// Mirrors the level toolbar's Stop, which the engine disables during an in-stack halt.
+		// HaltUntilReleased() sees the queued end of play and returns Abort.
+		GUnrealEd->RequestEndPlayMap();
+		ReleaseHalt();
+	}
 }
 
 void UFlowDebugEditorSubsystem::OnInstancedTemplateAdded(UFlowAsset* AssetTemplate)
@@ -79,9 +90,9 @@ void UFlowDebugEditorSubsystem::OnResumePIE(const bool bIsSimulating)
 	// This does not necessarily flow through AGameModeBase::ClearPause(), so we must unhalt Flow here.
 	ClearLastHitBreakpoint();
 
-	if (HaltedOnFlowAssetInstance.IsValid())
+	if (UFlowAsset* HaltedAsset = HaltedOnFlowAssetInstance.Get())
 	{
-		ResumeSession(*HaltedOnFlowAssetInstance.Get());
+		ResumeSession(*HaltedAsset);
 	}
 
 	// Release the suspended Flow call stack after updating the debugger session state.
@@ -101,18 +112,23 @@ void UFlowDebugEditorSubsystem::OnEndPIE(const bool bIsSimulating)
 
 	for (const TPair<TWeakObjectPtr<UFlowAsset>, TSharedPtr<class IMessageLogListing>>& Log : RuntimeLogs)
 	{
-		if (Log.Key.IsValid() && Log.Value->NumMessages(EMessageSeverity::Warning) > 0)
+		const UFlowAsset* LogAsset = Log.Key.Get();
+		if (LogAsset && Log.Value->NumMessages(EMessageSeverity::Warning) > 0)
 		{
 			FNotificationInfo Info{FText::FromString(TEXT("Flow Graph reported in-game issues"))};
 			Info.ExpireDuration = 15.0;
 
-			Info.HyperlinkText = FText::Format(LOCTEXT("OpenFlowAssetHyperlink", "Open {0}"), FText::FromString(Log.Key->GetName()));
+			Info.HyperlinkText = FText::Format(LOCTEXT("OpenFlowAssetHyperlink", "Open {0}"), FText::FromString(LogAsset->GetName()));
 			Info.Hyperlink = FSimpleDelegate::CreateLambda([this, Log]()
 			{
 				UAssetEditorSubsystem* AssetEditorSubsystem = GEditor->GetEditorSubsystem<UAssetEditorSubsystem>();
-				if (AssetEditorSubsystem->OpenEditorForAsset(Log.Key.Get()))
+				UFlowAsset* Asset = Log.Key.Get();
+				if (AssetEditorSubsystem->OpenEditorForAsset(Asset))
 				{
-					AssetEditorSubsystem->FindEditorForAsset(Log.Key.Get(), true)->InvokeTab(FFlowAssetEditor::RuntimeLogTab);
+					if (IAssetEditorInstance* AssetEditor = AssetEditorSubsystem->FindEditorForAsset(Asset, true))
+					{
+						AssetEditor->InvokeTab(FFlowAssetEditor::RuntimeLogTab);
+					}
 				}
 			});
 
@@ -177,17 +193,6 @@ void UFlowDebugEditorSubsystem::ReleaseHalt()
 	// Ends the nested tick loop in HaltUntilReleased() on its next iteration. BreakFlowExecution()
 	// resumes the debugger session after the halt returns if another path has not already resumed it.
 	FSlateApplication::Get().LeaveDebuggingMode();
-}
-
-void UFlowDebugEditorSubsystem::RequestStop()
-{
-	if (bIsHaltedAtBreakpoint && GUnrealEd)
-	{
-		// Mirrors the level toolbar's Stop, which the engine disables during an in-stack halt.
-		// HaltUntilReleased() sees the queued end of play and returns Abort.
-		GUnrealEd->RequestEndPlayMap();
-		ReleaseHalt();
-	}
 }
 
 void UFlowDebugEditorSubsystem::ShowHaltNotification(const FFlowBreakContext& Context)

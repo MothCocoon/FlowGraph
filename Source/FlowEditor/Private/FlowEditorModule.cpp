@@ -14,24 +14,24 @@
 #include "Pins/SFlowOutputPinHandle.h"
 #include "Utils/SLevelEditorFlow.h"
 
-#include "DetailCustomizations/FlowActorDetails.h"
-#include "DetailCustomizations/FlowActorOwnerComponentRefCustomization.h"
-#include "DetailCustomizations/FlowAssetDetails.h"
-#include "DetailCustomizations/FlowAssetParamsPtrCustomization.h"
-#include "DetailCustomizations/FlowComponentDetails.h"
-#include "DetailCustomizations/FlowDataPinValueInstancedStructCustomization.h"
-#include "DetailCustomizations/FlowDataPinValueOwnerCustomizations.h"
-#include "DetailCustomizations/FlowDataPinValueStandardCustomizations.h"
-#include "DetailCustomizations/FlowIdentityCustomization.h"
-#include "DetailCustomizations/FlowNamedDataPinPropertyCustomization.h"
-#include "DetailCustomizations/FlowNode_Details.h"
-#include "DetailCustomizations/FlowNode_ComponentObserverDetails.h"
-#include "DetailCustomizations/FlowNode_CustomInputDetails.h"
-#include "DetailCustomizations/FlowNode_CustomOutputDetails.h"
-#include "DetailCustomizations/FlowNode_PlayLevelSequenceDetails.h"
-#include "DetailCustomizations/FlowNode_SubGraphDetails.h"
-#include "DetailCustomizations/FlowNodeAddOn_Details.h"
-#include "DetailCustomizations/FlowPinCustomization.h"
+#include "Details/Actor/FlowActorDetails.h"
+#include "Details/Actor/FlowActorOwnerComponentRefCustomization.h"
+#include "Details/Actor/FlowComponentDetails.h"
+#include "Details/Actor/FlowIdentityCustomization.h"
+#include "Details/AddOns/FlowNodeAddOn_Details.h"
+#include "Details/Asset/FlowAssetDetails.h"
+#include "Details/Asset/FlowAssetParamsPtrCustomization.h"
+#include "Details/Nodes/FlowNode_Details.h"
+#include "Details/Nodes/FlowNode_ComponentObserverDetails.h"
+#include "Details/Nodes/FlowNode_CustomInputDetails.h"
+#include "Details/Nodes/FlowNode_CustomOutputDetails.h"
+#include "Details/Nodes/FlowNode_PlayLevelSequenceDetails.h"
+#include "Details/Nodes/FlowNode_SubGraphDetails.h"
+#include "Details/Pins/FlowDataPinValueInstancedStructCustomization.h"
+#include "Details/Pins/FlowDataPinValueOwnerCustomizations.h"
+#include "Details/Pins/FlowDataPinValueStandardCustomizations.h"
+#include "Details/Pins/FlowNamedDataPinPropertyCustomization.h"
+#include "Details/Pins/FlowPinCustomization.h"
 
 #include "FlowAsset.h"
 #include "FlowComponent.h"
@@ -112,19 +112,6 @@ void FFlowEditorModule::StartupModule()
 	FFlowGraphToken::OnJumpToNodeRequested.BindStatic(&FFlowEditorModule::JumpToNodeFromLogToken);
 }
 
-void FFlowEditorModule::RegisterForAssetChanges()
-{
-	if (!bIsRegisteredForAssetChanges)
-	{
-		// Register asset change detection for search cache invalidation
-		const FAssetRegistryModule& AssetRegistry = FModuleManager::LoadModuleChecked<FAssetRegistryModule>("AssetRegistry");
-		AssetUpdatedHandle = AssetRegistry.Get().OnAssetUpdated().AddStatic(&FFlowEditorModule::OnAssetUpdated);
-		AssetRenamedHandle = AssetRegistry.Get().OnAssetRenamed().AddStatic(&FFlowEditorModule::OnAssetRenamed);
-		AssetRemovedHandle = AssetRegistry.Get().OnAssetRemoved().AddStatic(&FFlowEditorModule::OnAssetUpdated);
-		bIsRegisteredForAssetChanges = true;
-	}
-}
-
 void FFlowEditorModule::ShutdownModule()
 {
 	FFlowGraphToken::OnJumpToNodeRequested.Unbind();
@@ -158,6 +145,19 @@ void FFlowEditorModule::ShutdownModule()
 		AssetRegistry.Get().OnAssetRemoved().RemoveAll(this);
 
 		bIsRegisteredForAssetChanges = false;
+	}
+}
+
+void FFlowEditorModule::RegisterForAssetChanges()
+{
+	if (!bIsRegisteredForAssetChanges)
+	{
+		// Register asset change detection for search cache invalidation
+		const FAssetRegistryModule& AssetRegistry = FModuleManager::LoadModuleChecked<FAssetRegistryModule>("AssetRegistry");
+		AssetUpdatedHandle = AssetRegistry.Get().OnAssetUpdated().AddStatic(&FFlowEditorModule::OnAssetUpdated);
+		AssetRenamedHandle = AssetRegistry.Get().OnAssetRenamed().AddStatic(&FFlowEditorModule::OnAssetRenamed);
+		AssetRemovedHandle = AssetRegistry.Get().OnAssetRemoved().AddStatic(&FFlowEditorModule::OnAssetUpdated);
+		bIsRegisteredForAssetChanges = true;
 	}
 }
 
@@ -233,28 +233,6 @@ void FFlowEditorModule::UnregisterAssets()
 	}
 
 	RegisteredAssetActions.Empty();
-}
-
-void FFlowEditorModule::RegisterCustomClassLayout(const TSubclassOf<UObject> Class, const FOnGetDetailCustomizationInstance DetailLayout)
-{
-	if (Class)
-	{
-		FPropertyEditorModule& PropertyModule = FModuleManager::GetModuleChecked<FPropertyEditorModule>("PropertyEditor");
-		PropertyModule.RegisterCustomClassLayout(Class->GetFName(), DetailLayout);
-
-		CustomClassLayouts.Add(Class->GetFName());
-	}
-}
-
-void FFlowEditorModule::RegisterCustomStructLayout(const UScriptStruct& Struct, const FOnGetPropertyTypeCustomizationInstance DetailLayout)
-{
-	if (FModuleManager::Get().IsModuleLoaded("PropertyEditor"))
-	{
-		FPropertyEditorModule& PropertyModule = FModuleManager::GetModuleChecked<FPropertyEditorModule>("PropertyEditor");
-		PropertyModule.RegisterCustomPropertyTypeLayout(Struct.GetFName(), DetailLayout);
-
-		CustomStructLayouts.Add(Struct.GetFName());
-	}
 }
 
 void FFlowEditorModule::RegisterDetailCustomizations()
@@ -340,6 +318,28 @@ void FFlowEditorModule::UnregisterDetailCustomizations() const
 		}
 
 		PropertyModule.NotifyCustomizationModuleChanged();
+	}
+}
+
+void FFlowEditorModule::RegisterCustomClassLayout(const TSubclassOf<UObject> Class, const FOnGetDetailCustomizationInstance DetailLayout)
+{
+	if (Class)
+	{
+		FPropertyEditorModule& PropertyModule = FModuleManager::GetModuleChecked<FPropertyEditorModule>("PropertyEditor");
+		PropertyModule.RegisterCustomClassLayout(Class->GetFName(), DetailLayout);
+
+		CustomClassLayouts.Add(Class->GetFName());
+	}
+}
+
+void FFlowEditorModule::RegisterCustomStructLayout(const UScriptStruct& Struct, const FOnGetPropertyTypeCustomizationInstance DetailLayout)
+{
+	if (FModuleManager::Get().IsModuleLoaded("PropertyEditor"))
+	{
+		FPropertyEditorModule& PropertyModule = FModuleManager::GetModuleChecked<FPropertyEditorModule>("PropertyEditor");
+		PropertyModule.RegisterCustomPropertyTypeLayout(Struct.GetFName(), DetailLayout);
+
+		CustomStructLayouts.Add(Struct.GetFName());
 	}
 }
 

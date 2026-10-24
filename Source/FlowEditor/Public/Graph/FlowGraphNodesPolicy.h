@@ -66,12 +66,10 @@ public:
 	TArray<FString> DisallowedCategories;
 #endif
 
-#if WITH_EDITOR
 public:
 	EFlowGraphPolicyResult IsNodeAllowedByPolicy(const UFlowNodeBase* FlowNodeBase) const;
 
 protected:
 	static bool IsAnySubcategory(const FString& CheckCategory, const TArray<FString>& Categories);
-#endif
 };
 

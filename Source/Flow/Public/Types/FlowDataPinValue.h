@@ -34,7 +34,6 @@ public:
 	EFlowDataMultiType MultiType = EFlowDataMultiType::Single;
 #endif
 
-	FFlowDataPinValue() {}
 	virtual ~FFlowDataPinValue() {}
 
 #if WITH_EDITOR

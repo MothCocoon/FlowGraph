@@ -13,6 +13,7 @@
 #include "FlowSubsystem.h"
 #include "GameFramework/Actor.h"
 #include "Nodes/Graph/FlowNode_Start.h"
+#include "Runtime/Launch/Resources/Version.h"
 #include "Types/FlowInjectComponentsManager.h"
 #include "UObject/StrongObjectPtr.h"
 #include "UObject/UObjectGlobals.h"
