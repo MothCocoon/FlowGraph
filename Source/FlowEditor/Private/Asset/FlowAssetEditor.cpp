@@ -7,7 +7,7 @@
 #include "Asset/FlowDebugEditorSubsystem.h"
 #include "Asset/FlowAssetToolbar.h"
 #include "Asset/FlowMessageLogListing.h"
-#include "DetailCustomizations/FlowNodeAddOnCustomization.h"
+#include "Details/AddOns/FlowNodeAddOnCustomization.h"
 #include "Graph/FlowGraphEditor.h"
 #include "Graph/FlowGraphEditorSettings.h"
 #include "Graph/FlowGraphEditorLayout.h"
