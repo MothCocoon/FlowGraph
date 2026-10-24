@@ -5,12 +5,14 @@
 #include "Types/FlowDataPinValuesStandard.h"
 #include "UnrealExtensions/VisibilityArrayBuilder.h"
 
+#include "Algo/Reverse.h"
 #include "DetailLayoutBuilder.h"
 #include "DetailWidgetRow.h"
 #include "IDetailChildrenBuilder.h"
 #include "IDetailPropertyRow.h"
 #include "IPropertyUtilities.h"
 #include "ScopedTransaction.h"
+#include "StructUtils/InstancedStructBaseStructQueryParams.h"
 #include "Widgets/Input/SCheckBox.h"
 #include "Widgets/Input/SComboBox.h"
 #include "Widgets/Text/STextBlock.h"
@@ -311,13 +313,67 @@ void FFlowDataPinValueCustomization::ApplyInstancedStructMetaData(const TSharedR
 		return;
 	}
 
-	for (const FName MetaDataName : { BaseStructMeta, BaseStructFunctionMeta, ExcludeBaseStructMeta })
+	for (const FName MetaDataName : { BaseStructMeta, ExcludeBaseStructMeta })
 	{
 		if (StructPropertyHandle->HasMetaData(MetaDataName))
 		{
 			ElementHandle->SetInstanceMetaData(MetaDataName, StructPropertyHandle->GetMetaData(MetaDataName));
 		}
 	}
+
+	// The engine picker resolves BaseStructFunction only from metadata declared on the FInstancedStruct property itself.
+	if (const UScriptStruct* BaseStruct = ResolveBaseStructFunction())
+	{
+		ElementHandle->SetInstanceMetaData(BaseStructMeta, BaseStruct->GetPathName());
+	}
+}
+
+const UScriptStruct* FFlowDataPinValueCustomization::ResolveBaseStructFunction() const
+{
+	const FString& FunctionName = StructPropertyHandle->GetMetaData(BaseStructFunctionMeta);
+
+	UObject* Target = nullptr;
+	UFunction* Function = nullptr;
+
+	if (FunctionName.Contains(TEXT(".")))
+	{
+		Function = FindObject<UFunction>(nullptr, *FunctionName);
+		if (Function && Function->HasAnyFunctionFlags(FUNC_Static))
+		{
+			Target = Function->GetOuterUClass()->GetDefaultObject();
+		}
+	}
+	else if (!FunctionName.IsEmpty())
+	{
+		TArray<UObject*> OuterObjects;
+		StructPropertyHandle->GetOuterObjects(OuterObjects);
+		if (OuterObjects.Num() > 0 && OuterObjects[0])
+		{
+			Target = OuterObjects[0];
+			Function = Target->GetClass()->FindFunctionByName(*FunctionName);
+		}
+	}
+
+	const UScriptStruct* BaseStruct = nullptr;
+
+	if (Target && Function && Function->IsNative())
+	{
+		// The chain ends at the data pin value property, as if it was the FInstancedStruct property.
+		UE::StructUtils::FInstancedStructBaseStructQueryParams Params;
+		for (TSharedPtr<IPropertyHandle> Handle = StructPropertyHandle; Handle.IsValid(); Handle = Handle->GetParentHandle())
+		{
+			if (const FProperty* Property = Handle->GetProperty())
+			{
+				Params.PropertyChainWithArrayIndex.Add({ Property, Handle->GetArrayIndex() });
+			}
+		}
+		Algo::Reverse(Params.PropertyChainWithArrayIndex);
+
+		DECLARE_DELEGATE_RetVal_OneParam(TObjectPtr<UScriptStruct>, FGetBaseStruct, UE::StructUtils::FInstancedStructBaseStructQueryParams);
+		BaseStruct = FGetBaseStruct::CreateUFunction(Target, Function->GetFName()).Execute(Params);
+	}
+
+	return BaseStruct;
 }
 
 void FFlowDataPinValueCustomization::CacheOwnerInterface()

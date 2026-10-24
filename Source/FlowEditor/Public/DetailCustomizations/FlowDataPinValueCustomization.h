@@ -108,6 +108,7 @@ protected:
 	void CacheHandles(const TSharedRef<IPropertyHandle>& PropertyHandle,
 		IPropertyTypeCustomizationUtils& StructCustomizationUtils);
 	void ApplyInstancedStructMetaData(const TSharedRef<IPropertyHandle>& ElementHandle) const;
+	const UScriptStruct* ResolveBaseStructFunction() const;
 	void CacheOwnerInterface();
 	void CacheArraySupported();
 
