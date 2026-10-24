@@ -12,7 +12,6 @@
 void SFindInFlowFilterPopup::Construct(const FArguments& InArgs)
 {
 	OnApplyDelegate = InArgs._OnApply;
-	OnSaveAsDefaultDelegate = InArgs._OnSaveAsDefault;
 	ProposedFlags = InArgs._InitialFlags;
 
 	// Build the checkbox container with slots added during construction
@@ -76,13 +75,6 @@ void SFindInFlowFilterPopup::Construct(const FArguments& InArgs)
 								.Text(LOCTEXT("ToggleAllFilters", "Toggle All"))
 								.OnClicked(this, &SFindInFlowFilterPopup::OnToggleAllClicked)
 						]
-						+ SHorizontalBox::Slot()
-						.AutoWidth()
-						[
-							SNew(SButton)
-								.Text(LOCTEXT("SaveAsDefaultFilters", "Save as Default"))
-								.OnClicked(this, &SFindInFlowFilterPopup::OnSaveAsDefaultClicked)
-						]
 				]
 			+ SVerticalBox::Slot()
 				.AutoHeight()
@@ -133,12 +125,6 @@ FReply SFindInFlowFilterPopup::OnToggleAllClicked()
 
 	CheckBoxContainer->Invalidate(EInvalidateWidgetReason::Layout);
 
-	return FReply::Handled();
-}
-
-FReply SFindInFlowFilterPopup::OnSaveAsDefaultClicked()
-{
-	OnSaveAsDefaultDelegate.ExecuteIfBound(ProposedFlags);
 	return FReply::Handled();
 }
 

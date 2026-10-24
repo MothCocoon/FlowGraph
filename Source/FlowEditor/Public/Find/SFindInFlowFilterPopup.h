@@ -14,7 +14,6 @@ class SFindInFlowFilterPopup : public SCompoundWidget
 public:
 	SLATE_BEGIN_ARGS(SFindInFlowFilterPopup) {}
 		SLATE_ARGUMENT(FFindInFlowApplyDelegate, OnApply)
-		SLATE_ARGUMENT(FFindInFlowApplyDelegate, OnSaveAsDefault)
 		SLATE_ARGUMENT(EFlowSearchFlags, InitialFlags)
 	SLATE_END_ARGS()
 
@@ -25,7 +24,6 @@ protected:
 	EFlowSearchFlags ProposedFlags = EFlowSearchFlags::DefaultSearchFlags;
 
 	FFindInFlowApplyDelegate OnApplyDelegate;
-	FFindInFlowApplyDelegate OnSaveAsDefaultDelegate;
 
 	TSharedPtr<SVerticalBox> CheckBoxContainer;
 
@@ -37,5 +35,4 @@ protected:
 	FReply OnApplyClicked();
 	FReply OnCancelClicked();
 	FReply OnToggleAllClicked();
-	FReply OnSaveAsDefaultClicked();
 };

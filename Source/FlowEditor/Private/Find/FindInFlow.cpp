@@ -225,11 +225,6 @@ void SFindInFlow::Construct(const FArguments& InArgs, const TSharedPtr<class FFl
 		SearchFlags = static_cast<EFlowSearchFlags>(Settings->DefaultSearchFlags);
 		PinDirection = Settings->DefaultSearchPinDirection;
 		PinConnection = Settings->DefaultSearchPinConnection;
-		if (!EnumHasAnyFlags(SearchFlags, EFlowSearchFlags::PinNames))
-		{
-			PinDirection = EFlowSearchPinDirection::Any;
-			PinConnection = EFlowSearchPinConnectionState::Any;
-		}
 	}
 
 	// Populate scope options
@@ -302,33 +297,17 @@ void SFindInFlow::Construct(const FArguments& InArgs, const TSharedPtr<class FFl
 								.ToolTipText(LOCTEXT("EditFiltersTooltip", "Edit search filters"))
 								.OnClicked_Lambda([this]()
 									{
-										const FFindInFlowApplyDelegate OnSaveAsDefault = FFindInFlowApplyDelegate::CreateLambda([](EFlowSearchFlags Flags)
-											{
-												if (UFlowGraphEditorSettings* GraphEditorSettings = GetMutableDefault<UFlowGraphEditorSettings>())
-												{
-													GraphEditorSettings->DefaultSearchFlags = static_cast<uint32>(Flags);
-													GraphEditorSettings->SaveConfig();
-												}
-											});
-
 										const TSharedRef<SFindInFlowFilterPopup> FilterPopup = SNew(SFindInFlowFilterPopup)
 											.OnApply(FFindInFlowApplyDelegate::CreateLambda([this](const EFlowSearchFlags NewSearchFlags)
 												{
 													SearchFlags = NewSearchFlags;
-													if (!EnumHasAnyFlags(SearchFlags, EFlowSearchFlags::PinNames))
+													if (UFlowGraphEditorSettings* GraphEditorSettings = GetMutableDefault<UFlowGraphEditorSettings>())
 													{
-														PinDirection = EFlowSearchPinDirection::Any;
-														PinConnection = EFlowSearchPinConnectionState::Any;
-														if (UFlowGraphEditorSettings* GraphEditorSettings = GetMutableDefault<UFlowGraphEditorSettings>())
-														{
-															GraphEditorSettings->DefaultSearchPinDirection = EFlowSearchPinDirection::Any;
-															GraphEditorSettings->DefaultSearchPinConnection = EFlowSearchPinConnectionState::Any;
-															GraphEditorSettings->SaveConfig();
-														}
+														GraphEditorSettings->DefaultSearchFlags = static_cast<uint32>(NewSearchFlags);
+														GraphEditorSettings->SaveConfig();
 													}
 													InitiateSearch();
 												}))
-											.OnSaveAsDefault(OnSaveAsDefault)
 											.InitialFlags(SearchFlags);
 
 										FSlateApplication::Get().PushMenu(
