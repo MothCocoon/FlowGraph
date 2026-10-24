@@ -25,6 +25,7 @@
 class UFlowNode_SubGraph;
 class UFlowNode_CustomOutput;
 class UFlowNode_CustomInput;
+class UFlowInjectComponentsManager;
 struct FFlowPreloadPolicy;
 struct FFlowPinConnectionPolicy;
 
@@ -411,6 +412,13 @@ protected:
 	 * Initialized from OutputDataPinDeclarations defaults at StartFlow; updated by SetGraphOutput/Finish nodes. */
 	UPROPERTY(Transient)
 	FFlowOutputDataPinValues OutputDataPinValues;
+	
+private:
+	UPROPERTY(Transient)
+	TObjectPtr<UFlowAsset> OwningRootFlowInstance;
+
+	UPROPERTY(Transient)
+	TObjectPtr<UFlowInjectComponentsManager> ComponentInjector;
 
 public:
 	virtual bool CanBeInstanced(const UFlowAsset& InTemplateAsset, const UObject* InOwner) const;
@@ -486,6 +494,14 @@ public:
 	/* Returns nodes active in the past, done their work. */
 	UFUNCTION(BlueprintPure, Category = "Flow")
 	const TArray<UFlowNode*>& GetRecordedNodes() const { return RecordedNodes; }
+
+	UFUNCTION(BlueprintPure, Category = "Flow|Components")
+	UFlowAsset* GetOwningRootFlowInstance() const;
+
+	UFlowInjectComponentsManager* GetOrCreateComponentInjectionManager();
+	UFlowInjectComponentsManager* GetOrCreateComponentInjectionManagerInRootFlow() const;
+	UFlowInjectComponentsManager* FindComponentInjectionManager() const;
+	UFlowInjectComponentsManager* FindComponentInjectionManagerInRootFlow() const;
 
 //////////////////////////////////////////////////////////////////////////
 // Network replication
