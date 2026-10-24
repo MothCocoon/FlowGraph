@@ -80,9 +80,9 @@ public:
 	UPROPERTY(EditAnywhere, config, Category = "Search", meta = (ClampMin = 1))
 	int32 DefaultMaxSearchDepth = 1;
 	
-	/* Default search filter flags for the Flow Editor. */
+	/* Search filter flags excluded from search in the Flow Editor. */
 	UPROPERTY(VisibleAnywhere, config, Category = "Search", meta = (Bitmask, BitmaskEnum = "/Script/FlowEditor.EFlowSearchFlags"))
-	uint32 DefaultSearchFlags = static_cast<uint32>(EFlowSearchFlags::DefaultSearchFlags);
+	uint32 DisabledSearchFlags = 0;
 
 	UPROPERTY(VisibleAnywhere, config, Category = "Search")
 	EFlowSearchPinDirection DefaultSearchPinDirection = EFlowSearchPinDirection::Any;

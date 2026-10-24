@@ -222,7 +222,7 @@ void SFindInFlow::Construct(const FArguments& InArgs, const TSharedPtr<class FFl
 	if (ensure(Settings))
 	{
 		MaxSearchDepth = Settings->DefaultMaxSearchDepth;
-		SearchFlags = static_cast<EFlowSearchFlags>(Settings->DefaultSearchFlags);
+		SearchFlags = EFlowSearchFlags::All & ~static_cast<EFlowSearchFlags>(Settings->DisabledSearchFlags);
 		PinDirection = Settings->DefaultSearchPinDirection;
 		PinConnection = Settings->DefaultSearchPinConnection;
 	}
@@ -303,7 +303,7 @@ void SFindInFlow::Construct(const FArguments& InArgs, const TSharedPtr<class FFl
 													SearchFlags = NewSearchFlags;
 													if (UFlowGraphEditorSettings* GraphEditorSettings = GetMutableDefault<UFlowGraphEditorSettings>())
 													{
-														GraphEditorSettings->DefaultSearchFlags = static_cast<uint32>(NewSearchFlags);
+														GraphEditorSettings->DisabledSearchFlags = static_cast<uint32>(EFlowSearchFlags::All & ~NewSearchFlags);
 														GraphEditorSettings->SaveConfig();
 													}
 													InitiateSearch();
