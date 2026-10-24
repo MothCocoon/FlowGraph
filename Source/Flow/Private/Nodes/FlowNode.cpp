@@ -1388,13 +1388,14 @@ bool UFlowNode::TryInitializePreloadHelper()
 		return false;
 	}
 
-	const UFlowAsset* FlowAsset = GetFlowAsset();
+	UFlowAsset* FlowAsset = GetFlowAsset();
 	if (!IsValid(FlowAsset))
 	{
 		LogError(TEXT("IFlowPreloadableInterface node has no valid FlowAsset during InitializeInstance — PreloadHelper will not be created."));
 		return false;
 	}
 
+	FlowAsset->EnsurePreloadPolicyInitialized();
 	const FFlowPreloadPolicy& PreloadPolicy = FlowAsset->GetPreloadPolicy();
 
 	const UScriptStruct* HelperType = PreloadPolicy.GetPreloadHelperStructType(*this);
@@ -1447,8 +1448,8 @@ void UFlowNode::TriggerInput(const FName& PinName, const EFlowPinActivationType 
 
 #if !UE_BUILD_SHIPPING
 		// record for debugging
-		TArray<FPinRecord>& Records = InputRecords.FindOrAdd(PinName);
-		Records.Add(FPinRecord(FApp::GetCurrentTime(), ActivationType));
+		FPinRecordBuffer& Records = InputRecords.FindOrAdd(PinName);
+		Records.Add(PinName, FPinRecord(FApp::GetCurrentTime(), ActivationType));
 
 		// Halt here if a breakpoint covers this pin.
 		// In the case of an Abort while breaking we'll early-out of this function.
@@ -1516,8 +1517,8 @@ void UFlowNode::TriggerOutput(const FName PinName, const bool bFinish /*= false*
 	if (OutputPins.Contains(PinName))
 	{
 		// record for debugging, even if nothing is connected to this pin
-		TArray<FPinRecord>& Records = OutputRecords.FindOrAdd(PinName);
-		Records.Add(FPinRecord(FApp::GetCurrentTime(), ActivationType));
+		FPinRecordBuffer& Records = OutputRecords.FindOrAdd(PinName);
+		Records.Add(PinName, FPinRecord(FApp::GetCurrentTime(), ActivationType));
 
 		// Halt here if a breakpoint covers this pin.
 		// In the case of an Abort while breaking we'll early-out of this function.
@@ -1556,7 +1557,10 @@ void UFlowNode::Deactivate()
 		return;
 	}
 
-	if (GetFlowAsset()->FinishPolicy == EFlowFinishPolicy::Abort)
+	const UFlowAsset* FlowAsset = GetFlowAsset();
+	ensureMsgf(IsValid(FlowAsset), TEXT("Flow Node is orphaned and could not retrieve its Flow Asset"));
+
+	if (IsValid(FlowAsset) && FlowAsset->FinishPolicy == EFlowFinishPolicy::Abort)
 	{
 		SetActivationState(EFlowNodeState::Aborted);
 	}
@@ -1653,22 +1657,31 @@ bool UFlowNode::ShouldSave_Implementation()
 TMap<uint8, FPinRecord> UFlowNode::GetWireRecords() const
 {
 	TMap<uint8, FPinRecord> Result;
-	for (const TPair<FName, TArray<FPinRecord>>& Record : OutputRecords)
+	for (const TPair<FName, FPinRecordBuffer>& Record : OutputRecords)
 	{
 		Result.Emplace(OutputPins.IndexOfByKey(Record.Key), Record.Value.Last());
 	}
 	return Result;
 }
 
-TArray<FPinRecord> UFlowNode::GetPinRecords(const FName& PinName, const EEdGraphPinDirection PinDirection) const
+TArray<FPinRecord> UFlowNode::GetPinRecords(const FName& PinName, const EEdGraphPinDirection PinDirection, int32& OutTotalPinRecords) const
 {
 	switch (PinDirection)
 	{
 		case EGPD_Input:
-			return InputRecords.FindRef(PinName);
+		{
+			const FPinRecordBuffer& Buffer = InputRecords.FindRef(PinName);
+			OutTotalPinRecords = Buffer.TotalPinRecords;
+			return Buffer.GetArray();
+		}
 		case EGPD_Output:
-			return OutputRecords.FindRef(PinName);
+		{
+			const FPinRecordBuffer& Buffer = OutputRecords.FindRef(PinName);
+			OutTotalPinRecords = Buffer.TotalPinRecords;
+			return Buffer.GetArray();
+		}
 		default:
+			OutTotalPinRecords = 0;
 			return TArray<FPinRecord>();
 	}
 }

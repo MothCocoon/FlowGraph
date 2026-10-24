@@ -795,27 +795,6 @@ FString UFlowNodeBase::GetAddOnDescriptions() const
 	return Result;
 }
 
-void UFlowNodeBase::InitializeReplica()
-{
-	InstantiateAddOns();
-
-	for (UFlowNodeAddOn* AddOn : AddOns)
-	{
-		AddOn->InitializeReplica();
-	}
-}
-
-void UFlowNodeBase::MarkReplicatedPropertiesDirty()
-{
-	if (UFlowNode* FlowNode = GetFlowNodeSelfOrOwner())
-	{
-		if (UFlowAsset* FlowAsset = FlowNode->GetFlowAsset())
-		{
-			FlowAsset->WriteReplicatedNodeState(*FlowNode);
-		}
-	}
-}
-
 bool UFlowNodeBase::CanModifyFlowDataPinType() const
 {
 	return !IsPlacedInFlowAsset() || IsFlowNamedPropertiesSupplier();
@@ -851,6 +830,27 @@ bool UFlowNodeBase::IsFlowNamedPropertiesSupplier() const
 	return Implements<UFlowNamedPropertiesSupplierInterface>();
 }
 #endif
+
+void UFlowNodeBase::InitializeReplica()
+{
+	InstantiateAddOns();
+
+	for (UFlowNodeAddOn* AddOn : AddOns)
+	{
+		AddOn->InitializeReplica();
+	}
+}
+
+void UFlowNodeBase::MarkReplicatedPropertiesDirty()
+{
+	if (UFlowNode* FlowNode = GetFlowNodeSelfOrOwner())
+	{
+		if (UFlowAsset* FlowAsset = FlowNode->GetFlowAsset())
+		{
+			FlowAsset->WriteReplicatedNodeState(*FlowNode);
+		}
+	}
+}
 
 FText UFlowNodeBase::K2_GetNodeTitle_Implementation() const
 {
