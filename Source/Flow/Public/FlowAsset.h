@@ -124,6 +124,9 @@ public:
 	virtual EDataValidationResult IsDataValid(FDataValidationContext& Context) const override;
 	virtual EDataValidationResult ValidateAsset(FFlowMessageLog& MessageLog) const;
 
+	/* Allow subclasses to override the project-wide validation on save. */
+	virtual bool ShouldValidateOnSave() const;
+
 private:
 	/* Validates every direct child attachment on OwnerNode and recursively validates child trees. */
 	void ValidateAddOnChildren(UFlowNodeBase& OwnerNode, FFlowMessageLog& MessageLog) const;

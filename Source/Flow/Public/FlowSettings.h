@@ -77,6 +77,13 @@ public:
 	UPROPERTY(Config, EditAnywhere, Category = "SaveSystem")
 	bool bWarnAboutMissingIdentityTags;
 
+#if WITH_EDITORONLY_DATA
+	/* Trigger validation on asset save.
+	 * Flow Asset class can override it. */
+	UPROPERTY(Config, EditAnywhere, Category = "Validation")
+	bool bValidateAssetOnSave = true;
+#endif
+
 public:
 	UClass* GetDefaultExpectedOwnerClass() const;
 

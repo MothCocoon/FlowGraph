@@ -381,6 +381,11 @@ EDataValidationResult UFlowAsset::ValidateAsset(FFlowMessageLog& MessageLog) con
 	return EDataValidationResult::Valid;
 }
 
+bool UFlowAsset::ShouldValidateOnSave() const
+{
+	return GetDefault<UFlowSettings>()->bValidateAssetOnSave;
+}
+
 void UFlowAsset::ValidateAddOnTree(UFlowNodeAddOn& AddOn, FFlowMessageLog& MessageLog) const
 {
 	// Filter unauthorized addon nodes
