@@ -5,7 +5,7 @@
 
 #include "FlowAssetLifecycleTestTypes.generated.h"
 
-UCLASS()
+UCLASS(NotPlaceable)
 class UFlowNode_LogTestable : public UFlowNode_Log
 {
 	GENERATED_BODY()
