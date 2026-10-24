@@ -467,7 +467,7 @@ protected:
 	void ResetNodes();
 
 public:
-	UE_DEPRECATED(5.6, "Method replaced with FinishFlowInstance and (if bRemoveInstance == true) separate call to DeinitializeInstance.")
+	UE_DEPRECATED(5.7, "Method replaced with FinishFlowInstance and (if bRemoveInstance == true) separate call to DeinitializeInstance.")
 	void FinishFlow(const EFlowFinishPolicy InFinishPolicy, const bool bRemoveInstance = true);
 
 	virtual void FinishFlowInstance(const EFlowFinishPolicy InFinishPolicy);
