@@ -7,7 +7,6 @@
 
 UFlowGraphEditorSettings::FOnSettingsChanged UFlowGraphEditorSettings::SettingsChanged;
 
-#if WITH_EDITOR
 void UFlowGraphEditorSettings::PostEditChangeProperty(FPropertyChangedEvent& PropertyChangedEvent)
 {
 	Super::PostEditChangeProperty(PropertyChangedEvent);
@@ -22,7 +21,6 @@ void UFlowGraphEditorSettings::PostEditChangeProperty(FPropertyChangedEvent& Pro
 		SettingsChanged.Broadcast();
 	}
 }
-#endif
 
 UFlowGraphEditorSettings::FOnSettingsChanged& UFlowGraphEditorSettings::OnSettingsChanged()
 {

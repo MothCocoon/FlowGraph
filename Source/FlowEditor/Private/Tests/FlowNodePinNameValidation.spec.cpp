@@ -2,7 +2,7 @@
 
 #include "Misc/AutomationTest.h"
 
-#if WITH_DEV_AUTOMATION_TESTS && WITH_EDITOR
+#if WITH_DEV_AUTOMATION_TESTS
 
 #include "EdGraph/EdGraph.h"
 #include "FlowAsset.h"
@@ -86,4 +86,4 @@ void FFlowNodePinNameValidationSpec::Define()
 	});
 }
 
-#endif // WITH_DEV_AUTOMATION_TESTS && WITH_EDITOR
+#endif // WITH_DEV_AUTOMATION_TESTS

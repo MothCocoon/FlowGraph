@@ -24,9 +24,7 @@ class FLOWEDITOR_API UFlowGraphEditorSettings : public UDeveloperSettings
 	GENERATED_BODY()
 
 public:
-#if WITH_EDITOR
 	virtual void PostEditChangeProperty(FPropertyChangedEvent& PropertyChangedEvent) override;
-#endif
 
 	/* Double-clicking a Flow Node might open relevant asset/code editor. */
 	UPROPERTY(config, EditAnywhere, Category = "Nodes")

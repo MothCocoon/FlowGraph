@@ -16,7 +16,6 @@ struct FFlowActorOwnerComponentFilters
 {
 	GENERATED_BODY()
 
-#if WITH_EDITOR
 public:
 	void BuildFiltersFromMetadata(const FProperty& ComponentNameProperty);
 
@@ -26,8 +25,6 @@ public:
 protected:
 	void BuildClassFilters(const FProperty& ComponentNameProperty);
 	void BuildInterfaceFilters(const FProperty& ComponentNameProperty);
-
-#endif // WITH_EDITOR
 
 protected:
 

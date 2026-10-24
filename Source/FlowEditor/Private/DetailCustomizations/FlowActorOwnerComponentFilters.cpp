@@ -5,11 +5,7 @@
 #include "GameFramework/Actor.h"
 #include "UObject/UObjectIterator.h"
 
-#if WITH_EDITOR
 #include "EditorClassUtils.h"
-#endif // WITH_EDITOR
-
-#if WITH_EDITOR
 
 const FName FFlowActorOwnerComponentFilters::NAME_AllowedClasses = "AllowedClasses";
 const FName FFlowActorOwnerComponentFilters::NAME_DisallowedClasses = "DisallowedClasses";
@@ -181,5 +177,3 @@ bool FFlowActorOwnerComponentFilters::IsFilteredComponent(const UActorComponent&
 
 	return bAllowedToSetBasedOnFilter;
 }
-
-#endif // WITH_EDITOR

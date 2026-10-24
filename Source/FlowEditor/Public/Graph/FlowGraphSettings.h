@@ -60,9 +60,7 @@ class FLOWEDITOR_API UFlowGraphSettings : public UDeveloperSettings
 
 	virtual void PostInitProperties() override;
 
-#if WITH_EDITOR
 	virtual void PostEditChangeProperty(FPropertyChangedEvent& PropertyChangedEvent) override;
-#endif
 
 	/* Show Flow Asset in Flow category of "Create Asset" menu?
 	 * Requires restart after making a change. */
@@ -217,9 +215,7 @@ public:
 	/* Categories meta string for Identity Tag picker of the given Flow Component class. */
 	FString GetIdentityTagCategories(const UClass* ComponentClass) const;
 
-#if WITH_EDITOR
 	const TMap<FGameplayTag, FFlowNodeDisplayStyleConfig>& EnsureNodeDisplayStylesMap();
 	void TryAddDefaultNodeDisplayStyle(const FFlowNodeDisplayStyleConfig& StyleConfig);
 	const FLinearColor* LookupNodeTitleColorForNode(const UFlowNodeBase& FlowNodeBase);
-#endif
 };

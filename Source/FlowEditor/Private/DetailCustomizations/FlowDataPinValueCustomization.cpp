@@ -430,7 +430,6 @@ void FFlowDataPinValueCustomization::OnMultiTypeChanged(TSharedPtr<int32> NewSel
 	SelectedMultiType = NewSelection;
 
 	// Preferred: trigger owner rebuild
-#if WITH_EDITOR
 	if (OwnerInterface)
 	{
 		OwnerInterface->RequestFlowDataPinValuesDetailsRebuild();
@@ -439,7 +438,6 @@ void FFlowDataPinValueCustomization::OnMultiTypeChanged(TSharedPtr<int32> NewSel
 	{
 		RequestRefresh();
 	}
-#endif
 }
 
 void FFlowDataPinValueCustomization::OnInputPinChanged(const ECheckBoxState NewState) const

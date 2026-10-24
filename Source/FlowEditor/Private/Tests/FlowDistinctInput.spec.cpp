@@ -13,7 +13,7 @@
 
 #include UE_INLINE_GENERATED_CPP_BY_NAME(FlowDistinctInputTestTypes)
 
-#if WITH_DEV_AUTOMATION_TESTS && WITH_EDITOR
+#if WITH_DEV_AUTOMATION_TESTS
 
 namespace FlowDistinctInputTests
 {
@@ -167,4 +167,4 @@ void FFlowDistinctInputSpec::Define()
 	});
 }
 
-#endif // WITH_DEV_AUTOMATION_TESTS && WITH_EDITOR
+#endif // WITH_DEV_AUTOMATION_TESTS

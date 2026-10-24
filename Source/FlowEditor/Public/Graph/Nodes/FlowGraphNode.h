@@ -287,9 +287,7 @@ public:
 	static void DiffSubNodes(const FText& NodeTypeDisplayName, const TArray<UFlowGraphNode*>& LhsSubNodes, const TArray<UFlowGraphNode*>& RhsSubNodes, FDiffResults& Results);
 
 	// UObject
-#if WITH_EDITOR
 	virtual void PostEditUndo() override;
-#endif
 	// --
 
 	virtual UEdGraphPin* GetInputPin(int32 InputIndex = 0) const;

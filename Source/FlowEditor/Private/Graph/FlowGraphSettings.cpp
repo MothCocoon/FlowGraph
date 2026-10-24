@@ -32,8 +32,6 @@ void UFlowGraphSettings::PostInitProperties()
 	NodePrefixesToRemove.Sort(TGreater{});
 }
 
-#if WITH_EDITOR
-
 void UFlowGraphSettings::PostEditChangeProperty(FPropertyChangedEvent& PropertyChangedEvent)
 {
 	Super::PostEditChangeProperty(PropertyChangedEvent);
@@ -173,7 +171,5 @@ const FLinearColor* UFlowGraphSettings::LookupNodeTitleColorForNode(const UFlowN
 
 	return nullptr;
 }
-
-#endif
 
 #undef LOCTEXT_NAMESPACE
