@@ -12,6 +12,89 @@ const FFlowPin FFlowPreloadHelper_Standard::INPIN_PreloadContent(TEXT("Preload C
 const FFlowPin FFlowPreloadHelper_Standard::INPIN_FlushContent(TEXT("Flush Content"), FText::FromString(TEXT("Flush")));
 const FFlowPin FFlowPreloadHelper::OUTPIN_Preloaded(TEXT("All Preloads Complete"), FText::FromString(TEXT("Preloaded")));
 
+#if WITH_EDITOR
+void FFlowPreloadHelper::GetContextOutputs(TArray<FFlowPin>& OutOutputPins) const
+{
+	OutOutputPins.AddUnique(OUTPIN_Preloaded);
+}
+#endif
+
+void FFlowPreloadHelper_Standard::OnNodeInitializeInstance(UFlowNode& Node)
+{
+	FLOW_ASSERT_ENUM_MAX(EFlowPreloadTiming, 3);
+
+	if (const UFlowAsset* FlowAsset = Node.GetFlowAsset())
+	{
+		const FFlowPreloadPolicy& Policy = FlowAsset->GetPreloadPolicy();
+		if (Policy.GetPreloadTimingForNode(Node) == EFlowPreloadTiming::OnGraphInitialize)
+		{
+			TriggerPreload(Node);
+		}
+	}
+}
+
+void FFlowPreloadHelper_Standard::OnNodeActivate(UFlowNode& Node)
+{
+	FLOW_ASSERT_ENUM_MAX(EFlowPreloadTiming, 3);
+
+	if (const UFlowAsset* FlowAsset = Node.GetFlowAsset())
+	{
+		const FFlowPreloadPolicy& Policy = FlowAsset->GetPreloadPolicy();
+		if (Policy.GetPreloadTimingForNode(Node) == EFlowPreloadTiming::OnActivate)
+		{
+			TriggerPreload(Node);
+		}
+	}
+}
+
+void FFlowPreloadHelper_Standard::OnNodeCleanup(UFlowNode& Node)
+{
+	FLOW_ASSERT_ENUM_MAX(EFlowFlushTiming, 3);
+
+	if (const UFlowAsset* FlowAsset = Node.GetFlowAsset())
+	{
+		const FFlowPreloadPolicy& Policy = FlowAsset->GetPreloadPolicy();
+		if (Policy.GetFlushTimingForNode(Node) == EFlowFlushTiming::OnNodeFinish)
+		{
+			TriggerFlush(Node);
+		}
+	}
+}
+
+void FFlowPreloadHelper_Standard::OnNodeDeinitializeInstance(UFlowNode& Node)
+{
+	FLOW_ASSERT_ENUM_MAX(EFlowFlushTiming, 3);
+
+	if (const UFlowAsset* FlowAsset = Node.GetFlowAsset())
+	{
+		const FFlowPreloadPolicy& Policy = FlowAsset->GetPreloadPolicy();
+		if (Policy.GetFlushTimingForNode(Node) != EFlowFlushTiming::ManualOnly)
+		{
+			// Flush regardless of specific timing (safety net for OnNodeFinish
+			// where content may still be loaded at graph teardown). TriggerFlush is idempotent.
+			TriggerFlush(Node);
+		}
+	}
+}
+
+EFlowPreloadInputResult FFlowPreloadHelper_Standard::OnNodeExecuteInput(UFlowNode& Node, const FName& PinName)
+{
+	FLOW_ASSERT_ENUM_MAX(EFlowPreloadInputResult, 2);
+
+	if (PinName == INPIN_PreloadContent.PinName)
+	{
+		TriggerPreload(Node);
+		return EFlowPreloadInputResult::Handled;
+	}
+	else if (PinName == INPIN_FlushContent.PinName)
+	{
+		TriggerFlush(Node);
+		return EFlowPreloadInputResult::Handled;
+	}
+
+	return EFlowPreloadInputResult::Unhandled;
+}
+
 void FFlowPreloadHelper_Standard::TriggerPreload(UFlowNode& Node)
 {
 	FLOW_ASSERT_ENUM_MAX(EFlowPreloadResult, 2);
@@ -108,91 +191,10 @@ EFlowPreloadResult FFlowPreloadHelper_Standard::OnPreloadComplete(UFlowNode& /*N
 	return EFlowPreloadResult::Completed;
 }
 
-void FFlowPreloadHelper_Standard::OnNodeActivate(UFlowNode& Node)
-{
-	FLOW_ASSERT_ENUM_MAX(EFlowPreloadTiming, 3);
-
-	if (const UFlowAsset* FlowAsset = Node.GetFlowAsset())
-	{
-		const FFlowPreloadPolicy& Policy = FlowAsset->GetPreloadPolicy();
-		if (Policy.GetPreloadTimingForNode(Node) == EFlowPreloadTiming::OnActivate)
-		{
-			TriggerPreload(Node);
-		}
-	}
-}
-
-void FFlowPreloadHelper_Standard::OnNodeInitializeInstance(UFlowNode& Node)
-{
-	FLOW_ASSERT_ENUM_MAX(EFlowPreloadTiming, 3);
-
-	if (const UFlowAsset* FlowAsset = Node.GetFlowAsset())
-	{
-		const FFlowPreloadPolicy& Policy = FlowAsset->GetPreloadPolicy();
-		if (Policy.GetPreloadTimingForNode(Node) == EFlowPreloadTiming::OnGraphInitialize)
-		{
-			TriggerPreload(Node);
-		}
-	}
-}
-
-void FFlowPreloadHelper_Standard::OnNodeCleanup(UFlowNode& Node)
-{
-	FLOW_ASSERT_ENUM_MAX(EFlowFlushTiming, 3);
-
-	if (const UFlowAsset* FlowAsset = Node.GetFlowAsset())
-	{
-		const FFlowPreloadPolicy& Policy = FlowAsset->GetPreloadPolicy();
-		if (Policy.GetFlushTimingForNode(Node) == EFlowFlushTiming::OnNodeFinish)
-		{
-			TriggerFlush(Node);
-		}
-	}
-}
-
-void FFlowPreloadHelper_Standard::OnNodeDeinitializeInstance(UFlowNode& Node)
-{
-	FLOW_ASSERT_ENUM_MAX(EFlowFlushTiming, 3);
-
-	if (const UFlowAsset* FlowAsset = Node.GetFlowAsset())
-	{
-		const FFlowPreloadPolicy& Policy = FlowAsset->GetPreloadPolicy();
-		if (Policy.GetFlushTimingForNode(Node) != EFlowFlushTiming::ManualOnly)
-		{
-			// Flush regardless of specific timing (safety net for OnNodeFinish
-			// where content may still be loaded at graph teardown). TriggerFlush is idempotent.
-			TriggerFlush(Node);
-		}
-	}
-}
-
-EFlowPreloadInputResult FFlowPreloadHelper_Standard::OnNodeExecuteInput(UFlowNode& Node, const FName& PinName)
-{
-	FLOW_ASSERT_ENUM_MAX(EFlowPreloadInputResult, 2);
-
-	if (PinName == INPIN_PreloadContent.PinName)
-	{
-		TriggerPreload(Node);
-		return EFlowPreloadInputResult::Handled;
-	}
-	else if (PinName == INPIN_FlushContent.PinName)
-	{
-		TriggerFlush(Node);
-		return EFlowPreloadInputResult::Handled;
-	}
-
-	return EFlowPreloadInputResult::Unhandled;
-}
-
 #if WITH_EDITOR
 void FFlowPreloadHelper_Standard::GetContextInputs(TArray<FFlowPin>& OutInputPins) const
 {
 	OutInputPins.AddUnique(INPIN_PreloadContent);
 	OutInputPins.AddUnique(INPIN_FlushContent);
-}
-
-void FFlowPreloadHelper::GetContextOutputs(TArray<FFlowPin>& OutOutputPins) const
-{
-	OutOutputPins.AddUnique(OUTPIN_Preloaded);
 }
 #endif

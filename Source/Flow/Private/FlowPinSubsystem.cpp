@@ -1,6 +1,6 @@
 // Copyright https://github.com/MothCocoon/FlowGraph/graphs/contributors
-
 #include "FlowPinSubsystem.h"
+
 #include "Types/FlowPinTypesStandard.h"
 
 #include "Engine/Engine.h"
@@ -53,17 +53,6 @@ void UFlowPinSubsystem::Deinitialize()
 	Super::Deinitialize();
 }
 
-void UFlowPinSubsystem::UnregisterAllPinTypes()
-{
-	const TArray<FFlowPinTypeName> PinTypeNames = GetPinTypeNames();
-	for (const FFlowPinTypeName& PinTypeName : PinTypeNames)
-	{
-		UnregisterPinType(PinTypeName);
-	}
-
-	check(PinTypes.IsEmpty());
-}
-
 void UFlowPinSubsystem::RegisterPinType(const FFlowPinTypeName& TypeName, const TInstancedStruct<FFlowPinType>& PinType)
 {
 	PinTypes.Add(TypeName, PinType);
@@ -80,4 +69,15 @@ TArray<FFlowPinTypeName> UFlowPinSubsystem::GetPinTypeNames() const
 	PinTypes.GetKeys(TypeNames);
 
 	return TypeNames;
+}
+
+void UFlowPinSubsystem::UnregisterAllPinTypes()
+{
+	const TArray<FFlowPinTypeName> PinTypeNames = GetPinTypeNames();
+	for (const FFlowPinTypeName& PinTypeName : PinTypeNames)
+	{
+		UnregisterPinType(PinTypeName);
+	}
+
+	check(PinTypes.IsEmpty());
 }

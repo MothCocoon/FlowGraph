@@ -1,12 +1,7 @@
-﻿// Copyright https://github.com/MothCocoon/FlowGraph/graphs/contributors
+// Copyright https://github.com/MothCocoon/FlowGraph/graphs/contributors
 #pragma once
 
-#include "Runtime/Launch/Resources/Version.h"
-#if ENGINE_MAJOR_VERSION == 5 && ENGINE_MINOR_VERSION < 7
-#include "Editor/Kismet/Private/DiffControl.h"
-#else
 #include "Editor/Kismet/Internal/DiffControl.h"
-#endif
 
 class FBlueprintDifferenceTreeEntry;
 class FDetailsDiff;

@@ -1,5 +1,4 @@
-﻿// Copyright https://github.com/MothCocoon/FlowGraph/graphs/contributors
-
+// Copyright https://github.com/MothCocoon/FlowGraph/graphs/contributors
 #include "Asset/FlowObjectDiff.h"
 
 #include "Asset/FlowDiffControl.h"
@@ -31,6 +30,15 @@ FFlowObjectDiff::FFlowObjectDiff(TSharedPtr<FDiffResultItem> InDiffResult, const
 	}
 }
 
+void FFlowObjectDiff::DiffProperties(TArray<FSingleObjectDiffEntry>& OutPropertyDiffsArray) const
+{
+	if (OldDetailsView.IsValid() && NewDetailsView.IsValid())
+	{
+		static constexpr bool bSortByDisplayOrder = true;
+		OldDetailsView->DiffAgainst(*NewDetailsView.Get(), OutPropertyDiffsArray, bSortByDisplayOrder);
+	}
+}
+
 void FFlowObjectDiff::InitializeDetailsDiffFromNode(UEdGraphNode* Node, const UObject* Object, const FFlowGraphToDiff& GraphToDiff)
 {
 	if (!IsValid(Node))
@@ -55,14 +63,5 @@ void FFlowObjectDiff::InitializeDetailsDiffFromNode(UEdGraphNode* Node, const UO
 	else if (NodeDiffType == ENodeDiffType::New && !NewDetailsView.IsValid())
 	{
 		NewDetailsView = MakeShared<FDetailsDiff>(Object);
-	}
-}
-
-void FFlowObjectDiff::DiffProperties(TArray<FSingleObjectDiffEntry>& OutPropertyDiffsArray) const
-{
-	if (OldDetailsView.IsValid() && NewDetailsView.IsValid())
-	{
-		static constexpr bool bSortByDisplayOrder = true;
-		OldDetailsView->DiffAgainst(*NewDetailsView.Get(), OutPropertyDiffsArray, bSortByDisplayOrder);
 	}
 }

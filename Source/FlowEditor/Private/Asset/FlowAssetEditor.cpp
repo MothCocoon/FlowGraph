@@ -1,5 +1,4 @@
 // Copyright https://github.com/MothCocoon/FlowGraph/graphs/contributors
-
 #include "Asset/FlowAssetEditor.h"
 
 #include "FlowEditorCommands.h"
@@ -8,7 +7,7 @@
 #include "Asset/FlowDebugEditorSubsystem.h"
 #include "Asset/FlowAssetToolbar.h"
 #include "Asset/FlowMessageLogListing.h"
-#include "DetailCustomizations/FlowNodeAddOnCustomization.h"
+#include "Details/AddOns/FlowNodeAddOnCustomization.h"
 #include "Graph/FlowGraphEditor.h"
 #include "Graph/FlowGraphEditorSettings.h"
 #include "Graph/FlowGraphEditorLayout.h"
@@ -49,11 +48,6 @@ const FName FFlowAssetEditor::PaletteTab(TEXT("Palette"));
 const FName FFlowAssetEditor::RuntimeLogTab(TEXT("RuntimeLog"));
 const FName FFlowAssetEditor::SearchTab(TEXT("Search"));
 const FName FFlowAssetEditor::ValidationLogTab(TEXT("ValidationLog"));
-
-FFlowAssetEditor::FFlowAssetEditor()
-	: FlowAsset(nullptr)
-{
-}
 
 FFlowAssetEditor::~FFlowAssetEditor()
 {
@@ -223,18 +217,6 @@ void FFlowAssetEditor::OnAssetsSavedAs(const TArray<UObject*>& SavedObjects)
 	TryValidateOnAssetSave(SavedObjects);
 }
 
-void FFlowAssetEditor::DoPreSaveAssetUpdate() const
-{
-	if (IsValid(FlowAsset))
-	{
-		UFlowGraph* FlowGraph = Cast<UFlowGraph>(FlowAsset->GetGraph());
-		if (IsValid(FlowGraph))
-		{
-			FlowGraph->OnSave();
-		}
-	}
-}
-
 bool FFlowAssetEditor::IsTabFocused(const FTabId& TabId) const
 {
 	if (const TSharedPtr<SDockTab> CurrentGraphTab = GetToolkitHost()->GetTabManager()->FindExistingLiveTab(TabId))
@@ -317,6 +299,18 @@ TSharedRef<SDockTab> FFlowAssetEditor::SpawnTab_ValidationLog(const FSpawnTabArg
 		[
 			ValidationLog.ToSharedRef()
 		];
+}
+
+void FFlowAssetEditor::DoPreSaveAssetUpdate() const
+{
+	if (IsValid(FlowAsset))
+	{
+		UFlowGraph* FlowGraph = Cast<UFlowGraph>(FlowAsset->GetGraph());
+		if (IsValid(FlowGraph))
+		{
+			FlowGraph->OnSave();
+		}
+	}
 }
 
 void FFlowAssetEditor::InitFlowAssetEditor(const EToolkitMode::Type Mode, const TSharedPtr<class IToolkitHost>& InitToolkitHost, UObject* ObjectToEdit)

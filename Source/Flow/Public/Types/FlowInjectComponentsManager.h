@@ -21,10 +21,10 @@ struct FLOW_API FFlowInjectedComponent
 	GENERATED_BODY()
 
 	UPROPERTY(Transient)
-	TObjectPtr<AActor> Actor = nullptr;
+	TObjectPtr<AActor> Actor;
 
 	UPROPERTY(Transient)
-	TObjectPtr<UActorComponent> Component = nullptr;
+	TObjectPtr<UActorComponent> Component;
 
 	/* Objects using the component. Weak, so a user that is garbage collected stops counting. */
 	TSet<TWeakObjectPtr<UObject>, TWeakObjectPtrSetKeyFuncs<TWeakObjectPtr<UObject>>> Users;

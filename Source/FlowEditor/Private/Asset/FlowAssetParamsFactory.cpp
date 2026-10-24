@@ -1,5 +1,4 @@
 // Copyright https://github.com/MothCocoon/FlowGraph/graphs/contributors
-
 #include "Asset/FlowAssetParamsFactory.h"
 
 #include "Asset/FlowAssetParams.h"
@@ -30,6 +29,33 @@ bool UFlowAssetParamsFactory::ConfigureProperties()
 {
 	SelectedParentParams.Reset();
 	return ShowParentPickerDialog();
+}
+
+UObject* UFlowAssetParamsFactory::FactoryCreateNew(UClass* Class, UObject* InParent, FName Name, EObjectFlags Flags, UObject* Context, FFeedbackContext* Warn)
+{
+	if (SelectedParentParams.IsNull())
+	{
+		FMessageDialog::Open(EAppMsgType::Ok, LOCTEXT("FactoryMissingParent", "No parent params were selected."));
+
+		return nullptr;
+	}
+
+	UFlowAssetParams* Parent = SelectedParentParams.LoadSynchronous();
+	if (!IsValid(Parent))
+	{
+		FMessageDialog::Open(EAppMsgType::Ok,
+			FText::Format(LOCTEXT("ParentLoadFail", "Failed to load selected parent params:\n{0}"),
+				FText::FromString(SelectedParentParams.ToString())));
+
+		return nullptr;
+	}
+
+	FText FailureReason;
+	constexpr bool bShowDialogs = true;
+	UFlowAssetParams* NewParams = FFlowAssetParamsUtils::CreateChildParamsAsset(*Parent, bShowDialogs, &FailureReason);
+
+	// FactoryCreateNew expects the created asset (or nullptr). The helper already shows dialogs/logs on failure.
+	return NewParams;
 }
 
 bool UFlowAssetParamsFactory::ShowParentPickerDialog()
@@ -144,33 +170,6 @@ bool UFlowAssetParamsFactory::ShowParentPickerDialog()
 	}
 
 	return true;
-}
-
-UObject* UFlowAssetParamsFactory::FactoryCreateNew(UClass* Class, UObject* InParent, FName Name, EObjectFlags Flags, UObject* Context, FFeedbackContext* Warn)
-{
-	if (SelectedParentParams.IsNull())
-	{
-		FMessageDialog::Open(EAppMsgType::Ok, LOCTEXT("FactoryMissingParent", "No parent params were selected."));
-
-		return nullptr;
-	}
-
-	UFlowAssetParams* Parent = SelectedParentParams.LoadSynchronous();
-	if (!IsValid(Parent))
-	{
-		FMessageDialog::Open(EAppMsgType::Ok,
-			FText::Format(LOCTEXT("ParentLoadFail", "Failed to load selected parent params:\n{0}"),
-				FText::FromString(SelectedParentParams.ToString())));
-
-		return nullptr;
-	}
-
-	FText FailureReason;
-	constexpr bool bShowDialogs = true;
-	UFlowAssetParams* NewParams = FFlowAssetParamsUtils::CreateChildParamsAsset(*Parent, bShowDialogs, &FailureReason);
-
-	// FactoryCreateNew expects the created asset (or nullptr). The helper already shows dialogs/logs on failure.
-	return NewParams;
 }
 
 #undef LOCTEXT_NAMESPACE

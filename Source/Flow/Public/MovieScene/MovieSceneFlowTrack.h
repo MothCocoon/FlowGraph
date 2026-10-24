@@ -20,7 +20,6 @@ public:
 	UMovieSceneFlowTrack()
 		: bFireEventsWhenForwards(true)
 		, bFireEventsWhenBackwards(true)
-		, EventPosition(EFireEventsAtPosition::AfterSpawn)
 	{
 #if WITH_EDITOR
 		TrackTint = FColor(91, 75, 57);
@@ -57,7 +56,7 @@ public:
 
 	/* Defines where in the evaluation to trigger events. */
 	UPROPERTY(EditAnywhere, Category=TrackEvent)
-	EFireEventsAtPosition EventPosition;
+	EFireEventsAtPosition EventPosition = EFireEventsAtPosition::AfterSpawn;
 
 private:
 	/* The track's sections. */

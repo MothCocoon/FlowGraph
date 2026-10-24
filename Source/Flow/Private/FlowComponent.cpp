@@ -1,5 +1,4 @@
 // Copyright https://github.com/MothCocoon/FlowGraph/graphs/contributors
-
 #include "FlowComponent.h"
 
 #include "Asset/FlowAssetParams.h"
@@ -21,10 +20,6 @@
 
 UFlowComponent::UFlowComponent(const FObjectInitializer& ObjectInitializer)
 	: Super(ObjectInitializer)
-	, RootFlow(nullptr)
-	, bAutoStartRootFlow(true)
-	, RootFlowMode(EFlowNetMode::Authority)
-	, bAllowMultipleInstances(true)
 {
 	PrimaryComponentTick.bCanEverTick = false;
 	PrimaryComponentTick.bStartWithTickEnabled = false;
@@ -64,6 +59,13 @@ void UFlowComponent::BeginPlay()
 	RegisterWithFlowSubsystem();
 }
 
+void UFlowComponent::EndPlay(const EEndPlayReason::Type EndPlayReason)
+{
+	UnregisterWithFlowSubsystem();
+
+	Super::EndPlay(EndPlayReason);
+}
+
 void UFlowComponent::RegisterWithFlowSubsystem()
 {
 	if (UFlowSubsystem* FlowSubsystem = GetFlowSubsystem())
@@ -76,7 +78,16 @@ void UFlowComponent::RegisterWithFlowSubsystem()
 	}
 }
 
-void UFlowComponent::BeginRootFlow(bool bComponentLoadedFromSaveGame)
+void UFlowComponent::UnregisterWithFlowSubsystem()
+{
+	if (UFlowSubsystem* FlowSubsystem = GetFlowSubsystem())
+	{
+		FlowSubsystem->FinishAndDeinitializeAllRootFlows(this, EFlowFinishPolicy::Keep);
+		FlowSubsystem->UnregisterComponent(this);
+	}
+}
+
+void UFlowComponent::BeginRootFlow(const bool bComponentLoadedFromSaveGame)
 {
 	if (RootFlow)
 	{
@@ -88,22 +99,6 @@ void UFlowComponent::BeginRootFlow(bool bComponentLoadedFromSaveGame)
 		{
 			StartRootFlow();
 		}
-	}
-}
-
-void UFlowComponent::EndPlay(const EEndPlayReason::Type EndPlayReason)
-{
-	UnregisterWithFlowSubsystem();
-
-	Super::EndPlay(EndPlayReason);
-}
-
-void UFlowComponent::UnregisterWithFlowSubsystem()
-{
-	if (UFlowSubsystem* FlowSubsystem = GetFlowSubsystem())
-	{
-		FlowSubsystem->FinishAndDeinitializeAllRootFlows(this, EFlowFinishPolicy::Keep);
-		FlowSubsystem->UnregisterComponent(this);
 	}
 }
 

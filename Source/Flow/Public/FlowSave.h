@@ -79,8 +79,6 @@ class FLOW_API UFlowSaveGame : public USaveGame
 	GENERATED_BODY()
 
 public:
-	UFlowSaveGame() {};
-
 	UPROPERTY(VisibleAnywhere, Category = "SaveGame")
 	FString SaveSlotName = TEXT("FlowSave");
 

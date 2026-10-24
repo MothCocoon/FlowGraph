@@ -332,9 +332,10 @@ namespace UE::FlowGraph::Private
 						OutermostComment = &Comment;
 					}
 				}
-				if (OutermostComment && OutermostComment->Comment.IsValid())
+				const UEdGraphNode_Comment* CommentNode = OutermostComment ? OutermostComment->Comment.Get() : nullptr;
+				if (CommentNode)
 				{
-					NodeToComment.Add(Pair.Key, OutermostComment->Comment->NodeGuid);
+					NodeToComment.Add(Pair.Key, CommentNode->NodeGuid);
 				}
 			}
 

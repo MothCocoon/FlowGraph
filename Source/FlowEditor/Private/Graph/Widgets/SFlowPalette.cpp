@@ -1,6 +1,6 @@
 // Copyright https://github.com/MothCocoon/FlowGraph/graphs/contributors
-
 #include "Graph/Widgets/SFlowPalette.h"
+
 #include "Asset/FlowAssetEditor.h"
 #include "FlowEditorCommands.h"
 #include "Graph/FlowGraphSchema.h"
@@ -194,8 +194,9 @@ TSharedRef<SWidget> SFlowPalette::OnCreateWidgetForAction(FCreateWidgetForAction
 
 void SFlowPalette::CollectAllActions(FGraphActionListBuilderBase& OutAllActions)
 {
-	ensureAlways(FlowAssetEditor.Pin() && FlowAssetEditor.Pin()->GetFlowAsset());
-	const UFlowAsset* EditedFlowAsset = FlowAssetEditor.Pin()->GetFlowAsset();
+	const TSharedPtr<FFlowAssetEditor> FlowAssetEditorPtr = FlowAssetEditor.Pin();
+	const UFlowAsset* EditedFlowAsset = FlowAssetEditorPtr ? FlowAssetEditorPtr->GetFlowAsset() : nullptr;
+	ensureAlways(EditedFlowAsset);
 	
 	FGraphActionMenuBuilder ActionMenuBuilder;
 	UFlowGraphSchema::GetPaletteActions(ActionMenuBuilder, EditedFlowAsset, GetFilterCategoryName());

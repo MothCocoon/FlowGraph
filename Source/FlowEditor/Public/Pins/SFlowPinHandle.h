@@ -7,7 +7,6 @@
 class FLOWEDITOR_API SFlowPinHandle : public SGraphPin
 {
 public:
-	SFlowPinHandle();
 	virtual ~SFlowPinHandle() override;
 
 	SLATE_BEGIN_ARGS(SFlowPinHandle) {}
@@ -21,7 +20,7 @@ protected:
 	void ParseDefaultValueData();
 	void ComboBoxSelectionChanged(const TSharedPtr<FName> NameItem, ESelectInfo::Type SelectInfo) const;
 
-	const UBlueprint* Blueprint;
+	const UBlueprint* Blueprint = nullptr;
 	TArray<TSharedPtr<FName>> PinNames;
 	
 	TSharedPtr<SNameComboBox> ComboBox;

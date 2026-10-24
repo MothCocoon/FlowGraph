@@ -1,6 +1,6 @@
 // Copyright https://github.com/MothCocoon/FlowGraph/graphs/contributors
-
 #include "Types/FlowNamedDataPinProperty.h"
+
 #include "Types/FlowDataPinPropertyToValueMigration.h"
 #include "Types/FlowAutoDataPinsWorkingData.h"
 

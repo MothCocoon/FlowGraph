@@ -1,6 +1,6 @@
 // Copyright https://github.com/MothCocoon/FlowGraph/graphs/contributors
-
 #include "Types/FlowDataPinBlueprintLibrary.h"
+
 #include "Types/FlowDataPinValue.h"
 #include "Types/FlowDataPinValuesStandard.h"
 #include "Nodes/FlowNodeBase.h"
@@ -1145,7 +1145,7 @@ UObject* UFlowDataPinBlueprintLibrary::AutoConvert_TryResolveAsObject(const FFlo
 	using namespace FlowPinType;
 
 	constexpr EFlowSingleFromArray SingleMode = EFlowSingleFromArray::LastValue;
-	TObjectPtr<UObject> Extracted = nullptr;
+	TObjectPtr<UObject> Extracted;
 	EFlowDataPinResolveResult ResolveResult = EFlowDataPinResolveResult::FailedNullFlowNodeBase;
 
 	if (IsValid(Target))
@@ -1198,7 +1198,7 @@ UClass* UFlowDataPinBlueprintLibrary::AutoConvert_TryResolveAsClass(const FFlowD
 	using namespace FlowPinType;
 
 	constexpr EFlowSingleFromArray SingleMode = EFlowSingleFromArray::LastValue;
-	TObjectPtr<UClass> Extracted = nullptr;
+	TObjectPtr<UClass> Extracted;
 	EFlowDataPinResolveResult ResolveResult = EFlowDataPinResolveResult::FailedNullFlowNodeBase;
 
 	if (IsValid(Target))
@@ -1640,7 +1640,7 @@ TArray<FInstancedStruct> UFlowDataPinBlueprintLibrary::AutoConvert_TryExtractIns
 UObject* UFlowDataPinBlueprintLibrary::AutoConvert_TryExtractObject(const FFlowDataPinResult& DataPinResult)
 {
 	using namespace FlowPinType;
-	TObjectPtr<UObject> ExtractedValue = nullptr;
+	TObjectPtr<UObject> ExtractedValue;
 	constexpr EFlowSingleFromArray SingleMode = EFlowSingleFromArray::LastValue;
 	const EFlowDataPinResolveResult ResolveResult = TryExtractValue<FFlowPinType_Object>(DataPinResult, ExtractedValue, SingleMode);
 	if (!IsSuccess(ResolveResult))
@@ -1665,7 +1665,7 @@ TArray<UObject*> UFlowDataPinBlueprintLibrary::AutoConvert_TryExtractObjectArray
 UClass* UFlowDataPinBlueprintLibrary::AutoConvert_TryExtractClass(const FFlowDataPinResult& DataPinResult)
 {
 	using namespace FlowPinType;
-	TObjectPtr<UClass> ExtractedValue = nullptr;
+	TObjectPtr<UClass> ExtractedValue;
 	constexpr EFlowSingleFromArray SingleMode = EFlowSingleFromArray::LastValue;
 	const EFlowDataPinResolveResult ResolveResult = TryExtractValue<FFlowPinType_Class>(DataPinResult, ExtractedValue, SingleMode);
 	if (!IsSuccess(ResolveResult))

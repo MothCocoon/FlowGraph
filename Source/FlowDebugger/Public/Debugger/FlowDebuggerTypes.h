@@ -1,4 +1,4 @@
-﻿// Copyright https://github.com/MothCocoon/FlowGraph/graphs/contributors
+// Copyright https://github.com/MothCocoon/FlowGraph/graphs/contributors
 #pragma once
 
 #include "FlowDebuggerTypes.generated.h"
@@ -12,7 +12,7 @@ protected:
 	/* Applies only to node breakpoint.
 	 * Pin breakpoints are deactivated by removing element from FNodeBreakpoint::PinBreakpoints. */
 	UPROPERTY()
-	bool bActive;
+	bool bActive = false;
 
 	UPROPERTY()
 	uint8 bEnabled : 1;
@@ -22,8 +22,7 @@ protected:
 
 public:
 	FFlowBreakpoint()
-		: bActive(false)
-		, bEnabled(false)
+		: bEnabled(false)
 		, bHit(false)
 	{
 	};
@@ -60,10 +59,6 @@ public:
 
 	UPROPERTY()
 	TMap<FName, FFlowBreakpoint> PinBreakpoints;
-
-	FNodeBreakpoint()
-	{
-	};
 
 	bool IsEmpty() const
 	{

@@ -24,8 +24,9 @@ void SFlowCreateSubGraphDialog::Construct(const FArguments& InArgs)
 	SourceAsset = InArgs._SourceAsset;
 	AssetName = FlowSubGraphExtraction::GetDefaultNewAssetName();
 
-	const FString PackageFolder = SourceAsset.Get()
-		? FPackageName::GetLongPackagePath(SourceAsset->GetOutermost()->GetName())
+	const UFlowAsset* SourceAssetPtr = SourceAsset.Get();
+	const FString PackageFolder = SourceAssetPtr
+		? FPackageName::GetLongPackagePath(SourceAssetPtr->GetOutermost()->GetName())
 		: FString();
 
 	TSharedRef<SVerticalBox> WarningsBox = SNew(SVerticalBox);
@@ -114,67 +115,6 @@ void SFlowCreateSubGraphDialog::Construct(const FArguments& InArgs)
 	OnAssetNameChanged(FText::FromString(AssetName));
 }
 
-void SFlowCreateSubGraphDialog::OnAssetNameChanged(const FText& NewName)
-{
-	AssetName = NewName.ToString();
-
-	ValidationError = SourceAsset.Get()
-		? FlowSubGraphExtraction::ValidateNewAssetName(*SourceAsset, AssetName)
-		: LOCTEXT("NoSourceAsset", "No source asset.");
-
-	if (AssetNameTextBox.IsValid())
-	{
-		AssetNameTextBox->SetError(ValidationError);
-	}
-}
-
-void SFlowCreateSubGraphDialog::OnAssetNameCommitted(const FText& NewName, const ETextCommit::Type CommitType)
-{
-	if (CommitType == ETextCommit::OnEnter && IsCreateEnabled())
-	{
-		OnCreateClicked();
-	}
-}
-
-FText SFlowCreateSubGraphDialog::GetValidationErrorText() const
-{
-	return ValidationError;
-}
-
-EVisibility SFlowCreateSubGraphDialog::GetErrorVisibility() const
-{
-	return ValidationError.IsEmpty() ? EVisibility::Collapsed : EVisibility::Visible;
-}
-
-bool SFlowCreateSubGraphDialog::IsCreateEnabled() const
-{
-	return ValidationError.IsEmpty();
-}
-
-FReply SFlowCreateSubGraphDialog::OnCreateClicked()
-{
-	bConfirmed = true;
-
-	if (const TSharedPtr<SWindow> OwningWindow = FSlateApplication::Get().FindWidgetWindow(AsShared()))
-	{
-		OwningWindow->RequestDestroyWindow();
-	}
-
-	return FReply::Handled();
-}
-
-FReply SFlowCreateSubGraphDialog::OnCancelClicked()
-{
-	bConfirmed = false;
-
-	if (const TSharedPtr<SWindow> OwningWindow = FSlateApplication::Get().FindWidgetWindow(AsShared()))
-	{
-		OwningWindow->RequestDestroyWindow();
-	}
-
-	return FReply::Handled();
-}
-
 bool SFlowCreateSubGraphDialog::ShowModal(const UFlowAsset& SourceAsset, const TArray<FText>& Warnings, FString& OutAssetName)
 {
 	const TSharedRef<SFlowCreateSubGraphDialog> Dialog = SNew(SFlowCreateSubGraphDialog)
@@ -208,6 +148,68 @@ bool SFlowCreateSubGraphDialog::ShowModal(const UFlowAsset& SourceAsset, const T
 
 	OutAssetName = Dialog->AssetName;
 	return true;
+}
+
+FReply SFlowCreateSubGraphDialog::OnCreateClicked()
+{
+	bConfirmed = true;
+
+	if (const TSharedPtr<SWindow> OwningWindow = FSlateApplication::Get().FindWidgetWindow(AsShared()))
+	{
+		OwningWindow->RequestDestroyWindow();
+	}
+
+	return FReply::Handled();
+}
+
+FReply SFlowCreateSubGraphDialog::OnCancelClicked()
+{
+	bConfirmed = false;
+
+	if (const TSharedPtr<SWindow> OwningWindow = FSlateApplication::Get().FindWidgetWindow(AsShared()))
+	{
+		OwningWindow->RequestDestroyWindow();
+	}
+
+	return FReply::Handled();
+}
+
+void SFlowCreateSubGraphDialog::OnAssetNameChanged(const FText& NewName)
+{
+	AssetName = NewName.ToString();
+
+	const UFlowAsset* SourceAssetPtr = SourceAsset.Get();
+	ValidationError = SourceAssetPtr
+		? FlowSubGraphExtraction::ValidateNewAssetName(*SourceAssetPtr, AssetName)
+		: LOCTEXT("NoSourceAsset", "No source asset.");
+
+	if (AssetNameTextBox.IsValid())
+	{
+		AssetNameTextBox->SetError(ValidationError);
+	}
+}
+
+void SFlowCreateSubGraphDialog::OnAssetNameCommitted(const FText& NewName, const ETextCommit::Type CommitType)
+{
+	if (CommitType == ETextCommit::OnEnter && IsCreateEnabled())
+	{
+		OnCreateClicked();
+	}
+}
+
+bool SFlowCreateSubGraphDialog::IsCreateEnabled() const
+{
+	return ValidationError.IsEmpty();
+}
+
+FText SFlowCreateSubGraphDialog::GetValidationErrorText() const
+{
+	return ValidationError;
+}
+
+EVisibility SFlowCreateSubGraphDialog::GetErrorVisibility() const
+{
+	return ValidationError.IsEmpty() ? EVisibility::Collapsed : EVisibility::Visible;
 }
 
 #undef LOCTEXT_NAMESPACE

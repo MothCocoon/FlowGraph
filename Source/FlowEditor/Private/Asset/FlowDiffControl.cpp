@@ -1,6 +1,6 @@
 // Copyright https://github.com/MothCocoon/FlowGraph/graphs/contributors
-
 #include "Asset/FlowDiffControl.h"
+
 #include "Asset/SFlowDiff.h"
 
 #include "FlowAsset.h"
@@ -161,28 +161,6 @@ FFlowGraphToDiff::~FFlowGraphToDiff()
 	}
 }
 
-ENodeDiffType FFlowGraphToDiff::GetNodeDiffType(const UEdGraphNode& Node) const
-{
-	if (IsValid(GraphOld) && Node.GetGraph() == GraphOld)
-	{
-		return ENodeDiffType::Old;
-	}
-
-	if (IsValid(GraphNew) && Node.GetGraph() == GraphNew)
-	{
-		return ENodeDiffType::New;
-	}
-
-	return ENodeDiffType::Invalid;
-}
-
-TSharedPtr<FFlowObjectDiff> FFlowGraphToDiff::GetFlowObjectDiff(const FDiffResultItem& DiffResultItem)
-{
-	const FString DiffKey = GetDiffKeyFromDiffResult(DiffResultItem);
-	check(FlowObjectDiffsByNodeName.Contains(DiffKey));
-	return *FlowObjectDiffsByNodeName.Find(DiffKey);
-}
-
 void FFlowGraphToDiff::GenerateTreeEntries(TArray<TSharedPtr<FBlueprintDifferenceTreeEntry>>& OutTreeEntries, TArray<TSharedPtr<FBlueprintDifferenceTreeEntry>>& OutRealDifferences)
 {
 	if (!DiffListSource.IsEmpty())
@@ -242,10 +220,10 @@ void FFlowGraphToDiff::GenerateTreeEntries(TArray<TSharedPtr<FBlueprintDifferenc
 			continue;
 		}
 
-		FlowNodeDiff->ParentNodeDiff = FindParentDiff(Cast<UFlowGraphNode>(Node1));
-		if (FlowNodeDiff->ParentNodeDiff.IsValid())
+		const TSharedPtr<FFlowObjectDiff> ParentNode = FindParentDiff(Cast<UFlowGraphNode>(Node1));
+		FlowNodeDiff->ParentNodeDiff = ParentNode;
+		if (ParentNode)
 		{
-			const TSharedPtr<FFlowObjectDiff> ParentNode = FlowNodeDiff->ParentNodeDiff.Pin();
 			ParentNode->DiffTreeEntry->Children.Push(FlowNodeDiff->DiffTreeEntry);
 
 			//if a parent has any sub node changes,  make sure the color does not stay as "minor"
@@ -320,56 +298,26 @@ void FFlowGraphToDiff::GenerateTreeEntries(TArray<TSharedPtr<FBlueprintDifferenc
 	OutTreeEntries.Push(Entry);
 }
 
-TSharedPtr<FFlowObjectDiff> FFlowGraphToDiff::GenerateFlowObjectDiff(const TSharedPtr<FDiffResultItem>& Difference)
+ENodeDiffType FFlowGraphToDiff::GetNodeDiffType(const UEdGraphNode& Node) const
 {
-	//copy the first diff found in order to enable jumping to the node in the graph.
-	TSharedPtr<FDiffResultItem> DuplicatedFirstFoundDiffResult = MakeShared<FDiffResultItem>(Difference->Result);
+	if (IsValid(GraphOld) && Node.GetGraph() == GraphOld)
+	{
+		return ENodeDiffType::Old;
+	}
 
-	ModifyDiffDisplayName(DuplicatedFirstFoundDiffResult->Result, GetNodeNameFromDiffResult(*Difference.Get()));
+	if (IsValid(GraphNew) && Node.GetGraph() == GraphNew)
+	{
+		return ENodeDiffType::New;
+	}
 
-	TSharedPtr<FFlowObjectDiff> NewFlowObjectDiff = MakeShared<FFlowObjectDiff>(DuplicatedFirstFoundDiffResult, *this);
-
-	static const FSingleObjectDiffEntry InvalidDiff = FSingleObjectDiffEntry(); //do not specify a property change for the main object diff itself. 
-	NewFlowObjectDiff->DiffEntryFocusArg = MakeShared<FFlowObjectDiffArgs>(
-		NewFlowObjectDiff,
-		FSingleObjectDiffEntry(InvalidDiff));
-
-	NewFlowObjectDiff->DiffTreeEntry = MakeShared<FBlueprintDifferenceTreeEntry>(
-		FOnDiffEntryFocused::CreateRaw(DiffWidget, &SFlowDiff::OnDiffListSelectionChanged, NewFlowObjectDiff->DiffEntryFocusArg),
-		FGenerateDiffEntryWidget::CreateSP(DuplicatedFirstFoundDiffResult.ToSharedRef(), &FDiffResultItem::GenerateWidget));
-
-	return NewFlowObjectDiff;
+	return ENodeDiffType::Invalid;
 }
 
-TSharedPtr<FFlowObjectDiff> FFlowGraphToDiff::FindParentDiff(UFlowGraphNode* Node)
+TSharedPtr<FFlowObjectDiff> FFlowGraphToDiff::GetFlowObjectDiff(const FDiffResultItem& DiffResultItem)
 {
-	if (!IsValid(Node))
-	{
-		return nullptr;
-	}
-
-	const UFlowGraphNode* ParentNode = Node->GetParentNode();
-	while (IsValid(ParentNode))
-	{
-		for (auto& FlowNodeDiff : FlowObjectDiffsByNodeName)
-		{
-			//don't allow a pin diff be the parent of anything.
-			if (FlowNodeDiff.Value->DiffResult->Result.Pin1)
-			{
-				continue;
-			}
-			
-			if (FlowNodeDiff.Value->DiffResult->Result.Node1 == ParentNode
-				|| FlowNodeDiff.Value->DiffResult->Result.Node2 == ParentNode)
-			{
-				return FlowNodeDiff.Value;
-			}
-		}
-
-		ParentNode = ParentNode->GetParentNode();
-	}
-
-	return nullptr;
+	const FString DiffKey = GetDiffKeyFromDiffResult(DiffResultItem);
+	check(FlowObjectDiffsByNodeName.Contains(DiffKey));
+	return *FlowObjectDiffsByNodeName.Find(DiffKey);
 }
 
 FText FFlowGraphToDiff::GetToolTip() const
@@ -425,6 +373,11 @@ TSharedRef<SWidget> FFlowGraphToDiff::GenerateCategoryWidget() const
 		+ DiffViewUtils::Box(GraphNew != nullptr, Color);
 }
 
+void FFlowGraphToDiff::OnGraphChanged(const FEdGraphEditAction& Action) const
+{
+	DiffWidget->OnGraphChanged(this);
+}
+
 void FFlowGraphToDiff::BuildDiffSourceArray()
 {
 	FoundDiffs->Empty();
@@ -439,9 +392,56 @@ void FFlowGraphToDiff::BuildDiffSourceArray()
 	}
 }
 
-void FFlowGraphToDiff::OnGraphChanged(const FEdGraphEditAction& Action) const
+TSharedPtr<FFlowObjectDiff> FFlowGraphToDiff::GenerateFlowObjectDiff(const TSharedPtr<FDiffResultItem>& Difference)
 {
-	DiffWidget->OnGraphChanged(this);
+	//copy the first diff found in order to enable jumping to the node in the graph.
+	TSharedPtr<FDiffResultItem> DuplicatedFirstFoundDiffResult = MakeShared<FDiffResultItem>(Difference->Result);
+
+	ModifyDiffDisplayName(DuplicatedFirstFoundDiffResult->Result, GetNodeNameFromDiffResult(*Difference.Get()));
+
+	TSharedPtr<FFlowObjectDiff> NewFlowObjectDiff = MakeShared<FFlowObjectDiff>(DuplicatedFirstFoundDiffResult, *this);
+
+	static const FSingleObjectDiffEntry InvalidDiff = FSingleObjectDiffEntry(); //do not specify a property change for the main object diff itself.
+	NewFlowObjectDiff->DiffEntryFocusArg = MakeShared<FFlowObjectDiffArgs>(
+		NewFlowObjectDiff,
+		FSingleObjectDiffEntry(InvalidDiff));
+
+	NewFlowObjectDiff->DiffTreeEntry = MakeShared<FBlueprintDifferenceTreeEntry>(
+		FOnDiffEntryFocused::CreateRaw(DiffWidget, &SFlowDiff::OnDiffListSelectionChanged, NewFlowObjectDiff->DiffEntryFocusArg),
+		FGenerateDiffEntryWidget::CreateSP(DuplicatedFirstFoundDiffResult.ToSharedRef(), &FDiffResultItem::GenerateWidget));
+
+	return NewFlowObjectDiff;
+}
+
+TSharedPtr<FFlowObjectDiff> FFlowGraphToDiff::FindParentDiff(UFlowGraphNode* Node)
+{
+	if (!IsValid(Node))
+	{
+		return nullptr;
+	}
+
+	const UFlowGraphNode* ParentNode = Node->GetParentNode();
+	while (IsValid(ParentNode))
+	{
+		for (auto& FlowNodeDiff : FlowObjectDiffsByNodeName)
+		{
+			//don't allow a pin diff be the parent of anything.
+			if (FlowNodeDiff.Value->DiffResult->Result.Pin1)
+			{
+				continue;
+			}
+
+			if (FlowNodeDiff.Value->DiffResult->Result.Node1 == ParentNode
+				|| FlowNodeDiff.Value->DiffResult->Result.Node2 == ParentNode)
+			{
+				return FlowNodeDiff.Value;
+			}
+		}
+
+		ParentNode = ParentNode->GetParentNode();
+	}
+
+	return nullptr;
 }
 
 #undef LOCTEXT_NAMESPACE

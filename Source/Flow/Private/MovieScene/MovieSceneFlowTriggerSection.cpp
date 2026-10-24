@@ -1,5 +1,4 @@
 // Copyright https://github.com/MothCocoon/FlowGraph/graphs/contributors
-
 #include "MovieScene/MovieSceneFlowTriggerSection.h"
 
 #include "Channels/MovieSceneChannelProxy.h"

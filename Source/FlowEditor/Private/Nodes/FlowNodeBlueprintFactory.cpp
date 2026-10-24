@@ -1,5 +1,4 @@
 // Copyright https://github.com/MothCocoon/FlowGraph/graphs/contributors
-
 #include "Nodes/FlowNodeBlueprintFactory.h"
 
 #include "Nodes/FlowNode.h"
@@ -14,7 +13,6 @@
 #include "Kismet2/KismetEditorUtilities.h"
 #include "Misc/MessageDialog.h"
 #include "Modules/ModuleManager.h"
-#include "SlateOptMacros.h"
 #include "Templates/SubclassOf.h"
 #include "Widgets/Input/SButton.h"
 #include "Widgets/Layout/SBorder.h"
@@ -32,8 +30,6 @@ class UFlowNodeBase;
 // ------------------------------------------------------------------------------
 // Dialog to configure creation properties
 // ------------------------------------------------------------------------------
-BEGIN_SLATE_FUNCTION_BUILD_OPTIMIZATION
-
 class SFlowNodeBlueprintCreateDialog final : public SCompoundWidget
 {
 public:
@@ -129,8 +125,6 @@ private:
 		/** All children of these classes will be included unless filtered out by another setting. */
 		TSet<const UClass*> AllowedChildrenOfClasses;
 
-		FFlowNodeBlueprintParentFilter() {}
-
 		virtual bool IsClassAllowed(const FClassViewerInitializationOptions& InInitOptions, const UClass* InClass, TSharedRef< FClassViewerFilterFuncs > InFilterFuncs) override
 		{
 			// If it appears on the allowed child-of classes list (or there is nothing on that list)
@@ -183,9 +177,9 @@ private:
 	/** Handler for when ok is clicked */
 	FReply OkClicked()
 	{
-		if (FlowNodeBlueprintFactory.IsValid())
+		if (UFlowNodeBaseBlueprintFactory* FlowNodeBlueprintFactoryPtr = FlowNodeBlueprintFactory.Get())
 		{
-			FlowNodeBlueprintFactory->ParentClass = ParentClass.Get();
+			FlowNodeBlueprintFactoryPtr->ParentClass = ParentClass.Get();
 		}
 
 		CloseDialog(true);
@@ -196,9 +190,9 @@ private:
 	void CloseDialog(bool bWasPicked = false)
 	{
 		bOkClicked = bWasPicked;
-		if (PickerWindow.IsValid())
+		if (const TSharedPtr<SWindow> PickerWindowPtr = PickerWindow.Pin())
 		{
-			PickerWindow.Pin()->RequestDestroyWindow();
+			PickerWindowPtr->RequestDestroyWindow();
 		}
 	}
 
@@ -235,8 +229,6 @@ private:
 	/** True if Ok was clicked */
 	bool bOkClicked = false;
 };
-
-END_SLATE_FUNCTION_BUILD_OPTIMIZATION
 
 /*------------------------------------------------------------------------------
 	UFlowNodeBaseBlueprintFactory implementation

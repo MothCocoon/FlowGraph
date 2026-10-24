@@ -1,6 +1,6 @@
 // Copyright https://github.com/MothCocoon/FlowGraph/graphs/contributors
-
 #include "Asset/FlowAssetParams.h"
+
 #include "FlowAsset.h"
 #include "FlowLogChannels.h"
 #include "Asset/FlowAssetParamsUtils.h"
@@ -85,6 +85,24 @@ void UFlowAssetParams::Serialize(FArchive& Ar)
 
 #endif
 	Super::Serialize(Ar);
+}
+
+bool UFlowAssetParams::CanSupplyDataPinValues() const
+{
+	return !PropertyMap.IsEmpty();
+}
+
+FFlowDataPinResult UFlowAssetParams::TrySupplyDataPin(const FName PinName) const
+{
+	if (const TInstancedStruct<FFlowDataPinValue>* Found = PropertyMap.Find(PinName))
+	{
+		FFlowDataPinResult DataPinResult(EFlowDataPinResolveResult::Success);
+		DataPinResult.ResultValue = (*Found);
+
+		return DataPinResult;
+	}
+
+	return FFlowDataPinResult(EFlowDataPinResolveResult::FailedUnknownPin);
 }
 
 UFlowAsset* UFlowAssetParams::ProvideFlowAsset() const
@@ -461,21 +479,3 @@ TMap<FName, TInstancedStruct<FFlowDataPinValue>> UFlowAssetParams::BuildProperty
 	return Result;
 }
 #endif
-
-bool UFlowAssetParams::CanSupplyDataPinValues() const
-{
-	return !PropertyMap.IsEmpty();
-}
-
-FFlowDataPinResult UFlowAssetParams::TrySupplyDataPin(const FName PinName) const
-{
-	if (const TInstancedStruct<FFlowDataPinValue>* Found = PropertyMap.Find(PinName))
-	{
-		FFlowDataPinResult DataPinResult(EFlowDataPinResolveResult::Success);
-		DataPinResult.ResultValue = (*Found);
-
-		return DataPinResult;
-	}
-
-	return FFlowDataPinResult(EFlowDataPinResolveResult::FailedUnknownPin);
-}

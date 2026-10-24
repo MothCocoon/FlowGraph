@@ -1,14 +1,12 @@
 // Copyright https://github.com/MothCocoon/FlowGraph/graphs/contributors
-
-// NOTE (gtaylor) This class is planned for submission to Epic to include in baseline UE.
-// If/when that happens, we will want to remove this version and update to the latest one in the PropertyModule
-
 #include "UnrealExtensions/IFlowExtendedPropertyTypeCustomization.h"
 
 #include "DetailWidgetRow.h"
 #include "IDetailChildrenBuilder.h"
-#include "IDetailPropertyRow.h"
 #include "Widgets/Text/STextBlock.h"
+
+// NOTE (gtaylor) This class is planned for submission to Epic to include in baseline UE.
+// If/when that happens, we will want to remove this version and update to the latest one in the PropertyModule
 
 void IFlowExtendedPropertyTypeCustomization::CustomizeHeader(TSharedRef<IPropertyHandle> InStructPropertyHandle, FDetailWidgetRow& HeaderRow, IPropertyTypeCustomizationUtils& StructCustomizationUtils)
 {
@@ -42,6 +40,14 @@ void IFlowExtendedPropertyTypeCustomization::CustomizeChildrenDefaultImpl(TShare
 	}
 }
 
+void IFlowExtendedPropertyTypeCustomization::RefreshHeader() const
+{
+	if (HeaderTextBlock.IsValid() && StructPropertyHandle.IsValid())
+	{
+		HeaderTextBlock->SetText(BuildHeaderText());
+	}
+}
+
 void IFlowExtendedPropertyTypeCustomization::CreateHeaderRowWidget(FDetailWidgetRow& HeaderRow, IPropertyTypeCustomizationUtils& StructCustomizationUtils)
 {
 	// Build the Slate widget for the header row
@@ -51,19 +57,6 @@ void IFlowExtendedPropertyTypeCustomization::CreateHeaderRowWidget(FDetailWidget
 			SAssignNew(HeaderTextBlock, STextBlock)
 			.Text(BuildHeaderText())
 		];
-}
-
-void IFlowExtendedPropertyTypeCustomization::OnAnyChildPropertyChanged() const
-{
-	RefreshHeader();
-}
-
-void IFlowExtendedPropertyTypeCustomization::RefreshHeader() const
-{
-	if (HeaderTextBlock.IsValid() && StructPropertyHandle.IsValid())
-	{
-		HeaderTextBlock->SetText(BuildHeaderText());
-	}
 }
 
 FText IFlowExtendedPropertyTypeCustomization::BuildHeaderText() const
@@ -76,4 +69,9 @@ FText IFlowExtendedPropertyTypeCustomization::BuildHeaderText() const
 	{
 		return FText();
 	}
+}
+
+void IFlowExtendedPropertyTypeCustomization::OnAnyChildPropertyChanged() const
+{
+	RefreshHeader();
 }

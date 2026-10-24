@@ -75,42 +75,6 @@ void UFlowNode_ExecuteComponent::DeinitializeInstance()
 	Super::DeinitializeInstance();
 }
 
-EFlowPreloadResult UFlowNode_ExecuteComponent::PreloadContent()
-{
-	if (UActorComponent* ResolvedComp = TryResolveComponent())
-	{
-		if (IFlowPreloadableInterface* PreloadableComponent = Cast<IFlowPreloadableInterface>(ResolvedComp))
-		{
-			FLOW_ASSERT_ENUM_MAX(EFlowPreloadResult, 2);
-
-			const EFlowPreloadResult PreloadableComponentResult = PreloadableComponent->PreloadContent();
-
-			// TODO (gtaylor) Consider adding a mechanism for components to do an async preload.
-			// Components have no back-reference to this node and cannot call NotifyPreloadComplete().
-			// Async (PreloadInProgress) component preloads are therefore unsupported (For Now(tm)):
-			// if a component returns PreloadInProgress the PendingPreloadCount would never reach zero.
-			ensureAlwaysMsgf(PreloadableComponentResult == EFlowPreloadResult::Completed,
-				TEXT("Component '%s' returned PreloadInProgress from PreloadContent(), but UFlowNode_ExecuteComponent has no mechanism to receive the async completion callback. Treating as Completed."),
-				*ResolvedComp->GetName());
-
-			return EFlowPreloadResult::Completed;
-		}
-	}
-
-	return EFlowPreloadResult::Completed;
-}
-
-void UFlowNode_ExecuteComponent::FlushContent()
-{
-	if (UActorComponent* ResolvedComp = TryResolveComponent())
-	{
-		if (IFlowPreloadableInterface* Preloadable = Cast<IFlowPreloadableInterface>(ResolvedComp))
-		{
-			Preloadable->FlushContent();
-		}
-	}
-}
-
 void UFlowNode_ExecuteComponent::OnActivate()
 {
 	Super::OnActivate();
@@ -209,6 +173,113 @@ void UFlowNode_ExecuteComponent::ExecuteInput(const FName& PinName)
 	}
 }
 
+EFlowPreloadResult UFlowNode_ExecuteComponent::PreloadContent()
+{
+	if (UActorComponent* ResolvedComp = TryResolveComponent())
+	{
+		if (IFlowPreloadableInterface* PreloadableComponent = Cast<IFlowPreloadableInterface>(ResolvedComp))
+		{
+			FLOW_ASSERT_ENUM_MAX(EFlowPreloadResult, 2);
+
+			const EFlowPreloadResult PreloadableComponentResult = PreloadableComponent->PreloadContent();
+
+			// TODO (gtaylor) Consider adding a mechanism for components to do an async preload.
+			// Components have no back-reference to this node and cannot call NotifyPreloadComplete().
+			// Async (PreloadInProgress) component preloads are therefore unsupported (For Now(tm)):
+			// if a component returns PreloadInProgress the PendingPreloadCount would never reach zero.
+			ensureAlwaysMsgf(PreloadableComponentResult == EFlowPreloadResult::Completed,
+				TEXT("Component '%s' returned PreloadInProgress from PreloadContent(), but UFlowNode_ExecuteComponent has no mechanism to receive the async completion callback. Treating as Completed."),
+				*ResolvedComp->GetName());
+
+			return EFlowPreloadResult::Completed;
+		}
+	}
+
+	return EFlowPreloadResult::Completed;
+}
+
+void UFlowNode_ExecuteComponent::FlushContent()
+{
+	if (UActorComponent* ResolvedComp = TryResolveComponent())
+	{
+		if (IFlowPreloadableInterface* Preloadable = Cast<IFlowPreloadableInterface>(ResolvedComp))
+		{
+			Preloadable->FlushContent();
+		}
+	}
+}
+
+void UFlowNode_ExecuteComponent::UpdateNodeConfigText_Implementation()
+{
+#if WITH_EDITOR
+	FText ComponentNameText;
+
+	const bool bUseAdaptiveNodeTitles = GetDefault<UFlowSettings>()->bUseAdaptiveNodeTitles;
+	if (!bUseAdaptiveNodeTitles)
+	{
+		FLOW_ASSERT_ENUM_MAX(EExecuteComponentSource, 4);
+
+		switch (ComponentSource)
+		{
+		case EExecuteComponentSource::Undetermined:
+			break;
+
+		case EExecuteComponentSource::BindToExisting:
+			{
+				if (!ComponentRef.ComponentName.IsNone())
+				{
+					ComponentNameText = FText::FromName(ComponentRef.ComponentName);
+				}
+			}
+			break;
+
+		case EExecuteComponentSource::InjectFromTemplate:
+			{
+				if (IsValid(ComponentTemplate))
+				{
+					FString ComponentNameString = ComponentTemplate->GetName();
+					ComponentNameString.RemoveFromEnd(TEXT("_C"));
+
+					ComponentNameText = FText::FromString(ComponentNameString);
+				}
+			}
+			break;
+
+		case EExecuteComponentSource::InjectFromClass:
+			{
+				if (IsValid(ComponentClass))
+				{
+					FString ComponentClassString = ComponentClass->GetName();
+					ComponentClassString.RemoveFromEnd(TEXT("_C"));
+
+					ComponentNameText = FText::FromString(ComponentClassString);
+				}
+			}
+			break;
+
+		default: break;
+		}
+	}
+
+	SetNodeConfigText(ComponentNameText);
+#endif // WITH_EDITOR
+}
+
+void UFlowNode_ExecuteComponent::GatherDataPinValueOwnerCollection(FFlowDataPinValueOwnerCollection& ValueOwnerCollection) const
+{
+	Super::GatherDataPinValueOwnerCollection(ValueOwnerCollection);
+
+	// Can also source properties from the resolved component (runtime) or expected component (in-editor)
+
+	// TODO (gtaylor) Eliminate this const_cast (ie, need rework GetResolvedOrExpectedComponent to have a mutable version)
+	UActorComponent* ResolvedComp = const_cast<UActorComponent*>(GetResolvedOrExpectedComponent());
+	IFlowDataPinValueOwnerInterface* ValueOwnerInterface = Cast<IFlowDataPinValueOwnerInterface>(ResolvedComp);
+	if (IsValid(ResolvedComp) && ValueOwnerInterface)
+	{
+		ValueOwnerCollection.AddValueOwner(*ValueOwnerInterface);
+	}
+}
+
 #if WITH_EDITOR
 TArray<FFlowPin> UFlowNode_ExecuteComponent::GetContextInputs() const
 {
@@ -291,22 +362,205 @@ TArray<FFlowPin> UFlowNode_ExecuteComponent::GetContextOutputs() const
 	return ContextOutputs;
 }
 
-#endif // WITH_EDITOR
-
-void UFlowNode_ExecuteComponent::GatherDataPinValueOwnerCollection(FFlowDataPinValueOwnerCollection& ValueOwnerCollection) const
+void UFlowNode_ExecuteComponent::PostLoad()
 {
-	Super::GatherDataPinValueOwnerCollection(ValueOwnerCollection);
+	Super::PostLoad();
 
-	// Can also source properties from the resolved component (runtime) or expected component (in-editor)
+	RefreshComponentSource();
+}
 
-	// TODO (gtaylor) Eliminate this const_cast (ie, need rework GetResolvedOrExpectedComponent to have a mutable version)
-	UActorComponent* ResolvedComp = const_cast<UActorComponent*>(GetResolvedOrExpectedComponent());
-	IFlowDataPinValueOwnerInterface* ValueOwnerInterface = Cast<IFlowDataPinValueOwnerInterface>(ResolvedComp);
-	if (IsValid(ResolvedComp) && ValueOwnerInterface)
+void UFlowNode_ExecuteComponent::PostEditChangeProperty(struct FPropertyChangedEvent& PropertyChangedEvent)
+{
+	Super::PostEditChangeProperty(PropertyChangedEvent);
+
+	const FName PropertyName = PropertyChangedEvent.Property->GetFName();
+	if (PropertyName == GET_MEMBER_NAME_CHECKED(FFlowActorOwnerComponentRef, ComponentName) ||
+		PropertyName == GET_MEMBER_NAME_CHECKED(UFlowNode_ExecuteComponent, ComponentTemplate) ||
+		PropertyName == GET_MEMBER_NAME_CHECKED(UFlowNode_ExecuteComponent, ComponentClass))
 	{
-		ValueOwnerCollection.AddValueOwner(*ValueOwnerInterface);
+		RefreshComponentSource();
+
+		RefreshPins();
 	}
 }
+
+FText UFlowNode_ExecuteComponent::K2_GetNodeTitle_Implementation() const
+{
+	if (GetDefault<UFlowSettings>()->bUseAdaptiveNodeTitles)
+	{
+		FLOW_ASSERT_ENUM_MAX(EExecuteComponentSource, 4);
+
+		switch (ComponentSource)
+		{
+		case EExecuteComponentSource::Undetermined:
+			break;
+
+		case EExecuteComponentSource::BindToExisting:
+			{
+				if (!ComponentRef.ComponentName.IsNone())
+				{
+					const FText ComponentNameText = FText::FromName(ComponentRef.ComponentName);
+
+					return FText::Format(LOCTEXT("ExecuteComponent", "Execute {0}"), {ComponentNameText});
+				}
+			}
+			break;
+
+		case EExecuteComponentSource::InjectFromTemplate:
+			{
+				if (IsValid(ComponentTemplate))
+				{
+					FString ComponentNameString = ComponentTemplate->GetName();
+					ComponentNameString.RemoveFromEnd(TEXT("_C"));
+					const FText ComponentNameText = FText::FromString(ComponentNameString);
+
+					return FText::Format(LOCTEXT("ExecuteComponent", "Execute {0}"), {ComponentNameText});
+				}
+			}
+			break;
+
+		case EExecuteComponentSource::InjectFromClass:
+			{
+				if (IsValid(ComponentClass))
+				{
+					FString ComponentClassString = ComponentClass->GetName();
+					ComponentClassString.RemoveFromEnd(TEXT("_C"));
+					const FText ComponentNameText = FText::FromString(ComponentClassString);
+
+					return FText::Format(LOCTEXT("ExecuteComponent", "Execute {0}"), {ComponentNameText});
+				}
+			}
+			break;
+
+		default: break;
+		}
+	}
+
+	return Super::K2_GetNodeTitle_Implementation();
+}
+
+EDataValidationResult UFlowNode_ExecuteComponent::ValidateNode()
+{
+	const EDataValidationResult SuperResult = Super::ValidateNode();
+
+	EDataValidationResult FinalResult = CombineDataValidationResults(SuperResult, EDataValidationResult::Valid);
+
+	if (IsValid(ComponentTemplate) || IsValid(ComponentClass))
+	{
+		return FinalResult;
+	}
+
+	const bool bHasComponent = ComponentRef.IsConfigured();
+	if (!bHasComponent)
+	{
+		ValidationLog.Error<UFlowNode>(TEXT("ExecuteComponent requires a valid component reference"), this);
+
+		return EDataValidationResult::Invalid;
+	}
+
+	const TSubclassOf<AActor> ExpectedActorOwnerClass = TryGetExpectedActorOwnerClass();
+	if (!IsValid(ExpectedActorOwnerClass))
+	{
+		ValidationLog.Error<UFlowNode>(TEXT("Invalid or null Expected Actor Owner Class for this Flow Asset"), this);
+
+		return EDataValidationResult::Invalid;
+	}
+
+	{
+		// Check if the component can be found on the expected owner
+		const UActorComponent* ExpectedComponent = TryGetExpectedComponent();
+		if (!IsValid(ExpectedComponent))
+		{
+			ValidationLog.Error<UFlowNode>(TEXT("Could not resolve component for flow actor owner"), this);
+
+			return EDataValidationResult::Invalid;
+		}
+
+		// Check that the component implements the expected interfaces
+		if (!ExpectedComponent->Implements<UFlowExternalExecutableInterface>())
+		{
+			ValidationLog.Error<UFlowNode>(TEXT("Expected component to implement IFlowExternalExecutableInterface"), this);
+
+			return EDataValidationResult::Invalid;
+		}
+
+		if (!ExpectedComponent->Implements<UFlowCoreExecutableInterface>())
+		{
+			ValidationLog.Error<UFlowNode>(TEXT("Expected component to implement IFlowCoreExecutableInterface"), this);
+
+			return EDataValidationResult::Invalid;
+		}
+	}
+
+	return FinalResult;
+}
+
+FString UFlowNode_ExecuteComponent::GetStatusString() const
+{
+	if (GetActivationState() != EFlowNodeState::NeverActivated)
+	{
+		return UEnum::GetDisplayValueAsText(GetActivationState()).ToString();
+	}
+
+	return Super::GetStatusString();
+}
+
+void UFlowNode_ExecuteComponent::RefreshPins() const
+{
+	OnReconstructionRequested.ExecuteIfBound();
+}
+
+const UActorComponent* UFlowNode_ExecuteComponent::TryGetExpectedComponent() const
+{
+	const TSubclassOf<AActor> ExpectedOwnerClass = TryGetExpectedActorOwnerClass();
+
+	FLOW_ASSERT_ENUM_MAX(EExecuteComponentSource, 4);
+
+	switch (ComponentSource)
+	{
+	case EExecuteComponentSource::Undetermined:
+		{
+			return nullptr;
+		}
+	case EExecuteComponentSource::BindToExisting:
+		{
+			return AActor::GetActorClassDefaultComponentByName(ExpectedOwnerClass, ComponentRef.ComponentName);
+		}
+	case EExecuteComponentSource::InjectFromTemplate:
+		{
+			return ComponentTemplate;
+		}
+	case EExecuteComponentSource::InjectFromClass:
+		{
+			return IsValid(ComponentClass) ? ComponentClass->GetDefaultObject<UActorComponent>() : nullptr;
+		}
+
+	default:
+		return nullptr;
+	}
+}
+
+void UFlowNode_ExecuteComponent::RefreshComponentSource()
+{
+	if (ComponentRef.IsConfigured())
+	{
+		ComponentSource = EExecuteComponentSource::BindToExisting;
+	}
+	else if (ComponentTemplate != nullptr)
+	{
+		ComponentSource = EExecuteComponentSource::InjectFromTemplate;
+	}
+	else if (ComponentClass != nullptr)
+	{
+		ComponentSource = EExecuteComponentSource::InjectFromClass;
+	}
+	else
+	{
+		ComponentSource = EExecuteComponentSource::Undetermined;
+	}
+}
+
+#endif // WITH_EDITOR
 
 bool UFlowNode_ExecuteComponent::TryInjectComponent()
 {
@@ -452,272 +706,17 @@ UActorComponent* UFlowNode_ExecuteComponent::GetResolvedComponent() const
 }
 
 #if WITH_EDITOR
-const UActorComponent* UFlowNode_ExecuteComponent::TryGetExpectedComponent() const
-{
-	const TSubclassOf<AActor> ExpectedOwnerClass = TryGetExpectedActorOwnerClass();
-
-	FLOW_ASSERT_ENUM_MAX(EExecuteComponentSource, 4);
-
-	switch (ComponentSource)
-	{
-	case EExecuteComponentSource::Undetermined:
-		{
-			return nullptr;
-		}
-	case EExecuteComponentSource::BindToExisting:
-		{
-			return AActor::GetActorClassDefaultComponentByName(ExpectedOwnerClass, ComponentRef.ComponentName);
-		}
-	case EExecuteComponentSource::InjectFromTemplate:
-		{
-			return ComponentTemplate;
-		}
-	case EExecuteComponentSource::InjectFromClass:
-		{
-			return IsValid(ComponentClass) ? ComponentClass->GetDefaultObject<UActorComponent>() : nullptr;
-		}
-
-	default:
-		return nullptr;
-	}
-}
-
-void UFlowNode_ExecuteComponent::PostLoad()
-{
-	Super::PostLoad();
-
-	RefreshComponentSource();
-}
-
-void UFlowNode_ExecuteComponent::PostEditChangeProperty(struct FPropertyChangedEvent& PropertyChangedEvent)
-{
-	Super::PostEditChangeProperty(PropertyChangedEvent);
-
-	const FName PropertyName = PropertyChangedEvent.Property->GetFName();
-	if (PropertyName == GET_MEMBER_NAME_CHECKED(FFlowActorOwnerComponentRef, ComponentName) ||
-		PropertyName == GET_MEMBER_NAME_CHECKED(UFlowNode_ExecuteComponent, ComponentTemplate) ||
-		PropertyName == GET_MEMBER_NAME_CHECKED(UFlowNode_ExecuteComponent, ComponentClass))
-	{
-		RefreshComponentSource();
-
-		RefreshPins();
-	}
-}
-
-void UFlowNode_ExecuteComponent::RefreshComponentSource()
-{
-	if (ComponentRef.IsConfigured())
-	{
-		ComponentSource = EExecuteComponentSource::BindToExisting;
-	}
-	else if (ComponentTemplate != nullptr)
-	{
-		ComponentSource = EExecuteComponentSource::InjectFromTemplate;
-	}
-	else if (ComponentClass != nullptr)
-	{
-		ComponentSource = EExecuteComponentSource::InjectFromClass;
-	}
-	else
-	{
-		ComponentSource = EExecuteComponentSource::Undetermined;
-	}
-}
-
-void UFlowNode_ExecuteComponent::RefreshPins() const
-{
-	OnReconstructionRequested.ExecuteIfBound();
-}
-
-EDataValidationResult UFlowNode_ExecuteComponent::ValidateNode()
-{
-	const EDataValidationResult SuperResult = Super::ValidateNode();
-
-	EDataValidationResult FinalResult = CombineDataValidationResults(SuperResult, EDataValidationResult::Valid);
-			
-	if (IsValid(ComponentTemplate) || IsValid(ComponentClass))
-	{
-		return FinalResult;
-	}
-	
-	const bool bHasComponent = ComponentRef.IsConfigured();
-	if (!bHasComponent)
-	{
-		ValidationLog.Error<UFlowNode>(TEXT("ExecuteComponent requires a valid component reference"), this);
-
-		return EDataValidationResult::Invalid;
-	}
-
-	const TSubclassOf<AActor> ExpectedActorOwnerClass = TryGetExpectedActorOwnerClass();
-	if (!IsValid(ExpectedActorOwnerClass))
-	{
-		ValidationLog.Error<UFlowNode>(TEXT("Invalid or null Expected Actor Owner Class for this Flow Asset"), this);
-
-		return EDataValidationResult::Invalid;
-	}
-
-	{
-		// Check if the component can be found on the expected owner
-		const UActorComponent* ExpectedComponent = TryGetExpectedComponent();
-		if (!IsValid(ExpectedComponent))
-		{
-			ValidationLog.Error<UFlowNode>(TEXT("Could not resolve component for flow actor owner"), this);
-
-			return EDataValidationResult::Invalid;
-		}
-
-		// Check that the component implements the expected interfaces
-		if (!ExpectedComponent->Implements<UFlowExternalExecutableInterface>())
-		{
-			ValidationLog.Error<UFlowNode>(TEXT("Expected component to implement IFlowExternalExecutableInterface"), this);
-
-			return EDataValidationResult::Invalid;
-		}
-
-		if (!ExpectedComponent->Implements<UFlowCoreExecutableInterface>())
-		{
-			ValidationLog.Error<UFlowNode>(TEXT("Expected component to implement IFlowCoreExecutableInterface"), this);
-
-			return EDataValidationResult::Invalid;
-		}
-	}
-
-	return FinalResult;
-}
-
-FString UFlowNode_ExecuteComponent::GetStatusString() const
-{
-	if (GetActivationState() != EFlowNodeState::NeverActivated)
-	{
-		return UEnum::GetDisplayValueAsText(GetActivationState()).ToString();
-	}
-
-	return Super::GetStatusString();
-}
-
 TSubclassOf<AActor> UFlowNode_ExecuteComponent::TryGetExpectedActorOwnerClass() const
 {
 	const UFlowAsset* FlowAsset = GetFlowAsset();
 	if (IsValid(FlowAsset))
 	{
-		return FlowAsset->GetExpectedOwnerClass();
+		return FlowAsset->GetExpectedOwnerClass().LoadSynchronous();
 	}
 
 	return nullptr;
 }
-
-FText UFlowNode_ExecuteComponent::K2_GetNodeTitle_Implementation() const
-{
-	if (GetDefault<UFlowSettings>()->bUseAdaptiveNodeTitles)
-	{
-		FLOW_ASSERT_ENUM_MAX(EExecuteComponentSource, 4);
-
-		switch (ComponentSource)
-		{
-		case EExecuteComponentSource::Undetermined:
-			break;
-
-		case EExecuteComponentSource::BindToExisting:
-			{
-				if (!ComponentRef.ComponentName.IsNone())
-				{
-					const FText ComponentNameText = FText::FromName(ComponentRef.ComponentName);
-
-					return FText::Format(LOCTEXT("ExecuteComponent", "Execute {0}"), {ComponentNameText});
-				}
-			}
-			break;
-
-		case EExecuteComponentSource::InjectFromTemplate:
-			{
-				if (IsValid(ComponentTemplate))
-				{
-					FString ComponentNameString = ComponentTemplate->GetName();
-					ComponentNameString.RemoveFromEnd(TEXT("_C"));
-					const FText ComponentNameText = FText::FromString(ComponentNameString);
-
-					return FText::Format(LOCTEXT("ExecuteComponent", "Execute {0}"), {ComponentNameText});
-				}
-			}
-			break;
-
-		case EExecuteComponentSource::InjectFromClass:
-			{
-				if (IsValid(ComponentClass))
-				{
-					FString ComponentClassString = ComponentClass->GetName();
-					ComponentClassString.RemoveFromEnd(TEXT("_C"));
-					const FText ComponentNameText = FText::FromString(ComponentClassString);
-
-					return FText::Format(LOCTEXT("ExecuteComponent", "Execute {0}"), {ComponentNameText});
-				}
-			}
-			break;
-
-		default: break;
-		}
-	}
-
-	return Super::K2_GetNodeTitle_Implementation();
-}
-
 #endif // WITH_EDITOR
-
-void UFlowNode_ExecuteComponent::UpdateNodeConfigText_Implementation()
-{
-#if WITH_EDITOR
-	FText ComponentNameText;
-
-	const bool bUseAdaptiveNodeTitles = GetDefault<UFlowSettings>()->bUseAdaptiveNodeTitles;
-	if (!bUseAdaptiveNodeTitles)
-	{
-		FLOW_ASSERT_ENUM_MAX(EExecuteComponentSource, 4);
-
-		switch (ComponentSource)
-		{
-		case EExecuteComponentSource::Undetermined:
-			break;
-
-		case EExecuteComponentSource::BindToExisting:
-			{
-				if (!ComponentRef.ComponentName.IsNone())
-				{
-					ComponentNameText = FText::FromName(ComponentRef.ComponentName);
-				}
-			}
-			break;
-
-		case EExecuteComponentSource::InjectFromTemplate:
-			{
-				if (IsValid(ComponentTemplate))
-				{
-					FString ComponentNameString = ComponentTemplate->GetName();
-					ComponentNameString.RemoveFromEnd(TEXT("_C"));
-
-					ComponentNameText = FText::FromString(ComponentNameString);
-				}
-			}
-			break;
-
-		case EExecuteComponentSource::InjectFromClass:
-			{
-				if (IsValid(ComponentClass))
-				{
-					FString ComponentClassString = ComponentClass->GetName();
-					ComponentClassString.RemoveFromEnd(TEXT("_C"));
-
-					ComponentNameText = FText::FromString(ComponentClassString);
-				}
-			}
-			break;
-
-		default: break;
-		}
-	}
-
-	SetNodeConfigText(ComponentNameText);
-#endif // WITH_EDITOR
-}
 
 #undef LOCTEXT_NAMESPACE
 

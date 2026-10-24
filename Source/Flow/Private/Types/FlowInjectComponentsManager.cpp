@@ -82,6 +82,22 @@ void UFlowInjectComponentsManager::InjectComponentsOnActor(
 	}
 }
 
+void UFlowInjectComponentsManager::RemoveAllInjectedComponentsAndStopMonitoringActor(AActor& Actor)
+{
+	// Single pass: move the actor's entries out of the array, then release them
+	TArray<FFlowInjectedComponent> ActorEntries;
+	for (int32 ComponentIndex = InjectedComponents.Num() - 1; ComponentIndex >= 0; --ComponentIndex)
+	{
+		if (InjectedComponents[ComponentIndex].Actor == &Actor)
+		{
+			ActorEntries.Add(MoveTemp(InjectedComponents[ComponentIndex]));
+			InjectedComponents.RemoveAtSwap(ComponentIndex, EAllowShrinking::No);
+		}
+	}
+
+	ReleaseRemovedEntries(ActorEntries);
+}
+
 void UFlowInjectComponentsManager::RegisterComponentUser(UObject& User, const UActorComponent& Component)
 {
 	const int32 ComponentIndex = FindComponentIndex(&Component);
@@ -97,43 +113,6 @@ void UFlowInjectComponentsManager::UnregisterComponentUser(UObject& User, const 
 	if (ComponentIndex != INDEX_NONE)
 	{
 		UnregisterComponentUser(User, ComponentIndex);
-	}
-}
-
-void UFlowInjectComponentsManager::UnregisterComponentUser(UObject& User, const int32 ComponentIndex)
-{
-	FFlowInjectedComponent& Entry = InjectedComponents[ComponentIndex];
-	if (Entry.Users.Remove(&User) == 0)
-	{
-		return;
-	}
-
-	PruneCollectedUsers(Entry);
-	if (Entry.Users.IsEmpty())
-	{
-		RemoveComponent(ComponentIndex);
-	}
-}
-
-void UFlowInjectComponentsManager::PruneCollectedUsers(FFlowInjectedComponent& Entry)
-{
-	// Users that were garbage collected without releasing must not keep the component alive
-	int32 CollectedUserCount = 0;
-	for (auto UserIt = Entry.Users.CreateIterator(); UserIt; ++UserIt)
-	{
-		if (!UserIt->IsValid())
-		{
-			UserIt.RemoveCurrent();
-			++CollectedUserCount;
-		}
-	}
-
-	if (CollectedUserCount > 0)
-	{
-		UE_LOG(LogFlow, Warning,
-		       TEXT("UFlowInjectComponentsManager - %d user(s) of component %s on %s were garbage collected without unregistering. ")
-		       TEXT("Call UnregisterComponentUser or UnregisterAllComponentUsers before releasing a user; otherwise the component stays injected until another release reaches this manager."),
-		       CollectedUserCount, *GetNameSafe(Entry.Component), *GetNameSafe(Entry.Actor));
 	}
 }
 
@@ -178,6 +157,41 @@ int32 UFlowInjectComponentsManager::GetInjectedComponentCount() const
 	return InjectedComponents.Num();
 }
 
+void UFlowInjectComponentsManager::RegisterOnDestroyedDelegate(AActor& Actor)
+{
+	Actor.OnDestroyed.AddUniqueDynamic(this, &UFlowInjectComponentsManager::OnActorDestroyed);
+	Actor.OnEndPlay.AddUniqueDynamic(this, &UFlowInjectComponentsManager::OnActorEndPlay);
+}
+
+void UFlowInjectComponentsManager::UnregisterOnDestroyedDelegate(AActor& Actor)
+{
+	Actor.OnDestroyed.RemoveDynamic(this, &UFlowInjectComponentsManager::OnActorDestroyed);
+	Actor.OnEndPlay.RemoveDynamic(this, &UFlowInjectComponentsManager::OnActorEndPlay);
+}
+
+void UFlowInjectComponentsManager::RemoveInjectedComponents()
+{
+	TArray<FFlowInjectedComponent> RemovedEntries = MoveTemp(InjectedComponents);
+	InjectedComponents.Reset();
+	ReleaseRemovedEntries(RemovedEntries);
+}
+
+void UFlowInjectComponentsManager::OnActorDestroyed(AActor* DestroyedActor)
+{
+	if (IsValid(DestroyedActor))
+	{
+		RemoveAllInjectedComponentsAndStopMonitoringActor(*DestroyedActor);
+	}
+}
+
+void UFlowInjectComponentsManager::OnActorEndPlay(AActor* Actor, EEndPlayReason::Type EndPlayReason)
+{
+	if (IsValid(Actor))
+	{
+		RemoveAllInjectedComponentsAndStopMonitoringActor(*Actor);
+	}
+}
+
 int32 UFlowInjectComponentsManager::FindComponentIndex(const UActorComponent* Component) const
 {
 	return InjectedComponents.IndexOfByPredicate([Component](const FFlowInjectedComponent& Entry)
@@ -186,11 +200,41 @@ int32 UFlowInjectComponentsManager::FindComponentIndex(const UActorComponent* Co
 	});
 }
 
-void UFlowInjectComponentsManager::RemoveInjectedComponents()
+void UFlowInjectComponentsManager::UnregisterComponentUser(UObject& User, const int32 ComponentIndex)
 {
-	TArray<FFlowInjectedComponent> RemovedEntries = MoveTemp(InjectedComponents);
-	InjectedComponents.Reset();
-	ReleaseRemovedEntries(RemovedEntries);
+	FFlowInjectedComponent& Entry = InjectedComponents[ComponentIndex];
+	if (Entry.Users.Remove(&User) == 0)
+	{
+		return;
+	}
+
+	PruneCollectedUsers(Entry);
+	if (Entry.Users.IsEmpty())
+	{
+		RemoveComponent(ComponentIndex);
+	}
+}
+
+void UFlowInjectComponentsManager::PruneCollectedUsers(FFlowInjectedComponent& Entry)
+{
+	// Users that were garbage collected without releasing must not keep the component alive
+	int32 CollectedUserCount = 0;
+	for (auto UserIt = Entry.Users.CreateIterator(); UserIt; ++UserIt)
+	{
+		if (!UserIt->IsValid())
+		{
+			UserIt.RemoveCurrent();
+			++CollectedUserCount;
+		}
+	}
+
+	if (CollectedUserCount > 0)
+	{
+		UE_LOG(LogFlow, Warning,
+		       TEXT("UFlowInjectComponentsManager - %d user(s) of component %s on %s were garbage collected without unregistering. ")
+		       TEXT("Call UnregisterComponentUser or UnregisterAllComponentUsers before releasing a user; otherwise the component stays injected until another release reaches this manager."),
+		       CollectedUserCount, *GetNameSafe(Entry.Component), *GetNameSafe(Entry.Actor));
+	}
 }
 
 void UFlowInjectComponentsManager::RemoveComponent(const int32 ComponentIndex)
@@ -244,48 +288,4 @@ bool UFlowInjectComponentsManager::IsActorTracked(const AActor& Actor) const
 	{
 		return Entry.Actor == &Actor;
 	});
-}
-
-void UFlowInjectComponentsManager::RegisterOnDestroyedDelegate(AActor& Actor)
-{
-	Actor.OnDestroyed.AddUniqueDynamic(this, &UFlowInjectComponentsManager::OnActorDestroyed);
-	Actor.OnEndPlay.AddUniqueDynamic(this, &UFlowInjectComponentsManager::OnActorEndPlay);
-}
-
-void UFlowInjectComponentsManager::UnregisterOnDestroyedDelegate(AActor& Actor)
-{
-	Actor.OnDestroyed.RemoveDynamic(this, &UFlowInjectComponentsManager::OnActorDestroyed);
-	Actor.OnEndPlay.RemoveDynamic(this, &UFlowInjectComponentsManager::OnActorEndPlay);
-}
-
-void UFlowInjectComponentsManager::RemoveAllInjectedComponentsAndStopMonitoringActor(AActor& Actor)
-{
-	// Single pass: move the actor's entries out of the array, then release them
-	TArray<FFlowInjectedComponent> ActorEntries;
-	for (int32 ComponentIndex = InjectedComponents.Num() - 1; ComponentIndex >= 0; --ComponentIndex)
-	{
-		if (InjectedComponents[ComponentIndex].Actor == &Actor)
-		{
-			ActorEntries.Add(MoveTemp(InjectedComponents[ComponentIndex]));
-			InjectedComponents.RemoveAtSwap(ComponentIndex, EAllowShrinking::No);
-		}
-	}
-
-	ReleaseRemovedEntries(ActorEntries);
-}
-
-void UFlowInjectComponentsManager::OnActorDestroyed(AActor* DestroyedActor)
-{
-	if (IsValid(DestroyedActor))
-	{
-		RemoveAllInjectedComponentsAndStopMonitoringActor(*DestroyedActor);
-	}
-}
-
-void UFlowInjectComponentsManager::OnActorEndPlay(AActor* Actor, EEndPlayReason::Type EndPlayReason)
-{
-	if (IsValid(Actor))
-	{
-		RemoveAllInjectedComponentsAndStopMonitoringActor(*Actor);
-	}
 }

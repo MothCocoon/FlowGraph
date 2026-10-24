@@ -28,8 +28,6 @@ class FLOW_API UFlowSubsystem : public UGameInstanceSubsystem
 	GENERATED_BODY()
 
 public:
-	UFlowSubsystem();
-
 	friend class UFlowAsset;
 	friend class UFlowComponent;
 	friend class UFlowNode_SubGraph;
@@ -289,12 +287,9 @@ public:
 		TSet<TWeakObjectPtr<T>> Result;
 		for (const TWeakObjectPtr<UFlowComponent>& Component : FoundComponents)
 		{
-			if (Component.IsValid())
+			if (T* ComponentOfClass = Cast<T>(Component.Get()))
 			{
-				if (T* ComponentOfClass = Cast<T>(Component))
-				{
-					Result.Emplace(ComponentOfClass);
-				}
+				Result.Emplace(ComponentOfClass);
 			}
 		}
 
@@ -320,12 +315,9 @@ public:
 		TSet<TWeakObjectPtr<T>> Result;
 		for (const TWeakObjectPtr<UFlowComponent>& Component : FoundComponents)
 		{
-			if (Component.IsValid())
+			if (T* ComponentOfClass = Cast<T>(Component.Get()))
 			{
-				if (T* ComponentOfClass = Cast<T>(Component))
-				{
-					Result.Emplace(ComponentOfClass);
-				}
+				Result.Emplace(ComponentOfClass);
 			}
 		}
 
@@ -350,9 +342,9 @@ public:
 		TSet<TWeakObjectPtr<T>> Result;
 		for (const TWeakObjectPtr<UFlowComponent>& Component : FoundComponents)
 		{
-			if (Component.IsValid())
+			if (const UFlowComponent* FlowComponent = Component.Get())
 			{
-				if (T* ActorOfClass = Cast<T>(Component->GetOwner()))
+				if (T* ActorOfClass = Cast<T>(FlowComponent->GetOwner()))
 				{
 					Result.Emplace(ActorOfClass);
 				}
@@ -381,9 +373,9 @@ public:
 		TSet<TWeakObjectPtr<T>> Result;
 		for (const TWeakObjectPtr<UFlowComponent>& Component : FoundComponents)
 		{
-			if (Component.IsValid())
+			if (const UFlowComponent* FlowComponent = Component.Get())
 			{
-				if (T* ActorOfClass = Cast<T>(Component->GetOwner()))
+				if (T* ActorOfClass = Cast<T>(FlowComponent->GetOwner()))
 				{
 					Result.Emplace(ActorOfClass);
 				}
@@ -413,10 +405,10 @@ public:
 		TMap<TWeakObjectPtr<ActorT>, TWeakObjectPtr<ComponentT>> Result;
 		for (const TWeakObjectPtr<UFlowComponent>& Component : FoundComponents)
 		{
-			if (Component.IsValid())
+			if (UFlowComponent* FlowComponent = Component.Get())
 			{
-				ComponentT* ComponentOfClass = Cast<ComponentT>(Component);
-				ActorT* ActorOfClass = Cast<ActorT>(Component->GetOwner());
+				ComponentT* ComponentOfClass = Cast<ComponentT>(FlowComponent);
+				ActorT* ActorOfClass = Cast<ActorT>(FlowComponent->GetOwner());
 				if (ComponentOfClass && ActorOfClass)
 				{
 					Result.Emplace(ActorOfClass, ComponentOfClass);
@@ -448,10 +440,10 @@ public:
 		TMap<TWeakObjectPtr<ActorT>, TWeakObjectPtr<ComponentT>> Result;
 		for (const TWeakObjectPtr<UFlowComponent>& Component : FoundComponents)
 		{
-			if (Component.IsValid())
+			if (UFlowComponent* FlowComponent = Component.Get())
 			{
-				ComponentT* ComponentOfClass = Cast<ComponentT>(Component);
-				ActorT* ActorOfClass = Cast<ActorT>(Component->GetOwner());
+				ComponentT* ComponentOfClass = Cast<ComponentT>(FlowComponent);
+				ActorT* ActorOfClass = Cast<ActorT>(FlowComponent->GetOwner());
 				if (ComponentOfClass && ActorOfClass)
 				{
 					Result.Emplace(ActorOfClass, ComponentOfClass);

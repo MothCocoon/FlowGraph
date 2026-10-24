@@ -1,5 +1,4 @@
 // Copyright https://github.com/MothCocoon/FlowGraph/graphs/contributors
-
 #include "AddOns/FlowNodeAddOn.h"
 
 #include "FlowLogChannels.h"
@@ -47,25 +46,29 @@ void UFlowNodeAddOn::PostEditImport()
 }
 #endif
 
-void UFlowNodeAddOn::InitializeInstance()
+EFlowAddOnAcceptResult UFlowNodeAddOn::AcceptFlowNodeAddOnParent_Implementation(
+	const UFlowNodeBase* ParentTemplate,
+	const TArray<UFlowNodeAddOn*>& AdditionalAddOnsToAssumeAreChildren) const
 {
-	CacheFlowNode();
-
-	Super::InitializeInstance();
+	// Subclasses may override this function to opt in to parent classes
+	return EFlowAddOnAcceptResult::Undetermined;
 }
 
-void UFlowNodeAddOn::DeinitializeInstance()
+bool UFlowNodeAddOn::IsSupportedInputPinName(const FName& PinName) const
 {
-	Super::DeinitializeInstance();
+	if (InputPins.IsEmpty())
+	{
+		return true;
+	}
 
-	FlowNode = nullptr;
-}
-
-void UFlowNodeAddOn::InitializeReplica()
-{
-	CacheFlowNode();
-
-	Super::InitializeReplica();
+	if (const FFlowPin* FoundFlowPin = FindFlowPinByName(PinName, InputPins))
+	{
+		return true;
+	}
+	else
+	{
+		return false;
+	}
 }
 
 void UFlowNodeAddOn::TriggerFirstOutput(const bool bFinish)
@@ -92,20 +95,25 @@ void UFlowNodeAddOn::Finish()
 	}
 }
 
-EFlowAddOnAcceptResult UFlowNodeAddOn::AcceptFlowNodeAddOnParent_Implementation(
-	const UFlowNodeBase* ParentTemplate,
-	const TArray<UFlowNodeAddOn*>& AdditionalAddOnsToAssumeAreChildren) const
+void UFlowNodeAddOn::InitializeInstance()
 {
-	// Subclasses may override this function to opt in to parent classes
-	return EFlowAddOnAcceptResult::Undetermined;
+	CacheFlowNode();
+
+	Super::InitializeInstance();
 }
 
-void UFlowNodeAddOn::NotifyPreloadComplete()
+void UFlowNodeAddOn::DeinitializeInstance()
 {
-	if (ensure(FlowNode))
-	{
-		FlowNode->NotifyPreloadComplete();
-	}
+	Super::DeinitializeInstance();
+
+	FlowNode = nullptr;
+}
+
+void UFlowNodeAddOn::InitializeReplica()
+{
+	CacheFlowNode();
+
+	Super::InitializeReplica();
 }
 
 UFlowNode* UFlowNodeAddOn::GetFlowNode() const
@@ -146,22 +154,30 @@ int32 UFlowNodeAddOn::GetRandomSeed() const
 	return 0;
 }
 
-bool UFlowNodeAddOn::IsSupportedInputPinName(const FName& PinName) const
+void UFlowNodeAddOn::NotifyPreloadComplete()
 {
-	if (InputPins.IsEmpty())
+	if (ensure(FlowNode))
 	{
-		return true;
-	}
-
-	if (const FFlowPin* FoundFlowPin = FindFlowPinByName(PinName, InputPins))
-	{
-		return true;
-	}
-	else
-	{
-		return false;
+		FlowNode->NotifyPreloadComplete();
 	}
 }
+
+#if WITH_EDITOR
+TArray<FFlowPin> UFlowNodeAddOn::GetContextInputs() const
+{
+	return GetPinsForContext(InputPins, Super::GetContextInputs());
+}
+
+TArray<FFlowPin> UFlowNodeAddOn::GetContextOutputs() const
+{
+	return GetPinsForContext(OutputPins, Super::GetContextOutputs());
+}
+
+void UFlowNodeAddOn::RequestReconstructionOnOwningFlowNode() const
+{
+	(void)OnAddOnRequestedParentReconstruction.ExecuteIfBound();
+}
+#endif // WITH_EDITOR
 
 void UFlowNodeAddOn::CacheFlowNode()
 {
@@ -194,20 +210,5 @@ TArray<FFlowPin> UFlowNodeAddOn::GetPinsForContext(
 	}
 
 	return ContextPins;
-}
-
-TArray<FFlowPin> UFlowNodeAddOn::GetContextInputs() const
-{
-	return GetPinsForContext(InputPins, Super::GetContextInputs());
-}
-
-TArray<FFlowPin> UFlowNodeAddOn::GetContextOutputs() const
-{
-	return GetPinsForContext(OutputPins, Super::GetContextOutputs());
-}
-
-void UFlowNodeAddOn::RequestReconstructionOnOwningFlowNode() const
-{
-	(void)OnAddOnRequestedParentReconstruction.ExecuteIfBound();
 }
 #endif // WITH_EDITOR

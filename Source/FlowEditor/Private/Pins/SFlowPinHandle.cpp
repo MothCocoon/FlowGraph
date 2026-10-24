@@ -1,15 +1,9 @@
 // Copyright https://github.com/MothCocoon/FlowGraph/graphs/contributors
-
 #include "Pins/SFlowPinHandle.h"
 
 #include "ScopedTransaction.h"
 
 #define LOCTEXT_NAMESPACE "SFlowPinHandle"
-
-SFlowPinHandle::SFlowPinHandle()
-	: Blueprint(nullptr)
-{
-}
 
 SFlowPinHandle::~SFlowPinHandle()
 {

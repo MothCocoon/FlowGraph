@@ -71,7 +71,6 @@ private:
 	FDelegateHandle FlowGraphEditorSettingsChangedHandle;
 
 public:
-	FFlowAssetEditor();
 	virtual ~FFlowAssetEditor() override;
 
 	UFlowAsset* GetFlowAsset() const { return FlowAsset; }

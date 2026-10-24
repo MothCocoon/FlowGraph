@@ -64,9 +64,11 @@ public:
 	UFUNCTION()
 	void OnActorRemoved(AActor* RemovedActor)
 	{
-		if (RemovedActor == TriggerActor.Get() && Manager.IsValid() && OtherActor.IsValid())
+		UFlowInjectComponentsManager* ManagerPtr = Manager.Get();
+		AActor* OtherActorPtr = OtherActor.Get();
+		if (RemovedActor == TriggerActor.Get() && ManagerPtr && OtherActorPtr)
 		{
-			Manager->RemoveAllInjectedComponentsAndStopMonitoringActor(*OtherActor.Get());
+			ManagerPtr->RemoveAllInjectedComponentsAndStopMonitoringActor(*OtherActorPtr);
 		}
 	}
 };

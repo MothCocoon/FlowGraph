@@ -38,6 +38,16 @@ EFlowAddOnAcceptResult UFlowNode_Switch::AcceptFlowNodeAddOnChild_Implementation
 	return Super::AcceptFlowNodeAddOnChild_Implementation(AddOnTemplate, AdditionalAddOnsToAssumeAreChildren);
 }
 
+FText UFlowNode_Switch::K2_GetNodeTitle_Implementation() const
+{
+	if (!bOnlyTriggerFirstPassingCase && GetDefault<UFlowSettings>()->bUseAdaptiveNodeTitles)
+	{
+		return FText::Format(LOCTEXT("SwitchTitle", "{0} (All Passing)"), {Super::K2_GetNodeTitle_Implementation()});
+	}
+
+	return Super::K2_GetNodeTitle_Implementation();
+}
+
 void UFlowNode_Switch::ExecuteInput(const FName& PinName)
 {
 	int32 TriggeringCaseCount = 0;
@@ -66,16 +76,6 @@ void UFlowNode_Switch::ExecuteInput(const FName& PinName)
 		constexpr bool bFinish = true;
 		TriggerOutput(OUTPIN_DefaultCase, bFinish);
 	}
-}
-
-FText UFlowNode_Switch::K2_GetNodeTitle_Implementation() const
-{
-	if (!bOnlyTriggerFirstPassingCase && GetDefault<UFlowSettings>()->bUseAdaptiveNodeTitles)
-	{
-		return FText::Format(LOCTEXT("SwitchTitle", "{0} (All Passing)"), {Super::K2_GetNodeTitle_Implementation()});
-	}
-
-	return Super::K2_GetNodeTitle_Implementation();
 }
 
 #undef LOCTEXT_NAMESPACE

@@ -1,6 +1,6 @@
 // Copyright https://github.com/MothCocoon/FlowGraph/graphs/contributors
-
 #include "LevelSequence/FlowLevelSequenceActor.h"
+
 #include "FlowLogChannels.h"
 #include "LevelSequence/FlowLevelSequencePlayer.h"
 #include "Net/UnrealNetwork.h"
@@ -11,7 +11,6 @@
 
 AFlowLevelSequenceActor::AFlowLevelSequenceActor(const FObjectInitializer& ObjectInitializer)
 	: Super(ObjectInitializer.SetDefaultSubobjectClass<UFlowLevelSequencePlayer>("AnimationPlayer"))
-	, ReplicatedLevelSequenceAsset(nullptr)
 {
 }
 
@@ -36,25 +35,6 @@ void AFlowLevelSequenceActor::SetReplicatedLevelSequenceAsset(ULevelSequence* As
 		LevelSequenceAsset = Asset;
 		ReplicatedLevelSequenceAsset = LevelSequenceAsset;
 	}
-}
-
-void AFlowLevelSequenceActor::OnRep_ReplicatedLevelSequenceAsset()
-{
-	LevelSequenceAsset = ReplicatedLevelSequenceAsset;
-	ReplicatedLevelSequenceAsset = nullptr;
-	
-	// InstanceData is not replicated to the client.
-	// However, it can be assumed that the spawn transform of the level sequence actor is the transform origin for the sequence.
-	if (UDefaultLevelSequenceInstanceData* InstanceData = Cast<UDefaultLevelSequenceInstanceData>(DefaultInstanceData))
-	{
-		bOverrideInstanceData = true;
-		InstanceData->TransformOriginActor = this;
-	}
-
-	InitializePlayer();
-
-	// Re-apply bindings that replicated before the sequence player was created
-	OnRep_BindingEntries();
 }
 
 void AFlowLevelSequenceActor::AddBinding(FName Tag, AActor* Actor)
@@ -87,6 +67,25 @@ void AFlowLevelSequenceActor::ClearAllBindings()
 
 	BindingEntries.Empty();
 	ResetBindings();
+}
+
+void AFlowLevelSequenceActor::OnRep_ReplicatedLevelSequenceAsset()
+{
+	LevelSequenceAsset = ReplicatedLevelSequenceAsset;
+	ReplicatedLevelSequenceAsset = nullptr;
+
+	// InstanceData is not replicated to the client.
+	// However, it can be assumed that the spawn transform of the level sequence actor is the transform origin for the sequence.
+	if (UDefaultLevelSequenceInstanceData* InstanceData = Cast<UDefaultLevelSequenceInstanceData>(DefaultInstanceData))
+	{
+		bOverrideInstanceData = true;
+		InstanceData->TransformOriginActor = this;
+	}
+
+	InitializePlayer();
+
+	// Re-apply bindings that replicated before the sequence player was created
+	OnRep_BindingEntries();
 }
 
 void AFlowLevelSequenceActor::OnRep_BindingEntries()
