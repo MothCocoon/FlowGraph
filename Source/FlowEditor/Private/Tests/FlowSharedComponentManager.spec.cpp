@@ -20,7 +20,7 @@
 #include "UObject/UnrealType.h"
 #include "UObject/WeakObjectPtrTemplates.h"
 
-namespace
+namespace FlowSharedComponentManagerTests
 {
 	void AddNodeToTemplate(UFlowAsset& Template, const FGuid& NodeGuid, UFlowNode* Node)
 	{
@@ -61,10 +61,16 @@ END_DEFINE_SPEC(FFlowSharedComponentManagerSpec)
 bool FFlowSharedComponentManagerSpec::HasInjectionManagerWithOuter(UObject& Outer)
 {
 	bool bFound = false;
-	ForEachObjectWithOuter(&Outer, [&bFound](UObject* Object)
+	const auto CheckObject = [&bFound](UObject* Object)
 	{
 		bFound |= Object->IsA<UFlowInjectComponentsManager>();
-	}, EGetObjectsFlags::None);
+	};
+#if ENGINE_MAJOR_VERSION == 5 && ENGINE_MINOR_VERSION < 8
+	constexpr bool bIncludeNestedObjects = false;
+	ForEachObjectWithOuter(&Outer, CheckObject, bIncludeNestedObjects);
+#else
+	ForEachObjectWithOuter(&Outer, CheckObject, EGetObjectsFlags::None);
+#endif
 	return bFound;
 }
 
@@ -367,7 +373,7 @@ void FFlowSharedComponentManagerSpec::Define()
 	It("never creates a manager for an instance that does not inject", [this]()
 	{
 		TStrongObjectPtr<UFlowAsset> NodeTemplate(NewObject<UFlowAsset>());
-		AddNodeToTemplate(*NodeTemplate.Get(), FGuid::NewGuid(), NewObject<UFlowNode_Start>(NodeTemplate.Get()));
+		FlowSharedComponentManagerTests::AddNodeToTemplate(*NodeTemplate.Get(), FGuid::NewGuid(), NewObject<UFlowNode_Start>(NodeTemplate.Get()));
 		UFlowAsset* Instance = Subsystem->CreateFlowInstance(Actor, NodeTemplate.Get());
 		if (!TestNotNull(TEXT("Instance created"), Instance))
 		{
