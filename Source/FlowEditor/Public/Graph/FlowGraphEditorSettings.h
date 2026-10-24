@@ -84,6 +84,12 @@ public:
 	UPROPERTY(EditAnywhere, config, Category = "Search", meta = (ClampMin = 1))
 	int32 DefaultMaxSearchDepth = 1;
 
+	UPROPERTY(VisibleAnywhere, config, Category = "Search")
+	EFlowSearchPinDirection DefaultSearchPinDirection = EFlowSearchPinDirection::Any;
+
+	UPROPERTY(VisibleAnywhere, config, Category = "Search")
+	EFlowSearchPinConnectionState DefaultSearchPinConnection = EFlowSearchPinConnectionState::Any;
+
 	UPROPERTY(EditAnywhere, config, Category = "Wires")
 	bool bHighlightInputWiresOfSelectedNodes;
 

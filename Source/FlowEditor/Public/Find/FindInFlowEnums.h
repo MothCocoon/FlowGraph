@@ -49,3 +49,25 @@ enum class EFlowSearchScope : uint8
 	Min = 0 UMETA(Hidden),
 };
 FLOW_ENUM_RANGE_VALUES(EFlowSearchScope);
+
+/**
+ * Pin direction accepted by a pin name match.
+ */
+UENUM()
+enum class EFlowSearchPinDirection : uint8
+{
+	Any,
+	Input,
+	Output,
+};
+
+/**
+ * Pin connection state accepted by a pin name match.
+ */
+UENUM()
+enum class EFlowSearchPinConnectionState : uint8
+{
+	Any,
+	Connected,
+	Unconnected,
+};

@@ -35,12 +35,13 @@
 #include "Types/SlateStructs.h"
 #include "UObject/Class.h"
 #include "UObject/ObjectPtr.h"
-#include "UObject/TopLevelAssetPath.h"
 #include "Widgets/Images/SImage.h"
-#include "Widgets/Input/SSearchBox.h"
-#include "Widgets/Input/SComboBox.h"
-#include "Widgets/Input/SSpinBox.h"
 #include "Widgets/Input/SButton.h"
+#include "Widgets/Input/SComboBox.h"
+#include "Widgets/Input/SComboButton.h"
+#include "Widgets/Input/SSearchBox.h"
+#include "Widgets/Input/SSegmentedControl.h"
+#include "Widgets/Input/SSpinBox.h"
 #include "Widgets/Layout/SBorder.h"
 #include "Widgets/Layout/SBox.h"
 #include "Widgets/SBoxPanel.h"
@@ -222,6 +223,8 @@ void SFindInFlow::Construct(const FArguments& InArgs, const TSharedPtr<class FFl
 	{
 		MaxSearchDepth = Settings->DefaultMaxSearchDepth;
 		SearchFlags = static_cast<EFlowSearchFlags>(Settings->DefaultSearchFlags);
+		PinDirection = Settings->DefaultSearchPinDirection;
+		PinConnection = Settings->DefaultSearchPinConnection;
 	}
 
 	// Populate scope options
@@ -294,22 +297,17 @@ void SFindInFlow::Construct(const FArguments& InArgs, const TSharedPtr<class FFl
 								.ToolTipText(LOCTEXT("EditFiltersTooltip", "Edit search filters"))
 								.OnClicked_Lambda([this]()
 									{
-										const FFindInFlowApplyDelegate OnSaveAsDefault = FFindInFlowApplyDelegate::CreateLambda([this](EFlowSearchFlags Flags)
-											{
-												if (UFlowGraphEditorSettings* GraphEditorSettings = GetMutableDefault<UFlowGraphEditorSettings>())
-												{
-													GraphEditorSettings->DefaultSearchFlags = static_cast<uint32>(Flags);
-													GraphEditorSettings->SaveConfig();
-												}
-											});
-
 										const TSharedRef<SFindInFlowFilterPopup> FilterPopup = SNew(SFindInFlowFilterPopup)
 											.OnApply(FFindInFlowApplyDelegate::CreateLambda([this](const EFlowSearchFlags NewSearchFlags)
 												{
 													SearchFlags = NewSearchFlags;
+													if (UFlowGraphEditorSettings* GraphEditorSettings = GetMutableDefault<UFlowGraphEditorSettings>())
+													{
+														GraphEditorSettings->DefaultSearchFlags = static_cast<uint32>(NewSearchFlags);
+														GraphEditorSettings->SaveConfig();
+													}
 													InitiateSearch();
 												}))
-											.OnSaveAsDefault(OnSaveAsDefault)
 											.InitialFlags(SearchFlags);
 
 										FSlateApplication::Get().PushMenu(
@@ -325,9 +323,24 @@ void SFindInFlow::Construct(const FArguments& InArgs, const TSharedPtr<class FFl
 									SNew(STextBlock)
 										.Text_Lambda([this]()
 											{
-												int32 ActiveCount = FMath::CountBits(static_cast<uint32>(SearchFlags));
+												const int32 ActiveCount = FMath::CountBits(static_cast<uint32>(SearchFlags));
 												return FText::Format(LOCTEXT("ActiveFilters", "{0} Active"), FText::AsNumber(ActiveCount));
 											})
+								]
+						]
+					+ SHorizontalBox::Slot()
+						.AutoWidth()
+						.VAlign(VAlign_Center)
+						.Padding(4, 0)
+						[
+							SNew(SComboButton)
+								.IsEnabled(this, &SFindInFlow::ArePinFiltersEnabled)
+								.ToolTipText(this, &SFindInFlow::GetPinFilterToolTip)
+								.OnGetMenuContent(this, &SFindInFlow::MakePinFilterMenu)
+								.ButtonContent()
+								[
+									SNew(STextBlock)
+										.Text(this, &SFindInFlow::GetPinFilterSummaryText)
 								]
 						]
 					+ SHorizontalBox::Slot()
@@ -426,6 +439,152 @@ FText SFindInFlow::GetCurrentScopeText() const
 	return UEnum::GetDisplayValueAsText(*SelectedScopeOption.Get());
 }
 
+TSharedRef<SWidget> SFindInFlow::MakePinFilterMenu()
+{
+	return SNew(SBorder)
+		.BorderImage(FAppStyle::GetBrush("Menu.Background"))
+		.Padding(10.0f)
+		[
+			SNew(SVerticalBox)
+			+ SVerticalBox::Slot()
+			.AutoHeight()
+			.Padding(0, 0, 0, 8)
+			[
+				SNew(STextBlock)
+				.Text(LOCTEXT("PinFiltersTitle", "Pin Filters"))
+				.Font(FAppStyle::GetFontStyle("NormalFontBold"))
+			]
+			+ SVerticalBox::Slot()
+			.AutoHeight()
+			.Padding(0, 2)
+			[
+				SNew(SHorizontalBox)
+				+ SHorizontalBox::Slot()
+				.AutoWidth()
+				.VAlign(VAlign_Center)
+				[
+					SNew(SBox)
+					.WidthOverride(82.0f)
+					[
+						SNew(STextBlock)
+						.Text(LOCTEXT("PinDirectionLabel", "Direction"))
+					]
+				]
+				+ SHorizontalBox::Slot()
+				.AutoWidth()
+				[
+					SNew(SSegmentedControl<EFlowSearchPinDirection>)
+					.Value_Lambda([this]() { return PinDirection; })
+					.OnValueChanged(this, &SFindInFlow::OnPinDirectionChanged)
+					+ SSegmentedControl<EFlowSearchPinDirection>::Slot(EFlowSearchPinDirection::Any)
+						.Text(LOCTEXT("PinDirectionAny", "Any"))
+						.ToolTip(LOCTEXT("PinDirectionAnyTooltip", "Match input and output pin names."))
+					+ SSegmentedControl<EFlowSearchPinDirection>::Slot(EFlowSearchPinDirection::Input)
+						.Text(LOCTEXT("PinDirectionInput", "Input"))
+						.ToolTip(LOCTEXT("PinDirectionInputTooltip", "Match input pin names only."))
+					+ SSegmentedControl<EFlowSearchPinDirection>::Slot(EFlowSearchPinDirection::Output)
+						.Text(LOCTEXT("PinDirectionOutput", "Output"))
+						.ToolTip(LOCTEXT("PinDirectionOutputTooltip", "Match output pin names only."))
+				]
+			]
+			+ SVerticalBox::Slot()
+			.AutoHeight()
+			.Padding(0, 2)
+			[
+				SNew(SHorizontalBox)
+				+ SHorizontalBox::Slot()
+				.AutoWidth()
+				.VAlign(VAlign_Center)
+				[
+					SNew(SBox)
+					.WidthOverride(82.0f)
+					[
+						SNew(STextBlock)
+						.Text(LOCTEXT("PinConnectivityLabel", "Connectivity"))
+					]
+				]
+				+ SHorizontalBox::Slot()
+				.AutoWidth()
+				[
+					SNew(SSegmentedControl<EFlowSearchPinConnectionState>)
+					.Value_Lambda([this]() { return PinConnection; })
+					.OnValueChanged(this, &SFindInFlow::OnPinConnectionChanged)
+					+ SSegmentedControl<EFlowSearchPinConnectionState>::Slot(EFlowSearchPinConnectionState::Any)
+						.Text(LOCTEXT("PinConnectionAny", "Any"))
+						.ToolTip(LOCTEXT("PinConnectionAnyTooltip", "Match connected and unconnected pin names."))
+					+ SSegmentedControl<EFlowSearchPinConnectionState>::Slot(EFlowSearchPinConnectionState::Connected)
+						.Text(LOCTEXT("PinConnectionConnected", "Connected"))
+						.ToolTip(LOCTEXT("PinConnectionConnectedTooltip", "Match connected pin names only."))
+					+ SSegmentedControl<EFlowSearchPinConnectionState>::Slot(EFlowSearchPinConnectionState::Unconnected)
+						.Text(LOCTEXT("PinConnectionUnconnected", "Unconnected"))
+						.ToolTip(LOCTEXT("PinConnectionUnconnectedTooltip", "Match unconnected pin names only."))
+				]
+			]
+		];
+}
+
+FText SFindInFlow::GetPinFilterSummaryText() const
+{
+	TArray<FText> ActiveFilters;
+	if (PinDirection == EFlowSearchPinDirection::Input)
+	{
+		ActiveFilters.Add(LOCTEXT("PinDirectionInputSummary", "Input"));
+	}
+	else if (PinDirection == EFlowSearchPinDirection::Output)
+	{
+		ActiveFilters.Add(LOCTEXT("PinDirectionOutputSummary", "Output"));
+	}
+
+	if (PinConnection == EFlowSearchPinConnectionState::Connected)
+	{
+		ActiveFilters.Add(LOCTEXT("PinConnectionConnectedSummary", "Connected"));
+	}
+	else if (PinConnection == EFlowSearchPinConnectionState::Unconnected)
+	{
+		ActiveFilters.Add(LOCTEXT("PinConnectionUnconnectedSummary", "Unconnected"));
+	}
+
+	if (ActiveFilters.IsEmpty())
+	{
+		return LOCTEXT("PinsAnySummary", "Pins: Any");
+	}
+	return FText::Format(LOCTEXT("PinsSummary", "Pins: {0}"), FText::Join(LOCTEXT("PinsSummaryDelimiter", ", "), ActiveFilters));
+}
+
+FText SFindInFlow::GetPinFilterToolTip() const
+{
+	return ArePinFiltersEnabled()
+		? LOCTEXT("PinFiltersTooltip", "Filter Pin Names matches by direction and connectivity.")
+		: LOCTEXT("PinFiltersDisabledTooltip", "Enable the Pin Names search category to use pin filters.");
+}
+
+bool SFindInFlow::ArePinFiltersEnabled() const
+{
+	return EnumHasAnyFlags(SearchFlags, EFlowSearchFlags::PinNames);
+}
+
+void SFindInFlow::OnPinDirectionChanged(EFlowSearchPinDirection NewDirection)
+{
+	PinDirection = NewDirection;
+	if (UFlowGraphEditorSettings* GraphEditorSettings = GetMutableDefault<UFlowGraphEditorSettings>())
+	{
+		GraphEditorSettings->DefaultSearchPinDirection = NewDirection;
+		GraphEditorSettings->SaveConfig();
+	}
+	InitiateSearch();
+}
+
+void SFindInFlow::OnPinConnectionChanged(EFlowSearchPinConnectionState NewConnection)
+{
+	PinConnection = NewConnection;
+	if (UFlowGraphEditorSettings* GraphEditorSettings = GetMutableDefault<UFlowGraphEditorSettings>())
+	{
+		GraphEditorSettings->DefaultSearchPinConnection = NewConnection;
+		GraphEditorSettings->SaveConfig();
+	}
+	InitiateSearch();
+}
+
 void SFindInFlow::InitiateSearch()
 {
 	FFlowEditorModule* FlowEditorModule = &FModuleManager::LoadModuleChecked<FFlowEditorModule>("FlowEditor");
@@ -469,7 +628,23 @@ void SFindInFlow::InitiateSearch()
 	Query.Scope        = SearchScope;
 	Query.MaxDepth     = MaxSearchDepth;
 	Query.ContextAsset = CurrentAsset;
+	Query.PinFilter.Direction = PinDirection;
+	Query.PinFilter.ConnectionState = PinConnection;
 
+	FScopedSlowTask SearchTask(1.0f, LOCTEXT("FlowSearchSlowTask", "Searching Flow assets..."));
+	SearchTask.MakeDialogDelayed(0.5f);
+	float LastReportedProgress = 0.0f;
+	Query.OnAssetSearchProgress = [&SearchTask, &LastReportedProgress](int32 ProcessedAssets, int32 TotalAssets, const FString& CurrentAssetName)
+	{
+		const float CurrentProgress = TotalAssets > 0
+			? FMath::Clamp(static_cast<float>(ProcessedAssets) / static_cast<float>(TotalAssets), 0.0f, 1.0f)
+			: LastReportedProgress;
+		const float ProgressDelta = FMath::Max(CurrentProgress - LastReportedProgress, 0.0f);
+		LastReportedProgress = CurrentProgress;
+		SearchTask.EnterProgressFrame(ProgressDelta, CurrentAssetName.IsEmpty()
+			? LOCTEXT("FlowSearchProgress", "Searching Flow assets...")
+			: FText::Format(LOCTEXT("FlowSearchProgressAsset", "Searching {0}..."), FText::FromString(CurrentAssetName)));
+	};
 
 	TArray<FFlowSearchResultItem> RawResults;
 	FFlowSearch::Search(Query, RawResults);

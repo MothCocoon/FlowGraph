@@ -12,7 +12,6 @@
 void SFindInFlowFilterPopup::Construct(const FArguments& InArgs)
 {
 	OnApplyDelegate = InArgs._OnApply;
-	OnSaveAsDefaultDelegate = InArgs._OnSaveAsDefault;
 	ProposedFlags = InArgs._InitialFlags;
 
 	// Build the checkbox container with slots added during construction
@@ -47,16 +46,8 @@ void SFindInFlowFilterPopup::Construct(const FArguments& InArgs)
 		[
 			SNew(SVerticalBox)
 				+ SVerticalBox::Slot()
-				.AutoHeight()
-				.Padding(10)
-				[
-					SNew(STextBlock)
-						.Text(LOCTEXT("FilterPopupTitle", "Select Search Filters:"))
-						.Font(FAppStyle::GetFontStyle("NormalFontBold"))
-				]
-				+ SVerticalBox::Slot()
 				.FillHeight(1.0f)
-				.Padding(10, 5)
+				.Padding(10, 10, 10, 5)
 				[
 					SNew(SScrollBox)
 						+ SScrollBox::Slot()
@@ -66,7 +57,7 @@ void SFindInFlowFilterPopup::Construct(const FArguments& InArgs)
 				]
 			+ SVerticalBox::Slot()
 				.AutoHeight()
-				.Padding(10)
+				.Padding(10, 0, 10, 10)
 				[
 					SNew(SHorizontalBox)
 						+ SHorizontalBox::Slot()
@@ -75,13 +66,6 @@ void SFindInFlowFilterPopup::Construct(const FArguments& InArgs)
 							SNew(SButton)
 								.Text(LOCTEXT("ToggleAllFilters", "Toggle All"))
 								.OnClicked(this, &SFindInFlowFilterPopup::OnToggleAllClicked)
-						]
-						+ SHorizontalBox::Slot()
-						.AutoWidth()
-						[
-							SNew(SButton)
-								.Text(LOCTEXT("SaveAsDefaultFilters", "Save as Default"))
-								.OnClicked(this, &SFindInFlowFilterPopup::OnSaveAsDefaultClicked)
 						]
 				]
 			+ SVerticalBox::Slot()
@@ -93,15 +77,16 @@ void SFindInFlowFilterPopup::Construct(const FArguments& InArgs)
 						.AutoWidth()
 						[
 							SNew(SButton)
-								.Text(LOCTEXT("CancelFilters", "Cancel"))
-								.OnClicked(this, &SFindInFlowFilterPopup::OnCancelClicked)
+								.Text(LOCTEXT("ApplyFilters", "Apply"))
+								.OnClicked(this, &SFindInFlowFilterPopup::OnApplyClicked)
 						]
 						+ SHorizontalBox::Slot()
 						.AutoWidth()
+						.Padding(4, 0, 0, 0)
 						[
 							SNew(SButton)
-								.Text(LOCTEXT("ApplyFilters", "Apply"))
-								.OnClicked(this, &SFindInFlowFilterPopup::OnApplyClicked)
+								.Text(LOCTEXT("CancelFilters", "Cancel"))
+								.OnClicked(this, &SFindInFlowFilterPopup::OnCancelClicked)
 						]
 				]
 		];
@@ -133,12 +118,6 @@ FReply SFindInFlowFilterPopup::OnToggleAllClicked()
 
 	CheckBoxContainer->Invalidate(EInvalidateWidgetReason::Layout);
 
-	return FReply::Handled();
-}
-
-FReply SFindInFlowFilterPopup::OnSaveAsDefaultClicked()
-{
-	OnSaveAsDefaultDelegate.ExecuteIfBound(ProposedFlags);
 	return FReply::Handled();
 }
 
