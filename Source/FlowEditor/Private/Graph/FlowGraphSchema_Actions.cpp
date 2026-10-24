@@ -283,9 +283,9 @@ UFlowGraphNode* FFlowSchemaAction_NewSubNode::RecreateNode(UEdGraph* ParentGraph
 	return NewGraphNode;
 }
 
-TSharedPtr<FFlowSchemaAction_NewSubNode> FFlowSchemaAction_NewSubNode::AddNewSubNodeAction(FGraphActionListBuilderBase& ContextMenuBuilder, const FText& Category, const FText& MenuDesc, const FText& Tooltip)
+TSharedPtr<FFlowSchemaAction_NewSubNode> FFlowSchemaAction_NewSubNode::AddNewSubNodeAction(FGraphActionListBuilderBase& ContextMenuBuilder, const FText& Category, const FText& MenuDesc, const FText& Tooltip, const FText& Keywords)
 {
-	TSharedPtr<FFlowSchemaAction_NewSubNode> NewAction = MakeShared<FFlowSchemaAction_NewSubNode>(Category, MenuDesc, Tooltip, 0);
+	TSharedPtr<FFlowSchemaAction_NewSubNode> NewAction = MakeShared<FFlowSchemaAction_NewSubNode>(Category, MenuDesc, Tooltip, 0, Keywords);
 	ContextMenuBuilder.AddAction(NewAction);
 	return NewAction;
 }

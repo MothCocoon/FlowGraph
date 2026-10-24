@@ -40,19 +40,19 @@ class FFindInFlowResult
 {
 public:
 	/*Create a root (or only text) result. */
-	FFindInFlowResult(const FString& InValue, UFlowAsset* InOwningFlowAsset = nullptr);
+	explicit FFindInFlowResult(const FString& InValue, UFlowAsset* InOwningFlowAsset = nullptr);
 
 	/* Create a flow node result. */
-	FFindInFlowResult(const FString& InValue, TSharedPtr<FFindInFlowResult> InParent, UEdGraphNode* InNode, bool bInIsSubGraphNode = false, UFlowAsset* InOwningFlowAsset = nullptr);
+	FFindInFlowResult(const FString& InValue, const TSharedPtr<FFindInFlowResult>& InParent, UEdGraphNode* InNode, bool bInIsSubGraphNode = false, UFlowAsset* InOwningFlowAsset = nullptr);
 
 	/* Called when user clicks on the search item. */
-	FReply OnClick(TWeakPtr<class FFlowAssetEditor> FlowAssetEditorPtr);
+	FReply OnClick(TWeakPtr<class FFlowAssetEditor> FlowAssetEditorPtr) const;
 
-	/* Called when user double clicks on the search item. */
+	/* Called when user double-clicks on the search item. */
 	FReply OnDoubleClick() const;
 
 	/* Create an icon to represent the result. */
-	TSharedRef<SWidget> CreateIcon() const;
+	static TSharedRef<SWidget> CreateIcon();
 
 	/* Gets the description on flow node if any. */
 	FString GetDescriptionText() const;
@@ -131,7 +131,7 @@ public:
 	SLATE_BEGIN_ARGS(SFindInFlow) {}
 	SLATE_END_ARGS()
 
-	void Construct(const FArguments& InArgs, TSharedPtr<class FFlowAssetEditor> InFlowAssetEditor);
+	void Construct(const FArguments& InArgs, const TSharedPtr<class FFlowAssetEditor>& InFlowAssetEditor);
 
 	/* Focuses this widget's search box. */
 	void FocusForUse() const;
@@ -151,13 +151,13 @@ protected:
 	FReply OnSearchButtonClicked();
 
 	/* Get the children of a row. */
-	void OnGetChildren(FSearchResult InItem, TArray<FSearchResult>& OutChildren);
+	static void OnGetChildren(FSearchResult InItem, TArray<FSearchResult>& OutChildren);
 
 	/* Called when user clicks on a new result. */
-	void OnTreeSelectionChanged(FSearchResult Item, ESelectInfo::Type SelectInfo);
+	void OnTreeSelectionChanged(FSearchResult Item, ESelectInfo::Type SelectInfo) const;
 
-	/* Called when user double clicks on a new result. */
-	void OnTreeSelectionDoubleClicked(FSearchResult Item);
+	/* Called when user double-clicks on a new result. */
+	static void OnTreeSelectionDoubleClicked(FSearchResult Item);
 
 	/* Called when scope selection changed. */
 	void OnScopeChanged(TSharedPtr<EFlowSearchScope> NewSelection, ESelectInfo::Type SelectInfo);
@@ -166,10 +166,10 @@ protected:
 	void OnMaxDepthChanged(int32 NewDepth);
 
 	/* Called when a new row is being generated. */
-	TSharedRef<ITableRow> OnGenerateRow(FSearchResult InItem, const TSharedRef<STableViewBase>& OwnerTable);
+	TSharedRef<ITableRow> OnGenerateRow(FSearchResult InItem, const TSharedRef<STableViewBase>& OwnerTable) const;
 
 	/* Generate widget for scope combo. */
-	TSharedRef<SWidget> GenerateScopeWidget(TSharedPtr<EFlowSearchScope> Item) const;
+	static TSharedRef<SWidget> GenerateScopeWidget(TSharedPtr<EFlowSearchScope> Item);
 
 	/* Get current scope display text. */
 	FText GetCurrentScopeText() const;
@@ -185,7 +185,10 @@ protected:
 	void InitiateSearch();
 
 	/* Maps one FFlowSearchResultItem to a tree result, loading its owning asset for navigation. */
-	FSearchResult MakeResultItem(const struct FFlowSearchResultItem& Item) const;
+	static FSearchResult MakeResultItem(const struct FFlowSearchResultItem& Item);
+
+	/* Returns nullptr when the asset has no graph or no node with this Guid. */
+	static UEdGraphNode* FindGraphNode(const UFlowAsset* Asset, const FGuid& NodeGuid);
 
 protected:
 	/* Pointer back to the flow editor that owns us. */
@@ -200,7 +203,7 @@ protected:
 	/* The search button. */
 	TSharedPtr<SButton> SearchButton;
 
-	/* Struct with all of the search results. */
+	/* Struct with all the search results. */
 	FFindInFlowAllResults SearchResults;
 
 	/* The string to highlight in the results. */

@@ -25,6 +25,7 @@
 class UFlowNode_SubGraph;
 class UFlowNode_CustomOutput;
 class UFlowNode_CustomInput;
+class UFlowInjectComponentsManager;
 struct FFlowPreloadPolicy;
 struct FFlowPinConnectionPolicy;
 
@@ -123,6 +124,9 @@ public:
 	FFlowGraphValidationEvent OnValidateGraph;
 	virtual EDataValidationResult IsDataValid(FDataValidationContext& Context) const override;
 	virtual EDataValidationResult ValidateAsset(FFlowMessageLog& MessageLog) const;
+
+	/* Allow subclasses to override the project-wide validation on save. */
+	virtual bool ShouldValidateOnSave() const;
 
 private:
 	/* Validates every direct child attachment on OwnerNode and recursively validates child trees. */
@@ -408,8 +412,16 @@ protected:
 	 * Initialized from OutputDataPinDeclarations defaults at StartFlow; updated by SetGraphOutput/Finish nodes. */
 	UPROPERTY(Transient)
 	FFlowOutputDataPinValues OutputDataPinValues;
+	
+private:
+	UPROPERTY(Transient)
+	TObjectPtr<UFlowAsset> OwningRootFlowInstance;
+
+	UPROPERTY(Transient)
+	TObjectPtr<UFlowInjectComponentsManager> ComponentInjector;
 
 public:
+	virtual bool CanBeInstanced(const UFlowAsset& InTemplateAsset, const UObject* InOwner) const;
 	virtual void InitializeInstance(const TWeakObjectPtr<UObject> InOwner, UFlowAsset& InTemplateAsset);
 	bool IsInstanceInitialized() const { return IsValid(TemplateAsset); }
 
@@ -482,6 +494,14 @@ public:
 	/* Returns nodes active in the past, done their work. */
 	UFUNCTION(BlueprintPure, Category = "Flow")
 	const TArray<UFlowNode*>& GetRecordedNodes() const { return RecordedNodes; }
+
+	UFUNCTION(BlueprintPure, Category = "Flow|Components")
+	UFlowAsset* GetOwningRootFlowInstance() const;
+
+	UFlowInjectComponentsManager* GetOrCreateComponentInjectionManager();
+	UFlowInjectComponentsManager* GetOrCreateComponentInjectionManagerInRootFlow() const;
+	UFlowInjectComponentsManager* FindComponentInjectionManager() const;
+	UFlowInjectComponentsManager* FindComponentInjectionManagerInRootFlow() const;
 
 //////////////////////////////////////////////////////////////////////////
 // Network replication
@@ -562,6 +582,7 @@ protected:
 	virtual void InitializePreloadPolicy();
 
 public:
+	void EnsurePreloadPolicyInitialized();
 	const FFlowPreloadPolicy& GetPreloadPolicy() const;
 
 //////////////////////////////////////////////////////////////////////////

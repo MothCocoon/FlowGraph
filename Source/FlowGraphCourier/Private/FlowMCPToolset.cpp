@@ -1099,7 +1099,7 @@ FFlowMCPCreateFlowSubgraphFromSelectionResult UFlowMCPToolset::CreateFlowSubgrap
 	MutationContext.Modify(SourceAsset);
 	UFlowAsset* NewAsset = nullptr;
 	UFlowGraphNode* SubgraphNode = nullptr;
-	if (!FlowSubGraphExtraction::ApplyExtractionByGuid(
+	if (!FlowSubGraphExtraction::ApplyExtractionByGuidWithoutSave(
 		SourceAsset,
 		SelectionGuids,
 		Request.NewAssetName,

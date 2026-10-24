@@ -49,9 +49,9 @@ public:
 	// bCreateDefaultNodes: whether to seed default nodes (e.g. a Start node) via
 	// UFlowGraphSchema::CreateDefaultNodesForGraph. Only appropriate for a brand new, genuinely
 	// empty FlowAsset (the editor's "New Asset" flow) - pass false when creating the graph shell
-	// for an asset that already has real runtime nodes (e.g. from a Flow Courier import/reconcile), to
+	// for an asset that already has real runtime nodes (for example, an external import or regraph), to
 	// avoid injecting an unwanted extra node.
-	static void CreateGraph(UFlowAsset* InFlowAsset, TSubclassOf<UFlowGraphSchema> FlowSchema, bool bCreateDefaultNodes = true);
+	static void CreateGraph(UFlowAsset* InFlowAsset, const TSubclassOf<UFlowGraphSchema> FlowSchema, const bool bCreateDefaultNodes = true);
 	void RefreshGraph();
 
 protected:
