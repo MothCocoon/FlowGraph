@@ -413,6 +413,7 @@ protected:
 	FFlowOutputDataPinValues OutputDataPinValues;
 
 public:
+	virtual bool CanBeInstanced(const UFlowAsset& InTemplateAsset, const UObject* InOwner) const;
 	virtual void InitializeInstance(const TWeakObjectPtr<UObject> InOwner, UFlowAsset& InTemplateAsset);
 	bool IsInstanceInitialized() const { return IsValid(TemplateAsset); }
 
