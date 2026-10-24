@@ -1,5 +1,4 @@
 // Copyright https://github.com/MothCocoon/FlowGraph/graphs/contributors
-
 #pragma once
 
 #include "UObject/SoftObjectPath.h"
@@ -121,16 +120,16 @@ struct FLOWEDITOR_API FFlowSearchQuery
 struct FLOWEDITOR_API FFindInFlowCache
 {
 	/* Removes all cached data for the changed flow asset. */
-	static void OnFlowAssetChanged(UFlowAsset& ChangedFlowAsset);
+	static void OnFlowAssetChanged(const UFlowAsset& ChangedFlowAsset);
 
 	/* Category-string map keyed by editor graph node pointer. */
 	static TMap<TWeakObjectPtr<UEdGraphNode>, TMap<EFlowSearchFlags, TSet<FString>>> CategoryStringCache;
 };
 
 /**
- * Stateless, headless search service. Owns the full search algorithm previously embedded in
- * SFindInFlow. No Slate, no FFlowAssetEditor coupling, no INI reads - all configuration is
- * passed in via FFlowSearchQuery.
+ * Stateless, headless search service. Owns the full search algorithm previously embedded in SFindInFlow.
+ * No Slate, no FFlowAssetEditor coupling, no INI reads.
+ * All configuration is passed in via FFlowSearchQuery.
  *
  * SFindInFlow wraps this with UI state and result-tree presentation.
  * Editor integrations can wrap it without coupling search behavior to Slate.
@@ -147,8 +146,10 @@ public:
 	static bool Search(const FFlowSearchQuery& Query, TArray<FFlowSearchResultItem>& OutResults);
 
 private:
-	// Per-search traversal state. Passed by reference through the recursion so the service
-	// remains stateless at the class level.
+	/**
+	 * Per-search traversal state. Passed by reference through the recursion so the service
+	 * remains stateless at the class level.
+	 */
 	struct FSearchContext
 	{
 		TArray<FString> Tokens;         // Upper-cased AND tokens
@@ -160,7 +161,7 @@ private:
 
 	static bool ProcessAsset(
 		UFlowAsset* Asset,
-		FSearchContext& Ctx,
+		FSearchContext& Context,
 		bool bIsSubGraphNode,
 		const FSoftObjectPath& SubgraphOwnerPath,
 		TArray<FFlowSearchResultItem>& OutResults);
@@ -168,23 +169,25 @@ private:
 	static bool RecurseIntoSubgraphsIfEnabled(
 		UEdGraphNode* EdNode,
 		const FSoftObjectPath& OwnerAssetPath,
-		FSearchContext& Ctx,
+		FSearchContext& Context,
 		TArray<FFlowSearchResultItem>& OutResults);
 
-	// Builds a per-node category->strings map. Result is cached keyed by EdGraphNode pointer
-	// (same cache SFindInFlow used) to avoid rebuilding on repeated searches.
+	/**
+	 * Builds a per-node category->strings map. Result is cached keyed by EdGraphNode pointer
+	 * (same cache SFindInFlow used) to avoid rebuilding on repeated searches.
+	 */
 	static const TMap<EFlowSearchFlags, TSet<FString>>* BuildCategoryStrings(
 		UEdGraphNode* EdNode,
-		FSearchContext& Ctx);
+		const FSearchContext& Context);
 
 	static void UpdateCategoryStringsForEdGraphNode(
 		const UEdGraphNode& EdGraphNode,
-		const FSearchContext& Ctx,
+		const FSearchContext& Context,
 		TMap<EFlowSearchFlags, TSet<FString>>& OutMap);
 
 	static void UpdateCategoryStringsForFlowNodeBase(
 		const class UFlowNodeBase& FlowNodeBase,
-		const FSearchContext& Ctx,
+		const FSearchContext& Context,
 		int32 Depth,
 		TMap<EFlowSearchFlags, TSet<FString>>& OutMap);
 
@@ -192,7 +195,7 @@ private:
 		const void* Container,
 		const UStruct* Struct,
 		const UObject* ParentObject,
-		const FSearchContext& Ctx,
+		const FSearchContext& Context,
 		int32 Depth,
 		TMap<EFlowSearchFlags, TSet<FString>>& OutMap);
 
@@ -205,8 +208,8 @@ private:
 	static bool StringMatchesTokens(const TArray<FString>& Tokens, const FString& Str);
 	static bool StringSetMatchesTokens(const TArray<FString>& Tokens, const TSet<FString>& StringSet);
 
-	// Returns the first "Key: Value" snippet from a matched property, or empty string.
+	/* Returns the first "Key: Value" snippet from a matched property, or empty string. */
 	static FString BuildMatchedSnippet(const TMap<EFlowSearchFlags, TSet<FString>>& CategoryStrings,
-	                                   EFlowSearchFlags MatchedFlags,
+	                                   const EFlowSearchFlags MatchedFlags,
 	                                   const TArray<FString>& Tokens);
 };

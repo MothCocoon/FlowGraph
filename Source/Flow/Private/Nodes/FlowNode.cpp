@@ -399,12 +399,6 @@ TArray<FFlowPin> UFlowNode::GetContextOutputs() const
 	return ContextOutputs;
 }
 
-void UFlowNode::GetCatalogPins(TArray<FFlowPin>& OutInputPins, TArray<FFlowPin>& OutOutputPins) const
-{
-	OutInputPins = InputPins;
-	OutOutputPins = OutputPins;
-}
-
 bool UFlowNode::CanUserAddInput() const
 {
 	return K2_CanUserAddInput();
@@ -469,6 +463,12 @@ void UFlowNode::RemoveUserOutput(const FName& PinName)
 			}
 		}
 	}
+}
+
+void UFlowNode::GetCatalogPins(TArray<FFlowPin>& OutInputPins, TArray<FFlowPin>& OutOutputPins) const
+{
+	OutInputPins = InputPins;
+	OutOutputPins = OutputPins;
 }
 
 bool UFlowNode::TryUpdateAutoDataPins()
@@ -626,7 +626,7 @@ bool UFlowNode::TryGatherPropertyOwnersAndPopulateResult(
 		return false;
 	}
 
-	const FFlowDataPinValueOwner* ValueOwner = nullptr;
+	const FFlowDataPinValueOwner* ValueOwner;
 	FName PropertyNameToLookup;
 	const TArray<FFlowDataPinValueOwner>& ValueOwners = ValueOwnerCollection.GetValueOwners();
 

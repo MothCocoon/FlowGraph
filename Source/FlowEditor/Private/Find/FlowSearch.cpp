@@ -1,12 +1,11 @@
 // Copyright https://github.com/MothCocoon/FlowGraph/graphs/contributors
-
 #include "Find/FlowSearch.h"
 
-#include "FlowAsset.h"
-#include "Nodes/FlowNodeBase.h"
 #include "AddOns/FlowNodeAddOn.h"
-#include "Nodes/Graph/FlowNode_SubGraph.h"
+#include "FlowAsset.h"
 #include "Graph/Nodes/FlowGraphNode.h"
+#include "Nodes/FlowNodeBase.h"
+#include "Nodes/Graph/FlowNode_SubGraph.h"
 
 #include "AssetRegistry/AssetRegistryModule.h"
 #include "AssetRegistry/ARFilter.h"
@@ -20,13 +19,13 @@
 
 TMap<TWeakObjectPtr<UEdGraphNode>, TMap<EFlowSearchFlags, TSet<FString>>> FFindInFlowCache::CategoryStringCache;
 
-void FFindInFlowCache::OnFlowAssetChanged(UFlowAsset& ChangedFlowAsset)
+void FFindInFlowCache::OnFlowAssetChanged(const UFlowAsset& ChangedFlowAsset)
 {
 	TArray<TWeakObjectPtr<UEdGraphNode>> EntriesToRemove;
 
-	for (const auto& KV : CategoryStringCache)
+	for (const auto& Pair : CategoryStringCache)
 	{
-		const TWeakObjectPtr<UEdGraphNode>& EdNodePtr = KV.Key;
+		const TWeakObjectPtr<UEdGraphNode>& EdNodePtr = Pair.Key;
 
 		UEdGraphNode* EdNode = EdNodePtr.Get();
 
@@ -36,7 +35,7 @@ void FFindInFlowCache::OnFlowAssetChanged(UFlowAsset& ChangedFlowAsset)
 			continue;
 		}
 
-		UEdGraph* EdGraph = ChangedFlowAsset.GetGraph();
+		const UEdGraph* EdGraph = ChangedFlowAsset.GetGraph();
 		if (EdGraph && EdGraph->Nodes.Contains(EdNode))
 		{
 			EntriesToRemove.Add(EdNodePtr);
@@ -147,17 +146,17 @@ bool FFlowSearch::Search(const FFlowSearchQuery& Query, TArray<FFlowSearchResult
 
 bool FFlowSearch::ProcessAsset(
 	UFlowAsset* Asset,
-	FSearchContext& Ctx,
+	FSearchContext& Context,
 	bool bIsSubGraphNode,
 	const FSoftObjectPath& SubgraphOwnerPath,
 	TArray<FFlowSearchResultItem>& OutResults)
 {
-	if (!Asset || !Asset->GetGraph() || Ctx.VisitedAssets.Contains(Asset))
+	if (!Asset || !Asset->GetGraph() || Context.VisitedAssets.Contains(Asset))
 	{
 		return false;
 	}
 
-	Ctx.VisitedAssets.Add(Asset);
+	Context.VisitedAssets.Add(Asset);
 
 	const FSoftObjectPath AssetPath(Asset);
 	bool bAnyMatches = false;
@@ -170,21 +169,21 @@ bool FFlowSearch::ProcessAsset(
 		}
 
 		TArray<FFlowSearchMatchedPin> MatchedPins;
-		const TMap<EFlowSearchFlags, TSet<FString>>* CategoryStrings = BuildCategoryStrings(EdNode, Ctx);
+		const TMap<EFlowSearchFlags, TSet<FString>>* CategoryStrings = BuildCategoryStrings(EdNode, Context);
 		EFlowSearchFlags NodeMatchedFlags = EFlowSearchFlags::None;
 		if (CategoryStrings)
 		{
 			for (const TPair<EFlowSearchFlags, TSet<FString>>& Pair : *CategoryStrings)
 			{
-				if (EnumHasAnyFlags(Ctx.Flags, Pair.Key) && StringSetMatchesTokens(Ctx.Tokens, Pair.Value))
+				if (EnumHasAnyFlags(Context.Flags, Pair.Key) && StringSetMatchesTokens(Context.Tokens, Pair.Value))
 				{
 					EnumAddFlags(NodeMatchedFlags, Pair.Key);
 				}
 			}
 		}
 
-		if (EnumHasAnyFlags(Ctx.Flags, EFlowSearchFlags::PinNames)
-			&& FindMatchingPins(*EdNode, Ctx.Tokens, Ctx.PinFilter, MatchedPins))
+		if (EnumHasAnyFlags(Context.Flags, EFlowSearchFlags::PinNames)
+			&& FindMatchingPins(*EdNode, Context.Tokens, Context.PinFilter, MatchedPins))
 		{
 			EnumAddFlags(NodeMatchedFlags, EFlowSearchFlags::PinNames);
 		}
@@ -197,7 +196,7 @@ bool FFlowSearch::ProcessAsset(
 			Item.MatchedPins  = MoveTemp(MatchedPins);
 			Item.bIsSubGraphNode     = bIsSubGraphNode;
 			Item.SubgraphOwnerAssetPath = SubgraphOwnerPath;
-			Item.MatchedSnippet = BuildMatchedSnippet(*CategoryStrings, NodeMatchedFlags, Ctx.Tokens);
+			Item.MatchedSnippet = BuildMatchedSnippet(*CategoryStrings, NodeMatchedFlags, Context.Tokens);
 
 			Item.NodeGuid = EdNode->NodeGuid;
 
@@ -223,7 +222,7 @@ bool FFlowSearch::ProcessAsset(
 			bAnyMatches = true;
 		}
 
-		bAnyMatches |= RecurseIntoSubgraphsIfEnabled(EdNode, AssetPath, Ctx, OutResults);
+		bAnyMatches |= RecurseIntoSubgraphsIfEnabled(EdNode, AssetPath, Context, OutResults);
 	}
 
 	return bAnyMatches;
@@ -232,10 +231,10 @@ bool FFlowSearch::ProcessAsset(
 bool FFlowSearch::RecurseIntoSubgraphsIfEnabled(
 	UEdGraphNode* EdNode,
 	const FSoftObjectPath& OwnerAssetPath,
-	FSearchContext& Ctx,
+	FSearchContext& Context,
 	TArray<FFlowSearchResultItem>& OutResults)
 {
-	if (!EnumHasAnyFlags(Ctx.Flags, EFlowSearchFlags::Subgraphs))
+	if (!EnumHasAnyFlags(Context.Flags, EFlowSearchFlags::Subgraphs))
 	{
 		return false;
 	}
@@ -259,12 +258,12 @@ bool FFlowSearch::RecurseIntoSubgraphsIfEnabled(
 	}
 
 	// Subgraphs don't count against depth - same convention as SFindInFlow.
-	return ProcessAsset(SubAsset, Ctx, true, OwnerAssetPath, OutResults);
+	return ProcessAsset(SubAsset, Context, true, OwnerAssetPath, OutResults);
 }
 
 const TMap<EFlowSearchFlags, TSet<FString>>* FFlowSearch::BuildCategoryStrings(
 	UEdGraphNode* EdNode,
-	FSearchContext& Ctx)
+	const FSearchContext& Context)
 {
 	if (!IsValid(EdNode))
 	{
@@ -278,13 +277,13 @@ const TMap<EFlowSearchFlags, TSet<FString>>* FFlowSearch::BuildCategoryStrings(
 	}
 
 	TMap<EFlowSearchFlags, TSet<FString>> NewMap;
-	UpdateCategoryStringsForEdGraphNode(*EdNode, Ctx, NewMap);
+	UpdateCategoryStringsForEdGraphNode(*EdNode, Context, NewMap);
 
 	if (const UFlowGraphNode* FlowGraphNode = Cast<UFlowGraphNode>(EdNode))
 	{
-		if (UFlowNodeBase* Base = FlowGraphNode->GetFlowNodeBase())
+		if (const UFlowNodeBase* Base = FlowGraphNode->GetFlowNodeBase())
 		{
-			UpdateCategoryStringsForFlowNodeBase(*Base, Ctx, 0, NewMap);
+			UpdateCategoryStringsForFlowNodeBase(*Base, Context, 0, NewMap);
 		}
 	}
 
@@ -293,10 +292,10 @@ const TMap<EFlowSearchFlags, TSet<FString>>* FFlowSearch::BuildCategoryStrings(
 
 void FFlowSearch::UpdateCategoryStringsForEdGraphNode(
 	const UEdGraphNode& EdGraphNode,
-	const FSearchContext& Ctx,
+	const FSearchContext& Context,
 	TMap<EFlowSearchFlags, TSet<FString>>& OutMap)
 {
-	if (EnumHasAnyFlags(Ctx.Flags, EFlowSearchFlags::Comments))
+	if (EnumHasAnyFlags(Context.Flags, EFlowSearchFlags::Comments))
 	{
 		OutMap.FindOrAdd(EFlowSearchFlags::Comments).Add(EdGraphNode.NodeComment);
 	}
@@ -304,47 +303,47 @@ void FFlowSearch::UpdateCategoryStringsForEdGraphNode(
 
 void FFlowSearch::UpdateCategoryStringsForFlowNodeBase(
 	const UFlowNodeBase& FlowNodeBase,
-	const FSearchContext& Ctx,
+	const FSearchContext& Context,
 	int32 Depth,
 	TMap<EFlowSearchFlags, TSet<FString>>& OutMap)
 {
-	if (EnumHasAnyFlags(Ctx.Flags, EFlowSearchFlags::Titles))
+	if (EnumHasAnyFlags(Context.Flags, EFlowSearchFlags::Titles))
 	{
 		OutMap.FindOrAdd(EFlowSearchFlags::Titles).Add(FlowNodeBase.GetNodeTitle().ToString());
 	}
 
-	if (EnumHasAnyFlags(Ctx.Flags, EFlowSearchFlags::Tooltips))
+	if (EnumHasAnyFlags(Context.Flags, EFlowSearchFlags::Tooltips))
 	{
 		OutMap.FindOrAdd(EFlowSearchFlags::Tooltips).Add(FlowNodeBase.GetNodeToolTip().ToString());
 	}
 
-	if (EnumHasAnyFlags(Ctx.Flags, EFlowSearchFlags::Classes))
+	if (EnumHasAnyFlags(Context.Flags, EFlowSearchFlags::Classes))
 	{
 		TSet<FString>& ClassesSet = OutMap.FindOrAdd(EFlowSearchFlags::Classes);
 		ClassesSet.Add(FlowNodeBase.GetClass()->GetDisplayNameText().ToString());
 		ClassesSet.Add(FlowNodeBase.GetClass()->GetName());
 	}
 
-	if (EnumHasAnyFlags(Ctx.Flags, EFlowSearchFlags::Descriptions))
+	if (EnumHasAnyFlags(Context.Flags, EFlowSearchFlags::Descriptions))
 	{
 		OutMap.FindOrAdd(EFlowSearchFlags::Descriptions).Add(FlowNodeBase.GetNodeDescription());
 	}
 
-	if (EnumHasAnyFlags(Ctx.Flags, EFlowSearchFlags::ConfigText))
+	if (EnumHasAnyFlags(Context.Flags, EFlowSearchFlags::ConfigText))
 	{
 		OutMap.FindOrAdd(EFlowSearchFlags::ConfigText).Add(FlowNodeBase.GetNodeConfigText().ToString());
 	}
 
-	if (EnumHasAnyFlags(Ctx.Flags, EFlowSearchFlags::PropertiesFlags))
+	if (EnumHasAnyFlags(Context.Flags, EFlowSearchFlags::PropertiesFlags))
 	{
-		AppendPropertyValues(&FlowNodeBase, FlowNodeBase.GetClass(), &FlowNodeBase, Ctx, Depth, OutMap);
+		AppendPropertyValues(&FlowNodeBase, FlowNodeBase.GetClass(), &FlowNodeBase, Context, Depth, OutMap);
 	}
 
-	if (EnumHasAnyFlags(Ctx.Flags, EFlowSearchFlags::AddOns))
+	if (EnumHasAnyFlags(Context.Flags, EFlowSearchFlags::AddOns))
 	{
-		FlowNodeBase.ForEachAddOnConst([&Ctx, &OutMap, Depth](const UFlowNodeAddOn& AddOn)
+		FlowNodeBase.ForEachAddOnConst([&Context, &OutMap, Depth](const UFlowNodeAddOn& AddOn)
 		{
-			FFlowSearch::UpdateCategoryStringsForFlowNodeBase(AddOn, Ctx, Depth, OutMap);
+			FFlowSearch::UpdateCategoryStringsForFlowNodeBase(AddOn, Context, Depth, OutMap);
 			return EFlowForEachAddOnFunctionReturnValue::Continue;
 		});
 	}
@@ -354,11 +353,11 @@ void FFlowSearch::AppendPropertyValues(
 	const void* Container,
 	const UStruct* Struct,
 	const UObject* ParentObject,
-	const FSearchContext& Ctx,
+	const FSearchContext& Context,
 	int32 Depth,
 	TMap<EFlowSearchFlags, TSet<FString>>& OutMap)
 {
-	if (!Container || !Struct || !ParentObject || Depth >= Ctx.MaxDepth)
+	if (!Container || !Struct || !ParentObject || Depth >= Context.MaxDepth)
 	{
 		return;
 	}
@@ -373,7 +372,7 @@ void FFlowSearch::AppendPropertyValues(
 
 		const void* ValuePtr = Prop->ContainerPtrToValuePtr<void>(Container);
 
-		if (EnumHasAnyFlags(Ctx.Flags, EFlowSearchFlags::PropertyNames))
+		if (EnumHasAnyFlags(Context.Flags, EFlowSearchFlags::PropertyNames))
 		{
 			TSet<FString>& NamesSet = OutMap.FindOrAdd(EFlowSearchFlags::PropertyNames);
 			const FString DisplayName = Prop->GetMetaData(TEXT("DisplayName"));
@@ -384,7 +383,7 @@ void FFlowSearch::AppendPropertyValues(
 			NamesSet.Add(Prop->GetName());
 		}
 
-		if (EnumHasAnyFlags(Ctx.Flags, EFlowSearchFlags::PropertyValues))
+		if (EnumHasAnyFlags(Context.Flags, EFlowSearchFlags::PropertyValues))
 		{
 			FString ValueStr;
 			UObject* MutableParent = const_cast<UObject*>(ParentObject);
@@ -393,7 +392,7 @@ void FFlowSearch::AppendPropertyValues(
 			OutMap.FindOrAdd(EFlowSearchFlags::PropertyValues).Add(ValueStr);
 		}
 
-		if (EnumHasAnyFlags(Ctx.Flags, EFlowSearchFlags::Tooltips))
+		if (EnumHasAnyFlags(Context.Flags, EFlowSearchFlags::Tooltips))
 		{
 			OutMap.FindOrAdd(EFlowSearchFlags::Tooltips).Add(Prop->GetMetaData(TEXT("ToolTip")));
 		}
@@ -401,7 +400,7 @@ void FFlowSearch::AppendPropertyValues(
 		if (const FStructProperty* StructProp = CastField<FStructProperty>(Prop))
 		{
 			// Recurse into structs (no depth penalty - same as original).
-			AppendPropertyValues(ValuePtr, StructProp->Struct, ParentObject, Ctx, Depth, OutMap);
+			AppendPropertyValues(ValuePtr, StructProp->Struct, ParentObject, Context, Depth, OutMap);
 		}
 		else if (const FObjectProperty* ObjProp = CastField<FObjectProperty>(Prop))
 		{
@@ -409,7 +408,7 @@ void FFlowSearch::AppendPropertyValues(
 			if (IsValid(Obj) && !Obj->HasAnyFlags(RF_ClassDefaultObject))
 			{
 				// Inline objects incur a depth penalty (same as original).
-				AppendPropertyValues(Obj, Obj->GetClass(), Obj, Ctx, Depth + 1, OutMap);
+				AppendPropertyValues(Obj, Obj->GetClass(), Obj, Context, Depth + 1, OutMap);
 			}
 		}
 	}
@@ -483,10 +482,10 @@ bool FFlowSearch::StringSetMatchesTokens(const TArray<FString>& Tokens, const TS
 
 FString FFlowSearch::BuildMatchedSnippet(
 	const TMap<EFlowSearchFlags, TSet<FString>>& CategoryStrings,
-	EFlowSearchFlags MatchedFlags,
+	const EFlowSearchFlags MatchedFlags,
 	const TArray<FString>& Tokens)
 {
-	static const EFlowSearchFlags FlagOrder[] = {
+	static constexpr EFlowSearchFlags FlagOrder[] = {
 		EFlowSearchFlags::Titles,
 		EFlowSearchFlags::Classes,
 		EFlowSearchFlags::Descriptions,
@@ -500,7 +499,7 @@ FString FFlowSearch::BuildMatchedSnippet(
 	};
 
 	// Walk the matched categories in priority order; return the first string that hits a token.
-	for (EFlowSearchFlags Flag : FlagOrder)
+	for (const EFlowSearchFlags Flag : FlagOrder)
 	{
 		if (!EnumHasAnyFlags(MatchedFlags, Flag))
 		{

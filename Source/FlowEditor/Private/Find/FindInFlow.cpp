@@ -1,6 +1,6 @@
 // Copyright https://github.com/MothCocoon/FlowGraph/graphs/contributors
-
 #include "Find/FindInFlow.h"
+
 #include "Asset/FlowAssetEditor.h"
 #include "Find/SFindInFlowFilterPopup.h"
 #include "Graph/FlowGraphEditorSettings.h"
@@ -10,10 +10,8 @@
 #include "FlowEditorModule.h"
 #include "Nodes/FlowNode.h"
 #include "Nodes/FlowNodeBase.h"
-#include "AddOns/FlowNodeAddOn.h"
 #include "Nodes/Graph/FlowNode_SubGraph.h"
 
-#include "AssetRegistry/AssetRegistryModule.h"
 #include "AssetRegistry/ARFilter.h"
 #include "EdGraph/EdGraph.h"
 #include "EdGraph/EdGraphNode.h"
@@ -61,7 +59,7 @@ FFindInFlowResult::FFindInFlowResult(const FString& InValue, UFlowAsset* InOwnin
 {
 }
 
-FFindInFlowResult::FFindInFlowResult(const FString& InValue, TSharedPtr<FFindInFlowResult> InParent, UEdGraphNode* InNode, bool bInIsSubGraphNode, UFlowAsset* InOwningFlowAsset)
+FFindInFlowResult::FFindInFlowResult(const FString& InValue, const TSharedPtr<FFindInFlowResult>& InParent, UEdGraphNode* InNode, const bool bInIsSubGraphNode, UFlowAsset* InOwningFlowAsset)
 	: Value(InValue)
 	, GraphNode(InNode)
 	, OwningFlowAsset(InOwningFlowAsset)
@@ -70,7 +68,7 @@ FFindInFlowResult::FFindInFlowResult(const FString& InValue, TSharedPtr<FFindInF
 {
 }
 
-TSharedRef<SWidget> FFindInFlowResult::CreateIcon() const
+TSharedRef<SWidget> FFindInFlowResult::CreateIcon()
 {
 	const FSlateColor IconColor = FSlateColor::UseForeground();
 	const FSlateBrush* Brush = FAppStyle::GetBrush(TEXT("GraphEditor.FIB_Event"));
@@ -80,16 +78,16 @@ TSharedRef<SWidget> FFindInFlowResult::CreateIcon() const
 		.ColorAndOpacity(IconColor);
 }
 
-FReply FFindInFlowResult::OnClick(TWeakPtr<class FFlowAssetEditor> FlowAssetEditorPtr)
+FReply FFindInFlowResult::OnClick(TWeakPtr<class FFlowAssetEditor> FlowAssetEditorPtr) const
 {
 	if (GraphNode.IsValid())
 	{
-		if (UEdGraph* Graph = GraphNode->GetGraph())
+		if (const UEdGraph* Graph = GraphNode->GetGraph())
 		{
 			if (UFlowAsset* Asset = Cast<UFlowAsset>(Graph->GetOuter()))
 			{
 				GEditor->GetEditorSubsystem<UAssetEditorSubsystem>()->OpenEditorForAsset(Asset);
-				if (TSharedPtr<FFlowAssetEditor> Editor = FFlowGraphUtils::GetFlowAssetEditor(Graph))
+				if (const TSharedPtr<FFlowAssetEditor> Editor = FFlowGraphUtils::GetFlowAssetEditor(Graph))
 				{
 					Editor->JumpToNode(GraphNode.Get());
 				}
@@ -114,7 +112,7 @@ FReply FFindInFlowResult::OnDoubleClick() const
 				if (UObject* Target = SubGraph->GetAssetToEdit())
 				{
 					GEditor->GetEditorSubsystem<UAssetEditorSubsystem>()->OpenEditorForAsset(Target);
-					if (TSharedPtr<FFlowAssetEditor> Editor = FFlowGraphUtils::GetFlowAssetEditor(GraphNode->GetGraph()))
+					if (const TSharedPtr<FFlowAssetEditor> Editor = FFlowGraphUtils::GetFlowAssetEditor(GraphNode->GetGraph()))
 					{
 						Editor->JumpToNode(GraphNode.Get());
 					}
@@ -150,7 +148,7 @@ FString FFindInFlowResult::GetNodeTypeText() const
 
 	if (const UFlowGraphNode* FlowGraphNode = Cast<UFlowGraphNode>(GraphNode.Get()))
 	{
-		if (UFlowNodeBase* Base = FlowGraphNode->GetFlowNodeBase())
+		if (const UFlowNodeBase* Base = FlowGraphNode->GetFlowNodeBase())
 		{
 			return Base->GetClass()->GetDisplayNameText().ToString();
 		}
@@ -190,7 +188,7 @@ FText FFindInFlowResult::GetMatchedCategoriesText() const
 
 	TArray<FText> DisplayNames;
 
-	for (EFlowSearchFlags Flag : MakeFlagsRange(EFlowSearchFlags::All))
+	for (const EFlowSearchFlags Flag : MakeFlagsRange(EFlowSearchFlags::All))
 	{
 		if (EnumHasAnyFlags(MatchedFlags, Flag))
 		{
@@ -213,7 +211,7 @@ FText FFindInFlowResult::GetMatchedCategoriesText() const
 //////////////////////////////////////////////////////////////////////////
 // SFindInFlow
 
-void SFindInFlow::Construct(const FArguments& InArgs, TSharedPtr<class FFlowAssetEditor> InFlowAssetEditor)
+void SFindInFlow::Construct(const FArguments& InArgs, const TSharedPtr<class FFlowAssetEditor>& InFlowAssetEditor)
 {
 	FlowAssetEditorPtr = InFlowAssetEditor;
 	SearchResults.Setup();
@@ -228,7 +226,7 @@ void SFindInFlow::Construct(const FArguments& InArgs, TSharedPtr<class FFlowAsse
 
 	// Populate scope options
 	FLOW_ASSERT_ENUM_MAX(EFlowSearchScope, 3);
-	for (EFlowSearchScope Scope : TEnumRange<EFlowSearchScope>())
+	for (const EFlowSearchScope Scope : TEnumRange<EFlowSearchScope>())
 	{
 		if (FlowEnum::IsValidEnumValue(Scope))
 		{
@@ -254,9 +252,9 @@ void SFindInFlow::Construct(const FArguments& InArgs, TSharedPtr<class FFlowAsse
 	SAssignNew(TreeView, STreeViewType)
 		.TreeItemsSource(&SearchResults.ItemsFound)
 		.OnGenerateRow(this, &SFindInFlow::OnGenerateRow)
-		.OnGetChildren(this, &SFindInFlow::OnGetChildren)
+		.OnGetChildren_Static(&SFindInFlow::OnGetChildren)
 		.OnSelectionChanged(this, &SFindInFlow::OnTreeSelectionChanged)
-		.OnMouseButtonDoubleClick(this, &SFindInFlow::OnTreeSelectionDoubleClicked);
+		.OnMouseButtonDoubleClick_Static(&SFindInFlow::OnTreeSelectionDoubleClicked);
 
 	ChildSlot
 		[
@@ -339,7 +337,7 @@ void SFindInFlow::Construct(const FArguments& InArgs, TSharedPtr<class FFlowAsse
 						[
 							SNew(SComboBox<TSharedPtr<EFlowSearchScope>>)
 								.OptionsSource(&ScopeOptionList)
-								.OnGenerateWidget(this, &SFindInFlow::GenerateScopeWidget)
+								.OnGenerateWidget_Static(&SFindInFlow::GenerateScopeWidget)
 								.OnSelectionChanged(this, &SFindInFlow::OnScopeChanged)
 								[
 									SNew(STextBlock).Text(this, &SFindInFlow::GetCurrentScopeText)
@@ -405,7 +403,7 @@ void SFindInFlow::OnScopeChanged(TSharedPtr<EFlowSearchScope> NewSelection, ESel
 	SearchScope = *NewSelection;
 }
 
-void SFindInFlow::OnMaxDepthChanged(int32 NewDepth)
+void SFindInFlow::OnMaxDepthChanged(const int32 NewDepth)
 {
 	MaxSearchDepth = NewDepth;
 
@@ -417,7 +415,7 @@ void SFindInFlow::OnMaxDepthChanged(int32 NewDepth)
 	}
 }
 
-TSharedRef<SWidget> SFindInFlow::GenerateScopeWidget(TSharedPtr<EFlowSearchScope> Item) const
+TSharedRef<SWidget> SFindInFlow::GenerateScopeWidget(TSharedPtr<EFlowSearchScope> Item)
 {
 	return SNew(STextBlock)
 		.Text(UEnum::GetDisplayValueAsText(*Item.Get()));
@@ -445,7 +443,7 @@ void SFindInFlow::InitiateSearch()
 		return;
 	}
 
-	TSharedPtr<FFlowAssetEditor> Editor = FlowAssetEditorPtr.Pin();
+	const TSharedPtr<FFlowAssetEditor> Editor = FlowAssetEditorPtr.Pin();
 	if (!Editor.IsValid())
 	{
 		return;
@@ -459,7 +457,7 @@ void SFindInFlow::InitiateSearch()
 
 	if (GCompilingBlueprint && SearchScope != EFlowSearchScope::ThisAssetOnly)
 	{
-		FSearchResult CompilePending = MakeShareable(new FFindInFlowResult(TEXT("Search deferred while Blueprints are compiling")));
+		const FSearchResult CompilePending = MakeShareable(new FFindInFlowResult(TEXT("Search deferred while Blueprints are compiling")));
 		SearchResults.ItemsFound.Add(CompilePending);
 		TreeView->RequestTreeRefresh();
 		return;
@@ -493,27 +491,27 @@ void SFindInFlow::InitiateSearch()
 		AssetRoot->Children.Add(ResultItem);
 	}
 
-	for (auto& KV : AssetRoots)
+	for (TPair<FSoftObjectPath, FSearchResult>& AssetRoot : AssetRoots)
 	{
-		SearchResults.ItemsFound.Add(KV.Value);
+		SearchResults.ItemsFound.Add(AssetRoot.Value);
 
 		// Auto-expand the current asset's group.
-		if (KV.Key == FSoftObjectPath(CurrentAsset))
+		if (AssetRoot.Key == FSoftObjectPath(CurrentAsset))
 		{
-			TreeView->SetItemExpansion(KV.Value, true);
+			TreeView->SetItemExpansion(AssetRoot.Value, true);
 		}
 	}
 
 	if (SearchResults.ItemsFound.IsEmpty())
 	{
-		FSearchResult NoResults = MakeShareable(new FFindInFlowResult(TEXT("No results found")));
+		const FSearchResult NoResults = MakeShareable(new FFindInFlowResult(TEXT("No results found")));
 		SearchResults.ItemsFound.Add(NoResults);
 	}
 
 	TreeView->RequestTreeRefresh();
 }
 
-SFindInFlow::FSearchResult SFindInFlow::MakeResultItem(const FFlowSearchResultItem& Item) const
+SFindInFlow::FSearchResult SFindInFlow::MakeResultItem(const FFlowSearchResultItem& Item)
 {
 	UFlowAsset* Asset   = Cast<UFlowAsset>(Item.AssetPath.TryLoad());
 	UEdGraphNode* EdNode = nullptr;
@@ -536,7 +534,7 @@ SFindInFlow::FSearchResult SFindInFlow::MakeResultItem(const FFlowSearchResultIt
 	return Result;
 }
 
-TSharedRef<ITableRow> SFindInFlow::OnGenerateRow(FSearchResult InItem, const TSharedRef<STableViewBase>& OwnerTable)
+TSharedRef<ITableRow> SFindInFlow::OnGenerateRow(FSearchResult InItem, const TSharedRef<STableViewBase>& OwnerTable) const
 {
 	return SNew(STableRow<FSearchResult>, OwnerTable)
 		.ToolTip(SNew(SToolTip).Text(InItem->GetToolTipText()))
@@ -582,11 +580,11 @@ void SFindInFlow::OnGetChildren(FSearchResult InItem, TArray<FSearchResult>& Out
 	OutChildren = InItem->Children;
 }
 
-void SFindInFlow::OnTreeSelectionChanged(FSearchResult Item, ESelectInfo::Type)
+void SFindInFlow::OnTreeSelectionChanged(FSearchResult Item, ESelectInfo::Type) const
 {
 	if (Item.IsValid())
 	{
-		Item->OnClick(FlowAssetEditorPtr);
+		(void)Item->OnClick(FlowAssetEditorPtr);
 	}
 }
 
@@ -594,7 +592,7 @@ void SFindInFlow::OnTreeSelectionDoubleClicked(FSearchResult Item)
 {
 	if (Item.IsValid())
 	{
-		Item->OnDoubleClick();
+		(void)Item->OnDoubleClick();
 	}
 }
 
