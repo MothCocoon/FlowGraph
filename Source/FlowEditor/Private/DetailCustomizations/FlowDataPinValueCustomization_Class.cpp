@@ -160,6 +160,7 @@ void FFlowDataPinValueCustomization_Class::BuildSingleBranch(IDetailChildrenBuil
 		return;
 	}
 
+	const UClass* Filter = CachedEffectiveFilter.Get();
 	StructBuilder.AddCustomRow(LOCTEXT("ClassSingleSearch", "Class"))
 		.Visibility(TAttribute<EVisibility>::CreateSP(this, &FFlowDataPinValueCustomization_Class::GetSingleModeVisibility))
 		.NameContent()
@@ -172,7 +173,7 @@ void FFlowDataPinValueCustomization_Class::BuildSingleBranch(IDetailChildrenBuil
 		.MinDesiredWidth(250.f)
 		[
 			SNew(SClassPropertyEntryBox)
-				.MetaClass(CachedEffectiveFilter.Get() ? CachedEffectiveFilter.Get() : UObject::StaticClass())
+				.MetaClass(Filter ? Filter : UObject::StaticClass())
 				.RequiredInterface(RequiredInterface)
 				.AllowAbstract(bAllowAbstract)
 				.IsBlueprintBaseOnly(bIsBlueprintBaseOnly)
@@ -198,6 +199,7 @@ void FFlowDataPinValueCustomization_Class::BuildArrayBranch(IDetailChildrenBuild
 		ValuesHandle,
 		[this](TSharedRef<IPropertyHandle> ElementHandle, int32 Index, IDetailChildrenBuilder& ChildBuilder, const TAttribute<EVisibility>& RowVis)
 		{
+			const UClass* Filter = CachedEffectiveFilter.Get();
 			IDetailPropertyRow& Row = ChildBuilder.AddProperty(ElementHandle);
 			Row.Visibility(RowVis);
 
@@ -212,7 +214,7 @@ void FFlowDataPinValueCustomization_Class::BuildArrayBranch(IDetailChildrenBuild
 				.MinDesiredWidth(250.f)
 				[
 					SNew(SClassPropertyEntryBox)
-						.MetaClass(CachedEffectiveFilter.Get() ? CachedEffectiveFilter.Get() : UObject::StaticClass())
+						.MetaClass(Filter ? Filter : UObject::StaticClass())
 						.RequiredInterface(RequiredInterface)
 						.AllowAbstract(bAllowAbstract)
 						.IsBlueprintBaseOnly(bIsBlueprintBaseOnly)

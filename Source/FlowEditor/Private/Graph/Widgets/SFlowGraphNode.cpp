@@ -127,10 +127,11 @@ const FSlateBrush* SFlowGraphNode::GetShadowBrush(bool bSelected) const
 
 void SFlowGraphNode::GetOverlayBrushes(bool bSelected, const FVector2f& WidgetSize, TArray<FOverlayBrushInfo>& Brushes) const
 {
-	check(DebuggerSubsystem.IsValid());
+	UFlowDebuggerSubsystem* DebuggerSubsystemPtr = DebuggerSubsystem.Get();
+	check(DebuggerSubsystemPtr);
 	
 	// Node breakpoint
-	if (const FFlowBreakpoint* NodeBreakpoint = DebuggerSubsystem->FindBreakpoint(FlowGraphNode->NodeGuid))
+	if (const FFlowBreakpoint* NodeBreakpoint = DebuggerSubsystemPtr->FindBreakpoint(FlowGraphNode->NodeGuid))
 	{
 		FOverlayBrushInfo NodeBrush;
 
@@ -153,7 +154,7 @@ void SFlowGraphNode::GetOverlayBrushes(bool bSelected, const FVector2f& WidgetSi
 	// Pin breakpoints
 	for (UEdGraphPin* Pin : FlowGraphNode->Pins)
 	{
-		if (const FFlowBreakpoint* PinBreakpoint = DebuggerSubsystem->FindBreakpoint(Pin->GetOwningNode()->NodeGuid, Pin->PinName))
+		if (const FFlowBreakpoint* PinBreakpoint = DebuggerSubsystemPtr->FindBreakpoint(Pin->GetOwningNode()->NodeGuid, Pin->PinName))
 		{
 			if (Pin->Direction == EGPD_Input)
 			{
@@ -1152,10 +1153,10 @@ FReply SFlowGraphNode::OnAddFlowPin(const EEdGraphPinDirection Direction)
 
 void SFlowGraphNode::AddSubNodeWidget(const TSharedPtr<SGraphNode>& NewSubNodeWidget)
 {
-	if (OwnerGraphPanelPtr.IsValid())
+	if (const TSharedPtr<SGraphPanel> OwnerGraphPanel = OwnerGraphPanelPtr.Pin())
 	{
-		NewSubNodeWidget->SetOwner(OwnerGraphPanelPtr.Pin().ToSharedRef());
-		OwnerGraphPanelPtr.Pin()->AttachGraphEvents(NewSubNodeWidget);
+		NewSubNodeWidget->SetOwner(OwnerGraphPanel.ToSharedRef());
+		OwnerGraphPanel->AttachGraphEvents(NewSubNodeWidget);
 	}
 	NewSubNodeWidget->UpdateGraphNode();
 
@@ -1368,7 +1369,8 @@ void SFlowGraphNode::CreateOrRebuildSubNodeBox(const TSharedPtr<SVerticalBox>& I
 
 bool SFlowGraphNode::IsFlowGraphNodeSelected(UFlowGraphNode* Node) const
 {
-	return GetOwnerPanel().IsValid() && GetOwnerPanel()->SelectionManager.SelectedNodes.Contains(Node);
+	const TSharedPtr<SGraphPanel> OwnerPanel = GetOwnerPanel();
+	return OwnerPanel.IsValid() && OwnerPanel->SelectionManager.SelectedNodes.Contains(Node);
 }
 
 #undef LOCTEXT_NAMESPACE

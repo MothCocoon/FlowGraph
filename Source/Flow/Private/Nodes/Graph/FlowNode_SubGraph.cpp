@@ -371,9 +371,9 @@ void UFlowNode_SubGraph::SubscribeToAssetChanges()
 		TWeakObjectPtr<UFlowNode_SubGraph> SelfWeakPtr(this);
 		Asset->OnSubGraphReconstructionRequested.BindLambda([SelfWeakPtr]()
 		{
-			if (SelfWeakPtr.IsValid())
+			if (UFlowNode_SubGraph* Self = SelfWeakPtr.Get())
 			{
-				SelfWeakPtr->OnReconstructionRequested.ExecuteIfBound();
+				Self->OnReconstructionRequested.ExecuteIfBound();
 			}
 		});
 	}

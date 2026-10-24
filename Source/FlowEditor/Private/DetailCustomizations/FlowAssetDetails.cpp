@@ -106,17 +106,21 @@ bool FFlowAssetDetails::VerifyNewCustomPinText(const FText& InNewText, FText& Ou
 
 void FFlowAssetDetails::OnBrowseClicked(TSharedRef<IPropertyHandle> PropertyHandle)
 {
-	ensure(ObjectsBeingEdited[0].IsValid());
+	UObject* EditedObject = ObjectsBeingEdited[0].Get();
+	ensure(EditedObject);
 
-	UFlowAsset* Asset = Cast<UFlowAsset>(ObjectsBeingEdited[0]);
+	UFlowAsset* Asset = Cast<UFlowAsset>(EditedObject);
 	UFlowNode_CustomEventBase* EventNode = GetCustomEventNode(PropertyHandle);
-	
-	if (EventNode)
+
+	if (Asset && EventNode)
 	{
 		TSharedPtr<SFlowGraphEditor> Editor = FFlowGraphUtils::GetFlowGraphEditor(Asset->GetGraph());
-		Editor->ClearSelectionSet();
-		Editor->SelectSingleNode(EventNode->GetGraphNode());
-		Editor->ZoomToFit(true);
+		if (Editor)
+		{
+			Editor->ClearSelectionSet();
+			Editor->SelectSingleNode(EventNode->GetGraphNode());
+			Editor->ZoomToFit(true);
+		}
 	}
 }
 
@@ -127,26 +131,30 @@ bool FFlowAssetDetails::IsBrowseEnabled(TSharedRef<IPropertyHandle> PropertyHand
 
 UFlowNode_CustomEventBase* FFlowAssetDetails::GetCustomEventNode(TSharedRef<IPropertyHandle> PropertyHandle) const
 {
-	ensure(ObjectsBeingEdited[0].IsValid());
+	UObject* EditedObject = ObjectsBeingEdited[0].Get();
+	ensure(EditedObject);
 
-	UFlowAsset* Asset = Cast<UFlowAsset>(ObjectsBeingEdited[0]);
+	UFlowAsset* Asset = Cast<UFlowAsset>(EditedObject);
 	FName Text = FName(GetCustomPinText( PropertyHandle ).ToString());
 	TSharedPtr<IPropertyHandle> ArrayHandle = PropertyHandle->GetParentHandle();
 
-	if (ArrayHandle->IsSamePropertyNode(CustomInputsHandle))
+	if (Asset)
 	{
-		UFlowNode_CustomInput* Input = Asset->TryFindCustomInputNodeByEventName(Text);
-		if (Input)
+		if (ArrayHandle->IsSamePropertyNode(CustomInputsHandle))
 		{
-			return Input;
+			UFlowNode_CustomInput* Input = Asset->TryFindCustomInputNodeByEventName(Text);
+			if (Input)
+			{
+				return Input;
+			}
 		}
-	}
-	else if (ArrayHandle->IsSamePropertyNode(CustomOutputsHandle))
-	{
-		UFlowNode_CustomOutput* Output = Asset->TryFindCustomOutputNodeByEventName(Text);
-		if (Output)
+		else if (ArrayHandle->IsSamePropertyNode(CustomOutputsHandle))
 		{
-			return Output;
+			UFlowNode_CustomOutput* Output = Asset->TryFindCustomOutputNodeByEventName(Text);
+			if (Output)
+			{
+				return Output;
+			}
 		}
 	}
 

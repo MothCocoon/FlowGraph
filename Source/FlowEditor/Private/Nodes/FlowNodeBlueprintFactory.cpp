@@ -177,9 +177,9 @@ private:
 	/** Handler for when ok is clicked */
 	FReply OkClicked()
 	{
-		if (FlowNodeBlueprintFactory.IsValid())
+		if (UFlowNodeBaseBlueprintFactory* FlowNodeBlueprintFactoryPtr = FlowNodeBlueprintFactory.Get())
 		{
-			FlowNodeBlueprintFactory->ParentClass = ParentClass.Get();
+			FlowNodeBlueprintFactoryPtr->ParentClass = ParentClass.Get();
 		}
 
 		CloseDialog(true);
@@ -190,9 +190,9 @@ private:
 	void CloseDialog(bool bWasPicked = false)
 	{
 		bOkClicked = bWasPicked;
-		if (PickerWindow.IsValid())
+		if (const TSharedPtr<SWindow> PickerWindowPtr = PickerWindow.Pin())
 		{
-			PickerWindow.Pin()->RequestDestroyWindow();
+			PickerWindowPtr->RequestDestroyWindow();
 		}
 	}
 

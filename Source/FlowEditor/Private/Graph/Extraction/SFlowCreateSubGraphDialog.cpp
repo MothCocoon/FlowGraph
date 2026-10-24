@@ -24,8 +24,9 @@ void SFlowCreateSubGraphDialog::Construct(const FArguments& InArgs)
 	SourceAsset = InArgs._SourceAsset;
 	AssetName = FlowSubGraphExtraction::GetDefaultNewAssetName();
 
-	const FString PackageFolder = SourceAsset.Get()
-		? FPackageName::GetLongPackagePath(SourceAsset->GetOutermost()->GetName())
+	const UFlowAsset* SourceAssetPtr = SourceAsset.Get();
+	const FString PackageFolder = SourceAssetPtr
+		? FPackageName::GetLongPackagePath(SourceAssetPtr->GetOutermost()->GetName())
 		: FString();
 
 	TSharedRef<SVerticalBox> WarningsBox = SNew(SVerticalBox);
@@ -177,8 +178,9 @@ void SFlowCreateSubGraphDialog::OnAssetNameChanged(const FText& NewName)
 {
 	AssetName = NewName.ToString();
 
-	ValidationError = SourceAsset.Get()
-		? FlowSubGraphExtraction::ValidateNewAssetName(*SourceAsset, AssetName)
+	const UFlowAsset* SourceAssetPtr = SourceAsset.Get();
+	ValidationError = SourceAssetPtr
+		? FlowSubGraphExtraction::ValidateNewAssetName(*SourceAssetPtr, AssetName)
 		: LOCTEXT("NoSourceAsset", "No source asset.");
 
 	if (AssetNameTextBox.IsValid())

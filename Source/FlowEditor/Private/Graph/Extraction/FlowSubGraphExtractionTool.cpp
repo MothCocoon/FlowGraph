@@ -16,7 +16,8 @@
 
 void FFlowSubGraphExtractionTool::Execute(SFlowGraphEditor& GraphEditor)
 {
-	if (!GraphEditor.FlowAsset.IsValid())
+	UFlowAsset* FlowAssetPtr = GraphEditor.FlowAsset.Get();
+	if (!FlowAssetPtr)
 	{
 		return;
 	}
@@ -41,16 +42,19 @@ void FFlowSubGraphExtractionTool::Execute(SFlowGraphEditor& GraphEditor)
 	}
 
 	FString NewAssetName;
-	if (!SFlowCreateSubGraphDialog::ShowModal(*GraphEditor.FlowAsset, Plan.Warnings, NewAssetName))
+	if (!SFlowCreateSubGraphDialog::ShowModal(*FlowAssetPtr, Plan.Warnings, NewAssetName))
 	{
 		return;
 	}
 
-	GraphEditor.FlowAssetEditor.Pin()->SetUISelectionState(NAME_None);
+	if (const TSharedPtr<FFlowAssetEditor> FlowAssetEditorPtr = GraphEditor.FlowAssetEditor.Pin())
+	{
+		FlowAssetEditorPtr->SetUISelectionState(NAME_None);
+	}
 	GraphEditor.ClearSelectionSet();
 
 	FText SaveError;
-	const FlowSubGraphExtraction::FExtractionResult Result = ApplyAndSave(Plan, *GraphEditor.FlowAsset, NewAssetName, SaveError);
+	const FlowSubGraphExtraction::FExtractionResult Result = ApplyAndSave(Plan, *FlowAssetPtr, NewAssetName, SaveError);
 	GraphEditor.NotifyGraphChanged();
 
 	if (!Result.Succeeded())

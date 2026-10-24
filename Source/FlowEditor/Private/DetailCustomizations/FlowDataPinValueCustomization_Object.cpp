@@ -284,9 +284,10 @@ FFlowDataPinValue_Object* FFlowDataPinValueCustomization_Object::GetValueStruct(
 
 TSharedRef<SWidget> FFlowDataPinValueCustomization_Object::BuildObjectValueWidgetForElement(TSharedPtr<IPropertyHandle> ElementHandle) const
 {
+	UClass* Filter = EffectiveFilterClass.Get();
 	return SNew(SObjectPropertyEntryBox)
 		.PropertyHandle(ElementHandle)
-		.AllowedClass(EffectiveFilterClass.Get() ? EffectiveFilterClass.Get() : UObject::StaticClass())
+		.AllowedClass(Filter ? Filter : UObject::StaticClass())
 		.AllowClear(AreValuesEditable())
 		.IsEnabled(AreValuesEditable())
 		.ToolTipText(AreValuesEditable()

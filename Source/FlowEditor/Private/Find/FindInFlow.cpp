@@ -71,41 +71,45 @@ FFindInFlowResult::FFindInFlowResult(const FString& InValue, const TSharedPtr<FF
 
 FReply FFindInFlowResult::OnClick(TWeakPtr<class FFlowAssetEditor> FlowAssetEditorPtr) const
 {
-	if (GraphNode.IsValid())
+	if (const UEdGraphNode* GraphNodePtr = GraphNode.Get())
 	{
-		if (const UEdGraph* Graph = GraphNode->GetGraph())
+		if (const UEdGraph* Graph = GraphNodePtr->GetGraph())
 		{
 			if (UFlowAsset* Asset = Cast<UFlowAsset>(Graph->GetOuter()))
 			{
 				GEditor->GetEditorSubsystem<UAssetEditorSubsystem>()->OpenEditorForAsset(Asset);
 				if (const TSharedPtr<FFlowAssetEditor> Editor = FFlowGraphUtils::GetFlowAssetEditor(Graph))
 				{
-					Editor->JumpToNode(GraphNode.Get());
+					Editor->JumpToNode(GraphNodePtr);
 				}
 			}
 		}
 	}
-	else if (OwningFlowAsset.IsValid())
+	else if (UFlowAsset* OwningFlowAssetPtr = OwningFlowAsset.Get())
 	{
-		GEditor->GetEditorSubsystem<UAssetEditorSubsystem>()->OpenEditorForAsset(OwningFlowAsset.Get());
+		GEditor->GetEditorSubsystem<UAssetEditorSubsystem>()->OpenEditorForAsset(OwningFlowAssetPtr);
 	}
 	return FReply::Handled();
 }
 
 FReply FFindInFlowResult::OnDoubleClick() const
 {
-	if (bIsSubGraphNode && Parent.IsValid())
+	const TSharedPtr<FFindInFlowResult> ParentPtr = Parent.Pin();
+	if (bIsSubGraphNode && ParentPtr)
 	{
-		if (const UFlowGraphNode* ParentNode = Cast<UFlowGraphNode>(Parent.Pin()->GraphNode.Get()))
+		if (const UFlowGraphNode* ParentNode = Cast<UFlowGraphNode>(ParentPtr->GraphNode.Get()))
 		{
 			if (UFlowNode_SubGraph* SubGraph = Cast<UFlowNode_SubGraph>(ParentNode->GetFlowNodeBase()))
 			{
 				if (UObject* Target = SubGraph->GetAssetToEdit())
 				{
 					GEditor->GetEditorSubsystem<UAssetEditorSubsystem>()->OpenEditorForAsset(Target);
-					if (const TSharedPtr<FFlowAssetEditor> Editor = FFlowGraphUtils::GetFlowAssetEditor(GraphNode->GetGraph()))
+					if (const UEdGraphNode* GraphNodePtr = GraphNode.Get())
 					{
-						Editor->JumpToNode(GraphNode.Get());
+						if (const TSharedPtr<FFlowAssetEditor> Editor = FFlowGraphUtils::GetFlowAssetEditor(GraphNodePtr->GetGraph()))
+						{
+							Editor->JumpToNode(GraphNodePtr);
+						}
 					}
 				}
 			}
@@ -137,17 +141,19 @@ FString FFindInFlowResult::GetDescriptionText() const
 
 FString FFindInFlowResult::GetCommentText() const
 {
-	return GraphNode.IsValid() ? GraphNode->NodeComment : FString();
+	const UEdGraphNode* GraphNodePtr = GraphNode.Get();
+	return GraphNodePtr ? GraphNodePtr->NodeComment : FString();
 }
 
 FString FFindInFlowResult::GetNodeTypeText() const
 {
-	if (!GraphNode.IsValid())
+	const UEdGraphNode* GraphNodePtr = GraphNode.Get();
+	if (!GraphNodePtr)
 	{
 		return FString();
 	}
 
-	if (const UFlowGraphNode* FlowGraphNode = Cast<UFlowGraphNode>(GraphNode.Get()))
+	if (const UFlowGraphNode* FlowGraphNode = Cast<UFlowGraphNode>(GraphNodePtr))
 	{
 		if (const UFlowNodeBase* Base = FlowGraphNode->GetFlowNodeBase())
 		{
@@ -155,16 +161,17 @@ FString FFindInFlowResult::GetNodeTypeText() const
 		}
 	}
 
-	return GraphNode->GetClass()->GetDisplayNameText().ToString();
+	return GraphNodePtr->GetClass()->GetDisplayNameText().ToString();
 }
 
 FText FFindInFlowResult::GetToolTipText() const
 {
 	FString Tip = GetNodeTypeText() + TEXT("\n") + GetDescriptionText();
 
-	if (!GetCommentText().IsEmpty())
+	const FString CommentText = GetCommentText();
+	if (!CommentText.IsEmpty())
 	{
-		Tip += TEXT("\n") + GetCommentText();
+		Tip += TEXT("\n") + CommentText;
 	}
 
 	if (!MatchedPropertySnippet.IsEmpty())

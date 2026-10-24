@@ -10,9 +10,9 @@ void FFlowNode_SubGraphDetails::CustomizeDetails(IDetailLayoutBuilder& DetailLay
 	TArray<TWeakObjectPtr<UObject>> ObjectsBeingEdited;
 	DetailLayout.GetObjectsBeingCustomized(ObjectsBeingEdited);
 
-	if (ObjectsBeingEdited[0].IsValid())
+	if (const UObject* EditedObject = ObjectsBeingEdited[0].Get())
 	{
-		const UFlowNode_SubGraph* SubGraphNode = CastChecked<UFlowNode_SubGraph>(ObjectsBeingEdited[0]);
+		const UFlowNode_SubGraph* SubGraphNode = CastChecked<UFlowNode_SubGraph>(EditedObject);
 
 		// Generate the list of asset classes allowed or disallowed
 		TArray<UClass*> FlowAssetClasses;

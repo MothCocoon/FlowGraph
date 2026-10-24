@@ -105,7 +105,7 @@ TSharedPtr<SWidget> FFlowTrackEditor::BuildOutlinerEditWidget(const FGuid& Objec
 		.AutoWidth()
 		.VAlign(VAlign_Center)
 		[
-			FSequencerUtilities::MakeAddButton(LOCTEXT("AddSection", "Section"), FOnGetContent::CreateLambda(SubMenuCallback), Params.NodeIsHovered, GetSequencer())
+			FSequencerUtilities::MakeAddButton(LOCTEXT("AddSection", "Section"), FOnGetContent::CreateLambda(SubMenuCallback), Params.NodeIsHovered, SequencerPtr)
 		];
 }
 
@@ -166,9 +166,9 @@ void FFlowTrackEditor::HandleAddFlowTrackMenuEntryExecute(UClass* SectionType) c
 	UMovieSceneFlowTrack* NewMasterTrack = FocusedMovieScene->AddTrack<UMovieSceneFlowTrack>();
 	NewTracks.Add(NewMasterTrack);
 	
-	if (GetSequencer().IsValid())
+	if (const TSharedPtr<ISequencer> SequencerPtr = GetSequencer())
 	{
-		GetSequencer()->OnAddTrack(NewMasterTrack, FGuid());
+		SequencerPtr->OnAddTrack(NewMasterTrack, FGuid());
 	}
 
 	check(NewTracks.Num() != 0);

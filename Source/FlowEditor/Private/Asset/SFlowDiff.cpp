@@ -88,7 +88,8 @@ void FFlowDiffPanel::GeneratePanel(UEdGraph* NewGraph, UEdGraph* OldGraph)
 
 void FFlowDiffPanel::GeneratePanel(UEdGraph* Graph, TSharedPtr<TArray<FDiffSingleResult>> DiffResults, TAttribute<int32> FocusedDiffResult)
 {
-	if (GraphEditor.IsValid() && GraphEditor.Pin()->GetCurrentGraph() == Graph)
+	const TSharedPtr<SGraphEditor> GraphEditorPtr = GraphEditor.Pin();
+	if (GraphEditorPtr && GraphEditorPtr->GetCurrentGraph() == Graph)
 	{
 		return;
 	}
@@ -197,12 +198,15 @@ bool FFlowDiffPanel::CanCopyNodes() const
 
 void FFlowDiffPanel::FocusDiff(const UEdGraphPin& Pin) const
 {
-	GraphEditor.Pin()->JumpToPin(&Pin);
+	if (const TSharedPtr<SGraphEditor> GraphEditorPtr = GraphEditor.Pin())
+	{
+		GraphEditorPtr->JumpToPin(&Pin);
+	}
 }
 
 void FFlowDiffPanel::FocusDiff(const UEdGraphNode& Node) const
 {
-	if (GraphEditor.IsValid())
+	if (const TSharedPtr<SGraphEditor> GraphEditorPtr = GraphEditor.Pin())
 	{
 		const UEdGraphNode* JumpNode = &Node;
 
@@ -213,8 +217,8 @@ void FFlowDiffPanel::FocusDiff(const UEdGraphNode& Node) const
 			JumpNode = FlowNode->GetRootFlowGraphNode();
 		}
 
-		GraphEditor.Pin()->JumpToNode(JumpNode, false, false);
-		GraphEditor.Pin()->SetNodeSelection(const_cast<UEdGraphNode*>(&Node), true);
+		GraphEditorPtr->JumpToNode(JumpNode, false, false);
+		GraphEditorPtr->SetNodeSelection(const_cast<UEdGraphNode*>(&Node), true);
 	}
 }
 
@@ -423,7 +427,8 @@ void SFlowDiff::Tick(const FGeometry& AllottedGeometry, const double InCurrentTi
 
 void SFlowDiff::OnGraphChanged(const FFlowGraphToDiff* Diff)
 {
-	if (PanelNew.GraphEditor.IsValid() && PanelNew.GraphEditor.Pin()->GetCurrentGraph() == Diff->GetGraphNew())
+	const TSharedPtr<SGraphEditor> NewGraphEditor = PanelNew.GraphEditor.Pin();
+	if (NewGraphEditor && NewGraphEditor->GetCurrentGraph() == Diff->GetGraphNew())
 	{
 		FocusOnGraphRevisions(Diff);
 	}
@@ -601,17 +606,19 @@ void SFlowDiff::OnToggleSplitViewMode()
 
 void SFlowDiff::ResetGraphEditors() const
 {
-	if (PanelOld.GraphEditor.IsValid() && PanelNew.GraphEditor.IsValid())
+	const TSharedPtr<SGraphEditor> OldGraphEditor = PanelOld.GraphEditor.Pin();
+	const TSharedPtr<SGraphEditor> NewGraphEditor = PanelNew.GraphEditor.Pin();
+	if (OldGraphEditor && NewGraphEditor)
 	{
 		if (bLockViews)
 		{
-			PanelOld.GraphEditor.Pin()->LockToGraphEditor(PanelNew.GraphEditor);
-			PanelNew.GraphEditor.Pin()->LockToGraphEditor(PanelOld.GraphEditor);
+			OldGraphEditor->LockToGraphEditor(PanelNew.GraphEditor);
+			NewGraphEditor->LockToGraphEditor(PanelOld.GraphEditor);
 		}
 		else
 		{
-			PanelOld.GraphEditor.Pin()->UnlockFromGraphEditor(PanelNew.GraphEditor);
-			PanelNew.GraphEditor.Pin()->UnlockFromGraphEditor(PanelOld.GraphEditor);
+			OldGraphEditor->UnlockFromGraphEditor(PanelNew.GraphEditor);
+			NewGraphEditor->UnlockFromGraphEditor(PanelOld.GraphEditor);
 		}
 	}
 }
@@ -679,13 +686,15 @@ void SFlowDiff::HandleGraphChanged(const FString& GraphPath)
 		});
 
 	// only regenerate PanelOld if the old graph has changed
-	if (PanelOld.FlowAsset && (!PanelOld.GraphEditor.IsValid() || GraphOld != PanelOld.GraphEditor.Pin()->GetCurrentGraph()))
+	const TSharedPtr<SGraphEditor> OldGraphEditor = PanelOld.GraphEditor.Pin();
+	if (PanelOld.FlowAsset && (!OldGraphEditor || GraphOld != OldGraphEditor->GetCurrentGraph()))
 	{
 		PanelOld.GeneratePanel(GraphOld, DiffResults, FocusedDiffResult);
 	}
 
 	// only regenerate PanelNew if the old graph has changed
-	if (PanelNew.FlowAsset && (!PanelNew.GraphEditor.IsValid() || GraphNew != PanelNew.GraphEditor.Pin()->GetCurrentGraph()))
+	const TSharedPtr<SGraphEditor> NewGraphEditor = PanelNew.GraphEditor.Pin();
+	if (PanelNew.FlowAsset && (!NewGraphEditor || GraphNew != NewGraphEditor->GetCurrentGraph()))
 	{
 		PanelNew.GeneratePanel(GraphNew, DiffResults, FocusedDiffResult);
 	}
@@ -744,9 +753,9 @@ void SFlowDiff::OnCloseAssetEditor(UObject* Asset, const EAssetEditorCloseReason
 			GEditor->GetEditorSubsystem<UAssetEditorSubsystem>()->OnAssetEditorRequestClose().Remove(AssetEditorCloseDelegate);
 		}
 
-		if (WeakParentWindow.IsValid())
+		if (const TSharedPtr<SWindow> ParentWindow = WeakParentWindow.Pin())
 		{
-			WeakParentWindow.Pin()->RequestDestroyWindow();
+			ParentWindow->RequestDestroyWindow();
 		}
 	}
 }

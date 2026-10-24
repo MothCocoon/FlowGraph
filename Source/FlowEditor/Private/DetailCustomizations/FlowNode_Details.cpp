@@ -84,12 +84,14 @@ void FFlowNode_Details::CustomizeDetails(IDetailLayoutBuilder& DetailLayout)
 			.ToolTipText(LOCTEXT("AttachAddOnButtonTooltip", "Attach an AddOn to the selected node/addon."))
 			.IsEnabled_Lambda([this]()
 			{
-				return EditedNode.IsValid() && FFlowDetailsAddOnUI::CanAttachAddOn(EditedNode.Get());
+				UFlowNode* EditedNodePtr = EditedNode.Get();
+				return EditedNodePtr && FFlowDetailsAddOnUI::CanAttachAddOn(EditedNodePtr);
 			})
 			.OnGetMenuContent_Lambda([this]()
 			{
-				return EditedNode.IsValid()
-					? FFlowDetailsAddOnUI::BuildAttachAddOnMenuContent(EditedNode.Get())
+				UFlowNode* EditedNodePtr = EditedNode.Get();
+				return EditedNodePtr
+					? FFlowDetailsAddOnUI::BuildAttachAddOnMenuContent(EditedNodePtr)
 					: SNullWidget::NullWidget;
 			})
 		];

@@ -21,9 +21,9 @@ void FFlowNode_CustomEventBaseDetails::CustomizeDetailsInternal(IDetailLayoutBui
 {
 	DetailLayout.GetObjectsBeingCustomized(ObjectsBeingEdited);
 
-	if (ObjectsBeingEdited[0].IsValid())
+	if (const UObject* EditedObject = ObjectsBeingEdited[0].Get())
 	{
-		const UFlowNode_CustomEventBase* EventNode = CastChecked<UFlowNode_CustomEventBase>(ObjectsBeingEdited[0]);
+		const UFlowNode_CustomEventBase* EventNode = CastChecked<UFlowNode_CustomEventBase>(EditedObject);
 		CachedEventNameSelected = MakeShared<FName>(EventNode->GetEventName());
 	}
 
@@ -62,9 +62,10 @@ void FFlowNode_CustomEventBaseDetails::RebuildEventNames()
 	check(CachedEventNameSelected.IsValid());
 	EventNames.Add(CachedEventNameSelected);
 
-	if (ObjectsBeingEdited[0].IsValid() && ObjectsBeingEdited[0].Get()->GetOuter())
+	const UObject* EditedObject = ObjectsBeingEdited[0].Get();
+	if (EditedObject && EditedObject->GetOuter())
 	{
-		const UFlowAsset* FlowAsset = CastChecked<UFlowAsset>(ObjectsBeingEdited[0].Get()->GetOuter());
+		const UFlowAsset* FlowAsset = CastChecked<UFlowAsset>(EditedObject->GetOuter());
 		TArray<FName> SortedNames = BuildEventNames(*FlowAsset);
 
 		if (bExcludeReferencedEvents)
@@ -113,9 +114,10 @@ FText FFlowNode_CustomEventBaseDetails::GetSelectedEventText() const
 
 void FFlowNode_CustomEventBaseDetails::PinSelectionChanged(const TSharedPtr<FName> Item, ESelectInfo::Type SelectInfo)
 {
-	ensure(ObjectsBeingEdited[0].IsValid());
+	UObject* EditedObject = ObjectsBeingEdited[0].Get();
+	ensure(EditedObject);
 
-	UFlowNode_CustomEventBase* Node = Cast<UFlowNode_CustomEventBase>(ObjectsBeingEdited[0].Get());
+	UFlowNode_CustomEventBase* Node = Cast<UFlowNode_CustomEventBase>(EditedObject);
 	if (IsValid(Node) && Item)
 	{
 		const bool bIsChanged = (*CachedEventNameSelected != *Item);

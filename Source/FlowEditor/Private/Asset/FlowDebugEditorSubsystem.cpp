@@ -90,9 +90,9 @@ void UFlowDebugEditorSubsystem::OnResumePIE(const bool bIsSimulating)
 	// This does not necessarily flow through AGameModeBase::ClearPause(), so we must unhalt Flow here.
 	ClearLastHitBreakpoint();
 
-	if (HaltedOnFlowAssetInstance.IsValid())
+	if (UFlowAsset* HaltedAsset = HaltedOnFlowAssetInstance.Get())
 	{
-		ResumeSession(*HaltedOnFlowAssetInstance.Get());
+		ResumeSession(*HaltedAsset);
 	}
 
 	// Release the suspended Flow call stack after updating the debugger session state.
@@ -112,18 +112,23 @@ void UFlowDebugEditorSubsystem::OnEndPIE(const bool bIsSimulating)
 
 	for (const TPair<TWeakObjectPtr<UFlowAsset>, TSharedPtr<class IMessageLogListing>>& Log : RuntimeLogs)
 	{
-		if (Log.Key.IsValid() && Log.Value->NumMessages(EMessageSeverity::Warning) > 0)
+		const UFlowAsset* LogAsset = Log.Key.Get();
+		if (LogAsset && Log.Value->NumMessages(EMessageSeverity::Warning) > 0)
 		{
 			FNotificationInfo Info{FText::FromString(TEXT("Flow Graph reported in-game issues"))};
 			Info.ExpireDuration = 15.0;
 
-			Info.HyperlinkText = FText::Format(LOCTEXT("OpenFlowAssetHyperlink", "Open {0}"), FText::FromString(Log.Key->GetName()));
+			Info.HyperlinkText = FText::Format(LOCTEXT("OpenFlowAssetHyperlink", "Open {0}"), FText::FromString(LogAsset->GetName()));
 			Info.Hyperlink = FSimpleDelegate::CreateLambda([this, Log]()
 			{
 				UAssetEditorSubsystem* AssetEditorSubsystem = GEditor->GetEditorSubsystem<UAssetEditorSubsystem>();
-				if (AssetEditorSubsystem->OpenEditorForAsset(Log.Key.Get()))
+				UFlowAsset* Asset = Log.Key.Get();
+				if (AssetEditorSubsystem->OpenEditorForAsset(Asset))
 				{
-					AssetEditorSubsystem->FindEditorForAsset(Log.Key.Get(), true)->InvokeTab(FFlowAssetEditor::RuntimeLogTab);
+					if (IAssetEditorInstance* AssetEditor = AssetEditorSubsystem->FindEditorForAsset(Asset, true))
+					{
+						AssetEditor->InvokeTab(FFlowAssetEditor::RuntimeLogTab);
+					}
 				}
 			});
 

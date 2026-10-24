@@ -7,5 +7,6 @@
 
 UFlowAsset* UFlowAssetEditorContext::GetFlowAsset() const
 {
-	return FlowAssetEditor.IsValid() ? FlowAssetEditor.Pin()->GetFlowAsset() : nullptr;
+	const TSharedPtr<FFlowAssetEditor> FlowAssetEditorPtr = FlowAssetEditor.Pin();
+	return FlowAssetEditorPtr ? FlowAssetEditorPtr->GetFlowAsset() : nullptr;
 }

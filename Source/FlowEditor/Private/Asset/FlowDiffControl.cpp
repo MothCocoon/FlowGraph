@@ -220,10 +220,10 @@ void FFlowGraphToDiff::GenerateTreeEntries(TArray<TSharedPtr<FBlueprintDifferenc
 			continue;
 		}
 
-		FlowNodeDiff->ParentNodeDiff = FindParentDiff(Cast<UFlowGraphNode>(Node1));
-		if (FlowNodeDiff->ParentNodeDiff.IsValid())
+		const TSharedPtr<FFlowObjectDiff> ParentNode = FindParentDiff(Cast<UFlowGraphNode>(Node1));
+		FlowNodeDiff->ParentNodeDiff = ParentNode;
+		if (ParentNode)
 		{
-			const TSharedPtr<FFlowObjectDiff> ParentNode = FlowNodeDiff->ParentNodeDiff.Pin();
 			ParentNode->DiffTreeEntry->Children.Push(FlowNodeDiff->DiffTreeEntry);
 
 			//if a parent has any sub node changes,  make sure the color does not stay as "minor"

@@ -1069,7 +1069,8 @@ void UFlowAsset::AddInstance(UFlowAsset* Instance)
 int32 UFlowAsset::RemoveInstance(UFlowAsset* Instance)
 {
 #if WITH_EDITOR
-	if (InspectedInstance.IsValid() && InspectedInstance.Get() == Instance)
+	const UFlowAsset* InspectedInstancePtr = InspectedInstance.Get();
+	if (InspectedInstancePtr && InspectedInstancePtr == Instance)
 	{
 		SetInspectedInstance(nullptr);
 	}
@@ -1115,7 +1116,8 @@ void UFlowAsset::AddReplicaInstance(UFlowAsset* Instance)
 
 void UFlowAsset::RemoveReplicaInstance(UFlowAsset* Instance)
 {
-	if (InspectedInstance.IsValid() && InspectedInstance.Get() == Instance)
+	const UFlowAsset* InspectedInstancePtr = InspectedInstance.Get();
+	if (InspectedInstancePtr && InspectedInstancePtr == Instance)
 	{
 		SetInspectedInstance(nullptr);
 	}
@@ -1126,7 +1128,7 @@ void UFlowAsset::RemoveReplicaInstance(UFlowAsset* Instance)
 
 void UFlowAsset::SetInspectedInstance(TWeakObjectPtr<const UFlowAsset> NewInspectedInstance)
 {
-	if (NewInspectedInstance.IsValid())
+	if (const UFlowAsset* NewInspectedInstancePtr = NewInspectedInstance.Get())
 	{
 		if (InspectedInstance == NewInspectedInstance)
 		{
@@ -1134,15 +1136,15 @@ void UFlowAsset::SetInspectedInstance(TWeakObjectPtr<const UFlowAsset> NewInspec
 			return;
 		}
 
-		bool bIsNewInstancePresent = Algo::AnyOf(ActiveInstances, [NewInspectedInstance](const UFlowAsset* ActiveInstance)
+		bool bIsNewInstancePresent = Algo::AnyOf(ActiveInstances, [NewInspectedInstancePtr](const UFlowAsset* ActiveInstance)
 		{
-			return ActiveInstance && ActiveInstance == NewInspectedInstance;
-		}) || Algo::AnyOf(ReplicaInstances, [NewInspectedInstance](const TWeakObjectPtr<UFlowAsset>& ReplicaInstance)
+			return ActiveInstance && ActiveInstance == NewInspectedInstancePtr;
+		}) || Algo::AnyOf(ReplicaInstances, [NewInspectedInstancePtr](const TWeakObjectPtr<UFlowAsset>& ReplicaInstance)
 		{
-			return ReplicaInstance.Get() == NewInspectedInstance.Get();
+			return ReplicaInstance.Get() == NewInspectedInstancePtr;
 		});
 
-		if (!ensureMsgf(bIsNewInstancePresent, TEXT("Trying to set %s as InspectedInstance, but it is not one of the ActiveInstances"), *NewInspectedInstance->GetName()))
+		if (!ensureMsgf(bIsNewInstancePresent, TEXT("Trying to set %s as InspectedInstance, but it is not one of the ActiveInstances"), *NewInspectedInstancePtr->GetName()))
 		{
 			NewInspectedInstance = nullptr;
 		}
@@ -1357,20 +1359,22 @@ void UFlowAsset::FinishNode(UFlowNode* Node)
 				Receiver->ReceiveOutputDataSnapshot(OutputDataPinValues);
 			}
 
-			if (NodeOwningThisAssetInstance.IsValid())
+			if (UFlowNode_SubGraph* OwningSubGraphNode = NodeOwningThisAssetInstance.Get())
 			{
-				NodeOwningThisAssetInstance.Get()->TriggerFirstOutput(true);
+				OwningSubGraphNode->TriggerFirstOutput(true);
 				return;
 			}
 
-			// if this instance is a Root Flow, we need to deregister it from the subsystem first. This will 
+			// if this instance is a Root Flow, we need to deregister it from the subsystem first. This will
 			// finalize and deinitialize the root flow.
-			if (Owner.IsValid())
+			UObject* OwnerObject = Owner.Get();
+			UFlowSubsystem* FlowSubsystem = GetFlowSubsystem();
+			if (OwnerObject && FlowSubsystem)
 			{
-				const TSet<UFlowAsset*>& RootFlowInstances = GetFlowSubsystem()->GetRootInstancesByOwner(Owner.Get());
+				const TSet<UFlowAsset*>& RootFlowInstances = FlowSubsystem->GetRootInstancesByOwner(OwnerObject);
 				if (RootFlowInstances.Contains(this))
 				{
-					GetFlowSubsystem()->FinishAndDeinitializeRootFlow(Owner.Get(), TemplateAsset, EFlowFinishPolicy::Keep);
+					FlowSubsystem->FinishAndDeinitializeRootFlow(OwnerObject, TemplateAsset, EFlowFinishPolicy::Keep);
 
 					return;
 				}
@@ -1473,7 +1477,8 @@ UFlowNode_SubGraph* UFlowAsset::GetNodeOwningThisAssetInstance() const
 
 UFlowAsset* UFlowAsset::GetParentInstance() const
 {
-	return NodeOwningThisAssetInstance.IsValid() ? NodeOwningThisAssetInstance.Get()->GetFlowAsset() : nullptr;
+	const UFlowNode_SubGraph* OwningSubGraphNode = NodeOwningThisAssetInstance.Get();
+	return OwningSubGraphNode ? OwningSubGraphNode->GetFlowAsset() : nullptr;
 }
 
 TWeakObjectPtr<UFlowAsset> UFlowAsset::GetFlowInstance(UFlowNode_SubGraph* SubGraphNode) const
@@ -1585,7 +1590,8 @@ void UFlowAsset::StartReplication()
 {
 	if (ShouldReplicate() && !bReplicatedToClients)
 	{
-		if (AActor* OwnerActor = Cast<AActor>(Owner.Get()))
+		UObject* OwnerObject = Owner.Get();
+		if (AActor* OwnerActor = Cast<AActor>(OwnerObject))
 		{
 			if (OwnerActor->GetIsReplicated() && (OwnerActor->IsNetMode(NM_DedicatedServer) || OwnerActor->IsNetMode(NM_ListenServer)))
 			{
@@ -1593,7 +1599,7 @@ void UFlowAsset::StartReplication()
 				bReplicatedToClients = true;
 			}
 		}
-		else if (UActorComponent* OwnerComponent = Cast<UActorComponent>(Owner.Get()))
+		else if (UActorComponent* OwnerComponent = Cast<UActorComponent>(OwnerObject))
 		{
 			if (OwnerComponent->GetIsReplicated() && (OwnerComponent->IsNetMode(NM_DedicatedServer) || OwnerComponent->IsNetMode(NM_ListenServer)))
 			{
@@ -1624,11 +1630,12 @@ void UFlowAsset::StopReplication()
 {
 	if (bReplicatedToClients)
 	{
-		if (AActor* OwnerActor = Cast<AActor>(Owner.Get()))
+		UObject* OwnerObject = Owner.Get();
+		if (AActor* OwnerActor = Cast<AActor>(OwnerObject))
 		{
 			OwnerActor->DestroyReplicatedSubObjectOnRemotePeers(this);
 		}
-		else if (UActorComponent* OwnerComponent = Cast<UActorComponent>(Owner.Get()))
+		else if (UActorComponent* OwnerComponent = Cast<UActorComponent>(OwnerObject))
 		{
 			OwnerComponent->DestroyReplicatedSubObjectOnRemotePeers(this);
 		}
@@ -1818,8 +1825,7 @@ void UFlowAsset::TriggerCustomInput_FromSubGraph(UFlowNode_SubGraph* SubGraphNod
 	// but we may want to allow them to source parameters, so I am providing the subgraph node as the 
 	// IFlowDataPinValueSupplierInterface when triggering the node (even though it's not used at this time).
 
-	const TWeakObjectPtr<UFlowAsset> FlowInstance = ActiveSubGraphs.FindRef(SubGraphNode);
-	if (FlowInstance.IsValid())
+	if (UFlowAsset* FlowInstance = ActiveSubGraphs.FindRef(SubGraphNode).Get())
 	{
 		FlowInstance->TriggerCustomInput(EventName, SubGraphNode);
 	}
@@ -1827,10 +1833,10 @@ void UFlowAsset::TriggerCustomInput_FromSubGraph(UFlowNode_SubGraph* SubGraphNod
 
 void UFlowAsset::TriggerCustomOutput(const FName& EventName)
 {
-	if (NodeOwningThisAssetInstance.IsValid())
+	if (UFlowNode_SubGraph* OwningSubGraphNode = NodeOwningThisAssetInstance.Get())
 	{
 		// it's a SubGraph
-		NodeOwningThisAssetInstance->TriggerOutput(EventName);
+		OwningSubGraphNode->TriggerOutput(EventName);
 	}
 	else
 	{
@@ -2025,8 +2031,7 @@ FFlowAssetSaveData UFlowAsset::SaveInstance(TArray<FFlowAssetSaveData>& SavedFlo
 			// iterate SubGraphs
 			if (UFlowNode_SubGraph* SubGraphNode = Cast<UFlowNode_SubGraph>(Node))
 			{
-				const TWeakObjectPtr<UFlowAsset> SubFlowInstance = GetFlowInstance(SubGraphNode);
-				if (SubFlowInstance.IsValid())
+				if (UFlowAsset* SubFlowInstance = GetFlowInstance(SubGraphNode).Get())
 				{
 					const FFlowAssetSaveData SubAssetRecord = SubFlowInstance->SaveInstance(SavedFlowInstances);
 					SubGraphNode->SavedAssetInstanceName = SubAssetRecord.InstanceName;

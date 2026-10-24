@@ -354,7 +354,7 @@ public:
 	const TArray<TWeakObjectPtr<UFlowAsset>>& GetReplicaInstances() const { return ReplicaInstances; }
 
 	void SetInspectedInstance(TWeakObjectPtr<const UFlowAsset> NewInspectedInstance);
-	const UFlowAsset* GetInspectedInstance() const { return InspectedInstance.IsValid() ? InspectedInstance.Get() : nullptr; }
+	const UFlowAsset* GetInspectedInstance() const { return InspectedInstance.Get(); }
 
 	DECLARE_EVENT(UFlowAsset, FRefreshDebuggerEvent);
 
@@ -439,7 +439,7 @@ public:
 	template <class T>
 	TWeakObjectPtr<T> GetOwner() const
 	{
-		return Owner.IsValid() ? Cast<T>(Owner) : nullptr;
+		return Cast<T>(Owner.Get());
 	}
 
 	/* Returns the Owner as an Actor, or if Owner is a Component, return its Owner as an Actor. */

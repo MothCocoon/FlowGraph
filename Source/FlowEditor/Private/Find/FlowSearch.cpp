@@ -113,13 +113,14 @@ bool FFlowSearch::Search(const FFlowSearchQuery& Query, TArray<FFlowSearchResult
 			FARFilter Filter;
 			Filter.bRecursiveClasses = true;
 
-			if (Query.Scope == EFlowSearchScope::AllFlowAssets || !Query.ContextAsset.IsValid())
+			const UFlowAsset* ContextAsset = Query.ContextAsset.Get();
+			if (Query.Scope == EFlowSearchScope::AllFlowAssets || !ContextAsset)
 			{
 				Filter.ClassPaths.Add(FTopLevelAssetPath(UFlowAsset::StaticClass()->GetClassPathName()));
 			}
 			else
 			{
-				Filter.ClassPaths.Add(FTopLevelAssetPath(Query.ContextAsset->GetClass()->GetClassPathName()));
+				Filter.ClassPaths.Add(FTopLevelAssetPath(ContextAsset->GetClass()->GetClassPathName()));
 			}
 
 			Registry.Get().GetAssets(Filter, Assets);
