@@ -44,6 +44,95 @@ FORCEINLINE FString FPinRecord::DoubleDigit(const int32 Number)
 {
 	return Number > 9 ? FString::FromInt(Number) : TEXT("0") + FString::FromInt(Number);
 }
+
+FPinRecordBuffer::FPinRecordBuffer()
+{
+}
+
+void FPinRecordBuffer::Add(const FName& PinName, const FPinRecord& NewRecord)
+{
+	RecentPinRecords[NextPinRecordIndex] = NewRecord;
+	const FPinRecord& CurrentRecord = RecentPinRecords[NextPinRecordIndex];
+	NextPinRecordIndex = RecentPinRecords.GetNextIndex(NextPinRecordIndex);
+	TotalPinRecords++;
+	Log(PinName, CurrentRecord);
+}
+
+void FPinRecordBuffer::Add(const FName& PinName, FPinRecord&& NewRecord)
+{
+	RecentPinRecords[NextPinRecordIndex] = MoveTemp(NewRecord);
+	const FPinRecord& CurrentRecord = RecentPinRecords[NextPinRecordIndex];
+	NextPinRecordIndex = RecentPinRecords.GetNextIndex(NextPinRecordIndex);
+	TotalPinRecords++;
+	Log(PinName, CurrentRecord);
+}
+
+TArray<FPinRecord> FPinRecordBuffer::GetArray() const
+{
+    TArray<FPinRecord> Results;
+	uint32 Count = FMath::Min(TotalPinRecords, RecentPinRecordsCapacity);
+	if (Count <= 0)
+	{
+		return Results;
+	}
+
+	Results.Reserve(Count);
+
+	// If buffer is full, the oldest is at NextPinRecordIndex
+	// If buffer is not full, the oldest is at index 0
+	const uint32 StartIndex = (TotalPinRecords >= RecentPinRecordsCapacity) ? NextPinRecordIndex : 0;
+	for (uint32 ProcessedRecordsCount = 0, CurrentIndex = StartIndex;
+		ProcessedRecordsCount < Count;
+		ProcessedRecordsCount++, CurrentIndex = RecentPinRecords.GetNextIndex(CurrentIndex))
+	{
+		Results.Add(RecentPinRecords[CurrentIndex]);
+	}
+
+	return Results;
+}
+
+FPinRecord& FPinRecordBuffer::Last()
+{
+	const uint32 Index = RecentPinRecords.GetPreviousIndex(NextPinRecordIndex);
+	RangeCheck(Index);
+	return RecentPinRecords[Index];
+}
+
+const FPinRecord& FPinRecordBuffer::Last() const
+{
+	return const_cast<FPinRecordBuffer*>(this)->Last();
+}
+
+void FPinRecordBuffer::RangeCheck(uint32 Index) const
+{
+	checkf((Index >= 0) & (Index < RecentPinRecords.Capacity()),TEXT("Buffer index out of bounds: %lld into an buffer of size %lld"),(long long)Index, (long long)RecentPinRecords.Capacity()); // & for one branch
+}
+
+bool FPinRecordBuffer::IsValidIndex(uint32 Index) const
+{
+	return Index >= 0 && Index < RecentPinRecords.Capacity();
+}
+
+bool FPinRecordBuffer::IsEmpty() const
+{
+	return RecentPinRecords.Capacity() == 0;
+}
+
+uint32 FPinRecordBuffer::Capacity() const
+{
+	return RecentPinRecords.Capacity();
+}
+
+void FPinRecordBuffer::Log(const FName& PinName, const FPinRecord& Record)
+{
+	UE_LOG(LogFlow, VeryVerbose, TEXT("%s: %s: %s%s")
+		, *PinName.ToString()
+		, *FPinRecord::PinActivations
+		, *Record.HumanReadableTime
+		, Record.ActivationType == EFlowPinActivationType::Forced ? *FPinRecord::ForcedActivation
+		: Record.ActivationType == EFlowPinActivationType::PassThrough ? *FPinRecord::PassThroughActivation
+		: TEXT(""));
+}
 #endif
 
 //////////////////////////////////////////////////////////////////////////
