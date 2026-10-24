@@ -209,6 +209,20 @@ void FFlowAssetEditor::SaveAssetAs_Execute()
 	FAssetEditorToolkit::SaveAssetAs_Execute();
 }
 
+void FFlowAssetEditor::OnAssetsSaved(const TArray<UObject*>& SavedObjects)
+{
+	FAssetEditorToolkit::OnAssetsSaved(SavedObjects);
+
+	TryValidateOnAssetSave(SavedObjects);
+}
+
+void FFlowAssetEditor::OnAssetsSavedAs(const TArray<UObject*>& SavedObjects)
+{
+	FAssetEditorToolkit::OnAssetsSavedAs(SavedObjects);
+
+	TryValidateOnAssetSave(SavedObjects);
+}
+
 void FFlowAssetEditor::DoPreSaveAssetUpdate() const
 {
 	if (IsValid(FlowAsset))
@@ -466,6 +480,21 @@ void FFlowAssetEditor::RefreshAsset()
 {
 	// attempt to refresh graph, fix common issues automatically
 	CastChecked<UFlowGraph>(FlowAsset->GetGraph())->RefreshGraph();
+}
+
+void FFlowAssetEditor::TryValidateOnAssetSave(const TArray<UObject*>& SavedObjects) const
+{
+	for (UObject* SavedObject : SavedObjects)
+	{
+		const UFlowAsset* SavedFlowAsset = Cast<UFlowAsset>(SavedObject);
+		if (SavedFlowAsset && SavedFlowAsset->ShouldValidateOnSave())
+		{
+			if (FFlowAssetEditor* FlowEditor = static_cast<FFlowAssetEditor*>(GEditor->GetEditorSubsystem<UAssetEditorSubsystem>()->FindEditorForAsset(SavedObject, false)))
+			{
+				FlowEditor->ValidateAsset_Internal();
+			}
+		}
+	}
 }
 
 void FFlowAssetEditor::ValidateAsset(FFlowMessageLog& MessageLog)

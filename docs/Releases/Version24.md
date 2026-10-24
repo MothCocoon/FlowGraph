@@ -4,7 +4,7 @@ title: Flow 2.4 (work in progress)
 
 This is the upcoming release. This page is updated regularly after changes are pushed to the repository.
 
-This release includes pull requests from the community: Bargestt (Vasilii Bulgakov), CyaDaPaKnat, dskliarov-gsc, dyanikoglu (Doğa Can Yanıkoğlu), fcarreiro (Facundo), fede-Raider (Federico Ciardi), LindyHopperGT (Riot Games), Maksym Kapelianovych, northstarswap, omarchuk-gsc.
+This release includes pull requests from the community: AMBXJianPing (Fong Jian Ping), Bargestt (Vasilii Bulgakov), CyaDaPaKnat, dskliarov-gsc, dyanikoglu (Doğa Can Yanıkoğlu), fcarreiro (Facundo), fede-Raider (Federico Ciardi), LindyHopperGT (Riot Games), Maksym Kapelianovych, northstarswap, omarchuk-gsc.
 
 This is the first release for UE 5.9.
 
@@ -19,6 +19,12 @@ Version 2.2 came with a huge Data Pins refactor, and it requires data migration 
 ### Changed Flow Graph Node constructor to GENERATED_BODY
 This is a BREAKING CHANGE if you have any custom UFlowGraphNode class. Updating the code is trivial though.
 
+### By default, Data Validation runs on saving a Flow Asset
+This is the result of hooking up Flow Asset validation to the engine's built-in validation. Thanks to this, many issues can be detected early on. Even before submitting Flow Assets.
+However, this might be annoying to users.
+* You can disable this behavior in project settings by unchecking the `bValidateAssetOnSave` flag.
+* You can disable this in a specific `UFlowAsset` subclass by overriding the `ShouldValidateOnSave()` method.
+
 ## Flow Asset
 * Saving graph state to SaveGame now iterates nodes connected to Custom Inputs. Previously, the code only iterated over nodes connected to the Start node. (contributed by dskliarov-gsc)
 * New feature: Create a SubGraph asset from selected nodes! (contributed by LindyHopperGT)
@@ -26,8 +32,14 @@ This is a BREAKING CHANGE if you have any custom UFlowGraphNode class. Updating 
     * Creating a new asset was tested under Perforce and Git. It should work with other VCS but hasn't been tested yet.
 * Flow Asset validation improvements.
     * Validation logic is now called by the engine's Data Validation pipeline. (contributed by fede-Raider)
+    * Added ways to disable Data Validation on saving a Flow Asset. (based on a changelist by dskliarov-gsc)
     * Added a check whether a pin connects to zombie nodes. (contributed by LindyHopperGT)
     * Improved AddOn validation, i.e. checking whether it's allowed to place multiple AddOns of the same class on the node. (contributed by LindyHopperGT)
+* Added an option to reject the entire Flow Asset instance when attempting to create it.
+    * The new `UFlowAsset::CanBeInstanced()` method checks if all node templates are valid: a node won't be in the packaged game if its class is marked as Deprecated. Previously, such a missing node caused a silent failure in the packaged game. (contributed by LindyHopperGT)
+    * The runtime check is a failsafe, as such issues should be detected by Data Validation thanks to the changes to `UFlowAsset::IsNodeOrAddOnClassAllowed`. (contributed by LindyHopperGT)
+    * By default, this new behavior is disabled. This is the only way to ensure that released games and player save games are not affected.
+    * The new behavior can be enabled by checking the `bRejectFlowInstancesWithInvalidNodes` flag.
 * Diff improvements. (contributed by MaksymKapelianovych)
     * Reintroduced graph orientation changing.
     * Added highlighting of all changed properties in the Details view (as well as the focused one).
@@ -43,15 +55,17 @@ This is a BREAKING CHANGE if you have any custom UFlowGraphNode class. Updating 
 * QoL fix: added editor customizations to avoid displaying the " - Flow DataPin Value" suffix on every Data Pin type in the Flow Asset editor.
 
 ## Flow Node
-* Added initial implementation of network replication directly in Flow Nodes.
-* Added tooltip comparison when checking if Pins match. This fixes the automatic refresh of displayed tooltips after a tooltip has been modified. (contributed by CyaDaPaKnat)
+* New: Added initial implementation of network replication directly in Flow Nodes.
+* Pin-related improvements.
+    * Added tooltip comparison when checking if Pins match. This fixes the automatic refresh of displayed tooltips after a tooltip has been modified. (contributed by CyaDaPaKnat)
+    * Exposed `GetInputPins()` and `GetOutputPins()` to blueprints for automated tests. (contributed by omarchuk-gsc)
+    * Editor-only properties of `FFlowPin` are now wrapped with `WITH_EDITORONLY_DATA`: display name and tooltip. (contributed by Bargestt)
+    * Fixed `FPinRecord` slow memory leak in non-Shipping builds. Added `FPinRecordBuffer` that now limits the number of records to 64, instead of expanding infinitely. (contributed by AMBXJianPing)
 * Added the `Flow Identity` struct with a UI customization that filters actors in the world by actor and component class. (contributed by Bargestt)
     * This is used to provide a convenient actor picker on Flow Nodes.
     * The struct needs to be manually added to a Flow Node class and read by the node's logic.
 * Added a PIE world context guard during `ForcePinActivation`. This fixes issues with nodes spawning actors in the wrong (editor) world. (contributed by CyaDaPaKnat)
 * `GetNodeTitle()` and `GetNodeDescription()` are now called on node instances only when displaying actual node instances. This allows us to preserve the default title and description for the archetype (e.g. in the node selection list). (contributed by LindyHopperGT)
-* Exposed `GetInputPins()` and `GetOutputPins()` to blueprints for automated tests. (contributed by omarchuk-gsc)
-* Editor-only properties of `FFlowPin` are now wrapped with `WITH_EDITORONLY_DATA`: display name and tooltip. (contributed by Bargestt)
 * Node descriptions have been revamped and greatly improved. (contributed by LindyHopperGT)
 * Added documentation methods for LLM agents. All nodes now implement `GetAgentDoc()`. (contributed by LindyHopperGT)
 

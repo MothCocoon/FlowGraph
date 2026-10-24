@@ -163,6 +163,19 @@ bool UFlowAsset::IsNodeOrAddOnClassAllowed(const UClass* FlowNodeOrAddOnClass, F
 		return false;
 	}
 
+	if (FlowNodeOrAddOnClass->HasAnyClassFlags(CLASS_Abstract | CLASS_Deprecated | CLASS_NewerVersionExists))
+	{
+		if (OutOptionalFailureReason)
+		{
+			*OutOptionalFailureReason = FText::Format(
+				NSLOCTEXT("FlowAsset", "UnsaveableNodeClass",
+					"Class '{0}' cannot be saved because it is abstract, deprecated, or superseded. "
+					"Replace this node or add-on before cooking; its saved reference would be null."),
+				FText::FromString(FlowNodeOrAddOnClass->GetPathName()));
+		}
+		return false;
+	}
+
 	if (!CanFlowNodeClassBeUsedByFlowAsset(*FlowNodeOrAddOnClass))
 	{
 		return false;
@@ -379,6 +392,11 @@ EDataValidationResult UFlowAsset::ValidateAsset(FFlowMessageLog& MessageLog) con
 
 	// otherwise, the asset is considered valid (even with warnings or notes)
 	return EDataValidationResult::Valid;
+}
+
+bool UFlowAsset::ShouldValidateOnSave() const
+{
+	return GetDefault<UFlowSettings>()->bValidateAssetOnSave;
 }
 
 void UFlowAsset::ValidateAddOnTree(UFlowNodeAddOn& AddOn, FFlowMessageLog& MessageLog) const
@@ -1125,6 +1143,29 @@ void UFlowAsset::SetupForEditing()
 }
 #endif // WITH_EDITOR
 
+bool UFlowAsset::CanBeInstanced(const UFlowAsset& InTemplateAsset, const UObject* InOwner) const
+{
+	// Called for the template and again for its new instance.
+	// Use the (this != &InTemplateAsset) comparison if you need to test the new instance.
+
+	if (GetDefault<UFlowSettings>()->bRejectFlowInstancesWithInvalidNodes)
+	{
+		for (const TPair<FGuid, UFlowNode*>& Node : ObjectPtrDecay(Nodes))
+		{
+			if (!IsValid(Node.Value))
+			{
+				UE_LOG(LogFlow, Error,
+					TEXT("Flow instance creation rejected an invalid node. Template: '%s', Asset: '%s', "
+						"Node GUID: '%s', Owner: '%s'. Repair and recook the graph; it will not execute."),
+					*InTemplateAsset.GetPathName(), *GetPathName(), *Node.Key.ToString(), *GetPathNameSafe(InOwner));
+				return false;
+			}
+		}
+	}
+
+	return true;
+}
+
 void UFlowAsset::InitializeInstance(const TWeakObjectPtr<UObject> InOwner, UFlowAsset& InTemplateAsset)
 {
 	check(!IsInstanceInitialized());
@@ -1641,6 +1682,14 @@ void UFlowAsset::ApplyReplicatedNodeState(const FFlowNodeReplicatedState& Item)
 		{
 			FlowNodeReplication::ReadReplicatedProperties(*Node, Item.CustomData);
 		}
+	}
+}
+
+void UFlowAsset::EnsurePreloadPolicyInitialized()
+{
+	if (!PreloadPolicy.IsValid())
+	{
+		InitializePreloadPolicy();
 	}
 }
 
