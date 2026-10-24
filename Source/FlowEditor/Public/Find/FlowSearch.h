@@ -40,6 +40,18 @@ struct FLOWEDITOR_API FFlowSearchPinFilter
 	EFlowSearchPinConnectionState ConnectionState = EFlowSearchPinConnectionState::Any;
 };
 
+/**
+ * One SubGraph node crossed by search recursion.
+ */
+struct FLOWEDITOR_API FFlowSearchSubgraphLink
+{
+	// Asset that contains the SubGraph node.
+	FSoftObjectPath OwnerAssetPath;
+
+	// Graph node Guid of the SubGraph node.
+	FGuid SubGraphNodeGuid;
+};
+
 struct FLOWEDITOR_API FFlowSearchMatchedPin
 {
 	FName PinName;
@@ -80,6 +92,10 @@ struct FLOWEDITOR_API FFlowSearchResultItem
 
 	// When bIsSubGraphNode is true: the asset that contains the FlowNode_SubGraph entry point.
 	FSoftObjectPath SubgraphOwnerAssetPath;
+
+	// SubGraph nodes leading from the searched asset to AssetPath, outermost first.
+	// Empty for a node found directly in a searched asset.
+	TArray<FFlowSearchSubgraphLink> SubgraphPath;
 };
 
 /**
@@ -157,6 +173,7 @@ private:
 		int32 MaxDepth;
 		FFlowSearchPinFilter PinFilter;
 		TSet<UFlowAsset*> VisitedAssets; // Cycle guard for subgraph recursion
+		TArray<FFlowSearchSubgraphLink> SubgraphPath; // SubGraph nodes on the current recursion branch
 	};
 
 	static bool ProcessAsset(

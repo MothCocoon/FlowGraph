@@ -196,6 +196,7 @@ bool FFlowSearch::ProcessAsset(
 			Item.MatchedPins  = MoveTemp(MatchedPins);
 			Item.bIsSubGraphNode     = bIsSubGraphNode;
 			Item.SubgraphOwnerAssetPath = SubgraphOwnerPath;
+			Item.SubgraphPath = Context.SubgraphPath;
 			Item.MatchedSnippet = BuildMatchedSnippet(*CategoryStrings, NodeMatchedFlags, Context.Tokens);
 
 			Item.NodeGuid = EdNode->NodeGuid;
@@ -258,7 +259,11 @@ bool FFlowSearch::RecurseIntoSubgraphsIfEnabled(
 	}
 
 	// Subgraphs don't count against depth - same convention as SFindInFlow.
-	return ProcessAsset(SubAsset, Context, true, OwnerAssetPath, OutResults);
+	Context.SubgraphPath.Add({OwnerAssetPath, EdNode->NodeGuid});
+	const bool bAnyMatches = ProcessAsset(SubAsset, Context, true, OwnerAssetPath, OutResults);
+	Context.SubgraphPath.Pop();
+
+	return bAnyMatches;
 }
 
 const TMap<EFlowSearchFlags, TSet<FString>>* FFlowSearch::BuildCategoryStrings(

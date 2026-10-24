@@ -180,6 +180,9 @@ protected:
 	/* Maps one FFlowSearchResultItem to a tree result, loading its owning asset for navigation. */
 	static FSearchResult MakeResultItem(const struct FFlowSearchResultItem& Item);
 
+	/* Returns nullptr when the asset has no graph or no node with this Guid. */
+	static UEdGraphNode* FindGraphNode(const UFlowAsset* Asset, const FGuid& NodeGuid);
+
 protected:
 	/* Pointer back to the flow editor that owns us. */
 	TWeakPtr<class FFlowAssetEditor> FlowAssetEditorPtr;

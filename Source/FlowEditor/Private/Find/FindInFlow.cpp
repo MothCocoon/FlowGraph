@@ -474,21 +474,43 @@ void SFindInFlow::InitiateSearch()
 	TArray<FFlowSearchResultItem> RawResults;
 	FFlowSearch::Search(Query, RawResults);
 
-	// Group flat results by asset into per-asset root nodes (same visual layout as before).
+	// Each result goes under the root of its searched asset, nested in one row per SubGraph node on its path.
 	TMap<FSoftObjectPath, FSearchResult> AssetRoots;
+	TMap<TPair<FFindInFlowResult*, FGuid>, FSearchResult> SubgraphRows;
 	for (const FFlowSearchResultItem& Item : RawResults)
 	{
-		FSearchResult& AssetRoot = AssetRoots.FindOrAdd(Item.AssetPath);
+		const FSoftObjectPath& RootAssetPath = Item.SubgraphPath.IsEmpty() ? Item.AssetPath : Item.SubgraphPath[0].OwnerAssetPath;
+		FSearchResult& AssetRoot = AssetRoots.FindOrAdd(RootAssetPath);
 		if (!AssetRoot.IsValid())
 		{
-			UFlowAsset* Asset = Cast<UFlowAsset>(Item.AssetPath.TryLoad());
-			const FString AssetName = Asset ? Asset->GetName() : Item.AssetPath.GetAssetName();
+			UFlowAsset* Asset = Cast<UFlowAsset>(RootAssetPath.TryLoad());
+			const FString AssetName = Asset ? Asset->GetName() : RootAssetPath.GetAssetName();
 			AssetRoot = MakeShareable(new FFindInFlowResult(AssetName, Asset));
 		}
 
+		FSearchResult ParentRow = AssetRoot;
+		for (int32 LinkIndex = 0; LinkIndex < Item.SubgraphPath.Num(); ++LinkIndex)
+		{
+			const FFlowSearchSubgraphLink& Link = Item.SubgraphPath[LinkIndex];
+			FSearchResult& SubgraphRow = SubgraphRows.FindOrAdd(MakeTuple(ParentRow.Get(), Link.SubGraphNodeGuid));
+			if (!SubgraphRow.IsValid())
+			{
+				const FSoftObjectPath& SubAssetPath = Item.SubgraphPath.IsValidIndex(LinkIndex + 1)
+					? Item.SubgraphPath[LinkIndex + 1].OwnerAssetPath
+					: Item.AssetPath;
+				UFlowAsset* SubAsset = Cast<UFlowAsset>(SubAssetPath.TryLoad());
+				const FString SubAssetName = SubAsset ? SubAsset->GetName() : SubAssetPath.GetAssetName();
+				UEdGraphNode* SubGraphNode = FindGraphNode(Cast<UFlowAsset>(Link.OwnerAssetPath.TryLoad()), Link.SubGraphNodeGuid);
+
+				SubgraphRow = MakeShareable(new FFindInFlowResult(SubAssetName + TEXT(" (SubGraph)"), ParentRow, SubGraphNode, true, SubAsset));
+				ParentRow->Children.Add(SubgraphRow);
+			}
+			ParentRow = SubgraphRow;
+		}
+
 		FSearchResult ResultItem = MakeResultItem(Item);
-		ResultItem->Parent = AssetRoot;
-		AssetRoot->Children.Add(ResultItem);
+		ResultItem->Parent = ParentRow;
+		ParentRow->Children.Add(ResultItem);
 	}
 
 	for (TPair<FSoftObjectPath, FSearchResult>& AssetRoot : AssetRoots)
@@ -514,24 +536,28 @@ void SFindInFlow::InitiateSearch()
 SFindInFlow::FSearchResult SFindInFlow::MakeResultItem(const FFlowSearchResultItem& Item)
 {
 	UFlowAsset* Asset   = Cast<UFlowAsset>(Item.AssetPath.TryLoad());
-	UEdGraphNode* EdNode = nullptr;
+	UEdGraphNode* EdNode = FindGraphNode(Asset, Item.NodeGuid);
+
+	FSearchResult Result = MakeShareable(new FFindInFlowResult(Item.NodeTitle, nullptr, EdNode, Item.bIsSubGraphNode, Asset));
+	Result->MatchedFlags          = Item.MatchedFlags;
+	Result->MatchedPropertySnippet = Item.MatchedSnippet;
+	return Result;
+}
+
+UEdGraphNode* SFindInFlow::FindGraphNode(const UFlowAsset* Asset, const FGuid& NodeGuid)
+{
 	if (Asset && Asset->GetGraph())
 	{
 		for (UEdGraphNode* Node : Asset->GetGraph()->Nodes)
 		{
-			if (Node && Node->NodeGuid == Item.NodeGuid)
+			if (Node && Node->NodeGuid == NodeGuid)
 			{
-				EdNode = Node;
-				break;
+				return Node;
 			}
 		}
 	}
 
-	FSearchResult Result = MakeShareable(
-		new FFindInFlowResult(Item.NodeTitle, nullptr, EdNode, Item.bIsSubGraphNode, Asset));
-	Result->MatchedFlags          = Item.MatchedFlags;
-	Result->MatchedPropertySnippet = Item.MatchedSnippet;
-	return Result;
+	return nullptr;
 }
 
 TSharedRef<ITableRow> SFindInFlow::OnGenerateRow(FSearchResult InItem, const TSharedRef<STableViewBase>& OwnerTable) const
