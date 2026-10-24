@@ -54,7 +54,7 @@ class FLOWEDITOR_API FFlowGraphConnectionDrawingPolicy : public FConnectionDrawi
 public:
 	FFlowGraphConnectionDrawingPolicy(int32 InBackLayerID, int32 InFrontLayerID, float ZoomFactor, const FSlateRect& InClippingRect, FSlateWindowElementList& InDrawElements, UEdGraph* InGraphObj);
 
-	// Exporting this class forces the implicit copy operations to be emitted, and those touch FConnectionDrawingPolicy::LocalMousePosition, deprecated in UE 5.8. 
+	// Exporting this class forces the implicit copy operations to be emitted, and those touch FConnectionDrawingPolicy::LocalMousePosition, deprecated in UE 5.8.
 	// The factory only ever heap-allocates this policy, so drop the copy operations rather than silence the warning.
 	FFlowGraphConnectionDrawingPolicy(const FFlowGraphConnectionDrawingPolicy&) = delete;
 	FFlowGraphConnectionDrawingPolicy& operator=(const FFlowGraphConnectionDrawingPolicy&) = delete;
@@ -62,7 +62,7 @@ public:
 	void BuildPaths();
 
 	// FConnectionDrawingPolicy
-	virtual void DrawConnection(int32 LayerId, const FVector2f& Start, const FVector2f& End, const FConnectionParams& Params);
+	virtual void DrawConnection(int32 LayerId, const FVector2f& Start, const FVector2f& End, const FConnectionParams& Params) override;
 	virtual void DetermineWiringStyle(UEdGraphPin* OutputPin, UEdGraphPin* InputPin, FConnectionParams& Params) override;
 	virtual void Draw(TMap<TSharedRef<SWidget>, FArrangedWidget>& PinGeometries, FArrangedChildren& ArrangedNodes) override;
 	// --
@@ -81,21 +81,22 @@ protected:
 	bool FindPinCenter(const UEdGraphPin* Pin, FVector2D& OutCenter) const;
 	bool GetAverageConnectedPosition(class UFlowGraphNode_Reroute* Reroute, EEdGraphPinDirection Direction, FVector2D& OutPos) const;
 
-	/** The top and bottom edges of a node's arranged geometry, in the same absolute/panel space as pin geometry. */
-	struct FNodeVerticalExtent
+	/** The edges of a node's arranged geometry, in the same absolute/panel space as pin geometry. */
+	struct FNodeExtent
 	{
+		float Left = 0.0f;
+		float Right = 0.0f;
 		float Top = 0.0f;
 		float Bottom = 0.0f;
 	};
 
 	/**
-	 * Finds the vertical extent of the node that owns the given pin, using the geometry cached by the most
-	 * recent Draw() call.
+	 * Finds the extent of the node that owns the given pin, using the geometry cached by the most recent Draw() call.
 	 * @param Pin        Pin belonging to the node to look up.
-	 * @param OutExtent  Populated with the node's top/bottom edges on success.
+	 * @param OutExtent  Populated with the node's edges on success.
 	 * @return True if the owning node's arranged geometry was found.
 	 */
-	bool TryGetOwningNodeVerticalExtent(const UEdGraphPin* Pin, FNodeVerticalExtent& OutExtent) const;
+	bool TryGetOwningNodeExtent(const UEdGraphPin* Pin, FNodeExtent& OutExtent) const;
 
 private:
 	/** Arranged node geometry for the panel currently being painted, indexed by the node object. Rebuilt every Draw(). */

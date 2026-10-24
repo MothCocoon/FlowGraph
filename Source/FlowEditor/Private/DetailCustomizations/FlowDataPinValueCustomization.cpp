@@ -1,16 +1,18 @@
 // Copyright https://github.com/MothCocoon/FlowGraph/graphs/contributors
-
 #include "DetailCustomizations/FlowDataPinValueCustomization.h"
+
 #include "Interfaces/FlowDataPinValueOwnerInterface.h"
 #include "Types/FlowDataPinValuesStandard.h"
 #include "UnrealExtensions/VisibilityArrayBuilder.h"
 
+#include "Algo/Reverse.h"
 #include "DetailLayoutBuilder.h"
 #include "DetailWidgetRow.h"
 #include "IDetailChildrenBuilder.h"
 #include "IDetailPropertyRow.h"
 #include "IPropertyUtilities.h"
 #include "ScopedTransaction.h"
+#include "StructUtils/InstancedStructBaseStructQueryParams.h"
 #include "Widgets/Input/SCheckBox.h"
 #include "Widgets/Input/SComboBox.h"
 #include "Widgets/Text/STextBlock.h"
@@ -18,7 +20,10 @@
 
 #define LOCTEXT_NAMESPACE "FlowDataPinValueCustomization"
 
-static const TCHAR HiddenMeta[] = TEXT("Hidden");
+static constexpr TCHAR HiddenMeta[] = TEXT("Hidden");
+static const FName BaseStructMeta = TEXT("BaseStruct");
+static const FName BaseStructFunctionMeta = TEXT("BaseStructFunction");
+static const FName ExcludeBaseStructMeta = TEXT("ExcludeBaseStruct");
 
 FText FFlowDataPinValueCustomization::GetMultiTypeTooltip()
 {
@@ -59,8 +64,8 @@ void FFlowDataPinValueCustomization::CustomizeHeader(TSharedRef<IPropertyHandle>
 				continue;
 			}
 			const int64 Value = MultiTypeEnum->GetValueByIndex(i);
-			EFlowDataMultiType MT = static_cast<EFlowDataMultiType>(Value);
-			if (!bArraySupported && MT == EFlowDataMultiType::Array)
+			const EFlowDataMultiType MultiType = static_cast<EFlowDataMultiType>(Value);
+			if (!bArraySupported && MultiType == EFlowDataMultiType::Array)
 			{
 				continue;
 			}
@@ -96,7 +101,7 @@ void FFlowDataPinValueCustomization::CustomizeHeader(TSharedRef<IPropertyHandle>
 		}
 	}
 
-	TSharedRef<SHorizontalBox> HeaderBox = SNew(SHorizontalBox);
+	const TSharedRef<SHorizontalBox> HeaderBox = SNew(SHorizontalBox);
 
 	// MultiType control (combo or static label if array unsupported)
 	if (bArraySupported)
@@ -107,7 +112,7 @@ void FFlowDataPinValueCustomization::CustomizeHeader(TSharedRef<IPropertyHandle>
 			[
 				SAssignNew(MultiTypeComboBox, SComboBox<TSharedPtr<int32>>)
 					.OptionsSource(&MultiTypeOptions)
-					.OnGenerateWidget(this, &FFlowDataPinValueCustomization::GenerateMultiTypeWidget)
+					.OnGenerateWidget_Static(&FFlowDataPinValueCustomization::GenerateMultiTypeWidget)
 					.OnSelectionChanged(this, &FFlowDataPinValueCustomization::OnMultiTypeChanged)
 					.IsEnabled(this, &FFlowDataPinValueCustomization::GetInputPinCheckboxEnabled)
 					.ToolTipText(GetMultiTypeTooltip())
@@ -165,14 +170,14 @@ void FFlowDataPinValueCustomization::CustomizeHeader(TSharedRef<IPropertyHandle>
 		];
 }
 
-void FFlowDataPinValueCustomization::CustomizeChildren(TSharedRef<IPropertyHandle> InStructPropertyHandle,
+void FFlowDataPinValueCustomization::CustomizeChildren(const TSharedRef<IPropertyHandle> InStructPropertyHandle,
 	IDetailChildrenBuilder& StructBuilder,
 	IPropertyTypeCustomizationUtils& StructCustomizationUtils)
 {
 	BuildValueRows(InStructPropertyHandle, StructBuilder, StructCustomizationUtils);
 }
 
-void FFlowDataPinValueCustomization::BuildValueRows(TSharedRef<IPropertyHandle> InStructPropertyHandle,
+void FFlowDataPinValueCustomization::BuildValueRows(const TSharedRef<IPropertyHandle> InStructPropertyHandle,
 	IDetailChildrenBuilder& StructBuilder,
 	IPropertyTypeCustomizationUtils& StructCustomizationUtils)
 {
@@ -208,7 +213,7 @@ void FFlowDataPinValueCustomization::BuildSingleBranch(IDetailChildrenBuilder& S
 		return;
 	}
 
-	TSharedPtr<IPropertyHandle> ValueToShow = bArraySupported
+	const TSharedPtr<IPropertyHandle> ValueToShow = bArraySupported
 		? ValuesHandle->GetChildHandle(0)
 		: ValuesHandle;
 
@@ -216,6 +221,8 @@ void FFlowDataPinValueCustomization::BuildSingleBranch(IDetailChildrenBuilder& S
 	{
 		return;
 	}
+
+	ApplyInstancedStructMetaData(ValueToShow.ToSharedRef());
 
 	IDetailPropertyRow& Row = StructBuilder.AddProperty(ValueToShow.ToSharedRef());
 	Row.ShouldAutoExpand(true);
@@ -230,12 +237,29 @@ void FFlowDataPinValueCustomization::BuildArrayBranch(IDetailChildrenBuilder& St
 
 	if (bArraySupported && ValuesHandle.IsValid() && ValuesHandle->AsArray())
 	{
-		IDetailPropertyRow& Row = StructBuilder.AddProperty(ValuesHandle.ToSharedRef());
-		Row.ShouldAutoExpand(true);
+		if (DataPinType && DataPinType->GetPinTypeName() == FFlowPinType_InstancedStruct::GetPinTypeNameStatic())
+		{
+			BuildVisibilityAwareArray(StructBuilder,
+				ValuesHandle,
+				[this](TSharedRef<IPropertyHandle> ElementHandle, int32, IDetailChildrenBuilder& ChildBuilder,
+					const TAttribute<EVisibility>& RowVisibility)
+				{
+					ApplyInstancedStructMetaData(ElementHandle);
+					IDetailPropertyRow& Row = ChildBuilder.AddProperty(ElementHandle);
+					Row.Visibility(RowVisibility);
+					Row.ShouldAutoExpand(true);
+				},
+				TAttribute<EVisibility>::CreateSP(this, &FFlowDataPinValueCustomization::GetArrayModeVisibility));
+		}
+		else
+		{
+			IDetailPropertyRow& Row = StructBuilder.AddProperty(ValuesHandle.ToSharedRef());
+			Row.ShouldAutoExpand(true);
+		}
 	}
 }
 
-void FFlowDataPinValueCustomization::RequestRefresh()
+void FFlowDataPinValueCustomization::RequestRefresh() const
 {
 	if (PropertyUtilities.IsValid())
 	{
@@ -243,7 +267,7 @@ void FFlowDataPinValueCustomization::RequestRefresh()
 	}
 }
 
-void FFlowDataPinValueCustomization::EnsureSingleElementExists()
+void FFlowDataPinValueCustomization::EnsureSingleElementExists() const
 {
 	if (!ValuesHandle.IsValid())
 	{
@@ -252,7 +276,7 @@ void FFlowDataPinValueCustomization::EnsureSingleElementExists()
 
 	if (bArraySupported)
 	{
-		if (auto AsArray = ValuesHandle->AsArray())
+		if (const auto AsArray = ValuesHandle->AsArray())
 		{
 			uint32 Num = 0;
 			AsArray->GetNumElements(Num);
@@ -272,7 +296,7 @@ void FFlowDataPinValueCustomization::CacheHandles(const TSharedRef<IPropertyHand
 	IsInputPinHandle = PropertyHandle->GetChildHandle(GET_MEMBER_NAME_CHECKED(FFlowDataPinValue, bIsInputPin));
 	PropertyUtilities = StructCustomizationUtils.GetPropertyUtilities();
 
-	if (auto* Value = GetFlowDataPinValueBeingEdited())
+	if (const auto* Value = GetFlowDataPinValueBeingEdited())
 	{
 		DataPinType = Value->LookupPinType();
 		if (DataPinType)
@@ -280,6 +304,76 @@ void FFlowDataPinValueCustomization::CacheHandles(const TSharedRef<IPropertyHand
 			ValuesHandle = DataPinType->GetValuesHandle(PropertyHandle);
 		}
 	}
+}
+
+void FFlowDataPinValueCustomization::ApplyInstancedStructMetaData(const TSharedRef<IPropertyHandle>& ElementHandle) const
+{
+	if (!DataPinType || DataPinType->GetPinTypeName() != FFlowPinType_InstancedStruct::GetPinTypeNameStatic())
+	{
+		return;
+	}
+
+	for (const FName MetaDataName : { BaseStructMeta, ExcludeBaseStructMeta })
+	{
+		if (StructPropertyHandle->HasMetaData(MetaDataName))
+		{
+			ElementHandle->SetInstanceMetaData(MetaDataName, StructPropertyHandle->GetMetaData(MetaDataName));
+		}
+	}
+
+	// The engine picker resolves BaseStructFunction only from metadata declared on the FInstancedStruct property itself.
+	if (const UScriptStruct* BaseStruct = ResolveBaseStructFunction())
+	{
+		ElementHandle->SetInstanceMetaData(BaseStructMeta, BaseStruct->GetPathName());
+	}
+}
+
+const UScriptStruct* FFlowDataPinValueCustomization::ResolveBaseStructFunction() const
+{
+	const FString& FunctionName = StructPropertyHandle->GetMetaData(BaseStructFunctionMeta);
+
+	UObject* Target = nullptr;
+	UFunction* Function = nullptr;
+
+	if (FunctionName.Contains(TEXT(".")))
+	{
+		Function = FindObject<UFunction>(nullptr, *FunctionName);
+		if (Function && Function->HasAnyFunctionFlags(FUNC_Static))
+		{
+			Target = Function->GetOuterUClass()->GetDefaultObject();
+		}
+	}
+	else if (!FunctionName.IsEmpty())
+	{
+		TArray<UObject*> OuterObjects;
+		StructPropertyHandle->GetOuterObjects(OuterObjects);
+		if (OuterObjects.Num() > 0 && OuterObjects[0])
+		{
+			Target = OuterObjects[0];
+			Function = Target->GetClass()->FindFunctionByName(*FunctionName);
+		}
+	}
+
+	const UScriptStruct* BaseStruct = nullptr;
+
+	if (Target && Function && Function->IsNative())
+	{
+		// The chain ends at the data pin value property, as if it was the FInstancedStruct property.
+		UE::StructUtils::FInstancedStructBaseStructQueryParams Params;
+		for (TSharedPtr<IPropertyHandle> Handle = StructPropertyHandle; Handle.IsValid(); Handle = Handle->GetParentHandle())
+		{
+			if (const FProperty* Property = Handle->GetProperty())
+			{
+				Params.PropertyChainWithArrayIndex.Add({ Property, Handle->GetArrayIndex() });
+			}
+		}
+		Algo::Reverse(Params.PropertyChainWithArrayIndex);
+
+		DECLARE_DELEGATE_RetVal_OneParam(TObjectPtr<UScriptStruct>, FGetBaseStruct, UE::StructUtils::FInstancedStructBaseStructQueryParams);
+		BaseStruct = FGetBaseStruct::CreateUFunction(Target, Function->GetFName()).Execute(Params);
+	}
+
+	return BaseStruct;
 }
 
 void FFlowDataPinValueCustomization::CacheOwnerInterface()
@@ -316,7 +410,7 @@ void FFlowDataPinValueCustomization::OnMultiTypeChanged(TSharedPtr<int32> NewSel
 	bool bNeedsTrim = (NewType == EFlowDataMultiType::Single);
 	if (bNeedsTrim && ValuesHandle.IsValid())
 	{
-		if (auto AsArray = ValuesHandle->AsArray())
+		if (const auto AsArray = ValuesHandle->AsArray())
 		{
 			uint32 NumElements = 0;
 			AsArray->GetNumElements(NumElements);
@@ -348,7 +442,7 @@ void FFlowDataPinValueCustomization::OnMultiTypeChanged(TSharedPtr<int32> NewSel
 #endif
 }
 
-void FFlowDataPinValueCustomization::OnInputPinChanged(ECheckBoxState NewState)
+void FFlowDataPinValueCustomization::OnInputPinChanged(const ECheckBoxState NewState) const
 {
 	if (!IsInputPinHandle.IsValid())
 	{
@@ -372,14 +466,14 @@ void FFlowDataPinValueCustomization::OnInputPinChanged(ECheckBoxState NewState)
 	RequestRefresh();
 }
 
-void FFlowDataPinValueCustomization::TrimArrayToSingle()
+void FFlowDataPinValueCustomization::TrimArrayToSingle() const
 {
 	if (!ValuesHandle.IsValid())
 	{
 		return;
 	}
 
-	if (auto AsArray = ValuesHandle->AsArray())
+	if (const auto AsArray = ValuesHandle->AsArray())
 	{
 		uint32 NumElements = 0;
 		AsArray->GetNumElements(NumElements);
@@ -451,7 +545,7 @@ bool FFlowDataPinValueCustomization::GetInputPinCheckboxEnabled() const
 	return OwnerInterface ? OwnerInterface->CanModifyFlowDataPinType() : true;
 }
 
-TSharedRef<SWidget> FFlowDataPinValueCustomization::GenerateMultiTypeWidget(TSharedPtr<int32> Item) const
+TSharedRef<SWidget> FFlowDataPinValueCustomization::GenerateMultiTypeWidget(TSharedPtr<int32> Item)
 {
 	const UEnum* MultiTypeEnum = StaticEnum<EFlowDataMultiType>();
 	return SNew(STextBlock)
@@ -471,16 +565,16 @@ FText FFlowDataPinValueCustomization::GetSelectedMultiTypeText() const
 
 void FFlowDataPinValueCustomization::BuildVisibilityAwareArray(
 	IDetailChildrenBuilder& StructBuilder,
-	TSharedPtr<IPropertyHandle> ArrayHandle,
+	const TSharedPtr<IPropertyHandle>& ArrayHandle,
 	TFunction<void(TSharedRef<IPropertyHandle>, int32, IDetailChildrenBuilder&, const TAttribute<EVisibility>&)> Generator,
-	TAttribute<EVisibility> VisibilityAttribute)
+	TAttribute<EVisibility> VisibilityAttribute) const
 {
 	if (!ArrayHandle.IsValid() || !bArraySupported)
 	{
 		return;
 	}
 
-	TSharedRef<FVisibilityArrayBuilder> ArrayBuilder =
+	const TSharedRef<FVisibilityArrayBuilder> ArrayBuilder =
 		MakeShareable(new FVisibilityArrayBuilder(ArrayHandle.ToSharedRef(), true, true, true));
 
 	ArrayBuilder->SetVisibilityGetter([VisibilityAttribute]()
@@ -498,16 +592,16 @@ void FFlowDataPinValueCustomization::BuildVisibilityAwareArray(
 	StructBuilder.AddCustomBuilder(ArrayBuilder);
 }
 
-void FFlowDataPinValueCustomization::ValidateArrayElements(TSharedPtr<IPropertyHandle> ArrayHandle,
-	TFunction<bool(TSharedPtr<IPropertyHandle>)> IsValidPredicate,
-	TFunction<void(TSharedPtr<IPropertyHandle>)> InvalidateAction)
+void FFlowDataPinValueCustomization::ValidateArrayElements(const TSharedPtr<IPropertyHandle>& ArrayHandle,
+	const TFunction<bool(TSharedPtr<IPropertyHandle>)>& IsValidPredicate,
+	const TFunction<void(TSharedPtr<IPropertyHandle>)>& InvalidateAction)
 {
 	if (!ArrayHandle.IsValid())
 	{
 		return;
 	}
 
-	auto AsArray = ArrayHandle->AsArray();
+	const auto AsArray = ArrayHandle->AsArray();
 	if (!AsArray.IsValid())
 	{
 		return;
