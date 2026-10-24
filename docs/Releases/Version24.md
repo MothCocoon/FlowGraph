@@ -56,6 +56,7 @@ However, this might be annoying to users.
 * Refactored Flow Search. (contributed by LindyHopperGT)
     * Moved shared search semantics from the `FindInFlow` class into the `FFlowSearch` service. The extracted code can be called from external tools.
     * Added Pin Name search controls and progress feedback to the FindInFlow UI.
+    * Fix: keep newly added filters enabled by default.
 
 ## Flow Node
 * New: Added initial implementation of network replication directly in Flow Nodes.
