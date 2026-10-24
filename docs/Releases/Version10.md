@@ -32,4 +32,4 @@ March 8, 2021. The first publicly released version of the plugin!
 There are few things I described in that 24-minute presentation, but they're not part of the plugin.
 * Variables support. Adding variables to assets and passing values to nodes. This is a core blueprint feature that I'd like to implement in some way in Flow Asset. It's not a trivial thing to do. I don't know when this would be done.
 * You won't find any game-specific systems in the Flow plugin, like quest system or dialogue system. The fundamental idea of this plugin is to provide you an excellent framework for building your project-specific system. I might only provide some examples in the future. This would be added to the separate [FlowGame](https://github.com/MothCocoon/FlowGame) repository.
-* FactsDB isn't implemented, it might be in the future. 
+* FactsDB isn't implemented, it might be in the future.
