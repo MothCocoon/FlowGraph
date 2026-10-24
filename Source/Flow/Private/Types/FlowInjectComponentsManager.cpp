@@ -1,6 +1,6 @@
 // Copyright https://github.com/MothCocoon/FlowGraph/graphs/contributors
-
 #include "Types/FlowInjectComponentsManager.h"
+
 #include "Types/FlowInjectComponentsHelper.h"
 #include "Components/ActorComponent.h"
 #include "Containers/ArrayView.h"
@@ -9,7 +9,7 @@
 
 #include UE_INLINE_GENERATED_CPP_BY_NAME(FlowInjectComponentsManager)
 
-void UFlowInjectComponentsManager::InitializeRuntime()
+void UFlowInjectComponentsManager::InitializeRuntime() const
 {
 	check(InjectedComponents.IsEmpty());
 }
@@ -52,8 +52,8 @@ void UFlowInjectComponentsManager::InjectComponentOnActor(AActor& Actor, UActorC
 		if (TrackedActor != &Actor)
 		{
 			UE_LOG(LogFlow, Warning,
-				TEXT("UFlowInjectComponentsManager::InjectComponentOnActor - Component %s is already injected on %s; ignoring requested actor %s"),
-				*GetNameSafe(&ComponentInstance), *GetNameSafe(TrackedActor), *GetNameSafe(&Actor));
+			       TEXT("UFlowInjectComponentsManager::InjectComponentOnActor - Component %s is already injected on %s; ignoring requested actor %s"),
+			       *GetNameSafe(&ComponentInstance), *GetNameSafe(TrackedActor), *GetNameSafe(&Actor));
 		}
 
 		InjectedComponents[ComponentIndex].Users.Add(ComponentUser);
@@ -82,7 +82,7 @@ void UFlowInjectComponentsManager::InjectComponentsOnActor(
 	}
 }
 
-void UFlowInjectComponentsManager::RegisterComponentUser(UObject& User, UActorComponent& Component)
+void UFlowInjectComponentsManager::RegisterComponentUser(UObject& User, const UActorComponent& Component)
 {
 	const int32 ComponentIndex = FindComponentIndex(&Component);
 	if (ComponentIndex != INDEX_NONE)
@@ -91,7 +91,7 @@ void UFlowInjectComponentsManager::RegisterComponentUser(UObject& User, UActorCo
 	}
 }
 
-void UFlowInjectComponentsManager::UnregisterComponentUser(UObject& User, UActorComponent& Component)
+void UFlowInjectComponentsManager::UnregisterComponentUser(UObject& User, const UActorComponent& Component)
 {
 	const int32 ComponentIndex = FindComponentIndex(&Component);
 	if (ComponentIndex != INDEX_NONE)
@@ -100,7 +100,7 @@ void UFlowInjectComponentsManager::UnregisterComponentUser(UObject& User, UActor
 	}
 }
 
-void UFlowInjectComponentsManager::UnregisterComponentUser(UObject& User, int32 ComponentIndex)
+void UFlowInjectComponentsManager::UnregisterComponentUser(UObject& User, const int32 ComponentIndex)
 {
 	FFlowInjectedComponent& Entry = InjectedComponents[ComponentIndex];
 	if (Entry.Users.Remove(&User) == 0)
@@ -115,7 +115,7 @@ void UFlowInjectComponentsManager::UnregisterComponentUser(UObject& User, int32 
 	}
 }
 
-void UFlowInjectComponentsManager::PruneCollectedUsers(FFlowInjectedComponent& Entry) const
+void UFlowInjectComponentsManager::PruneCollectedUsers(FFlowInjectedComponent& Entry)
 {
 	// Users that were garbage collected without releasing must not keep the component alive
 	int32 CollectedUserCount = 0;
@@ -131,9 +131,9 @@ void UFlowInjectComponentsManager::PruneCollectedUsers(FFlowInjectedComponent& E
 	if (CollectedUserCount > 0)
 	{
 		UE_LOG(LogFlow, Warning,
-			TEXT("UFlowInjectComponentsManager - %d user(s) of component %s on %s were garbage collected without unregistering. ")
-			TEXT("Call UnregisterComponentUser or UnregisterAllComponentUsers before releasing a user; otherwise the component stays injected until another release reaches this manager."),
-			CollectedUserCount, *GetNameSafe(Entry.Component), *GetNameSafe(Entry.Actor));
+		       TEXT("UFlowInjectComponentsManager - %d user(s) of component %s on %s were garbage collected without unregistering. ")
+		       TEXT("Call UnregisterComponentUser or UnregisterAllComponentUsers before releasing a user; otherwise the component stays injected until another release reaches this manager."),
+		       CollectedUserCount, *GetNameSafe(Entry.Component), *GetNameSafe(Entry.Actor));
 	}
 }
 
@@ -193,14 +193,14 @@ void UFlowInjectComponentsManager::RemoveInjectedComponents()
 	ReleaseRemovedEntries(RemovedEntries);
 }
 
-void UFlowInjectComponentsManager::RemoveComponent(int32 ComponentIndex)
+void UFlowInjectComponentsManager::RemoveComponent(const int32 ComponentIndex)
 {
 	const FFlowInjectedComponent Entry = MoveTemp(InjectedComponents[ComponentIndex]);
 	InjectedComponents.RemoveAtSwap(ComponentIndex, EAllowShrinking::No);
 	ReleaseRemovedEntries(TConstArrayView<FFlowInjectedComponent>(&Entry, 1));
 }
 
-void UFlowInjectComponentsManager::ReleaseRemovedEntries(TConstArrayView<FFlowInjectedComponent> RemovedEntries)
+void UFlowInjectComponentsManager::ReleaseRemovedEntries(const TConstArrayView<FFlowInjectedComponent> RemovedEntries)
 {
 	// The entries are already out of InjectedComponents, so code run by destruction or by the notification below
 	// may change the tracked records freely.

@@ -412,6 +412,13 @@ protected:
 	 * Initialized from OutputDataPinDeclarations defaults at StartFlow; updated by SetGraphOutput/Finish nodes. */
 	UPROPERTY(Transient)
 	FFlowOutputDataPinValues OutputDataPinValues;
+	
+private:
+	UPROPERTY(Transient)
+	TObjectPtr<UFlowAsset> OwningRootFlowInstance;
+
+	UPROPERTY(Transient)
+	TObjectPtr<UFlowInjectComponentsManager> ComponentInjector;
 
 public:
 	virtual bool CanBeInstanced(const UFlowAsset& InTemplateAsset, const UObject* InOwner) const;
@@ -491,17 +498,10 @@ public:
 	UFUNCTION(BlueprintPure, Category = "Flow|Components")
 	UFlowAsset* GetOwningRootFlowInstance() const;
 
+	UFlowInjectComponentsManager* GetOrCreateComponentInjectionManager();
+	UFlowInjectComponentsManager* GetOrCreateComponentInjectionManagerInRootFlow() const;
 	UFlowInjectComponentsManager* FindComponentInjectionManager() const;
 	UFlowInjectComponentsManager* FindComponentInjectionManagerInRootFlow() const;
-	UFlowInjectComponentsManager* GetOrCreateComponentInjectionManager();
-	UFlowInjectComponentsManager* GetOrCreateComponentInjectionManagerInRootFlow();
-
-private:
-	UPROPERTY(Transient)
-	TObjectPtr<UFlowAsset> OwningRootFlowInstance = nullptr;
-
-	UPROPERTY(Transient)
-	TObjectPtr<UFlowInjectComponentsManager> ComponentInjector = nullptr;
 
 //////////////////////////////////////////////////////////////////////////
 // Network replication

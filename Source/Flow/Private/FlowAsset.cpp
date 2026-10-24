@@ -1212,17 +1212,6 @@ UFlowAsset* UFlowAsset::GetOwningRootFlowInstance() const
 	return OwningRootFlowInstance.Get();
 }
 
-UFlowInjectComponentsManager* UFlowAsset::FindComponentInjectionManager() const
-{
-	return IsValid(ComponentInjector) ? ComponentInjector.Get() : nullptr;
-}
-
-UFlowInjectComponentsManager* UFlowAsset::FindComponentInjectionManagerInRootFlow() const
-{
-	const UFlowAsset* Root = GetOwningRootFlowInstance();
-	return IsValid(Root) ? Root->FindComponentInjectionManager() : nullptr;
-}
-
 UFlowInjectComponentsManager* UFlowAsset::GetOrCreateComponentInjectionManager()
 {
 	if (!IsValid(ComponentInjector))
@@ -1233,11 +1222,23 @@ UFlowInjectComponentsManager* UFlowAsset::GetOrCreateComponentInjectionManager()
 	return ComponentInjector;
 }
 
-UFlowInjectComponentsManager* UFlowAsset::GetOrCreateComponentInjectionManagerInRootFlow()
+UFlowInjectComponentsManager* UFlowAsset::GetOrCreateComponentInjectionManagerInRootFlow() const
 {
 	UFlowAsset* Root = GetOwningRootFlowInstance();
 	checkf(IsValid(Root), TEXT("Root component manager access requires a runtime Flow instance."));
 	return Root->GetOrCreateComponentInjectionManager();
+}
+
+
+UFlowInjectComponentsManager* UFlowAsset::FindComponentInjectionManager() const
+{
+	return IsValid(ComponentInjector) ? ComponentInjector.Get() : nullptr;
+}
+
+UFlowInjectComponentsManager* UFlowAsset::FindComponentInjectionManagerInRootFlow() const
+{
+	const UFlowAsset* Root = GetOwningRootFlowInstance();
+	return IsValid(Root) ? Root->FindComponentInjectionManager() : nullptr;
 }
 
 FName UFlowAsset::GetInstanceName() const

@@ -39,7 +39,7 @@ class UFlowInjectComponentsManager : public UObject
 	GENERATED_BODY()
 
 public:
-	FLOW_API void InitializeRuntime();
+	FLOW_API void InitializeRuntime() const;
 	FLOW_API void ShutdownRuntime();
 
 	/** Injects the component onto the actor, with this manager as its user. See the overload taking a User. */
@@ -59,13 +59,13 @@ public:
 	FLOW_API void RemoveAllInjectedComponentsAndStopMonitoringActor(AActor& Actor);
 
 	/** Registers User for a component this manager injected. Ignored for components this manager does not track. */
-	FLOW_API void RegisterComponentUser(UObject& User, UActorComponent& Component);
+	FLOW_API void RegisterComponentUser(UObject& User, const UActorComponent& Component);
 
 	/**
 	 * Releases User from a component this manager injected. When no valid user remains, the component is destroyed
 	 * before this returns, regardless of bRemoveInjectedComponentsWhenDeinitializing. Ignored if User is not registered.
 	 */
-	FLOW_API void UnregisterComponentUser(UObject& User, UActorComponent& Component);
+	FLOW_API void UnregisterComponentUser(UObject& User, const UActorComponent& Component);
 
 	/**
 	 * Releases User from every component this manager injected, destroying those left without a valid user.
@@ -111,9 +111,9 @@ private:
 	TArray<FFlowInjectedComponent> InjectedComponents;
 
 	int32 FindComponentIndex(const UActorComponent* Component) const;
-	void UnregisterComponentUser(UObject& User, int32 ComponentIndex);
-	void PruneCollectedUsers(FFlowInjectedComponent& Entry) const;
-	void RemoveComponent(int32 ComponentIndex);
-	void ReleaseRemovedEntries(TConstArrayView<FFlowInjectedComponent> RemovedEntries);
+	void UnregisterComponentUser(UObject& User, const int32 ComponentIndex);
+	static void PruneCollectedUsers(FFlowInjectedComponent& Entry);
+	void RemoveComponent(const int32 ComponentIndex);
+	void ReleaseRemovedEntries(const TConstArrayView<FFlowInjectedComponent> RemovedEntries);
 	bool IsActorTracked(const AActor& Actor) const;
 };

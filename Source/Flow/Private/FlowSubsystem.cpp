@@ -195,8 +195,7 @@ UFlowAsset* UFlowSubsystem::CreateSubFlow(UFlowNode_SubGraph* SubGraphNode, cons
 	if (!InstancedSubFlows.Contains(SubGraphNode))
 	{
 		const TWeakObjectPtr<UObject> Owner = SubGraphOwner ? SubGraphOwner->GetOwner() : nullptr;
-		AssetInstance = CreateFlowInstance(
-			Owner, SubGraphNode->Asset.LoadSynchronous(), SavedInstanceName, /*bStartReplication=*/false, SubGraphOwner);
+		AssetInstance = CreateFlowInstance(Owner, SubGraphNode->Asset.LoadSynchronous(), SavedInstanceName, /*bStartReplication=*/false, SubGraphOwner);
 
 		if (AssetInstance)
 		{
@@ -235,13 +234,14 @@ void UFlowSubsystem::FinishSubFlow(UFlowNode_SubGraph* SubGraphNode, const EFlow
 {
 	if (IsValid(SubGraphNode) && InstancedSubFlows.Contains(SubGraphNode))
 	{
-		// The Flow Asset instantiated by SubGraph node 
-		UFlowAsset* AssetInstance = InstancedSubFlows[SubGraphNode];
-
+		// Delist this SubGraph node from its parent
 		if (UFlowAsset* SubGraphOwner = SubGraphNode->GetFlowAsset())
 		{
 			SubGraphOwner->ActiveSubGraphs.Remove(SubGraphNode);
 		}
+
+		// The Flow Asset instantiated by this SubGraph node
+		UFlowAsset* AssetInstance = InstancedSubFlows[SubGraphNode];
 		AssetInstance->FinishFlowInstance(FinishPolicy);
 
 		if (bRemoveInstance)
@@ -249,7 +249,7 @@ void UFlowSubsystem::FinishSubFlow(UFlowNode_SubGraph* SubGraphNode, const EFlow
 			InstancedSubFlows.Remove(SubGraphNode);
 			AssetInstance->DeinitializeInstance();
 
-			// Keep the owning node available during finish and deinitialize callbacks.
+			// Cleared only now, the owning node is needed during finish and deinitialize callbacks
 			AssetInstance->NodeOwningThisAssetInstance = nullptr;
 		}
 		else
@@ -285,6 +285,7 @@ UFlowAsset* UFlowSubsystem::CreateFlowInstance(const TWeakObjectPtr<UObject> Own
 	}
 
 	UFlowAsset* NewInstance = NewObject<UFlowAsset>(this, LoadedFlowAsset->GetClass(), *NewInstanceName, RF_Transient, LoadedFlowAsset, false, nullptr);
+
 	UFlowAsset* ResolvedRoot = IsValid(OwningFlowInstance) ? OwningFlowInstance->GetOwningRootFlowInstance() : nullptr;
 	if (!IsValid(ResolvedRoot))
 	{
