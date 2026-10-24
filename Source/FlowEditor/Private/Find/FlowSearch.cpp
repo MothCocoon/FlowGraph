@@ -18,7 +18,7 @@
 //////////////////////////////////////////////////////////////////////////
 // FFindInFlowCache
 
-TMap<TWeakObjectPtr<UEdGraphNode>, TMap<EFlowSearchFlags, TSet<FString>>> FFindInFlowCache::CategoryStringCache;
+TMap<TWeakObjectPtr<UEdGraphNode>, FFindInFlowCacheEntry> FFindInFlowCache::CategoryStringCache;
 
 void FFindInFlowCache::OnFlowAssetChanged(const UFlowAsset& ChangedFlowAsset)
 {
@@ -277,23 +277,29 @@ const TMap<EFlowSearchFlags, TSet<FString>>* FFlowSearch::BuildCategoryStrings(
 	}
 
 	// Reuse the same global cache that SFindInFlow uses so the two paths don't double-build.
-	if (const TMap<EFlowSearchFlags, TSet<FString>>* Cached = FFindInFlowCache::CategoryStringCache.Find(EdNode))
+	if (const FFindInFlowCacheEntry* Cached = FFindInFlowCache::CategoryStringCache.Find(EdNode))
 	{
-		return Cached;
+		// Flags and depth decide which strings are collected
+		if (Cached->Flags == Context.Flags && Cached->MaxDepth == Context.MaxDepth)
+		{
+			return &Cached->CategoryStrings;
+		}
 	}
 
-	TMap<EFlowSearchFlags, TSet<FString>> NewMap;
-	UpdateCategoryStringsForEdGraphNode(*EdNode, Context, NewMap);
+	FFindInFlowCacheEntry NewEntry;
+	NewEntry.Flags = Context.Flags;
+	NewEntry.MaxDepth = Context.MaxDepth;
+	UpdateCategoryStringsForEdGraphNode(*EdNode, Context, NewEntry.CategoryStrings);
 
 	if (const UFlowGraphNode* FlowGraphNode = Cast<UFlowGraphNode>(EdNode))
 	{
 		if (const UFlowNodeBase* Base = FlowGraphNode->GetFlowNodeBase())
 		{
-			UpdateCategoryStringsForFlowNodeBase(*Base, Context, 0, NewMap);
+			UpdateCategoryStringsForFlowNodeBase(*Base, Context, 0, NewEntry.CategoryStrings);
 		}
 	}
 
-	return &FFindInFlowCache::CategoryStringCache.Add(EdNode, MoveTemp(NewMap));
+	return &FFindInFlowCache::CategoryStringCache.Add(EdNode, MoveTemp(NewEntry)).CategoryStrings;
 }
 
 void FFlowSearch::UpdateCategoryStringsForEdGraphNode(
