@@ -45,4 +45,17 @@ namespace FlowSubGraphExtraction
 		UFlowAsset*& OutNewAsset,
 		UFlowGraphNode*& OutSubGraphNode,
 		FString& OutError);
+
+	/**
+	 * Extracts the selection without opening a transaction or saving.
+	 * The caller owns the enclosing transaction, rollback of a failed extraction and saving both assets.
+	 */
+	FLOWEDITOR_API bool ApplyExtractionByGuidWithoutSave(
+		UFlowAsset* SourceAsset,
+		const TArray<FGuid>& SelectionGuids,
+		const FString& NewAssetName,
+		const FExtractionPlanSummary& PlanSummary,
+		UFlowAsset*& OutNewAsset,
+		UFlowGraphNode*& OutSubGraphNode,
+		FString& OutError);
 }

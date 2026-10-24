@@ -16,7 +16,7 @@
 class FLOW_API FScopedFlowNodeReconstructionRequestDeferral
 {
 public:
-	explicit FScopedFlowNodeReconstructionRequestDeferral(UFlowNodeBase& FlowNodeBase);
+	explicit FScopedFlowNodeReconstructionRequestDeferral(UFlowNodeBase& InFlowNodeBase);
 	~FScopedFlowNodeReconstructionRequestDeferral();
 
 	FScopedFlowNodeReconstructionRequestDeferral(const FScopedFlowNodeReconstructionRequestDeferral&) = delete;

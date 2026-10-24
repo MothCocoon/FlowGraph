@@ -313,8 +313,7 @@ void UFlowGraphNode::ReconstructNode()
 		return;
 	}
 
-	TGuardValue<bool> GuardIsResonstructingNode(bIsReconstructingNode, true);
-
+	TGuardValue<bool> GuardIsReconstructingNode(bIsReconstructingNode, true);
 	FScopedTransaction Transaction(LOCTEXT("ReconstructNode", "Reconstruct Node"), !GUndo);
 
 	if (UFlowNode* FlowNode = Cast<UFlowNode>(NodeInstance))
@@ -1924,10 +1923,7 @@ bool CheckPinsMatch(const TArray<FFlowPin>& LeftPins, const TArray<FFlowPin>& Ri
 	return true;
 }
 
-bool CheckPinsMatch(
-	const TArray<UEdGraphPin*>& GraphPins,
-	const TArray<FFlowPin>& NodePins,
-	const EEdGraphPinDirection PinDirection)
+bool CheckPinsMatch(const TArray<UEdGraphPin*>& GraphPins, const TArray<FFlowPin>& NodePins, const EEdGraphPinDirection PinDirection)
 {
 	// Compare valid pin counts
 	if (GraphPins.Num() != NodePins.Num())
@@ -1940,7 +1936,7 @@ bool CheckPinsMatch(
 	{
 		if (!GraphPins.ContainsByPredicate([&FlowNodePin, PinDirection](const UEdGraphPin* GraphNodePin)
 		{
-			return GraphNodePin->PinName == FlowNodePin.PinName 
+			return GraphNodePin->PinName == FlowNodePin.PinName
 				&& GraphNodePin->Direction == PinDirection
 				&& GraphNodePin->PinFriendlyName.EqualTo(FlowNodePin.PinFriendlyName)
 				&& GraphNodePin->PinToolTip == FlowNodePin.PinToolTip;

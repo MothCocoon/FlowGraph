@@ -21,7 +21,7 @@ END_DEFINE_SPEC(FFlowNodePinNameValidationSpec)
 
 void FFlowNodePinNameValidationSpec::Define()
 {
-	It("allows same-named exec pins in opposite directions and preserves their graph directions", [this]
+	It("warns about same-named exec pins in opposite directions and preserves their graph directions", [this]
 	{
 		TStrongObjectPtr<UFlowAsset> Asset{NewObject<UFlowAsset>()};
 		UFlowGraph* Graph = NewObject<UFlowGraph>(Asset.Get());
@@ -37,9 +37,10 @@ void FFlowNodePinNameValidationSpec::Define()
 		GraphNode->MarkNeedsFullReconstruction();
 		GraphNode->ReconstructNode();
 
-		TestTrue(
-			TEXT("Same-named exec pins in opposite directions pass node validation"),
-			FlowNode->ValidatePinNamesForTest() != EDataValidationResult::Invalid);
+		TestEqual(
+			TEXT("Same-named exec pins in opposite directions are reported"),
+			FlowNode->ValidatePinNamesForTest(),
+			EDataValidationResult::Invalid);
 
 		UEdGraphPin* InputPin = GraphNode->FindPin(TEXT("StartLeft"), EGPD_Input);
 		UEdGraphPin* OutputPin = GraphNode->FindPin(TEXT("StartLeft"), EGPD_Output);
@@ -58,7 +59,7 @@ void FFlowNodePinNameValidationSpec::Define()
 			GraphNode->FindPin(TEXT("StartLeft"), EGPD_Output));
 	});
 
-	It("continues rejecting duplicate names within one direction and data pin collisions", [this]
+	It("rejects duplicate names within one direction and data pin collisions", [this]
 	{
 		UFlowNodePinNameValidationTestNode* DuplicateInputNode =
 			NewObject<UFlowNodePinNameValidationTestNode>();

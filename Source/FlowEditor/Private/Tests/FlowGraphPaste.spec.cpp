@@ -24,7 +24,7 @@
 #include "Graph/FlowGraph.h"
 #include "Graph/FlowGraphEditor.h"
 #include "Graph/FlowGraphSchema.h"
-#include "Graph/Collapse/FlowSubgraphSelection.h"
+#include "Graph/Extraction/FlowSubGraphExtractionByGuid.h"
 #include "Graph/Extraction/FlowSubGraphExtractionPlan.h"
 #include "Graph/Nodes/FlowGraphNode.h"
 #include "Nodes/Developer/FlowNode_Log.h"
@@ -167,7 +167,7 @@ void FFlowGraphPasteSpec::Define()
 		TestFalse(TEXT("A built-in node reports its output declarations"), OutputPins.IsEmpty());
 	});
 
-	It("SelectionPlanRejectsUnknownNodesAndApplyRechecksTheLiveGraph", [this]()
+	It("ExtractionByGuidRejectsUnknownNodesAndApplyRechecksTheLiveGraph", [this]()
 	{
 		FTestGraph Source;
 		UFlowGraphNode* Entry = Source.AddNode(UFlowNode_Reroute::StaticClass());
@@ -185,18 +185,18 @@ void FFlowGraphPasteSpec::Define()
 		Schema->TryCreateConnection(Log->FindPin(TEXT("Out"), EGPD_Output), LogTarget->FindPin(TEXT("In"), EGPD_Input));
 
 		TArray<FGuid> SelectionGuids{Sequence->NodeGuid, Timer->NodeGuid, Log->NodeGuid};
-		FlowSubgraphSelection::FSelectionPlanSummary Summary;
+		FlowSubGraphExtraction::FExtractionPlanSummary Summary;
 		FString Error;
-		TestFalse(TEXT("An unknown node GUID is rejected"), FlowSubgraphSelection::PlanSelection(
+		TestFalse(TEXT("An unknown node GUID is rejected"), FlowSubGraphExtraction::PlanExtractionByGuid(
 			Source.Asset.Get(), {FGuid::NewGuid()}, FlowSubGraphExtraction::GetDefaultNewAssetName(), Summary, Error));
-		TestTrue(TEXT("A valid live selection can be planned"), FlowSubgraphSelection::PlanSelection(
+		TestTrue(TEXT("A valid live selection can be planned"), FlowSubGraphExtraction::PlanExtractionByGuid(
 			Source.Asset.Get(), SelectionGuids, FlowSubGraphExtraction::GetDefaultNewAssetName(), Summary, Error));
 		TestTrue(TEXT("The plan can extract the connected selection"), Summary.bCanApply);
 
 		Entry->FindPin(TEXT("Out"), EGPD_Output)->BreakLinkTo(Sequence->FindPin(TEXT("In"), EGPD_Input));
 		UFlowAsset* NewAsset = nullptr;
 		UFlowGraphNode* NewSubGraphNode = nullptr;
-		TestFalse(TEXT("A stale summary cannot authorize a changed graph"), FlowSubgraphSelection::ApplySelection(
+		TestFalse(TEXT("A stale summary cannot authorize a changed graph"), FlowSubGraphExtraction::ApplyExtractionByGuidWithoutSave(
 			Source.Asset.Get(), SelectionGuids, FlowSubGraphExtraction::GetDefaultNewAssetName(), Summary,
 			NewAsset, NewSubGraphNode, Error));
 		TestNull(TEXT("A stale plan creates no asset"), NewAsset);
@@ -244,9 +244,9 @@ void FFlowGraphPasteSpec::Define()
 		};
 		CheckExits(FlowSubGraphExtraction::PlanExtraction({Sequence, Timer, Log}));
 
-		FlowSubgraphSelection::FSelectionPlanSummary Summary;
+		FlowSubGraphExtraction::FExtractionPlanSummary Summary;
 		FString Error;
-		TestTrue(TEXT("Courier can plan the same selection"), FlowSubgraphSelection::PlanSelection(
+		TestTrue(TEXT("Courier can plan the same selection"), FlowSubGraphExtraction::PlanExtractionByGuid(
 			Source.Asset.Get(), {Sequence->NodeGuid, Timer->NodeGuid, Log->NodeGuid},
 			FlowSubGraphExtraction::GetDefaultNewAssetName(), Summary, Error));
 		TestTrue(TEXT("Courier's extraction plan can be applied"), Summary.bCanApply);
@@ -255,7 +255,7 @@ void FFlowGraphPasteSpec::Define()
 			Summary.InterfaceOutputs.Contains(TEXT("Finish")));
 	});
 
-	It("SelectionAdapterRevalidatesBeforeApply", [this]()
+	It("ExtractionByGuidRevalidatesBeforeApply", [this]()
 	{
 		FTestGraph Source;
 		UFlowGraphNode* Entry = Source.AddNode(UFlowNode_Reroute::StaticClass());
@@ -267,24 +267,24 @@ void FFlowGraphPasteSpec::Define()
 			return;
 		}
 
-		FlowSubgraphSelection::FSelectionPlanSummary Summary;
+		FlowSubGraphExtraction::FExtractionPlanSummary Summary;
 		FString Error;
 		const FString AssetName = FlowSubGraphExtraction::GetDefaultNewAssetName();
-		TestTrue(TEXT("Planning succeeds"), FlowSubgraphSelection::PlanSelection(
+		TestTrue(TEXT("Planning succeeds"), FlowSubGraphExtraction::PlanExtractionByGuid(
 			Source.Asset.Get(), {Selected->NodeGuid}, AssetName, Summary, Error));
 		TestTrue(TEXT("The initial plan can be applied"), Summary.bCanApply);
 		Schema->BreakNodeLinks(*Entry);
 
 		UFlowAsset* NewAsset = nullptr;
 		UFlowGraphNode* SubgraphNode = nullptr;
-		TestFalse(TEXT("A stale plan cannot bypass live boundary validation"), FlowSubgraphSelection::ApplySelection(
+		TestFalse(TEXT("A stale plan cannot bypass live boundary validation"), FlowSubGraphExtraction::ApplyExtractionByGuidWithoutSave(
 			Source.Asset.Get(), {Selected->NodeGuid}, AssetName, Summary, NewAsset, SubgraphNode, Error));
 		TestFalse(TEXT("The stale plan reports its error"), Error.IsEmpty());
 		TestNull(TEXT("No asset is created for the stale plan"), NewAsset);
 		TestEqual(TEXT("Rejected extraction preserves the source"), Source.Graph->Nodes.Num(), 2);
 	});
 
-	It("SelectionAdapterExtractsNodesAndAddOns", [this]()
+	It("ExtractionByGuidExtractsNodesAndAddOns", [this]()
 	{
 		FTestGraph Source;
 		const FString Folder = TEXT("/Game/FlowExtractionAutomation_") + FGuid::NewGuid().ToString(EGuidFormats::Digits);
@@ -304,17 +304,17 @@ void FFlowGraphPasteSpec::Define()
 		}
 
 		const FGuid SelectedGuid = Selected->NodeGuid;
-		FlowSubgraphSelection::FSelectionPlanSummary Summary;
+		FlowSubGraphExtraction::FExtractionPlanSummary Summary;
 		FString Error;
 		const FString AssetName = FlowSubGraphExtraction::GetDefaultNewAssetName();
-		TestTrue(TEXT("The adapter plans extraction"), FlowSubgraphSelection::PlanSelection(
+		TestTrue(TEXT("The adapter plans extraction"), FlowSubGraphExtraction::PlanExtractionByGuid(
 			Source.Asset.Get(), {SelectedGuid}, AssetName, Summary, Error));
 		UFlowAsset* NewAsset = nullptr;
 		UFlowGraphNode* SubgraphNode = nullptr;
 		bool bApplied = false;
 		{
 			FScopedTransaction Transaction(NSLOCTEXT("FlowGraphTests", "Extract", "Test subgraph extraction"));
-			bApplied = FlowSubgraphSelection::ApplySelection(
+			bApplied = FlowSubGraphExtraction::ApplyExtractionByGuidWithoutSave(
 				Source.Asset.Get(), {SelectedGuid}, AssetName, Summary, NewAsset, SubgraphNode, Error);
 			Transaction.Cancel();
 		}

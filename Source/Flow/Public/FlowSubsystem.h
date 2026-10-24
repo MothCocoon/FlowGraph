@@ -91,7 +91,7 @@ protected:
 	virtual void FinishAndDeinitializeInstance(UFlowAsset* InstanceToFinish, const EFlowFinishPolicy FinishPolicy);
 
 	UFlowAsset* CreateSubFlow(UFlowNode_SubGraph* SubGraphNode, const FString& SavedInstanceName = FString(), const bool bPreloading = false);
-	
+
 	/* Finishes the SubFlow running in the SubGraphNode.
 	 * Optionally: deinitialize instance and remove Flow Asset instance. */
 	void FinishSubFlow(UFlowNode_SubGraph* SubGraphNode, const EFlowFinishPolicy FinishPolicy, const bool bRemoveInstance);
@@ -99,7 +99,7 @@ protected:
 public:
 	/* bStartReplication registers the instance as a replicated subobject of Owner right after creation.
 	 * SubGraph instance starts replication on its activation instead, so a preloaded instance isn't sent to clients. */
-	UFlowAsset* CreateFlowInstance(const TWeakObjectPtr<UObject> Owner, UFlowAsset* LoadedFlowAsset, FString NewInstanceName = FString(), const bool bStartReplication = true);
+	UFlowAsset* CreateFlowInstance(const TWeakObjectPtr<UObject> Owner, UFlowAsset* LoadedFlowAsset, FString NewInstanceName = FString(), const bool bStartReplication = true, UFlowAsset* OwningFlowInstance = nullptr);
 
 protected:
 	virtual void AddInstancedTemplate(UFlowAsset* Template);
@@ -120,7 +120,6 @@ public:
 	/* Returns assets instanced by Sub Graph nodes */
 	UFUNCTION(BlueprintPure, Category = "FlowSubsystem")
 	const TMap<UFlowNode_SubGraph*, UFlowAsset*>& GetInstancedSubFlows() const { return ObjectPtrDecay(InstancedSubFlows); }
-
 
 //////////////////////////////////////////////////////////////////////////
 // SaveGame support

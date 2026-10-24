@@ -30,6 +30,18 @@
 
 using namespace EFlowForEachAddOnFunctionReturnValue_Classifiers;
 
+void UFlowNodeBase::SetGuid(const FGuid& NewGuid)
+{
+#if WITH_EDITOR
+	if (NodeGuid.IsValid() && NodeGuid != NewGuid && !PreviousGuidForPinRemapping.IsValid())
+	{
+		PreviousGuidForPinRemapping = NodeGuid;
+	}
+#endif
+
+	NodeGuid = NewGuid;
+}
+
 UWorld* UFlowNodeBase::GetWorld() const
 {
 	if (const UFlowAsset* FlowAsset = GetFlowAsset())
@@ -675,10 +687,23 @@ FText UFlowNodeBase::GetNodeToolTip() const
 	}
 }
 
+FText UFlowNodeBase::GetGeneratedDisplayName() const
+{
+	static const FName NAME_GeneratedDisplayName(TEXT("GeneratedDisplayName"));
+
+	if (GetClass()->ClassGeneratedBy)
+	{
+		UClass* Class = Cast<UBlueprint>(GetClass()->ClassGeneratedBy)->GeneratedClass;
+		return Class->GetMetaDataText(NAME_GeneratedDisplayName);
+	}
+
+	return GetClass()->GetMetaDataText(NAME_GeneratedDisplayName);
+}
+
 FString UFlowNodeBase::GetInheritedNodeKeywords(const UClass* NodeClass)
 {
 	static const FName NAME_Keywords(TEXT("Keywords"));
-	static const TCHAR* Delimiters[] = { TEXT(" "), TEXT(","), TEXT("\t") };
+	static const TCHAR* Delimiters[] = {TEXT(" "), TEXT(","), TEXT("\t")};
 
 	TArray<FString> Keywords;
 	for (const UClass* Class = NodeClass; Class; Class = Class->GetSuperClass())
@@ -704,19 +729,6 @@ FString UFlowNodeBase::GetInheritedNodeKeywords(const UClass* NodeClass)
 	}
 
 	return FString::Join(Keywords, TEXT(" "));
-}
-
-FText UFlowNodeBase::GetGeneratedDisplayName() const
-{
-	static const FName NAME_GeneratedDisplayName(TEXT("GeneratedDisplayName"));
-
-	if (GetClass()->ClassGeneratedBy)
-	{
-		UClass* Class = Cast<UBlueprint>(GetClass()->ClassGeneratedBy)->GeneratedClass;
-		return Class->GetMetaDataText(NAME_GeneratedDisplayName);
-	}
-
-	return GetClass()->GetMetaDataText(NAME_GeneratedDisplayName);
 }
 
 void UFlowNodeBase::EnsureNodeDisplayStyle()
@@ -785,7 +797,8 @@ FString UFlowNodeBase::GetAddOnDescriptions() const
 	FString Result;
 
 	for (const UFlowNodeBase* Addon : AddOns)
-	{const FString& Description = Addon->GetNodeDescription();
+	{
+		const FString& Description = Addon->GetNodeDescription();
 		if (!Description.IsEmpty())
 		{
 			Result.Append(Description).Append(LINE_TERMINATOR);
@@ -949,7 +962,7 @@ void UFlowNodeBase::LogError(FString Message, const EFlowOnScreenMessageType OnS
 	{
 		// Output Log
 		UE_LOG(LogFlow, Error, TEXT("%s"), *Message);
-		
+
 #if WITH_EDITOR
 		if (GEditor)
 		{
@@ -957,7 +970,7 @@ void UFlowNodeBase::LogError(FString Message, const EFlowOnScreenMessageType OnS
 			GetFlowAsset()->GetTemplateAsset()->LogError(Message, this);
 		}
 #endif
-		
+
 #if UE_ENABLE_DEBUG_DRAWING
 		// OnScreen Message
 		if (OnScreenMessageType == EFlowOnScreenMessageType::Permanent)
@@ -1105,8 +1118,8 @@ FFlowDataPinResult UFlowNodeBase::TryResolveDataPin(FName PinName) const
 	FFlowDataPinResult DataPinResult(EFlowDataPinResolveResult::Success);
 
 	const UFlowNode* FlowNode = GetFlowNodeSelfOrOwner();
-	UFlowNode::TFlowPinValueSupplierDataArray PinValueSupplierDatas;
-	if (!FlowNode->TryGetFlowDataPinSupplierDatasForPinName(PinName, PinValueSupplierDatas))
+	UFlowNode::TFlowPinValueSupplierDataArray PinValueSupplierData;
+	if (!FlowNode->TryGetFlowDataPinSupplierDatasForPinName(PinName, PinValueSupplierData))
 	{
 		// If we could not build the PinValueDataSuppliers array, 
 		// then the pin must be disconnected and have no default value available.
@@ -1118,9 +1131,9 @@ FFlowDataPinResult UFlowNodeBase::TryResolveDataPin(FName PinName) const
 	}
 
 	// Iterate over the suppliers in inverse order
-	for (int32 Index = PinValueSupplierDatas.Num() - 1; Index >= 0; --Index)
+	for (int32 Index = PinValueSupplierData.Num() - 1; Index >= 0; --Index)
 	{
-		const FFlowPinValueSupplierData& SupplierData = PinValueSupplierDatas[Index];
+		const FFlowPinValueSupplierData& SupplierData = PinValueSupplierData[Index];
 
 		DataPinResult = SupplierData.PinValueSupplier->TrySupplyDataPin(SupplierData.SupplierPinName);
 

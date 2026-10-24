@@ -1,6 +1,6 @@
 // Copyright https://github.com/MothCocoon/FlowGraph/graphs/contributors
-
 #include "Graph/FlowGraph.h"
+
 #include "Graph/FlowGraphSchema.h"
 #include "Graph/FlowGraphSchema_Actions.h"
 #include "Graph/Nodes/FlowGraphNode.h"
@@ -30,7 +30,7 @@ void UFlowGraph::CreateGraph(UFlowAsset* InFlowAsset)
 	return CreateGraph(InFlowAsset, UFlowGraphSchema::StaticClass());
 }
 
-void UFlowGraph::CreateGraph(UFlowAsset* InFlowAsset, TSubclassOf<UFlowGraphSchema> FlowSchema, bool bCreateDefaultNodes)
+void UFlowGraph::CreateGraph(UFlowAsset* InFlowAsset, const TSubclassOf<UFlowGraphSchema> FlowSchema, const bool bCreateDefaultNodes)
 {
 	UFlowGraph* NewGraph = CastChecked<UFlowGraph>(FBlueprintEditorUtils::CreateNewGraph(InFlowAsset, NAME_None, StaticClass(), FlowSchema));
 	NewGraph->bAllowDeletion = false;

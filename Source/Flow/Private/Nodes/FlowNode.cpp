@@ -24,7 +24,6 @@
 
 #if WITH_EDITOR
 #include "Editor.h"
-#include "Misc/DataValidation.h"
 #endif
 
 FFlowPin UFlowNode::DefaultInputPin(TEXT("In"));
@@ -66,63 +65,14 @@ void UFlowNode::PostEditChangeProperty(FPropertyChangedEvent& PropertyChangedEve
 	}
 }
 
-EDataValidationResult UFlowNode::IsDataValid(FDataValidationContext& Context) const
-{
-	EDataValidationResult Result = Super::IsDataValid(Context);
-
-	if (const UFlowAsset* OwningFlowAsset = GetFlowAsset())
-	{
-		const TMap<FGuid, UFlowNode*>& OwningFlowAssetNodes = OwningFlowAsset->GetNodes();
-
-		for (const TPair<FName, FConnectedPin>& Connection : Connections)
-		{
-			if (!OwningFlowAssetNodes.Contains(Connection.Value.NodeGuid))
-			{
-				Context.AddError(FText::FromString(FString::Printf(
-					TEXT("Pin '%s' on Node '%s' is connected to node Guid %s, which does not exist in the owning Flow Asset '%s'. ")
-					TEXT("This connection is stale and will silently fail to trigger at runtime. Open the flow asset in editor and resave."),
-					*Connection.Key.ToString(),
-					*GetName(),
-					*Connection.Value.NodeGuid.ToString(),
-					*OwningFlowAsset->GetPathName())));
-
-				Result = CombineDataValidationResults(Result, EDataValidationResult::Invalid);
-			}
-		}
-	}
-
-	return Result;
-}
-
 EDataValidationResult UFlowNode::ValidateNode()
 {
 	EDataValidationResult ValidationResult = Super::ValidateNode();
 
-	// Pin names must be unique within each direction. Exec input and output names may match because
-	// connections and execution dispatch distinguish the pin direction.
-	TSet<FName> UniqueInputPinNames;
-	ValidateFlowPinArrayIsUnique(InputPins, UniqueInputPinNames, ValidationResult);
-	TSet<FName> UniqueOutputPinNames;
-	ValidateFlowPinArrayIsUnique(OutputPins, UniqueOutputPinNames, ValidationResult);
-
-	for (const FFlowPin& InputPin : InputPins)
-	{
-		const FFlowPin* MatchingOutputPin = OutputPins.FindByPredicate([&InputPin](const FFlowPin& OutputPin)
-		{
-			return OutputPin.PinName == InputPin.PinName;
-		});
-
-		if (MatchingOutputPin && (!InputPin.IsExecPin() || !MatchingOutputPin->IsExecPin()))
-		{
-			ValidationLog.Warning<UFlowNode>(
-				*FString::Printf(
-					TEXT("Input and output pins with the same name must both be exec pins, pin name %s is duplicated"),
-					*InputPin.PinName.ToString()),
-				this);
-
-			ValidationResult = EDataValidationResult::Invalid;
-		}
-	}
+	// Validate that output and input pins have unique names
+	TSet<FName> UniquePinNames;
+	ValidateFlowPinArrayIsUnique(InputPins, UniquePinNames, ValidationResult);
+	ValidateFlowPinArrayIsUnique(OutputPins, UniquePinNames, ValidationResult);
 
 	return ValidationResult;
 }
@@ -136,7 +86,7 @@ void UFlowNode::ValidateFlowPinArrayIsUnique(const TArray<FFlowPin>& FlowPins, T
 		{
 			ValidationLog.Warning<UFlowNode>(
 				*FString::Printf(
-					TEXT("Pin names within a direction must be unique, pin name %s is duplicated"),
+					TEXT("All pin names on a flow node must be unique, pin name %s is duplicated"),
 					*ThisPinName.ToString()),
 				this);
 
@@ -428,12 +378,6 @@ TArray<FFlowPin> UFlowNode::GetContextOutputs() const
 	return ContextOutputs;
 }
 
-void UFlowNode::GetCatalogPins(TArray<FFlowPin>& OutInputPins, TArray<FFlowPin>& OutOutputPins) const
-{
-	OutInputPins = InputPins;
-	OutOutputPins = OutputPins;
-}
-
 bool UFlowNode::CanUserAddInput() const
 {
 	return K2_CanUserAddInput();
@@ -498,6 +442,12 @@ void UFlowNode::RemoveUserOutput(const FName& PinName)
 			}
 		}
 	}
+}
+
+void UFlowNode::GetCatalogPins(TArray<FFlowPin>& OutInputPins, TArray<FFlowPin>& OutOutputPins) const
+{
+	OutInputPins = InputPins;
+	OutOutputPins = OutputPins;
 }
 
 bool UFlowNode::TryUpdateAutoDataPins()
@@ -655,7 +605,7 @@ bool UFlowNode::TryGatherPropertyOwnersAndPopulateResult(
 		return false;
 	}
 
-	const FFlowDataPinValueOwner* ValueOwner = nullptr;
+	const FFlowDataPinValueOwner* ValueOwner;
 	FName PropertyNameToLookup;
 	const TArray<FFlowDataPinValueOwner>& ValueOwners = ValueOwnerCollection.GetValueOwners();
 

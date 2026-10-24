@@ -103,26 +103,18 @@ public:
 	FGuid NodeGuid;
 
 	UFUNCTION(BlueprintCallable, Category = "FlowNode")
-	void SetGuid(const FGuid& NewGuid)
-	{
-#if WITH_EDITOR
-		if (NodeGuid.IsValid() && NodeGuid != NewGuid && !PreviousGuidForPinRemapping.IsValid())
-		{
-			PreviousGuidForPinRemapping = NodeGuid;
-		}
-#endif
-		NodeGuid = NewGuid;
-	}
+	void SetGuid(const FGuid& NewGuid);
 
 	UFUNCTION(BlueprintPure, Category = "FlowNode")
 	const FGuid& GetGuid() const { return NodeGuid; }
 
 #if WITH_EDITOR
-	const FGuid& GetPreviousGuidForPinRemapping() const { return PreviousGuidForPinRemapping; }
-	void ClearPreviousGuidForPinRemapping() { PreviousGuidForPinRemapping.Invalidate(); }
-
 private:
 	FGuid PreviousGuidForPinRemapping;
+	
+public:	
+	const FGuid& GetPreviousGuidForPinRemapping() const { return PreviousGuidForPinRemapping; }
+	void ClearPreviousGuidForPinRemapping() { PreviousGuidForPinRemapping.Invalidate(); }
 #endif
 
 public:
@@ -441,9 +433,9 @@ protected:
 	UPROPERTY(EditDefaultsOnly, Category = "FlowNode")
 	TSubclassOf<UFlowNode> ReplacedBy;
 
+	friend class FScopedFlowNodeReconstructionRequestDeferral;
 	FFlowNodeEvent OnReconstructionRequested;
 	FFlowNodeEvent OnAddOnRequestedParentReconstruction;
-	friend class FScopedFlowNodeReconstructionRequestDeferral;
 #endif // WITH_EDITORONLY_DATA
 
 #if WITH_EDITOR
@@ -520,12 +512,11 @@ public:
 	virtual FText GetNodeTitle() const;
 	virtual FText GetNodeToolTip() const;
 
-	static FString GetInheritedNodeKeywords(const UClass* NodeClass);
 	bool IsDeprecated() const { return bNodeDeprecated; }
 	const TSubclassOf<UFlowNode>& GetReplacedByClass() const { return ReplacedBy; }
-	virtual void GetCatalogPins(TArray<FFlowPin>& OutInputPins, TArray<FFlowPin>& OutOutputPins) const {}
 
 	FText GetGeneratedDisplayName() const;
+	static FString GetInheritedNodeKeywords(const UClass* NodeClass);
 
 	/**
 	 * Returns overlay icons to display on this node instance in the editor.
@@ -544,13 +535,15 @@ public:
 	 */
 	virtual bool GetCornerIcon(FName& OutBrushName, FName& OutStyleSetName) const { return false; }
 
-	/** Returns the agent-facing guidance authored on this class or supplied by a native override. */
-	virtual const FFlowAgentDoc& GetAgentDoc() const { return AgentDoc; }
-
 	/* Persists documentation for classes whose defaults serialize AgentDoc. Native overrides should
 	 * return their compiled-in documentation directly. */
 	void SetAgentDoc(const FFlowAgentDoc& InAgentDoc) { AgentDoc = InAgentDoc; }
 	
+	/** Returns the agent-facing guidance authored on this class or supplied by a native override. */
+	virtual const FFlowAgentDoc& GetAgentDoc() const { return AgentDoc; }
+
+	virtual void GetCatalogPins(TArray<FFlowPin>& OutInputPins, TArray<FFlowPin>& OutOutputPins) const {}
+
 protected:
 	void EnsureNodeDisplayStyle();
 #endif // WITH_EDITOR
