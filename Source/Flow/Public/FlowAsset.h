@@ -1,6 +1,7 @@
 // Copyright https://github.com/MothCocoon/FlowGraph/graphs/contributors
 #pragma once
 
+#include "FlowNodeReplication.h"
 #include "FlowSave.h"
 #include "FlowTypes.h"
 #include "Asset/FlowAssetParamsTypes.h"
@@ -251,8 +252,8 @@ protected:
 	TArray<FFlowNamedDataPinProperty> OutputDataPinDeclarations;
 
 public:
-	/* Gathers all the nodes that are connected to the Start & Custom Inputs of the flow graph. */
-	TArray<UFlowNode*> GatherNodesConnectedToAllInputs() const;
+	/* Gathers all the nodes that are connected to the Start & Custom Inputs. */
+	virtual TArray<UFlowNode*> GatherNodesConnectedToAllInputs() const;
 
 	UFlowNode_CustomInput* TryFindCustomInputNodeByEventName(const FName& EventName) const;
 	UFlowNode_CustomOutput* TryFindCustomOutputNodeByEventName(const FName& EventName) const;
@@ -327,6 +328,9 @@ private:
 #if WITH_EDITORONLY_DATA
 	TWeakObjectPtr<const UFlowAsset> InspectedInstance;
 
+	/* Instances replicated from the server to clients running in this process. */
+	TArray<TWeakObjectPtr<UFlowAsset>> ReplicaInstances;
+
 	/* Message log for storing runtime errors/notes/warnings that will only last until the next game run.
 	 * Log lives in the asset template, so it can be inspected after ending the PIE. */
 	TSharedPtr<class FFlowMessageLog> RuntimeLog;
@@ -341,6 +345,11 @@ public:
 	int32 GetInstancesNum() const { return ActiveInstances.Num(); }
 
 #if WITH_EDITOR
+	/* Replicas are listed separately from ActiveInstances, so they don't count as instances running on the server. */
+	void AddReplicaInstance(UFlowAsset* Instance);
+	void RemoveReplicaInstance(UFlowAsset* Instance);
+	const TArray<TWeakObjectPtr<UFlowAsset>>& GetReplicaInstances() const { return ReplicaInstances; }
+
 	void SetInspectedInstance(TWeakObjectPtr<const UFlowAsset> NewInspectedInstance);
 	const UFlowAsset* GetInspectedInstance() const { return InspectedInstance.IsValid() ? InspectedInstance.Get() : nullptr; }
 
@@ -363,11 +372,12 @@ private:
 // Executing asset instance
 
 protected:
-	UPROPERTY()
+	UPROPERTY(ReplicatedUsing = OnRep_TemplateAsset)
 	TObjectPtr<UFlowAsset> TemplateAsset;
 
 	/* Object that spawned Root Flow instance, i.e. World Settings or Player Controller.
 	 * This pointer is passed to child instances: Flow Asset instances created by the SubGraph nodes. */
+	UPROPERTY(Replicated)
 	TWeakObjectPtr<UObject> Owner;
 
 	/* SubGraph node that created this Flow Asset instance. */
@@ -475,6 +485,72 @@ public:
 	/* Returns nodes active in the past, done their work. */
 	UFUNCTION(BlueprintPure, Category = "Flow")
 	const TArray<UFlowNode*>& GetRecordedNodes() const { return RecordedNodes; }
+
+//////////////////////////////////////////////////////////////////////////
+// Network replication
+
+protected:
+	/* True on the server, if this instance is registered as a replicated subobject of its Owner. */
+	bool bReplicatedToClients = false;
+
+	/* True on a client, after TemplateAsset of this instance arrived. */
+	bool bReplicaInitialized = false;
+
+	/* Instance containing the SubGraph node that created this instance.
+	 * Required since NodeOwningThisAssetInstance points to a node, which isn't net-addressable. */
+	UPROPERTY(ReplicatedUsing = OnRep_ReplicatedParentInstance)
+	TWeakObjectPtr<UFlowAsset> ReplicatedParentInstance;
+
+	/* NodeGuid of the SubGraph node that created this instance.
+	 * Required since NodeOwningThisAssetInstance points to a node, which isn't net-addressable. */
+	UPROPERTY(Replicated)
+	FGuid OwningSubGraphNodeGuid;
+
+	/* Activation states and replicated properties of nodes. */
+	UPROPERTY(Replicated)
+	FFlowNodeReplicatedStateArray ReplicatedNodeStates;
+
+	/* Replicas of SubGraph instances that arrived on a client before TemplateAsset of this instance. */
+	TArray<TWeakObjectPtr<UFlowAsset>> ReplicaChildrenAwaitingTemplate;
+
+public:
+	// UObject
+	virtual bool IsSupportedForNetworking() const override { return true; }
+	virtual void GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const override;
+	virtual void PostInitProperties() override;
+	virtual void PreDestroyFromReplication() override;
+	// --
+
+	/* Decides if this instance is replicated to clients as a subobject of its Owner. */
+	virtual bool ShouldReplicate() const { return true; }
+
+protected:
+	/* Registers this instance as a replicated subobject of its Owner.
+	 * Does nothing, if this instance shouldn't replicate, already replicates or Owner isn't a replicated actor or component on the server. */
+	void StartReplication();
+
+	/* Removes this instance from replicated subobjects of its Owner and destroys it on clients. */
+	void StopReplication();
+
+	/* Prepares the replica on a client after TemplateAsset arrived, then applies states received before. */
+	UFUNCTION()
+	void OnRep_TemplateAsset();
+
+	UFUNCTION()
+	void OnRep_ReplicatedParentInstance();
+
+	/* Links the replica of a SubGraph instance to the SubGraph node of its parent replica. */
+	void LinkReplicaToParent();
+
+	/* Returns the node of the replica, creating it from TemplateAsset on first use. */
+	UFlowNode* GetOrCreateReplicaNode(const FGuid& NodeGuid);
+
+public:
+	/* Writes the activation state and replicated properties of the node, so they are sent to clients. */
+	void WriteReplicatedNodeState(UFlowNode& Node);
+
+	/* Applies the replicated state to the node with the same NodeGuid on a client, creating this node on first use. */
+	void ApplyReplicatedNodeState(const FFlowNodeReplicatedState& Item);
 
 //////////////////////////////////////////////////////////////////////////
 // Preload policy

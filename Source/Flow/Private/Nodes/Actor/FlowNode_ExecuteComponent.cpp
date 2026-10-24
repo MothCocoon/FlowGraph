@@ -587,9 +587,9 @@ EDataValidationResult UFlowNode_ExecuteComponent::ValidateNode()
 
 FString UFlowNode_ExecuteComponent::GetStatusString() const
 {
-	if (ActivationState != EFlowNodeState::NeverActivated)
+	if (GetActivationState() != EFlowNodeState::NeverActivated)
 	{
-		return UEnum::GetDisplayValueAsText(ActivationState).ToString();
+		return UEnum::GetDisplayValueAsText(GetActivationState()).ToString();
 	}
 
 	return Super::GetStatusString();

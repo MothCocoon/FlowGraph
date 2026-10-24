@@ -1,6 +1,7 @@
 // Copyright https://github.com/MothCocoon/FlowGraph/graphs/contributors
 #pragma once
 
+#include "Layout/Visibility.h"
 #include "UObject/Object.h"
 
 class SWidget;
@@ -8,7 +9,7 @@ class UEdGraph;
 class UFlowGraphNode;
 
 /**
-* Shared UI helpers for "Attach AddOn..." in details panels.
+* Shared UI helpers for "Attach AddOn..." in Details panels.
 */
 class FLOWEDITOR_API FFlowDetailsAddOnUI
 {
@@ -27,4 +28,7 @@ public:
 
 	/** Lower-level overload if caller already resolved graph + node. */
 	static TSharedRef<SWidget> BuildAttachAddOnMenuContent(UEdGraph* Graph, UFlowGraphNode* GraphNode);
+
+	/** Visible if any of the objects is a node or addon with attached AddOns. */
+	static EVisibility GetAddOnsVisibility(const TArray<TWeakObjectPtr<UObject>>& Objects);
 };

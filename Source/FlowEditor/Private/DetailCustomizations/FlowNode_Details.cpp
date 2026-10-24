@@ -3,10 +3,12 @@
 #include "DetailCustomizations/FlowNode_Details.h"
 
 #include "DetailCustomizations/FlowDetailsAddOnUI.h"
+#include "Graph/FlowGraphEditorSettings.h"
 #include "Nodes/FlowNode.h"
 
 #include "DetailCategoryBuilder.h"
 #include "DetailLayoutBuilder.h"
+#include "IDetailPropertyRow.h"
 #include "DetailWidgetRow.h"
 #include "Widgets/Input/SComboButton.h"
 #include "Widgets/Text/STextBlock.h"
@@ -15,10 +17,36 @@
 
 void FFlowNode_Details::CustomizeDetails(IDetailLayoutBuilder& DetailLayout)
 {
-	// Hide class-level category when editing an instance (not the CDO)
+	// Merged AddOn list, shown on instances only
 	if (!DetailLayout.HasClassDefaultObject())
 	{
-		DetailLayout.HideCategory(TEXT("FlowNode"));
+		if (GetDefault<UFlowGraphEditorSettings>()->bShowAddOnsInNodeDetails)
+		{
+			IDetailCategoryBuilder& AddOnDetailsCategory = DetailLayout.EditCategory(
+				TEXT("AddOnDetails"),
+				LOCTEXT("AddOnDetailsCategory", "AddOn Details"),
+				ECategoryPriority::Uncommon);
+
+			TArray<TWeakObjectPtr<UObject>> EditedObjects;
+			DetailLayout.GetObjectsBeingCustomized(EditedObjects);
+
+			TSharedRef<IPropertyHandle> AddOnsProperty = DetailLayout.GetProperty(TEXT("AddOns"), UFlowNodeBase::StaticClass());
+			IDetailPropertyRow& AddOnsRow = AddOnDetailsCategory.AddProperty(AddOnsProperty);
+			AddOnsRow.CustomWidget(true)
+				.Visibility(TAttribute<EVisibility>::CreateLambda([EditedObjects]()
+				{
+					return FFlowDetailsAddOnUI::GetAddOnsVisibility(EditedObjects);
+				}))
+				.NameContent()
+				[
+					AddOnsProperty->CreatePropertyNameWidget(LOCTEXT("AddOnDetailsProperty", "AddOns"))
+				]
+				.ValueContent()
+				[
+					AddOnsProperty->CreatePropertyValueWidget(false)
+				];
+			AddOnsRow.ShouldAutoExpand(true);
+		}
 	}
 
 	// Cache edited object

@@ -9,7 +9,8 @@ public class Flow : ModuleRules
 
 		PublicDependencyModuleNames.AddRange(
 		[
-			"LevelSequence"
+			"LevelSequence",
+			"NetCore"
 		]);
 
 		PrivateDependencyModuleNames.AddRange(
@@ -21,7 +22,6 @@ public class Flow : ModuleRules
 			"GameplayTags",
 			"MovieScene",
 			"MovieSceneTracks",
-			"NetCore",
 			"Slate",
 			"SlateCore"
 		]);
@@ -37,5 +37,7 @@ public class Flow : ModuleRules
 				"UnrealEd"
 			]);
 		}
+
+		SetupIrisSupport(target);
 	}
 }
