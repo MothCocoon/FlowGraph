@@ -333,6 +333,8 @@ void FFlowAssetEditor::InitFlowAssetEditor(const EToolkitMode::Type Mode, const 
 	FlowAsset->OnDetailsRefreshRequested.BindThreadSafeSP(this, &FFlowAssetEditor::RefreshDetails);
 	FlowGraphEditorSettingsChangedHandle = UFlowGraphEditorSettings::OnSettingsChanged().AddRaw(this, &FFlowAssetEditor::RefreshDetails);
 
+	bCanEditInPIE = FlowAsset->CanEditInPIE();
+
 	BindToolbarCommands();
 	CreateToolbar();
 
@@ -425,7 +427,7 @@ void FFlowAssetEditor::BindToolbarCommands()
 	// Automation
 	ToolkitCommands->MapAction(ToolbarCommands.RefreshAsset,
 	                           FExecuteAction::CreateSP(this, &FFlowAssetEditor::RefreshAsset),
-	                           FCanExecuteAction::CreateStatic(&FFlowAssetEditor::CanEdit));
+	                           FCanExecuteAction::CreateSP(this, &FFlowAssetEditor::CanEdit));
 
 	ToolkitCommands->MapAction(ToolbarCommands.ValidateAsset,
 	                           FExecuteAction::CreateSP(this, &FFlowAssetEditor::ValidateAsset_Internal),
@@ -433,7 +435,7 @@ void FFlowAssetEditor::BindToolbarCommands()
 
 	ToolkitCommands->MapAction(ToolbarCommands.AutoFormatGraph,
 	                           FExecuteAction::CreateSP(this, &FFlowAssetEditor::AutoFormatGraph),
-	                           FCanExecuteAction::CreateStatic(&FFlowAssetEditor::CanEdit));
+	                           FCanExecuteAction::CreateSP(this, &FFlowAssetEditor::CanEdit));
 
 	// View
 	ToolkitCommands->MapAction(ToolbarCommands.SearchInAsset,
@@ -607,7 +609,7 @@ void FFlowAssetEditor::CreateWidgets()
 
 		FPropertyEditorModule& PropertyModule = FModuleManager::LoadModuleChecked<FPropertyEditorModule>("PropertyEditor");
 		DetailsView = PropertyModule.CreateDetailView(Args);
-		DetailsView->SetIsPropertyEditingEnabledDelegate(FIsPropertyEditingEnabled::CreateStatic(&FFlowAssetEditor::CanEdit));
+		DetailsView->SetIsPropertyEditingEnabledDelegate(FIsPropertyEditingEnabled::CreateSP(this, &FFlowAssetEditor::CanEdit));
 		DetailsView->SetIsPropertyVisibleDelegate(FIsPropertyVisible::CreateStatic(&FFlowAssetEditor::IsPropertyVisible));
 		DetailsView->RegisterInstancedCustomPropertyTypeLayout(UFlowNodeAddOn::StaticClass()->GetFName(), FOnGetPropertyTypeCustomizationInstance::CreateStatic(&FFlowNodeAddOnCustomization::MakeInstance));
 		DetailsView->SetObject(FlowAsset);
@@ -642,12 +644,18 @@ void FFlowAssetEditor::CreateWidgets()
 void FFlowAssetEditor::CreateGraphWidget()
 {
 	SAssignNew(GraphEditor, SFlowGraphEditor, SharedThis(this))
-	.DetailsView(DetailsView);
+	.DetailsView(DetailsView)
+	.CanEditInPIE(bCanEditInPIE);
 }
 
-bool FFlowAssetEditor::CanEdit()
+bool FFlowAssetEditor::CanEdit() const
 {
-	return GEditor->PlayWorld == nullptr;
+	return GEditor->PlayWorld == nullptr || bCanEditInPIE;
+}
+
+void FFlowAssetEditor::SetCanEditInPIE(const bool bValue)
+{
+	bCanEditInPIE = bValue;
 }
 
 bool FFlowAssetEditor::IsPropertyVisible(const FPropertyAndParent& PropertyAndParent)
