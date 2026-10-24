@@ -64,7 +64,8 @@ UENUM(BlueprintType)
 enum class ESubGraphFinishPolicy : uint8
 {
 	Deinitialize	UMETA(ToolTip = "SubGraph instance is deinitialized immediately after finishing."),
-	Keep			UMETA(ToolTip = "SubGraph instance stays initialized until its parent Flow Asset deinitializes or the SubGraph node runs again.")
+	Keep			UMETA(ToolTip = "SubGraph instance stays initialized until its parent Flow Asset deinitializes or the SubGraph node runs again."),
+	Reuse			UMETA(ToolTip = "SubGraph instance stays initialized after finishing; when the SubGraph node runs again, the same instance is restarted instead of replaced.")
 };
 
 UENUM(BlueprintType)
