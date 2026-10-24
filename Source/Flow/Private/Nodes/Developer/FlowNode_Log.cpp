@@ -4,8 +4,6 @@
 #include "FlowLogChannels.h"
 
 #include "Engine/Engine.h"
-#include "Engine/World.h"
-#include "UnrealEngine.h"
 
 #include UE_INLINE_GENERATED_CPP_BY_NAME(FlowNode_Log)
 
@@ -20,13 +18,6 @@ UFlowNode_Log::UFlowNode_Log()
 
 	InputPins = {UFlowNode::DefaultInputPin};
 	OutputPins = {UFlowNode::DefaultOutputPin};
-}
-
-void UFlowNode_Log::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const
-{
-	Super::GetLifetimeReplicatedProps(OutLifetimeProps);
-
-	// Node isn't a replicated object, Flow Asset instance sends its replicated properties through FlowNodeReplication
 }
 
 void UFlowNode_Log::ExecuteInput(const FName& PinName)
@@ -48,59 +39,37 @@ void UFlowNode_Log::ExecuteInput(const FName& PinName)
 	FText FormattedMessage = FText::FromString(ResolvedMessage);
 	(void)TryFormatTextWithNamedPropertiesAsParameters(FormattedMessage, FormattedMessage);
 
-	PrintMessage(FormattedMessage.ToString());
-
-	if (bPrintOnClients)
-	{
-		ReplicatedMessage = FormattedMessage.ToString();
-		MarkReplicatedPropertiesDirty();
-	}
-
-	TriggerFirstOutput(true);
-}
-
-void UFlowNode_Log::PrintMessage(const FString& InMessage) const
-{
-	// Server and clients share the log in PIE
-	FString PrefixedMessage = InMessage;
-	const UWorld* World = GetWorld();
-	if (World && World->WorldType == EWorldType::PIE && World->GetNetMode() != NM_Standalone)
-	{
-		PrefixedMessage = GetDebugStringForWorld(World) + TEXT(": ") + InMessage;
-	}
+	// Display the message
 
 	switch (Verbosity)
 	{
 		case EFlowLogVerbosity::Error:
-			UE_LOG(LogFlow, Error, TEXT("%s"), *PrefixedMessage);
+			UE_LOG(LogFlow, Error, TEXT("%s"), *FormattedMessage.ToString());
 			break;
 		case EFlowLogVerbosity::Warning:
-			UE_LOG(LogFlow, Warning, TEXT("%s"), *PrefixedMessage);
+			UE_LOG(LogFlow, Warning, TEXT("%s"), *FormattedMessage.ToString());
 			break;
 		case EFlowLogVerbosity::Display:
-			UE_LOG(LogFlow, Display, TEXT("%s"), *PrefixedMessage);
+			UE_LOG(LogFlow, Display, TEXT("%s"), *FormattedMessage.ToString());
 			break;
 		case EFlowLogVerbosity::Log:
-			UE_LOG(LogFlow, Log, TEXT("%s"), *PrefixedMessage);
+			UE_LOG(LogFlow, Log, TEXT("%s"), *FormattedMessage.ToString());
 			break;
 		case EFlowLogVerbosity::Verbose:
-			UE_LOG(LogFlow, Verbose, TEXT("%s"), *PrefixedMessage);
+			UE_LOG(LogFlow, Verbose, TEXT("%s"), *FormattedMessage.ToString());
 			break;
 		case EFlowLogVerbosity::VeryVerbose:
-			UE_LOG(LogFlow, VeryVerbose, TEXT("%s"), *PrefixedMessage);
+			UE_LOG(LogFlow, VeryVerbose, TEXT("%s"), *FormattedMessage.ToString());
 			break;
 		default: ;
 	}
 
 	if (bPrintToScreen)
 	{
-		GEngine->AddOnScreenDebugMessage(-1, Duration, TextColor, PrefixedMessage);
+		GEngine->AddOnScreenDebugMessage(-1, Duration, TextColor, FormattedMessage.ToString());
 	}
-}
 
-void UFlowNode_Log::OnRep_ReplicatedMessage()
-{
-	PrintMessage(ReplicatedMessage);
+	TriggerFirstOutput(true);
 }
 
 #if WITH_EDITOR
