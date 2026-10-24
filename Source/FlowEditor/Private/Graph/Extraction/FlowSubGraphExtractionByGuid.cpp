@@ -203,13 +203,15 @@ namespace FlowSubGraphExtraction
 
 		const FlowSubGraphExtraction::FExtractionResult Result =
 			FlowSubGraphExtraction::ApplyExtraction(Plan.GetValue(), *SourceAsset, NewAssetName);
+
+		// Reported on failure too, so the caller can discard a partially built asset
+		OutNewAsset = Result.NewAsset;
 		if (!Result.Succeeded())
 		{
 			OutError = Result.Error.ToString();
 			return false;
 		}
 
-		OutNewAsset = Result.NewAsset;
 		OutSubGraphNode = Result.SubGraphNode;
 		return true;
 	}

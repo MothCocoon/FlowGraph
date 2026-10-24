@@ -49,6 +49,7 @@ namespace FlowSubGraphExtraction
 	/**
 	 * Extracts the selection without opening a transaction or saving.
 	 * The caller owns the enclosing transaction, rollback of a failed extraction and saving both assets.
+	 * On failure OutNewAsset holds the partially built asset, if one was created, for the caller to discard.
 	 */
 	FLOWEDITOR_API bool ApplyExtractionByGuidWithoutSave(
 		UFlowAsset* SourceAsset,
