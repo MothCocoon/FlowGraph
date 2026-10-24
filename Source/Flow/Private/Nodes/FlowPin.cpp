@@ -103,19 +103,14 @@ const FPinRecord& FPinRecordBuffer::Last() const
 	return const_cast<FPinRecordBuffer*>(this)->Last();
 }
 
-void FPinRecordBuffer::RangeCheck(uint32 Index) const
+void FPinRecordBuffer::RangeCheck(const uint32 Index) const
 {
-	checkf((Index >= 0) & (Index < RecentPinRecords.Capacity()),TEXT("Buffer index out of bounds: %lld into an buffer of size %lld"),(long long)Index, (long long)RecentPinRecords.Capacity()); // & for one branch
+	checkf(Index < RecentPinRecords.Capacity(),TEXT("Buffer index out of bounds: %lld into an buffer of size %lld"),static_cast<long long>(Index), static_cast<long long>(RecentPinRecords.Capacity()));
 }
 
-bool FPinRecordBuffer::IsValidIndex(uint32 Index) const
+bool FPinRecordBuffer::IsValidIndex(const uint32 Index) const
 {
-	return Index >= 0 && Index < RecentPinRecords.Capacity();
-}
-
-bool FPinRecordBuffer::IsEmpty() const
-{
-	return RecentPinRecords.Capacity() == 0;
+	return Index < RecentPinRecords.Capacity();
 }
 
 uint32 FPinRecordBuffer::Capacity() const

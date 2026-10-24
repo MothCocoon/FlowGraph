@@ -1,6 +1,7 @@
 // Copyright https://github.com/MothCocoon/FlowGraph/graphs/contributors
 #pragma once
 
+#include "Containers/CircularBuffer.h"
 #include "EdGraph/EdGraphPin.h"
 #include "Templates/SubclassOf.h"
 #include "UObject/ObjectMacros.h"
@@ -433,9 +434,8 @@ public:
 	TArray<FPinRecord> GetArray() const;
 	FPinRecord& Last();
 	const FPinRecord& Last() const;
-	void RangeCheck(uint32 Index) const;
-	bool IsValidIndex(uint32 Index) const;
-	bool IsEmpty() const;
+	void RangeCheck(const uint32 Index) const;
+	bool IsValidIndex(const uint32 Index) const;
 	uint32 Capacity() const;
 
 private:
