@@ -20,10 +20,6 @@
 
 UFlowComponent::UFlowComponent(const FObjectInitializer& ObjectInitializer)
 	: Super(ObjectInitializer)
-	, RootFlow(nullptr)
-	, bAutoStartRootFlow(true)
-	, RootFlowMode(EFlowNetMode::Authority)
-	, bAllowMultipleInstances(true)
 {
 	PrimaryComponentTick.bCanEverTick = false;
 	PrimaryComponentTick.bStartWithTickEnabled = false;

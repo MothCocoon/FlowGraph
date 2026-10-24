@@ -13,7 +13,7 @@ struct FLOW_API FFlowIdentity
 	FGameplayTagContainer IdentityTags;
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Identity")
-	EFlowTagContainerMatchType IdentityMatchType;
+	EFlowTagContainerMatchType IdentityMatchType = EFlowTagContainerMatchType::HasAnyExact;
 
 	/* Restricts matching to Flow Components of this class.
 	 * Class is never loaded by the filter itself. */
@@ -24,11 +24,6 @@ struct FLOW_API FFlowIdentity
 	 * Class is never loaded by the filter itself. */
 	UPROPERTY(EditDefaultsOnly, BlueprintReadWrite, Category = "Identity")
 	TSoftClassPtr<class AActor> ActorFilter;
-
-	FFlowIdentity()
-		: IdentityMatchType(EFlowTagContainerMatchType::HasAnyExact)
-	{
-	}
 
 	bool IsValid() const;
 	bool IsExactMatch() const;

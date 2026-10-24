@@ -15,8 +15,6 @@ const FName UFlowNodeAddOn_SwitchCase::DefaultCaseName = "Case";
 
 UFlowNodeAddOn_SwitchCase::UFlowNodeAddOn_SwitchCase()
 	: Super()
-	, CaseName(DefaultCaseName)
-	, OutputPinName(DefaultCaseName)
 {
 #if WITH_EDITOR
 	NodeDisplayStyle = FlowNodeStyle::AddOn_SwitchCase;

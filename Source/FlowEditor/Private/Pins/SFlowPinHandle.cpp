@@ -5,11 +5,6 @@
 
 #define LOCTEXT_NAMESPACE "SFlowPinHandle"
 
-SFlowPinHandle::SFlowPinHandle()
-	: Blueprint(nullptr)
-{
-}
-
 SFlowPinHandle::~SFlowPinHandle()
 {
 	Blueprint = nullptr;

@@ -19,7 +19,6 @@
 
 UFlowGraph::UFlowGraph(const FObjectInitializer& ObjectInitializer)
 	: Super(ObjectInitializer)
-	, GraphVersion(0)
 {
 	bLockUpdates = false;
 	bIsLoadingGraph = false;

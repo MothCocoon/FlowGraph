@@ -49,7 +49,7 @@ public:
 	bool Value = false;
 
 public:
-	FLOW_API FFlowDataPinResult_Bool() { }
+	FLOW_API FFlowDataPinResult_Bool() = default;
 	FLOW_API explicit FFlowDataPinResult_Bool(const EFlowDataPinResolveResult InResult) : Super(InResult) { }
 	FLOW_API explicit FFlowDataPinResult_Bool(const bool InValue)
 		: Super(EFlowDataPinResolveResult::Success)
@@ -69,7 +69,7 @@ public:
 
 public:
 
-	FLOW_API FFlowDataPinResult_Int() { }
+	FLOW_API FFlowDataPinResult_Int() = default;
 	FLOW_API explicit FFlowDataPinResult_Int(const EFlowDataPinResolveResult InResult) : Super(InResult) { }
 	FLOW_API explicit FFlowDataPinResult_Int(const int64 InValue)
 		: Super(EFlowDataPinResolveResult::Success)
@@ -89,7 +89,7 @@ public:
 
 public:
 
-	FLOW_API FFlowDataPinResult_Float() { }
+	FLOW_API FFlowDataPinResult_Float() = default;
 	FLOW_API explicit FFlowDataPinResult_Float(const EFlowDataPinResolveResult InResult) : Super(InResult) { }
 	FLOW_API explicit FFlowDataPinResult_Float(const double InValue)
 		: Super(EFlowDataPinResolveResult::Success)
@@ -107,7 +107,7 @@ public:
 	FName Value = NAME_None;
 
 public:
-	FLOW_API FFlowDataPinResult_Name() { }
+	FLOW_API FFlowDataPinResult_Name() = default;
 	FLOW_API explicit FFlowDataPinResult_Name(const EFlowDataPinResolveResult InResult) : Super(InResult) { }
 	FLOW_API explicit FFlowDataPinResult_Name(const FName& InValue)
 		: Super(EFlowDataPinResolveResult::Success)
@@ -129,7 +129,7 @@ public:
 	FString Value;
 
 public:
-	FLOW_API FFlowDataPinResult_String() { }
+	FLOW_API FFlowDataPinResult_String() = default;
 	FLOW_API explicit FFlowDataPinResult_String(const EFlowDataPinResolveResult InResult) : Super(InResult) { }
 	FLOW_API explicit FFlowDataPinResult_String(const FString& InValue)
 		: Super(EFlowDataPinResolveResult::Success)
@@ -151,7 +151,7 @@ public:
 	FText Value;
 
 public:
-	FLOW_API FFlowDataPinResult_Text() { }
+	FLOW_API FFlowDataPinResult_Text() = default;
 	FLOW_API explicit FFlowDataPinResult_Text(const EFlowDataPinResolveResult InResult) : Super(InResult) { }
 	FLOW_API explicit FFlowDataPinResult_Text(const FText& InValue)
 		: Super(EFlowDataPinResolveResult::Success)
@@ -175,10 +175,10 @@ public:
 
 	/* Class for this enum. */
 	UPROPERTY(BlueprintReadWrite, Category = DataPins)
-	TObjectPtr<UEnum> EnumClass = nullptr;
+	TObjectPtr<UEnum> EnumClass;
 
 public:
-	FLOW_API FFlowDataPinResult_Enum() { }
+	FLOW_API FFlowDataPinResult_Enum() = default;
 	FLOW_API explicit FFlowDataPinResult_Enum(const EFlowDataPinResolveResult InResult) : Super(InResult) { }
 	FLOW_API FFlowDataPinResult_Enum(const FName& InValue, UEnum* InEnumClass)
 		: Super(EFlowDataPinResolveResult::Success)
@@ -248,7 +248,7 @@ public:
 
 public:
 
-	FLOW_API FFlowDataPinResult_Vector() { }
+	FLOW_API FFlowDataPinResult_Vector() = default;
 	FLOW_API explicit FFlowDataPinResult_Vector(const EFlowDataPinResolveResult InResult) : Super(InResult) { }
 	FLOW_API explicit FFlowDataPinResult_Vector(const FVector& InValue)
 		: Super(EFlowDataPinResolveResult::Success)
@@ -266,7 +266,7 @@ public:
 	FRotator Value = FRotator::ZeroRotator;
 
 public:
-	FLOW_API FFlowDataPinResult_Rotator() { }
+	FLOW_API FFlowDataPinResult_Rotator() = default;
 	FLOW_API explicit FFlowDataPinResult_Rotator(const EFlowDataPinResolveResult InResult) : Super(InResult) { }
 	FLOW_API explicit FFlowDataPinResult_Rotator(const FRotator& InValue)
 		: Super(EFlowDataPinResolveResult::Success)
@@ -284,7 +284,7 @@ public:
 	FTransform Value;
 
 public:
-	FLOW_API FFlowDataPinResult_Transform() { }
+	FLOW_API FFlowDataPinResult_Transform() = default;
 	FLOW_API explicit FFlowDataPinResult_Transform(const EFlowDataPinResolveResult InResult) : Super(InResult) { }
 	FLOW_API explicit FFlowDataPinResult_Transform(const FTransform& InValue)
 		: Super(EFlowDataPinResolveResult::Success)
@@ -302,7 +302,7 @@ public:
 	FGameplayTag Value;
 
 public:
-	FLOW_API FFlowDataPinResult_GameplayTag() { }
+	FLOW_API FFlowDataPinResult_GameplayTag() = default;
 	FLOW_API explicit FFlowDataPinResult_GameplayTag(const EFlowDataPinResolveResult InResult) : Super(InResult) { }
 	FLOW_API explicit FFlowDataPinResult_GameplayTag(const FGameplayTag& InValue)
 		: Super(EFlowDataPinResolveResult::Success)
@@ -320,7 +320,7 @@ public:
 	FGameplayTagContainer Value;
 
 public:
-	FLOW_API FFlowDataPinResult_GameplayTagContainer() { }
+	FLOW_API FFlowDataPinResult_GameplayTagContainer() = default;
 	FLOW_API explicit FFlowDataPinResult_GameplayTagContainer(const EFlowDataPinResolveResult InResult) : Super(InResult) { }
 	FLOW_API explicit FFlowDataPinResult_GameplayTagContainer(const FGameplayTagContainer& InValue)
 		: Super(EFlowDataPinResolveResult::Success)
@@ -338,7 +338,7 @@ public:
 	FInstancedStruct Value;
 
 public:
-	FLOW_API FFlowDataPinResult_InstancedStruct() { }
+	FLOW_API FFlowDataPinResult_InstancedStruct() = default;
 	FLOW_API explicit FFlowDataPinResult_InstancedStruct(const EFlowDataPinResolveResult InResult) : Super(InResult) { }
 	FLOW_API explicit FFlowDataPinResult_InstancedStruct(const FInstancedStruct& InValue)
 		: Super(EFlowDataPinResolveResult::Success)
@@ -356,7 +356,7 @@ public:
 	TObjectPtr<UObject> Value;
 
 public:
-	FLOW_API FFlowDataPinResult_Object() { }
+	FLOW_API FFlowDataPinResult_Object() = default;
 	FLOW_API explicit FFlowDataPinResult_Object(const EFlowDataPinResolveResult InResult) : Super(InResult) { }
 	FLOW_API explicit FFlowDataPinResult_Object(UObject* InValue);
 
@@ -378,10 +378,10 @@ protected:
 	/* UClass version of the result.
 	 * Both the SoftClassPath and the UClass (if available) will be set for the result. */
 	UPROPERTY(BlueprintReadWrite, Category = DataPins)
-	TObjectPtr<UClass> ValueClass = nullptr;
+	TObjectPtr<UClass> ValueClass;
 
 public:
-	FLOW_API FFlowDataPinResult_Class() { }
+	FLOW_API FFlowDataPinResult_Class() = default;
 	FLOW_API explicit FFlowDataPinResult_Class(const EFlowDataPinResolveResult InResult) : Super(InResult) { }
 	FLOW_API explicit FFlowDataPinResult_Class(const FSoftClassPath& InValuePath);
 	FLOW_API explicit FFlowDataPinResult_Class(UClass* InValueClass);

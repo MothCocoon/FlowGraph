@@ -20,11 +20,6 @@ struct FLOWEDITOR_API FImportedGraphNode
 
 	TMultiMap<FName, FConnectedPin> Incoming;
 	TMultiMap<FName, FConnectedPin> Outgoing;
-
-	FImportedGraphNode()
-		: SourceGraphNode(nullptr)
-	{
-	}
 };
 
 /**
@@ -39,10 +34,6 @@ struct FLOWEDITOR_API FBlueprintToFlowPinName
 	// Value represents Input Pin name of blueprint function
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Pins")
 	TMap<FName, FName> NodePropertiesToFunctionPins;
-
-	FBlueprintToFlowPinName()
-	{
-	}
 };
 
 /**

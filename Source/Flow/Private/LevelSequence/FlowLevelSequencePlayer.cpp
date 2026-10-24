@@ -9,12 +9,6 @@
 
 #include UE_INLINE_GENERATED_CPP_BY_NAME(FlowLevelSequencePlayer)
 
-UFlowLevelSequencePlayer::UFlowLevelSequencePlayer(const FObjectInitializer& ObjectInitializer)
-	: Super(ObjectInitializer)
-	, FlowEventReceiver(nullptr)
-{
-}
-
 UFlowLevelSequencePlayer* UFlowLevelSequencePlayer::CreateFlowLevelSequencePlayer(
 	const UObject* WorldContextObject,
 	ULevelSequence* LevelSequence,

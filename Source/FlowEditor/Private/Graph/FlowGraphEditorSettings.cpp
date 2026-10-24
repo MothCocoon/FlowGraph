@@ -7,21 +7,6 @@
 
 UFlowGraphEditorSettings::FOnSettingsChanged UFlowGraphEditorSettings::SettingsChanged;
 
-UFlowGraphEditorSettings::UFlowGraphEditorSettings()
-	: NodeDoubleClickTarget(EFlowNodeDoubleClickTarget::PrimaryAssetOrNodeDefinition)
-	, bShowNodeClass(false)
-	, bShowNodeDescriptionWhilePlaying(true)
-	, bShowAddonDescriptions(true)
-	, bShowAddOnsInNodeDetails(false)
-	, bEnforceFriendlyPinNames(false)
-	, bShowSubGraphPreview(true)
-	, bShowSubGraphPath(true)
-	, SubGraphPreviewSize(FVector2D(640.f, 360.f))
-	, bHighlightInputWiresOfSelectedNodes(false)
-	, bHighlightOutputWiresOfSelectedNodes(false)
-{
-}
-
 #if WITH_EDITOR
 void UFlowGraphEditorSettings::PostEditChangeProperty(FPropertyChangedEvent& PropertyChangedEvent)
 {

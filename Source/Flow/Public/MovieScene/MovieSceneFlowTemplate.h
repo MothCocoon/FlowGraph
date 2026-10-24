@@ -41,7 +41,7 @@ struct FMovieSceneFlowTriggerTemplate : public FMovieSceneFlowTemplateBase
 {
 	GENERATED_BODY()
 
-	FMovieSceneFlowTriggerTemplate() {}
+	FMovieSceneFlowTriggerTemplate() = default;
 	FMovieSceneFlowTriggerTemplate(const UMovieSceneFlowTriggerSection& Section, const UMovieSceneFlowTrack& Track);
 
 	UPROPERTY()
@@ -60,7 +60,7 @@ struct FMovieSceneFlowRepeaterTemplate : public FMovieSceneFlowTemplateBase
 {
 	GENERATED_BODY()
 
-	FMovieSceneFlowRepeaterTemplate() {}
+	FMovieSceneFlowRepeaterTemplate() = default;
 	FMovieSceneFlowRepeaterTemplate(const UMovieSceneFlowRepeaterSection& Section, const UMovieSceneFlowTrack& Track);
 
 	UPROPERTY()

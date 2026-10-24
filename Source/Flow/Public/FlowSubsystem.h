@@ -28,8 +28,6 @@ class FLOW_API UFlowSubsystem : public UGameInstanceSubsystem
 	GENERATED_BODY()
 
 public:
-	UFlowSubsystem();
-
 	friend class UFlowAsset;
 	friend class UFlowComponent;
 	friend class UFlowNode_SubGraph;

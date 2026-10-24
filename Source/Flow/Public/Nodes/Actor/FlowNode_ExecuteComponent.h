@@ -112,7 +112,7 @@ protected:
 
 	/* Component (template) to inject on the spawned actor, may be configured inline. */
 	UPROPERTY(EditAnywhere, Instanced, Category = Configuration, DisplayName = "Inject & Execute Component (from Template)", meta = (MustImplement = "/Script/Flow.FlowCoreExecutableInterface,/Script/Flow.FlowExternalExecutableInterface", EditConditionHides, EditCondition = "ComponentSource == EExecuteComponentSource::InjectFromTemplate || ComponentSource == EExecuteComponentSource::Undetermined"))
-	TObjectPtr<UActorComponent> ComponentTemplate = nullptr;
+	TObjectPtr<UActorComponent> ComponentTemplate;
 
 	/* Component (class) to inject on the spawned actor. */
 	UPROPERTY(EditAnywhere, Category = Configuration, DisplayName = "Inject & Execute Component (by Class)", meta = (MustImplement = "/Script/Flow.FlowCoreExecutableInterface,/Script/Flow.FlowExternalExecutableInterface", EditConditionHides, EditCondition = "ComponentSource == EExecuteComponentSource::InjectFromClass || ComponentSource == EExecuteComponentSource::Undetermined"))
@@ -120,7 +120,7 @@ protected:
 
 	/* Manager object to inject and remove components from the Flow owning Actor. */
 	UPROPERTY(Transient)
-	TObjectPtr<UFlowInjectComponentsManager> InjectComponentsManager = nullptr;
+	TObjectPtr<UFlowInjectComponentsManager> InjectComponentsManager;
 
 	/* Look for the component (by class) on the Actor and re-use it (rather than injecting) if the component already exists. */
 	UPROPERTY(EditAnywhere, Category = Configuration, DisplayName = "Re-use existing component if found", meta = (EditConditionHides, EditCondition = "ComponentSource == EExecuteComponentSource::InjectFromClass"))

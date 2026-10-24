@@ -28,10 +28,7 @@ struct FLOWEDITOR_API FFlowGraphSchemaAction_NewNode : public FEdGraphSchemaActi
 
 	virtual FName GetTypeId() const override { return StaticGetTypeId(); }
 
-	FFlowGraphSchemaAction_NewNode()
-		: NodeClass(nullptr)
-	{
-	}
+	FFlowGraphSchemaAction_NewNode() = default;
 
 	explicit FFlowGraphSchemaAction_NewNode(UClass* InNodeClass)
 		: NodeClass(InNodeClass)
@@ -72,18 +69,11 @@ struct FLOWEDITOR_API FFlowSchemaAction_NewSubNode : public FEdGraphSchemaAction
 	UPROPERTY()
 	TObjectPtr<UFlowGraphNode> ParentNode;
 
-	FFlowSchemaAction_NewSubNode()
-		: FEdGraphSchemaAction()
-		, NodeTemplate(nullptr)
-		, ParentNode(nullptr)
-	{
-	}
+	FFlowSchemaAction_NewSubNode() = default;
 
 	FFlowSchemaAction_NewSubNode(FText InNodeCategory, FText InMenuDesc, FText InToolTip, const int32 InGrouping, FText InKeywords)
 		: FEdGraphSchemaAction(MoveTemp(InNodeCategory), MoveTemp(InMenuDesc), MoveTemp(InToolTip), InGrouping,
 			MoveTemp(InKeywords))
-		, NodeTemplate(nullptr)
-		, ParentNode(nullptr)
 	{
 	}
 
@@ -106,10 +96,7 @@ struct FLOWEDITOR_API FFlowGraphSchemaAction_Paste : public FEdGraphSchemaAction
 {
 	GENERATED_USTRUCT_BODY()
 
-	FFlowGraphSchemaAction_Paste()
-		: FEdGraphSchemaAction()
-	{
-	}
+	FFlowGraphSchemaAction_Paste() = default;
 
 	FFlowGraphSchemaAction_Paste(FText InNodeCategory, FText InMenuDesc, FText InToolTip, const int32 InGrouping)
 		: FEdGraphSchemaAction(MoveTemp(InNodeCategory), MoveTemp(InMenuDesc), MoveTemp(InToolTip), InGrouping)
@@ -137,10 +124,7 @@ struct FLOWEDITOR_API FFlowGraphSchemaAction_NewComment : public FEdGraphSchemaA
 
 	virtual FName GetTypeId() const override { return StaticGetTypeId(); }
 
-	FFlowGraphSchemaAction_NewComment()
-		: FEdGraphSchemaAction()
-	{
-	}
+	FFlowGraphSchemaAction_NewComment() = default;
 
 	FFlowGraphSchemaAction_NewComment(FText InNodeCategory, FText InMenuDesc, FText InToolTip, const int32 InGrouping)
 		: FEdGraphSchemaAction(MoveTemp(InNodeCategory), MoveTemp(InMenuDesc), MoveTemp(InToolTip), InGrouping)

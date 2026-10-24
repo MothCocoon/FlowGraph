@@ -11,7 +11,6 @@
 
 AFlowLevelSequenceActor::AFlowLevelSequenceActor(const FObjectInitializer& ObjectInitializer)
 	: Super(ObjectInitializer.SetDefaultSubobjectClass<UFlowLevelSequencePlayer>("AnimationPlayer"))
-	, ReplicatedLevelSequenceAsset(nullptr)
 {
 }
 

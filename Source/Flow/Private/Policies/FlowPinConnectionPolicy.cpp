@@ -7,10 +7,6 @@
 
 #include UE_INLINE_GENERATED_CPP_BY_NAME(FlowPinConnectionPolicy)
 
-FFlowPinConnectionPolicy::FFlowPinConnectionPolicy()
-{
-}
-
 const FFlowPinTypeMatchPolicy* FFlowPinConnectionPolicy::TryFindPinTypeMatchPolicy(const FName& PinTypeName) const
 {
 	return PinTypeMatchPolicies.Find(PinTypeName);

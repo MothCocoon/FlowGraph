@@ -128,8 +128,6 @@ private:
 		/** All children of these classes will be included unless filtered out by another setting. */
 		TSet<const UClass*> AllowedChildrenOfClasses;
 
-		FFlowNodeBlueprintParentFilter() {}
-
 		virtual bool IsClassAllowed(const FClassViewerInitializationOptions& InInitOptions, const UClass* InClass, TSharedRef< FClassViewerFilterFuncs > InFilterFuncs) override
 		{
 			// If it appears on the allowed child-of classes list (or there is nothing on that list)

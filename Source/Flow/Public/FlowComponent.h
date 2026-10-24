@@ -24,7 +24,7 @@ struct FNotifyTagReplication
 	UPROPERTY()
 	FGameplayTag NotifyTag;
 
-	FNotifyTagReplication() {}
+	FNotifyTagReplication() = default;
 
 	FNotifyTagReplication(const FGameplayTag& InActorTag, const FGameplayTag& InNotifyTag)
 		: ActorTag(InActorTag)
@@ -174,15 +174,15 @@ public:
 
 	/* If true, component will start Root Flow on Begin Play. */
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "RootFlow")
-	bool bAutoStartRootFlow;
+	bool bAutoStartRootFlow = true;
 
 	/* Networking mode for creating this Root Flow. */
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "RootFlow")
-	EFlowNetMode RootFlowMode;
+	EFlowNetMode RootFlowMode = EFlowNetMode::Authority;
 
 	/* If false, another Root Flow instance won't be created from this component, if this Flow Asset is already instantiated. */
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "RootFlow")
-	bool bAllowMultipleInstances;
+	bool bAllowMultipleInstances = true;
 
 	UPROPERTY(SaveGame)
 	FString SavedAssetInstanceName;

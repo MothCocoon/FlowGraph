@@ -55,10 +55,6 @@ public:
 	TArray<TSharedRef<FTokenizedMessage>> Messages;
 
 public:
-	FFlowMessageLog()
-	{
-	}
-
 	template <typename T>
 	TSharedRef<FTokenizedMessage> Error(const TCHAR* Format, T* Object)
 	{

@@ -12,14 +12,7 @@ UFlowSettings::UFlowSettings(const FObjectInitializer& ObjectInitializer)
 	: Super(ObjectInitializer)
 	, PinConnectionPolicy(FFlowPinConnectionPolicy_VeryRelaxed::StaticStruct())
 	, PreloadPolicy(FFlowPreloadPolicy_Standard::StaticStruct())
-	, SubGraphFinishPolicy(ESubGraphFinishPolicy::Deinitialize)
-	, bDeferTriggeredOutputsWhileTriggering(true)
-	, bLogOnSignalDisabled(true)
-	, bLogOnSignalPassthrough(true)
-	, bCreateFlowSubsystemOnClients(true)
-	, bUseAdaptiveNodeTitles(false)
 	, DefaultExpectedOwnerClass(UFlowComponent::StaticClass())
-	, bWarnAboutMissingIdentityTags(true)
 {
 }
 

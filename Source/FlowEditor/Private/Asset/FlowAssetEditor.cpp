@@ -49,11 +49,6 @@ const FName FFlowAssetEditor::RuntimeLogTab(TEXT("RuntimeLog"));
 const FName FFlowAssetEditor::SearchTab(TEXT("Search"));
 const FName FFlowAssetEditor::ValidationLogTab(TEXT("ValidationLog"));
 
-FFlowAssetEditor::FFlowAssetEditor()
-	: FlowAsset(nullptr)
-{
-}
-
 FFlowAssetEditor::~FFlowAssetEditor()
 {
 	if (FlowGraphEditorSettingsChangedHandle.IsValid())

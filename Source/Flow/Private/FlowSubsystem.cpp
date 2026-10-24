@@ -24,11 +24,6 @@ FNativeFlowAssetEvent UFlowSubsystem::OnInstancedTemplateRemoved;
 
 #define LOCTEXT_NAMESPACE "FlowSubsystem"
 
-UFlowSubsystem::UFlowSubsystem()
-	: LoadedSaveGame(nullptr)
-{
-}
-
 bool UFlowSubsystem::ShouldCreateSubsystem(UObject* Outer) const
 {
 	// Only create an instance if there is no override implementation defined elsewhere

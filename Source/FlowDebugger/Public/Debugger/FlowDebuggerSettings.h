@@ -15,8 +15,6 @@ class FLOWDEBUGGER_API UFlowDebuggerSettings : public UDeveloperSettings
 	GENERATED_BODY()
 
 public:
-	UFlowDebuggerSettings();
-
 	UPROPERTY(config)
 	TMap<FGuid, FNodeBreakpoint> NodeBreakpoints;
 };

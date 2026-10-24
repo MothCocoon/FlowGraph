@@ -16,20 +16,14 @@
 class FAssetClassParentFilter final : public IClassViewerFilter
 {
 public:
-	FAssetClassParentFilter()
-		: DisallowedClassFlags(CLASS_None)
-		, bDisallowBlueprintBase(false)
-	{
-	}
-
 	/** All children of these classes will be included unless filtered out by another setting. */
 	TSet<const UClass*> AllowedChildrenOfClasses;
 
 	/** Disallowed class flags. */
-	EClassFlags DisallowedClassFlags;
+	EClassFlags DisallowedClassFlags = CLASS_None;
 
 	/** Disallow blueprint base classes. */
-	bool bDisallowBlueprintBase;
+	bool bDisallowBlueprintBase = false;
 
 	virtual bool IsClassAllowed(const FClassViewerInitializationOptions& InInitOptions, const UClass* InClass, const TSharedRef<FClassViewerFilterFuncs> InFilterFuncs) override
 	{

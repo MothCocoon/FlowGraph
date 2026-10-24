@@ -28,8 +28,6 @@ static const FName DetailsMode = FName(TEXT("DetailsMode"));
 static const FName GraphMode = FName(TEXT("GraphMode"));
 
 FFlowDiffPanel::FFlowDiffPanel()
-	: FlowAsset(nullptr)
-	, bShowAssetName(false)
 {
 	DetailScrollbar = SNew(SLinkableScrollBar);
 }

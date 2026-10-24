@@ -35,13 +35,13 @@ public:
 	FName PinName = NAME_None;
 
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category="Flow")
-	TObjectPtr<UFlowNode> OldConnectedNode = nullptr;
+	TObjectPtr<UFlowNode> OldConnectedNode;
 
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Flow")
 	FName OldConnectedPinName = NAME_None;
 
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Flow")
-	TObjectPtr<UFlowNode> NewConnectedNode = nullptr;
+	TObjectPtr<UFlowNode> NewConnectedNode;
 
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Flow")
 	FName NewConnectedPinName = NAME_None;

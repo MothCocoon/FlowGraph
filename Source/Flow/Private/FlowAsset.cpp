@@ -56,15 +56,8 @@ FString UFlowAsset::ValidationError_AdviseResave = TEXT("Open the Flow Asset in 
 
 UFlowAsset::UFlowAsset(const FObjectInitializer& ObjectInitializer)
 	: Super(ObjectInitializer)
-	, bWorldBound(true)
-#if WITH_EDITORONLY_DATA
-	, FlowGraph(nullptr)
-#endif
 	, AllowedNodeClasses({UFlowNodeBase::StaticClass()})
 	, AllowedInSubgraphNodeClasses({UFlowNode_SubGraph::StaticClass()})
-	, bStartNodePlacedAsGhostNode(false)
-	, TemplateAsset(nullptr)
-	, FinishPolicy(EFlowFinishPolicy::Keep)
 {
 	if (!AssetGuid.IsValid())
 	{

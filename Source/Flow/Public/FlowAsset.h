@@ -66,7 +66,7 @@ public:
 	/* Set it to False, if this asset is instantiated as Root Flow for owner that doesn't live in the world.
 	 * This allows to SaveGame support works properly, if owner of Root Flow would be Game Instance or its subsystem. */
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Flow Asset")
-	bool bWorldBound;
+	bool bWorldBound = true;
 
 //////////////////////////////////////////////////////////////////////////
 // Graph (editor-only)
@@ -148,7 +148,7 @@ protected:
 	TArray<TSubclassOf<UFlowNodeBase>> AllowedInSubgraphNodeClasses;
 	TArray<TSubclassOf<UFlowNodeBase>> DeniedInSubgraphNodeClasses;
 
-	bool bStartNodePlacedAsGhostNode;
+	bool bStartNodePlacedAsGhostNode = false;
 
 private:
 	UPROPERTY()
@@ -403,7 +403,7 @@ protected:
 	TArray<TObjectPtr<UFlowNode>> RecordedNodes;
 
 	UPROPERTY(Transient)
-	EFlowFinishPolicy FinishPolicy;
+	EFlowFinishPolicy FinishPolicy = EFlowFinishPolicy::Keep;
 
 	 /* Receiver that will be given a snapshot of OutputDataPinValues when this graph finishes.
 	  * Typically, the SubGraph node that created this instance. */
