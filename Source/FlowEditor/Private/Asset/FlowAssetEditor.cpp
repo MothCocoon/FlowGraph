@@ -217,18 +217,6 @@ void FFlowAssetEditor::OnAssetsSavedAs(const TArray<UObject*>& SavedObjects)
 	TryValidateOnAssetSave(SavedObjects);
 }
 
-void FFlowAssetEditor::DoPreSaveAssetUpdate() const
-{
-	if (IsValid(FlowAsset))
-	{
-		UFlowGraph* FlowGraph = Cast<UFlowGraph>(FlowAsset->GetGraph());
-		if (IsValid(FlowGraph))
-		{
-			FlowGraph->OnSave();
-		}
-	}
-}
-
 bool FFlowAssetEditor::IsTabFocused(const FTabId& TabId) const
 {
 	if (const TSharedPtr<SDockTab> CurrentGraphTab = GetToolkitHost()->GetTabManager()->FindExistingLiveTab(TabId))
@@ -311,6 +299,18 @@ TSharedRef<SDockTab> FFlowAssetEditor::SpawnTab_ValidationLog(const FSpawnTabArg
 		[
 			ValidationLog.ToSharedRef()
 		];
+}
+
+void FFlowAssetEditor::DoPreSaveAssetUpdate() const
+{
+	if (IsValid(FlowAsset))
+	{
+		UFlowGraph* FlowGraph = Cast<UFlowGraph>(FlowAsset->GetGraph());
+		if (IsValid(FlowGraph))
+		{
+			FlowGraph->OnSave();
+		}
+	}
 }
 
 void FFlowAssetEditor::InitFlowAssetEditor(const EToolkitMode::Type Mode, const TSharedPtr<class IToolkitHost>& InitToolkitHost, UObject* ObjectToEdit)

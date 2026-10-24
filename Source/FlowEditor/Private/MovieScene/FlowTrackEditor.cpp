@@ -22,45 +22,9 @@ TSharedRef<ISequencerTrackEditor> FFlowTrackEditor::CreateTrackEditor(TSharedRef
 	return MakeShareable(new FFlowTrackEditor(InSequencer));
 }
 
-TSharedRef<ISequencerSection> FFlowTrackEditor::MakeSectionInterface(UMovieSceneSection& SectionObject, UMovieSceneTrack& Track, FGuid ObjectBinding)
-{
-	if (SectionObject.IsA<UMovieSceneFlowTriggerSection>())
-	{
-		return MakeShared<FFlowTriggerSection>(SectionObject, GetSequencer());
-	}
-
-	if (SectionObject.IsA<UMovieSceneFlowRepeaterSection>())
-	{
-		return MakeShared<FFlowRepeaterSection>(SectionObject, GetSequencer());
-	}
-
-	return MakeShared<FSequencerSection>(SectionObject);
-}
-
 FFlowTrackEditor::FFlowTrackEditor(TSharedRef<ISequencer> InSequencer)
 	: FMovieSceneTrackEditor(InSequencer)
 {
-}
-
-void FFlowTrackEditor::AddFlowSubMenu(FMenuBuilder& MenuBuilder)
-{
-	MenuBuilder.AddMenuEntry(
-		LOCTEXT("AddNewTriggerSection", "Flow Trigger"),
-		LOCTEXT("AddNewTriggerSectionTooltip", "Adds a new section that can trigger a Flow event at a specific time"),
-		FSlateIcon(),
-		FUIAction(
-			FExecuteAction::CreateRaw(this, &FFlowTrackEditor::HandleAddFlowTrackMenuEntryExecute, UMovieSceneFlowTriggerSection::StaticClass())
-		)
-	);
-
-	MenuBuilder.AddMenuEntry(
-		LOCTEXT("AddNewRepeaterSection", "Flow Repeater"),
-		LOCTEXT("AddNewRepeaterSectionTooltip", "Adds a new section that triggers a Flow event every time it's evaluated"),
-		FSlateIcon(),
-		FUIAction(
-			FExecuteAction::CreateRaw(this, &FFlowTrackEditor::HandleAddFlowTrackMenuEntryExecute, UMovieSceneFlowRepeaterSection::StaticClass())
-		)
-	);
 }
 
 void FFlowTrackEditor::BuildAddTrackMenu(FMenuBuilder& MenuBuilder)
@@ -78,6 +42,21 @@ void FFlowTrackEditor::BuildAddTrackMenu(FMenuBuilder& MenuBuilder)
 			FSlateIcon(FAppStyle::GetAppStyleSetName(), "Sequencer.Tracks.Event")
 		);
 	}
+}
+
+bool FFlowTrackEditor::SupportsType(TSubclassOf<UMovieSceneTrack> Type) const
+{
+	return (Type == UMovieSceneFlowTrack::StaticClass());
+}
+
+bool FFlowTrackEditor::SupportsSequence(UMovieSceneSequence* InSequence) const
+{
+	return InSequence && InSequence->GetClass()->IsChildOf(ULevelSequence::StaticClass());
+}
+
+const FSlateBrush* FFlowTrackEditor::GetIconBrush() const
+{
+	return FAppStyle::GetBrush("Sequencer.Tracks.Event");
 }
 
 TSharedPtr<SWidget> FFlowTrackEditor::BuildOutlinerEditWidget(const FGuid& ObjectBinding, UMovieSceneTrack* Track, const FBuildEditWidgetParams& Params)
@@ -130,19 +109,40 @@ TSharedPtr<SWidget> FFlowTrackEditor::BuildOutlinerEditWidget(const FGuid& Objec
 		];
 }
 
-bool FFlowTrackEditor::SupportsType(TSubclassOf<UMovieSceneTrack> Type) const
+TSharedRef<ISequencerSection> FFlowTrackEditor::MakeSectionInterface(UMovieSceneSection& SectionObject, UMovieSceneTrack& Track, FGuid ObjectBinding)
 {
-	return (Type == UMovieSceneFlowTrack::StaticClass());
+	if (SectionObject.IsA<UMovieSceneFlowTriggerSection>())
+	{
+		return MakeShared<FFlowTriggerSection>(SectionObject, GetSequencer());
+	}
+
+	if (SectionObject.IsA<UMovieSceneFlowRepeaterSection>())
+	{
+		return MakeShared<FFlowRepeaterSection>(SectionObject, GetSequencer());
+	}
+
+	return MakeShared<FSequencerSection>(SectionObject);
 }
 
-bool FFlowTrackEditor::SupportsSequence(UMovieSceneSequence* InSequence) const
+void FFlowTrackEditor::AddFlowSubMenu(FMenuBuilder& MenuBuilder)
 {
-	return InSequence && InSequence->GetClass()->IsChildOf(ULevelSequence::StaticClass());
-}
+	MenuBuilder.AddMenuEntry(
+		LOCTEXT("AddNewTriggerSection", "Flow Trigger"),
+		LOCTEXT("AddNewTriggerSectionTooltip", "Adds a new section that can trigger a Flow event at a specific time"),
+		FSlateIcon(),
+		FUIAction(
+			FExecuteAction::CreateRaw(this, &FFlowTrackEditor::HandleAddFlowTrackMenuEntryExecute, UMovieSceneFlowTriggerSection::StaticClass())
+		)
+	);
 
-const FSlateBrush* FFlowTrackEditor::GetIconBrush() const
-{
-	return FAppStyle::GetBrush("Sequencer.Tracks.Event");
+	MenuBuilder.AddMenuEntry(
+		LOCTEXT("AddNewRepeaterSection", "Flow Repeater"),
+		LOCTEXT("AddNewRepeaterSectionTooltip", "Adds a new section that triggers a Flow event every time it's evaluated"),
+		FSlateIcon(),
+		FUIAction(
+			FExecuteAction::CreateRaw(this, &FFlowTrackEditor::HandleAddFlowTrackMenuEntryExecute, UMovieSceneFlowRepeaterSection::StaticClass())
+		)
+	);
 }
 
 void FFlowTrackEditor::HandleAddFlowTrackMenuEntryExecute(UClass* SectionType) const

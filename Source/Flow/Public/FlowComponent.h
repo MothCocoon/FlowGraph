@@ -60,6 +60,12 @@ public:
 	virtual void BeginPlay() override;
 	virtual void EndPlay(const EEndPlayReason::Type EndPlayReason) override;
 
+protected:
+	void RegisterWithFlowSubsystem();
+	void UnregisterWithFlowSubsystem();
+	virtual void BeginRootFlow(const bool bComponentLoadedFromSaveGame);
+	
+public:	
 	UFUNCTION(BlueprintCallable, Category = "Flow")
 	void AddIdentityTag(const FGameplayTag Tag, const EFlowNetMode NetMode = EFlowNetMode::Authority);
 
@@ -71,11 +77,6 @@ public:
 
 	UFUNCTION(BlueprintCallable, Category = "Flow")
 	void RemoveIdentityTags(FGameplayTagContainer Tags, const EFlowNetMode NetMode = EFlowNetMode::Authority);
-
-protected:
-	void RegisterWithFlowSubsystem();
-	void UnregisterWithFlowSubsystem();
-	virtual void BeginRootFlow(bool bComponentLoadedFromSaveGame);
 
 private:
 	UFUNCTION()

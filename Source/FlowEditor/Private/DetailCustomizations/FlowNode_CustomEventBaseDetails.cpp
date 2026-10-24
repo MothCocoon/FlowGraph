@@ -99,16 +99,6 @@ void FFlowNode_CustomEventBaseDetails::RebuildEventNames()
 	}
 }
 
-bool FFlowNode_CustomEventBaseDetails::IsInEventNames(const FName& EventName) const
-{
-	const bool bIsInEventNames = EventNames.ContainsByPredicate([&EventName](const TSharedPtr<FName>& ExistingName)
-	{
-		return *ExistingName == EventName;
-	});
-
-	return bIsInEventNames;
-}
-
 TSharedRef<SWidget> FFlowNode_CustomEventBaseDetails::GenerateEventWidget(const TSharedPtr<FName> Item) const
 {
 	return SNew(STextBlock)
@@ -144,4 +134,14 @@ void FFlowNode_CustomEventBaseDetails::PinSelectionChanged(const TSharedPtr<FNam
 			}
 		}
 	}
+}
+
+bool FFlowNode_CustomEventBaseDetails::IsInEventNames(const FName& EventName) const
+{
+	const bool bIsInEventNames = EventNames.ContainsByPredicate([&EventName](const TSharedPtr<FName>& ExistingName)
+	{
+		return *ExistingName == EventName;
+	});
+
+	return bIsInEventNames;
 }

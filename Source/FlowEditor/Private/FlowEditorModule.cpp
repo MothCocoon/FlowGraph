@@ -112,19 +112,6 @@ void FFlowEditorModule::StartupModule()
 	FFlowGraphToken::OnJumpToNodeRequested.BindStatic(&FFlowEditorModule::JumpToNodeFromLogToken);
 }
 
-void FFlowEditorModule::RegisterForAssetChanges()
-{
-	if (!bIsRegisteredForAssetChanges)
-	{
-		// Register asset change detection for search cache invalidation
-		const FAssetRegistryModule& AssetRegistry = FModuleManager::LoadModuleChecked<FAssetRegistryModule>("AssetRegistry");
-		AssetUpdatedHandle = AssetRegistry.Get().OnAssetUpdated().AddStatic(&FFlowEditorModule::OnAssetUpdated);
-		AssetRenamedHandle = AssetRegistry.Get().OnAssetRenamed().AddStatic(&FFlowEditorModule::OnAssetRenamed);
-		AssetRemovedHandle = AssetRegistry.Get().OnAssetRemoved().AddStatic(&FFlowEditorModule::OnAssetUpdated);
-		bIsRegisteredForAssetChanges = true;
-	}
-}
-
 void FFlowEditorModule::ShutdownModule()
 {
 	FFlowGraphToken::OnJumpToNodeRequested.Unbind();
@@ -158,6 +145,19 @@ void FFlowEditorModule::ShutdownModule()
 		AssetRegistry.Get().OnAssetRemoved().RemoveAll(this);
 
 		bIsRegisteredForAssetChanges = false;
+	}
+}
+
+void FFlowEditorModule::RegisterForAssetChanges()
+{
+	if (!bIsRegisteredForAssetChanges)
+	{
+		// Register asset change detection for search cache invalidation
+		const FAssetRegistryModule& AssetRegistry = FModuleManager::LoadModuleChecked<FAssetRegistryModule>("AssetRegistry");
+		AssetUpdatedHandle = AssetRegistry.Get().OnAssetUpdated().AddStatic(&FFlowEditorModule::OnAssetUpdated);
+		AssetRenamedHandle = AssetRegistry.Get().OnAssetRenamed().AddStatic(&FFlowEditorModule::OnAssetRenamed);
+		AssetRemovedHandle = AssetRegistry.Get().OnAssetRemoved().AddStatic(&FFlowEditorModule::OnAssetUpdated);
+		bIsRegisteredForAssetChanges = true;
 	}
 }
 
@@ -233,28 +233,6 @@ void FFlowEditorModule::UnregisterAssets()
 	}
 
 	RegisteredAssetActions.Empty();
-}
-
-void FFlowEditorModule::RegisterCustomClassLayout(const TSubclassOf<UObject> Class, const FOnGetDetailCustomizationInstance DetailLayout)
-{
-	if (Class)
-	{
-		FPropertyEditorModule& PropertyModule = FModuleManager::GetModuleChecked<FPropertyEditorModule>("PropertyEditor");
-		PropertyModule.RegisterCustomClassLayout(Class->GetFName(), DetailLayout);
-
-		CustomClassLayouts.Add(Class->GetFName());
-	}
-}
-
-void FFlowEditorModule::RegisterCustomStructLayout(const UScriptStruct& Struct, const FOnGetPropertyTypeCustomizationInstance DetailLayout)
-{
-	if (FModuleManager::Get().IsModuleLoaded("PropertyEditor"))
-	{
-		FPropertyEditorModule& PropertyModule = FModuleManager::GetModuleChecked<FPropertyEditorModule>("PropertyEditor");
-		PropertyModule.RegisterCustomPropertyTypeLayout(Struct.GetFName(), DetailLayout);
-
-		CustomStructLayouts.Add(Struct.GetFName());
-	}
 }
 
 void FFlowEditorModule::RegisterDetailCustomizations()
@@ -340,6 +318,28 @@ void FFlowEditorModule::UnregisterDetailCustomizations() const
 		}
 
 		PropertyModule.NotifyCustomizationModuleChanged();
+	}
+}
+
+void FFlowEditorModule::RegisterCustomClassLayout(const TSubclassOf<UObject> Class, const FOnGetDetailCustomizationInstance DetailLayout)
+{
+	if (Class)
+	{
+		FPropertyEditorModule& PropertyModule = FModuleManager::GetModuleChecked<FPropertyEditorModule>("PropertyEditor");
+		PropertyModule.RegisterCustomClassLayout(Class->GetFName(), DetailLayout);
+
+		CustomClassLayouts.Add(Class->GetFName());
+	}
+}
+
+void FFlowEditorModule::RegisterCustomStructLayout(const UScriptStruct& Struct, const FOnGetPropertyTypeCustomizationInstance DetailLayout)
+{
+	if (FModuleManager::Get().IsModuleLoaded("PropertyEditor"))
+	{
+		FPropertyEditorModule& PropertyModule = FModuleManager::GetModuleChecked<FPropertyEditorModule>("PropertyEditor");
+		PropertyModule.RegisterCustomPropertyTypeLayout(Struct.GetFName(), DetailLayout);
+
+		CustomStructLayouts.Add(Struct.GetFName());
 	}
 }
 

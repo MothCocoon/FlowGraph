@@ -36,6 +36,17 @@ UFlowDebugEditorSubsystem::UFlowDebugEditorSubsystem()
 	OnDebuggerBreakpointHit.AddUObject(this, &ThisClass::OnBreakpointHit);
 }
 
+void UFlowDebugEditorSubsystem::RequestStop()
+{
+	if (bIsHaltedAtBreakpoint && GUnrealEd)
+	{
+		// Mirrors the level toolbar's Stop, which the engine disables during an in-stack halt.
+		// HaltUntilReleased() sees the queued end of play and returns Abort.
+		GUnrealEd->RequestEndPlayMap();
+		ReleaseHalt();
+	}
+}
+
 void UFlowDebugEditorSubsystem::OnInstancedTemplateAdded(UFlowAsset* AssetTemplate)
 {
 	Super::OnInstancedTemplateAdded(AssetTemplate);
@@ -177,17 +188,6 @@ void UFlowDebugEditorSubsystem::ReleaseHalt()
 	// Ends the nested tick loop in HaltUntilReleased() on its next iteration. BreakFlowExecution()
 	// resumes the debugger session after the halt returns if another path has not already resumed it.
 	FSlateApplication::Get().LeaveDebuggingMode();
-}
-
-void UFlowDebugEditorSubsystem::RequestStop()
-{
-	if (bIsHaltedAtBreakpoint && GUnrealEd)
-	{
-		// Mirrors the level toolbar's Stop, which the engine disables during an in-stack halt.
-		// HaltUntilReleased() sees the queued end of play and returns Abort.
-		GUnrealEd->RequestEndPlayMap();
-		ReleaseHalt();
-	}
 }
 
 void UFlowDebugEditorSubsystem::ShowHaltNotification(const FFlowBreakContext& Context)

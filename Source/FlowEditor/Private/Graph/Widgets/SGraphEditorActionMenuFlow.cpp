@@ -16,11 +16,6 @@
 #include "Types/SlateStructs.h"
 #include "Widgets/Layout/SBox.h"
 
-SGraphEditorActionMenuFlow::~SGraphEditorActionMenuFlow()
-{
-	OnClosedCallback.ExecuteIfBound();
-}
-
 void SGraphEditorActionMenuFlow::Construct(const FArguments& InArgs)
 {
 	this->GraphObj = InArgs._GraphObj;
@@ -49,29 +44,9 @@ void SGraphEditorActionMenuFlow::Construct(const FArguments& InArgs)
 	);
 }
 
-void SGraphEditorActionMenuFlow::CollectAllActions(FGraphActionListBuilderBase& OutAllActions)
+SGraphEditorActionMenuFlow::~SGraphEditorActionMenuFlow()
 {
-	// Build up the context object
-	FGraphContextMenuBuilder ContextMenuBuilder(GraphObj);
-	if (GraphNode != nullptr)
-	{
-		ContextMenuBuilder.SelectedObjects.Add(GraphNode);
-	}
-	if (DraggedFromPins.Num() > 0)
-	{
-		ContextMenuBuilder.FromPin = DraggedFromPins[0];
-	}
-
-	// Determine all possible actions
-	const UFlowGraphSchema* MySchema = Cast<const UFlowGraphSchema>(GraphObj->GetSchema());
-	if (MySchema)
-	{
-		MySchema->GetGraphNodeContextActions(ContextMenuBuilder, SubNodeFlags);
-	}
-
-	// Copy the added options back to the main list
-	//@TODO: Avoid this copy
-	OutAllActions.Append(ContextMenuBuilder);
+	OnClosedCallback.ExecuteIfBound();
 }
 
 TSharedRef<SEditableTextBox> SGraphEditorActionMenuFlow::GetFilterTextBox()
@@ -104,4 +79,29 @@ void SGraphEditorActionMenuFlow::OnActionSelected(const TArray<TSharedPtr<FEdGra
 			FSlateApplication::Get().DismissAllMenus();
 		}
 	}
+}
+
+void SGraphEditorActionMenuFlow::CollectAllActions(FGraphActionListBuilderBase& OutAllActions)
+{
+	// Build up the context object
+	FGraphContextMenuBuilder ContextMenuBuilder(GraphObj);
+	if (GraphNode != nullptr)
+	{
+		ContextMenuBuilder.SelectedObjects.Add(GraphNode);
+	}
+	if (DraggedFromPins.Num() > 0)
+	{
+		ContextMenuBuilder.FromPin = DraggedFromPins[0];
+	}
+
+	// Determine all possible actions
+	const UFlowGraphSchema* MySchema = Cast<const UFlowGraphSchema>(GraphObj->GetSchema());
+	if (MySchema)
+	{
+		MySchema->GetGraphNodeContextActions(ContextMenuBuilder, SubNodeFlags);
+	}
+
+	// Copy the added options back to the main list
+	//@TODO: Avoid this copy
+	OutAllActions.Append(ContextMenuBuilder);
 }

@@ -25,16 +25,16 @@ FFlowDataPinResult_Class::FFlowDataPinResult_Class(UClass* InValueClass)
 	SetValueFromObjectPtr(InValueClass);
 }
 
-void FFlowDataPinResult_Class::SetValueFromSoftPath(const FSoftObjectPath& SoftObjectPath)
-{
-	const FSoftClassPath SoftClassPath(SoftObjectPath.ToString());
-	SetValueSoftClassAndClassPtr(SoftClassPath, SoftClassPath.ResolveClass());
-}
-
 void FFlowDataPinResult_Class::SetValueSoftClassAndClassPtr(const FSoftClassPath& SoftPath, UClass* ObjectPtr)
 {
 	ValuePath = SoftPath;
 	ValueClass = ObjectPtr;
+}
+
+void FFlowDataPinResult_Class::SetValueFromSoftPath(const FSoftObjectPath& SoftObjectPath)
+{
+	const FSoftClassPath SoftClassPath(SoftObjectPath.ToString());
+	SetValueSoftClassAndClassPtr(SoftClassPath, SoftClassPath.ResolveClass());
 }
 
 FSoftClassPath FFlowDataPinResult_Class::GetAsSoftClass() const

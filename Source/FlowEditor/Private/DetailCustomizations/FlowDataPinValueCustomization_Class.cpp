@@ -16,25 +16,6 @@
 
 #define LOCTEXT_NAMESPACE "FlowDataPinValueCustomization_Class"
 
-FFlowDataPinValue_Class* FFlowDataPinValueCustomization_Class::GetValueStruct() const
-{
-	return IFlowExtendedPropertyTypeCustomization::TryGetTypedStructValue<FFlowDataPinValue_Class>(StructPropertyHandle);
-}
-
-bool FFlowDataPinValueCustomization_Class::ShouldShowSourceRow() const
-{
-	return OwnerInterface ? OwnerInterface->ShowFlowDataPinValueClassFilter(GetValueStruct()) : true;
-}
-
-bool FFlowDataPinValueCustomization_Class::IsSourceEditable() const
-{
-	if (bHasMetaClass)
-	{
-		return false; // forced meta class: show disabled
-	}
-	return OwnerInterface ? OwnerInterface->CanEditFlowDataPinValueClassFilter(GetValueStruct()) : true;
-}
-
 void FFlowDataPinValueCustomization_Class::BuildValueRows(
 	TSharedRef<IPropertyHandle> InStructPropertyHandle,
 	IDetailChildrenBuilder& StructBuilder,
@@ -97,6 +78,63 @@ void FFlowDataPinValueCustomization_Class::ExtractMetadata()
 	{
 		bAllowNone = true;
 	}
+}
+
+void FFlowDataPinValueCustomization_Class::TrySetClassFilterFromMetaData() const
+{
+	if (!StructPropertyHandle.IsValid() || !ClassFilterHandle.IsValid())
+	{
+		return;
+	}
+
+	const FString& MetaClassName = StructPropertyHandle->GetMetaData(TEXT("MetaClass"));
+	if (MetaClassName.IsEmpty())
+	{
+		return;
+	}
+
+	if (UClass* MetaClass = FEditorClassUtils::GetClassFromString(MetaClassName))
+	{
+		UObject* Existing = nullptr;
+		ClassFilterHandle->GetValue(Existing);
+		if (Existing != MetaClass)
+		{
+			ClassFilterHandle->SetValue(MetaClass, EPropertyValueSetFlags::DefaultFlags);
+		}
+	}
+}
+
+UClass* FFlowDataPinValueCustomization_Class::DeriveBestClassFilter() const
+{
+	if (!StructPropertyHandle.IsValid())
+	{
+		return nullptr;
+	}
+
+	const FString& MetaClassName = StructPropertyHandle->GetMetaData(TEXT("MetaClass"));
+	if (!MetaClassName.IsEmpty())
+	{
+		if (UClass* MetaClass = FEditorClassUtils::GetClassFromString(MetaClassName))
+		{
+			return MetaClass;
+		}
+	}
+
+	if (ClassFilterHandle.IsValid())
+	{
+		UObject* Raw = nullptr;
+		if (ClassFilterHandle->GetValue(Raw) == FPropertyAccess::Success && Raw)
+		{
+			return Cast<UClass>(Raw);
+		}
+	}
+
+	return nullptr;
+}
+
+void FFlowDataPinValueCustomization_Class::RefreshEffectiveFilter()
+{
+	CachedEffectiveFilter = DeriveBestClassFilter();
 }
 
 void FFlowDataPinValueCustomization_Class::BuildClassFilterRow(IDetailChildrenBuilder& StructBuilder, bool bSourceEditable) const
@@ -229,63 +267,6 @@ void FFlowDataPinValueCustomization_Class::OnValuesChanged()
 	ValidateAllElements();
 }
 
-void FFlowDataPinValueCustomization_Class::TrySetClassFilterFromMetaData() const
-{
-	if (!StructPropertyHandle.IsValid() || !ClassFilterHandle.IsValid())
-	{
-		return;
-	}
-
-	const FString& MetaClassName = StructPropertyHandle->GetMetaData(TEXT("MetaClass"));
-	if (MetaClassName.IsEmpty())
-	{
-		return;
-	}
-
-	if (UClass* MetaClass = FEditorClassUtils::GetClassFromString(MetaClassName))
-	{
-		UObject* Existing = nullptr;
-		ClassFilterHandle->GetValue(Existing);
-		if (Existing != MetaClass)
-		{
-			ClassFilterHandle->SetValue(MetaClass, EPropertyValueSetFlags::DefaultFlags);
-		}
-	}
-}
-
-UClass* FFlowDataPinValueCustomization_Class::DeriveBestClassFilter() const
-{
-	if (!StructPropertyHandle.IsValid())
-	{
-		return nullptr;
-	}
-
-	const FString& MetaClassName = StructPropertyHandle->GetMetaData(TEXT("MetaClass"));
-	if (!MetaClassName.IsEmpty())
-	{
-		if (UClass* MetaClass = FEditorClassUtils::GetClassFromString(MetaClassName))
-		{
-			return MetaClass;
-		}
-	}
-
-	if (ClassFilterHandle.IsValid())
-	{
-		UObject* Raw = nullptr;
-		if (ClassFilterHandle->GetValue(Raw) == FPropertyAccess::Success && Raw)
-		{
-			return Cast<UClass>(Raw);
-		}
-	}
-
-	return nullptr;
-}
-
-void FFlowDataPinValueCustomization_Class::RefreshEffectiveFilter()
-{
-	CachedEffectiveFilter = DeriveBestClassFilter();
-}
-
 void FFlowDataPinValueCustomization_Class::ValidateAllElements()
 {
 	ValidateArrayElements(ValuesHandle,
@@ -381,6 +362,25 @@ bool FFlowDataPinValueCustomization_Class::GetElementPathString(const TSharedPtr
 bool FFlowDataPinValueCustomization_Class::IsNoneString(const FString& Str)
 {
 	return Str.IsEmpty() || Str.Equals(TEXT("None"), ESearchCase::IgnoreCase);
+}
+
+bool FFlowDataPinValueCustomization_Class::ShouldShowSourceRow() const
+{
+	return OwnerInterface ? OwnerInterface->ShowFlowDataPinValueClassFilter(GetValueStruct()) : true;
+}
+
+bool FFlowDataPinValueCustomization_Class::IsSourceEditable() const
+{
+	if (bHasMetaClass)
+	{
+		return false; // forced meta class: show disabled
+	}
+	return OwnerInterface ? OwnerInterface->CanEditFlowDataPinValueClassFilter(GetValueStruct()) : true;
+}
+
+FFlowDataPinValue_Class* FFlowDataPinValueCustomization_Class::GetValueStruct() const
+{
+	return IFlowExtendedPropertyTypeCustomization::TryGetTypedStructValue<FFlowDataPinValue_Class>(StructPropertyHandle);
 }
 
 #undef LOCTEXT_NAMESPACE

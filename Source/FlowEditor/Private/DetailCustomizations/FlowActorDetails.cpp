@@ -40,6 +40,68 @@ namespace FlowActorDetails::TagHelpers
 	}
 }
 
+FFlowActorDetails::~FFlowActorDetails()
+{
+	OnExtendActorDetails.RemoveAll(this);
+}
+
+void FFlowActorDetails::Register()
+{
+	OnExtendActorDetails.AddSP(this, &FFlowActorDetails::AddFlowCategory);
+}
+
+void FFlowActorDetails::AddFlowCategory(class IDetailLayoutBuilder& Details, const FGetSelectedActors& GetSelectedActors)
+{
+	const bool bEnabled = GetDefault<UFlowGraphSettings>()->bShowFlowTagsInActorDetails;
+
+	if (!bEnabled)
+	{
+		return;
+	}
+
+	if (GetSelectedActors.IsBound())
+	{
+		const TArray<UFlowComponent*> Components = FFlowActorDetails::GetSelectedFlowComponents(GetSelectedActors);
+		if (!Components.IsEmpty())
+		{
+			const ECategoryPriority::Type Priority = GetDefault<UFlowGraphSettings>()->bMarkFlowCategoryImportant ? ECategoryPriority::Important : ECategoryPriority::Default;
+
+			const FText CategoryName = FText::Format(LOCTEXT("FlowCategoryFormat", "Flow Components: {0} "), FText::AsNumber(Components.Num()));
+			const FString Tooltip = FString::JoinBy(Components, LINE_TERMINATOR, [](const UObject* Object)
+			{
+				const UActorComponent* Component = CastChecked<UActorComponent>(Object);
+				const FString Actor = Component->GetOwner() ? Component->GetOwner()->GetActorNameOrLabel() : TEXT("None");
+				return FString(Actor + TEXT(".") + Object->GetName());
+			});
+
+			IDetailCategoryBuilder& Category = Details.EditCategory(TEXT("_FlowDetails"), CategoryName, Priority);
+			Category.SetToolTip(FText::FromString(Tooltip));
+			Category.AddCustomBuilder(MakeShared<FFlowActorDetailsBuilder>(GetSelectedActors));
+		}
+	}
+}
+
+TArray<class UFlowComponent*> FFlowActorDetails::GetSelectedFlowComponents(const FGetSelectedActors& GetSelectedActors)
+{
+	TArray<UFlowComponent*> Components;
+
+	if (GetSelectedActors.IsBound())
+	{
+		const TArray<TWeakObjectPtr<AActor>>& SelectedActors = GetSelectedActors.Execute();
+		for (auto& WeakActor : SelectedActors)
+		{
+			const AActor* Actor = WeakActor.Get();
+			if (Actor && !Actor->IsA(AWorldSettings::StaticClass()))
+			{
+				TInlineComponentArray<UFlowComponent*> FlowComps(Actor);
+				Components.Append(FlowComps);
+			}
+		}
+	}
+
+	return Components;
+}
+
 FFlowActorDetailsBuilder::FFlowActorDetailsBuilder(const FGetSelectedActors& GetSelectedActors)
 	: Getter(GetSelectedActors)
 {
@@ -218,68 +280,6 @@ void FFlowActorDetailsBuilder::ResolveCategoriesMeta(const TSharedPtr<IPropertyH
 			MetaString = GetDefault<UFlowGraphSettings>()->GetIdentityTagCategories(PropertyHandle->GetOuterBaseClass());
 		}
 	}
-}
-
-FFlowActorDetails::~FFlowActorDetails()
-{
-	OnExtendActorDetails.RemoveAll(this);
-}
-
-void FFlowActorDetails::Register()
-{
-	OnExtendActorDetails.AddSP(this, &FFlowActorDetails::AddFlowCategory);
-}
-
-void FFlowActorDetails::AddFlowCategory(class IDetailLayoutBuilder& Details, const FGetSelectedActors& GetSelectedActors)
-{
-	const bool bEnabled = GetDefault<UFlowGraphSettings>()->bShowFlowTagsInActorDetails;
-
-	if (!bEnabled)
-	{
-		return;
-	}
-
-	if (GetSelectedActors.IsBound())
-	{
-		const TArray<UFlowComponent*> Components = FFlowActorDetails::GetSelectedFlowComponents(GetSelectedActors);
-		if (!Components.IsEmpty())
-		{
-			const ECategoryPriority::Type Priority = GetDefault<UFlowGraphSettings>()->bMarkFlowCategoryImportant ? ECategoryPriority::Important : ECategoryPriority::Default;
-
-			const FText CategoryName = FText::Format(LOCTEXT("FlowCategoryFormat", "Flow Components: {0} "), FText::AsNumber(Components.Num()));
-			const FString Tooltip = FString::JoinBy(Components, LINE_TERMINATOR, [](const UObject* Object)
-			{
-				const UActorComponent* Component = CastChecked<UActorComponent>(Object);
-				const FString Actor = Component->GetOwner() ? Component->GetOwner()->GetActorNameOrLabel() : TEXT("None");
-				return FString(Actor + TEXT(".") + Object->GetName());
-			});
-
-			IDetailCategoryBuilder& Category = Details.EditCategory(TEXT("_FlowDetails"), CategoryName, Priority);
-			Category.SetToolTip(FText::FromString(Tooltip));
-			Category.AddCustomBuilder(MakeShared<FFlowActorDetailsBuilder>(GetSelectedActors));
-		}
-	}
-}
-
-TArray<class UFlowComponent*> FFlowActorDetails::GetSelectedFlowComponents(const FGetSelectedActors& GetSelectedActors)
-{
-	TArray<UFlowComponent*> Components;
-
-	if (GetSelectedActors.IsBound())
-	{
-		const TArray<TWeakObjectPtr<AActor>>& SelectedActors = GetSelectedActors.Execute();
-		for (auto& WeakActor : SelectedActors)
-		{
-			const AActor* Actor = WeakActor.Get();
-			if (Actor && !Actor->IsA(AWorldSettings::StaticClass()))
-			{
-				TInlineComponentArray<UFlowComponent*> FlowComps(Actor);
-				Components.Append(FlowComps);
-			}
-		}
-	}
-
-	return Components;
 }
 
 #undef LOCTEXT_NAMESPACE

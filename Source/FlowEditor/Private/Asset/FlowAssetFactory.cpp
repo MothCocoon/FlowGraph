@@ -68,9 +68,26 @@ bool UFlowAssetFactory::ConfigureProperties()
 	return ConfigurePropertiesInternal(TitleText);
 }
 
+UObject* UFlowAssetFactory::FactoryCreateNew(UClass* Class, UObject* InParent, FName Name, EObjectFlags Flags, UObject* Context, FFeedbackContext* Warn)
+{
+	UFlowAsset* NewFlowAsset;
+	if (AssetClass)
+	{
+		NewFlowAsset = NewObject<UFlowAsset>(InParent, AssetClass, Name, Flags | RF_Transactional, Context);
+	}
+	else
+	{
+		// if we have no asset class, use the passed-in class instead
+		NewFlowAsset = NewObject<UFlowAsset>(InParent, Class, Name, Flags | RF_Transactional, Context);
+	}
+
+	UFlowGraph::CreateGraph(NewFlowAsset);
+	return NewFlowAsset;
+}
+
 bool UFlowAssetFactory::ConfigurePropertiesInternal(const FText& TitleText)
 {
-	const TSoftClassPtr<UFlowAsset> DefaultClass = GetDefault<UFlowGraphSettings>()->DefaultFlowAssetClass; 
+	const TSoftClassPtr<UFlowAsset> DefaultClass = GetDefault<UFlowGraphSettings>()->DefaultFlowAssetClass;
 	if (!DefaultClass.IsNull())
 	{
 		AssetClass = DefaultClass.LoadSynchronous();
@@ -102,23 +119,6 @@ bool UFlowAssetFactory::ConfigurePropertiesInternal(const FText& TitleText)
 	}
 
 	return bPressedOk;
-}
-
-UObject* UFlowAssetFactory::FactoryCreateNew(UClass* Class, UObject* InParent, FName Name, EObjectFlags Flags, UObject* Context, FFeedbackContext* Warn)
-{
-	UFlowAsset* NewFlowAsset;
-	if (AssetClass)
-	{
-		NewFlowAsset = NewObject<UFlowAsset>(InParent, AssetClass, Name, Flags | RF_Transactional, Context);
-	}
-	else
-	{
-		// if we have no asset class, use the passed-in class instead
-		NewFlowAsset = NewObject<UFlowAsset>(InParent, Class, Name, Flags | RF_Transactional, Context);
-	}
-
-	UFlowGraph::CreateGraph(NewFlowAsset);
-	return NewFlowAsset;
 }
 
 #undef LOCTEXT_NAMESPACE

@@ -26,11 +26,6 @@
 static const FName DetailsMode = FName(TEXT("DetailsMode"));
 static const FName GraphMode = FName(TEXT("GraphMode"));
 
-FFlowDiffPanel::FFlowDiffPanel()
-{
-	DetailScrollbar = SNew(SLinkableScrollBar);
-}
-
 static int32 GetCurrentIndex(SListView<TSharedPtr<FDiffSingleResult>> const& ListView, const TArray<TSharedPtr<FDiffSingleResult>>& ListViewSource)
 {
 	const TArray<TSharedPtr<FDiffSingleResult>>& Selected = ListView.GetSelectedItems();
@@ -77,6 +72,150 @@ bool FlowDiffUtils::HasPrevDifference(const SListView<TSharedPtr<FDiffSingleResu
 {
 	const int32 CurrentIndex = GetCurrentIndex(ListView, ListViewSource);
 	return ListViewSource.IsValidIndex(CurrentIndex - 1);
+}
+
+FFlowDiffPanel::FFlowDiffPanel()
+{
+	DetailScrollbar = SNew(SLinkableScrollBar);
+}
+
+void FFlowDiffPanel::GeneratePanel(UEdGraph* NewGraph, UEdGraph* OldGraph)
+{
+	const TSharedPtr<TArray<FDiffSingleResult>> Diff = MakeShared<TArray<FDiffSingleResult>>();
+	FGraphDiffControl::DiffGraphs(OldGraph, NewGraph, *Diff);
+	GeneratePanel(NewGraph, Diff, {});
+}
+
+void FFlowDiffPanel::GeneratePanel(UEdGraph* Graph, TSharedPtr<TArray<FDiffSingleResult>> DiffResults, TAttribute<int32> FocusedDiffResult)
+{
+	if (GraphEditor.IsValid() && GraphEditor.Pin()->GetCurrentGraph() == Graph)
+	{
+		return;
+	}
+
+	TSharedPtr<SWidget> Widget = SNew(SBorder)
+								.HAlign(HAlign_Center)
+								.VAlign(VAlign_Center)
+	[
+		SNew(STextBlock).Text(LOCTEXT("FlowDiffPanelNoGraphTip", "Graph does not exist in this revision"))
+	];
+
+	if (Graph)
+	{
+		SGraphEditor::FGraphEditorEvents InEvents;
+		{
+			const auto SelectionChangedHandler = [](const FGraphPanelSelectionSet& SelectionSet, TSharedPtr<IDetailsView> DetailsView)
+			{
+				TArray<UObject*> SelectedObjects;
+				for (FGraphPanelSelectionSet::TConstIterator NodeIt(SelectionSet); NodeIt; ++NodeIt)
+				{
+					if (UFlowGraphNode* SelectedNode = Cast<UFlowGraphNode>(*NodeIt))
+					{
+						SelectedObjects.Emplace(SelectedNode->GetFlowNodeBase());
+					}
+					else
+					{
+						SelectedObjects.Add(*NodeIt);
+					}
+				}
+
+				DetailsView->SetObjects(SelectedObjects);
+			};
+
+			const auto ContextMenuHandler = [](UEdGraph* CurrentGraph, const UEdGraphNode* InGraphNode, const UEdGraphPin* InGraphPin, FMenuBuilder* MenuBuilder, bool bIsDebugging)
+			{
+				MenuBuilder->AddMenuEntry(FGenericCommands::Get().Copy);
+				return FActionMenuContent(MenuBuilder->MakeWidget());
+			};
+
+			InEvents.OnSelectionChanged = SGraphEditor::FOnSelectionChanged::CreateStatic(SelectionChangedHandler, DetailsView);
+			InEvents.OnCreateNodeOrPinMenu = SGraphEditor::FOnCreateNodeOrPinMenu::CreateStatic(ContextMenuHandler);
+		}
+
+		if (!GraphEditorCommands.IsValid())
+		{
+			GraphEditorCommands = MakeShared<FUICommandList>();
+
+			GraphEditorCommands->MapAction(
+				FGenericCommands::Get().Copy,
+				FExecuteAction::CreateRaw(this, &FFlowDiffPanel::CopySelectedNodes),
+				FCanExecuteAction::CreateRaw(this, &FFlowDiffPanel::CanCopyNodes)
+			);
+		}
+
+		const TSharedRef<SGraphEditor> Editor = SNew(SGraphEditor)
+			.AdditionalCommands(GraphEditorCommands)
+			.GraphToEdit(Graph)
+			.GraphToDiff(nullptr)
+			.DiffResults(DiffResults)
+			.FocusedDiffResult(FocusedDiffResult)
+			.IsEditable(false)
+			.GraphEvents(InEvents);
+
+		GraphEditor = Editor;
+		Widget = Editor;
+	}
+
+	GraphEditorBox->SetContent(Widget.ToSharedRef());
+}
+
+void FFlowDiffPanel::CopySelectedNodes() const
+{
+	// Export the selected nodes and place the text on the clipboard
+	const FGraphPanelSelectionSet SelectedNodes = GetSelectedNodes();
+
+	FString ExportedText;
+	FEdGraphUtilities::ExportNodesToText(SelectedNodes, /*out*/ ExportedText);
+	FPlatformApplicationMisc::ClipboardCopy(*ExportedText);
+}
+
+FGraphPanelSelectionSet FFlowDiffPanel::GetSelectedNodes() const
+{
+	FGraphPanelSelectionSet CurrentSelection;
+	const TSharedPtr<SGraphEditor> FocusedGraphEd = GraphEditor.Pin();
+	if (FocusedGraphEd.IsValid())
+	{
+		CurrentSelection = FocusedGraphEd->GetSelectedNodes();
+	}
+	return CurrentSelection;
+}
+
+bool FFlowDiffPanel::CanCopyNodes() const
+{
+	// If any of the nodes can be duplicated then we should allow copying
+	const FGraphPanelSelectionSet SelectedNodes = GetSelectedNodes();
+	for (FGraphPanelSelectionSet::TConstIterator SelectedIter(SelectedNodes); SelectedIter; ++SelectedIter)
+	{
+		const UEdGraphNode* Node = Cast<UEdGraphNode>(*SelectedIter);
+		if ((Node != nullptr) && Node->CanDuplicateNode())
+		{
+			return true;
+		}
+	}
+	return false;
+}
+
+void FFlowDiffPanel::FocusDiff(const UEdGraphPin& Pin) const
+{
+	GraphEditor.Pin()->JumpToPin(&Pin);
+}
+
+void FFlowDiffPanel::FocusDiff(const UEdGraphNode& Node) const
+{
+	if (GraphEditor.IsValid())
+	{
+		const UEdGraphNode* JumpNode = &Node;
+
+		const UFlowGraphNode* FlowNode = Cast<const UFlowGraphNode>(&Node);
+		if (FlowNode && FlowNode->IsSubNode())
+		{
+			check(FlowNode->GetParentNode());
+			JumpNode = FlowNode->GetRootFlowGraphNode();
+		}
+
+		GraphEditor.Pin()->JumpToNode(JumpNode, false, false);
+		GraphEditor.Pin()->SetNodeSelection(const_cast<UEdGraphNode*>(&Node), true);
+	}
 }
 
 void SFlowDiff::Construct(const FArguments& InArgs)
@@ -282,22 +421,11 @@ void SFlowDiff::Tick(const FGeometry& AllottedGeometry, const double InCurrentTi
 	GraphDetailDiff->Tick();
 }
 
-void SFlowDiff::OnCloseAssetEditor(UObject* Asset, const EAssetEditorCloseReason CloseReason)
+void SFlowDiff::OnGraphChanged(const FFlowGraphToDiff* Diff)
 {
-	if (PanelOld.FlowAsset == Asset || PanelNew.FlowAsset == Asset || CloseReason == EAssetEditorCloseReason::CloseAllAssetEditors)
+	if (PanelNew.GraphEditor.IsValid() && PanelNew.GraphEditor.Pin()->GetCurrentGraph() == Diff->GetGraphNew())
 	{
-		// Tell our window to close and set our selves to collapsed to try and stop it from ticking
-		SetVisibility(EVisibility::Collapsed);
-
-		if (AssetEditorCloseDelegate.IsValid())
-		{
-			GEditor->GetEditorSubsystem<UAssetEditorSubsystem>()->OnAssetEditorRequestClose().Remove(AssetEditorCloseDelegate);
-		}
-
-		if (WeakParentWindow.IsValid())
-		{
-			WeakParentWindow.Pin()->RequestDestroyWindow();
-		}
+		FocusOnGraphRevisions(Diff);
 	}
 }
 
@@ -311,11 +439,62 @@ void SFlowDiff::OnGraphSelectionChanged(const TSharedPtr<FFlowGraphToDiff> Item,
 	FocusOnGraphRevisions(Item.Get());
 }
 
-void SFlowDiff::OnGraphChanged(const FFlowGraphToDiff* Diff)
+void SFlowDiff::OnDiffListSelectionChanged(TSharedPtr<FFlowObjectDiffArgs> FlowObjectDiffArgs)
 {
-	if (PanelNew.GraphEditor.IsValid() && PanelNew.GraphEditor.Pin()->GetCurrentGraph() == Diff->GetGraphNew())
+	const TSharedPtr<FFlowObjectDiff> FlowObjectDiff = FlowObjectDiffArgs->FlowNodeDiff.Pin();
+	if (!ensure(FlowObjectDiff.IsValid()))
 	{
-		FocusOnGraphRevisions(Diff);
+		return;
+	}
+
+	check(!FlowObjectDiff->DiffResult->Result.OwningObjectPath.IsEmpty());
+	FocusOnGraphRevisions(FindGraphToDiffEntry(FlowObjectDiff->DiffResult->Result.OwningObjectPath));
+
+	const FDiffSingleResult& Result = FlowObjectDiff->DiffResult->Result;
+
+	const auto SafeClearSelection = [](TWeakPtr<SGraphEditor> GraphEditor)
+	{
+		const TSharedPtr<SGraphEditor> GraphEditorPtr = GraphEditor.Pin();
+		if (GraphEditorPtr.IsValid())
+		{
+			GraphEditorPtr->ClearSelectionSet();
+		}
+	};
+
+	SafeClearSelection(PanelNew.GraphEditor);
+	SafeClearSelection(PanelOld.GraphEditor);
+
+	if (Result.Pin1)
+	{
+		GetDiffPanelForNode(*Result.Pin1->GetOwningNode()).FocusDiff(*Result.Pin1);
+		if (Result.Pin2)
+		{
+			GetDiffPanelForNode(*Result.Pin2->GetOwningNode()).FocusDiff(*Result.Pin2);
+		}
+	}
+	else if (Result.Node1)
+	{
+		const FPropertySoftPath& PropertyIdentifier = FlowObjectDiffArgs->PropertyDiff.Identifier;
+
+		FFlowDiffPanel& OldPanel = GetDiffPanelForNode(*Result.Node1);
+		OldPanel.FocusDiff(*Result.Node1);
+
+		// Non-Flow nodes (comments) expose their properties on the graph node itself
+		const UFlowGraphNode* OldFlowGraphNode = Cast<UFlowGraphNode>(Result.Node1);
+		const UObject* OldDiffedObject = OldFlowGraphNode ? OldFlowGraphNode->GetFlowNodeBase() : static_cast<const UObject*>(Result.Node1);
+		const FPropertyPath OldProperty = PropertyIdentifier.ResolvePath(OldDiffedObject);
+		OldPanel.DetailsView->HighlightProperty(OldProperty);
+
+		if (Result.Node2)
+		{
+			FFlowDiffPanel& NewPanel = GetDiffPanelForNode(*Result.Node2);
+			NewPanel.FocusDiff(*Result.Node2);
+
+			const UFlowGraphNode* NewFlowGraphNode = Cast<UFlowGraphNode>(Result.Node2);
+			const UObject* NewDiffedObject = NewFlowGraphNode ? NewFlowGraphNode->GetFlowNodeBase() : static_cast<const UObject*>(Result.Node2);
+			const FPropertyPath NewProperty = PropertyIdentifier.ResolvePath(NewDiffedObject);
+			NewPanel.DetailsView->HighlightProperty(NewProperty);
+		}
 	}
 }
 
@@ -404,65 +583,6 @@ void SFlowDiff::FocusOnGraphRevisions(const FFlowGraphToDiff* Diff)
 	ResetGraphEditors();
 }
 
-void SFlowDiff::OnDiffListSelectionChanged(TSharedPtr<FFlowObjectDiffArgs> FlowObjectDiffArgs)
-{
-	const TSharedPtr<FFlowObjectDiff> FlowObjectDiff = FlowObjectDiffArgs->FlowNodeDiff.Pin();
-	if (!ensure(FlowObjectDiff.IsValid()))
-	{
-		return;
-	}
-
-	check(!FlowObjectDiff->DiffResult->Result.OwningObjectPath.IsEmpty());
-	FocusOnGraphRevisions(FindGraphToDiffEntry(FlowObjectDiff->DiffResult->Result.OwningObjectPath));
-
-	const FDiffSingleResult& Result = FlowObjectDiff->DiffResult->Result;
-
-	const auto SafeClearSelection = [](TWeakPtr<SGraphEditor> GraphEditor)
-	{
-		const TSharedPtr<SGraphEditor> GraphEditorPtr = GraphEditor.Pin();
-		if (GraphEditorPtr.IsValid())
-		{
-			GraphEditorPtr->ClearSelectionSet();
-		}
-	};
-
-	SafeClearSelection(PanelNew.GraphEditor);
-	SafeClearSelection(PanelOld.GraphEditor);
-
-	if (Result.Pin1)
-	{
-		GetDiffPanelForNode(*Result.Pin1->GetOwningNode()).FocusDiff(*Result.Pin1);
-		if (Result.Pin2)
-		{
-			GetDiffPanelForNode(*Result.Pin2->GetOwningNode()).FocusDiff(*Result.Pin2);
-		}
-	}
-	else if (Result.Node1)
-	{
-		const FPropertySoftPath& PropertyIdentifier = FlowObjectDiffArgs->PropertyDiff.Identifier;
-
-		FFlowDiffPanel& OldPanel = GetDiffPanelForNode(*Result.Node1);
-		OldPanel.FocusDiff(*Result.Node1);
-
-		// Non-Flow nodes (comments) expose their properties on the graph node itself
-		const UFlowGraphNode* OldFlowGraphNode = Cast<UFlowGraphNode>(Result.Node1);
-		const UObject* OldDiffedObject = OldFlowGraphNode ? OldFlowGraphNode->GetFlowNodeBase() : static_cast<const UObject*>(Result.Node1);
-		const FPropertyPath OldProperty = PropertyIdentifier.ResolvePath(OldDiffedObject);
-		OldPanel.DetailsView->HighlightProperty(OldProperty);
-
-		if (Result.Node2)
-		{
-			FFlowDiffPanel& NewPanel = GetDiffPanelForNode(*Result.Node2);
-			NewPanel.FocusDiff(*Result.Node2);
-
-			const UFlowGraphNode* NewFlowGraphNode = Cast<UFlowGraphNode>(Result.Node2);
-			const UObject* NewDiffedObject = NewFlowGraphNode ? NewFlowGraphNode->GetFlowNodeBase() : static_cast<const UObject*>(Result.Node2);
-			const FPropertyPath NewProperty = PropertyIdentifier.ResolvePath(NewDiffedObject);
-			NewPanel.DetailsView->HighlightProperty(NewProperty);
-		}
-	}
-}
-
 void SFlowDiff::OnToggleLockView()
 {
 	bLockViews = !bLockViews;
@@ -477,16 +597,6 @@ void SFlowDiff::OnToggleSplitViewMode()
 	{
 		DiffGraphSplitterPtr->SetOrientation(bVerticalSplitGraphMode ? Orient_Horizontal : Orient_Vertical);
 	}
-}
-
-FSlateIcon SFlowDiff::GetLockViewImage() const
-{
-	return FSlateIcon(FAppStyle::GetAppStyleSetName(), bLockViews ? "Icons.Lock" : "Icons.Unlock");
-}
-
-FSlateIcon SFlowDiff::GetSplitViewModeImage() const
-{
-	return FSlateIcon(FAppStyle::GetAppStyleSetName(), bVerticalSplitGraphMode ? "BlueprintDif.VerticalDiff.Small" : "BlueprintDif.HorizontalDiff.Small");
 }
 
 void SFlowDiff::ResetGraphEditors() const
@@ -506,143 +616,14 @@ void SFlowDiff::ResetGraphEditors() const
 	}
 }
 
-void FFlowDiffPanel::GeneratePanel(UEdGraph* NewGraph, UEdGraph* OldGraph)
+FSlateIcon SFlowDiff::GetLockViewImage() const
 {
-	const TSharedPtr<TArray<FDiffSingleResult>> Diff = MakeShared<TArray<FDiffSingleResult>>();
-	FGraphDiffControl::DiffGraphs(OldGraph, NewGraph, *Diff);
-	GeneratePanel(NewGraph, Diff, {});
+	return FSlateIcon(FAppStyle::GetAppStyleSetName(), bLockViews ? "Icons.Lock" : "Icons.Unlock");
 }
 
-void FFlowDiffPanel::GeneratePanel(UEdGraph* Graph, TSharedPtr<TArray<FDiffSingleResult>> DiffResults, TAttribute<int32> FocusedDiffResult)
+FSlateIcon SFlowDiff::GetSplitViewModeImage() const
 {
-	if (GraphEditor.IsValid() && GraphEditor.Pin()->GetCurrentGraph() == Graph)
-	{
-		return;
-	}
-
-	TSharedPtr<SWidget> Widget = SNew(SBorder)
-								.HAlign(HAlign_Center)
-								.VAlign(VAlign_Center)
-	[
-		SNew(STextBlock).Text(LOCTEXT("FlowDiffPanelNoGraphTip", "Graph does not exist in this revision"))
-	];
-
-	if (Graph)
-	{
-		SGraphEditor::FGraphEditorEvents InEvents;
-		{
-			const auto SelectionChangedHandler = [](const FGraphPanelSelectionSet& SelectionSet, TSharedPtr<IDetailsView> DetailsView)
-			{
-				TArray<UObject*> SelectedObjects;
-				for (FGraphPanelSelectionSet::TConstIterator NodeIt(SelectionSet); NodeIt; ++NodeIt)
-				{
-					if (UFlowGraphNode* SelectedNode = Cast<UFlowGraphNode>(*NodeIt))
-					{
-						SelectedObjects.Emplace(SelectedNode->GetFlowNodeBase());
-					}
-					else
-					{
-						SelectedObjects.Add(*NodeIt);
-					}
-				}
-
-				DetailsView->SetObjects(SelectedObjects);
-			};
-			
-			const auto ContextMenuHandler = [](UEdGraph* CurrentGraph, const UEdGraphNode* InGraphNode, const UEdGraphPin* InGraphPin, FMenuBuilder* MenuBuilder, bool bIsDebugging)
-			{
-				MenuBuilder->AddMenuEntry(FGenericCommands::Get().Copy);
-				return FActionMenuContent(MenuBuilder->MakeWidget());
-			};
-
-			InEvents.OnSelectionChanged = SGraphEditor::FOnSelectionChanged::CreateStatic(SelectionChangedHandler, DetailsView);
-			InEvents.OnCreateNodeOrPinMenu = SGraphEditor::FOnCreateNodeOrPinMenu::CreateStatic(ContextMenuHandler);
-		}
-
-		if (!GraphEditorCommands.IsValid())
-		{
-			GraphEditorCommands = MakeShared<FUICommandList>();
-
-			GraphEditorCommands->MapAction(
-				FGenericCommands::Get().Copy,
-				FExecuteAction::CreateRaw(this, &FFlowDiffPanel::CopySelectedNodes),
-				FCanExecuteAction::CreateRaw(this, &FFlowDiffPanel::CanCopyNodes)
-			);
-		}
-
-		const TSharedRef<SGraphEditor> Editor = SNew(SGraphEditor)
-			.AdditionalCommands(GraphEditorCommands)
-			.GraphToEdit(Graph)
-			.GraphToDiff(nullptr)
-			.DiffResults(DiffResults)
-			.FocusedDiffResult(FocusedDiffResult)
-			.IsEditable(false)
-			.GraphEvents(InEvents);
-
-		GraphEditor = Editor;
-		Widget = Editor;
-	}
-
-	GraphEditorBox->SetContent(Widget.ToSharedRef());
-}
-
-FGraphPanelSelectionSet FFlowDiffPanel::GetSelectedNodes() const
-{
-	FGraphPanelSelectionSet CurrentSelection;
-	const TSharedPtr<SGraphEditor> FocusedGraphEd = GraphEditor.Pin();
-	if (FocusedGraphEd.IsValid())
-	{
-		CurrentSelection = FocusedGraphEd->GetSelectedNodes();
-	}
-	return CurrentSelection;
-}
-
-void FFlowDiffPanel::CopySelectedNodes() const
-{
-	// Export the selected nodes and place the text on the clipboard
-	const FGraphPanelSelectionSet SelectedNodes = GetSelectedNodes();
-
-	FString ExportedText;
-	FEdGraphUtilities::ExportNodesToText(SelectedNodes, /*out*/ ExportedText);
-	FPlatformApplicationMisc::ClipboardCopy(*ExportedText);
-}
-
-bool FFlowDiffPanel::CanCopyNodes() const
-{
-	// If any of the nodes can be duplicated then we should allow copying
-	const FGraphPanelSelectionSet SelectedNodes = GetSelectedNodes();
-	for (FGraphPanelSelectionSet::TConstIterator SelectedIter(SelectedNodes); SelectedIter; ++SelectedIter)
-	{
-		const UEdGraphNode* Node = Cast<UEdGraphNode>(*SelectedIter);
-		if ((Node != nullptr) && Node->CanDuplicateNode())
-		{
-			return true;
-		}
-	}
-	return false;
-}
-
-void FFlowDiffPanel::FocusDiff(const UEdGraphPin& Pin) const
-{
-	GraphEditor.Pin()->JumpToPin(&Pin);
-}
-
-void FFlowDiffPanel::FocusDiff(const UEdGraphNode& Node) const
-{
-	if (GraphEditor.IsValid())
-	{
-		const UEdGraphNode* JumpNode = &Node;
-		
-		const UFlowGraphNode* FlowNode = Cast<const UFlowGraphNode>(&Node);
-		if (FlowNode && FlowNode->IsSubNode())
-		{
-			check(FlowNode->GetParentNode());
-			JumpNode = FlowNode->GetRootFlowGraphNode();
-		}
-		
-		GraphEditor.Pin()->JumpToNode(JumpNode, false, false);
-		GraphEditor.Pin()->SetNodeSelection(const_cast<UEdGraphNode*>(&Node), true);
-	}
+	return FSlateIcon(FAppStyle::GetAppStyleSetName(), bVerticalSplitGraphMode ? "BlueprintDif.VerticalDiff.Small" : "BlueprintDif.HorizontalDiff.Small");
 }
 
 FFlowDiffPanel& SFlowDiff::GetDiffPanelForNode(const UEdGraphNode& Node)
@@ -749,6 +730,25 @@ void SFlowDiff::GenerateDifferencesList()
 	ModePanels.Add(GraphMode, GenerateGraphPanel());
 
 	DifferencesTreeView->RebuildList();
+}
+
+void SFlowDiff::OnCloseAssetEditor(UObject* Asset, const EAssetEditorCloseReason CloseReason)
+{
+	if (PanelOld.FlowAsset == Asset || PanelNew.FlowAsset == Asset || CloseReason == EAssetEditorCloseReason::CloseAllAssetEditors)
+	{
+		// Tell our window to close and set our selves to collapsed to try and stop it from ticking
+		SetVisibility(EVisibility::Collapsed);
+
+		if (AssetEditorCloseDelegate.IsValid())
+		{
+			GEditor->GetEditorSubsystem<UAssetEditorSubsystem>()->OnAssetEditorRequestClose().Remove(AssetEditorCloseDelegate);
+		}
+
+		if (WeakParentWindow.IsValid())
+		{
+			WeakParentWindow.Pin()->RequestDestroyWindow();
+		}
+	}
 }
 
 SFlowDiff::FDiffControl SFlowDiff::GenerateDetailsPanel()
@@ -946,6 +946,11 @@ void SFlowDiff::SetCurrentMode(FName NewMode)
 	OnModeChanged(NewMode);
 }
 
+void SFlowDiff::OnModeChanged(const FName& InNewViewMode) const
+{
+	UpdateTopSectionVisibility(InNewViewMode);
+}
+
 void SFlowDiff::UpdateTopSectionVisibility(const FName& InNewViewMode) const
 {
 	SSplitter* GraphToolBarPtr = GraphToolBarWidget.Get();
@@ -966,11 +971,6 @@ void SFlowDiff::UpdateTopSectionVisibility(const FName& InNewViewMode) const
 		GraphToolBarPtr->SetVisibility(EVisibility::Collapsed);
 		TopRevisionInfoWidgetPtr->SetVisibility(EVisibility::HitTestInvisible);
 	}
-}
-
-void SFlowDiff::OnModeChanged(const FName& InNewViewMode) const
-{
-	UpdateTopSectionVisibility(InNewViewMode);
 }
 
 #undef LOCTEXT_NAMESPACE

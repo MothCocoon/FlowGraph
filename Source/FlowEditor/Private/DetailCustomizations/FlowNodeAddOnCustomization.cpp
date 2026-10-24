@@ -92,22 +92,6 @@ void FFlowNodeAddOnCustomization::CustomizeChildren(TSharedRef<IPropertyHandle> 
 	}
 }
 
-TSharedPtr<IPropertyHandle> FFlowNodeAddOnCustomization::FindAddOnsHandle(const TSharedRef<IPropertyHandle>& RowHandle)
-{
-	TSharedPtr<IPropertyHandle> AddOnsHandle = RowHandle;
-
-	// Category rows have no property, the AddOns category holds only the AddOns property
-	if (RowHandle->GetProperty() == nullptr)
-	{
-		uint32 NumChildren = 0;
-		RowHandle->GetNumChildren(NumChildren);
-		AddOnsHandle = NumChildren == 1 ? RowHandle->GetChildHandle(0) : TSharedPtr<IPropertyHandle>();
-	}
-
-	const FProperty* Property = AddOnsHandle.IsValid() ? AddOnsHandle->GetProperty() : nullptr;
-	return Property && Property->GetFName() == TEXT("AddOns") ? AddOnsHandle : TSharedPtr<IPropertyHandle>();
-}
-
 TArray<UObject*> FFlowNodeAddOnCustomization::GetAddOns(const TSharedRef<IPropertyHandle>& PropertyHandle)
 {
 	TArray<UObject*> AddOns;
@@ -130,6 +114,22 @@ TArray<UObject*> FFlowNodeAddOnCustomization::GetAddOns(const TSharedRef<IProper
 	}
 
 	return AddOns;
+}
+
+TSharedPtr<IPropertyHandle> FFlowNodeAddOnCustomization::FindAddOnsHandle(const TSharedRef<IPropertyHandle>& RowHandle)
+{
+	TSharedPtr<IPropertyHandle> AddOnsHandle = RowHandle;
+
+	// Category rows have no property, the AddOns category holds only the AddOns property
+	if (RowHandle->GetProperty() == nullptr)
+	{
+		uint32 NumChildren = 0;
+		RowHandle->GetNumChildren(NumChildren);
+		AddOnsHandle = NumChildren == 1 ? RowHandle->GetChildHandle(0) : TSharedPtr<IPropertyHandle>();
+	}
+
+	const FProperty* Property = AddOnsHandle.IsValid() ? AddOnsHandle->GetProperty() : nullptr;
+	return Property && Property->GetFName() == TEXT("AddOns") ? AddOnsHandle : TSharedPtr<IPropertyHandle>();
 }
 
 #undef LOCTEXT_NAMESPACE

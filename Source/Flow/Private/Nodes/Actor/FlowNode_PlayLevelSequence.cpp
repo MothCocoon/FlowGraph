@@ -134,16 +134,6 @@ void UFlowNode_PlayLevelSequence::FlushContent()
 	}
 }
 
-void UFlowNode_PlayLevelSequence::InitializeInstance()
-{
-	Super::InitializeInstance();
-
-	SequenceActor = nullptr;
-
-	// Cache Play Rate set by user
-	CachedPlayRate = PlaybackSettings.PlayRate;
-}
-
 EFlowAddOnAcceptResult UFlowNode_PlayLevelSequence::AcceptFlowNodeAddOnChild_Implementation(
 	const UFlowNodeAddOn* AddOnTemplate,
 	const TArray<UFlowNodeAddOn*>& AdditionalAddOnsToAssumeAreChildren) const
@@ -154,6 +144,16 @@ EFlowAddOnAcceptResult UFlowNode_PlayLevelSequence::AcceptFlowNodeAddOnChild_Imp
 	}
 
 	return Super::AcceptFlowNodeAddOnChild_Implementation(AddOnTemplate, AdditionalAddOnsToAssumeAreChildren);
+}
+
+void UFlowNode_PlayLevelSequence::InitializeInstance()
+{
+	Super::InitializeInstance();
+
+	SequenceActor = nullptr;
+
+	// Cache Play Rate set by user
+	CachedPlayRate = PlaybackSettings.PlayRate;
 }
 
 void UFlowNode_PlayLevelSequence::CreatePlayer()

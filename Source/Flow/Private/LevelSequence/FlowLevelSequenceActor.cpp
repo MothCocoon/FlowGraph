@@ -37,25 +37,6 @@ void AFlowLevelSequenceActor::SetReplicatedLevelSequenceAsset(ULevelSequence* As
 	}
 }
 
-void AFlowLevelSequenceActor::OnRep_ReplicatedLevelSequenceAsset()
-{
-	LevelSequenceAsset = ReplicatedLevelSequenceAsset;
-	ReplicatedLevelSequenceAsset = nullptr;
-	
-	// InstanceData is not replicated to the client.
-	// However, it can be assumed that the spawn transform of the level sequence actor is the transform origin for the sequence.
-	if (UDefaultLevelSequenceInstanceData* InstanceData = Cast<UDefaultLevelSequenceInstanceData>(DefaultInstanceData))
-	{
-		bOverrideInstanceData = true;
-		InstanceData->TransformOriginActor = this;
-	}
-
-	InitializePlayer();
-
-	// Re-apply bindings that replicated before the sequence player was created
-	OnRep_BindingEntries();
-}
-
 void AFlowLevelSequenceActor::AddBinding(FName Tag, AActor* Actor)
 {
 	if (!HasAuthority() || !IsValid(Actor) || Tag.IsNone())
@@ -86,6 +67,25 @@ void AFlowLevelSequenceActor::ClearAllBindings()
 
 	BindingEntries.Empty();
 	ResetBindings();
+}
+
+void AFlowLevelSequenceActor::OnRep_ReplicatedLevelSequenceAsset()
+{
+	LevelSequenceAsset = ReplicatedLevelSequenceAsset;
+	ReplicatedLevelSequenceAsset = nullptr;
+
+	// InstanceData is not replicated to the client.
+	// However, it can be assumed that the spawn transform of the level sequence actor is the transform origin for the sequence.
+	if (UDefaultLevelSequenceInstanceData* InstanceData = Cast<UDefaultLevelSequenceInstanceData>(DefaultInstanceData))
+	{
+		bOverrideInstanceData = true;
+		InstanceData->TransformOriginActor = this;
+	}
+
+	InitializePlayer();
+
+	// Re-apply bindings that replicated before the sequence player was created
+	OnRep_BindingEntries();
 }
 
 void AFlowLevelSequenceActor::OnRep_BindingEntries()

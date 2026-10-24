@@ -147,64 +147,6 @@ void SFlowIdentityTagSelector::Construct(const FArguments& InArgs, const TShared
 	];
 }
 
-TSharedRef<SWidget> SFlowIdentityTagSelector::CreateSettingsMenu()
-{
-	FMenuBuilder MenuBuilder(false, nullptr);
-
-	const FUIAction UIAction_CloseOnAction(
-		FExecuteAction::CreateLambda([]()
-		{
-			UFlowGraphEditorSettings* Settings = GetMutableDefault<UFlowGraphEditorSettings>();
-			Settings->bFlowIdentity_CloseOnAction = !Settings->bFlowIdentity_CloseOnAction;
-			Settings->SaveConfig();
-		}),
-		FCanExecuteAction(),
-		FIsActionChecked::CreateLambda([]()
-		{
-			return GetDefault<UFlowGraphEditorSettings>()->bFlowIdentity_CloseOnAction;
-		})
-	);
-	MenuBuilder.AddMenuEntry(LOCTEXT("Settings_CloseOnAction", "Close On Action"), FText::GetEmpty(), FSlateIcon(), UIAction_CloseOnAction, NAME_None, EUserInterfaceActionType::ToggleButton);
-
-	const FUIAction UIAction_ToggleShortNames(
-		FExecuteAction::CreateLambda([]()
-		{
-			UFlowGraphEditorSettings* Settings = GetMutableDefault<UFlowGraphEditorSettings>();
-			Settings->bFlowIdentity_DisplayShortNames = !Settings->bFlowIdentity_DisplayShortNames;
-			Settings->SaveConfig();
-		}),
-		FCanExecuteAction(),
-		FIsActionChecked::CreateLambda([]()
-		{
-			return GetDefault<UFlowGraphEditorSettings>()->bFlowIdentity_DisplayShortNames;
-		})
-	);
-	MenuBuilder.AddMenuEntry(LOCTEXT("Settings_ShortNames", "Short Names"), FText::GetEmpty(), FSlateIcon(), UIAction_ToggleShortNames, NAME_None, EUserInterfaceActionType::ToggleButton);
-
-	const TSharedRef<SWidget> SizeEditor =
-		SNew(SSpinBox<int32>)
-		.MinValue(100)
-		.EnableSlider(false)
-		.Value_Lambda([]() { return GetDefault<UFlowGraphEditorSettings>()->FlowIdentity_MinWindowWidth; })
-		.OnValueCommitted_Lambda([](const int32 Value, const ETextCommit::Type CommitInfo)
-		{
-			if (CommitInfo == ETextCommit::OnEnter)
-			{
-				UFlowGraphEditorSettings* Settings = GetMutableDefault<UFlowGraphEditorSettings>();
-				Settings->FlowIdentity_MinWindowWidth = Value;
-				Settings->SaveConfig();
-			}
-		})
-		.OnValueChanged_Lambda([](const int32 InValue)
-		{
-			UFlowGraphEditorSettings* Settings = GetMutableDefault<UFlowGraphEditorSettings>();
-			Settings->FlowIdentity_MinWindowWidth = InValue;
-		});
-
-	MenuBuilder.AddWidget(SizeEditor, LOCTEXT("Settings_Size", "Size"));
-	return MenuBuilder.MakeWidget();
-}
-
 void SFlowIdentityTagSelector::SetSourceFromComponent(UFlowComponent* Component)
 {
 	SelectionSource.Reset();
@@ -554,6 +496,64 @@ void SFlowIdentityTagSelector::ActionExecuted()
 	}
 
 	OnAction.ExecuteIfBound();
+}
+
+TSharedRef<SWidget> SFlowIdentityTagSelector::CreateSettingsMenu()
+{
+	FMenuBuilder MenuBuilder(false, nullptr);
+
+	const FUIAction UIAction_CloseOnAction(
+		FExecuteAction::CreateLambda([]()
+		{
+			UFlowGraphEditorSettings* Settings = GetMutableDefault<UFlowGraphEditorSettings>();
+			Settings->bFlowIdentity_CloseOnAction = !Settings->bFlowIdentity_CloseOnAction;
+			Settings->SaveConfig();
+		}),
+		FCanExecuteAction(),
+		FIsActionChecked::CreateLambda([]()
+		{
+			return GetDefault<UFlowGraphEditorSettings>()->bFlowIdentity_CloseOnAction;
+		})
+	);
+	MenuBuilder.AddMenuEntry(LOCTEXT("Settings_CloseOnAction", "Close On Action"), FText::GetEmpty(), FSlateIcon(), UIAction_CloseOnAction, NAME_None, EUserInterfaceActionType::ToggleButton);
+
+	const FUIAction UIAction_ToggleShortNames(
+		FExecuteAction::CreateLambda([]()
+		{
+			UFlowGraphEditorSettings* Settings = GetMutableDefault<UFlowGraphEditorSettings>();
+			Settings->bFlowIdentity_DisplayShortNames = !Settings->bFlowIdentity_DisplayShortNames;
+			Settings->SaveConfig();
+		}),
+		FCanExecuteAction(),
+		FIsActionChecked::CreateLambda([]()
+		{
+			return GetDefault<UFlowGraphEditorSettings>()->bFlowIdentity_DisplayShortNames;
+		})
+	);
+	MenuBuilder.AddMenuEntry(LOCTEXT("Settings_ShortNames", "Short Names"), FText::GetEmpty(), FSlateIcon(), UIAction_ToggleShortNames, NAME_None, EUserInterfaceActionType::ToggleButton);
+
+	const TSharedRef<SWidget> SizeEditor =
+		SNew(SSpinBox<int32>)
+		.MinValue(100)
+		.EnableSlider(false)
+		.Value_Lambda([]() { return GetDefault<UFlowGraphEditorSettings>()->FlowIdentity_MinWindowWidth; })
+		.OnValueCommitted_Lambda([](const int32 Value, const ETextCommit::Type CommitInfo)
+		{
+			if (CommitInfo == ETextCommit::OnEnter)
+			{
+				UFlowGraphEditorSettings* Settings = GetMutableDefault<UFlowGraphEditorSettings>();
+				Settings->FlowIdentity_MinWindowWidth = Value;
+				Settings->SaveConfig();
+			}
+		})
+		.OnValueChanged_Lambda([](const int32 InValue)
+		{
+			UFlowGraphEditorSettings* Settings = GetMutableDefault<UFlowGraphEditorSettings>();
+			Settings->FlowIdentity_MinWindowWidth = InValue;
+		});
+
+	MenuBuilder.AddWidget(SizeEditor, LOCTEXT("Settings_Size", "Size"));
+	return MenuBuilder.MakeWidget();
 }
 
 //////////////////////////////////////////////////////////////////////////

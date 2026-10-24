@@ -24,6 +24,30 @@ TSharedPtr<IPropertyHandle> FFlowActorOwnerComponentRefCustomization::GetCurated
 	return FoundHandle;
 }
 
+void FFlowActorOwnerComponentRefCustomization::SetCuratedName(const FName& NewComponentName)
+{
+	TSharedPtr<IPropertyHandle> ComponentNameHandle = StructPropertyHandle->GetChildHandle(GET_MEMBER_NAME_CHECKED(FFlowActorOwnerComponentRef, ComponentName));
+
+	check(ComponentNameHandle);
+
+	ComponentNameHandle->SetPerObjectValue(0, NewComponentName.ToString());
+}
+
+bool FFlowActorOwnerComponentRefCustomization::TryGetCuratedName(FName& OutName) const
+{
+	const FFlowActorOwnerComponentRef* ComponentRef = GetFlowActorOwnerComponentRef();
+	if (ComponentRef)
+	{
+		OutName = ComponentRef->ComponentName;
+
+		return true;
+	}
+	else
+	{
+		return false;
+	}
+}
+
 TArray<FName> FFlowActorOwnerComponentRefCustomization::GetCuratedNameOptions() const
 {
 	TArray<FName> Results;
@@ -55,6 +79,31 @@ UClass* FFlowActorOwnerComponentRefCustomization::TryGetExpectedOwnerClass() con
 
 	UClass* ExpectedOwnerClass = FlowAsset->GetExpectedOwnerClass();
 	return ExpectedOwnerClass;
+}
+
+UFlowNode* FFlowActorOwnerComponentRefCustomization::TryGetFlowNodeOuter() const
+{
+	check(StructPropertyHandle->IsValidHandle());
+
+	TArray<UObject*> OuterObjects;
+	StructPropertyHandle->GetOuterObjects(OuterObjects);
+
+	for (UObject* OuterObject : OuterObjects)
+	{
+		UFlowNode* FlowNodeOuter = Cast<UFlowNode>(OuterObject);
+		if (IsValid(FlowNodeOuter))
+		{
+			return FlowNodeOuter;
+		}
+
+		UFlowNodeAddOn* FlowNodeAddOnOuter = Cast<UFlowNodeAddOn>(OuterObject);
+		if (IsValid(FlowNodeAddOnOuter))
+		{
+			return FlowNodeAddOnOuter->GetFlowNode();
+		}
+	}
+
+	return nullptr;
 }
 
 TArray<FName> FFlowActorOwnerComponentRefCustomization::GetFlowActorOwnerComponents(TSubclassOf<AActor> ExpectedActorOwnerClass) const
@@ -89,53 +138,4 @@ TArray<FName> FFlowActorOwnerComponentRefCustomization::GetFlowActorOwnerCompone
 	}
 
 	return PassedComponentNames;
-}
-
-void FFlowActorOwnerComponentRefCustomization::SetCuratedName(const FName& NewComponentName)
-{
-	TSharedPtr<IPropertyHandle> ComponentNameHandle = StructPropertyHandle->GetChildHandle(GET_MEMBER_NAME_CHECKED(FFlowActorOwnerComponentRef, ComponentName));
-
-	check(ComponentNameHandle);
-
-	ComponentNameHandle->SetPerObjectValue(0, NewComponentName.ToString());
-}
-
-bool FFlowActorOwnerComponentRefCustomization::TryGetCuratedName(FName& OutName) const
-{
-	const FFlowActorOwnerComponentRef* ComponentRef = GetFlowActorOwnerComponentRef();
-	if (ComponentRef)
-	{
-		OutName = ComponentRef->ComponentName;
-
-		return true;
-	}
-	else
-	{
-		return false;
-	}
-}
-
-UFlowNode* FFlowActorOwnerComponentRefCustomization::TryGetFlowNodeOuter() const
-{
-	check(StructPropertyHandle->IsValidHandle());
-
-	TArray<UObject*> OuterObjects;
-	StructPropertyHandle->GetOuterObjects(OuterObjects);
-
-	for (UObject* OuterObject : OuterObjects)
-	{
-		UFlowNode* FlowNodeOuter = Cast<UFlowNode>(OuterObject);
-		if (IsValid(FlowNodeOuter))
-		{
-			return FlowNodeOuter;
-		}
-
-		UFlowNodeAddOn* FlowNodeAddOnOuter = Cast<UFlowNodeAddOn>(OuterObject);
-		if (IsValid(FlowNodeAddOnOuter))
-		{
-			return FlowNodeAddOnOuter->GetFlowNode();
-		}
-	}
-
-	return nullptr;
 }

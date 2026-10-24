@@ -39,6 +39,18 @@ EFlowAddOnAcceptResult UFlowNode_Branch::AcceptFlowNodeAddOnChild_Implementation
 	return Super::AcceptFlowNodeAddOnChild_Implementation(AddOnTemplate, AdditionalAddOnsToAssumeAreChildren);
 }
 
+FText UFlowNode_Branch::K2_GetNodeTitle_Implementation() const
+{
+	FLOW_ASSERT_ENUM_MAX(EFlowPredicateCombinationRule, 2);
+	if (BranchCombinationRule != EFlowPredicateCombinationRule::AND &&
+		GetDefault<UFlowSettings>()->bUseAdaptiveNodeTitles)
+	{
+		return FText::Format(LOCTEXT("BranchTitle", "{0} ({1})"), {Super::K2_GetNodeTitle_Implementation(), UEnum::GetDisplayValueAsText(BranchCombinationRule)});
+	}
+
+	return Super::K2_GetNodeTitle_Implementation();
+}
+
 void UFlowNode_Branch::ExecuteInput(const FName& PinName)
 {
 	bool bPassedRootPredicates;
@@ -64,18 +76,6 @@ void UFlowNode_Branch::ExecuteInput(const FName& PinName)
 	{
 		TriggerOutput(OUTPIN_False, bFinish);
 	}
-}
-
-FText UFlowNode_Branch::K2_GetNodeTitle_Implementation() const
-{
-	FLOW_ASSERT_ENUM_MAX(EFlowPredicateCombinationRule, 2);
-	if (BranchCombinationRule != EFlowPredicateCombinationRule::AND &&
-		GetDefault<UFlowSettings>()->bUseAdaptiveNodeTitles)
-	{
-		return FText::Format(LOCTEXT("BranchTitle", "{0} ({1})"), {Super::K2_GetNodeTitle_Implementation(), UEnum::GetDisplayValueAsText(BranchCombinationRule)});
-	}
-
-	return Super::K2_GetNodeTitle_Implementation();
 }
 
 #undef LOCTEXT_NAMESPACE

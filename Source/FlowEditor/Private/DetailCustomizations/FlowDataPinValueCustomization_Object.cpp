@@ -15,25 +15,6 @@
 
 #define LOCTEXT_NAMESPACE "FlowDataPinValueCustomization_Object"
 
-FFlowDataPinValue_Object* FFlowDataPinValueCustomization_Object::GetValueStruct() const
-{
-	return IFlowExtendedPropertyTypeCustomization::TryGetTypedStructValue<FFlowDataPinValue_Object>(StructPropertyHandle);
-}
-
-bool FFlowDataPinValueCustomization_Object::ShouldShowSourceRow() const
-{
-	return OwnerInterface ? OwnerInterface->ShowFlowDataPinValueClassFilter(GetValueStruct()) : true;
-}
-
-bool FFlowDataPinValueCustomization_Object::IsSourceEditable() const
-{
-	if (bMetaClassForced)
-	{
-		return false;
-	}
-	return OwnerInterface ? OwnerInterface->CanEditFlowDataPinValueClassFilter(GetValueStruct()) : true;
-}
-
 void FFlowDataPinValueCustomization_Object::BuildValueRows(
 	TSharedRef<IPropertyHandle> InStructPropertyHandle,
 	IDetailChildrenBuilder& StructBuilder,
@@ -66,58 +47,6 @@ void FFlowDataPinValueCustomization_Object::BuildValueRows(
 
 	BindDelegates();
 	ValidateAll();
-}
-
-void FFlowDataPinValueCustomization_Object::TryApplyMetaClass()
-{
-	if (!StructPropertyHandle.IsValid() || !ClassFilterHandle.IsValid())
-	{
-		return;
-	}
-
-	const FString& MetaClassName = StructPropertyHandle->GetMetaData(TEXT("MetaClass"));
-	if (MetaClassName.IsEmpty())
-	{
-		bMetaClassForced = false;
-		return;
-	}
-
-	if (UClass* Meta = FEditorClassUtils::GetClassFromString(MetaClassName))
-	{
-		UObject* Existing = nullptr;
-		ClassFilterHandle->GetValue(Existing);
-		if (Existing != Meta)
-		{
-			ClassFilterHandle->SetValue(Meta, EPropertyValueSetFlags::DefaultFlags);
-		}
-		bMetaClassForced = true;
-	}
-	else
-	{
-		bMetaClassForced = false;
-	}
-}
-
-void FFlowDataPinValueCustomization_Object::ResolveEffectiveFilter()
-{
-	if (bMetaClassForced)
-	{
-		const FString& MetaClassName = StructPropertyHandle->GetMetaData(TEXT("MetaClass"));
-		EffectiveFilterClass = FEditorClassUtils::GetClassFromString(MetaClassName);
-		return;
-	}
-
-	if (ClassFilterHandle.IsValid())
-	{
-		UObject* Obj = nullptr;
-		if (ClassFilterHandle->GetValue(Obj) == FPropertyAccess::Success)
-		{
-			EffectiveFilterClass = Cast<UClass>(Obj);
-			return;
-		}
-	}
-
-	EffectiveFilterClass = nullptr;
 }
 
 void FFlowDataPinValueCustomization_Object::BuildClassFilterRow(IDetailChildrenBuilder& StructBuilder, bool bSourceEditable) const
@@ -183,16 +112,56 @@ void FFlowDataPinValueCustomization_Object::BuildArrayBranch(IDetailChildrenBuil
 		TAttribute<EVisibility>::CreateSP(this, &FFlowDataPinValueCustomization_Object::GetArrayModeVisibility));
 }
 
-TSharedRef<SWidget> FFlowDataPinValueCustomization_Object::BuildObjectValueWidgetForElement(TSharedPtr<IPropertyHandle> ElementHandle) const
+void FFlowDataPinValueCustomization_Object::TryApplyMetaClass()
 {
-	return SNew(SObjectPropertyEntryBox)
-		.PropertyHandle(ElementHandle)
-		.AllowedClass(EffectiveFilterClass.Get() ? EffectiveFilterClass.Get() : UObject::StaticClass())
-		.AllowClear(AreValuesEditable())
-		.IsEnabled(AreValuesEditable())
-		.ToolTipText(AreValuesEditable()
-			? LOCTEXT("ObjectPickerTooltip", "Select an object reference.")
-			: LOCTEXT("ObjectPickerLockedTooltip", "Object references are not editable."));
+	if (!StructPropertyHandle.IsValid() || !ClassFilterHandle.IsValid())
+	{
+		return;
+	}
+
+	const FString& MetaClassName = StructPropertyHandle->GetMetaData(TEXT("MetaClass"));
+	if (MetaClassName.IsEmpty())
+	{
+		bMetaClassForced = false;
+		return;
+	}
+
+	if (UClass* Meta = FEditorClassUtils::GetClassFromString(MetaClassName))
+	{
+		UObject* Existing = nullptr;
+		ClassFilterHandle->GetValue(Existing);
+		if (Existing != Meta)
+		{
+			ClassFilterHandle->SetValue(Meta, EPropertyValueSetFlags::DefaultFlags);
+		}
+		bMetaClassForced = true;
+	}
+	else
+	{
+		bMetaClassForced = false;
+	}
+}
+
+void FFlowDataPinValueCustomization_Object::ResolveEffectiveFilter()
+{
+	if (bMetaClassForced)
+	{
+		const FString& MetaClassName = StructPropertyHandle->GetMetaData(TEXT("MetaClass"));
+		EffectiveFilterClass = FEditorClassUtils::GetClassFromString(MetaClassName);
+		return;
+	}
+
+	if (ClassFilterHandle.IsValid())
+	{
+		UObject* Obj = nullptr;
+		if (ClassFilterHandle->GetValue(Obj) == FPropertyAccess::Success)
+		{
+			EffectiveFilterClass = Cast<UClass>(Obj);
+			return;
+		}
+	}
+
+	EffectiveFilterClass = nullptr;
 }
 
 void FFlowDataPinValueCustomization_Object::BindDelegates()
@@ -292,6 +261,37 @@ void FFlowDataPinValueCustomization_Object::SetObjectValue(TSharedPtr<IPropertyH
 
 	FScopedTransaction Tx(LOCTEXT("SetObjectValue", "Set Object Reference"));
 	ElementHandle->SetValue(NewObj);
+}
+
+bool FFlowDataPinValueCustomization_Object::ShouldShowSourceRow() const
+{
+	return OwnerInterface ? OwnerInterface->ShowFlowDataPinValueClassFilter(GetValueStruct()) : true;
+}
+
+bool FFlowDataPinValueCustomization_Object::IsSourceEditable() const
+{
+	if (bMetaClassForced)
+	{
+		return false;
+	}
+	return OwnerInterface ? OwnerInterface->CanEditFlowDataPinValueClassFilter(GetValueStruct()) : true;
+}
+
+FFlowDataPinValue_Object* FFlowDataPinValueCustomization_Object::GetValueStruct() const
+{
+	return IFlowExtendedPropertyTypeCustomization::TryGetTypedStructValue<FFlowDataPinValue_Object>(StructPropertyHandle);
+}
+
+TSharedRef<SWidget> FFlowDataPinValueCustomization_Object::BuildObjectValueWidgetForElement(TSharedPtr<IPropertyHandle> ElementHandle) const
+{
+	return SNew(SObjectPropertyEntryBox)
+		.PropertyHandle(ElementHandle)
+		.AllowedClass(EffectiveFilterClass.Get() ? EffectiveFilterClass.Get() : UObject::StaticClass())
+		.AllowClear(AreValuesEditable())
+		.IsEnabled(AreValuesEditable())
+		.ToolTipText(AreValuesEditable()
+			? LOCTEXT("ObjectPickerTooltip", "Select an object reference.")
+			: LOCTEXT("ObjectPickerLockedTooltip", "Object references are not editable."));
 }
 
 #undef LOCTEXT_NAMESPACE

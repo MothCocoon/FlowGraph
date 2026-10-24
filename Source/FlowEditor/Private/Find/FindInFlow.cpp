@@ -69,16 +69,6 @@ FFindInFlowResult::FFindInFlowResult(const FString& InValue, const TSharedPtr<FF
 {
 }
 
-TSharedRef<SWidget> FFindInFlowResult::CreateIcon()
-{
-	const FSlateColor IconColor = FSlateColor::UseForeground();
-	const FSlateBrush* Brush = FAppStyle::GetBrush(TEXT("GraphEditor.FIB_Event"));
-
-	return SNew(SImage)
-		.Image(Brush)
-		.ColorAndOpacity(IconColor);
-}
-
 FReply FFindInFlowResult::OnClick(TWeakPtr<class FFlowAssetEditor> FlowAssetEditorPtr) const
 {
 	if (GraphNode.IsValid())
@@ -123,6 +113,16 @@ FReply FFindInFlowResult::OnDoubleClick() const
 	}
 
 	return FReply::Handled();
+}
+
+TSharedRef<SWidget> FFindInFlowResult::CreateIcon()
+{
+	const FSlateColor IconColor = FSlateColor::UseForeground();
+	const FSlateBrush* Brush = FAppStyle::GetBrush(TEXT("GraphEditor.FIB_Event"));
+
+	return SNew(SImage)
+		.Image(Brush)
+		.ColorAndOpacity(IconColor);
 }
 
 FString FFindInFlowResult::GetDescriptionText() const
@@ -410,6 +410,27 @@ FReply SFindInFlow::OnSearchButtonClicked()
 	return FReply::Handled();
 }
 
+void SFindInFlow::OnGetChildren(FSearchResult InItem, TArray<FSearchResult>& OutChildren)
+{
+	OutChildren = InItem->Children;
+}
+
+void SFindInFlow::OnTreeSelectionChanged(FSearchResult Item, ESelectInfo::Type) const
+{
+	if (Item.IsValid())
+	{
+		(void)Item->OnClick(FlowAssetEditorPtr);
+	}
+}
+
+void SFindInFlow::OnTreeSelectionDoubleClicked(FSearchResult Item)
+{
+	if (Item.IsValid())
+	{
+		(void)Item->OnDoubleClick();
+	}
+}
+
 void SFindInFlow::OnScopeChanged(TSharedPtr<EFlowSearchScope> NewSelection, ESelectInfo::Type)
 {
 	SelectedScopeOption = NewSelection;
@@ -426,6 +447,47 @@ void SFindInFlow::OnMaxDepthChanged(const int32 NewDepth)
 		GraphEditorSettings->DefaultMaxSearchDepth = NewDepth;
 		GraphEditorSettings->SaveConfig();
 	}
+}
+
+TSharedRef<ITableRow> SFindInFlow::OnGenerateRow(FSearchResult InItem, const TSharedRef<STableViewBase>& OwnerTable) const
+{
+	return SNew(STableRow<FSearchResult>, OwnerTable)
+		.ToolTip(SNew(SToolTip).Text(InItem->GetToolTipText()))
+		[
+			SNew(SHorizontalBox)
+				+ SHorizontalBox::Slot()
+				.AutoWidth()
+				.VAlign(VAlign_Center)
+				.Padding(2, 0)
+				[
+					InItem->CreateIcon()
+				]
+				+ SHorizontalBox::Slot()
+				.VAlign(VAlign_Center)
+				.Padding(4, 0)
+				[
+					SNew(STextBlock)
+						.Text(FText::FromString(InItem->Value))
+						.HighlightText(HighlightText)
+				]
+				+ SHorizontalBox::Slot()
+				.VAlign(VAlign_Center)
+				.Padding(4, 0)
+				[
+					SNew(STextBlock)
+						.Text(FText::FromString(InItem->GetNodeTypeText()))
+						.ColorAndOpacity(FSlateColor(FLinearColor(0.6f, 0.8f, 1.0f)))
+				]
+				+ SHorizontalBox::Slot()
+				.HAlign(HAlign_Right)
+				.VAlign(VAlign_Center)
+				.Padding(4, 0)
+				[
+					SNew(STextBlock)
+						.Text(InItem->GetMatchedCategoriesText())
+						.ColorAndOpacity(FSlateColor(FLinearColor(0.8f, 0.8f, 0.8f)))
+				]
+		];
 }
 
 TSharedRef<SWidget> SFindInFlow::GenerateScopeWidget(TSharedPtr<EFlowSearchScope> Item)
@@ -733,68 +795,6 @@ UEdGraphNode* SFindInFlow::FindGraphNode(const UFlowAsset* Asset, const FGuid& N
 	}
 
 	return nullptr;
-}
-
-TSharedRef<ITableRow> SFindInFlow::OnGenerateRow(FSearchResult InItem, const TSharedRef<STableViewBase>& OwnerTable) const
-{
-	return SNew(STableRow<FSearchResult>, OwnerTable)
-		.ToolTip(SNew(SToolTip).Text(InItem->GetToolTipText()))
-		[
-			SNew(SHorizontalBox)
-				+ SHorizontalBox::Slot()
-				.AutoWidth()
-				.VAlign(VAlign_Center)
-				.Padding(2, 0)
-				[
-					InItem->CreateIcon()
-				]
-				+ SHorizontalBox::Slot()
-				.VAlign(VAlign_Center)
-				.Padding(4, 0)
-				[
-					SNew(STextBlock)
-						.Text(FText::FromString(InItem->Value))
-						.HighlightText(HighlightText)
-				]
-				+ SHorizontalBox::Slot()
-				.VAlign(VAlign_Center)
-				.Padding(4, 0)
-				[
-					SNew(STextBlock)
-						.Text(FText::FromString(InItem->GetNodeTypeText()))
-						.ColorAndOpacity(FSlateColor(FLinearColor(0.6f, 0.8f, 1.0f)))
-				]
-				+ SHorizontalBox::Slot()
-				.HAlign(HAlign_Right)
-				.VAlign(VAlign_Center)
-				.Padding(4, 0)
-				[
-					SNew(STextBlock)
-						.Text(InItem->GetMatchedCategoriesText())
-						.ColorAndOpacity(FSlateColor(FLinearColor(0.8f, 0.8f, 0.8f)))
-				]
-		];
-}
-
-void SFindInFlow::OnGetChildren(FSearchResult InItem, TArray<FSearchResult>& OutChildren)
-{
-	OutChildren = InItem->Children;
-}
-
-void SFindInFlow::OnTreeSelectionChanged(FSearchResult Item, ESelectInfo::Type) const
-{
-	if (Item.IsValid())
-	{
-		(void)Item->OnClick(FlowAssetEditorPtr);
-	}
-}
-
-void SFindInFlow::OnTreeSelectionDoubleClicked(FSearchResult Item)
-{
-	if (Item.IsValid())
-	{
-		(void)Item->OnDoubleClick();
-	}
 }
 
 #undef LOCTEXT_NAMESPACE

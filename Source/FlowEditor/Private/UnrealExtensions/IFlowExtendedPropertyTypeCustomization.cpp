@@ -40,6 +40,14 @@ void IFlowExtendedPropertyTypeCustomization::CustomizeChildrenDefaultImpl(TShare
 	}
 }
 
+void IFlowExtendedPropertyTypeCustomization::RefreshHeader() const
+{
+	if (HeaderTextBlock.IsValid() && StructPropertyHandle.IsValid())
+	{
+		HeaderTextBlock->SetText(BuildHeaderText());
+	}
+}
+
 void IFlowExtendedPropertyTypeCustomization::CreateHeaderRowWidget(FDetailWidgetRow& HeaderRow, IPropertyTypeCustomizationUtils& StructCustomizationUtils)
 {
 	// Build the Slate widget for the header row
@@ -49,19 +57,6 @@ void IFlowExtendedPropertyTypeCustomization::CreateHeaderRowWidget(FDetailWidget
 			SAssignNew(HeaderTextBlock, STextBlock)
 			.Text(BuildHeaderText())
 		];
-}
-
-void IFlowExtendedPropertyTypeCustomization::OnAnyChildPropertyChanged() const
-{
-	RefreshHeader();
-}
-
-void IFlowExtendedPropertyTypeCustomization::RefreshHeader() const
-{
-	if (HeaderTextBlock.IsValid() && StructPropertyHandle.IsValid())
-	{
-		HeaderTextBlock->SetText(BuildHeaderText());
-	}
 }
 
 FText IFlowExtendedPropertyTypeCustomization::BuildHeaderText() const
@@ -74,4 +69,9 @@ FText IFlowExtendedPropertyTypeCustomization::BuildHeaderText() const
 	{
 		return FText();
 	}
+}
+
+void IFlowExtendedPropertyTypeCustomization::OnAnyChildPropertyChanged() const
+{
+	RefreshHeader();
 }

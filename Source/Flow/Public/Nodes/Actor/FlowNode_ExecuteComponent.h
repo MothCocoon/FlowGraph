@@ -99,10 +99,12 @@ protected:
 	bool TryInjectComponent();
 
 	const UActorComponent* GetResolvedOrExpectedComponent() const;
-
 	UActorComponent* TryResolveComponent();
 	UActorComponent* GetResolvedComponent() const;
+
+#if WITH_EDITOR
 	TSubclassOf<AActor> TryGetExpectedActorOwnerClass() const;
+#endif
 
 protected:
 	/* Executable Component (by name) on the expected Flow owning Actor.

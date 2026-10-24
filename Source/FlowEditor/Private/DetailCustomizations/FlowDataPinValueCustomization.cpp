@@ -25,18 +25,6 @@ static const FName BaseStructMeta = TEXT("BaseStruct");
 static const FName BaseStructFunctionMeta = TEXT("BaseStructFunction");
 static const FName ExcludeBaseStructMeta = TEXT("ExcludeBaseStruct");
 
-FText FFlowDataPinValueCustomization::GetMultiTypeTooltip()
-{
-	return LOCTEXT("MultiTypeTooltip",
-		"Select whether this Data Pin holds a Single value or an Array of values.\n"
-		"Changing from Array to Single trims the array to the first element.");
-}
-FText FFlowDataPinValueCustomization::GetInputPinTooltip()
-{
-	return LOCTEXT("InputPinTooltip",
-		"Marks this Data Pin as an Input.\nChecked = Input Pin, Unchecked = Output Pin.");
-}
-
 TSharedRef<IPropertyTypeCustomization> FFlowDataPinValueCustomization::MakeInstance()
 {
 	return MakeShareable(new FFlowDataPinValueCustomization());
@@ -259,14 +247,6 @@ void FFlowDataPinValueCustomization::BuildArrayBranch(IDetailChildrenBuilder& St
 	}
 }
 
-void FFlowDataPinValueCustomization::RequestRefresh() const
-{
-	if (PropertyUtilities.IsValid())
-	{
-		PropertyUtilities->RequestRefresh();
-	}
-}
-
 void FFlowDataPinValueCustomization::EnsureSingleElementExists() const
 {
 	if (!ValuesHandle.IsValid())
@@ -286,6 +266,182 @@ void FFlowDataPinValueCustomization::EnsureSingleElementExists() const
 			}
 		}
 	}
+}
+
+void FFlowDataPinValueCustomization::RequestRefresh() const
+{
+	if (PropertyUtilities.IsValid())
+	{
+		PropertyUtilities->RequestRefresh();
+	}
+}
+
+EFlowDataMultiType FFlowDataPinValueCustomization::GetCurrentMultiType() const
+{
+	if (MultiTypeHandle.IsValid())
+	{
+		uint8 Value = 0;
+		if (MultiTypeHandle->GetValue(Value) == FPropertyAccess::Success)
+		{
+			return static_cast<EFlowDataMultiType>(Value);
+		}
+	}
+	return EFlowDataMultiType::Single;
+}
+
+EVisibility FFlowDataPinValueCustomization::GetSingleModeVisibility() const
+{
+	return GetCurrentMultiType() == EFlowDataMultiType::Single ? EVisibility::Visible : EVisibility::Collapsed;
+}
+
+EVisibility FFlowDataPinValueCustomization::GetArrayModeVisibility() const
+{
+	if (!bArraySupported)
+	{
+		return EVisibility::Collapsed;
+	}
+	return GetCurrentMultiType() == EFlowDataMultiType::Array ? EVisibility::Visible : EVisibility::Collapsed;
+}
+
+void FFlowDataPinValueCustomization::TrimArrayToSingle() const
+{
+	if (!ValuesHandle.IsValid())
+	{
+		return;
+	}
+
+	if (const auto AsArray = ValuesHandle->AsArray())
+	{
+		uint32 NumElements = 0;
+		AsArray->GetNumElements(NumElements);
+
+		if (NumElements == 0)
+		{
+			AsArray->AddItem();
+		}
+		else
+		{
+			while (NumElements > 1)
+			{
+				AsArray->DeleteItem(NumElements - 1);
+				AsArray->GetNumElements(NumElements);
+			}
+		}
+
+		RequestRefresh();
+	}
+}
+
+ECheckBoxState FFlowDataPinValueCustomization::GetCurrentIsInputPin() const
+{
+	if (IsInputPinHandle.IsValid())
+	{
+		bool Value = false;
+		IsInputPinHandle->GetValue(Value);
+		return Value ? ECheckBoxState::Checked : ECheckBoxState::Unchecked;
+	}
+	return ECheckBoxState::Unchecked;
+}
+
+EVisibility FFlowDataPinValueCustomization::GetInputPinCheckboxVisibility() const
+{
+	return OwnerInterface && OwnerInterface->ShowFlowDataPinValueInputPinCheckbox()
+		? EVisibility::Visible
+		: EVisibility::Collapsed;
+}
+
+bool FFlowDataPinValueCustomization::GetInputPinCheckboxEnabled() const
+{
+	return OwnerInterface ? OwnerInterface->CanModifyFlowDataPinType() : true;
+}
+
+TSharedRef<SWidget> FFlowDataPinValueCustomization::GenerateMultiTypeWidget(TSharedPtr<int32> Item)
+{
+	const UEnum* MultiTypeEnum = StaticEnum<EFlowDataMultiType>();
+	return SNew(STextBlock)
+		.Text(Item.IsValid() && MultiTypeEnum
+			? MultiTypeEnum->GetDisplayNameTextByValue(*Item)
+			: FText::GetEmpty())
+		.Font(IDetailLayoutBuilder::GetDetailFont());
+}
+
+FText FFlowDataPinValueCustomization::GetSelectedMultiTypeText() const
+{
+	const UEnum* MultiTypeEnum = StaticEnum<EFlowDataMultiType>();
+	return (SelectedMultiType.IsValid() && MultiTypeEnum)
+		? MultiTypeEnum->GetDisplayNameTextByValue(*SelectedMultiType)
+		: FText::GetEmpty();
+}
+
+void FFlowDataPinValueCustomization::OnMultiTypeChanged(TSharedPtr<int32> NewSelection, ESelectInfo::Type)
+{
+	if (!NewSelection.IsValid() || !MultiTypeHandle.IsValid())
+	{
+		return;
+	}
+
+	if (!bArraySupported)
+	{
+		return;
+	}
+
+	const EFlowDataMultiType NewType = static_cast<EFlowDataMultiType>(*NewSelection);
+
+	bool bNeedsTrim = (NewType == EFlowDataMultiType::Single);
+	if (bNeedsTrim && ValuesHandle.IsValid())
+	{
+		if (const auto AsArray = ValuesHandle->AsArray())
+		{
+			uint32 NumElements = 0;
+			AsArray->GetNumElements(NumElements);
+			bNeedsTrim = NumElements > 1;
+		}
+	}
+
+	FScopedTransaction Transaction(LOCTEXT("ChangePinMultiType", "Change Pin MultiType"));
+	MultiTypeHandle->NotifyPreChange();
+	MultiTypeHandle->SetValue(static_cast<uint8>(NewType));
+	if (bNeedsTrim)
+	{
+		TrimArrayToSingle();
+	}
+	MultiTypeHandle->NotifyPostChange(EPropertyChangeType::ValueSet);
+
+	SelectedMultiType = NewSelection;
+
+	// Preferred: trigger owner rebuild
+	if (OwnerInterface)
+	{
+		OwnerInterface->RequestFlowDataPinValuesDetailsRebuild();
+	}
+	else
+	{
+		RequestRefresh();
+	}
+}
+
+void FFlowDataPinValueCustomization::OnInputPinChanged(const ECheckBoxState NewState) const
+{
+	if (!IsInputPinHandle.IsValid())
+	{
+		return;
+	}
+
+	bool Existing = false;
+	IsInputPinHandle->GetValue(Existing);
+	const bool bNewValue = NewState == ECheckBoxState::Checked;
+
+	if (Existing == bNewValue)
+	{
+		return;
+	}
+
+	FScopedTransaction Transaction(LOCTEXT("ChangeInputPin", "Change Input Pin"));
+	IsInputPinHandle->NotifyPreChange();
+	IsInputPinHandle->SetValue(bNewValue);
+	IsInputPinHandle->NotifyPostChange(EPropertyChangeType::ValueSet);
+
+	RequestRefresh();
 }
 
 void FFlowDataPinValueCustomization::CacheHandles(const TSharedRef<IPropertyHandle>& PropertyHandle,
@@ -393,174 +549,6 @@ void FFlowDataPinValueCustomization::CacheArraySupported()
 	bArraySupported = DataPinType ? DataPinType->SupportsMultiType(EFlowDataMultiType::Array) : true;
 }
 
-void FFlowDataPinValueCustomization::OnMultiTypeChanged(TSharedPtr<int32> NewSelection, ESelectInfo::Type)
-{
-	if (!NewSelection.IsValid() || !MultiTypeHandle.IsValid())
-	{
-		return;
-	}
-
-	if (!bArraySupported)
-	{
-		return;
-	}
-
-	const EFlowDataMultiType NewType = static_cast<EFlowDataMultiType>(*NewSelection);
-
-	bool bNeedsTrim = (NewType == EFlowDataMultiType::Single);
-	if (bNeedsTrim && ValuesHandle.IsValid())
-	{
-		if (const auto AsArray = ValuesHandle->AsArray())
-		{
-			uint32 NumElements = 0;
-			AsArray->GetNumElements(NumElements);
-			bNeedsTrim = NumElements > 1;
-		}
-	}
-
-	FScopedTransaction Transaction(LOCTEXT("ChangePinMultiType", "Change Pin MultiType"));
-	MultiTypeHandle->NotifyPreChange();
-	MultiTypeHandle->SetValue(static_cast<uint8>(NewType));
-	if (bNeedsTrim)
-	{
-		TrimArrayToSingle();
-	}
-	MultiTypeHandle->NotifyPostChange(EPropertyChangeType::ValueSet);
-
-	SelectedMultiType = NewSelection;
-
-	// Preferred: trigger owner rebuild
-	if (OwnerInterface)
-	{
-		OwnerInterface->RequestFlowDataPinValuesDetailsRebuild();
-	}
-	else
-	{
-		RequestRefresh();
-	}
-}
-
-void FFlowDataPinValueCustomization::OnInputPinChanged(const ECheckBoxState NewState) const
-{
-	if (!IsInputPinHandle.IsValid())
-	{
-		return;
-	}
-
-	bool Existing = false;
-	IsInputPinHandle->GetValue(Existing);
-	const bool bNewValue = NewState == ECheckBoxState::Checked;
-
-	if (Existing == bNewValue)
-	{
-		return;
-	}
-
-	FScopedTransaction Transaction(LOCTEXT("ChangeInputPin", "Change Input Pin"));
-	IsInputPinHandle->NotifyPreChange();
-	IsInputPinHandle->SetValue(bNewValue);
-	IsInputPinHandle->NotifyPostChange(EPropertyChangeType::ValueSet);
-
-	RequestRefresh();
-}
-
-void FFlowDataPinValueCustomization::TrimArrayToSingle() const
-{
-	if (!ValuesHandle.IsValid())
-	{
-		return;
-	}
-
-	if (const auto AsArray = ValuesHandle->AsArray())
-	{
-		uint32 NumElements = 0;
-		AsArray->GetNumElements(NumElements);
-
-		if (NumElements == 0)
-		{
-			AsArray->AddItem();
-		}
-		else
-		{
-			while (NumElements > 1)
-			{
-				AsArray->DeleteItem(NumElements - 1);
-				AsArray->GetNumElements(NumElements);
-			}
-		}
-
-		RequestRefresh();
-	}
-}
-
-EFlowDataMultiType FFlowDataPinValueCustomization::GetCurrentMultiType() const
-{
-	if (MultiTypeHandle.IsValid())
-	{
-		uint8 Value = 0;
-		if (MultiTypeHandle->GetValue(Value) == FPropertyAccess::Success)
-		{
-			return static_cast<EFlowDataMultiType>(Value);
-		}
-	}
-	return EFlowDataMultiType::Single;
-}
-
-ECheckBoxState FFlowDataPinValueCustomization::GetCurrentIsInputPin() const
-{
-	if (IsInputPinHandle.IsValid())
-	{
-		bool Value = false;
-		IsInputPinHandle->GetValue(Value);
-		return Value ? ECheckBoxState::Checked : ECheckBoxState::Unchecked;
-	}
-	return ECheckBoxState::Unchecked;
-}
-
-EVisibility FFlowDataPinValueCustomization::GetSingleModeVisibility() const
-{
-	return GetCurrentMultiType() == EFlowDataMultiType::Single ? EVisibility::Visible : EVisibility::Collapsed;
-}
-
-EVisibility FFlowDataPinValueCustomization::GetArrayModeVisibility() const
-{
-	if (!bArraySupported)
-	{
-		return EVisibility::Collapsed;
-	}
-	return GetCurrentMultiType() == EFlowDataMultiType::Array ? EVisibility::Visible : EVisibility::Collapsed;
-}
-
-EVisibility FFlowDataPinValueCustomization::GetInputPinCheckboxVisibility() const
-{
-	return OwnerInterface && OwnerInterface->ShowFlowDataPinValueInputPinCheckbox()
-		? EVisibility::Visible
-		: EVisibility::Collapsed;
-}
-
-bool FFlowDataPinValueCustomization::GetInputPinCheckboxEnabled() const
-{
-	return OwnerInterface ? OwnerInterface->CanModifyFlowDataPinType() : true;
-}
-
-TSharedRef<SWidget> FFlowDataPinValueCustomization::GenerateMultiTypeWidget(TSharedPtr<int32> Item)
-{
-	const UEnum* MultiTypeEnum = StaticEnum<EFlowDataMultiType>();
-	return SNew(STextBlock)
-		.Text(Item.IsValid() && MultiTypeEnum
-			? MultiTypeEnum->GetDisplayNameTextByValue(*Item)
-			: FText::GetEmpty())
-		.Font(IDetailLayoutBuilder::GetDetailFont());
-}
-
-FText FFlowDataPinValueCustomization::GetSelectedMultiTypeText() const
-{
-	const UEnum* MultiTypeEnum = StaticEnum<EFlowDataMultiType>();
-	return (SelectedMultiType.IsValid() && MultiTypeEnum)
-		? MultiTypeEnum->GetDisplayNameTextByValue(*SelectedMultiType)
-		: FText::GetEmpty();
-}
-
 void FFlowDataPinValueCustomization::BuildVisibilityAwareArray(
 	IDetailChildrenBuilder& StructBuilder,
 	const TSharedPtr<IPropertyHandle>& ArrayHandle,
@@ -635,6 +623,19 @@ void FFlowDataPinValueCustomization::ValidateArrayElements(const TSharedPtr<IPro
 			}
 		}
 	}
+}
+
+FText FFlowDataPinValueCustomization::GetMultiTypeTooltip()
+{
+	return LOCTEXT("MultiTypeTooltip",
+		"Select whether this Data Pin holds a Single value or an Array of values.\n"
+		"Changing from Array to Single trims the array to the first element.");
+}
+
+FText FFlowDataPinValueCustomization::GetInputPinTooltip()
+{
+	return LOCTEXT("InputPinTooltip",
+		"Marks this Data Pin as an Input.\nChecked = Input Pin, Unchecked = Output Pin.");
 }
 
 #undef LOCTEXT_NAMESPACE

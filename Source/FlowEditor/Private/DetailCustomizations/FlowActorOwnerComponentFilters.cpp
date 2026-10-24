@@ -24,6 +24,77 @@ void FFlowActorOwnerComponentFilters::BuildFiltersFromMetadata(const FProperty& 
 	bHasBuiltFilters = true;
 }
 
+bool FFlowActorOwnerComponentFilters::IsFilteredComponent(const UActorComponent& Component) const
+{
+	check(bHasBuiltFilters);
+
+	// For Now(tm) at least, hard coding excluding Transient components
+	//  (could make this configurable, but that doesn't make any sense for FRGIPeerComponentReference)
+	constexpr bool bAllowTransient = false;
+	if constexpr (!bAllowTransient)
+	{
+		const EObjectFlags Flags = Component.GetFlags();
+		const bool bIsTransient = (Flags & RF_Transient) != 0;
+		if (bIsTransient)
+		{
+			// The component is allowed to be transient if the owning actor is also marked as transient.
+			// This happens with level instance actors placed in a level.
+			if (const AActor* CompOwnerActor = Component.GetOwner())
+			{
+				const EObjectFlags OuterFlags = CompOwnerActor->GetFlags();
+				const bool bIsOuterTransient = (OuterFlags & RF_Transient) != 0;
+				if(!bIsOuterTransient)
+				{
+					return false;
+				}
+			}
+		}
+	}
+
+	// Check for required interface(s)
+	for (const UClass* RequiredInterface : RequiredInterfaceFilters)
+	{
+		if (IsValid(RequiredInterface) && !Component.GetClass()->ImplementsInterface(RequiredInterface))
+		{
+			return false;
+		}
+	}
+
+	// NOTE (gtaylor) Adapted from FComponentReferenceCustomization::IsFilteredObject
+
+	bool bAllowedToSetBasedOnFilter = true;
+
+	const UClass* ObjectClass = Component.GetClass();
+	if (AllowedComponentClassFilters.Num() > 0)
+	{
+		bAllowedToSetBasedOnFilter = false;
+		for (const UClass* AllowedClass : AllowedComponentClassFilters)
+		{
+			const bool bAllowedClassIsInterface = AllowedClass->HasAnyClassFlags(CLASS_Interface);
+			if (ObjectClass->IsChildOf(AllowedClass) || (bAllowedClassIsInterface && ObjectClass->ImplementsInterface(AllowedClass)))
+			{
+				bAllowedToSetBasedOnFilter = true;
+				break;
+			}
+		}
+	}
+
+	if (DisallowedComponentClassFilters.Num() > 0 && bAllowedToSetBasedOnFilter)
+	{
+		for (const UClass* DisallowedClass : DisallowedComponentClassFilters)
+		{
+			const bool bDisallowedClassIsInterface = DisallowedClass->HasAnyClassFlags(CLASS_Interface);
+			if (ObjectClass->IsChildOf(DisallowedClass) || (bDisallowedClassIsInterface && ObjectClass->ImplementsInterface(DisallowedClass)))
+			{
+				bAllowedToSetBasedOnFilter = false;
+				break;
+			}
+		}
+	}
+
+	return bAllowedToSetBasedOnFilter;
+}
+
 void FFlowActorOwnerComponentFilters::BuildClassFilters(const FProperty& ComponentNameProperty)
 {
 	// NOTE (gtaylor) Adapted from FComponentReferenceCustomization::BuildClassFilters()
@@ -105,75 +176,4 @@ void FFlowActorOwnerComponentFilters::BuildInterfaceFilters(const FProperty& Com
 	// MustImplement interface(s)
 	const FString& MustImplementInterfacesFilterString = ComponentNameProperty.GetMetaData(NAME_MustImplement);
 	ParseInterfaceFilters(MustImplementInterfacesFilterString, MutableView(RequiredInterfaceFilters));
-}
-
-bool FFlowActorOwnerComponentFilters::IsFilteredComponent(const UActorComponent& Component) const
-{
-	check(bHasBuiltFilters);
-
-	// For Now(tm) at least, hard coding excluding Transient components
-	//  (could make this configurable, but that doesn't make any sense for FRGIPeerComponentReference)
-	constexpr bool bAllowTransient = false;
-	if constexpr (!bAllowTransient)
-	{
-		const EObjectFlags Flags = Component.GetFlags();
-		const bool bIsTransient = (Flags & RF_Transient) != 0;
-		if (bIsTransient)
-		{
-			// The component is allowed to be transient if the owning actor is also marked as transient.
-			// This happens with level instance actors placed in a level.
-			if (const AActor* CompOwnerActor = Component.GetOwner())
-			{
-				const EObjectFlags OuterFlags = CompOwnerActor->GetFlags();
-				const bool bIsOuterTransient = (OuterFlags & RF_Transient) != 0;
-				if(!bIsOuterTransient)
-				{
-					return false;
-				}
-			}
-		}
-	}
-
-	// Check for required interface(s)
-	for (const UClass* RequiredInterface : RequiredInterfaceFilters)
-	{
-		if (IsValid(RequiredInterface) && !Component.GetClass()->ImplementsInterface(RequiredInterface))
-		{
-			return false;
-		}
-	}
-
-	// NOTE (gtaylor) Adapted from FComponentReferenceCustomization::IsFilteredObject
-
-	bool bAllowedToSetBasedOnFilter = true;
-
-	const UClass* ObjectClass = Component.GetClass();
-	if (AllowedComponentClassFilters.Num() > 0)
-	{
-		bAllowedToSetBasedOnFilter = false;
-		for (const UClass* AllowedClass : AllowedComponentClassFilters)
-		{
-			const bool bAllowedClassIsInterface = AllowedClass->HasAnyClassFlags(CLASS_Interface);
-			if (ObjectClass->IsChildOf(AllowedClass) || (bAllowedClassIsInterface && ObjectClass->ImplementsInterface(AllowedClass)))
-			{
-				bAllowedToSetBasedOnFilter = true;
-				break;
-			}
-		}
-	}
-
-	if (DisallowedComponentClassFilters.Num() > 0 && bAllowedToSetBasedOnFilter)
-	{
-		for (const UClass* DisallowedClass : DisallowedComponentClassFilters)
-		{
-			const bool bDisallowedClassIsInterface = DisallowedClass->HasAnyClassFlags(CLASS_Interface);
-			if (ObjectClass->IsChildOf(DisallowedClass) || (bDisallowedClassIsInterface && ObjectClass->ImplementsInterface(DisallowedClass)))
-			{
-				bAllowedToSetBasedOnFilter = false;
-				break;
-			}
-		}
-	}
-
-	return bAllowedToSetBasedOnFilter;
 }

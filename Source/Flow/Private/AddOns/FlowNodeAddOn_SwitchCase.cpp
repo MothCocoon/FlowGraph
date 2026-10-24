@@ -22,6 +22,40 @@ UFlowNodeAddOn_SwitchCase::UFlowNodeAddOn_SwitchCase()
 #endif
 }
 
+EFlowAddOnAcceptResult UFlowNodeAddOn_SwitchCase::AcceptFlowNodeAddOnChild_Implementation(
+	const UFlowNodeAddOn* AddOnTemplate,
+	const TArray<UFlowNodeAddOn*>& AdditionalAddOnsToAssumeAreChildren) const
+{
+	if (IFlowPredicateInterface::ImplementsInterfaceSafe(AddOnTemplate))
+	{
+		return EFlowAddOnAcceptResult::TentativeAccept;
+	}
+	else
+	{
+		// All AddOn children MUST implement IFlowPredicateInterface
+		// (so do not return Super's implementation which will return Undetermined)
+		return EFlowAddOnAcceptResult::Reject;
+	}
+}
+
+FText UFlowNodeAddOn_SwitchCase::K2_GetNodeTitle_Implementation() const
+{
+	if (GetDefault<UFlowSettings>()->bUseAdaptiveNodeTitles)
+	{
+		FLOW_ASSERT_ENUM_MAX(EFlowPredicateCombinationRule, 2);
+		if (BranchCombinationRule != EFlowPredicateCombinationRule::AND)
+		{
+			return FText::Format(LOCTEXT("SwitchCaseTitle", "{0} ({1})"), { FText::FromName(OutputPinName), UEnum::GetDisplayValueAsText(BranchCombinationRule) });
+		}
+		else
+		{
+			return FText::Format(LOCTEXT("SwitchCaseTitle", "{0}"), { FText::FromName(OutputPinName) });
+		}
+	}
+
+	return Super::K2_GetNodeTitle_Implementation();
+}
+
 #if WITH_EDITOR
 
 void UFlowNodeAddOn_SwitchCase::PostEditChangeProperty(struct FPropertyChangedEvent& PropertyChangedEvent)
@@ -92,22 +126,6 @@ TArray<FFlowPin> UFlowNodeAddOn_SwitchCase::GetContextOutputs() const
 }
 #endif
 
-EFlowAddOnAcceptResult UFlowNodeAddOn_SwitchCase::AcceptFlowNodeAddOnChild_Implementation(
-	const UFlowNodeAddOn* AddOnTemplate,
-	const TArray<UFlowNodeAddOn*>& AdditionalAddOnsToAssumeAreChildren) const
-{
-	if (IFlowPredicateInterface::ImplementsInterfaceSafe(AddOnTemplate))
-	{
-		return EFlowAddOnAcceptResult::TentativeAccept;
-	}
-	else
-	{
-		// All AddOn children MUST implement IFlowPredicateInterface
-		// (so do not return Super's implementation which will return Undetermined)
-		return EFlowAddOnAcceptResult::Reject;
-	}
-}
-
 bool UFlowNodeAddOn_SwitchCase::TryTriggerForCase_Implementation() const
 {
 	bool bResult = false;
@@ -130,24 +148,6 @@ bool UFlowNodeAddOn_SwitchCase::TryTriggerForCase_Implementation() const
 	}
 
 	return bResult;
-}
-
-FText UFlowNodeAddOn_SwitchCase::K2_GetNodeTitle_Implementation() const
-{
-	if (GetDefault<UFlowSettings>()->bUseAdaptiveNodeTitles)
-	{
-		FLOW_ASSERT_ENUM_MAX(EFlowPredicateCombinationRule, 2);
-		if (BranchCombinationRule != EFlowPredicateCombinationRule::AND)
-		{
-			return FText::Format(LOCTEXT("SwitchCaseTitle", "{0} ({1})"), { FText::FromName(OutputPinName), UEnum::GetDisplayValueAsText(BranchCombinationRule) });
-		}
-		else
-		{
-			return FText::Format(LOCTEXT("SwitchCaseTitle", "{0}"), { FText::FromName(OutputPinName) });
-		}
-	}
-
-	return Super::K2_GetNodeTitle_Implementation();
 }
 
 #undef LOCTEXT_NAMESPACE
