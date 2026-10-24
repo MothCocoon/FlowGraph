@@ -625,14 +625,14 @@ void FFlowAssetEditor::CreateGraphWidget()
 	.CanEditInPIE(bCanEditInPIE);
 }
 
-bool FFlowAssetEditor::CanEdit()
+bool FFlowAssetEditor::CanEdit() const
 {
 	return GEditor->PlayWorld == nullptr || bCanEditInPIE;
 }
 
-void FFlowAssetEditor::SetCanEditInPIE(bool value)
+void FFlowAssetEditor::SetCanEditInPIE(const bool bValue)
 {
-	bCanEditInPIE = value;
+	bCanEditInPIE = bValue;
 }
 
 bool FFlowAssetEditor::IsPropertyVisible(const FPropertyAndParent& PropertyAndParent)
