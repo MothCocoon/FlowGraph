@@ -255,11 +255,12 @@ void UFlowSubsystem::FinishSubFlow(UFlowNode_SubGraph* SubGraphNode, const EFlow
 
 UFlowAsset* UFlowSubsystem::CreateFlowInstance(const TWeakObjectPtr<UObject> Owner, UFlowAsset* LoadedFlowAsset, FString NewInstanceName, const bool bStartReplication)
 {
-	if (LoadedFlowAsset == nullptr)
+	if (!IsValid(LoadedFlowAsset) || !LoadedFlowAsset->CanBeInstanced(*LoadedFlowAsset, Owner.Get()))
 	{
 		return nullptr;
 	}
 
+	const bool bTemplateAlreadyInstanced = InstancedTemplates.Contains(LoadedFlowAsset);
 	AddInstancedTemplate(LoadedFlowAsset);
 
 #if WITH_EDITOR
@@ -277,6 +278,15 @@ UFlowAsset* UFlowSubsystem::CreateFlowInstance(const TWeakObjectPtr<UObject> Own
 	}
 
 	UFlowAsset* NewInstance = NewObject<UFlowAsset>(this, LoadedFlowAsset->GetClass(), *NewInstanceName, RF_Transient, LoadedFlowAsset, false, nullptr);
+	if (!NewInstance->CanBeInstanced(*LoadedFlowAsset, Owner.Get()))
+	{
+		if (!bTemplateAlreadyInstanced)
+		{
+			RemoveInstancedTemplate(LoadedFlowAsset);
+		}
+		return nullptr;
+	}
+
 	NewInstance->InitializeInstance(Owner, *LoadedFlowAsset);
 	if (bStartReplication)
 	{

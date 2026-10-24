@@ -1,6 +1,7 @@
 // Copyright https://github.com/MothCocoon/FlowGraph/graphs/contributors
 #pragma once
 
+#include "Containers/CircularBuffer.h"
 #include "EdGraph/EdGraphPin.h"
 #include "Templates/SubclassOf.h"
 #include "UObject/ObjectMacros.h"
@@ -416,5 +417,28 @@ struct FLOW_API FPinRecord
 
 private:
 	FORCEINLINE static FString DoubleDigit(const int32 Number);
+};
+
+struct FLOW_API FPinRecordBuffer
+{
+	const uint32 RecentPinRecordsCapacity = 64;
+	TCircularBuffer<FPinRecord> RecentPinRecords = TCircularBuffer<FPinRecord>(RecentPinRecordsCapacity);
+	uint32 NextPinRecordIndex = 0;
+	uint32 TotalPinRecords = 0;
+
+	FPinRecordBuffer();
+
+public:
+	void Add(const FName& PinName, const FPinRecord& NewRecord);
+	void Add(const FName& PinName, FPinRecord&& NewRecord);
+	TArray<FPinRecord> GetArray() const;
+	FPinRecord& Last();
+	const FPinRecord& Last() const;
+	void RangeCheck(const uint32 Index) const;
+	bool IsValidIndex(const uint32 Index) const;
+	uint32 Capacity() const;
+
+private:
+	static void Log(const FName& PinName, const FPinRecord& Record);
 };
 #endif

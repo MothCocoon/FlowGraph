@@ -110,10 +110,14 @@ public:
 	// FAssetEditorToolkit
 	virtual void InitToolMenuContext(FToolMenuContext& MenuContext) override;
 	virtual void PostRegenerateMenusAndToolbars() override;
+protected:
 	virtual void SaveAsset_Execute() override;
 	virtual void SaveAssetAs_Execute() override;
+	virtual void OnAssetsSaved(const TArray<UObject*>& SavedObjects) override;
+	virtual void OnAssetsSavedAs(const TArray<UObject*>& SavedObjects) override;
 	// --
 
+public:
 	bool IsTabFocused(const FTabId& TabId) const;
 
 private:
@@ -138,6 +142,8 @@ protected:
 	void ShowAssetDefaults() const;
 
 	virtual void RefreshAsset();
+	
+	virtual void TryValidateOnAssetSave(const TArray<UObject*>& SavedObjects) const;
 	virtual void ValidateAsset(FFlowMessageLog& MessageLog);
 
 private:

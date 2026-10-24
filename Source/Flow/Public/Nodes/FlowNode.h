@@ -337,8 +337,8 @@ protected:
 
 protected:
 #if !UE_BUILD_SHIPPING
-	TMap<FName, TArray<FPinRecord>> InputRecords;
-	TMap<FName, TArray<FPinRecord>> OutputRecords;
+	TMap<FName, FPinRecordBuffer> InputRecords;
+	TMap<FName, FPinRecordBuffer> OutputRecords;
 #endif
 	
 	/* True, if this node or any of its AddOns has a custom property marked as UPROPERTY(Replicated). */
@@ -447,7 +447,7 @@ public:
 	UFlowNode* GetInspectedInstance() const;
 
 	TMap<uint8, FPinRecord> GetWireRecords() const;
-	TArray<FPinRecord> GetPinRecords(const FName& PinName, const EEdGraphPinDirection PinDirection) const;
+	TArray<FPinRecord> GetPinRecords(const FName& PinName, const EEdGraphPinDirection PinDirection, int32& OutTotalPinRecords) const;
 #endif
 
 	/* Information displayed while node is working - displayed over node as NodeInfoPopup. */
