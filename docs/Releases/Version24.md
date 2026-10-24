@@ -16,8 +16,12 @@ Version 2.2 came with a huge Data Pins refactor, and it requires data migration 
 * Resave all Flow Graph assets.
 * Then update to the newer Flow Graph version.
 
-### Changed Flow Graph Node constructor to GENERATED_BODY
-This is a BREAKING CHANGE if you have any custom UFlowGraphNode classes. Updating the code is trivial though.
+### Changes potentially breaking C++ compilation
+* The `ActivationState` property of Flow Asset is now private. Access it through the `GetActivationState()` getter.
+* Changed the Flow Graph Node constructor to GENERATED_BODY.
+    * This is a breaking change if you have custom UFlowGraphNode classes. Updating the code is trivial though.
+* Detail Customizations are now organized into subfolders.
+    * This is a breaking change if you made changes to these classes.
 
 ### By default, Data Validation runs on saving a Flow Asset
 This is the result of hooking up Flow Asset validation to the engine's built-in validation. Thanks to this, many issues can be detected early on.
@@ -59,7 +63,7 @@ However, this might be annoying to users.
     * Fix: keep newly added filters enabled by default.
 
 ## Flow Node
-* New: Added initial implementation of network replication directly in Flow Nodes.
+* New: Added an initial implementation of network replication directly in Flow Nodes.
 * Pin-related improvements.
     * Added tooltip comparison when checking if Pins match. This fixes the automatic refresh of displayed tooltips after a tooltip has been modified. (contributed by CyaDaPaKnat)
     * Exposed `GetInputPins()` and `GetOutputPins()` to blueprints for automated tests. (contributed by omarchuk-gsc)
@@ -109,5 +113,11 @@ However, this might be annoying to users.
     * Controlled by the `bShowFlowTagsInActorDetails` flag, enabled by default.
 
 ## Misc
+* Weak pointer audit across the plugin.
+    * Each weak pointer is now resolved once, instead of `IsValid()` followed by `Get()`, `->` or `Pin()`. This removes the redundant cost of dereferencing multiple times.
+    * Added null checks where a weak pointer or a nullable accessor was dereferenced without one. A missing object is now skipped instead of crashing.
+* `UFlowAsset::ExpectedOwnerClass` and `UFlowNodeBase::ReplacedBy` are now `TSoftClassPtr`, so cooked assets no longer load the referenced classes.
+    * `GetExpectedOwnerClass()` and `GetReplacedByClass()` now return the soft pointer. Code calling them needs to load or resolve the class.
+    * As a general rule, runtime properties shouldn't use TSubclassOf, which is a hard reference.
 * Fixed the `GetObjectsWithOuter` call in `RemoveOrphanedNodes` for UE 5.8. (contributed by fcarreiro)
 * Fixed `-Wunreachable-code-loop-increment` errors on Clang. (based on a changelist by northstarswap)
