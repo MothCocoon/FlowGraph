@@ -13,7 +13,6 @@
 #include "Kismet2/KismetEditorUtilities.h"
 #include "Misc/MessageDialog.h"
 #include "Modules/ModuleManager.h"
-#include "SlateOptMacros.h"
 #include "Templates/SubclassOf.h"
 #include "Widgets/Input/SButton.h"
 #include "Widgets/Layout/SBorder.h"
@@ -31,8 +30,6 @@ class UFlowNodeBase;
 // ------------------------------------------------------------------------------
 // Dialog to configure creation properties
 // ------------------------------------------------------------------------------
-BEGIN_SLATE_FUNCTION_BUILD_OPTIMIZATION
-
 class SFlowNodeBlueprintCreateDialog final : public SCompoundWidget
 {
 public:
@@ -232,8 +229,6 @@ private:
 	/** True if Ok was clicked */
 	bool bOkClicked = false;
 };
-
-END_SLATE_FUNCTION_BUILD_OPTIMIZATION
 
 /*------------------------------------------------------------------------------
 	UFlowNodeBaseBlueprintFactory implementation

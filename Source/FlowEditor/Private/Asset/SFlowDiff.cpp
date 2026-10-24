@@ -18,7 +18,6 @@
 #include "PropertyEditorModule.h"
 #include "SBlueprintDiff.h"
 #include "SDetailsSplitter.h"
-#include "SlateOptMacros.h"
 #include "Subsystems/AssetEditorSubsystem.h"
 #include "Widgets/Layout/SSpacer.h"
 
@@ -79,8 +78,6 @@ bool FlowDiffUtils::HasPrevDifference(const SListView<TSharedPtr<FDiffSingleResu
 	const int32 CurrentIndex = GetCurrentIndex(ListView, ListViewSource);
 	return ListViewSource.IsValidIndex(CurrentIndex - 1);
 }
-
-BEGIN_SLATE_FUNCTION_BUILD_OPTIMIZATION
 
 void SFlowDiff::Construct(const FArguments& InArgs)
 {
@@ -264,8 +261,6 @@ void SFlowDiff::Construct(const FArguments& InArgs)
 
 	SetCurrentMode(DetailsMode);
 }
-
-END_SLATE_FUNCTION_BUILD_OPTIMIZATION
 
 SFlowDiff::~SFlowDiff()
 {

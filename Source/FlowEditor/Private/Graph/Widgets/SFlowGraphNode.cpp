@@ -25,7 +25,6 @@
 #include "SGraphNode.h"
 #include "SGraphPanel.h"
 #include "SGraphPin.h"
-#include "SlateOptMacros.h"
 #include "SLevelOfDetailBranchNode.h"
 #include "SNodePanel.h"
 #include "Styling/SlateColor.h"
@@ -585,8 +584,6 @@ void SFlowGraphNode::AddPin(const TSharedRef<SGraphPin>& PinToAdd)
 	}
 }
 
-BEGIN_SLATE_FUNCTION_BUILD_OPTIMIZATION
-
 void SFlowGraphNode::UpdateGraphNode()
 {
 	InputPins.Empty();
@@ -786,8 +783,6 @@ void SFlowGraphNode::UpdateGraphNode()
 	CreateBelowPinControls(InnerVerticalBox);
 	CreateAdvancedViewArrow(InnerVerticalBox);
 }
-
-END_SLATE_FUNCTION_BUILD_OPTIMIZATION
 
 void SFlowGraphNode::UpdateErrorInfo()
 {
