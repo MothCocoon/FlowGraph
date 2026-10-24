@@ -27,13 +27,10 @@ class UFlowGraphNode;
  *    requires an already-running instance. An extractable selection therefore has exactly one incoming
  *    execution boundary, and that boundary maps to Start.
  *
- * 2. The output interface is named after the pins it replaces. An exit crossing an unnamed default pin
- *    (UFlowNode::DefaultOutputPin) has nothing to name an event after, so it maps to the built-in Finish.
- *    An exit on a named pin becomes a Custom Output carrying that name, so the parent's wiring reconnects
- *    to a pin matching the original. Finish can be claimed only once because it is a single exec pin and
- *    an exec output drives exactly one target; later unnamed boundaries fall back to a node-derived name.
- *    A Finish node is always placed, and is simply left unconnected when nothing routes to it. Reaching
- *    a Finish is what ends the child instance, so a SubGraph with only Custom Outputs stays active
+ * 2. Every ordinary exit becomes a Custom Output named after its pin, or its node's title for an unnamed
+ *    default pin. Names are unique and cannot use reserved interface names. An ordinary exit must not
+ *    end the child instance because that would cancel other active branches. A Finish node is placed
+ *    but left unconnected, so the SubGraph stays active
  *    until the parent tears it down in UFlowNode_SubGraph::Cleanup. That is normal for a long-running
  *    SubGraph and matches shipped content.
  *
@@ -57,10 +54,10 @@ namespace FlowSubGraphExtraction
 		/** Name of InnerPin, used to find the matching pin on the clone. */
 		FName InnerPinName;
 
-		/** Pin name exposed on the SubGraph node: Start, Finish, or a custom event name taken from the pin. */
+		/** Pin name exposed on the SubGraph node: Start or a unique custom output name. */
 		FName InterfaceName;
 
-		/** True when this boundary maps to the built-in Start or Finish pin rather than a custom event. */
+		/** True when this boundary maps to the built-in Start pin rather than a custom output. */
 		bool bUsesBuiltInPin = false;
 	};
 
@@ -103,7 +100,7 @@ namespace FlowSubGraphExtraction
 		/** Requires one incoming execution connection and maps it to the built-in Start interface. */
 		void ConfigureEntry();
 
-		/** Maps the first unnamed exit to Finish and names additional exits as Custom Outputs. */
+		/** Names all ordinary exits as Custom Outputs, preserving concurrent child execution. */
 		void ConfigureExits();
 
 		/** Orders boundary pins top-to-bottom then left-to-right for deterministic interface naming. */

@@ -158,6 +158,8 @@ public:
 
 	void RemoveUserInput(const FName& PinName);
 	void RemoveUserOutput(const FName& PinName);
+
+	virtual void GetCatalogPins(TArray<FFlowPin>& OutInputPins, TArray<FFlowPin>& OutOutputPins) const override;
 #endif
 
 protected:
@@ -309,7 +311,7 @@ protected:
 	// --
 
 //////////////////////////////////////////////////////////////////////////
-// Debugger
+// Data validation
 
 protected:
 	static FString MissingIdentityTag;
@@ -318,7 +320,6 @@ protected:
 	static FString NoActorsFound;
 
 #if WITH_EDITOR
-
 protected:
 	virtual EDataValidationResult ValidateNode() override;
 	void ValidateFlowPinArrayIsUnique(const TArray<FFlowPin>& FlowPins, TSet<FName>& InOutUniquePinNames, EDataValidationResult& InOutResult);

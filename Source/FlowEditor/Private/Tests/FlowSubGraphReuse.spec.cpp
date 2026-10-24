@@ -26,7 +26,7 @@
 
 #include "FlowSubGraphReuseTestTypes.h"
 
-namespace
+namespace FlowSubGraphReuseTests
 {
 	void AddNodeToTemplate(UFlowAsset& Template, const FGuid& NodeGuid, UFlowNode* Node)
 	{
@@ -67,8 +67,8 @@ BEGIN_DEFINE_SPEC(FFlowSubGraphReuseSpec, "FlowEditor.SubGraphReuse",
 		const FGuid ChildFinishGuid = FGuid::NewGuid();
 		UFlowSubGraphReuseTestStartNode* ChildStart = NewObject<UFlowSubGraphReuseTestStartNode>(Template);
 		UFlowSubGraphReuseTestFinishNode* ChildFinish = NewObject<UFlowSubGraphReuseTestFinishNode>(Template);
-		AddNodeToTemplate(*Template, ChildStartGuid, ChildStart);
-		AddNodeToTemplate(*Template, ChildFinishGuid, ChildFinish);
+		FlowSubGraphReuseTests::AddNodeToTemplate(*Template, ChildStartGuid, ChildStart);
+		FlowSubGraphReuseTests::AddNodeToTemplate(*Template, ChildFinishGuid, ChildFinish);
 
 		TMap<FName, FConnectedPin> ChildStartConnections;
 		ChildStartConnections.Add(UFlowNode::DefaultOutputPin.PinName,
@@ -206,7 +206,7 @@ void FFlowSubGraphReuseSpec::Define()
 		ChildTemplate.Reset(CreateChildTemplate(UFlowAsset::StaticClass()));
 
 		const FGuid ParentStartGuid = FGuid::NewGuid();
-		AddNodeToTemplate(*ParentTemplate.Get(), ParentStartGuid,
+		FlowSubGraphReuseTests::AddNodeToTemplate(*ParentTemplate.Get(), ParentStartGuid,
 			NewObject<UFlowNode_Start>(ParentTemplate.Get()));
 
 		UFlowNode_SubGraph* ParentSubGraph = NewObject<UFlowNode_SubGraph>(ParentTemplate.Get());
@@ -215,7 +215,7 @@ void FFlowSubGraphReuseSpec::Define()
 			UFlowNode::StaticClass(), TEXT("OutputPins"));
 		TArray<FFlowPin>& OutputPins = *OutputPinsProperty->ContainerPtrToValuePtr<TArray<FFlowPin>>(ParentSubGraph);
 		OutputPins.Add(FFlowPreloadHelper::OUTPIN_Preloaded);
-		AddNodeToTemplate(*ParentTemplate.Get(), FGuid::NewGuid(), ParentSubGraph);
+		FlowSubGraphReuseTests::AddNodeToTemplate(*ParentTemplate.Get(), FGuid::NewGuid(), ParentSubGraph);
 
 		OwnerActor = World->SpawnActor<AActor>();
 		RootInstance.Reset(Subsystem->CreateRootFlow(OwnerActor, ParentTemplate.Get()));

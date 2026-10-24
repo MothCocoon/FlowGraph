@@ -1,6 +1,6 @@
 // Copyright https://github.com/MothCocoon/FlowGraph/graphs/contributors
-
 #include "Graph/FlowGraph.h"
+
 #include "Graph/FlowGraphSchema.h"
 #include "Graph/FlowGraphSchema_Actions.h"
 #include "Graph/Nodes/FlowGraphNode.h"
@@ -30,7 +30,7 @@ void UFlowGraph::CreateGraph(UFlowAsset* InFlowAsset)
 	return CreateGraph(InFlowAsset, UFlowGraphSchema::StaticClass());
 }
 
-void UFlowGraph::CreateGraph(UFlowAsset* InFlowAsset, TSubclassOf<UFlowGraphSchema> FlowSchema)
+void UFlowGraph::CreateGraph(UFlowAsset* InFlowAsset, const TSubclassOf<UFlowGraphSchema> FlowSchema, const bool bCreateDefaultNodes)
 {
 	UFlowGraph* NewGraph = CastChecked<UFlowGraph>(FBlueprintEditorUtils::CreateNewGraph(InFlowAsset, NAME_None, StaticClass(), FlowSchema));
 	NewGraph->bAllowDeletion = false;
@@ -47,7 +47,10 @@ void UFlowGraph::CreateGraph(UFlowAsset* InFlowAsset, TSubclassOf<UFlowGraphSche
 	// Nodes read them while being reconstructed, so this must precede creating any node.
 	InFlowAsset->SetupForEditing();
 
-	InFlowAsset->FlowGraph->GetSchema()->CreateDefaultNodesForGraph(*InFlowAsset->FlowGraph);
+	if (bCreateDefaultNodes)
+	{
+		InFlowAsset->FlowGraph->GetSchema()->CreateDefaultNodesForGraph(*InFlowAsset->FlowGraph);
+	}
 }
 
 void UFlowGraph::RefreshGraph()
@@ -132,9 +135,12 @@ void UFlowGraph::RecursivelyRefreshAddOns(UFlowGraphNode& FromFlowGraphNode)
 
 void UFlowGraph::NotifyGraphChanged()
 {
-	if (UFlowAsset* FlowAsset = GetFlowAsset())
+	if (!IsLocked())
 	{
-		FlowAsset->HarvestNodeConnections();
+		if (UFlowAsset* FlowAsset = GetFlowAsset())
+		{
+			FlowAsset->HarvestNodeConnections();
+		}
 	}
 
 	Super::NotifyGraphChanged();
@@ -522,6 +528,13 @@ void UFlowGraph::UnlockUpdates()
 
 	// Existing behavior
 	UpdateAsset();
+}
+
+void UFlowGraph::UnlockUpdatesWithoutReconcile()
+{
+	bLockUpdates = false;
+	PendingRerouteTypeFixups.Reset();
+	PendingNodeReconstructs.Reset();
 }
 
 void UFlowGraph::EnqueueRerouteTypeFixup(UFlowGraphNode_Reroute* RerouteNode)
