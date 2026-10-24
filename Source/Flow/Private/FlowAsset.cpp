@@ -1138,6 +1138,26 @@ void UFlowAsset::SetupForEditing()
 }
 #endif // WITH_EDITOR
 
+bool UFlowAsset::CanBeInstanced(const UObject* InOwner) const
+{
+	if (GetDefault<UFlowSettings>()->bRejectFlowInstancesWithInvalidNodes)
+	{
+		for (const TPair<FGuid, UFlowNode*>& Node : ObjectPtrDecay(Nodes))
+		{
+			if (!IsValid(Node.Value))
+			{
+				UE_LOG(LogFlow, Error,
+					TEXT("Flow instance creation rejected an invalid node. Asset: '%s', Node GUID: '%s', Owner: '%s'. "
+						"Repair and recook the graph; it will not execute."),
+					*GetPathName(), *Node.Key.ToString(), *GetPathNameSafe(InOwner));
+				return false;
+			}
+		}
+	}
+
+	return true;
+}
+
 void UFlowAsset::InitializeInstance(const TWeakObjectPtr<UObject> InOwner, UFlowAsset& InTemplateAsset)
 {
 	check(!IsInstanceInitialized());
