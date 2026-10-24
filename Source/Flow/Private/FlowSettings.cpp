@@ -1,6 +1,6 @@
 // Copyright https://github.com/MothCocoon/FlowGraph/graphs/contributors
-
 #include "FlowSettings.h"
+
 #include "FlowComponent.h"
 #include "Policies/FlowPreloadPolicy.h"
 #include "Policies/FlowStandardPinConnectionPolicies.h"

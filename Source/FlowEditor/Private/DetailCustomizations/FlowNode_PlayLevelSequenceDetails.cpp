@@ -1,6 +1,6 @@
 // Copyright https://github.com/MothCocoon/FlowGraph/graphs/contributors
-
 #include "DetailCustomizations/FlowNode_PlayLevelSequenceDetails.h"
+
 #include "Nodes/Actor/FlowNode_PlayLevelSequence.h"
 
 #include "DetailCategoryBuilder.h"

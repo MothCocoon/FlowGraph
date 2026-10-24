@@ -1,6 +1,6 @@
 // Copyright https://github.com/MothCocoon/FlowGraph/graphs/contributors
-
 #include "MovieScene/FlowSection.h"
+
 #include "MovieScene/MovieSceneFlowRepeaterSection.h"
 #include "MovieScene/MovieSceneFlowTriggerSection.h"
 

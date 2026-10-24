@@ -1,6 +1,6 @@
 // Copyright https://github.com/MothCocoon/FlowGraph/graphs/contributors
-
 #include "Graph/FlowGraphNodesPolicy.h"
+
 #include "Nodes/FlowNodeBase.h"
 #include "Graph/FlowGraphSettings.h"
 

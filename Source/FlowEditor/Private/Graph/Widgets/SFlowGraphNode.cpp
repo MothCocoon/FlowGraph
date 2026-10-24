@@ -1,6 +1,6 @@
 // Copyright https://github.com/MothCocoon/FlowGraph/graphs/contributors
-
 #include "Graph/Widgets/SFlowGraphNode.h"
+
 #include "DragFlowGraphNode.h"
 #include "FlowEditorStyle.h"
 #include "Graph/FlowGraph.h"

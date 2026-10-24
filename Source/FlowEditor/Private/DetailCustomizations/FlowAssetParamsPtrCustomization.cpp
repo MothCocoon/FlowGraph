@@ -1,6 +1,6 @@
 // Copyright https://github.com/MothCocoon/FlowGraph/graphs/contributors
-
 #include "DetailCustomizations/FlowAssetParamsPtrCustomization.h"
+
 #include "Asset/FlowAssetParams.h"
 #include "FlowAsset.h"
 #include "FlowComponent.h"

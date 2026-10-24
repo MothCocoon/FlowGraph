@@ -1,5 +1,4 @@
 // Copyright https://github.com/MothCocoon/FlowGraph/graphs/contributors
-
 #include "DetailCustomizations/FlowNodeAddOn_Details.h"
 
 #include "AddOns/FlowNodeAddOn.h"

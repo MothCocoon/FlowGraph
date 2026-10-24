@@ -1,5 +1,4 @@
 // Copyright https://github.com/MothCocoon/FlowGraph/graphs/contributors
-
 #include "Asset/SFlowDiff.h"
 
 #include "Asset/FlowDiffControl.h"

@@ -1,6 +1,6 @@
 // Copyright https://github.com/MothCocoon/FlowGraph/graphs/contributors
-
 #include "AddOns/FlowNodeAddOn_SwitchCase.h"
+
 #include "AddOns/FlowNodeAddOn_PredicateAND.h"
 #include "AddOns/FlowNodeAddOn_PredicateOR.h"
 #include "FlowLogChannels.h"

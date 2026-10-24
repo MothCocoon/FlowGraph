@@ -1,5 +1,4 @@
 // Copyright https://github.com/MothCocoon/FlowGraph/graphs/contributors
-
 #include "Asset/FlowMessageLogListing.h"
 
 #include "MessageLogModule.h"

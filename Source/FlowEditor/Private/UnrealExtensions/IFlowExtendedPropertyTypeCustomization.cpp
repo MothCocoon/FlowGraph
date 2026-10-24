@@ -1,14 +1,12 @@
 // Copyright https://github.com/MothCocoon/FlowGraph/graphs/contributors
-
-// NOTE (gtaylor) This class is planned for submission to Epic to include in baseline UE.
-// If/when that happens, we will want to remove this version and update to the latest one in the PropertyModule
-
 #include "UnrealExtensions/IFlowExtendedPropertyTypeCustomization.h"
 
 #include "DetailWidgetRow.h"
 #include "IDetailChildrenBuilder.h"
-#include "IDetailPropertyRow.h"
 #include "Widgets/Text/STextBlock.h"
+
+// NOTE (gtaylor) This class is planned for submission to Epic to include in baseline UE.
+// If/when that happens, we will want to remove this version and update to the latest one in the PropertyModule
 
 void IFlowExtendedPropertyTypeCustomization::CustomizeHeader(TSharedRef<IPropertyHandle> InStructPropertyHandle, FDetailWidgetRow& HeaderRow, IPropertyTypeCustomizationUtils& StructCustomizationUtils)
 {

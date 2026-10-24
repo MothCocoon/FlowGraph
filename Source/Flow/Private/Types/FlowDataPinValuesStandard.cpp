@@ -1,6 +1,6 @@
 // Copyright https://github.com/MothCocoon/FlowGraph/graphs/contributors
-
 #include "Types/FlowDataPinValuesStandard.h"
+
 #include "Nodes/FlowPin.h"
 #include "Types/FlowArray.h"
 #include "Types/FlowDebuggableStruct.h"

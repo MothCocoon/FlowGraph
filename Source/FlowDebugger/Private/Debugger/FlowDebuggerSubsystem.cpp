@@ -1,6 +1,6 @@
 // Copyright https://github.com/MothCocoon/FlowGraph/graphs/contributors
-
 #include "Debugger/FlowDebuggerSubsystem.h"
+
 #include "Debugger/FlowDebuggerSettings.h"
 
 #include "FlowAsset.h"

@@ -1,6 +1,6 @@
 // Copyright https://github.com/MothCocoon/FlowGraph/graphs/contributors
-
 #include "DetailCustomizations/FlowPinCustomization.h"
+
 #include "Nodes/FlowPin.h"
 #include "IDetailChildrenBuilder.h"
 #include "UObject/UnrealType.h"

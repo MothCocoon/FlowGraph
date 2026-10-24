@@ -1,6 +1,6 @@
 // Copyright https://github.com/MothCocoon/FlowGraph/graphs/contributors
-
 #include "Interfaces/FlowSwitchCaseInterface.h"
+
 #include "AddOns/FlowNodeAddOn.h"
 
 bool IFlowSwitchCaseInterface::ImplementsInterfaceSafe(const UFlowNodeAddOn* AddOnTemplate)

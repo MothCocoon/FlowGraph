@@ -1,5 +1,4 @@
 // Copyright https://github.com/MothCocoon/FlowGraph/graphs/contributors
-
 #include "Graph/FlowGraphSchema_Actions.h"
 
 #include "Graph/FlowGraph.h"

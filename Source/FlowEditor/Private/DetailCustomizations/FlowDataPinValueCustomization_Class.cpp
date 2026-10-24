@@ -1,6 +1,6 @@
 // Copyright https://github.com/MothCocoon/FlowGraph/graphs/contributors
-
 #include "DetailCustomizations/FlowDataPinValueCustomization_Class.h"
+
 #include "Interfaces/FlowDataPinValueOwnerInterface.h"
 #include "Types/FlowDataPinValuesStandard.h"
 #include "UnrealExtensions/VisibilityArrayBuilder.h"

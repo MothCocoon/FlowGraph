@@ -1,6 +1,6 @@
 // Copyright https://github.com/MothCocoon/FlowGraph/graphs/contributors
-
 #include "Asset/FlowDeferredTransitionScope.h"
+
 #include "FlowAsset.h"
 
 void FFlowDeferredTransitionScope::EnqueueDeferredTrigger(const FFlowDeferredTriggerInput& Entry)

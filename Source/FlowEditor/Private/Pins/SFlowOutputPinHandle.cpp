@@ -1,6 +1,6 @@
 // Copyright https://github.com/MothCocoon/FlowGraph/graphs/contributors
-
 #include "Pins/SFlowOutputPinHandle.h"
+
 #include "Nodes/FlowNode.h"
 #include "Pins/SFlowPinHandle.h"
 

@@ -1,6 +1,6 @@
 // Copyright https://github.com/MothCocoon/FlowGraph/graphs/contributors
-
 #include "Types/FlowClassUtils.h"
+
 #include "UObject/Class.h"
 #include "UObject/UObjectIterator.h"
 

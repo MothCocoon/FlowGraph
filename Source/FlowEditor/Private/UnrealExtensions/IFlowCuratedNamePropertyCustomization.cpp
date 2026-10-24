@@ -1,15 +1,12 @@
 // Copyright https://github.com/MothCocoon/FlowGraph/graphs/contributors
+#include "UnrealExtensions/IFlowCuratedNamePropertyCustomization.h"
 
 // NOTE (gtaylor) This class is planned for submission to Epic to include in baseline UE.
 // If/when that happens, we will want to remove this version and update to the latest one in the PropertyModule
 
-#include "UnrealExtensions/IFlowCuratedNamePropertyCustomization.h"
-
 #include "DetailLayoutBuilder.h"
 #include "DetailWidgetRow.h"
-#include "EditorClassUtils.h"
 #include "IDetailPropertyRow.h"
-#include "IDetailChildrenBuilder.h"
 #include "Internationalization/Text.h"
 #include "IPropertyUtilities.h"
 #include "PropertyHandle.h"
