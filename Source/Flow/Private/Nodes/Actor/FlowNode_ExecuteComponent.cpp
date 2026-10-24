@@ -711,7 +711,7 @@ TSubclassOf<AActor> UFlowNode_ExecuteComponent::TryGetExpectedActorOwnerClass() 
 	const UFlowAsset* FlowAsset = GetFlowAsset();
 	if (IsValid(FlowAsset))
 	{
-		return FlowAsset->GetExpectedOwnerClass();
+		return FlowAsset->GetExpectedOwnerClass().LoadSynchronous();
 	}
 
 	return nullptr;

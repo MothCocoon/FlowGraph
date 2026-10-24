@@ -77,7 +77,7 @@ UClass* FFlowActorOwnerComponentRefCustomization::TryGetExpectedOwnerClass() con
 		return nullptr;
 	}
 
-	UClass* ExpectedOwnerClass = FlowAsset->GetExpectedOwnerClass();
+	UClass* ExpectedOwnerClass = FlowAsset->GetExpectedOwnerClass().LoadSynchronous();
 	return ExpectedOwnerClass;
 }
 
