@@ -20,20 +20,6 @@ class UStruct;
  * Set of data types for pin search filtering.
  */
 
-enum class EFlowSearchPinDirection : uint8
-{
-	Any,
-	Input,
-	Output,
-};
-
-enum class EFlowSearchPinConnectionState : uint8
-{
-	Any,
-	Connected,
-	Unconnected,
-};
-
 struct FLOWEDITOR_API FFlowSearchPinFilter
 {
 	EFlowSearchPinDirection Direction = EFlowSearchPinDirection::Any;
@@ -133,13 +119,23 @@ struct FLOWEDITOR_API FFlowSearchQuery
  * Lives here (service layer) so both FFlowSearch and SFindInFlow share one cache
  * without SFindInFlow needing to know about the service internals.
  */
+/**
+ * Searchable strings of one node, together with the search settings they were collected for.
+ */
+struct FLOWEDITOR_API FFindInFlowCacheEntry
+{
+	EFlowSearchFlags Flags = EFlowSearchFlags::None;
+	int32 MaxDepth = 0;
+	TMap<EFlowSearchFlags, TSet<FString>> CategoryStrings;
+};
+
 struct FLOWEDITOR_API FFindInFlowCache
 {
 	/* Removes all cached data for the changed flow asset. */
 	static void OnFlowAssetChanged(const UFlowAsset& ChangedFlowAsset);
 
 	/* Category-string map keyed by editor graph node pointer. */
-	static TMap<TWeakObjectPtr<UEdGraphNode>, TMap<EFlowSearchFlags, TSet<FString>>> CategoryStringCache;
+	static TMap<TWeakObjectPtr<UEdGraphNode>, FFindInFlowCacheEntry> CategoryStringCache;
 };
 
 /**

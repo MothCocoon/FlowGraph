@@ -5,6 +5,7 @@
 #include "FlowAsset.h"
 #include "Graph/Nodes/FlowGraphNode.h"
 #include "Nodes/FlowNodeBase.h"
+#include "Nodes/FlowPin.h"
 #include "Nodes/Graph/FlowNode_SubGraph.h"
 
 #include "AssetRegistry/AssetRegistryModule.h"
@@ -17,7 +18,7 @@
 //////////////////////////////////////////////////////////////////////////
 // FFindInFlowCache
 
-TMap<TWeakObjectPtr<UEdGraphNode>, TMap<EFlowSearchFlags, TSet<FString>>> FFindInFlowCache::CategoryStringCache;
+TMap<TWeakObjectPtr<UEdGraphNode>, FFindInFlowCacheEntry> FFindInFlowCache::CategoryStringCache;
 
 void FFindInFlowCache::OnFlowAssetChanged(const UFlowAsset& ChangedFlowAsset)
 {
@@ -276,23 +277,29 @@ const TMap<EFlowSearchFlags, TSet<FString>>* FFlowSearch::BuildCategoryStrings(
 	}
 
 	// Reuse the same global cache that SFindInFlow uses so the two paths don't double-build.
-	if (const TMap<EFlowSearchFlags, TSet<FString>>* Cached = FFindInFlowCache::CategoryStringCache.Find(EdNode))
+	if (const FFindInFlowCacheEntry* Cached = FFindInFlowCache::CategoryStringCache.Find(EdNode))
 	{
-		return Cached;
+		// Flags and depth decide which strings are collected
+		if (Cached->Flags == Context.Flags && Cached->MaxDepth == Context.MaxDepth)
+		{
+			return &Cached->CategoryStrings;
+		}
 	}
 
-	TMap<EFlowSearchFlags, TSet<FString>> NewMap;
-	UpdateCategoryStringsForEdGraphNode(*EdNode, Context, NewMap);
+	FFindInFlowCacheEntry NewEntry;
+	NewEntry.Flags = Context.Flags;
+	NewEntry.MaxDepth = Context.MaxDepth;
+	UpdateCategoryStringsForEdGraphNode(*EdNode, Context, NewEntry.CategoryStrings);
 
 	if (const UFlowGraphNode* FlowGraphNode = Cast<UFlowGraphNode>(EdNode))
 	{
 		if (const UFlowNodeBase* Base = FlowGraphNode->GetFlowNodeBase())
 		{
-			UpdateCategoryStringsForFlowNodeBase(*Base, Context, 0, NewMap);
+			UpdateCategoryStringsForFlowNodeBase(*Base, Context, 0, NewEntry.CategoryStrings);
 		}
 	}
 
-	return &FFindInFlowCache::CategoryStringCache.Add(EdNode, MoveTemp(NewMap));
+	return &FFindInFlowCache::CategoryStringCache.Add(EdNode, MoveTemp(NewEntry)).CategoryStrings;
 }
 
 void FFlowSearch::UpdateCategoryStringsForEdGraphNode(
@@ -377,6 +384,19 @@ void FFlowSearch::AppendPropertyValues(
 
 		const void* ValuePtr = Prop->ContainerPtrToValuePtr<void>(Container);
 
+		// Pin names are searched only by the Pin Names category, where pin filters apply
+		const FProperty* ElementProp = Prop;
+		if (const FArrayProperty* ArrayProp = CastField<FArrayProperty>(Prop))
+		{
+			ElementProp = ArrayProp->Inner;
+		}
+		else if (const FSetProperty* SetProp = CastField<FSetProperty>(Prop))
+		{
+			ElementProp = SetProp->ElementProp;
+		}
+		const FStructProperty* ElementStructProp = CastField<FStructProperty>(ElementProp);
+		const bool bIsFlowPinProperty = ElementStructProp && ElementStructProp->Struct->IsChildOf(FFlowPin::StaticStruct());
+
 		if (EnumHasAnyFlags(Context.Flags, EFlowSearchFlags::PropertyNames))
 		{
 			TSet<FString>& NamesSet = OutMap.FindOrAdd(EFlowSearchFlags::PropertyNames);
@@ -388,7 +408,7 @@ void FFlowSearch::AppendPropertyValues(
 			NamesSet.Add(Prop->GetName());
 		}
 
-		if (EnumHasAnyFlags(Context.Flags, EFlowSearchFlags::PropertyValues))
+		if (EnumHasAnyFlags(Context.Flags, EFlowSearchFlags::PropertyValues) && !bIsFlowPinProperty)
 		{
 			FString ValueStr;
 			UObject* MutableParent = const_cast<UObject*>(ParentObject);
@@ -400,6 +420,11 @@ void FFlowSearch::AppendPropertyValues(
 		if (EnumHasAnyFlags(Context.Flags, EFlowSearchFlags::Tooltips))
 		{
 			OutMap.FindOrAdd(EFlowSearchFlags::Tooltips).Add(Prop->GetMetaData(TEXT("ToolTip")));
+		}
+
+		if (bIsFlowPinProperty)
+		{
+			continue;
 		}
 
 		if (const FStructProperty* StructProp = CastField<FStructProperty>(Prop))
