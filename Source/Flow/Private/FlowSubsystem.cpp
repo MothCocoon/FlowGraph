@@ -275,7 +275,8 @@ void UFlowSubsystem::FinishSubFlow(UFlowNode_SubGraph* SubGraphNode, const EFlow
 
 UFlowAsset* UFlowSubsystem::CreateFlowInstance(const TWeakObjectPtr<UObject> Owner, UFlowAsset* LoadedFlowAsset, FString NewInstanceName, const bool bStartReplication)
 {
-	if (!IsValid(LoadedFlowAsset) || !HasValidNodesForInstancing(*LoadedFlowAsset, *LoadedFlowAsset, Owner.Get()))
+	const bool bRejectInvalidNodes = GetDefault<UFlowSettings>()->bRejectFlowInstancesWithInvalidNodes;
+	if (!IsValid(LoadedFlowAsset) || (bRejectInvalidNodes && !HasValidNodesForInstancing(*LoadedFlowAsset, *LoadedFlowAsset, Owner.Get())))
 	{
 		return nullptr;
 	}
@@ -298,7 +299,7 @@ UFlowAsset* UFlowSubsystem::CreateFlowInstance(const TWeakObjectPtr<UObject> Own
 	}
 
 	UFlowAsset* NewInstance = NewObject<UFlowAsset>(this, LoadedFlowAsset->GetClass(), *NewInstanceName, RF_Transient, LoadedFlowAsset, false, nullptr);
-	if (!HasValidNodesForInstancing(*NewInstance, *LoadedFlowAsset, Owner.Get()))
+	if (bRejectInvalidNodes && !HasValidNodesForInstancing(*NewInstance, *LoadedFlowAsset, Owner.Get()))
 	{
 		if (!bTemplateAlreadyInstanced)
 		{
