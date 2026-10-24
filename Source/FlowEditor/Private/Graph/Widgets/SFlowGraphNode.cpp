@@ -214,7 +214,7 @@ FMargin SFlowGraphNode::GetTitleBorderMargin() const
 	return UFlowNodeBase::GetDefaultTitleBorderMargin();
 }
 
-const FSlateBrush* SFlowGraphNode::GetSlateBrush(const FName BrushName, const FName StyleSetName) const
+const FSlateBrush* SFlowGraphNode::GetSlateBrush(const FName BrushName, const FName StyleSetName)
 {
 	if (!StyleSetName.IsNone())
 	{
@@ -1244,8 +1244,8 @@ FReply SFlowGraphNode::OnDrop(const FGeometry& MyGeometry, const FDragDropEvent&
 	const bool bShouldDropAsSubNodesOfDropTargetNode = bReorderOperation || ShouldDropDraggedNodesAsSubNodes(DraggedNodes, DropTargetNode);
 
 	// Decide the new parent insertion target (either the hovered node, or its parent for sibling insert)
-	UFlowGraphNode* DropTargetParentNode = nullptr;
-	UFlowGraphNode* SiblingInsertBeforeNode = nullptr;
+	UFlowGraphNode* DropTargetParentNode;
+	UFlowGraphNode* SiblingInsertBeforeNode;
 
 	if (bShouldDropAsSubNodesOfDropTargetNode)
 	{

@@ -39,7 +39,7 @@ public:
 	FMargin GetTitleBorderMargin() const;
 
 protected:
-	const FSlateBrush* GetSlateBrush(const FName BrushName, const FName StyleSetName) const;
+	static const FSlateBrush* GetSlateBrush(const FName BrushName, const FName StyleSetName);
 
 	// SGraphNode
 	virtual void GetPinBrush(const bool bLeftSide, const float WidgetWidth, const int32 PinIndex, const struct FFlowBreakpoint* Breakpoint, TArray<FOverlayBrushInfo>& Brushes) const;

@@ -1,6 +1,6 @@
 // Copyright https://github.com/MothCocoon/FlowGraph/graphs/contributors
-
 #include "DetailCustomizations/FlowDataPinValueCustomization.h"
+
 #include "Interfaces/FlowDataPinValueOwnerInterface.h"
 #include "Types/FlowDataPinValuesStandard.h"
 #include "UnrealExtensions/VisibilityArrayBuilder.h"
@@ -18,7 +18,7 @@
 
 #define LOCTEXT_NAMESPACE "FlowDataPinValueCustomization"
 
-static const TCHAR HiddenMeta[] = TEXT("Hidden");
+static constexpr TCHAR HiddenMeta[] = TEXT("Hidden");
 static const FName BaseStructMeta = TEXT("BaseStruct");
 static const FName BaseStructFunctionMeta = TEXT("BaseStructFunction");
 static const FName ExcludeBaseStructMeta = TEXT("ExcludeBaseStruct");
@@ -62,8 +62,8 @@ void FFlowDataPinValueCustomization::CustomizeHeader(TSharedRef<IPropertyHandle>
 				continue;
 			}
 			const int64 Value = MultiTypeEnum->GetValueByIndex(i);
-			EFlowDataMultiType MT = static_cast<EFlowDataMultiType>(Value);
-			if (!bArraySupported && MT == EFlowDataMultiType::Array)
+			const EFlowDataMultiType MultiType = static_cast<EFlowDataMultiType>(Value);
+			if (!bArraySupported && MultiType == EFlowDataMultiType::Array)
 			{
 				continue;
 			}
@@ -99,7 +99,7 @@ void FFlowDataPinValueCustomization::CustomizeHeader(TSharedRef<IPropertyHandle>
 		}
 	}
 
-	TSharedRef<SHorizontalBox> HeaderBox = SNew(SHorizontalBox);
+	const TSharedRef<SHorizontalBox> HeaderBox = SNew(SHorizontalBox);
 
 	// MultiType control (combo or static label if array unsupported)
 	if (bArraySupported)
@@ -110,7 +110,7 @@ void FFlowDataPinValueCustomization::CustomizeHeader(TSharedRef<IPropertyHandle>
 			[
 				SAssignNew(MultiTypeComboBox, SComboBox<TSharedPtr<int32>>)
 					.OptionsSource(&MultiTypeOptions)
-					.OnGenerateWidget(this, &FFlowDataPinValueCustomization::GenerateMultiTypeWidget)
+					.OnGenerateWidget_Static(&FFlowDataPinValueCustomization::GenerateMultiTypeWidget)
 					.OnSelectionChanged(this, &FFlowDataPinValueCustomization::OnMultiTypeChanged)
 					.IsEnabled(this, &FFlowDataPinValueCustomization::GetInputPinCheckboxEnabled)
 					.ToolTipText(GetMultiTypeTooltip())
@@ -168,14 +168,14 @@ void FFlowDataPinValueCustomization::CustomizeHeader(TSharedRef<IPropertyHandle>
 		];
 }
 
-void FFlowDataPinValueCustomization::CustomizeChildren(TSharedRef<IPropertyHandle> InStructPropertyHandle,
+void FFlowDataPinValueCustomization::CustomizeChildren(const TSharedRef<IPropertyHandle> InStructPropertyHandle,
 	IDetailChildrenBuilder& StructBuilder,
 	IPropertyTypeCustomizationUtils& StructCustomizationUtils)
 {
 	BuildValueRows(InStructPropertyHandle, StructBuilder, StructCustomizationUtils);
 }
 
-void FFlowDataPinValueCustomization::BuildValueRows(TSharedRef<IPropertyHandle> InStructPropertyHandle,
+void FFlowDataPinValueCustomization::BuildValueRows(const TSharedRef<IPropertyHandle> InStructPropertyHandle,
 	IDetailChildrenBuilder& StructBuilder,
 	IPropertyTypeCustomizationUtils& StructCustomizationUtils)
 {
@@ -211,7 +211,7 @@ void FFlowDataPinValueCustomization::BuildSingleBranch(IDetailChildrenBuilder& S
 		return;
 	}
 
-	TSharedPtr<IPropertyHandle> ValueToShow = bArraySupported
+	const TSharedPtr<IPropertyHandle> ValueToShow = bArraySupported
 		? ValuesHandle->GetChildHandle(0)
 		: ValuesHandle;
 
@@ -257,7 +257,7 @@ void FFlowDataPinValueCustomization::BuildArrayBranch(IDetailChildrenBuilder& St
 	}
 }
 
-void FFlowDataPinValueCustomization::RequestRefresh()
+void FFlowDataPinValueCustomization::RequestRefresh() const
 {
 	if (PropertyUtilities.IsValid())
 	{
@@ -265,7 +265,7 @@ void FFlowDataPinValueCustomization::RequestRefresh()
 	}
 }
 
-void FFlowDataPinValueCustomization::EnsureSingleElementExists()
+void FFlowDataPinValueCustomization::EnsureSingleElementExists() const
 {
 	if (!ValuesHandle.IsValid())
 	{
@@ -274,7 +274,7 @@ void FFlowDataPinValueCustomization::EnsureSingleElementExists()
 
 	if (bArraySupported)
 	{
-		if (auto AsArray = ValuesHandle->AsArray())
+		if (const auto AsArray = ValuesHandle->AsArray())
 		{
 			uint32 Num = 0;
 			AsArray->GetNumElements(Num);
@@ -294,7 +294,7 @@ void FFlowDataPinValueCustomization::CacheHandles(const TSharedRef<IPropertyHand
 	IsInputPinHandle = PropertyHandle->GetChildHandle(GET_MEMBER_NAME_CHECKED(FFlowDataPinValue, bIsInputPin));
 	PropertyUtilities = StructCustomizationUtils.GetPropertyUtilities();
 
-	if (auto* Value = GetFlowDataPinValueBeingEdited())
+	if (const auto* Value = GetFlowDataPinValueBeingEdited())
 	{
 		DataPinType = Value->LookupPinType();
 		if (DataPinType)
@@ -304,8 +304,7 @@ void FFlowDataPinValueCustomization::CacheHandles(const TSharedRef<IPropertyHand
 	}
 }
 
-void FFlowDataPinValueCustomization::ApplyInstancedStructMetaData(
-	const TSharedRef<IPropertyHandle>& ElementHandle) const
+void FFlowDataPinValueCustomization::ApplyInstancedStructMetaData(const TSharedRef<IPropertyHandle>& ElementHandle) const
 {
 	if (!DataPinType || DataPinType->GetPinTypeName() != FFlowPinType_InstancedStruct::GetPinTypeNameStatic())
 	{
@@ -355,7 +354,7 @@ void FFlowDataPinValueCustomization::OnMultiTypeChanged(TSharedPtr<int32> NewSel
 	bool bNeedsTrim = (NewType == EFlowDataMultiType::Single);
 	if (bNeedsTrim && ValuesHandle.IsValid())
 	{
-		if (auto AsArray = ValuesHandle->AsArray())
+		if (const auto AsArray = ValuesHandle->AsArray())
 		{
 			uint32 NumElements = 0;
 			AsArray->GetNumElements(NumElements);
@@ -387,7 +386,7 @@ void FFlowDataPinValueCustomization::OnMultiTypeChanged(TSharedPtr<int32> NewSel
 #endif
 }
 
-void FFlowDataPinValueCustomization::OnInputPinChanged(ECheckBoxState NewState)
+void FFlowDataPinValueCustomization::OnInputPinChanged(const ECheckBoxState NewState) const
 {
 	if (!IsInputPinHandle.IsValid())
 	{
@@ -411,14 +410,14 @@ void FFlowDataPinValueCustomization::OnInputPinChanged(ECheckBoxState NewState)
 	RequestRefresh();
 }
 
-void FFlowDataPinValueCustomization::TrimArrayToSingle()
+void FFlowDataPinValueCustomization::TrimArrayToSingle() const
 {
 	if (!ValuesHandle.IsValid())
 	{
 		return;
 	}
 
-	if (auto AsArray = ValuesHandle->AsArray())
+	if (const auto AsArray = ValuesHandle->AsArray())
 	{
 		uint32 NumElements = 0;
 		AsArray->GetNumElements(NumElements);
@@ -490,7 +489,7 @@ bool FFlowDataPinValueCustomization::GetInputPinCheckboxEnabled() const
 	return OwnerInterface ? OwnerInterface->CanModifyFlowDataPinType() : true;
 }
 
-TSharedRef<SWidget> FFlowDataPinValueCustomization::GenerateMultiTypeWidget(TSharedPtr<int32> Item) const
+TSharedRef<SWidget> FFlowDataPinValueCustomization::GenerateMultiTypeWidget(TSharedPtr<int32> Item)
 {
 	const UEnum* MultiTypeEnum = StaticEnum<EFlowDataMultiType>();
 	return SNew(STextBlock)
@@ -510,16 +509,16 @@ FText FFlowDataPinValueCustomization::GetSelectedMultiTypeText() const
 
 void FFlowDataPinValueCustomization::BuildVisibilityAwareArray(
 	IDetailChildrenBuilder& StructBuilder,
-	TSharedPtr<IPropertyHandle> ArrayHandle,
+	const TSharedPtr<IPropertyHandle>& ArrayHandle,
 	TFunction<void(TSharedRef<IPropertyHandle>, int32, IDetailChildrenBuilder&, const TAttribute<EVisibility>&)> Generator,
-	TAttribute<EVisibility> VisibilityAttribute)
+	TAttribute<EVisibility> VisibilityAttribute) const
 {
 	if (!ArrayHandle.IsValid() || !bArraySupported)
 	{
 		return;
 	}
 
-	TSharedRef<FVisibilityArrayBuilder> ArrayBuilder =
+	const TSharedRef<FVisibilityArrayBuilder> ArrayBuilder =
 		MakeShareable(new FVisibilityArrayBuilder(ArrayHandle.ToSharedRef(), true, true, true));
 
 	ArrayBuilder->SetVisibilityGetter([VisibilityAttribute]()
@@ -537,16 +536,16 @@ void FFlowDataPinValueCustomization::BuildVisibilityAwareArray(
 	StructBuilder.AddCustomBuilder(ArrayBuilder);
 }
 
-void FFlowDataPinValueCustomization::ValidateArrayElements(TSharedPtr<IPropertyHandle> ArrayHandle,
-	TFunction<bool(TSharedPtr<IPropertyHandle>)> IsValidPredicate,
-	TFunction<void(TSharedPtr<IPropertyHandle>)> InvalidateAction)
+void FFlowDataPinValueCustomization::ValidateArrayElements(const TSharedPtr<IPropertyHandle>& ArrayHandle,
+	const TFunction<bool(TSharedPtr<IPropertyHandle>)>& IsValidPredicate,
+	const TFunction<void(TSharedPtr<IPropertyHandle>)>& InvalidateAction)
 {
 	if (!ArrayHandle.IsValid())
 	{
 		return;
 	}
 
-	auto AsArray = ArrayHandle->AsArray();
+	const auto AsArray = ArrayHandle->AsArray();
 	if (!AsArray.IsValid())
 	{
 		return;
