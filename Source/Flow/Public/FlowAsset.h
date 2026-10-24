@@ -565,6 +565,7 @@ protected:
 	virtual void InitializePreloadPolicy();
 
 public:
+	void EnsurePreloadPolicyInitialized();
 	const FFlowPreloadPolicy& GetPreloadPolicy() const;
 
 //////////////////////////////////////////////////////////////////////////
