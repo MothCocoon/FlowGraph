@@ -177,12 +177,13 @@ void FFlowGraphConnectionDrawingPolicy::DrawDefaultConnection(int32 LayerId, con
 		(Params.AssociatedPin1 != nullptr && IsValid(Cast<UFlowGraphNode_Reroute>(Params.AssociatedPin1->GetOwningNode()))) ||
 		(Params.AssociatedPin2 != nullptr && IsValid(Cast<UFlowGraphNode_Reroute>(Params.AssociatedPin2->GetOwningNode())));
 
-	FNodeVerticalExtent OutputNodeExtent;
-	FNodeVerticalExtent InputNodeExtent;
+	FNodeExtent OutputNodeExtent;
+	FNodeExtent InputNodeExtent;
 
 	if (!bIsBackwards || bTouchesReroute
-		|| !TryGetOwningNodeVerticalExtent(Params.AssociatedPin1, OutputNodeExtent)
-		|| !TryGetOwningNodeVerticalExtent(Params.AssociatedPin2, InputNodeExtent))
+		|| !TryGetOwningNodeExtent(Params.AssociatedPin1, OutputNodeExtent)
+		|| !TryGetOwningNodeExtent(Params.AssociatedPin2, InputNodeExtent)
+		|| (OutputNodeExtent.Left < InputNodeExtent.Right && InputNodeExtent.Left < OutputNodeExtent.Right))
 	{
 		FConnectionDrawingPolicy::DrawConnection(LayerId, Start, End, Params);
 		return;
@@ -371,7 +372,7 @@ void FFlowGraphConnectionDrawingPolicy::Draw(TMap<TSharedRef<SWidget>, FArranged
 	CurrentArrangedNodes = nullptr;
 }
 
-bool FFlowGraphConnectionDrawingPolicy::TryGetOwningNodeVerticalExtent(const UEdGraphPin* Pin, FNodeVerticalExtent& OutExtent) const
+bool FFlowGraphConnectionDrawingPolicy::TryGetOwningNodeExtent(const UEdGraphPin* Pin, FNodeExtent& OutExtent) const
 {
 	if (Pin == nullptr || CurrentArrangedNodes == nullptr)
 	{
@@ -387,13 +388,16 @@ bool FFlowGraphConnectionDrawingPolicy::TryGetOwningNodeVerticalExtent(const UEd
 	const FArrangedWidget& ArrangedNode = (*CurrentArrangedNodes)[*NodeIndex];
 
 	// Nodes culled off-screen are arranged with zero-size synthesized geometry (see SGraphPanel::OnPaint), which
-	// would otherwise collapse the node's bottom edge to its top and make a route jump as the far node scrolls
-	// out of view. Fall back to the widget's (zoom-scaled) desired size in that case; the top edge's position is
-	// unaffected by this, since only the synthesized size (not position) is wrong for a culled node.
-	const float DrawHeight = ArrangedNode.Geometry.GetDrawSize().Y;
-	const float DesiredHeight = ArrangedNode.Widget->GetDesiredSize().Y * ZoomFactor;
-	const float NodeHeight = FMath::Max(DrawHeight, DesiredHeight);
+	// would otherwise collapse the node's right and bottom edges to their left and top edges. Fall back to the
+	// widget's (zoom-scaled) desired size in that case; the left and top edge positions are unaffected, since only
+	// the synthesized size (not position) is wrong for a culled node.
+	const FVector2D DrawSize = ArrangedNode.Geometry.GetDrawSize();
+	const FVector2D DesiredSize = ArrangedNode.Widget->GetDesiredSize() * ZoomFactor;
+	const float NodeWidth = FMath::Max(DrawSize.X, DesiredSize.X);
+	const float NodeHeight = FMath::Max(DrawSize.Y, DesiredSize.Y);
 
+	OutExtent.Left = ArrangedNode.Geometry.AbsolutePosition.X;
+	OutExtent.Right = OutExtent.Left + NodeWidth;
 	OutExtent.Top = ArrangedNode.Geometry.AbsolutePosition.Y;
 	OutExtent.Bottom = OutExtent.Top + NodeHeight;
 

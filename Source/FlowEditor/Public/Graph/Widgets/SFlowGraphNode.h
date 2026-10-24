@@ -35,8 +35,11 @@ public:
 	virtual void GetOverlayBrushes(bool bSelected, const FVector2f& WidgetSize, TArray<FOverlayBrushInfo>& Brushes) const override;
 	// --
 
+	/** Padding for the title border, sourced from the node so a subclass can reserve extra space for things like overlay icons. */
+	FMargin GetTitleBorderMargin() const;
+
 protected:
-	const FSlateBrush* GetSlateBrush(const FName BrushName, const FName StyleSetName) const;
+	static const FSlateBrush* GetSlateBrush(const FName BrushName, const FName StyleSetName);
 
 	// SGraphNode
 	virtual void GetPinBrush(const bool bLeftSide, const float WidgetWidth, const int32 PinIndex, const struct FFlowBreakpoint* Breakpoint, TArray<FOverlayBrushInfo>& Brushes) const;
