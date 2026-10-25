@@ -34,9 +34,12 @@ private:
 
 	// UI building
 	void BuildClassFilterRow(IDetailChildrenBuilder& StructBuilder, bool bSourceEditable) const;
+
+protected:
 	virtual void BuildSingleBranch(IDetailChildrenBuilder& StructBuilder) override;
 	virtual void BuildArrayBranch(IDetailChildrenBuilder& StructBuilder) override;
 
+private:
 	// Metadata / filter
 	void TryApplyMetaClass();
 	void ResolveEffectiveFilter();

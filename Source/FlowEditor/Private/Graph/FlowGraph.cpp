@@ -569,18 +569,25 @@ void UFlowGraph::RemoveOrphanedNodes()
 
 void UFlowGraph::CollectAllNodeInstances(TSet<UObject*>& NodeInstances)
 {
-	for (UObject* NodeInstance : NodeInstances)
+	TArray<const UFlowGraphNode*> PendingGraphNodes;
+	for (const UEdGraphNode* Node : Nodes)
 	{
-		if (UFlowGraphNode* FlowGraphNode = Cast<UFlowGraphNode>(NodeInstance))
+		if (const UFlowGraphNode* FlowGraphNode = Cast<UFlowGraphNode>(Node))
 		{
-			NodeInstances.Add(FlowGraphNode->GetFlowNodeBase());
+			PendingGraphNodes.Add(FlowGraphNode);
+		}
+	}
 
-			for (const UFlowGraphNode* SubNode : FlowGraphNode->SubNodes)
+	while (PendingGraphNodes.Num() > 0)
+	{
+		const UFlowGraphNode* FlowGraphNode = PendingGraphNodes.Pop();
+		NodeInstances.Add(FlowGraphNode->GetFlowNodeBase());
+
+		for (const UFlowGraphNode* SubNode : FlowGraphNode->SubNodes)
+		{
+			if (SubNode)
 			{
-				if (SubNode)
-				{
-					NodeInstances.Add(SubNode->GetFlowNodeBase());
-				}
+				PendingGraphNodes.Add(SubNode);
 			}
 		}
 	}

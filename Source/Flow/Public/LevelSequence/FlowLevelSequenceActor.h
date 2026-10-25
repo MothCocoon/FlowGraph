@@ -31,9 +31,9 @@ protected:
 	UPROPERTY(ReplicatedUsing = OnRep_ReplicatedLevelSequenceAsset)
 	TObjectPtr<ULevelSequence> ReplicatedLevelSequenceAsset;
 
+public:
 	virtual void GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const override;
 
-public:
 	void SetPlaybackSettings(FMovieSceneSequencePlaybackSettings NewPlaybackSettings);
 	void SetReplicatedLevelSequenceAsset(ULevelSequence* Asset);
 

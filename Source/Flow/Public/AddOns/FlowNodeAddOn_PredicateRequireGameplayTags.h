@@ -26,17 +26,19 @@ public:
 	virtual bool EvaluatePredicate_Implementation() const override;
 	// --
 
+protected:
 	// UFlowNodeBase
 	virtual void UpdateNodeConfigText_Implementation() override;
 	// --
 
+public:
 #if WITH_EDITOR
 	// UObject Interface
 	virtual void PostEditChangeProperty(FPropertyChangedEvent& PropertyChangedEvent) override;
 	// --
 
 	// UFlowNodeBase
-	void OnEditorPinConnectionsChanged(const TArray<FFlowPinConnectionChange>& Changes) override;
+	virtual void OnEditorPinConnectionsChanged(const TArray<FFlowPinConnectionChange>& Changes) override;
 	// --
 #endif
 

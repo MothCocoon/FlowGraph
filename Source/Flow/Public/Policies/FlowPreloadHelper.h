@@ -103,7 +103,6 @@ public:
 	/* Called by UFlowNode::NotifyPreloadComplete() to update async state before the output pin fires. */
 	virtual EFlowPreloadResult OnPreloadComplete(UFlowNode& Node) override;
 
-protected:
 #if WITH_EDITOR
 	virtual void GetContextInputs(TArray<FFlowPin>& OutInputPins) const override;
 #endif

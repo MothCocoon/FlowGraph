@@ -11,6 +11,7 @@
 #include "Nodes/FlowNode.h"
 #include "Types/FlowArray.h"
 #include "Types/FlowDataPinResults.h"
+#include "Types/FlowInjectComponentsManager.h"
 #include "Types/FlowPinTypesStandard.h"
 #include "Types/FlowNamedDataPinProperty.h"
 
@@ -116,6 +117,21 @@ void UFlowNodeBase::Cleanup()
 	for (UFlowNodeAddOn* AddOn : AddOns)
 	{
 		AddOn->Cleanup();
+	}
+
+	if (const UFlowAsset* FlowAsset = GetFlowAsset())
+	{
+		UFlowInjectComponentsManager* LocalManager = FlowAsset->FindComponentInjectionManager();
+		if (LocalManager)
+		{
+			LocalManager->UnregisterAllComponentUsers(*this);
+		}
+
+		UFlowInjectComponentsManager* RootManager = FlowAsset->FindComponentInjectionManagerInRootFlow();
+		if (RootManager && RootManager != LocalManager)
+		{
+			RootManager->UnregisterAllComponentUsers(*this);
+		}
 	}
 
 	IFlowCoreExecutableInterface::Cleanup();

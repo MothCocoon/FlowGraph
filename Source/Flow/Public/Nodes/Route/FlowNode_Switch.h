@@ -23,8 +23,11 @@ public:
 	UPROPERTY(EditAnywhere, Category = "Switch")
 	bool bOnlyTriggerFirstPassingCase = true;
 
+protected:
 	// UFlowNodeBase
 	virtual EFlowAddOnAcceptResult AcceptFlowNodeAddOnChild_Implementation(const UFlowNodeAddOn* AddOnTemplate, const TArray<UFlowNodeAddOn*>& AdditionalAddOnsToAssumeAreChildren) const override;
+
+public:
 	virtual FText K2_GetNodeTitle_Implementation() const override;
 	// --
 

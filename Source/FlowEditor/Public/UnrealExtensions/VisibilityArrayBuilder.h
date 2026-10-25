@@ -82,7 +82,7 @@ public:
 		BaseProperty->MarkHiddenByCustomization();
 	}
 
-	~FVisibilityArrayBuilder()
+	virtual ~FVisibilityArrayBuilder() override
 	{
 		if (ArrayProperty.IsValid())
 		{
@@ -218,17 +218,17 @@ public:
 		OnRebuildChildren.ExecuteIfBound();
 	}
 
-	virtual TSharedPtr<IPropertyHandle> GetPropertyHandle() const
+	virtual TSharedPtr<IPropertyHandle> GetPropertyHandle() const override
 	{
 		return BaseProperty;
 	}
 
-protected:
 	virtual void SetOnRebuildChildren(FSimpleDelegate InOnRebuildChildren) override
 	{
 		OnRebuildChildren = InOnRebuildChildren;
 	}
 
+protected:
 	void OnNumChildrenChanged()
 	{
 		OnRebuildChildren.ExecuteIfBound();

@@ -35,8 +35,11 @@ public:
 	virtual void PostEditChangeChainProperty(FPropertyChangedChainEvent& PropertyChangedEvent) override;
 	// --
 
+protected:
 	// UFlowNodeBase
 	virtual EDataValidationResult ValidateNode() override;
+
+public:
 	virtual FText K2_GetNodeTitle_Implementation() const override;
 	// --
 
@@ -58,7 +61,7 @@ protected:
 	UPROPERTY(EditAnywhere, Category = Configuration)
 	EFlowSingleFromArray SingleFromArray = EFlowSingleFromArray::LastValue;
 
-protected:
+public:
 	// IFlowDataPinValueOwnerInterface
 	virtual bool TryFindPropertyByPinName(
 		const FName& PinName,
@@ -66,6 +69,7 @@ protected:
 		TInstancedStruct<FFlowDataPinValue>& OutFoundInstancedStruct) const override;
 	// --
 
+protected:
 	// Operator classifiers
 	bool IsEqualityOp() const;
 	bool IsArithmeticOp() const;

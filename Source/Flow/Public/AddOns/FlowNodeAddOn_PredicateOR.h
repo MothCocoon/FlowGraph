@@ -22,10 +22,12 @@ class UFlowNodeAddOn_PredicateOR
 public:
 	UFlowNodeAddOn_PredicateOR();
 
+protected:
 	// UFlowNodeBase
 	virtual EFlowAddOnAcceptResult AcceptFlowNodeAddOnChild_Implementation(const UFlowNodeAddOn* AddOnTemplate, const TArray<UFlowNodeAddOn*>& AdditionalAddOnsToAssumeAreChildren) const override;
 	// --
 
+public:
 	// IFlowPredicateInterface
 	virtual bool EvaluatePredicate_Implementation() const override;
 	// --

@@ -21,6 +21,7 @@ public:
 	TSharedPtr<FUICommandInfo> ContinueFlowExecution;
 	TSharedPtr<FUICommandInfo> StopFlowExecution;
 
+	// Public despite protected base, TCommands::Register calls it through the derived type
 	virtual void RegisterCommands() override;
 };
 
@@ -65,6 +66,7 @@ public:
 	TSharedPtr<FUICommandInfo> FocusViewport;
 	TSharedPtr<FUICommandInfo> JumpToNodeDefinition;
 
+	// Public despite protected base, TCommands::Register calls it through the derived type
 	virtual void RegisterCommands() override;
 };
 
@@ -76,6 +78,7 @@ class FLOWEDITOR_API FFlowSpawnNodeCommands : public TCommands<FFlowSpawnNodeCom
 public:
 	FFlowSpawnNodeCommands();
 
+	// Public despite protected base, TCommands::Register calls it through the derived type
 	virtual void RegisterCommands() override;
 
 public:
