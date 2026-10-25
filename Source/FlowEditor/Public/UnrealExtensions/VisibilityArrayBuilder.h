@@ -223,12 +223,12 @@ public:
 		return BaseProperty;
 	}
 
-protected:
 	virtual void SetOnRebuildChildren(FSimpleDelegate InOnRebuildChildren) override
 	{
 		OnRebuildChildren = InOnRebuildChildren;
 	}
 
+protected:
 	void OnNumChildrenChanged()
 	{
 		OnRebuildChildren.ExecuteIfBound();

@@ -61,7 +61,7 @@ protected:
 	UPROPERTY(EditAnywhere, Category = Configuration)
 	EFlowSingleFromArray SingleFromArray = EFlowSingleFromArray::LastValue;
 
-protected:
+public:
 	// IFlowDataPinValueOwnerInterface
 	virtual bool TryFindPropertyByPinName(
 		const FName& PinName,
@@ -69,6 +69,7 @@ protected:
 		TInstancedStruct<FFlowDataPinValue>& OutFoundInstancedStruct) const override;
 	// --
 
+protected:
 	// Operator classifiers
 	bool IsEqualityOp() const;
 	bool IsArithmeticOp() const;
