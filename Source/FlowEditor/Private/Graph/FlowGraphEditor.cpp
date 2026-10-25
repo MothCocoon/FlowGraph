@@ -654,7 +654,7 @@ void SFlowGraphEditor::CopySelectedNodes() const
 	FString ExportedText;
 
 	FEdGraphUtilities::ExportNodesToText(NewSelectedNodes, ExportedText);
-	FPlatformApplicationMisc::ClipboardCopy(*ExportedText);
+	ClipboardCopy(ExportedText);
 
 	for (FGraphPanelSelectionSet::TIterator SelectedIter(NewSelectedNodes); SelectedIter; ++SelectedIter)
 	{
@@ -793,9 +793,19 @@ void SFlowGraphEditor::PasteNodesHere(const FVector2f& Location)
 	}
 }
 
-TSet<UEdGraphNode*> SFlowGraphEditor::ImportNodesToPasteFromClipboard(UFlowGraph& FlowGraph, FString& OutTextToImport)
+void SFlowGraphEditor::ClipboardCopy(const FString& Text) const
 {
-	FPlatformApplicationMisc::ClipboardPaste(OutTextToImport);
+	FPlatformApplicationMisc::ClipboardCopy(*Text);
+}
+
+void SFlowGraphEditor::ClipboardPaste(FString& OutText) const
+{
+	FPlatformApplicationMisc::ClipboardPaste(OutText);
+}
+
+TSet<UEdGraphNode*> SFlowGraphEditor::ImportNodesToPasteFromClipboard(UFlowGraph& FlowGraph, FString& OutTextToImport) const
+{
+	ClipboardPaste(OutTextToImport);
 
 	// Import the nodes
 	TSet<UEdGraphNode*> NodesToPaste;
@@ -973,7 +983,7 @@ bool SFlowGraphEditor::CanPasteNodes() const
 	}
 
 	FString ClipboardContent;
-	FPlatformApplicationMisc::ClipboardPaste(ClipboardContent);
+	ClipboardPaste(ClipboardContent);
 
 	const UFlowGraph* FlowGraph = CastChecked<UFlowGraph>(FlowAsset->GetGraph());
 	if (!ensure(IsValid(FlowGraph)))

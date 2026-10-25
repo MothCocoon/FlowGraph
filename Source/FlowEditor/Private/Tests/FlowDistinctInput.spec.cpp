@@ -2,7 +2,6 @@
 #include "Tests/FlowDistinctInputTestTypes.h"
 
 #include "Editor.h"
-#include "HAL/PlatformApplicationMisc.h"
 #include "Misc/AutomationTest.h"
 #include "Subsystems/AssetEditorSubsystem.h"
 #include "UObject/Package.h"
@@ -22,6 +21,8 @@
 
 namespace FlowDistinctInputTests
 {
+	FString TestClipboard;
+
 	class STestFlowGraphEditor : public SFlowGraphEditor
 	{
 	public:
@@ -33,6 +34,8 @@ namespace FlowDistinctInputTests
 		}
 
 		virtual bool IsTabFocused() const override { return true; }
+		virtual void ClipboardCopy(const FString& Text) const override { TestClipboard = Text; }
+		virtual void ClipboardPaste(FString& OutText) const override { OutText = TestClipboard; }
 		using SFlowGraphEditor::CopySelectedNodes;
 	};
 
@@ -98,15 +101,13 @@ namespace FlowDistinctInputTests
 
 BEGIN_DEFINE_SPEC(FFlowDistinctInputSpec, "Flow.Editor.DistinctInput",
 	EAutomationTestFlags::EditorContext | EAutomationTestFlags::ProductFilter)
-	FString OriginalClipboard;
 END_DEFINE_SPEC(FFlowDistinctInputSpec)
 
 void FFlowDistinctInputSpec::Define()
 {
 	using namespace FlowDistinctInputTests;
 
-	BeforeEach([this]() { FPlatformApplicationMisc::ClipboardPaste(OriginalClipboard); });
-	AfterEach([this]() { FPlatformApplicationMisc::ClipboardCopy(*OriginalClipboard); });
+	BeforeEach([]() { TestClipboard.Reset(); });
 
 	It("keeps each connection and resolved value attached to its provider after reorder", [this]
 	{
