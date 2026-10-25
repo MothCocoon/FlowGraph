@@ -113,6 +113,8 @@ However, this might be annoying to users.
     * Controlled by the `bShowFlowTagsInActorDetails` flag, enabled by default.
 
 ## Misc
+* The plugin code went through a series of code audits.
+    * Anyone can run the same audits on their own code. The agent skills are available in the [CodeAudits](https://github.com/MothCocoon/CodeAudits) repository.
 * Weak pointer audit across the plugin.
     * Each weak pointer is now resolved once, instead of `IsValid()` followed by `Get()`, `->` or `Pin()`. This removes the redundant cost of dereferencing multiple times.
     * Added null checks where a weak pointer or a nullable accessor was dereferenced without one. A missing object is now skipped instead of crashing.

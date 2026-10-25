@@ -52,9 +52,12 @@ private:
 
 	// UI
 	void BuildClassFilterRow(IDetailChildrenBuilder& StructBuilder, bool bSourceEditable) const;
-	void BuildSingleBranch(IDetailChildrenBuilder& StructBuilder);
-	void BuildArrayBranch(IDetailChildrenBuilder& StructBuilder);
 
+protected:
+	virtual void BuildSingleBranch(IDetailChildrenBuilder& StructBuilder) override;
+	virtual void BuildArrayBranch(IDetailChildrenBuilder& StructBuilder) override;
+
+private:
 	// Delegates / validation
 	void BindDelegates();
 	void OnClassFilterChanged();

@@ -17,12 +17,14 @@ public:
 	int32 RegistrationCount = 0;
 	int32 DestructionCount = 0;
 
+protected:
 	virtual void OnRegister() override
 	{
 		Super::OnRegister();
 		++RegistrationCount;
 	}
 
+public:
 	virtual void OnComponentDestroyed(bool bDestroyingHierarchy) override
 	{
 		++DestructionCount;

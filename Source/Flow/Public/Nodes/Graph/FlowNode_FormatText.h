@@ -29,6 +29,7 @@ public:
 	virtual void PostEditChangeChainProperty(FPropertyChangedChainEvent& PropertyChangedEvent) override;
 	// --
 
+protected:
 	virtual void UpdateNodeConfigText_Implementation() override;
 #endif
 

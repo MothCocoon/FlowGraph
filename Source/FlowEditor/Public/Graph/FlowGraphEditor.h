@@ -97,7 +97,10 @@ public:
 	virtual void PasteNodesHere(const FVector2f& Location);
 
 protected:
-	static TSet<UEdGraphNode*> ImportNodesToPasteFromClipboard(UFlowGraph& FlowGraph, FString& OutTextToImport);
+	virtual void ClipboardCopy(const FString& Text) const;
+	virtual void ClipboardPaste(FString& OutText) const;
+
+	TSet<UEdGraphNode*> ImportNodesToPasteFromClipboard(UFlowGraph& FlowGraph, FString& OutTextToImport) const;
 	TSet<UEdGraphNode*> ImportAndValidatePastedNodes(FString& OutTextToImport, TMap<FGuid, UFlowGraphNode*>& OutSourceGuidToPastedNode, const UFlowGraphNode* AddOnPasteTarget) const;
 	void PreparePastedNodesForPaste(const TSet<UEdGraphNode*>& NodesToPaste, const FVector2f& Location);
 	static void AttachPastedSubNodes(const TSet<UEdGraphNode*>& NodesToPaste, const TMap<FGuid, UFlowGraphNode*>& SourceGuidToPastedNode, UFlowGraphNode* AddOnPasteTarget);

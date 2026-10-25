@@ -58,7 +58,7 @@ protected:
 	virtual void PauseSession(UFlowAsset& FlowAssetInstance) override;
 	virtual void ResumeSession(UFlowAsset& FlowAssetInstance) override;
 	virtual void StopSession() override;
-	virtual void OnFlowDebuggerStateChanged(EFlowDebuggerState PrevState, EFlowDebuggerState NextState, UFlowAsset* FlowAssetInstance);
+	virtual void OnFlowDebuggerStateChanged(EFlowDebuggerState PrevState, EFlowDebuggerState NextState, UFlowAsset* FlowAssetInstance) override;
 
 	void OnBreakpointHit(const UFlowNode* FlowNode) const;
 

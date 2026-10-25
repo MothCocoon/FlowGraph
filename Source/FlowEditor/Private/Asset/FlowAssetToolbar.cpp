@@ -345,7 +345,7 @@ void SFlowAssetBreadcrumb::OnCrumbClicked(const FFlowBreadcrumb& Item) const
 {
 	const UFlowAsset* TemplateAssetPtr = TemplateAsset.Get();
 	const UFlowAsset* InspectedInstance = TemplateAssetPtr ?TemplateAssetPtr->GetInspectedInstance() : nullptr;
-	if (InspectedInstance == nullptr || Item.CurrentInstance != TemplateAsset)
+	if (InspectedInstance == nullptr || Item.CurrentInstance != InspectedInstance)
 	{
 		const TWeakObjectPtr<const UFlowAsset> ClickedInstance = Item.CurrentInstance;
 		if (const UFlowAsset* ClickedInstancePtr = ClickedInstance.Get())

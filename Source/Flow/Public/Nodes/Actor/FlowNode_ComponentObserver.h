@@ -44,9 +44,10 @@ protected:
 
 public:
 	virtual void ExecuteInput(const FName& PinName) override;
+
+protected:
 	virtual void OnLoad_Implementation() override;
 
-protected:	
 	virtual void StartObserving();
 	virtual void StopObserving();
 

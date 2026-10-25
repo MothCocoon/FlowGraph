@@ -20,12 +20,11 @@ private:
 public:
 	static TSharedRef<IPropertyTypeCustomization> MakeInstance() { return MakeShareable(new FFlowActorOwnerComponentRefCustomization()); }
 
-protected:
-
 	// IPropertyTypeCustomization
 	virtual void CustomizeChildren(TSharedRef<IPropertyHandle> InStructPropertyHandle, IDetailChildrenBuilder& StructBuilder, IPropertyTypeCustomizationUtils& StructCustomizationUtils) override;
 	// --
 
+protected:
 	// ICuratedNamePropertyCustomization
 	virtual TSharedPtr<IPropertyHandle> GetCuratedNamePropertyHandle() const override;
 	virtual void SetCuratedName(const FName& NewName) override;

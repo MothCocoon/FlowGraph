@@ -7,7 +7,6 @@
 #include "Editor.h"
 #include "AssetRegistry/AssetRegistryModule.h"
 #include "Framework/Commands/UICommandList.h"
-#include "HAL/PlatformApplicationMisc.h"
 #include "ScopedTransaction.h"
 #include "Subsystems/AssetEditorSubsystem.h"
 #include "Templates/UnrealTemplate.h"
@@ -37,12 +36,27 @@ namespace FlowGraphPasteTests
 {
 using FAssetClasses = TArray<TSubclassOf<UFlowAsset>>;
 
-FAssetClasses& GetBranchDeniedAssetClasses()
+FAssetClasses& GetDeniedAssetClasses(UFlowNode& Node)
 {
 	const FArrayProperty* Property = FindFProperty<FArrayProperty>(UFlowNode::StaticClass(), TEXT("DeniedAssetClasses"));
 	check(Property);
-	return *Property->ContainerPtrToValuePtr<FAssetClasses>(GetMutableDefault<UFlowNode_Branch>());
+	return *Property->ContainerPtrToValuePtr<FAssetClasses>(&Node);
 }
+
+FAssetClasses& GetBranchDeniedAssetClasses()
+{
+	return GetDeniedAssetClasses(*GetMutableDefault<UFlowNode_Branch>());
+}
+
+// Native instances don't pick up CDO changes made after startup.
+// A value differing from the CDO is exported as an empty array that fails to import on paste.
+void MatchBranchDeniedAssetClasses(const UFlowGraphNode& Node)
+{
+	GetDeniedAssetClasses(*CastChecked<UFlowNode>(Node.GetFlowNodeBase())) = GetBranchDeniedAssetClasses();
+}
+
+// Shared by all test editors, so nodes copied in one graph can be pasted into another.
+FString TestClipboard;
 
 class STestFlowGraphEditor : public SFlowGraphEditor
 {
@@ -55,6 +69,8 @@ public:
 	}
 
 	virtual bool IsTabFocused() const override { return true; }
+	virtual void ClipboardCopy(const FString& Text) const override { TestClipboard = Text; }
+	virtual void ClipboardPaste(FString& OutText) const override { OutText = TestClipboard; }
 	using SFlowGraphEditor::CopySelectedNodes;
 	using SFlowGraphEditor::DuplicateNodes;
 	using SFlowGraphEditor::BindGraphCommands;
@@ -120,15 +136,13 @@ struct FTestGraph
 
 BEGIN_DEFINE_SPEC(FFlowGraphPasteSpec, "FlowEditor.Paste",
 	EAutomationTestFlags::EditorContext | EAutomationTestFlags::ProductFilter)
-	FString OriginalClipboard;
 END_DEFINE_SPEC(FFlowGraphPasteSpec)
 
 void FFlowGraphPasteSpec::Define()
 {
 	using namespace FlowGraphPasteTests;
 
-	BeforeEach([this]() { FPlatformApplicationMisc::ClipboardPaste(OriginalClipboard); });
-	AfterEach([this]() { FPlatformApplicationMisc::ClipboardCopy(*OriginalClipboard); });
+	BeforeEach([]() { TestClipboard.Reset(); });
 
 	It("GraphCommandsBindRegisteredExtractionAction", [this]()
 	{
@@ -371,8 +385,9 @@ void FFlowGraphPasteSpec::Define()
 	{
 		FTestGraph Source;
 		FTestGraph Target;
-		UFlowGraphNode* Node = Source.AddNode(UFlowNode_Branch::StaticClass());
 		TGuardValue<FAssetClasses> DeniedClasses(GetBranchDeniedAssetClasses(), {UFlowAsset::StaticClass()});
+		UFlowGraphNode* Node = Source.AddNode(UFlowNode_Branch::StaticClass());
+		MatchBranchDeniedAssetClasses(*Node);
 		Source.Copy({Node});
 		TestFalse(TEXT("The copied runtime type is incompatible"), Node->CanPasteHere(Target.Graph));
 		TestTrue(TEXT("The paste command remains available"), Target.Editor->CanPasteNodes());
@@ -387,11 +402,12 @@ void FFlowGraphPasteSpec::Define()
 	{
 		FTestGraph Source;
 		FTestGraph Target;
+		TGuardValue<FAssetClasses> DeniedClasses(GetBranchDeniedAssetClasses(), {UFlowAsset::StaticClass()});
 		UFlowGraphNode* RejectedParent = Source.AddNode(UFlowNode_Branch::StaticClass());
+		MatchBranchDeniedAssetClasses(*RejectedParent);
 		UFlowGraphNode* Child = Source.AddSubNode(RejectedParent, UFlowNodeAddOn_PredicateAND::StaticClass());
 		Source.AddSubNode(Child, UFlowNodeAddOn_PredicateNOT::StaticClass());
 		UFlowGraphNode* ValidNode = Source.AddNode(UFlowNode_Reroute::StaticClass());
-		TGuardValue<FAssetClasses> DeniedClasses(GetBranchDeniedAssetClasses(), {UFlowAsset::StaticClass()});
 		Source.Copy({RejectedParent, ValidNode});
 
 		Target.Editor->PasteNodesHere(FVector2f::ZeroVector);

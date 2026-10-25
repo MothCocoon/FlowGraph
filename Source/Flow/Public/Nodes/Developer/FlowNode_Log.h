@@ -62,9 +62,11 @@ public:
 	virtual void OnEditorPinConnectionsChanged(const TArray<FFlowPinConnectionChange>& Changes) override;
 	// --
 
+protected:
 	virtual void UpdateNodeConfigText_Implementation() override;
 #endif
 
+public:
 	EFlowLogVerbosity GetVerbosity() const { return Verbosity; }
 
 #if WITH_EDITOR
