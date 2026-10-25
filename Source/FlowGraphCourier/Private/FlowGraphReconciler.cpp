@@ -1322,13 +1322,12 @@ bool FFlowGraphReconciler::FindOrCreateNode(
 	TArray<TSharedPtr<FJsonValue>> OpsArray;
 	OpsArray.Add(MakeShared<FJsonValueObject>(OpObject));
 
-	UClass* ExpectedOwnerClass = ExistingAsset->GetExpectedOwnerClass();
 	TSharedRef<FJsonObject> DocumentObject = MakeShared<FJsonObject>();
 	DocumentObject->SetNumberField(TEXT("formatVersion"), 2);
 	DocumentObject->SetStringField(TEXT("mode"), TEXT("Patch"));
 	DocumentObject->SetStringField(TEXT("assetClass"), ExistingAsset->GetClass()->GetPathName());
 	DocumentObject->SetBoolField(TEXT("bWorldBound"), ExistingAsset->bWorldBound);
-	DocumentObject->SetStringField(TEXT("expectedOwnerClass"), ExpectedOwnerClass ? ExpectedOwnerClass->GetName() : FString());
+	DocumentObject->SetStringField(TEXT("expectedOwnerClass"), ExistingAsset->GetExpectedOwnerClass().GetAssetName());
 	DocumentObject->SetArrayField(TEXT("ops"), OpsArray);
 
 	FString MutationDocumentJson;
