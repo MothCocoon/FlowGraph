@@ -39,7 +39,11 @@ public:
 #endif
 
 	virtual void ExecuteInput(const FName& PinName) override;
+
+protected:
 	virtual void OnLoad_Implementation() override;
+
+public:
 	virtual void Cleanup() override;
 
 protected:

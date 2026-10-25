@@ -111,15 +111,18 @@ public:
 	virtual void FlushContent() override;
 	// --
 
+protected:
 	// UFlowNodeBase
 	virtual EFlowAddOnAcceptResult AcceptFlowNodeAddOnChild_Implementation(const UFlowNodeAddOn* AddOnTemplate, const TArray<UFlowNodeAddOn*>& AdditionalAddOnsToAssumeAreChildren) const override;
 	// --
 
+public:
 	virtual void InitializeInstance() override;
 	void CreatePlayer();
 
 	virtual void ExecuteInput(const FName& PinName) override;
 
+protected:
 	virtual void OnSave_Implementation() override;
 	virtual void OnLoad_Implementation() override;
 

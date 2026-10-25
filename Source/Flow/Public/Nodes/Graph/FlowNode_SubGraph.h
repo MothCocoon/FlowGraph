@@ -76,6 +76,7 @@ public:
 	virtual void ReceiveOutputDataSnapshot(const FFlowOutputDataPinValues& Snapshot) override;
 	// --
 
+protected:
 	virtual void OnLoad_Implementation() override;
 
 #if WITH_EDITORONLY_DATA

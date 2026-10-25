@@ -68,12 +68,15 @@ private:
 public:
 	virtual void Cleanup() override;
 
+protected:
 	virtual void OnSave_Implementation() override;
 	virtual void OnLoad_Implementation() override;
 
 #if WITH_EDITOR
 public:
 	virtual FString GetStatusString() const override;
+
+protected:
 	virtual void UpdateNodeConfigText_Implementation() override;
 #endif
 

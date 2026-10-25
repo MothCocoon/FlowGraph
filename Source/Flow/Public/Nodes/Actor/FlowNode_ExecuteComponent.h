@@ -60,10 +60,12 @@ public:
 	virtual void FlushContent() override;
 	// --
 
+protected:
 	// UFlowNodeBase
 	virtual void UpdateNodeConfigText_Implementation() override;
 	// --
 
+public:
 	// UFlowNode
 	virtual void GatherDataPinValueOwnerCollection(FFlowDataPinValueOwnerCollection& ValueOwnerCollection) const override;
 	// --
@@ -82,8 +84,11 @@ public:
 
 	// UFlowNode
 	virtual FText K2_GetNodeTitle_Implementation() const override;
+
+protected:
 	virtual EDataValidationResult ValidateNode() override;
 
+public:
 	virtual FString GetStatusString() const override;
 	// --
 #endif // WITH_EDITOR

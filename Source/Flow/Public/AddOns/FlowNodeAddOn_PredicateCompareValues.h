@@ -35,8 +35,11 @@ public:
 	virtual void PostEditChangeChainProperty(FPropertyChangedChainEvent& PropertyChangedEvent) override;
 	// --
 
+protected:
 	// UFlowNodeBase
 	virtual EDataValidationResult ValidateNode() override;
+
+public:
 	virtual FText K2_GetNodeTitle_Implementation() const override;
 	// --
 
