@@ -14,7 +14,7 @@ public:
 
 	void Construct(const FArguments& InArgs);
 
-	~SLevelEditorFlow();
+	virtual ~SLevelEditorFlow() override;
 
 protected:
 	void OnMapOpened(const FString& Filename, bool bAsTemplate);

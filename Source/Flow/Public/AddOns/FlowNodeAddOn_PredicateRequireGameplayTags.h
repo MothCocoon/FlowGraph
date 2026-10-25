@@ -38,7 +38,7 @@ public:
 	// --
 
 	// UFlowNodeBase
-	void OnEditorPinConnectionsChanged(const TArray<FFlowPinConnectionChange>& Changes) override;
+	virtual void OnEditorPinConnectionsChanged(const TArray<FFlowPinConnectionChange>& Changes) override;
 	// --
 #endif
 
