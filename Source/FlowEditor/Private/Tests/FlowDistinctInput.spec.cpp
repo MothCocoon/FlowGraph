@@ -1,12 +1,17 @@
 // Copyright https://github.com/MothCocoon/FlowGraph/graphs/contributors
 #include "Tests/FlowDistinctInputTestTypes.h"
 
-#include "EdGraphUtilities.h"
+#include "Editor.h"
+#include "HAL/PlatformApplicationMisc.h"
 #include "Misc/AutomationTest.h"
+#include "Subsystems/AssetEditorSubsystem.h"
+#include "UObject/Package.h"
 #include "UObject/StrongObjectPtr.h"
 
+#include "Asset/FlowAssetEditor.h"
 #include "FlowAsset.h"
 #include "Graph/FlowGraph.h"
+#include "Graph/FlowGraphEditor.h"
 #include "Graph/FlowGraphSchema.h"
 #include "Graph/Nodes/FlowGraphNode.h"
 #include "Types/FlowPinTypesStandard.h"
@@ -17,9 +22,23 @@
 
 namespace FlowDistinctInputTests
 {
+	class STestFlowGraphEditor : public SFlowGraphEditor
+	{
+	public:
+		void Construct(const FArguments& Arguments, UFlowAsset* Asset, TSharedRef<FFlowAssetEditor> AssetEditor)
+		{
+			FlowAsset = Asset;
+			FlowAssetEditor = AssetEditor;
+			SGraphEditor::Construct(SGraphEditor::FArguments().GraphToEdit(Asset->GetGraph()));
+		}
+
+		virtual bool IsTabFocused() const override { return true; }
+		using SFlowGraphEditor::CopySelectedNodes;
+	};
+
 	struct FFixture
 	{
-		TStrongObjectPtr<UFlowAsset> Asset{NewObject<UFlowAsset>()};
+		TStrongObjectPtr<UFlowAsset> Asset{NewObject<UFlowAsset>(GetTransientPackage(), NAME_None, RF_Transactional)};
 		UFlowGraph* Graph = nullptr;
 		UFlowGraphNode* SinkGraphNode = nullptr;
 		UFlowDistinctInputTestNode* Sink = nullptr;
@@ -41,15 +60,23 @@ namespace FlowDistinctInputTests
 			return GraphNode;
 		}
 
+		UFlowDistinctInputTestAddOn* AddProvider(UFlowGraphNode& Parent)
+		{
+			UFlowGraphNode* SubNode = NewObject<UFlowGraphNode>(Graph);
+			UFlowDistinctInputTestAddOn* AddOn = NewObject<UFlowDistinctInputTestAddOn>(Asset.Get());
+			SubNode->SetNodeTemplate(AddOn);
+			Parent.AddSubNode(SubNode);
+			return AddOn;
+		}
+
 		FFixture()
 		{
-			Graph = NewObject<UFlowGraph>(Asset.Get());
-			Graph->Schema = UFlowGraphSchema::StaticClass();
+			UFlowGraph::CreateGraph(Asset.Get(), UFlowGraphSchema::StaticClass(), /*bCreateDefaultNodes=*/false);
+			Graph = CastChecked<UFlowGraph>(Asset->GetGraph());
 			SinkGraphNode = AddNode(0);
 			Sink = CastChecked<UFlowDistinctInputTestNode>(SinkGraphNode->GetFlowNodeBase());
-			First = NewObject<UFlowDistinctInputTestAddOn>(Sink);
-			Second = NewObject<UFlowDistinctInputTestAddOn>(Sink);
-			Sink->GetFlowNodeAddOnChildrenByEditor() = {First, Second};
+			First = AddProvider(*SinkGraphNode);
+			Second = AddProvider(*SinkGraphNode);
 			SinkGraphNode->ReconstructNode();
 			UFlowGraphNode* FirstSupplier = AddNode(11);
 			UFlowGraphNode* SecondSupplier = AddNode(22);
@@ -71,11 +98,15 @@ namespace FlowDistinctInputTests
 
 BEGIN_DEFINE_SPEC(FFlowDistinctInputSpec, "Flow.Editor.DistinctInput",
 	EAutomationTestFlags::EditorContext | EAutomationTestFlags::ProductFilter)
+	FString OriginalClipboard;
 END_DEFINE_SPEC(FFlowDistinctInputSpec)
 
 void FFlowDistinctInputSpec::Define()
 {
 	using namespace FlowDistinctInputTests;
+
+	BeforeEach([this]() { FPlatformApplicationMisc::ClipboardPaste(OriginalClipboard); });
+	AfterEach([this]() { FPlatformApplicationMisc::ClipboardCopy(*OriginalClipboard); });
 
 	It("keeps each connection and resolved value attached to its provider after reorder", [this]
 	{
@@ -120,36 +151,29 @@ void FFlowDistinctInputSpec::Define()
 	It("remaps imported provider identities while retaining each copied connection", [this]
 	{
 		FFixture Fixture;
-		TSet<UObject*> NodesToCopy;
+		const TSharedRef<FFlowAssetEditor> AssetEditor = MakeShared<FFlowAssetEditor>();
+		// The toolkit destructor expects a matching editor-subsystem registration.
+		GEditor->GetEditorSubsystem<UAssetEditorSubsystem>()->NotifyAssetOpened(Fixture.Asset.Get(), &AssetEditor.Get());
+		const TSharedRef<STestFlowGraphEditor> Editor = SNew(STestFlowGraphEditor, Fixture.Asset.Get(), AssetEditor);
+
+		const TArray<UEdGraphNode*> SourceNodes = Fixture.Graph->Nodes;
+		for (UEdGraphNode* GraphNode : SourceNodes)
+		{
+			Editor->SetNodeSelection(GraphNode, true);
+		}
+		Editor->CopySelectedNodes();
+		Editor->PasteNodesHere(FVector2f::ZeroVector);
+		Fixture.Asset->HarvestNodeConnections();
+
+		UFlowDistinctInputTestNode* CopiedSink = nullptr;
 		for (UEdGraphNode* GraphNode : Fixture.Graph->Nodes)
 		{
-			GraphNode->PrepareForCopying();
-			NodesToCopy.Add(GraphNode);
-		}
-		FString ExportedText;
-		FEdGraphUtilities::ExportNodesToText(NodesToCopy, ExportedText);
-		for (UObject* Object : NodesToCopy)
-		{
-			CastChecked<UFlowGraphNode>(Object)->PostCopyNode();
-		}
-
-		TSet<UEdGraphNode*> ImportedNodes;
-		FEdGraphUtilities::ImportNodesFromText(Fixture.Graph, ExportedText, ImportedNodes);
-		UFlowDistinctInputTestNode* CopiedSink = nullptr;
-		for (UEdGraphNode* ImportedNode : ImportedNodes)
-		{
-			UFlowGraphNode* GraphNode = CastChecked<UFlowGraphNode>(ImportedNode);
-			GraphNode->CreateNewGuid();
-			UFlowDistinctInputTestNode* Node = CastChecked<UFlowDistinctInputTestNode>(GraphNode->GetFlowNodeBase());
-			if (Node->Role == 0)
+			UFlowDistinctInputTestNode* Node = Cast<UFlowDistinctInputTestNode>(CastChecked<UFlowGraphNode>(GraphNode)->GetFlowNodeBase());
+			if (Node && Node->Role == 0 && !SourceNodes.Contains(GraphNode))
 			{
 				CopiedSink = Node;
 			}
-			Fixture.Asset->RegisterNode(GraphNode->NodeGuid, Node);
-			GraphNode->MarkNeedsFullReconstruction();
-			GraphNode->ReconstructNode();
 		}
-		Fixture.Asset->HarvestNodeConnections();
 		if (!TestNotNull(TEXT("Copied sink was imported"), CopiedSink)
 			|| !TestEqual(TEXT("Both copied providers retained"), CopiedSink->GetFlowNodeAddOnChildren().Num(), 2))
 		{
