@@ -18,13 +18,25 @@ struct FLOW_API FFlowPreloadPolicy : public FFlowPolicy
 
 	/* Returns the resolved preload timing for the given node, checking per-class overrides first.
 	 * Override in subclasses for code-driven per-node logic. */
-	virtual EFlowPreloadTiming GetPreloadTimingForNode(const UFlowNode& Node) const PURE_VIRTUAL(FFlowPreloadPolicy::GetPreloadTimingForNode, return EFlowPreloadTiming::Invalid;);
+	virtual EFlowPreloadTiming GetPreloadTimingForNode(const UFlowNode& Node) const
+	{
+		checkNoEntry();
+		return EFlowPreloadTiming::Invalid;
+	}
 
 	/* Returns the resolved flush timing for the given node, checking per-class overrides first.
 	 * Override in subclasses for code-driven per-node logic. */
-	virtual EFlowFlushTiming GetFlushTimingForNode(const UFlowNode& Node) const PURE_VIRTUAL(FFlowPreloadPolicy::GetFlushTimingForNode, return EFlowFlushTiming::Invalid;);
+	virtual EFlowFlushTiming GetFlushTimingForNode(const UFlowNode& Node) const
+	{
+		checkNoEntry();
+		return EFlowFlushTiming::Invalid;
+	}
 
 	/* Returns the UScriptStruct type to instantiate as the FFlowPreloadHelper for a given preloadable node.
 	 * Default returns FFlowPreloadHelper_Standard. Override to supply project-specific helper types. */
-	virtual UScriptStruct* GetPreloadHelperStructType(const UFlowNode& Node) const PURE_VIRTUAL(FFlowPreloadPolicy::GetPreloadHelperStructType, return nullptr;);
+	virtual UScriptStruct* GetPreloadHelperStructType(const UFlowNode& Node) const
+	{
+		checkNoEntry();
+		return nullptr;
+	}
 };

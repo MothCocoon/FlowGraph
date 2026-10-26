@@ -31,25 +31,37 @@ public:
 	virtual ~FFlowPreloadHelper() = default;
 
 	// IFlowCoreExecutableInterface
-	virtual void OnNodeInitializeInstance(UFlowNode& Node) PURE_VIRTUAL(OnNodeInitializeInstance);
-	virtual void OnNodeActivate(UFlowNode& Node) PURE_VIRTUAL(OnNodeActivate);
-	virtual void OnNodeCleanup(UFlowNode& Node) PURE_VIRTUAL(OnNodeCleanup);
-	virtual void OnNodeDeinitializeInstance(UFlowNode& Node) PURE_VIRTUAL(OnNodeDeinitializeInstance);
-	virtual EFlowPreloadInputResult OnNodeExecuteInput(UFlowNode& Node, const FName& PinName) PURE_VIRTUAL(OnNodeExecuteInput, return EFlowPreloadInputResult::Invalid;);
+	virtual void OnNodeInitializeInstance(UFlowNode& Node) { checkNoEntry(); }
+	virtual void OnNodeActivate(UFlowNode& Node) { checkNoEntry(); }
+	virtual void OnNodeCleanup(UFlowNode& Node) { checkNoEntry(); }
+	virtual void OnNodeDeinitializeInstance(UFlowNode& Node) { checkNoEntry(); }
+	virtual EFlowPreloadInputResult OnNodeExecuteInput(UFlowNode& Node, const FName& PinName)
+	{
+		checkNoEntry();
+		return EFlowPreloadInputResult::Invalid;
+	}
 	// --
 
 	/* Returns true if this node's content is fully preloaded (if async, the async load(s) must be complete). */
-	virtual bool IsContentPreloaded() const PURE_VIRTUAL(IsContentPreloaded, return false;);
+	virtual bool IsContentPreloaded() const
+	{
+		checkNoEntry();
+		return false;
+	}
 
 	/* These Trigger functions are safe to be called when already preloaded, or already flushed. */
-	virtual void TriggerPreload(UFlowNode& Node) PURE_VIRTUAL(TriggerPreload);
-	virtual void TriggerFlush(UFlowNode& Node) PURE_VIRTUAL(TriggerFlush);
+	virtual void TriggerPreload(UFlowNode& Node) { checkNoEntry(); }
+	virtual void TriggerFlush(UFlowNode& Node) { checkNoEntry(); }
 
 	/* Called by UFlowNode::NotifyPreloadComplete() when async preloading finishes.
 	 * Possible results:
 	 * - Completed			- all participants finished, "Preloaded" output should fire.
 	 * - PreloadInProgress  - call arrived after flush/cancel, or other participants are still in progress. */
-	virtual EFlowPreloadResult OnPreloadComplete(UFlowNode& Node) PURE_VIRTUAL(OnPreloadComplete, return EFlowPreloadResult::Invalid;);
+	virtual EFlowPreloadResult OnPreloadComplete(UFlowNode& Node)
+	{
+		checkNoEntry();
+		return EFlowPreloadResult::Invalid;
+	}
 
 #if WITH_EDITOR
 	/* Provide Preload-specific pins to the FlowNode. */

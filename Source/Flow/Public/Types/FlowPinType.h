@@ -34,7 +34,11 @@ public:
 	FLOW_API static const FFlowPinType* LookupPinType(const FFlowPinTypeName& FlowPinTypeName);
 
 	/* Identity. */
-	FLOW_API virtual const FFlowPinTypeName& GetPinTypeName() const PURE_VIRTUAL(GetPinTypeName, return PinTypeNameUnknown;);
+	FLOW_API virtual const FFlowPinTypeName& GetPinTypeName() const
+	{
+		checkNoEntry();
+		return PinTypeNameUnknown;
+	}
 
 	/* Value resolution. */
 	FLOW_API virtual bool ResolveAndFormatPinValue(const UFlowNodeBase& Node, const FName& PinName, FFormatArgumentValue& OutValue) const;
