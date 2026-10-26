@@ -14,6 +14,11 @@
 
 #define LOCTEXT_NAMESPACE "FlowNodeAddOnDetails"
 
+TSharedRef<IDetailCustomization> FFlowNodeAddOn_Details::MakeInstance()
+{
+	return MakeShareable(new FFlowNodeAddOn_Details());
+}
+
 void FFlowNodeAddOn_Details::CustomizeDetails(IDetailLayoutBuilder& DetailLayout)
 {
 	// Merged AddOn list, shown on instances only

@@ -10,10 +10,7 @@ class UFlowNodeAddOn;
 class FFlowNodeAddOn_Details final : public TFlowDataPinValueOwnerCustomization<UFlowNodeAddOn>
 {
 public:
-	static TSharedRef<IDetailCustomization> MakeInstance()
-	{
-		return MakeShareable(new FFlowNodeAddOn_Details());
-	}
+	static TSharedRef<IDetailCustomization> MakeInstance();
 
 	// IDetailCustomization
 	virtual void CustomizeDetails(IDetailLayoutBuilder& DetailLayout) override;
