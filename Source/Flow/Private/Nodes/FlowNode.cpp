@@ -3,7 +3,6 @@
 
 #include "AddOns/FlowNodeAddOn.h"
 #include "FlowAsset.h"
-#include "FlowNodeReplication.h"
 #include "FlowSettings.h"
 #include "Interfaces/FlowExecutionGate.h"
 #include "Interfaces/FlowPreloadableInterface.h"
@@ -1214,8 +1213,6 @@ void UFlowNode::InitializeInstance()
 	Super::InitializeInstance();
 
 	TryInitializePreloadHelper();
-
-	bHasReplicatedProperties = ShouldReplicateProperties() && FlowNodeReplication::HasReplicatedProperties(*this);
 }
 
 void UFlowNode::DeinitializeInstance()

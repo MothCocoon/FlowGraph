@@ -27,7 +27,10 @@ UFlowComponent::UFlowComponent(const FObjectInitializer& ObjectInitializer)
 	SetIsReplicatedByDefault(true);
 
 	// Flow Asset instances owned by this component replicate as its subobjects
-	bReplicateUsingRegisteredSubObjectList = true;
+	if (GetDefault<UFlowSettings>()->bReplicateFlowInstances)
+	{
+		bReplicateUsingRegisteredSubObjectList = true;
+	}
 }
 
 void UFlowComponent::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const
