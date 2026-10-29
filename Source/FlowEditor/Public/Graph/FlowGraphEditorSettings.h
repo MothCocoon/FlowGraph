@@ -92,6 +92,10 @@ public:
 	UPROPERTY(EditAnywhere, config, Category = "Wires")
 	bool bHighlightOutputWiresOfSelectedNodes = false;
 
+	/* Default search filter flags for the Flow Editor. */
+	UPROPERTY(VisibleAnywhere, config, Category = "Search", meta = (Bitmask, BitmaskEnum = "/Script/Flow.EFlowSearchFlags"))
+	uint32 DefaultSearchFlags = uint32(EFlowSearchFlags::DefaultSearchFlags);
+
 public:
 	virtual FName GetCategoryName() const override { return FName("Flow Graph"); }
 	virtual FText GetSectionText() const override { return INVTEXT("User Settings"); }

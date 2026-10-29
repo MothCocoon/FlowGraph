@@ -170,6 +170,10 @@ UFlowAsset* UFlowSubsystem::CreateSubFlow(UFlowNode_SubGraph* SubGraphNode, cons
 {
 	// all calls checks if SubGraphNode is valid
 	ensureAlways(SubGraphNode);
+	if (!IsValid(SubGraphNode))
+	{
+		return nullptr;
+	}
 
 	UFlowAsset* SubGraphOwner = SubGraphNode->GetFlowAsset();
 	UFlowAsset* AssetInstance = nullptr;

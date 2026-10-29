@@ -12,6 +12,7 @@
 #include "Templates/UnrealTemplate.h"
 #include "UObject/Package.h"
 #include "UObject/StrongObjectPtr.h"
+#include "UObject/Package.h"
 #include "UObject/UnrealType.h"
 #include "UObject/UObjectHash.h"
 
@@ -20,6 +21,7 @@
 #include "Asset/FlowAssetEditor.h"
 #include "FlowAsset.h"
 #include "FlowEditorCommands.h"
+#include "Graph/Collapse/FlowSubgraphSelection.h"
 #include "Graph/FlowGraph.h"
 #include "Graph/FlowGraphEditor.h"
 #include "Graph/FlowGraphSchema.h"
@@ -65,6 +67,7 @@ public:
 	{
 		FlowAsset = Asset;
 		FlowAssetEditor = AssetEditor;
+		bCanEditInPIE = false;
 		SGraphEditor::Construct(SGraphEditor::FArguments().GraphToEdit(Asset->GetGraph()));
 	}
 
@@ -329,6 +332,148 @@ void FFlowGraphPasteSpec::Define()
 		{
 			FScopedTransaction Transaction(NSLOCTEXT("FlowGraphTests", "Extract", "Test subgraph extraction"));
 			bApplied = FlowSubGraphExtraction::ApplyExtractionByGuidWithoutSave(
+				Source.Asset.Get(), {SelectedGuid}, AssetName, Summary, NewAsset, SubgraphNode, Error);
+			Transaction.Cancel();
+		}
+		TestTrue(*FString::Printf(TEXT("Extraction succeeds: %s"), *Error), bApplied);
+		if (bApplied && TestNotNull(TEXT("Extraction creates a replacement node"), SubgraphNode))
+		{
+			TestNull(TEXT("The selected runtime node leaves the source"), Source.Asset->GetNode(SelectedGuid));
+			UFlowNode* ClonedNode = NewAsset->GetNode(SelectedGuid);
+			if (TestNotNull(TEXT("The new asset contains the selected runtime node"), ClonedNode))
+			{
+				const UFlowGraphNode* ClonedGraphNode = CastChecked<UFlowGraphNode>(ClonedNode->GetGraphNode());
+				TestEqual(TEXT("The extracted node retains its add-on"), ClonedGraphNode->SubNodes.Num(), 1);
+			}
+			TestTrue(TEXT("The incoming connection targets the replacement"),
+				Entry->FindPin(TEXT("Out"), EGPD_Output)->LinkedTo.Contains(
+					SubgraphNode->FindPin(TEXT("Start"), EGPD_Input)));
+			TestTrue(TEXT("The outgoing connection comes from the replacement"),
+				Target->FindPin(TEXT("In"), EGPD_Input)->LinkedTo.Contains(
+					SubgraphNode->FindPin(FName(*Summary.InterfaceOutputs[0]), EGPD_Output)));
+		}
+		if (NewAsset)
+		{
+			FAssetRegistryModule::AssetDeleted(NewAsset);
+			NewAsset->GetOutermost()->SetDirtyFlag(false);
+			NewAsset->ClearFlags(RF_Public | RF_Standalone);
+			NewAsset->Rename(nullptr, GetTransientPackage(), REN_DontCreateRedirectors | REN_NonTransactional);
+		}
+		SourcePackage->SetDirtyFlag(false);
+	});
+
+	It("SelectionPlanPreservesConcurrentExits", [this]()
+	{
+		FTestGraph Source;
+		UFlowGraphNode* Entry = Source.AddNode(UFlowNode_Reroute::StaticClass());
+		UFlowGraphNode* Sequence = Source.AddNode(UFlowNode_ExecutionSequence::StaticClass());
+		UFlowGraphNode* Timer = Source.AddNode(UFlowNode_Timer::StaticClass());
+		UFlowGraphNode* Log = Source.AddNode(UFlowNode_Log::StaticClass());
+		UFlowGraphNode* TimerTarget = Source.AddNode(UFlowNode_Reroute::StaticClass());
+		UFlowGraphNode* LogTarget = Source.AddNode(UFlowNode_Reroute::StaticClass());
+		Log->NodePosY = 200;
+
+		const UEdGraphSchema* Schema = Source.Graph->GetSchema();
+		const auto Connect = [this, Schema](UFlowGraphNode* From, const FName OutputName, UFlowGraphNode* To)
+		{
+			return TestTrue(TEXT("The source execution connection is valid"), Schema->TryCreateConnection(
+				From->FindPin(OutputName, EGPD_Output), To->FindPin(TEXT("In"), EGPD_Input)));
+		};
+		if (!Connect(Entry, TEXT("Out"), Sequence)
+			|| !Connect(Sequence, TEXT("0"), Timer)
+			|| !Connect(Sequence, TEXT("1"), Log)
+			|| !Connect(Timer, TEXT("Completed"), TimerTarget)
+			|| !Connect(Log, TEXT("Out"), LogTarget))
+		{
+			return;
+		}
+
+		const auto CheckExits = [this](const auto& Plan)
+		{
+			TestTrue(TEXT("A selection containing concurrent timer and immediate branches can be extracted"), Plan.CanApply());
+			TestEqual(TEXT("Both branches retain their outgoing interfaces"), Plan.Exits.Num(), 2);
+			TSet<FName> ExitNames;
+			for (const auto& Exit : Plan.Exits)
+			{
+				TestFalse(TEXT("An ordinary exit must not finish the child and cancel sibling work"), Exit.bUsesBuiltInPin);
+				TestNotEqual(TEXT("An ordinary exit must not use the reserved Finish interface"), Exit.InterfaceName, FName(TEXT("Finish")));
+				ExitNames.Add(Exit.InterfaceName);
+			}
+			TestEqual(TEXT("Concurrent exits use distinct interfaces"), ExitNames.Num(), 2);
+		};
+		CheckExits(FlowSubGraphExtraction::PlanExtraction({Sequence, Timer, Log}));
+
+		FlowSubgraphSelection::FSelectionPlanSummary Summary;
+		FString Error;
+		TestTrue(TEXT("Courier can plan the same selection"), FlowSubgraphSelection::PlanSelection(
+			Source.Asset.Get(), {Sequence->NodeGuid, Timer->NodeGuid, Log->NodeGuid},
+			FlowSubGraphExtraction::GetDefaultNewAssetName(), Summary, Error));
+		TestTrue(TEXT("Courier's extraction plan can be applied"), Summary.bCanApply);
+		TestEqual(TEXT("Courier retains both concurrent outputs"), Summary.InterfaceOutputs.Num(), 2);
+		TestFalse(TEXT("Courier does not turn an ordinary output into Finish"),
+			Summary.InterfaceOutputs.Contains(TEXT("Finish")));
+	});
+
+	It("SelectionAdapterRevalidatesBeforeApply", [this]()
+	{
+		FTestGraph Source;
+		UFlowGraphNode* Entry = Source.AddNode(UFlowNode_Reroute::StaticClass());
+		UFlowGraphNode* Selected = Source.AddNode(UFlowNode_Log::StaticClass());
+		const UEdGraphSchema* Schema = Source.Graph->GetSchema();
+		if (!TestTrue(TEXT("The selection has an incoming connection"), Schema->TryCreateConnection(
+			Entry->FindPin(TEXT("Out"), EGPD_Output), Selected->FindPin(TEXT("In"), EGPD_Input))))
+		{
+			return;
+		}
+
+		FlowSubgraphSelection::FSelectionPlanSummary Summary;
+		FString Error;
+		const FString AssetName = FlowSubGraphExtraction::GetDefaultNewAssetName();
+		TestTrue(TEXT("Planning succeeds"), FlowSubgraphSelection::PlanSelection(
+			Source.Asset.Get(), {Selected->NodeGuid}, AssetName, Summary, Error));
+		TestTrue(TEXT("The initial plan can be applied"), Summary.bCanApply);
+		Schema->BreakNodeLinks(*Entry);
+
+		UFlowAsset* NewAsset = nullptr;
+		UFlowGraphNode* SubgraphNode = nullptr;
+		TestFalse(TEXT("A stale plan cannot bypass live boundary validation"), FlowSubgraphSelection::ApplySelection(
+			Source.Asset.Get(), {Selected->NodeGuid}, AssetName, Summary, NewAsset, SubgraphNode, Error));
+		TestFalse(TEXT("The stale plan reports its error"), Error.IsEmpty());
+		TestNull(TEXT("No asset is created for the stale plan"), NewAsset);
+		TestEqual(TEXT("Rejected extraction preserves the source"), Source.Graph->Nodes.Num(), 2);
+	});
+
+	It("SelectionAdapterExtractsNodesAndAddOns", [this]()
+	{
+		FTestGraph Source;
+		const FString Folder = TEXT("/Game/FlowExtractionAutomation_") + FGuid::NewGuid().ToString(EGuidFormats::Digits);
+		UPackage* SourcePackage = CreatePackage(*(Folder / TEXT("Source")));
+		Source.Asset->Rename(TEXT("Source"), SourcePackage, REN_DontCreateRedirectors | REN_NonTransactional);
+		UFlowGraphNode* Entry = Source.AddNode(UFlowNode_Reroute::StaticClass());
+		UFlowGraphNode* Selected = Source.AddNode(UFlowNode_Branch::StaticClass());
+		Source.AddSubNode(Selected, UFlowNodeAddOn_PredicateAND::StaticClass());
+		UFlowGraphNode* Target = Source.AddNode(UFlowNode_Reroute::StaticClass());
+		const UEdGraphSchema* Schema = Source.Graph->GetSchema();
+		if (!TestTrue(TEXT("The entry is connected"), Schema->TryCreateConnection(
+			Entry->FindPin(TEXT("Out"), EGPD_Output), Selected->FindPin(TEXT("Evaluate"), EGPD_Input)))
+			|| !TestTrue(TEXT("The exit is connected"), Schema->TryCreateConnection(
+				Selected->FindPin(TEXT("True"), EGPD_Output), Target->FindPin(TEXT("In"), EGPD_Input))))
+		{
+			return;
+		}
+
+		const FGuid SelectedGuid = Selected->NodeGuid;
+		FlowSubgraphSelection::FSelectionPlanSummary Summary;
+		FString Error;
+		const FString AssetName = FlowSubGraphExtraction::GetDefaultNewAssetName();
+		TestTrue(TEXT("The adapter plans extraction"), FlowSubgraphSelection::PlanSelection(
+			Source.Asset.Get(), {SelectedGuid}, AssetName, Summary, Error));
+		UFlowAsset* NewAsset = nullptr;
+		UFlowGraphNode* SubgraphNode = nullptr;
+		bool bApplied = false;
+		{
+			FScopedTransaction Transaction(NSLOCTEXT("FlowGraphTests", "Extract", "Test subgraph extraction"));
+			bApplied = FlowSubgraphSelection::ApplySelection(
 				Source.Asset.Get(), {SelectedGuid}, AssetName, Summary, NewAsset, SubgraphNode, Error);
 			Transaction.Cancel();
 		}

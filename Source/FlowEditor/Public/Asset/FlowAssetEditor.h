@@ -49,6 +49,7 @@ protected:
 	TSharedPtr<SFlowGraphEditor> GraphEditor;
 	TSharedPtr<class IDetailsView> DetailsView;
 	TSharedPtr<class SFlowPalette> Palette;
+	TSharedPtr<class SWidget> GraphEditorWidget;
 
 #if ENABLE_SEARCH_IN_ASSET_EDITOR
 	TSharedPtr<class SSearchBrowser> SearchBrowser;
@@ -63,6 +64,9 @@ protected:
 	/* Asset Validation message log, with the log listing that it reflects. */
 	TSharedPtr<class SWidget> ValidationLog;
 	TSharedPtr<class IMessageLogListing> ValidationLogListing;
+
+	/* Assigned by the Asset opened for editing. */
+	bool bCanEditInPIE = false;
 
 private:
 	/* The current UI selection state of this editor. */
@@ -161,11 +165,12 @@ protected:
 	virtual void CreateWidgets();
 	virtual void CreateGraphWidget();
 
-	static bool CanEdit();
+	bool CanEdit() const;
 	static bool IsPropertyVisible(const FPropertyAndParent& PropertyAndParent);
 
 public:
 	void SetUISelectionState(const FName SelectionOwner);
+	void SetCanEditInPIE(bool value);
 	virtual void ClearSelectionStateFor(const FName SelectionOwner);
 	FName GetUISelectionState() const;
 

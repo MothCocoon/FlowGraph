@@ -112,6 +112,8 @@ public:
 	/* Returns whether the node class is allowed in this flow asset. */
 	bool IsNodeOrAddOnClassAllowed(const UClass* FlowNodeClass, FText* OutOptionalFailureReason = nullptr) const;
 
+	/* Sub-classes can override once they support edits in PIE.Called by the Asset Editor. */
+	virtual bool CanEditInPIE() const { return false; }
 protected:
 	bool CanFlowNodeClassBeUsedByFlowAsset(const UClass& FlowNodeClass) const;
 	bool CanFlowAssetUseFlowNodeClass(const UClass& FlowNodeClass) const;
@@ -229,7 +231,7 @@ public:
 	
 	/* Re-mints the NodeGuid of any UFlowNodeAddOn (at any nesting depth) whose Guid collides with
 	 * one already seen earlier in the walk, keeping the first occurrence of each Guid unchanged.
-	 * Called from PreSaveRoot so every explicit save self-heals.
+	 * Called from PreSaveRoot so every explicit save self-heals, and can be called directly.
 	 * Returns the number of AddOns that were re-minted. */
 	int32 RepairDuplicateAddOnGuids() const;
 
@@ -264,6 +266,8 @@ public:
 	TArray<FName> GatherCustomInputNodeEventNames() const;
 	TArray<FName> GatherCustomOutputNodeEventNames() const;
 
+	const TArray<FFlowNamedDataPinProperty>& GetOutputDataPinDeclarations() const { return OutputDataPinDeclarations; }
+
 #if WITH_EDITOR
 	const TArray<FName>& GetCustomInputs() const { return CustomInputs; }
 	const TArray<FName>& GetCustomOutputs() const { return CustomOutputs; }
@@ -278,9 +282,6 @@ protected:
 	void AddCustomOutput(const FName& EventName);
 	void RemoveCustomOutput(const FName& EventName);
 #endif
-
-public:
-	const TArray<FFlowNamedDataPinProperty>& GetOutputDataPinDeclarations() const { return OutputDataPinDeclarations; }
 
 //////////////////////////////////////////////////////////////////////////
 // Pin connections
@@ -325,7 +326,7 @@ protected:
 
 private:
 	/* Original object holds references to instances. */
-	UPROPERTY(Transient)
+	UPROPERTY(Transient, NonTransactional)
 	TArray<TObjectPtr<UFlowAsset>> ActiveInstances;
 
 #if WITH_EDITORONLY_DATA
@@ -425,8 +426,9 @@ private:
 public:
 	virtual bool CanBeInstanced(const UFlowAsset& InTemplateAsset, const UObject* InOwner) const;
 	virtual void InitializeInstance(const TWeakObjectPtr<UObject> InOwner, UFlowAsset& InTemplateAsset);
-	bool IsInstanceInitialized() const { return IsValid(TemplateAsset); }
+	bool IsInstanceInitialized() const { return IsValid(TemplateAsset.Get()); }
 
+	void FinishFlowAndDeinitializeInstance(const EFlowFinishPolicy InFinishPolicy);
 	virtual FName GetInstanceName() const;
 
 	UFlowAsset* GetTemplateAsset() const { return TemplateAsset; }
@@ -459,7 +461,7 @@ public:
 	 * Called by SetGraphOutput and Finish nodes for each connected output pin. */
 	void WriteOutputDataPinValue(const FName& PinName, const TInstancedStruct<FFlowDataPinValue>& Value);
 
-	/* Flush all the OutputDataPinValues to the receiver (if set) */
+	/* Flush all of the OutputDataPinValues to the receiver (if set) */
 	void FlushOutputDataPinValuesToReceiver() const;
 	
 protected:
@@ -625,8 +627,7 @@ protected:
 	bool TryFlushAndRemoveDeferredTransitionScope(const TSharedPtr<FFlowDeferredTransitionScope>& Scope);
 
 public:
-	/* Try to flush (and clear) all Deferred Trigger scopes.
-	 * Can fail to flush all if a FFlowExecutionGate causes a new halt. */
+	/* Try to flush (and clear) all Deferred Trigger scopes. */
 	bool TryFlushAllDeferredTriggerScopes();
 
 	/* Clear (do not trigger) any remaining deferred transitions (for shutdown cases). */

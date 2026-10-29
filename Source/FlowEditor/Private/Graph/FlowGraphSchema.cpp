@@ -1408,6 +1408,20 @@ void UFlowGraphSchema::RefreshNativeNodeCache()
 	}
 }
 
+void UFlowGraphSchema::RefreshNodesForScriptReload()
+{
+	// External reload systems (e.g. Angelscript) create new UClass objects for changed script
+	// classes; the previous revision lingers in memory (marked CLASS_NewerVersionExists) and is
+	// not automatically dropped from our cached native node lists, unlike a native (Live Coding)
+	// hot reload which patches classes in place. Clear the caches so GatherNativeNodesOrAddOns
+	// fully re-scans instead of early-returning because the arrays are already populated.
+	NativeFlowNodes.Reset();
+	NativeFlowNodeAddOns.Reset();
+	GraphNodesByFlowNodes.Reset();
+
+	GatherNodes();
+}
+
 void UFlowGraphSchema::GatherNativeNodesOrAddOns(const TSubclassOf<UFlowNodeBase>& FlowNodeBaseClass, TArray<UClass*>& InOutNodesOrAddOnsArray)
 {
 	// collect C++ Nodes or AddOns once per editor session
@@ -1424,7 +1438,14 @@ void UFlowGraphSchema::GatherNativeNodesOrAddOns(const TSubclassOf<UFlowNodeBase
 			&& !EnumHasAnyFlags(Class->GetClassFlags(), CLASS_NewerVersionExists)
 			&& IsFlowNodeOrAddOnPlaceable(Class))
 		{
-			InOutNodesOrAddOnsArray.Emplace(Class);
+			if (Class->bIsScriptClass && EnumHasAnyFlags(Class->GetClassFlags(), CLASS_NewerVersionExists))
+			{
+				// Do not register if it is a ScriptClass (Angelscript) and it is outdated by a newer version of itself
+			}
+			else
+			{
+				InOutNodesOrAddOnsArray.Emplace(Class);
+			}
 		}
 	}
 

@@ -19,6 +19,8 @@
 #include "DetailLayoutBuilder.h"
 #include "DetailWidgetRow.h"
 #include "IDetailChildrenBuilder.h"
+#include "Widgets/Input/SComboButton.h"
+#include "Widgets/Docking/SDockTab.h"
 #include "SGameplayTagChip.h"
 #include "SLevelViewport.h"
 #include "Styling/SlateStyleRegistry.h"

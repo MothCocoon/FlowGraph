@@ -17,6 +17,7 @@
 #include "Nodes/Graph/FlowNode_SubGraph.h"
 #include "Policies/FlowPinConnectionPolicy.h"
 #include "Policies/FlowPreloadPolicy.h"
+#include "Types/FlowAutoDataPinsWorkingData.h"
 #include "Types/FlowDataPinValue.h"
 #include "Types/FlowStructUtils.h"
 
@@ -907,7 +908,7 @@ void UFlowAsset::InitializePinConnectionPolicy()
 const FFlowPinConnectionPolicy& UFlowAsset::GetPinConnectionPolicy() const
 {
 	// Runtime instances delegate to their template, which holds the serialized policy
-	if (!PinConnectionPolicy.IsValid() && IsValid(TemplateAsset))
+	if (!PinConnectionPolicy.IsValid() && IsValid(TemplateAsset.Get()))
 	{
 		return TemplateAsset->GetPinConnectionPolicy();
 	}
@@ -1254,6 +1255,12 @@ AActor* UFlowAsset::TryFindActorOwner() const
 	}
 
 	return nullptr;
+}
+
+void UFlowAsset::FinishFlowAndDeinitializeInstance(const EFlowFinishPolicy InFinishPolicy)
+{
+	FinishFlowInstance(InFinishPolicy);
+	DeinitializeInstance();
 }
 
 void UFlowAsset::PreStartFlow()

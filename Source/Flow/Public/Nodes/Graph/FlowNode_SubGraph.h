@@ -4,15 +4,21 @@
 #include "Interfaces/FlowGraphOutputDataReceiverInterface.h"
 #include "Interfaces/FlowPreloadableInterface.h"
 #include "Nodes/FlowNode.h"
+#include "Types/FlowDataPinValue.h"
 #include "Types/FlowOutputDataPinValues.h"
+#include "StructUtils/InstancedStruct.h"
 #include "FlowNode_SubGraph.generated.h"
 
 class UFlowAssetParams;
 
 /**
- * Creates instance of provided Flow Asset and starts its execution.
+ * Instantiates a child Flow Asset and runs it inline. 
+ * 
+ * Fires its Start pin on the child asset and waits for the child to Finish before firing its own output.
+ * Custom Input/Output nodes in the child asset add matching pins to this node.
+ * Use to compose complex flows from reusable sub-graphs.
  */
-UCLASS(NotBlueprintable, meta = (DisplayName = "Sub Graph"))
+UCLASS(NotBlueprintable, meta = (DisplayName = "Sub Graph", Keywords = "subgraph"))
 class FLOW_API UFlowNode_SubGraph
 	: public UFlowNode
 	, public IFlowPreloadableInterface
@@ -31,6 +37,7 @@ public:
 	static FFlowPin FinishPin;
 
 protected:
+	/* The Flow Asset to instantiate and run as a child graph. */
 	UPROPERTY(EditAnywhere, Category = "Graph")
 	TSoftObjectPtr<UFlowAsset> Asset;
 
@@ -38,10 +45,10 @@ protected:
 	UPROPERTY(EditAnywhere, Category = "Graph", meta = (DefaultForInputFlowPin, FlowPinType = "Object"))
 	TSoftObjectPtr<UFlowAssetParams> AssetParams;
 
-	/* Allow to create instance of the same Flow Asset as the asset containing this node.
-	 * Enabling it may cause an infinite loop, if graph would keep creating copies of itself. */
+	/* Allow creating an instance of the same Flow Asset as the one containing this node. 
+	 * Warning: enabling this can cause infinite recursion if the graph spawns itself unconditionally. */
 	UPROPERTY(EditAnywhere, Category = "Graph")
-	bool bCanInstanceIdenticalAsset;
+	bool bCanInstanceIdenticalAsset = false;
 
 	UPROPERTY(SaveGame)
 	FString SavedAssetInstanceName;

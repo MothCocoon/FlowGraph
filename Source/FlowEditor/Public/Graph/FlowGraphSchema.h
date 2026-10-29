@@ -5,6 +5,8 @@
 #include "Templates/SubclassOf.h"
 #include "Templates/SharedPointer.h"
 
+#include "Templates/SharedPointer.h"
+
 #include "Policies/FlowPinTypeMatchPolicy.h"
 #include "FlowGraphSchema.generated.h"
 
@@ -44,6 +46,7 @@ private:
 public:
 	static void SubscribeToAssetChanges();
 	static void GetPaletteActions(FGraphActionMenuBuilder& ActionMenuBuilder, const UFlowAsset* EditedFlowAsset, const FString& CategoryName);
+	static void RefreshNodesForScriptReload();
 
 	// EdGraphSchema
 	virtual void GetGraphContextActions(FGraphContextMenuBuilder& ContextMenuBuilder) const override;

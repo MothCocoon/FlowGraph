@@ -6,9 +6,11 @@
 #include "Nodes/FlowNode.h"
 
 #include "DetailCategoryBuilder.h"
+#include "IDetailChildrenBuilder.h"
 #include "DetailLayoutBuilder.h"
 #include "IDetailPropertyRow.h"
 #include "DetailWidgetRow.h"
+#include "PropertyCustomizationHelpers.h"
 #include "Widgets/Input/SComboButton.h"
 #include "Widgets/Text/STextBlock.h"
 

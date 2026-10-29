@@ -2,7 +2,10 @@
 #pragma once
 
 #include "GameplayTagContainer.h"
+#include "IDetailsView.h"
 #include "IPropertyTypeCustomization.h"
+#include "PropertyHandle.h"
+#include "Widgets/Input/SCheckBox.h"
 #include "StructUtils/InstancedStruct.h"
 #include "Styling/SlateTypes.h"
 #include "Widgets/SBoxPanel.h"

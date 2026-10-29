@@ -6,6 +6,7 @@
 #include "Asset/FlowAssetEditorContext.h"
 #include "Asset/FlowDebugEditorSubsystem.h"
 #include "Asset/FlowAssetToolbar.h"
+#include "Asset/FlowDebugEditorSubsystem.h"
 #include "Asset/FlowMessageLogListing.h"
 #include "Details/AddOns/FlowNodeAddOnCustomization.h"
 #include "Graph/FlowGraphEditor.h"
@@ -17,8 +18,14 @@
 
 #include "AddOns/FlowNodeAddOn.h"
 #include "FlowAsset.h"
+#include "Widgets/Text/STextBlock.h"
+#include "Widgets/Layout/SBox.h"
+#include "Widgets/SOverlay.h"
+#include "Graph/FlowGraphEditorLayout.h"
+#include "Graph/Nodes/FlowGraphNode.h"
 
 #include "EdGraph/EdGraphNode.h"
+#include "ScopedTransaction.h"
 #include "Editor.h"
 #include "Engine/Engine.h"
 #include "EditorClassUtils.h"
@@ -41,6 +48,21 @@
 #endif
 
 #define LOCTEXT_NAMESPACE "FlowAssetEditor"
+
+namespace FlowAssetEditor_Private
+{
+	bool ShouldShowDetailsProperty(const FPropertyAndParent& PropertyAndParent)
+	{
+		const FName CategoryName = FObjectEditorUtils::GetCategoryFName(&PropertyAndParent.Property);
+		if (CategoryName == TEXT("FlowNode") || CategoryName == TEXT("FlowNodeAddOn"))
+		{
+			return false;
+		}
+
+		return PropertyAndParent.Property.GetFName() != TEXT("AddOns")
+			|| GetDefault<UFlowGraphEditorSettings>()->bShowAddOnsInNodeDetails;
+	}
+}
 
 const FName FFlowAssetEditor::DetailsTab(TEXT("Details"));
 const FName FFlowAssetEditor::GraphTab(TEXT("Graph"));
@@ -245,9 +267,9 @@ TSharedRef<SDockTab> FFlowAssetEditor::SpawnTab_Graph(const FSpawnTabArgs& Args)
 	TSharedRef<SDockTab> SpawnedTab = SNew(SDockTab)
 		.Label(LOCTEXT("FlowGraphTitle", "Graph"));
 
-	if (GraphEditor.IsValid())
+	if (GraphEditorWidget.IsValid())
 	{
-		SpawnedTab->SetContent(GraphEditor.ToSharedRef());
+		SpawnedTab->SetContent(GraphEditorWidget.ToSharedRef());
 	}
 
 	return SpawnedTab;
@@ -331,7 +353,10 @@ void FFlowAssetEditor::InitFlowAssetEditor(const EToolkitMode::Type Mode, const 
 	UFlowGraphSchema::SubscribeToAssetChanges();
 
 	FlowAsset->OnDetailsRefreshRequested.BindThreadSafeSP(this, &FFlowAssetEditor::RefreshDetails);
-	FlowGraphEditorSettingsChangedHandle = UFlowGraphEditorSettings::OnSettingsChanged().AddRaw(this, &FFlowAssetEditor::RefreshDetails);
+	FlowGraphEditorSettingsChangedHandle = UFlowGraphEditorSettings::OnSettingsChanged().AddRaw(
+		this, &FFlowAssetEditor::RefreshDetails);
+
+	bCanEditInPIE = FlowAsset->CanEditInPIE();
 
 	BindToolbarCommands();
 	CreateToolbar();
@@ -425,7 +450,7 @@ void FFlowAssetEditor::BindToolbarCommands()
 	// Automation
 	ToolkitCommands->MapAction(ToolbarCommands.RefreshAsset,
 	                           FExecuteAction::CreateSP(this, &FFlowAssetEditor::RefreshAsset),
-	                           FCanExecuteAction::CreateStatic(&FFlowAssetEditor::CanEdit));
+							   FCanExecuteAction::CreateSP(this, &FFlowAssetEditor::CanEdit));
 
 	ToolkitCommands->MapAction(ToolbarCommands.ValidateAsset,
 	                           FExecuteAction::CreateSP(this, &FFlowAssetEditor::ValidateAsset_Internal),
@@ -433,7 +458,7 @@ void FFlowAssetEditor::BindToolbarCommands()
 
 	ToolkitCommands->MapAction(ToolbarCommands.AutoFormatGraph,
 	                           FExecuteAction::CreateSP(this, &FFlowAssetEditor::AutoFormatGraph),
-	                           FCanExecuteAction::CreateStatic(&FFlowAssetEditor::CanEdit));
+	                           FCanExecuteAction::CreateSP(this, &FFlowAssetEditor::CanEdit));
 
 	// View
 	ToolkitCommands->MapAction(ToolbarCommands.SearchInAsset,
@@ -607,7 +632,7 @@ void FFlowAssetEditor::CreateWidgets()
 
 		FPropertyEditorModule& PropertyModule = FModuleManager::LoadModuleChecked<FPropertyEditorModule>("PropertyEditor");
 		DetailsView = PropertyModule.CreateDetailView(Args);
-		DetailsView->SetIsPropertyEditingEnabledDelegate(FIsPropertyEditingEnabled::CreateStatic(&FFlowAssetEditor::CanEdit));
+		DetailsView->SetIsPropertyEditingEnabledDelegate(FIsPropertyEditingEnabled::CreateSP(this, &FFlowAssetEditor::CanEdit));
 		DetailsView->SetIsPropertyVisibleDelegate(FIsPropertyVisible::CreateStatic(&FFlowAssetEditor::IsPropertyVisible));
 		DetailsView->RegisterInstancedCustomPropertyTypeLayout(UFlowNodeAddOn::StaticClass()->GetFName(), FOnGetPropertyTypeCustomizationInstance::CreateStatic(&FFlowNodeAddOnCustomization::MakeInstance));
 		DetailsView->SetObject(FlowAsset);
@@ -642,12 +667,39 @@ void FFlowAssetEditor::CreateWidgets()
 void FFlowAssetEditor::CreateGraphWidget()
 {
 	SAssignNew(GraphEditor, SFlowGraphEditor, SharedThis(this))
-	.DetailsView(DetailsView);
+		.DetailsView(DetailsView)
+		.CanEditInPIE(bCanEditInPIE);
+
+	// Wrap the graph editor in an overlay with the asset name text
+	GraphEditorWidget = SNew(SOverlay)
+		+ SOverlay::Slot()
+		[
+			GraphEditor.ToSharedRef()
+		]
+		+ SOverlay::Slot()
+		.HAlign(HAlign_Left)
+		.VAlign(VAlign_Top)
+		.Padding(10.0f, 10.0f)
+		[
+			SNew(SBox)
+			.Visibility(EVisibility::HitTestInvisible)
+			[
+				SNew(STextBlock)
+				.Text(FText::FromString(FlowAsset->GetName()))
+				.TextStyle(FAppStyle::Get(), "GraphBreadcrumbButtonText")
+				.ColorAndOpacity(FLinearColor(1.0f, 1.0f, 1.0f, 0.7f))
+			]
+		];
 }
 
-bool FFlowAssetEditor::CanEdit()
+bool FFlowAssetEditor::CanEdit() const
 {
-	return GEditor->PlayWorld == nullptr;
+	return GEditor->PlayWorld == nullptr || bCanEditInPIE;
+}
+
+void FFlowAssetEditor::SetCanEditInPIE(bool value)
+{
+	bCanEditInPIE = value;
 }
 
 bool FFlowAssetEditor::IsPropertyVisible(const FPropertyAndParent& PropertyAndParent)

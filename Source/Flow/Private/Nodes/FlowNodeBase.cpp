@@ -13,6 +13,7 @@
 #include "Types/FlowDataPinResults.h"
 #include "Types/FlowInjectComponentsManager.h"
 #include "Types/FlowPinTypesStandard.h"
+#include "Types/FlowInjectComponentsManager.h"
 #include "Types/FlowNamedDataPinProperty.h"
 
 #include "Components/ActorComponent.h"
@@ -85,6 +86,28 @@ void UFlowNodeBase::DeinitializeInstance()
 	}
 
 	IFlowCoreExecutableInterface::DeinitializeInstance();
+	ReleaseInjectedComponentUsers();
+}
+
+void UFlowNodeBase::ReleaseInjectedComponentUsers()
+{
+	const UFlowAsset* FlowAsset = GetFlowAsset();
+	if (!IsValid(FlowAsset))
+	{
+		return;
+	}
+
+	UFlowInjectComponentsManager* LocalManager = FlowAsset->FindComponentInjectionManager();
+	if (IsValid(LocalManager))
+	{
+		LocalManager->UnregisterAllComponentUsers(*this);
+	}
+
+	UFlowInjectComponentsManager* RootManager = FlowAsset->FindComponentInjectionManagerInRootFlow();
+	if (IsValid(RootManager) && RootManager != LocalManager)
+	{
+		RootManager->UnregisterAllComponentUsers(*this);
+	}
 }
 
 void UFlowNodeBase::OnActivate()
@@ -135,6 +158,7 @@ void UFlowNodeBase::Cleanup()
 	}
 
 	IFlowCoreExecutableInterface::Cleanup();
+	ReleaseInjectedComponentUsers();
 }
 
 void UFlowNodeBase::ExecuteInputForSelfAndAddOns(const FName& PinName)
@@ -245,7 +269,14 @@ UFlowAsset* UFlowNodeBase::GetFlowAsset() const
 {
 	// In the case of an AddOn, we want our containing FlowNode's Outer, not our own
 	const UFlowNode* FlowNode = GetFlowNodeSelfOrOwner();
-	return FlowNode && FlowNode->GetOuter() ? Cast<UFlowAsset>(FlowNode->GetOuter()) : Cast<UFlowAsset>(GetOuter());
+	if (IsValid(FlowNode))
+	{
+		UObject* Outer = FlowNode->GetOuter();
+		
+		return Cast<UFlowAsset>(Outer);
+	}
+	
+	return Cast<UFlowAsset>(GetOuter());
 }
 
 const UFlowNode* UFlowNodeBase::GetFlowNodeSelfOrOwner() const

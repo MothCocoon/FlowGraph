@@ -1032,7 +1032,7 @@ void UFlowGraphNode::JumpToDefinition() const
 {
 	if (NodeInstance)
 	{
-		if (NodeInstance->GetClass()->IsNative())
+		if (NodeInstance->GetClass()->ClassGeneratedBy == nullptr)
 		{
 			if (FSourceCodeNavigation::CanNavigateToClass(NodeInstance->GetClass()))
 			{
