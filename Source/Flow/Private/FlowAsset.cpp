@@ -17,7 +17,6 @@
 #include "Nodes/Graph/FlowNode_SubGraph.h"
 #include "Policies/FlowPinConnectionPolicy.h"
 #include "Policies/FlowPreloadPolicy.h"
-#include "Types/FlowAutoDataPinsWorkingData.h"
 #include "Types/FlowDataPinValue.h"
 #include "Types/FlowStructUtils.h"
 
@@ -1255,12 +1254,6 @@ AActor* UFlowAsset::TryFindActorOwner() const
 	}
 
 	return nullptr;
-}
-
-void UFlowAsset::FinishFlowAndDeinitializeInstance(const EFlowFinishPolicy InFinishPolicy)
-{
-	FinishFlowInstance(InFinishPolicy);
-	DeinitializeInstance();
 }
 
 void UFlowAsset::PreStartFlow()
