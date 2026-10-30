@@ -134,6 +134,10 @@ public:
 	virtual void Cleanup() override;
 	// --
 
+protected:
+	void ReleaseInjectedComponentUsers();
+
+public:
 	/* Dispatcher for ExecuteInput to ensure the AddOns get their ExecuteInput calls even if the node/addon. */
 	void ExecuteInputForSelfAndAddOns(const FName& PinName);
 
@@ -437,9 +441,6 @@ protected:
 	friend class FScopedFlowNodeReconstructionRequestDeferral;
 	FFlowNodeEvent OnReconstructionRequested;
 	FFlowNodeEvent OnAddOnRequestedParentReconstruction;
-
-	// The scoped helper preserves and restores both bindings while a caller batches property callbacks.
-	friend class FScopedFlowNodeReconstructionRequestDeferral;
 #endif // WITH_EDITORONLY_DATA
 
 #if WITH_EDITOR

@@ -142,23 +142,8 @@ void UFlowNodeBase::Cleanup()
 		AddOn->Cleanup();
 	}
 
-	if (const UFlowAsset* FlowAsset = GetFlowAsset())
-	{
-		UFlowInjectComponentsManager* LocalManager = FlowAsset->FindComponentInjectionManager();
-		if (LocalManager)
-		{
-			LocalManager->UnregisterAllComponentUsers(*this);
-		}
-
-		UFlowInjectComponentsManager* RootManager = FlowAsset->FindComponentInjectionManagerInRootFlow();
-		if (RootManager && RootManager != LocalManager)
-		{
-			RootManager->UnregisterAllComponentUsers(*this);
-		}
-	}
-
-	IFlowCoreExecutableInterface::Cleanup();
 	ReleaseInjectedComponentUsers();
+	IFlowCoreExecutableInterface::Cleanup();
 }
 
 void UFlowNodeBase::ExecuteInputForSelfAndAddOns(const FName& PinName)
