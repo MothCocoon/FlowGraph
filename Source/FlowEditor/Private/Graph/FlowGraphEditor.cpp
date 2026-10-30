@@ -537,7 +537,7 @@ void SFlowGraphEditor::DeleteSelectedNodes()
 {
 	const FScopedTransaction Transaction(LOCTEXT("DeleteSelectedNode", "Delete Selected Node"));
 	GetCurrentGraph()->Modify();
-	UFlowAsset* FlowAssetPtr =FlowAsset.Get();
+	UFlowAsset* FlowAssetPtr = FlowAsset.Get();
 	FlowAssetPtr->Modify();
 
 	const FGraphPanelSelectionSet SelectedNodes = GetSelectedNodes();
@@ -738,7 +738,7 @@ void SFlowGraphEditor::PasteNodesHere(const FVector2f& Location)
 {
 	// Start the transaction and protect the graph update lock.
 	FScopedTransaction Transaction(LOCTEXT("PasteNode", "Paste Node"));
-	UFlowAsset* FlowAssetPtr =FlowAsset.Get();
+	UFlowAsset* FlowAssetPtr = FlowAsset.Get();
 	UFlowGraph* FlowGraph = CastChecked<UFlowGraph>(FlowAssetPtr->GetGraph());
 	FlowGraph->Modify();
 	FlowAssetPtr->Modify();
@@ -913,7 +913,7 @@ void SFlowGraphEditor::PreparePastedNodesForPaste(const TSet<UEdGraphNode*>& Nod
 		AverageNodePosition.Y *= InverseNodeCount;
 	}
 
-	UFlowAsset* FlowAssetPtr =FlowAsset.Get();
+	UFlowAsset* FlowAssetPtr = FlowAsset.Get();
 	for (UEdGraphNode* PastedNode : NodesToPaste)
 	{
 		UFlowGraphNode* PastedFlowGraphNode = Cast<UFlowGraphNode>(PastedNode);

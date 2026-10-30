@@ -61,7 +61,7 @@ private:
 
 public:
 	virtual bool IsTabFocused() const;
-	
+
 	bool CanEdit() const;
 	static bool IsPIE();
 	static bool IsPlaySessionPaused();
