@@ -358,6 +358,8 @@ void FFlowAssetEditor::InitFlowAssetEditor(const EToolkitMode::Type Mode, const 
 
 	bCanEditInPIE = FlowAsset->CanEditInPIE();
 
+	bCanEditInPIE = FlowAsset->CanEditInPIE();
+
 	BindToolbarCommands();
 	CreateToolbar();
 
@@ -450,7 +452,7 @@ void FFlowAssetEditor::BindToolbarCommands()
 	// Automation
 	ToolkitCommands->MapAction(ToolbarCommands.RefreshAsset,
 	                           FExecuteAction::CreateSP(this, &FFlowAssetEditor::RefreshAsset),
-							   FCanExecuteAction::CreateSP(this, &FFlowAssetEditor::CanEdit));
+	                           FCanExecuteAction::CreateSP(this, &FFlowAssetEditor::CanEdit));
 
 	ToolkitCommands->MapAction(ToolbarCommands.ValidateAsset,
 	                           FExecuteAction::CreateSP(this, &FFlowAssetEditor::ValidateAsset_Internal),
@@ -667,8 +669,8 @@ void FFlowAssetEditor::CreateWidgets()
 void FFlowAssetEditor::CreateGraphWidget()
 {
 	SAssignNew(GraphEditor, SFlowGraphEditor, SharedThis(this))
-		.DetailsView(DetailsView)
-		.CanEditInPIE(bCanEditInPIE);
+	.DetailsView(DetailsView)
+	.CanEditInPIE(bCanEditInPIE);
 
 	// Wrap the graph editor in an overlay with the asset name text
 	GraphEditorWidget = SNew(SOverlay)
@@ -697,9 +699,9 @@ bool FFlowAssetEditor::CanEdit() const
 	return GEditor->PlayWorld == nullptr || bCanEditInPIE;
 }
 
-void FFlowAssetEditor::SetCanEditInPIE(bool value)
+void FFlowAssetEditor::SetCanEditInPIE(const bool bValue)
 {
-	bCanEditInPIE = value;
+	bCanEditInPIE = bValue;
 }
 
 bool FFlowAssetEditor::IsPropertyVisible(const FPropertyAndParent& PropertyAndParent)

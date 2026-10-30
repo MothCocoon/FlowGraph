@@ -104,7 +104,7 @@ void SFlowGraphEditor::BindGraphCommands()
 	// Graph commands
 	CommandList->MapAction(GraphEditorCommands.CreateComment,
 	                       FExecuteAction::CreateSP(this, &SFlowGraphEditor::OnCreateComment),
-						   FCanExecuteAction::CreateSP(this, &SFlowGraphEditor::CanEdit));
+	                       FCanExecuteAction::CreateSP(this, &SFlowGraphEditor::CanEdit));
 
 	CommandList->MapAction(GraphEditorCommands.StraightenConnections,
 	                       FExecuteAction::CreateSP(this, &SFlowGraphEditor::OnStraightenConnections));
@@ -116,11 +116,11 @@ void SFlowGraphEditor::BindGraphCommands()
 	// Generic Node commands
 	CommandList->MapAction(GenericCommands.Undo,
 	                       FExecuteAction::CreateStatic(&SFlowGraphEditor::UndoGraphAction),
-						   FCanExecuteAction::CreateSP(this, &SFlowGraphEditor::CanEdit));
+	                       FCanExecuteAction::CreateSP(this, &SFlowGraphEditor::CanEdit));
 
 	CommandList->MapAction(GenericCommands.Redo,
 	                       FExecuteAction::CreateStatic(&SFlowGraphEditor::RedoGraphAction),
-						   FCanExecuteAction::CreateSP(this, &SFlowGraphEditor::CanEdit));
+	                       FCanExecuteAction::CreateSP(this, &SFlowGraphEditor::CanEdit));
 
 	CommandList->MapAction(GenericCommands.SelectAll,
 	                       FExecuteAction::CreateSP(this, &SFlowGraphEditor::SelectAllNodes),

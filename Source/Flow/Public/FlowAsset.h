@@ -112,8 +112,10 @@ public:
 	/* Returns whether the node class is allowed in this flow asset. */
 	bool IsNodeOrAddOnClassAllowed(const UClass* FlowNodeClass, FText* OutOptionalFailureReason = nullptr) const;
 
-	/* Sub-classes can override once they support edits in PIE.Called by the Asset Editor. */
+	/* Subclasses can override this once they support editing in PIE.
+	 * Meant for external tools that generate the asset. */
 	virtual bool CanEditInPIE() const { return false; }
+
 protected:
 	bool CanFlowNodeClassBeUsedByFlowAsset(const UClass& FlowNodeClass) const;
 	bool CanFlowAssetUseFlowNodeClass(const UClass& FlowNodeClass) const;
