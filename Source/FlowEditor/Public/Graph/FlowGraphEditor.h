@@ -37,7 +37,7 @@ protected:
 	TWeakPtr<FFlowAssetEditor> FlowAssetEditor;
 	TSharedPtr<IDetailsView> DetailsView;
 	TSharedPtr<FUICommandList> CommandList;
-	bool bCanEditInPIE;
+	bool bCanEditInPIE = false;
 
 	TWeakObjectPtr<UFlowDebuggerSubsystem> DebuggerSubsystem;
 
