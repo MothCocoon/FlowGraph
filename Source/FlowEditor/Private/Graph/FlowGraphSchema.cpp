@@ -1438,14 +1438,7 @@ void UFlowGraphSchema::GatherNativeNodesOrAddOns(const TSubclassOf<UFlowNodeBase
 			&& !EnumHasAnyFlags(Class->GetClassFlags(), CLASS_NewerVersionExists)
 			&& IsFlowNodeOrAddOnPlaceable(Class))
 		{
-			if (Class->bIsScriptClass && EnumHasAnyFlags(Class->GetClassFlags(), CLASS_NewerVersionExists))
-			{
-				// Do not register if it is a ScriptClass (Angelscript) and it is outdated by a newer version of itself
-			}
-			else
-			{
-				InOutNodesOrAddOnsArray.Emplace(Class);
-			}
+			InOutNodesOrAddOnsArray.Emplace(Class);
 		}
 	}
 
