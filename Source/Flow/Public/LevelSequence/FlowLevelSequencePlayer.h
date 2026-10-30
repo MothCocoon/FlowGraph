@@ -21,7 +21,8 @@ private:
 	TObjectPtr<UFlowNode> FlowEventReceiver;
 
 public:
-	/* Variant of ULevelSequencePlayer::CreateLevelSequencePlayer. */
+	/* Variant of ULevelSequencePlayer::CreateLevelSequencePlayer.
+	 * ActorClass has to be a child of AFlowLevelSequenceActor, nullptr spawns AFlowLevelSequenceActor. */
 	static UFlowLevelSequencePlayer* CreateFlowLevelSequencePlayer(
 		const UObject* WorldContextObject,
 		ULevelSequence* LevelSequence,
@@ -30,7 +31,8 @@ public:
 		const AActor* TransformOriginActor,
 		const bool bReplicates,
 		const bool bAlwaysRelevant,
-		TObjectPtr<AFlowLevelSequenceActor>& OutActor);
+		TObjectPtr<AFlowLevelSequenceActor>& OutActor,
+		UClass* ActorClass = nullptr);
 
 	void SetFlowEventReceiver(UFlowNode* FlowNode) { FlowEventReceiver = FlowNode; }
 
