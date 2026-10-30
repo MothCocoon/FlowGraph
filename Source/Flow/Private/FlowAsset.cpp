@@ -907,7 +907,7 @@ void UFlowAsset::InitializePinConnectionPolicy()
 const FFlowPinConnectionPolicy& UFlowAsset::GetPinConnectionPolicy() const
 {
 	// Runtime instances delegate to their template, which holds the serialized policy
-	if (!PinConnectionPolicy.IsValid() && IsValid(TemplateAsset.Get()))
+	if (!PinConnectionPolicy.IsValid() && IsValid(TemplateAsset))
 	{
 		return TemplateAsset->GetPinConnectionPolicy();
 	}
