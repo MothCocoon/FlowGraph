@@ -114,12 +114,6 @@ struct FLOWEDITOR_API FFlowSearchQuery
 };
 
 /**
- * Shared cache of per-node category-string maps (flag -> set of strings).
- * Built lazily by FFlowSearch::Search and invalidated when a FlowAsset changes.
- * Lives here (service layer) so both FFlowSearch and SFindInFlow share one cache
- * without SFindInFlow needing to know about the service internals.
- */
-/**
  * Searchable strings of one node, together with the search settings they were collected for.
  */
 struct FLOWEDITOR_API FFindInFlowCacheEntry
@@ -129,6 +123,12 @@ struct FLOWEDITOR_API FFindInFlowCacheEntry
 	TMap<EFlowSearchFlags, TSet<FString>> CategoryStrings;
 };
 
+/**
+ * Shared cache of per-node category-string maps (flag -> set of strings).
+ * Built lazily by FFlowSearch::Search and invalidated when a FlowAsset changes.
+ * Lives here (service layer) so both FFlowSearch and SFindInFlow share one cache
+ * without SFindInFlow needing to know about the service internals.
+ */
 struct FLOWEDITOR_API FFindInFlowCache
 {
 	/* Removes all cached data for the changed flow asset. */

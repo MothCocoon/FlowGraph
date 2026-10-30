@@ -233,7 +233,7 @@ public:
 	
 	/* Re-mints the NodeGuid of any UFlowNodeAddOn (at any nesting depth) whose Guid collides with
 	 * one already seen earlier in the walk, keeping the first occurrence of each Guid unchanged.
-	 * Called from PreSaveRoot so every explicit save self-heals.
+	 * Called from PreSaveRoot so every explicit save self-heals, and can be called directly.
 	 * Returns the number of AddOns that were re-minted. */
 	int32 RepairDuplicateAddOnGuids() const;
 
