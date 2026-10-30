@@ -4,6 +4,7 @@
 #include "IDetailCustomization.h"
 #include "Templates/SharedPointer.h"
 #include "Types/SlateEnums.h"
+#include "UObject/WeakObjectPtr.h"
 
 class UFlowNode_CustomEventBase;
 class UFlowAsset;

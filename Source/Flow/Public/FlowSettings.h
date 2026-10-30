@@ -66,6 +66,11 @@ public:
 	UPROPERTY(Config, EditAnywhere, Category = "Networking")
 	bool bCreateFlowSubsystemOnClients = true;
 
+	/* If True, Flow Asset instances replicate to clients as subobjects of their replicated Owner.
+	 * Keep False, if the project handles Flow networking on its own. */
+	UPROPERTY(Config, EditAnywhere, Category = "Networking", meta = (ConfigRestartRequired = true))
+	bool bReplicateFlowInstances = false;
+
 	/* Adjust the Titles for FlowNodes to be more expressive than default
 	 * by incorporating data that would otherwise go in the Description. */
 	UPROPERTY(EditAnywhere, config, Category = "Nodes")
