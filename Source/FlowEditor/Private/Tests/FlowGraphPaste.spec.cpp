@@ -65,7 +65,6 @@ public:
 	{
 		FlowAsset = Asset;
 		FlowAssetEditor = AssetEditor;
-		bCanEditInPIE = false;
 		SGraphEditor::Construct(SGraphEditor::FArguments().GraphToEdit(Asset->GetGraph()));
 	}
 
