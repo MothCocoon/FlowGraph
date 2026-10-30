@@ -550,6 +550,8 @@ public:
 	 * return their compiled-in documentation directly. */
 	void SetAgentDoc(const FFlowAgentDoc& InAgentDoc) { AgentDoc = InAgentDoc; }
 
+	/** Returns the agent-facing guidance authored on this class or supplied by a native override. */
+	virtual const FFlowAgentDoc& GetAgentDoc() const { return AgentDoc; }
 
 	/**
 	 * The pin surface a catalog or documentation consumer should report for this class, read from the
@@ -558,9 +560,6 @@ public:
 	 * contributed by attached addons are outside the scope of a CDO and are not reported here.
 	 */
 	virtual void GetCatalogPins(TArray<FFlowPin>& OutInputPins, TArray<FFlowPin>& OutOutputPins) const {}
-	
-	/** Returns the agent-facing guidance authored on this class or supplied by a native override. */
-	virtual const FFlowAgentDoc& GetAgentDoc() const { return AgentDoc; }
 
 protected:
 	void EnsureNodeDisplayStyle();
