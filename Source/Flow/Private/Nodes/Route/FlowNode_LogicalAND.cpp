@@ -13,6 +13,23 @@ UFlowNode_LogicalAND::UFlowNode_LogicalAND()
 	SetNumberedInputPins(0, 1);
 }
 
+#if WITH_EDITOR
+FString UFlowNode_LogicalAND::GetStatusString() const
+{
+	FTextBuilder TextBuilder;
+
+	if (GetActivationState() != EFlowNodeState::NeverActivated)
+	{
+		for (const FName& PinName : ExecutedInputNames)
+		{
+			TextBuilder.AppendLine(PinName.ToString());
+		}
+	}
+
+	return TextBuilder.ToText().ToString();
+}
+#endif
+
 void UFlowNode_LogicalAND::ExecuteInput(const FName& PinName)
 {
 	ExecutedInputNames.Add(PinName);
@@ -29,21 +46,6 @@ void UFlowNode_LogicalAND::Cleanup()
 }
 
 #if WITH_EDITOR
-FString UFlowNode_LogicalAND::GetStatusString() const
-{
-	FTextBuilder TextBuilder;
-
-	if (GetActivationState() != EFlowNodeState::NeverActivated)
-	{
-		for (const FName& PinName : ExecutedInputNames)
-		{
-			TextBuilder.AppendLine(PinName.ToString());
-		}
-	}
-
-	return TextBuilder.ToText().ToString();
-}
-
 const FFlowAgentDoc& UFlowNode_LogicalAND::GetAgentDoc() const
 {
 	static const FFlowAgentDoc Doc = MakeAgentDoc(

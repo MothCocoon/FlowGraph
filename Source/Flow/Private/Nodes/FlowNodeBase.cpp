@@ -88,27 +88,6 @@ void UFlowNodeBase::DeinitializeInstance()
 	ReleaseInjectedComponentUsers();
 }
 
-void UFlowNodeBase::ReleaseInjectedComponentUsers()
-{
-	const UFlowAsset* FlowAsset = GetFlowAsset();
-	if (!IsValid(FlowAsset))
-	{
-		return;
-	}
-
-	UFlowInjectComponentsManager* LocalManager = FlowAsset->FindComponentInjectionManager();
-	if (IsValid(LocalManager))
-	{
-		LocalManager->UnregisterAllComponentUsers(*this);
-	}
-
-	UFlowInjectComponentsManager* RootManager = FlowAsset->FindComponentInjectionManagerInRootFlow();
-	if (IsValid(RootManager) && RootManager != LocalManager)
-	{
-		RootManager->UnregisterAllComponentUsers(*this);
-	}
-}
-
 void UFlowNodeBase::OnActivate()
 {
 	IFlowCoreExecutableInterface::OnActivate();
@@ -143,6 +122,27 @@ void UFlowNodeBase::Cleanup()
 
 	ReleaseInjectedComponentUsers();
 	IFlowCoreExecutableInterface::Cleanup();
+}
+
+void UFlowNodeBase::ReleaseInjectedComponentUsers()
+{
+	const UFlowAsset* FlowAsset = GetFlowAsset();
+	if (!IsValid(FlowAsset))
+	{
+		return;
+	}
+
+	UFlowInjectComponentsManager* LocalManager = FlowAsset->FindComponentInjectionManager();
+	if (IsValid(LocalManager))
+	{
+		LocalManager->UnregisterAllComponentUsers(*this);
+	}
+
+	UFlowInjectComponentsManager* RootManager = FlowAsset->FindComponentInjectionManagerInRootFlow();
+	if (IsValid(RootManager) && RootManager != LocalManager)
+	{
+		RootManager->UnregisterAllComponentUsers(*this);
+	}
 }
 
 void UFlowNodeBase::ExecuteInputForSelfAndAddOns(const FName& PinName)
