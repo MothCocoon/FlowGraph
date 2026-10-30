@@ -46,21 +46,6 @@
 
 #define LOCTEXT_NAMESPACE "FlowAssetEditor"
 
-namespace FlowAssetEditor_Private
-{
-	bool ShouldShowDetailsProperty(const FPropertyAndParent& PropertyAndParent)
-	{
-		const FName CategoryName = FObjectEditorUtils::GetCategoryFName(&PropertyAndParent.Property);
-		if (CategoryName == TEXT("FlowNode") || CategoryName == TEXT("FlowNodeAddOn"))
-		{
-			return false;
-		}
-
-		return PropertyAndParent.Property.GetFName() != TEXT("AddOns")
-			|| GetDefault<UFlowGraphEditorSettings>()->bShowAddOnsInNodeDetails;
-	}
-}
-
 const FName FFlowAssetEditor::DetailsTab(TEXT("Details"));
 const FName FFlowAssetEditor::GraphTab(TEXT("Graph"));
 const FName FFlowAssetEditor::PaletteTab(TEXT("Palette"));
@@ -352,8 +337,6 @@ void FFlowAssetEditor::InitFlowAssetEditor(const EToolkitMode::Type Mode, const 
 	FlowAsset->OnDetailsRefreshRequested.BindThreadSafeSP(this, &FFlowAssetEditor::RefreshDetails);
 	FlowGraphEditorSettingsChangedHandle = UFlowGraphEditorSettings::OnSettingsChanged().AddRaw(
 		this, &FFlowAssetEditor::RefreshDetails);
-
-	bCanEditInPIE = FlowAsset->CanEditInPIE();
 
 	bCanEditInPIE = FlowAsset->CanEditInPIE();
 
