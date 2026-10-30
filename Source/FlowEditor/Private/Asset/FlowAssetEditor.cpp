@@ -18,9 +18,6 @@
 
 #include "AddOns/FlowNodeAddOn.h"
 #include "FlowAsset.h"
-#include "Widgets/Text/STextBlock.h"
-#include "Widgets/Layout/SBox.h"
-#include "Widgets/SOverlay.h"
 #include "Graph/FlowGraphEditorLayout.h"
 #include "Graph/Nodes/FlowGraphNode.h"
 
@@ -267,9 +264,9 @@ TSharedRef<SDockTab> FFlowAssetEditor::SpawnTab_Graph(const FSpawnTabArgs& Args)
 	TSharedRef<SDockTab> SpawnedTab = SNew(SDockTab)
 		.Label(LOCTEXT("FlowGraphTitle", "Graph"));
 
-	if (GraphEditorWidget.IsValid())
+	if (GraphEditor.IsValid())
 	{
-		SpawnedTab->SetContent(GraphEditorWidget.ToSharedRef());
+		SpawnedTab->SetContent(GraphEditor.ToSharedRef());
 	}
 
 	return SpawnedTab;
@@ -671,27 +668,6 @@ void FFlowAssetEditor::CreateGraphWidget()
 	SAssignNew(GraphEditor, SFlowGraphEditor, SharedThis(this))
 	.DetailsView(DetailsView)
 	.CanEditInPIE(bCanEditInPIE);
-
-	// Wrap the graph editor in an overlay with the asset name text
-	GraphEditorWidget = SNew(SOverlay)
-		+ SOverlay::Slot()
-		[
-			GraphEditor.ToSharedRef()
-		]
-		+ SOverlay::Slot()
-		.HAlign(HAlign_Left)
-		.VAlign(VAlign_Top)
-		.Padding(10.0f, 10.0f)
-		[
-			SNew(SBox)
-			.Visibility(EVisibility::HitTestInvisible)
-			[
-				SNew(STextBlock)
-				.Text(FText::FromString(FlowAsset->GetName()))
-				.TextStyle(FAppStyle::Get(), "GraphBreadcrumbButtonText")
-				.ColorAndOpacity(FLinearColor(1.0f, 1.0f, 1.0f, 0.7f))
-			]
-		];
 }
 
 bool FFlowAssetEditor::CanEdit() const
