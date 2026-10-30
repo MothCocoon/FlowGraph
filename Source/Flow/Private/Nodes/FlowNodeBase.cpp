@@ -253,13 +253,11 @@ UFlowAsset* UFlowNodeBase::GetFlowAsset() const
 {
 	// In the case of an AddOn, we want our containing FlowNode's Outer, not our own
 	const UFlowNode* FlowNode = GetFlowNodeSelfOrOwner();
-	if (IsValid(FlowNode))
+	if (FlowNode && FlowNode->GetOuter())
 	{
-		UObject* Outer = FlowNode->GetOuter();
-		
-		return Cast<UFlowAsset>(Outer);
+		return Cast<UFlowAsset>(FlowNode->GetOuter());
 	}
-	
+
 	return Cast<UFlowAsset>(GetOuter());
 }
 
