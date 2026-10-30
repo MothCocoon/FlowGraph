@@ -4,16 +4,14 @@
 #include "Interfaces/FlowGraphOutputDataReceiverInterface.h"
 #include "Interfaces/FlowPreloadableInterface.h"
 #include "Nodes/FlowNode.h"
-#include "Types/FlowDataPinValue.h"
 #include "Types/FlowOutputDataPinValues.h"
-#include "StructUtils/InstancedStruct.h"
 #include "FlowNode_SubGraph.generated.h"
 
 class UFlowAssetParams;
 
 /**
- * Instantiates a child Flow Asset and runs it inline. 
- * 
+ * Instantiates a child Flow Asset and runs it inline.
+ *
  * Fires its Start pin on the child asset and waits for the child to Finish before firing its own output.
  * Custom Input/Output nodes in the child asset add matching pins to this node.
  * Use to compose complex flows from reusable sub-graphs.
@@ -45,7 +43,7 @@ protected:
 	UPROPERTY(EditAnywhere, Category = "Graph", meta = (DefaultForInputFlowPin, FlowPinType = "Object"))
 	TSoftObjectPtr<UFlowAssetParams> AssetParams;
 
-	/* Allow creating an instance of the same Flow Asset as the one containing this node. 
+	/* Allow creating an instance of the same Flow Asset as the one containing this node.
 	 * Warning: enabling this can cause infinite recursion if the graph spawns itself unconditionally. */
 	UPROPERTY(EditAnywhere, Category = "Graph")
 	bool bCanInstanceIdenticalAsset = false;
