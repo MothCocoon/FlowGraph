@@ -64,6 +64,9 @@ protected:
 	TSharedPtr<class SWidget> ValidationLog;
 	TSharedPtr<class IMessageLogListing> ValidationLogListing;
 
+	/* Assigned by the Asset opened for editing. */
+	bool bCanEditInPIE = false;
+
 private:
 	/* The current UI selection state of this editor. */
 	FName CurrentUISelection;
@@ -161,7 +164,9 @@ protected:
 	virtual void CreateWidgets();
 	virtual void CreateGraphWidget();
 
-	static bool CanEdit();
+	bool CanEdit() const;
+	void SetCanEditInPIE(bool bValue);
+
 	static bool IsPropertyVisible(const FPropertyAndParent& PropertyAndParent);
 
 public:
