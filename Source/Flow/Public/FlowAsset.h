@@ -112,6 +112,10 @@ public:
 	/* Returns whether the node class is allowed in this flow asset. */
 	bool IsNodeOrAddOnClassAllowed(const UClass* FlowNodeClass, FText* OutOptionalFailureReason = nullptr) const;
 
+	/* Subclasses can override this once they support editing in PIE.
+	 * Meant for external tools that generate the asset. */
+	virtual bool CanEditInPIE() const { return false; }
+
 protected:
 	bool CanFlowNodeClassBeUsedByFlowAsset(const UClass& FlowNodeClass) const;
 	bool CanFlowAssetUseFlowNodeClass(const UClass& FlowNodeClass) const;
@@ -229,7 +233,7 @@ public:
 	
 	/* Re-mints the NodeGuid of any UFlowNodeAddOn (at any nesting depth) whose Guid collides with
 	 * one already seen earlier in the walk, keeping the first occurrence of each Guid unchanged.
-	 * Called from PreSaveRoot so every explicit save self-heals.
+	 * Called from PreSaveRoot so every explicit save self-heals, and can be called directly.
 	 * Returns the number of AddOns that were re-minted. */
 	int32 RepairDuplicateAddOnGuids() const;
 
@@ -325,7 +329,7 @@ protected:
 
 private:
 	/* Original object holds references to instances. */
-	UPROPERTY(Transient)
+	UPROPERTY(Transient, NonTransactional)
 	TArray<TObjectPtr<UFlowAsset>> ActiveInstances;
 
 #if WITH_EDITORONLY_DATA
@@ -509,6 +513,11 @@ public:
 // Network replication
 
 protected:
+	/* Set it to False, if instances of this asset shouldn't replicate to clients.
+	 * Instances of SubGraphs started by this asset don't replicate either. */
+	UPROPERTY(EditAnywhere, Category = "Networking")
+	bool bReplicateInstances = true;
+
 	/* True on the server, if this instance is registered as a replicated subobject of its Owner. */
 	bool bReplicatedToClients = false;
 
@@ -541,7 +550,7 @@ public:
 	// --
 
 	/* Decides if this instance is replicated to clients as a subobject of its Owner. */
-	virtual bool ShouldReplicate() const { return true; }
+	virtual bool ShouldReplicate() const;
 
 protected:
 	/* Registers this instance as a replicated subobject of its Owner.

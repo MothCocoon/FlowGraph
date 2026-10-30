@@ -168,8 +168,11 @@ void UFlowSubsystem::FinishAndDeinitializeInstance(UFlowAsset* InstanceToFinish,
 
 UFlowAsset* UFlowSubsystem::CreateSubFlow(UFlowNode_SubGraph* SubGraphNode, const FString& SavedInstanceName, const bool bPreloading /* = false */)
 {
-	// all calls checks if SubGraphNode is valid
-	ensureAlways(SubGraphNode);
+	// Callers validate SubGraphNode, so this only catches a broken caller
+	if (!ensureAlways(IsValid(SubGraphNode)))
+	{
+		return nullptr;
+	}
 
 	UFlowAsset* SubGraphOwner = SubGraphNode->GetFlowAsset();
 	UFlowAsset* AssetInstance = nullptr;

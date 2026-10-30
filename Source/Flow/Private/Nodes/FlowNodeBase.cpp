@@ -85,6 +85,7 @@ void UFlowNodeBase::DeinitializeInstance()
 	}
 
 	IFlowCoreExecutableInterface::DeinitializeInstance();
+	ReleaseInjectedComponentUsers();
 }
 
 void UFlowNodeBase::OnActivate()
@@ -119,22 +120,29 @@ void UFlowNodeBase::Cleanup()
 		AddOn->Cleanup();
 	}
 
-	if (const UFlowAsset* FlowAsset = GetFlowAsset())
-	{
-		UFlowInjectComponentsManager* LocalManager = FlowAsset->FindComponentInjectionManager();
-		if (LocalManager)
-		{
-			LocalManager->UnregisterAllComponentUsers(*this);
-		}
+	ReleaseInjectedComponentUsers();
+	IFlowCoreExecutableInterface::Cleanup();
+}
 
-		UFlowInjectComponentsManager* RootManager = FlowAsset->FindComponentInjectionManagerInRootFlow();
-		if (RootManager && RootManager != LocalManager)
-		{
-			RootManager->UnregisterAllComponentUsers(*this);
-		}
+void UFlowNodeBase::ReleaseInjectedComponentUsers()
+{
+	const UFlowAsset* FlowAsset = GetFlowAsset();
+	if (!IsValid(FlowAsset))
+	{
+		return;
 	}
 
-	IFlowCoreExecutableInterface::Cleanup();
+	UFlowInjectComponentsManager* LocalManager = FlowAsset->FindComponentInjectionManager();
+	if (IsValid(LocalManager))
+	{
+		LocalManager->UnregisterAllComponentUsers(*this);
+	}
+
+	UFlowInjectComponentsManager* RootManager = FlowAsset->FindComponentInjectionManagerInRootFlow();
+	if (IsValid(RootManager) && RootManager != LocalManager)
+	{
+		RootManager->UnregisterAllComponentUsers(*this);
+	}
 }
 
 void UFlowNodeBase::ExecuteInputForSelfAndAddOns(const FName& PinName)
@@ -245,7 +253,12 @@ UFlowAsset* UFlowNodeBase::GetFlowAsset() const
 {
 	// In the case of an AddOn, we want our containing FlowNode's Outer, not our own
 	const UFlowNode* FlowNode = GetFlowNodeSelfOrOwner();
-	return FlowNode && FlowNode->GetOuter() ? Cast<UFlowAsset>(FlowNode->GetOuter()) : Cast<UFlowAsset>(GetOuter());
+	if (FlowNode && FlowNode->GetOuter())
+	{
+		return Cast<UFlowAsset>(FlowNode->GetOuter());
+	}
+
+	return Cast<UFlowAsset>(GetOuter());
 }
 
 const UFlowNode* UFlowNodeBase::GetFlowNodeSelfOrOwner() const

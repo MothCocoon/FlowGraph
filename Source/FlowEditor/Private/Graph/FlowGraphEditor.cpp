@@ -37,6 +37,7 @@ void SFlowGraphEditor::Construct(const FArguments& InArgs, const TSharedPtr<FFlo
 	UFlowAsset* FlowAssetPtr =InAssetEditor->GetFlowAsset();
 	FlowAsset = FlowAssetPtr;
 	DetailsView = InArgs._DetailsView;
+	bCanEditInPIE = InArgs._CanEditInPIE;
 
 	DebuggerSubsystem = GEngine->GetEngineSubsystem<UFlowDebuggerSubsystem>();
 
@@ -103,7 +104,7 @@ void SFlowGraphEditor::BindGraphCommands()
 	// Graph commands
 	CommandList->MapAction(GraphEditorCommands.CreateComment,
 	                       FExecuteAction::CreateSP(this, &SFlowGraphEditor::OnCreateComment),
-	                       FCanExecuteAction::CreateStatic(&SFlowGraphEditor::CanEdit));
+	                       FCanExecuteAction::CreateSP(this, &SFlowGraphEditor::CanEdit));
 
 	CommandList->MapAction(GraphEditorCommands.StraightenConnections,
 	                       FExecuteAction::CreateSP(this, &SFlowGraphEditor::OnStraightenConnections));
@@ -115,11 +116,11 @@ void SFlowGraphEditor::BindGraphCommands()
 	// Generic Node commands
 	CommandList->MapAction(GenericCommands.Undo,
 	                       FExecuteAction::CreateStatic(&SFlowGraphEditor::UndoGraphAction),
-	                       FCanExecuteAction::CreateStatic(&SFlowGraphEditor::CanEdit));
+	                       FCanExecuteAction::CreateSP(this, &SFlowGraphEditor::CanEdit));
 
 	CommandList->MapAction(GenericCommands.Redo,
 	                       FExecuteAction::CreateStatic(&SFlowGraphEditor::RedoGraphAction),
-	                       FCanExecuteAction::CreateStatic(&SFlowGraphEditor::CanEdit));
+	                       FCanExecuteAction::CreateSP(this, &SFlowGraphEditor::CanEdit));
 
 	CommandList->MapAction(GenericCommands.SelectAll,
 	                       FExecuteAction::CreateSP(this, &SFlowGraphEditor::SelectAllNodes),
@@ -377,9 +378,9 @@ bool SFlowGraphEditor::IsTabFocused() const
 	return FlowAssetEditor.Pin()->IsTabFocused(FFlowAssetEditor::GraphTab);
 }
 
-bool SFlowGraphEditor::CanEdit()
+bool SFlowGraphEditor::CanEdit() const
 {
-	return GEditor->PlayWorld == nullptr;
+	return GEditor->PlayWorld == nullptr || bCanEditInPIE;
 }
 
 bool SFlowGraphEditor::IsPIE()
@@ -536,7 +537,7 @@ void SFlowGraphEditor::DeleteSelectedNodes()
 {
 	const FScopedTransaction Transaction(LOCTEXT("DeleteSelectedNode", "Delete Selected Node"));
 	GetCurrentGraph()->Modify();
-	UFlowAsset* FlowAssetPtr =FlowAsset.Get();
+	UFlowAsset* FlowAssetPtr = FlowAsset.Get();
 	FlowAssetPtr->Modify();
 
 	const FGraphPanelSelectionSet SelectedNodes = GetSelectedNodes();
@@ -737,7 +738,7 @@ void SFlowGraphEditor::PasteNodesHere(const FVector2f& Location)
 {
 	// Start the transaction and protect the graph update lock.
 	FScopedTransaction Transaction(LOCTEXT("PasteNode", "Paste Node"));
-	UFlowAsset* FlowAssetPtr =FlowAsset.Get();
+	UFlowAsset* FlowAssetPtr = FlowAsset.Get();
 	UFlowGraph* FlowGraph = CastChecked<UFlowGraph>(FlowAssetPtr->GetGraph());
 	FlowGraph->Modify();
 	FlowAssetPtr->Modify();
@@ -912,7 +913,7 @@ void SFlowGraphEditor::PreparePastedNodesForPaste(const TSet<UEdGraphNode*>& Nod
 		AverageNodePosition.Y *= InverseNodeCount;
 	}
 
-	UFlowAsset* FlowAssetPtr =FlowAsset.Get();
+	UFlowAsset* FlowAssetPtr = FlowAsset.Get();
 	for (UEdGraphNode* PastedNode : NodesToPaste)
 	{
 		UFlowGraphNode* PastedFlowGraphNode = Cast<UFlowGraphNode>(PastedNode);

@@ -1586,34 +1586,67 @@ void UFlowAsset::PreDestroyFromReplication()
 	Super::PreDestroyFromReplication();
 }
 
+bool UFlowAsset::ShouldReplicate() const
+{
+	return GetDefault<UFlowSettings>()->bReplicateFlowInstances && bReplicateInstances;
+}
+
 void UFlowAsset::StartReplication()
 {
-	if (ShouldReplicate() && !bReplicatedToClients)
+	const UFlowNode_SubGraph* OwningSubGraphNode = NodeOwningThisAssetInstance.Get();
+	UFlowAsset* ParentInstance = OwningSubGraphNode ? OwningSubGraphNode->GetFlowAsset() : nullptr;
+
+	// Clients link the replica of a SubGraph instance to the replica of its parent
+	const bool bParentReplicates = ParentInstance == nullptr || ParentInstance->bReplicatedToClients;
+
+	if (ShouldReplicate() && !bReplicatedToClients && bParentReplicates)
 	{
 		UObject* OwnerObject = Owner.Get();
 		if (AActor* OwnerActor = Cast<AActor>(OwnerObject))
 		{
 			if (OwnerActor->GetIsReplicated() && (OwnerActor->IsNetMode(NM_DedicatedServer) || OwnerActor->IsNetMode(NM_ListenServer)))
 			{
-				OwnerActor->AddReplicatedSubObject(this);
-				bReplicatedToClients = true;
+				if (OwnerActor->IsUsingRegisteredSubObjectList())
+				{
+					OwnerActor->AddReplicatedSubObject(this);
+					bReplicatedToClients = true;
+				}
+				else
+				{
+					UE_LOG(LogFlow, Warning, TEXT("%s won't replicate, since its Owner %s doesn't use the registered subobject list."), *GetName(), *OwnerActor->GetName());
+				}
 			}
 		}
 		else if (UActorComponent* OwnerComponent = Cast<UActorComponent>(OwnerObject))
 		{
 			if (OwnerComponent->GetIsReplicated() && (OwnerComponent->IsNetMode(NM_DedicatedServer) || OwnerComponent->IsNetMode(NM_ListenServer)))
 			{
-				OwnerComponent->AddReplicatedSubObject(this);
-				bReplicatedToClients = true;
+				if (OwnerComponent->IsUsingRegisteredSubObjectList())
+				{
+					OwnerComponent->AddReplicatedSubObject(this);
+					bReplicatedToClients = true;
+				}
+				else
+				{
+					UE_LOG(LogFlow, Warning, TEXT("%s won't replicate, since its Owner %s doesn't use the registered subobject list."), *GetName(), *OwnerComponent->GetName());
+				}
 			}
 		}
 
 		if (bReplicatedToClients)
 		{
-			if (const UFlowNode_SubGraph* OwningSubGraphNode = NodeOwningThisAssetInstance.Get())
+			if (ParentInstance)
 			{
-				ReplicatedParentInstance = OwningSubGraphNode->GetFlowAsset();
+				ReplicatedParentInstance = ParentInstance;
 				OwningSubGraphNodeGuid = OwningSubGraphNode->GetGuid();
+			}
+
+			for (const TPair<FGuid, UFlowNode*>& Node : ObjectPtrDecay(Nodes))
+			{
+				if (IsValid(Node.Value))
+				{
+					Node.Value->bHasReplicatedProperties = Node.Value->ShouldReplicateProperties() && FlowNodeReplication::HasReplicatedProperties(*Node.Value);
+				}
 			}
 
 #if WITH_PUSH_MODEL
