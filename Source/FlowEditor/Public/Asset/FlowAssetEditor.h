@@ -166,6 +166,7 @@ protected:
 
 	bool CanEdit() const;
 	void SetCanEditInPIE(bool bValue);
+
 	static bool IsPropertyVisible(const FPropertyAndParent& PropertyAndParent);
 
 public:
