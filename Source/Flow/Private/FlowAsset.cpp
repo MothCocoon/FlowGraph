@@ -1405,7 +1405,7 @@ void UFlowAsset::ResetNodes()
 void UFlowAsset::FinishFlow(const EFlowFinishPolicy InFinishPolicy, const bool bRemoveInstance)
 {
 	FinishFlowInstance(InFinishPolicy);
-
+	
 	if (bRemoveInstance)
 	{
 		DeinitializeInstance();
@@ -1423,7 +1423,6 @@ void UFlowAsset::FinishFlowInstance(const EFlowFinishPolicy InFinishPolicy)
 	{
 		Node->Deactivate();
 	}
-
 	ActiveNodes.Empty();
 }
 
