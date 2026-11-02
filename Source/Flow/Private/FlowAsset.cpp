@@ -1230,39 +1230,6 @@ void UFlowAsset::InitializeInstance(const TWeakObjectPtr<UObject> InOwner, UFlow
 	}
 }
 
-UFlowAsset* UFlowAsset::GetOwningRootFlowInstance() const
-{
-	return OwningRootFlowInstance.Get();
-}
-
-UFlowInjectComponentsManager* UFlowAsset::FindComponentInjectionManager() const
-{
-	return IsValid(ComponentInjector) ? ComponentInjector.Get() : nullptr;
-}
-
-UFlowInjectComponentsManager* UFlowAsset::FindComponentInjectionManagerInRootFlow() const
-{
-	const UFlowAsset* Root = GetOwningRootFlowInstance();
-	return IsValid(Root) ? Root->FindComponentInjectionManager() : nullptr;
-}
-
-UFlowInjectComponentsManager* UFlowAsset::GetOrCreateComponentInjectionManager()
-{
-	if (!IsValid(ComponentInjector))
-	{
-		ComponentInjector = NewObject<UFlowInjectComponentsManager>(this);
-		ComponentInjector->InitializeRuntime();
-	}
-	return ComponentInjector;
-}
-
-UFlowInjectComponentsManager* UFlowAsset::GetOrCreateComponentInjectionManagerInRootFlow() const
-{
-	UFlowAsset* Root = GetOwningRootFlowInstance();
-	checkf(IsValid(Root), TEXT("Root component manager access requires a runtime Flow instance."));
-	return Root->GetOrCreateComponentInjectionManager();
-}
-
 FName UFlowAsset::GetInstanceName() const
 {
 	return GetFName();
@@ -1526,6 +1493,39 @@ UFlowAsset* UFlowAsset::GetParentInstance() const
 TWeakObjectPtr<UFlowAsset> UFlowAsset::GetFlowInstance(UFlowNode_SubGraph* SubGraphNode) const
 {
 	return ActiveSubGraphs.FindRef(SubGraphNode);
+}
+
+UFlowAsset* UFlowAsset::GetOwningRootFlowInstance() const
+{
+	return OwningRootFlowInstance.Get();
+}
+
+UFlowInjectComponentsManager* UFlowAsset::FindComponentInjectionManager() const
+{
+	return IsValid(ComponentInjector) ? ComponentInjector.Get() : nullptr;
+}
+
+UFlowInjectComponentsManager* UFlowAsset::FindComponentInjectionManagerInRootFlow() const
+{
+	const UFlowAsset* Root = GetOwningRootFlowInstance();
+	return IsValid(Root) ? Root->FindComponentInjectionManager() : nullptr;
+}
+
+UFlowInjectComponentsManager* UFlowAsset::GetOrCreateComponentInjectionManager()
+{
+	if (!IsValid(ComponentInjector))
+	{
+		ComponentInjector = NewObject<UFlowInjectComponentsManager>(this);
+		ComponentInjector->InitializeRuntime();
+	}
+	return ComponentInjector;
+}
+
+UFlowInjectComponentsManager* UFlowAsset::GetOrCreateComponentInjectionManagerInRootFlow() const
+{
+	UFlowAsset* Root = GetOwningRootFlowInstance();
+	checkf(IsValid(Root), TEXT("Root component manager access requires a runtime Flow instance."));
+	return Root->GetOrCreateComponentInjectionManager();
 }
 
 void UFlowAsset::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const

@@ -136,6 +136,7 @@ public:
 	// --
 
 protected:
+	/* Releases this node's users on its Flow instance's local and root injection managers, if those exist. */
 	void ReleaseInjectedComponentUsers();
 
 public:
@@ -166,10 +167,6 @@ public:
 	/* Returns a random seed suitable for this flow node base. */
 	UFUNCTION(BlueprintPure, Category = "FlowNode")
 	virtual int32 GetRandomSeed() const PURE_VIRTUAL(GetRandomSeed, return 0;);
-
-private:
-	/* Releases this node's users on its Flow instance's local and root injection managers, if those exist. */
-	void ReleaseInjectedComponentUsers();
 
 //////////////////////////////////////////////////////////////////////////
 // Pins
