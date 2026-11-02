@@ -260,12 +260,12 @@ void FFlowGraphPasteSpec::Define()
 
 		FlowSubGraphExtraction::FExtractionPlanSummary Summary;
 		FString Error;
-		TestTrue(TEXT("Courier can plan the same selection"), FlowSubGraphExtraction::PlanExtractionByGuid(
+		TestTrue(TEXT("FlowAgent can plan the same selection"), FlowSubGraphExtraction::PlanExtractionByGuid(
 			Source.Asset.Get(), {Sequence->NodeGuid, Timer->NodeGuid, Log->NodeGuid},
 			FlowSubGraphExtraction::GetDefaultNewAssetName(), Summary, Error));
-		TestTrue(TEXT("Courier's extraction plan can be applied"), Summary.bCanApply);
-		TestEqual(TEXT("Courier retains both concurrent outputs"), Summary.InterfaceOutputs.Num(), 2);
-		TestFalse(TEXT("Courier does not turn an ordinary output into Finish"),
+		TestTrue(TEXT("FlowAgent's extraction plan can be applied"), Summary.bCanApply);
+		TestEqual(TEXT("FlowAgent retains both concurrent outputs"), Summary.InterfaceOutputs.Num(), 2);
+		TestFalse(TEXT("FlowAgent does not turn an ordinary output into Finish"),
 			Summary.InterfaceOutputs.Contains(TEXT("Finish")));
 	});
 

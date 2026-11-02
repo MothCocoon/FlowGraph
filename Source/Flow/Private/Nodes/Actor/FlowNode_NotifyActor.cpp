@@ -45,9 +45,7 @@ EDataValidationResult UFlowNode_NotifyActor::ValidateNode()
 
 	return EDataValidationResult::Valid;
 }
-#endif
 
-#if WITH_EDITOR
 const FFlowAgentDoc& UFlowNode_NotifyActor::GetAgentDoc() const
 {
 	static const FFlowAgentDoc Doc = MakeAgentDoc(
