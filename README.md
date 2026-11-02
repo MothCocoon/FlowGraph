@@ -21,14 +21,6 @@ This 24-minute presentation breaks down the concept of the Flow Graph. Trust me,
 ## Documentation
 [Plugin documentation on GitHub Pages.](https://mothcocoon.github.io/FlowGraph/)
 
-## FlowAgentToolkit
-
-Agent-assisted Flow graph tooling is provided by the separate FlowAgentToolkit editor plugin.
-It uses Epic's ToolsetRegistry plugin and requires Unreal Engine 5.8 or later. The core Flow
-modules do not depend on ToolsetRegistry. See the
-[FlowAgentToolkit repository](https://github.com/MothCocoon/FlowAgentToolkit) for the plugin,
-FlowAgent format, MCP integration, and Flow agent skill documentation.
-
 ## Acknowledgements
 I got an opportunity to work on something like the Flow Graph at Reikon Games. They shared my enthusiasm for providing the plugin as open source and as such allowed me to publish this work and keep expanding it as a personal project. Kudos, guys!
 Reikon badly wanted to build a better tool for implementing game flow rather than level blueprints or existing Marketplace plug-ins. I was very much interested in this since the studio was just starting with the production of a new title. And we did exactly that, created a node editor dedicated to scripting game flow. Kudos to Dariusz Murawski - a programmer who spent a few months with me to establish the working system and editor. And who had to endure my never-ending feedback and requests.
