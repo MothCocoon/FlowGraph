@@ -753,10 +753,9 @@ void SFlowGraphEditor::PasteNodesHere(const FVector2f& Location)
 		}
 	};
 
-	const TArray<UFlowGraphNode*> SelectedNodes = GetSelectedFlowNodes();
-
 	// Parent for AddOns copied without their parent node.
 	// Unused when pasting base nodes or AddOns copied together with their parent.
+	const TArray<UFlowGraphNode*> SelectedNodes = GetSelectedFlowNodes();
 	UFlowGraphNode* AddOnPasteTarget = SelectedNodes.Num() == 1 ? SelectedNodes[0] : nullptr;
 
 	// Import clipboard nodes and reject incompatible nodes or AddOn trees.

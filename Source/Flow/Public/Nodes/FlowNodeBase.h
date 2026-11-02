@@ -97,9 +97,9 @@ public:
 // Node
 
 public:
-	/* Stable identity persisted across saves. For UFlowNode, inherits from graph node; for
-	 * UFlowNodeAddOn, auto-minted in constructor. Used by FlowAgent tools to upsert/delete individual
-	 * addons. Name-keyed serialization means no CoreRedirect needed. */
+	/* Stable identity persisted across saves.
+	 * Nodes inherit it from the graph node.
+	 * AddOns mint their identity at construction. */
 	UPROPERTY()
 	FGuid NodeGuid;
 
@@ -111,10 +111,9 @@ public:
 
 #if WITH_EDITOR
 private:
-	// Deliberately not serialized or copied: each duplication records its own source identity in SetGuid.
 	FGuid PreviousGuidForPinRemapping;
-	/** Original provider identity before editor duplication/import changed it, until pins are rebuilt. */
-public:
+	
+public:	
 	const FGuid& GetPreviousGuidForPinRemapping() const { return PreviousGuidForPinRemapping; }
 	void ClearPreviousGuidForPinRemapping() { PreviousGuidForPinRemapping.Invalidate(); }
 #endif
@@ -136,7 +135,6 @@ public:
 	// --
 
 protected:
-	/* Releases this node's users on its Flow instance's local and root injection managers, if those exist. */
 	void ReleaseInjectedComponentUsers();
 
 public:
@@ -443,9 +441,6 @@ protected:
 	friend class FScopedFlowNodeReconstructionRequestDeferral;
 	FFlowNodeEvent OnReconstructionRequested;
 	FFlowNodeEvent OnAddOnRequestedParentReconstruction;
-
-	// The scoped helper preserves and restores both bindings while a caller batches property callbacks.
-	friend class FScopedFlowNodeReconstructionRequestDeferral;
 #endif // WITH_EDITORONLY_DATA
 
 #if WITH_EDITOR

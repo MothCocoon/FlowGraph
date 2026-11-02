@@ -6,7 +6,6 @@
 #include "Asset/FlowAssetEditorContext.h"
 #include "Asset/FlowDebugEditorSubsystem.h"
 #include "Asset/FlowAssetToolbar.h"
-#include "Asset/FlowDebugEditorSubsystem.h"
 #include "Asset/FlowMessageLogListing.h"
 #include "Details/AddOns/FlowNodeAddOnCustomization.h"
 #include "Graph/FlowGraphEditor.h"
@@ -18,14 +17,8 @@
 
 #include "AddOns/FlowNodeAddOn.h"
 #include "FlowAsset.h"
-#include "Widgets/Text/STextBlock.h"
-#include "Widgets/Layout/SBox.h"
-#include "Widgets/SOverlay.h"
-#include "Graph/FlowGraphEditorLayout.h"
-#include "Graph/Nodes/FlowGraphNode.h"
 
 #include "EdGraph/EdGraphNode.h"
-#include "ScopedTransaction.h"
 #include "Editor.h"
 #include "Engine/Engine.h"
 #include "EditorClassUtils.h"
@@ -48,21 +41,6 @@
 #endif
 
 #define LOCTEXT_NAMESPACE "FlowAssetEditor"
-
-namespace FlowAssetEditor_Private
-{
-	bool ShouldShowDetailsProperty(const FPropertyAndParent& PropertyAndParent)
-	{
-		const FName CategoryName = FObjectEditorUtils::GetCategoryFName(&PropertyAndParent.Property);
-		if (CategoryName == TEXT("FlowNode") || CategoryName == TEXT("FlowNodeAddOn"))
-		{
-			return false;
-		}
-
-		return PropertyAndParent.Property.GetFName() != TEXT("AddOns")
-			|| GetDefault<UFlowGraphEditorSettings>()->bShowAddOnsInNodeDetails;
-	}
-}
 
 const FName FFlowAssetEditor::DetailsTab(TEXT("Details"));
 const FName FFlowAssetEditor::GraphTab(TEXT("Graph"));
@@ -267,9 +245,9 @@ TSharedRef<SDockTab> FFlowAssetEditor::SpawnTab_Graph(const FSpawnTabArgs& Args)
 	TSharedRef<SDockTab> SpawnedTab = SNew(SDockTab)
 		.Label(LOCTEXT("FlowGraphTitle", "Graph"));
 
-	if (GraphEditorWidget.IsValid())
+	if (GraphEditor.IsValid())
 	{
-		SpawnedTab->SetContent(GraphEditorWidget.ToSharedRef());
+		SpawnedTab->SetContent(GraphEditor.ToSharedRef());
 	}
 
 	return SpawnedTab;
@@ -353,10 +331,7 @@ void FFlowAssetEditor::InitFlowAssetEditor(const EToolkitMode::Type Mode, const 
 	UFlowGraphSchema::SubscribeToAssetChanges();
 
 	FlowAsset->OnDetailsRefreshRequested.BindThreadSafeSP(this, &FFlowAssetEditor::RefreshDetails);
-	FlowGraphEditorSettingsChangedHandle = UFlowGraphEditorSettings::OnSettingsChanged().AddRaw(
-		this, &FFlowAssetEditor::RefreshDetails);
-
-	bCanEditInPIE = FlowAsset->CanEditInPIE();
+	FlowGraphEditorSettingsChangedHandle = UFlowGraphEditorSettings::OnSettingsChanged().AddRaw(this, &FFlowAssetEditor::RefreshDetails);
 
 	bCanEditInPIE = FlowAsset->CanEditInPIE();
 
@@ -671,7 +646,6 @@ void FFlowAssetEditor::CreateGraphWidget()
 	SAssignNew(GraphEditor, SFlowGraphEditor, SharedThis(this))
 	.DetailsView(DetailsView)
 	.CanEditInPIE(bCanEditInPIE);
-	GraphEditorWidget = GraphEditor;
 }
 
 bool FFlowAssetEditor::CanEdit() const

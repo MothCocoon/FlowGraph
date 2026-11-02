@@ -13,7 +13,6 @@
 #include "Types/FlowDataPinResults.h"
 #include "Types/FlowInjectComponentsManager.h"
 #include "Types/FlowPinTypesStandard.h"
-#include "Types/FlowInjectComponentsManager.h"
 #include "Types/FlowNamedDataPinProperty.h"
 
 #include "Components/ActorComponent.h"

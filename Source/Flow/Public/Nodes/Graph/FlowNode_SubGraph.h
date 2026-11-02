@@ -4,9 +4,7 @@
 #include "Interfaces/FlowGraphOutputDataReceiverInterface.h"
 #include "Interfaces/FlowPreloadableInterface.h"
 #include "Nodes/FlowNode.h"
-#include "Types/FlowDataPinValue.h"
 #include "Types/FlowOutputDataPinValues.h"
-#include "StructUtils/InstancedStruct.h"
 #include "FlowNode_SubGraph.generated.h"
 
 class UFlowAssetParams;
@@ -60,10 +58,6 @@ protected:
 	FFlowOutputDataPinValues CachedOutputDataPinValues;
 
 protected:
-	// IFlowGraphOutputDataReceiverInterface
-	virtual void ReceiveOutputDataSnapshot(const FFlowOutputDataPinValues& Snapshot) override;
-	// --
-
 	virtual bool CanBeAssetInstanced() const;
 
 public:
@@ -79,12 +73,16 @@ public:
 public:
 	virtual void ForceFinishNode() override;
 
-	virtual void OnLoad_Implementation() override;
-
-protected:
 	// IFlowDataPinValueSupplierInterface
 	virtual FFlowDataPinResult TrySupplyDataPin(const FName PinName) const override;
 	// --
+	
+	// IFlowGraphOutputDataReceiverInterface
+	virtual void ReceiveOutputDataSnapshot(const FFlowOutputDataPinValues& Snapshot) override;
+	// --
+
+protected:
+	virtual void OnLoad_Implementation() override;
 
 #if WITH_EDITORONLY_DATA
 protected:

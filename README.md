@@ -1,4 +1,4 @@
-﻿## Concept
+## Concept
 Flow plug-in for Unreal Engine is a design-agnostic event node editor. It provides a graph editor tailored for scripting flow of events in virtual worlds. It's based on a decade of experience with designing and implementing a narrative layer in video games. All we need here is simplicity.
 
 The aim of publishing it as an open-source project is to let people tell great stories and construct immersive worlds more easily. That allows us to enrich video game storytelling so we can inspire people and make our world a better place.
@@ -11,7 +11,7 @@ The aim of publishing it as an open-source project is to let people tell great s
 * Developers creating a Flow Node can call the execution of pins in any way they need. API is extremely simple.
 * Editor supports conveniently displaying debug information on nodes and wires while playing a game. You simply provide what kind of message would be displayed over active Flow Nodes - you can't have that with blueprint functions.
 * It's up to you to add game-specific functionalities by writing your nodes and editor customizations. It's not like a marketplace providing a very specific implementation of systems. It's a convenient base for building systems tailored to fit your needs.
-* It's easy to include a Flow plugin in your own project. Follow this short [Getting Started]([https://github.com/MothCocoon/FlowGraph/wiki/Getting-Started](https://mothcocoon.github.io/FlowGraph/Overview/GettingStarted)) guide.
+* Follow this short [Getting Started](https://mothcocoon.github.io/FlowGraph/Overview/GettingStarted) guide to start working with this plugin.
 
 ## In-depth video presentation
 This 24-minute presentation breaks down the concept of the Flow Graph. Trust me, you want to understand the concept properly before diving into implementation.

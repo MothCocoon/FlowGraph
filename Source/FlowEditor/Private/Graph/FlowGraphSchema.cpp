@@ -1420,22 +1420,12 @@ void UFlowGraphSchema::GatherNativeNodesOrAddOns(const TSubclassOf<UFlowNodeBase
 	GetDerivedClasses(FlowNodeBaseClass, FlowNodesOrAddOns);
 	for (UClass* Class : FlowNodesOrAddOns)
 	{
-// <MKT> #AngelScript compatibility hook.  We intentionally deviate from Flow mainline here
-//		InOutNodesOrAddOnsArray.Emplace(CDDlass);
 		if (Class->ClassGeneratedBy == nullptr
 			&& !EnumHasAnyFlags(Class->GetClassFlags(), CLASS_NewerVersionExists)
 			&& IsFlowNodeOrAddOnPlaceable(Class))
 		{
-			if (Class->bIsScriptClass && EnumHasAnyFlags(Class->GetClassFlags(), CLASS_NewerVersionExists))
-			{
-				// Do not register if it is a ScriptClass (Angelscript) and it is outdated by a newer version of itself
-			}
-			else
-			{
-				InOutNodesOrAddOnsArray.Emplace(Class);
-			}
+			InOutNodesOrAddOnsArray.Emplace(Class);
 		}
-// </MKT>
 	}
 
 	TArray<UClass*> GraphNodes;

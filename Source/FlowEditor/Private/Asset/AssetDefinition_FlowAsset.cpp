@@ -2,8 +2,6 @@
 #include "Asset/AssetDefinition_FlowAsset.h"
 
 #include "Asset/SFlowDiff.h"
-
-#include "EdGraph/EdGraph.h"
 #include "FlowEditorModule.h"
 #include "Graph/FlowGraphSettings.h"
 #include "Graph/Nodes/FlowGraphNode.h"

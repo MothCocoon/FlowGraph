@@ -20,6 +20,16 @@ class FLOW_API UFlowSettings : public UDeveloperSettings
 	GENERATED_UCLASS_BODY()
 
 public:
+	/* Returns a typed pointer to the current pin connection policy, or nullptr if unset/invalid. */
+	const FFlowPinConnectionPolicy* GetPinConnectionPolicy() const;
+
+	/* Returns a typed pointer to the current preload policy, or nullptr if unset/invalid. */
+	const FFlowPreloadPolicy* GetPreloadPolicy() const;
+
+#if WITH_EDITOR
+	virtual void PostEditChangeProperty(FPropertyChangedEvent& PropertyChangedEvent) override;
+#endif
+
 	/* The policy for connecting pins in the Flow Graph Editor. */
 	UPROPERTY(EditAnywhere, config, Category = "Default Policies", DisplayName = "Pin Connection Policy", NoClear, meta = (ExcludeBaseStruct, BaseStruct = "/Script/Flow.FlowPinConnectionPolicy"))
 	FInstancedStruct PinConnectionPolicy;
@@ -86,16 +96,6 @@ public:
 #endif
 
 public:
-	/* Returns a typed pointer to the current pin connection policy, or nullptr if unset/invalid. */
-	const FFlowPinConnectionPolicy* GetPinConnectionPolicy() const;
-
-	/* Returns a typed pointer to the current preload policy, or nullptr if unset/invalid. */
-	const FFlowPreloadPolicy* GetPreloadPolicy() const;
-
-#if WITH_EDITOR
-	virtual void PostEditChangeProperty(FPropertyChangedEvent& PropertyChangedEvent) override;
-#endif
-
 	UClass* GetDefaultExpectedOwnerClass() const;
 
 #if WITH_EDITORONLY_DATA

@@ -1,4 +1,4 @@
-﻿{
+{
 	"FileVersion" : 3,
 	"Version" : 2.4,
 	"FriendlyName" : "Flow",
@@ -41,10 +41,6 @@
 		},
 		{
 			"Name": "EngineAssetDefinitions",
-			"Enabled": true
-		},
-		{
-			"Name": "ToolsetRegistry",
 			"Enabled": true
 		},
 		{

@@ -13,6 +13,3 @@
 *.patch_*
 *.pdb
 *.target
-
-__pycache__/
-*.py[cod]

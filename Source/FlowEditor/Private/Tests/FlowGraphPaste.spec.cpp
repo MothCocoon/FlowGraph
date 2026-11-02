@@ -12,7 +12,6 @@
 #include "Templates/UnrealTemplate.h"
 #include "UObject/Package.h"
 #include "UObject/StrongObjectPtr.h"
-#include "UObject/Package.h"
 #include "UObject/UnrealType.h"
 #include "UObject/UObjectHash.h"
 
@@ -66,7 +65,6 @@ public:
 	{
 		FlowAsset = Asset;
 		FlowAssetEditor = AssetEditor;
-		bCanEditInPIE = false;
 		SGraphEditor::Construct(SGraphEditor::FArguments().GraphToEdit(Asset->GetGraph()));
 	}
 
@@ -359,49 +357,6 @@ void FFlowGraphPasteSpec::Define()
 			NewAsset->Rename(nullptr, GetTransientPackage(), REN_DontCreateRedirectors | REN_NonTransactional);
 		}
 		SourcePackage->SetDirtyFlag(false);
-	});
-
-	It("SelectionPlanPreservesConcurrentExits", [this]()
-	{
-		FTestGraph Source;
-		UFlowGraphNode* Entry = Source.AddNode(UFlowNode_Reroute::StaticClass());
-		UFlowGraphNode* Sequence = Source.AddNode(UFlowNode_ExecutionSequence::StaticClass());
-		UFlowGraphNode* Timer = Source.AddNode(UFlowNode_Timer::StaticClass());
-		UFlowGraphNode* Log = Source.AddNode(UFlowNode_Log::StaticClass());
-		UFlowGraphNode* TimerTarget = Source.AddNode(UFlowNode_Reroute::StaticClass());
-		UFlowGraphNode* LogTarget = Source.AddNode(UFlowNode_Reroute::StaticClass());
-		Log->NodePosY = 200;
-
-		const UEdGraphSchema* Schema = Source.Graph->GetSchema();
-		const auto Connect = [this, Schema](UFlowGraphNode* From, const FName OutputName, UFlowGraphNode* To)
-		{
-			return TestTrue(TEXT("The source execution connection is valid"), Schema->TryCreateConnection(
-				From->FindPin(OutputName, EGPD_Output), To->FindPin(TEXT("In"), EGPD_Input)));
-		};
-		if (!Connect(Entry, TEXT("Out"), Sequence)
-			|| !Connect(Sequence, TEXT("0"), Timer)
-			|| !Connect(Sequence, TEXT("1"), Log)
-			|| !Connect(Timer, TEXT("Completed"), TimerTarget)
-			|| !Connect(Log, TEXT("Out"), LogTarget))
-		{
-			return;
-		}
-
-		const auto CheckExits = [this](const auto& Plan)
-		{
-			TestTrue(TEXT("A selection containing concurrent timer and immediate branches can be extracted"), Plan.CanApply());
-			TestEqual(TEXT("Both branches retain their outgoing interfaces"), Plan.Exits.Num(), 2);
-			TSet<FName> ExitNames;
-			for (const auto& Exit : Plan.Exits)
-			{
-				TestFalse(TEXT("An ordinary exit must not finish the child and cancel sibling work"), Exit.bUsesBuiltInPin);
-				TestNotEqual(TEXT("An ordinary exit must not use the reserved Finish interface"), Exit.InterfaceName, FName(TEXT("Finish")));
-				ExitNames.Add(Exit.InterfaceName);
-			}
-			TestEqual(TEXT("Concurrent exits use distinct interfaces"), ExitNames.Num(), 2);
-		};
-		CheckExits(FlowSubGraphExtraction::PlanExtraction({Sequence, Timer, Log}));
-
 	});
 
 	It("AvailabilityDoesNotImportIncompatibleNodes", [this]()

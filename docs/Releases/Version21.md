@@ -1,4 +1,4 @@
-﻿---
+---
 title: Flow 2.1
 ---
 
@@ -67,7 +67,6 @@ Flow Solo (sample project) releases
 * Adaptive Build fix for when the entire FlowGraph is built as separate source files. (contributed by jnucc)
 
 ## Flow Debugger
-These notes describe the Version 21 implementation. Current versions use `FFlowExecutionGate` for breakpoints; `OnPinTriggered` is no longer part of the runtime API.
 * There are several improvements to Flow breakpoints.
     * Node and pin breakpoints are now stored locally for every user. This is thanks to moving data structures out of `UFlowGraphNode`; we no longer need to save assets to remember added breakpoints. Data is now stored in .ini, which was created for this purpose, `UFlowDebuggerSettings`. Logic is handled by the new `UFlowDebuggerSubsystem` class. (contributed by Maksym Kapelianovych)
         * Any breakpoints set on older plugin versions will vanish.

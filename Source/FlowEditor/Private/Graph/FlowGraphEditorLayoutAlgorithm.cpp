@@ -1,5 +1,4 @@
 // Copyright https://github.com/MothCocoon/FlowGraph/graphs/contributors
-
 #include "Graph/FlowGraphEditorLayoutAlgorithm.h"
 
 #include "EdGraph/EdGraph.h"

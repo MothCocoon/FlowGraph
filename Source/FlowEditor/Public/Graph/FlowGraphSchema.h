@@ -5,8 +5,6 @@
 #include "Templates/SubclassOf.h"
 #include "Templates/SharedPointer.h"
 
-#include "Templates/SharedPointer.h"
-
 #include "Policies/FlowPinTypeMatchPolicy.h"
 #include "FlowGraphSchema.generated.h"
 
