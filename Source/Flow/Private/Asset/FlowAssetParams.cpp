@@ -204,8 +204,10 @@ EFlowReconcilePropertiesResult UFlowAssetParams::ReconcilePropertiesWithStartNod
 			{
 				OnAssetParamsReconciled.Broadcast();
 			}
+
 			return EFlowReconcilePropertiesResult::ParamsPropertiesUpdated;
 		}
+
 		return EFlowReconcilePropertiesResult::NoChanges;
 	}
 
