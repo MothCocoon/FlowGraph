@@ -15,11 +15,6 @@
 	"Modules" :
 	[
 		{
-			"Name" : "FlowGameFramework",
-			"Type" : "Runtime",
-			"LoadingPhase" : "PreDefault"
-		},
-		{
 			"Name" : "Flow",
 			"Type" : "Runtime",
 			"LoadingPhase" : "PreDefault"
@@ -33,11 +28,6 @@
 			"Name" : "FlowEditor",
 			"Type" : "Editor",
 			"LoadingPhase" : "PreDefault"
-		},
-		{
-			"Name" : "FlowGraphCourier",
-			"Type" : "Editor",
-			"LoadingPhase" : "Default"
 		}
 	],
 	"Plugins": [

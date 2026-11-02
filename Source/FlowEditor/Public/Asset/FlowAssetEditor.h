@@ -172,7 +172,6 @@ protected:
 
 public:
 	void SetUISelectionState(const FName SelectionOwner);
-	void SetCanEditInPIE(bool value);
 	virtual void ClearSelectionStateFor(const FName SelectionOwner);
 	FName GetUISelectionState() const;
 

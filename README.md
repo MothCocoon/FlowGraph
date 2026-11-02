@@ -21,19 +21,13 @@ This 24-minute presentation breaks down the concept of the Flow Graph. Trust me,
 ## Documentation
 [Plugin documentation on GitHub Pages.](https://mothcocoon.github.io/FlowGraph/)
 
-## FlowGraphCourier
+## FlowAgentToolkit
 
-FlowGraphCourier requires the ToolsetRegistry plugin in Unreal Engine 5.8. The current
-`Flow.uplugin` descriptor includes Courier and ToolsetRegistry, so this combined plugin
-requires UE 5.8 in stock engine installations. The core Flow modules do not depend on
-ToolsetRegistry.
-
-FlowGraphCourier is the editor module for agent-assisted Flow graph discovery and editing. It
-registers an Epic ToolsetRegistry toolset with reflected operations for catalog queries, graph
-export, scoped JSON patches, validation, diffs, layout, and subgraph extraction. See the
-[MCP integration guide](docs/Courier/MCPIntegration.md), the
-[Courier v2 format guide](agent-docs/CourierTextFormat.md), and the
-[Flow agent skill](.agents/skills/flow/SKILL.md).
+Agent-assisted Flow graph tooling is provided by the separate FlowAgentToolkit editor plugin.
+It uses Epic's ToolsetRegistry plugin and requires Unreal Engine 5.8 or later. The core Flow
+modules do not depend on ToolsetRegistry. See the
+[FlowAgentToolkit repository](https://github.com/MothCocoon/FlowAgentToolkit) for the plugin,
+FlowAgent format, MCP integration, and Flow agent skill documentation.
 
 ## Acknowledgements
 I got an opportunity to work on something like the Flow Graph at Reikon Games. They shared my enthusiasm for providing the plugin as open source and as such allowed me to publish this work and keep expanding it as a personal project. Kudos, guys!

@@ -98,7 +98,7 @@ public:
 
 public:
 	/* Stable identity persisted across saves. For UFlowNode, inherits from graph node; for
-	 * UFlowNodeAddOn, auto-minted in constructor. Used by Flow Courier to upsert/delete individual
+	 * UFlowNodeAddOn, auto-minted in constructor. Used by FlowAgent tools to upsert/delete individual
 	 * addons. Name-keyed serialization means no CoreRedirect needed. */
 	UPROPERTY()
 	FGuid NodeGuid;

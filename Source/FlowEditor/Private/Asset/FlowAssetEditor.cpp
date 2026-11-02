@@ -671,6 +671,7 @@ void FFlowAssetEditor::CreateGraphWidget()
 	SAssignNew(GraphEditor, SFlowGraphEditor, SharedThis(this))
 	.DetailsView(DetailsView)
 	.CanEditInPIE(bCanEditInPIE);
+	GraphEditorWidget = GraphEditor;
 }
 
 bool FFlowAssetEditor::CanEdit() const
