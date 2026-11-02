@@ -37,7 +37,7 @@ protected:
 	TWeakPtr<FFlowAssetEditor> FlowAssetEditor;
 	TSharedPtr<IDetailsView> DetailsView;
 	TSharedPtr<FUICommandList> CommandList;
-	bool bCanEditInPIE;
+	bool bCanEditInPIE = false;
 
 	TWeakObjectPtr<UFlowDebuggerSubsystem> DebuggerSubsystem;
 
@@ -61,7 +61,7 @@ private:
 
 public:
 	virtual bool IsTabFocused() const;
-	
+
 	bool CanEdit() const;
 	static bool IsPIE();
 	static bool IsPlaySessionPaused();

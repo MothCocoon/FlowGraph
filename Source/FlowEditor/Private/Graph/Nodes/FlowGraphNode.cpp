@@ -1032,6 +1032,7 @@ void UFlowGraphNode::JumpToDefinition() const
 {
 	if (NodeInstance)
 	{
+		// Script classes (e.g. Angelscript) aren't native and have no Blueprint, but navigate to source like native classes
 		if (NodeInstance->GetClass()->ClassGeneratedBy == nullptr)
 		{
 			if (FSourceCodeNavigation::CanNavigateToClass(NodeInstance->GetClass()))

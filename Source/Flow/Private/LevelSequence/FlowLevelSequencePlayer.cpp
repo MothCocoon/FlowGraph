@@ -17,10 +17,20 @@ UFlowLevelSequencePlayer* UFlowLevelSequencePlayer::CreateFlowLevelSequencePlaye
 	const AActor* TransformOriginActor,
 	const bool bReplicates,
 	const bool bAlwaysRelevant,
-	TObjectPtr<AFlowLevelSequenceActor>& OutActor
+	TObjectPtr<AFlowLevelSequenceActor>& OutActor,
+	UClass* ActorClass
 )
 {
 	if (LevelSequence == nullptr)
+	{
+		return nullptr;
+	}
+
+	if (ActorClass == nullptr)
+	{
+		ActorClass = AFlowLevelSequenceActor::StaticClass();
+	}
+	else if (!ensureMsgf(ActorClass->IsChildOf<AFlowLevelSequenceActor>(), TEXT("%s isn't a child of AFlowLevelSequenceActor"), *ActorClass->GetName()))
 	{
 		return nullptr;
 	}
@@ -47,7 +57,7 @@ UFlowLevelSequencePlayer* UFlowLevelSequencePlayer::CreateFlowLevelSequencePlaye
 	// Create Sequence Actor
 	// We use deferred spawn, so we can set all actor properties prior to its initialization.
 	// This also helpful in case of multiplayer, since all actor settings are replicated with the spawned actor. No need to call replication just after spawn.
-	AFlowLevelSequenceActor* Actor = World->SpawnActorDeferred<AFlowLevelSequenceActor>(AFlowLevelSequenceActor::StaticClass(), SpawnTransform, nullptr, nullptr, ESpawnActorCollisionHandlingMethod::AlwaysSpawn);
+	AFlowLevelSequenceActor* Actor = World->SpawnActorDeferred<AFlowLevelSequenceActor>(ActorClass,SpawnTransform, nullptr, nullptr, ESpawnActorCollisionHandlingMethod::AlwaysSpawn);
 	Actor->SetPlaybackSettings(Settings);
 	Actor->CameraSettings = CameraSettings;
 
