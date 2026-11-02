@@ -548,7 +548,6 @@ void UFlowAsset::HarvestNodeConnections(UFlowNode* TargetNode)
 			// the asset before RegraphFlowAsset has finished linking runtime nodes to their
 			// editor counterparts.
 			// Such nodes have no pins to harvest yet. Skip them.
-
 			continue;
 		}
 
@@ -1406,7 +1405,6 @@ void UFlowAsset::ResetNodes()
 void UFlowAsset::FinishFlow(const EFlowFinishPolicy InFinishPolicy, const bool bRemoveInstance)
 {
 	FinishFlowInstance(InFinishPolicy);
-
 	if (bRemoveInstance)
 	{
 		DeinitializeInstance();
@@ -1500,17 +1498,6 @@ UFlowAsset* UFlowAsset::GetOwningRootFlowInstance() const
 	return OwningRootFlowInstance.Get();
 }
 
-UFlowInjectComponentsManager* UFlowAsset::FindComponentInjectionManager() const
-{
-	return IsValid(ComponentInjector) ? ComponentInjector.Get() : nullptr;
-}
-
-UFlowInjectComponentsManager* UFlowAsset::FindComponentInjectionManagerInRootFlow() const
-{
-	const UFlowAsset* Root = GetOwningRootFlowInstance();
-	return IsValid(Root) ? Root->FindComponentInjectionManager() : nullptr;
-}
-
 UFlowInjectComponentsManager* UFlowAsset::GetOrCreateComponentInjectionManager()
 {
 	if (!IsValid(ComponentInjector))
@@ -1526,6 +1513,17 @@ UFlowInjectComponentsManager* UFlowAsset::GetOrCreateComponentInjectionManagerIn
 	UFlowAsset* Root = GetOwningRootFlowInstance();
 	checkf(IsValid(Root), TEXT("Root component manager access requires a runtime Flow instance."));
 	return Root->GetOrCreateComponentInjectionManager();
+}
+
+UFlowInjectComponentsManager* UFlowAsset::FindComponentInjectionManager() const
+{
+	return IsValid(ComponentInjector) ? ComponentInjector.Get() : nullptr;
+}
+
+UFlowInjectComponentsManager* UFlowAsset::FindComponentInjectionManagerInRootFlow() const
+{
+	const UFlowAsset* Root = GetOwningRootFlowInstance();
+	return IsValid(Root) ? Root->FindComponentInjectionManager() : nullptr;
 }
 
 void UFlowAsset::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const
@@ -1805,14 +1803,6 @@ void UFlowAsset::ApplyReplicatedNodeState(const FFlowNodeReplicatedState& Item)
 	}
 }
 
-void UFlowAsset::EnsurePreloadPolicyInitialized()
-{
-	if (!PreloadPolicy.IsValid())
-	{
-		InitializePreloadPolicy();
-	}
-}
-
 void UFlowAsset::InitializePreloadPolicy()
 {
 	if (PreloadPolicy.IsValid())
@@ -1831,6 +1821,14 @@ void UFlowAsset::InitializePreloadPolicy()
 	}
 
 	ensureAlwaysMsgf(PreloadPolicy.IsValid(), TEXT("There's no valid Preload Policy set in the project!"));
+}
+
+void UFlowAsset::EnsurePreloadPolicyInitialized()
+{
+	if (!PreloadPolicy.IsValid())
+	{
+		InitializePreloadPolicy();
+	}
 }
 
 const FFlowPreloadPolicy& UFlowAsset::GetPreloadPolicy() const
