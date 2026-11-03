@@ -45,7 +45,7 @@ void CleanInvalidPins(TArray<FFlowPin>& Array)
 	{
 		if (!Array[i].IsValid())
 		{
-			Array.RemoveAtSwap(i, EAllowShrinking::No);
+			Array.RemoveAt(i, EAllowShrinking::No);
 		}
 	}
 }
