@@ -44,7 +44,7 @@ protected:
 	TSoftObjectPtr<UFlowAssetParams> AssetParams;
 
 	/* Allow creating an instance of the same Flow Asset as the one containing this node.
-	* Warning: enabling this can cause infinite recursion if the graph spawns itself unconditionally. */
+	 * Warning: enabling this can cause infinite recursion if the graph spawns itself unconditionally. */
 	UPROPERTY(EditAnywhere, Category = "Graph")
 	bool bCanInstanceIdenticalAsset = false;
 

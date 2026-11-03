@@ -3,6 +3,7 @@
 
 #include "ConnectionDrawingPolicy.h"
 #include "EdGraphUtilities.h"
+#include "FlowGraphConnectionDrawingPolicy.generated.h"
 
 class FSlateWindowElementList;
 class UEdGraph;
