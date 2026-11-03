@@ -110,11 +110,11 @@ public:
 protected:
 	/* Class-specific and user-added inputs. */
 	UPROPERTY(EditDefaultsOnly, Category = "FlowNode")
-	TArray<FFlowPin> InputPins;
+	TArray<FFlowPin> InputPins = {DefaultInputPin};
 
 	/* Class-specific and user-added outputs. */
 	UPROPERTY(EditDefaultsOnly, Category = "FlowNode")
-	TArray<FFlowPin> OutputPins;
+	TArray<FFlowPin> OutputPins = {DefaultOutputPin};
 
 	void AddInputPins(const TArray<FFlowPin>& Pins);
 	void AddOutputPins(const TArray<FFlowPin>& Pins);

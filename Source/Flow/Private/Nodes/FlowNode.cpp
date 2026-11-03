@@ -39,9 +39,6 @@ UFlowNode::UFlowNode()
 	Category = TEXT("Uncategorized");
 	NodeDisplayStyle = FlowNodeStyle::Default;
 #endif
-
-	InputPins = {DefaultInputPin};
-	OutputPins = {DefaultOutputPin};
 }
 
 bool UFlowNode::IsSupportedInputPinName(const FName& PinName) const
