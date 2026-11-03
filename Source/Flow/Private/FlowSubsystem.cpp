@@ -499,12 +499,12 @@ const FFlowComponentSaveData* UFlowSubsystem::GetLoadedComponentRecord(const UFl
 {
 	if (LoadedSaveGame)
 	{
-		const FString WorldName = Component->GetWorld()->GetName();
-		const FString ActorName = Component->GetOwner()->GetName();
+		const FName WorldName = Component->GetWorld()->GetFName();
+		const FName ActorName = Component->GetOwner()->GetFName();
 
 		for (const FFlowComponentSaveData& ComponentRecord : LoadedSaveGame->FlowComponents)
 		{
-			if (ComponentRecord.WorldName == WorldName && ComponentRecord.ActorInstanceName == ActorName)
+			if (WorldName == FStringView(ComponentRecord.WorldName) && ActorName == FStringView(ComponentRecord.ActorInstanceName))
 			{
 				return &ComponentRecord;
 			}
