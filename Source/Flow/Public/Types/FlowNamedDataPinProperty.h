@@ -9,12 +9,11 @@
 #include "FlowNamedDataPinProperty.generated.h"
 
 struct FFlowAutoDataPinsWorkingData;
-struct FFlowDataPinProperty;
 struct FFlowDataPinValue;
 struct FFlowDataPinValueOwner;
 
 /**
- * Wrapper for FFlowDataPinProperty that is used for flow nodes that add dynamic properties,
+ * Wrapper for FFlowDataPinValue that is used for flow nodes that add dynamic properties,
  * with associated data pins, on the flow node instance.
  * (as opposed to C++ or blueprint compile-time).
  */
@@ -28,12 +27,6 @@ public:
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = DataPins, meta = (EditCondition = "bMayChangeNameAndType", HideEditConditionToggle))
 	FName Name = NAME_None;
 
-private:
-	/* DataPinProperty payload. */
-	UPROPERTY(VisibleAnywhere, Category = DataPins, meta = (DeprecatedProperty))
-	TInstancedStruct<FFlowDataPinProperty> DataPinProperty;
-
-public:
 	/* DataPinProperty payload. */
 	UPROPERTY(EditAnywhere, Category = DataPins, meta = (ExcludeBaseStruct, NoClear))
 	TInstancedStruct<FFlowDataPinValue> DataPinValue;
@@ -60,9 +53,6 @@ public:
 
 	bool IsValid() const { return Name != NAME_None && DataPinValue.GetPtr() != nullptr; }
 
-	// #FlowDataPinLegacy
-	bool FixupDataPinProperty();
-	// --
 
 #if WITH_EDITOR
 	FLOW_API FFlowPin CreateFlowPin() const;

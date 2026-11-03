@@ -39,9 +39,6 @@ UFlowNode::UFlowNode()
 	Category = TEXT("Uncategorized");
 	NodeDisplayStyle = FlowNodeStyle::Default;
 #endif
-
-	InputPins = {DefaultInputPin};
-	OutputPins = {DefaultOutputPin};
 }
 
 bool UFlowNode::IsSupportedInputPinName(const FName& PinName) const
@@ -89,11 +86,6 @@ void UFlowNode::PostLoad()
 	// fix Class Default Object
 	FixNode(nullptr);
 #endif
-
-	if (!HasAnyFlags(RF_ArchetypeObject | RF_ClassDefaultObject))
-	{
-		FixupDataPinTypes();
-	}
 }
 
 void UFlowNode::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const
@@ -1134,43 +1126,6 @@ bool UFlowNode::TryGetFlowDataPinSupplierDatasForPinName(const FName& PinName, T
 	return !InOutPinValueSupplierDatas.IsEmpty();
 }
 
-// #FlowDataPinLegacy
-void UFlowNode::FixupDataPinTypes()
-{
-	FixupDataPinTypesForArray(InputPins);
-	FixupDataPinTypesForArray(OutputPins);
-#if WITH_EDITOR
-	FixupDataPinTypesForArray(AutoInputDataPins);
-	FixupDataPinTypesForArray(AutoOutputDataPins);
-#endif
-}
-
-void UFlowNode::FixupDataPinTypesForArray(TArray<FFlowPin>& MutableDataPinArray)
-{
-	for (FFlowPin& MutableFlowPin : MutableDataPinArray)
-	{
-		FixupDataPinTypesForPin(MutableFlowPin);
-	}
-}
-
-void UFlowNode::FixupDataPinTypesForPin(FFlowPin& MutableDataPin)
-{
-	const FFlowPinTypeName NewPinTypeName = FFlowPin::GetPinTypeNameForLegacyPinType(MutableDataPin.PinType);
-
-	if (!NewPinTypeName.IsNone())
-	{
-		MutableDataPin.SetPinTypeName(NewPinTypeName);
-	}
-
-	if (MutableDataPin.GetPinTypeName().IsNone())
-	{
-		// Ensure we have a pin type even if the enum was invalid before
-		MutableDataPin.SetPinTypeName(FFlowPinType_Exec::GetPinTypeNameStatic());
-	}
-
-	MutableDataPin.PinType = EFlowPinType::Invalid;
-}
-// --
 
 #if WITH_EDITOR
 EDataValidationResult UFlowNode::ValidateNode()

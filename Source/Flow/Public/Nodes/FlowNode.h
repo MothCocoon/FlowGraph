@@ -110,11 +110,11 @@ public:
 protected:
 	/* Class-specific and user-added inputs. */
 	UPROPERTY(EditDefaultsOnly, Category = "FlowNode")
-	TArray<FFlowPin> InputPins;
+	TArray<FFlowPin> InputPins = {DefaultInputPin};
 
 	/* Class-specific and user-added outputs. */
 	UPROPERTY(EditDefaultsOnly, Category = "FlowNode")
-	TArray<FFlowPin> OutputPins;
+	TArray<FFlowPin> OutputPins = {DefaultOutputPin};
 
 	void AddInputPins(const TArray<FFlowPin>& Pins);
 	void AddOutputPins(const TArray<FFlowPin>& Pins);
@@ -301,14 +301,6 @@ public:
 
 	bool TryGetFlowDataPinSupplierDatasForPinName(const FName& PinName, TFlowPinValueSupplierDataArray& InOutPinValueSupplierDatas) const;
 
-	// #FlowDataPinLegacy
-public:
-	void FixupDataPinTypes();
-
-protected:
-	static void FixupDataPinTypesForArray(TArray<FFlowPin>& MutableDataPinArray);
-	static void FixupDataPinTypesForPin(FFlowPin& MutableDataPin);
-	// --
 
 //////////////////////////////////////////////////////////////////////////
 // Data validation

@@ -110,49 +110,6 @@ const FFlowPinType* FFlowPin::ResolveFlowPinType() const
 	return FFlowPinType::LookupPinType(PinTypeName);
 }
 
-// #FlowDataPinLegacy
-FFlowPinTypeName FFlowPin::GetPinTypeNameForLegacyPinType(EFlowPinType PinType)
-{
-	FLOW_ASSERT_ENUM_MAX(EFlowPinType, 16);
-	switch (PinType)
-	{
-	case EFlowPinType::Exec:
-		return FFlowPinType_Exec::GetPinTypeNameStatic();
-	case EFlowPinType::Bool:
-		return FFlowPinType_Bool::GetPinTypeNameStatic();
-	case EFlowPinType::Int:
-		return FFlowPinType_Int::GetPinTypeNameStatic();
-	case EFlowPinType::Float:
-		return FFlowPinType_Float::GetPinTypeNameStatic();
-	case EFlowPinType::Name:
-		return FFlowPinType_Name::GetPinTypeNameStatic();
-	case EFlowPinType::String:
-		return FFlowPinType_String::GetPinTypeNameStatic();
-	case EFlowPinType::Text:
-		return FFlowPinType_Text::GetPinTypeNameStatic();
-	case EFlowPinType::Enum:
-		return FFlowPinType_Enum::GetPinTypeNameStatic();
-	case EFlowPinType::Vector:
-		return FFlowPinType_Vector::GetPinTypeNameStatic();
-	case EFlowPinType::Rotator:
-		return FFlowPinType_Rotator::GetPinTypeNameStatic();
-	case EFlowPinType::Transform:
-		return FFlowPinType_Transform::GetPinTypeNameStatic();
-	case EFlowPinType::GameplayTag:
-		return FFlowPinType_GameplayTag::GetPinTypeNameStatic();
-	case EFlowPinType::GameplayTagContainer:
-		return FFlowPinType_GameplayTagContainer::GetPinTypeNameStatic();
-	case EFlowPinType::InstancedStruct:
-		return FFlowPinType_InstancedStruct::GetPinTypeNameStatic();
-	case EFlowPinType::Object:
-		return FFlowPinType_Object::GetPinTypeNameStatic();
-	case EFlowPinType::Class:
-		return FFlowPinType_Class::GetPinTypeNameStatic();
-	default:
-		return FFlowPinTypeName();
-	}
-}
-// --
 
 bool FFlowPin::IsExecPin() const
 {

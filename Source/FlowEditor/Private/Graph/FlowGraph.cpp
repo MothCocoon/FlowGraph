@@ -93,31 +93,6 @@ void UFlowGraph::RefreshGraph()
 	}
 }
 
-void UFlowGraph::UpgradeAllFlowNodePins()
-{
-	if (UFlowAsset* FlowAsset = GetFlowAsset())
-	{
-		for (TPair<FGuid, TObjectPtr<UFlowNode>>& Node : FlowAsset->Nodes)
-		{
-			UFlowNode* FlowNode = Node.Value;
-			if (IsValid(FlowNode))
-			{
-				FlowNode->FixupDataPinTypes();
-				FlowNode->TryUpdateAutoDataPins();
-			}
-		}
-	}
-
-	for (UEdGraphNode* Node : Nodes)
-	{
-		if (UFlowGraphNode* FlowGraphNode = Cast<UFlowGraphNode>(Node))
-		{
-			FlowGraphNode->MarkNeedsFullReconstruction();
-			FlowGraphNode->ReconstructNode();
-		}
-	}
-}
-
 void UFlowGraph::RecursivelyRefreshAddOns(UFlowGraphNode& FromFlowGraphNode)
 {
 	// Refresh AddOns
@@ -373,16 +348,11 @@ void UFlowGraph::UpdateVersion()
 		return;
 	}
 
-	const int32 PrevGraphVersion = GraphVersion;
 	MarkVersion();
 	Modify();
 
 	// Insert any Version updating code here
 
-	if (PrevGraphVersion < 2)
-	{
-		UpgradeAllFlowNodePins();
-	}
 }
 
 void UFlowGraph::MarkVersion()

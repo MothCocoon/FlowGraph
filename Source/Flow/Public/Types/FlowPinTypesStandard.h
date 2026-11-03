@@ -34,25 +34,6 @@ struct FFlowDataPinValue_InstancedStruct;
 struct FFlowDataPinValue_Object;
 struct FFlowDataPinValue_Class;
 
-// #FlowDataPinLegacy
-struct FFlowDataPinOutputProperty_Bool;
-struct FFlowDataPinOutputProperty_Int32;
-struct FFlowDataPinOutputProperty_Int64;
-struct FFlowDataPinOutputProperty_Float;
-struct FFlowDataPinOutputProperty_Double;
-struct FFlowDataPinOutputProperty_Name;
-struct FFlowDataPinOutputProperty_String;
-struct FFlowDataPinOutputProperty_Text;
-struct FFlowDataPinOutputProperty_Enum;
-struct FFlowDataPinOutputProperty_Vector;
-struct FFlowDataPinOutputProperty_Rotator;
-struct FFlowDataPinOutputProperty_Transform;
-struct FFlowDataPinOutputProperty_GameplayTag;
-struct FFlowDataPinOutputProperty_GameplayTagContainer;
-struct FFlowDataPinOutputProperty_InstancedStruct;
-struct FFlowDataPinOutputProperty_Object;
-struct FFlowDataPinOutputProperty_Class;
-// --
 
 /**
  * Exec
@@ -65,7 +46,6 @@ struct FLOW_API FFlowPinType_Exec : public FFlowPinType
 	using ValueType = void;
 	using WrapperType = void;
 	using MainPropertyType = void;
-	using LegacyWrapperType = void;
 
 private:
 	static const FFlowPinTypeName PinTypeNameExec;
@@ -90,7 +70,6 @@ struct FLOW_API FFlowPinType_Bool : public FFlowPinType
 	using ValueType = bool;
 	using WrapperType = FFlowDataPinValue_Bool;
 	using MainPropertyType = FBoolProperty;
-	using LegacyWrapperType = FFlowDataPinOutputProperty_Bool;
 
 private:
 	static const FFlowPinTypeName PinTypeNameBool;
@@ -117,7 +96,6 @@ struct FLOW_API FFlowPinType_Int : public FFlowPinType
 	using ValueType = int32;
 	using WrapperType = FFlowDataPinValue_Int;
 	using MainPropertyType = FIntProperty;
-	using LegacyWrapperType = FFlowDataPinOutputProperty_Int32;
 
 private:
 	static const FFlowPinTypeName PinTypeNameInt;
@@ -144,7 +122,6 @@ struct FLOW_API FFlowPinType_Int64 : public FFlowPinType
 	using ValueType = int64;
 	using WrapperType = FFlowDataPinValue_Int64;
 	using MainPropertyType = FInt64Property;
-	using LegacyWrapperType = FFlowDataPinOutputProperty_Int64;
 
 private:
 	static const FFlowPinTypeName PinTypeNameInt64;
@@ -171,7 +148,6 @@ struct FLOW_API FFlowPinType_Float : public FFlowPinType
 	using ValueType = float;
 	using WrapperType = FFlowDataPinValue_Float;
 	using MainPropertyType = FFloatProperty;
-	using LegacyWrapperType = FFlowDataPinOutputProperty_Float;
 
 private:
 	static const FFlowPinTypeName PinTypeNameFloat;
@@ -198,7 +174,6 @@ struct FLOW_API FFlowPinType_Double : public FFlowPinType
 	using ValueType = double;
 	using WrapperType = FFlowDataPinValue_Double;
 	using MainPropertyType = FDoubleProperty;
-	using LegacyWrapperType = FFlowDataPinOutputProperty_Double;
 
 private:
 	static const FFlowPinTypeName PinTypeNameDouble;
@@ -225,7 +200,6 @@ struct FLOW_API FFlowPinType_Name : public FFlowPinType
 	using ValueType = FName;
 	using WrapperType = FFlowDataPinValue_Name;
 	using MainPropertyType = FNameProperty;
-	using LegacyWrapperType = FFlowDataPinOutputProperty_Name;
 
 private:
 	static const FFlowPinTypeName PinTypeNameName;
@@ -252,7 +226,6 @@ struct FLOW_API FFlowPinType_String : public FFlowPinType
 	using ValueType = FString;
 	using WrapperType = FFlowDataPinValue_String;
 	using MainPropertyType = FStrProperty;
-	using LegacyWrapperType = FFlowDataPinOutputProperty_String;
 
 private:
 	static const FFlowPinTypeName PinTypeNameString;
@@ -279,7 +252,6 @@ struct FLOW_API FFlowPinType_Text : public FFlowPinType
 	using ValueType = FText;
 	using WrapperType = FFlowDataPinValue_Text;
 	using MainPropertyType = FTextProperty;
-	using LegacyWrapperType = FFlowDataPinOutputProperty_Text;
 
 private:
 	static const FFlowPinTypeName PinTypeNameText;
@@ -307,7 +279,6 @@ struct FLOW_API FFlowPinType_Enum : public FFlowPinType
 	using WrapperType = FFlowDataPinValue_Enum;
 	using MainPropertyType = FEnumProperty;
 	using FieldType = UEnum;
-	using LegacyWrapperType = FFlowDataPinOutputProperty_Enum;
 
 private:
 	static const FFlowPinTypeName PinTypeNameEnum;
@@ -335,7 +306,6 @@ struct FLOW_API FFlowPinType_Vector : public FFlowPinType
 	using ValueType = FVector;
 	using WrapperType = FFlowDataPinValue_Vector;
 	using MainPropertyType = FStructProperty;
-	using LegacyWrapperType = FFlowDataPinOutputProperty_Vector;
 
 private:
 	static const FFlowPinTypeName PinTypeNameVector;
@@ -363,7 +333,6 @@ struct FLOW_API FFlowPinType_Rotator : public FFlowPinType
 	using ValueType = FRotator;
 	using WrapperType = FFlowDataPinValue_Rotator;
 	using MainPropertyType = FStructProperty;
-	using LegacyWrapperType = FFlowDataPinOutputProperty_Rotator;
 
 private:
 	static const FFlowPinTypeName PinTypeNameRotator;
@@ -391,7 +360,6 @@ struct FLOW_API FFlowPinType_Transform : public FFlowPinType
 	using ValueType = FTransform;
 	using WrapperType = FFlowDataPinValue_Transform;
 	using MainPropertyType = FStructProperty;
-	using LegacyWrapperType = FFlowDataPinOutputProperty_Transform;
 
 private:
 	static const FFlowPinTypeName PinTypeNameTransform;
@@ -419,7 +387,6 @@ struct FLOW_API FFlowPinType_GameplayTag : public FFlowPinType
 	using ValueType = FGameplayTag;
 	using WrapperType = FFlowDataPinValue_GameplayTag;
 	using MainPropertyType = FStructProperty;
-	using LegacyWrapperType = FFlowDataPinOutputProperty_GameplayTag;
 
 private:
 	static const FFlowPinTypeName PinTypeNameGameplayTag;
@@ -447,7 +414,6 @@ struct FLOW_API FFlowPinType_GameplayTagContainer : public FFlowPinType
 	using ValueType = FGameplayTagContainer;
 	using WrapperType = FFlowDataPinValue_GameplayTagContainer;
 	using MainPropertyType = FStructProperty;
-	using LegacyWrapperType = FFlowDataPinOutputProperty_GameplayTagContainer;
 
 private:
 	static const FFlowPinTypeName PinTypeNameGameplayTagContainer;
@@ -476,7 +442,6 @@ struct FLOW_API FFlowPinType_InstancedStruct : public FFlowPinType
 	using ValueType = FInstancedStruct;
 	using WrapperType = FFlowDataPinValue_InstancedStruct;
 	using MainPropertyType = FStructProperty;
-	using LegacyWrapperType = FFlowDataPinOutputProperty_InstancedStruct;
 
 private:
 	static const FFlowPinTypeName PinTypeNameInstancedStruct;
@@ -504,7 +469,6 @@ struct FLOW_API FFlowPinType_Object : public FFlowPinType
 	using ValueType = TObjectPtr<UObject>;
 	using WrapperType = FFlowDataPinValue_Object;
 	using MainPropertyType = FObjectProperty;
-	using LegacyWrapperType = FFlowDataPinOutputProperty_Object;
 
 private:
 	static const FFlowPinTypeName PinTypeNameObject;
@@ -535,7 +499,6 @@ struct FLOW_API FFlowPinType_Class : public FFlowPinType
 	using ValueType = TObjectPtr<UClass>;
 	using WrapperType = FFlowDataPinValue_Class;
 	using MainPropertyType = FClassProperty;
-	using LegacyWrapperType = FFlowDataPinOutputProperty_Class;
 
 private:
 	static const FFlowPinTypeName PinTypeNameClass;

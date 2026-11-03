@@ -55,7 +55,6 @@ public:
 	void RefreshGraph();
 
 protected:
-	void UpgradeAllFlowNodePins();
 
 	void RecursivelyRefreshAddOns(UFlowGraphNode& FromFlowGraphNode);
 	static void RecursivelySetupAllFlowGraphNodesForEditing(UFlowGraphNode& FromFlowGraphNode);

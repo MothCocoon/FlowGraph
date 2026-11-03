@@ -5,63 +5,6 @@
 
 #include "FlowPinEnums.generated.h"
 
-UENUM(BlueprintType, meta = (ScriptName = "LegacyFlowPinNameEnum"))
-enum class EFlowPinType : uint8
-{
-	// Execution pin
-	Exec,
-
-	// FBoolProperty
-	Bool,
-
-	// FByteProperty FInt16Property FIntProperty FInt64Property FUInt16Property FUInt32Property FUInt64Property
-	Int,
-
-	// FFloatProperty, FDoubleProperty
-	Float,
-
-	// FNameProperty
-	Name,
-
-	// FStringProperty
-	String,
-
-	// FTextProperty
-	Text,
-
-	// FEnumProperty, FByteProperty
-	Enum,
-
-	// FVector (FStructProperty)
-	Vector,
-
-	// FRotator (FStructProperty)
-	Rotator,
-
-	// FTransform (FStructProperty)
-	Transform,
-
-	// FGameplayTag (FStructProperty)
-	GameplayTag,
-
-	// FGameplayTagContainer (FStructProperty)
-	GameplayTagContainer,
-
-	// FInstancedStruct (FStructProperty)
-	InstancedStruct,
-
-	// FObjectProperty, FObjectPtrProperty, FWeakObjectProperty, FLazyObjectProperty, FSoftObjectProperty
-	Object,
-
-	// FClassProperty, FClassPtrProperty, FSoftClassProperty
-	Class,
-
-	Max UMETA(Hidden),
-	Invalid UMETA(Hidden),
-	Min = 0 UMETA(Hidden),
-};
-FLOW_ENUM_RANGE_VALUES(EFlowPinType)
-
 /**
  * Result enum for TryResolveDataPin()
  */

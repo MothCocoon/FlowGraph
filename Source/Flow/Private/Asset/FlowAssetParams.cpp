@@ -18,22 +18,6 @@ void UFlowAssetParams::PostLoad()
 {
 	Super::PostLoad();
 
-	if (!HasAnyFlags(RF_ArchetypeObject | RF_ClassDefaultObject))
-	{
-		// Migrate the named properties over to the new structs
-
-		bool bMadeAnyChanges = false;
-		for (FFlowNamedDataPinProperty& NamedProperty : Properties)
-		{
-			bMadeAnyChanges |= NamedProperty.FixupDataPinProperty();
-		}
-		
-		if (bMadeAnyChanges)
-		{
-			ModifyAndRebuildPropertiesMap();
-		}
-	}
-
 	const EFlowReconcilePropertiesResult ReconcileResult = ReconcilePropertiesWithParentParams();
 	if (EFlowReconcilePropertiesResult_Classifiers::IsErrorResult(ReconcileResult))
 	{

@@ -19,21 +19,6 @@ UFlowNode_DefineProperties::UFlowNode_DefineProperties()
 	AllowedSignalModes = {EFlowSignalMode::Enabled, EFlowSignalMode::Disabled};
 }
 
-void UFlowNode_DefineProperties::PostLoad()
-{
-	Super::PostLoad();
-
-	if (!HasAnyFlags(RF_ArchetypeObject | RF_ClassDefaultObject))
-	{
-		// Migrate the named properties over to the new structs
-
-		for (FFlowNamedDataPinProperty& NamedProperty : NamedProperties)
-		{
-			NamedProperty.FixupDataPinProperty();
-		}
-	}
-}
-
 #if WITH_EDITOR
 bool UFlowNode_DefineProperties::SupportsContextPins() const
 {
@@ -54,7 +39,7 @@ void UFlowNode_DefineProperties::PostEditChangeChainProperty(FPropertyChangedCha
 	// The DetailsCustomization for FFlowDataPinValue_Enum isn't being called when using an InstancedStruct
 	// so we need to call OnEnumNameChanged refresh by hand...
 	if (PropertyChainEvent.ChangeType == EPropertyChangeType::ValueSet &&
-		Property->GetFName() == GET_MEMBER_NAME_CHECKED(FFlowDataPinOutputProperty_Enum, EnumName))
+		Property->GetFName() == GET_MEMBER_NAME_CHECKED(FFlowDataPinValue_Enum, EnumName))
 	{
 		for (FFlowNamedDataPinProperty& NamedProperty : NamedProperties)
 		{

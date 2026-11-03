@@ -24,16 +24,7 @@ void UFlowNode_Log::ExecuteInput(const FName& PinName)
 {
 	// Get the Message from either the default (Message property) or the data pin (if connected)
 	FString ResolvedMessage;
-	const EFlowDataPinResolveResult MessageResult = TryResolveDataPinValue<FFlowPinType_String>(GET_MEMBER_NAME_CHECKED(ThisClass, Message), ResolvedMessage);
-
-	// #FlowDataPinLegacy - retire this backward compatibility when we remove legacy data pin support?
-	FLOW_ASSERT_ENUM_MAX(EFlowDataPinResolveResult, 9);
-	if (MessageResult == EFlowDataPinResolveResult::FailedUnknownPin)
-	{
-		// Handle lookup of a FlowNode_Log that predated DataPins
-		ResolvedMessage = Message;
-	}
-	// --
+	(void)TryResolveDataPinValue<FFlowPinType_String>(GET_MEMBER_NAME_CHECKED(ThisClass, Message), ResolvedMessage);
 
 	// Format Message with named properties
 	FText FormattedMessage = FText::FromString(ResolvedMessage);
