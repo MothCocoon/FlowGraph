@@ -697,13 +697,6 @@ bool UFlowNodeBase::TryAddValueToFormatNamedArguments(const FFlowNamedDataPinPro
 }
 
 #if WITH_EDITOR
-void UFlowNodeBase::PostLoad()
-{
-	Super::PostLoad();
-
-	EnsureNodeDisplayStyle();
-}
-
 void UFlowNodeBase::SetGraphNode(UEdGraphNode* NewGraphNode)
 {
 	GraphNode = NewGraphNode;
@@ -782,8 +775,7 @@ FString UFlowNodeBase::GetNodeCategory() const
 
 bool UFlowNodeBase::GetDynamicTitleColor(FLinearColor& OutColor) const
 {
-	// Legacy asset support for NodeStyle == EFlowNodeStyle::Custom
-	if (NodeDisplayStyle == FlowNodeStyle::Custom || NodeStyle == EFlowNodeStyle::Custom)
+	if (NodeDisplayStyle == FlowNodeStyle::Custom)
 	{
 		OutColor = NodeColor;
 		return true;
@@ -824,7 +816,7 @@ FText UFlowNodeBase::GetGeneratedDisplayName() const
 
 	if (GetClass()->ClassGeneratedBy)
 	{
-		UClass* Class = Cast<UBlueprint>(GetClass()->ClassGeneratedBy)->GeneratedClass;
+		const UClass* Class = Cast<UBlueprint>(GetClass()->ClassGeneratedBy)->GeneratedClass;
 		return Class->GetMetaDataText(NAME_GeneratedDisplayName);
 	}
 
@@ -860,62 +852,6 @@ FString UFlowNodeBase::GetInheritedNodeKeywords(const UClass* NodeClass)
 	}
 
 	return FString::Join(Keywords, TEXT(" "));
-}
-
-void UFlowNodeBase::EnsureNodeDisplayStyle()
-{
-	// todo: remove in Flow 2.2
-
-	// Backward compatibility update to convert NodeStyle to NodeDisplayStyle
-	FLOW_ASSERT_ENUM_MAX(EFlowNodeStyle, 7);
-
-	const FGameplayTag NodeDisplayStylePrev = NodeDisplayStyle;
-
-	switch (NodeStyle)
-	{
-		case EFlowNodeStyle::Condition:
-			{
-				NodeDisplayStyle = FlowNodeStyle::Condition;
-			}
-			break;
-		case EFlowNodeStyle::Default:
-			{
-				NodeDisplayStyle = FlowNodeStyle::Default;
-			}
-			break;
-		case EFlowNodeStyle::InOut:
-			{
-				NodeDisplayStyle = FlowNodeStyle::InOut;
-			}
-			break;
-		case EFlowNodeStyle::Latent:
-			{
-				NodeDisplayStyle = FlowNodeStyle::Latent;
-			}
-			break;
-		case EFlowNodeStyle::Logic:
-			{
-				NodeDisplayStyle = FlowNodeStyle::Logic;
-			}
-			break;
-		case EFlowNodeStyle::SubGraph:
-			{
-				NodeDisplayStyle = FlowNodeStyle::SubGraph;
-			}
-			break;
-		case EFlowNodeStyle::Custom:
-			{
-				NodeDisplayStyle = FlowNodeStyle::Custom;
-			}
-			break;
-		default: break;
-	}
-
-	if (GEditor != nullptr && NodeDisplayStyle != NodeDisplayStylePrev)
-	{
-		NodeStyle = EFlowNodeStyle::Invalid;
-		Modify();
-	}
 }
 #endif
 

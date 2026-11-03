@@ -399,8 +399,6 @@ protected:
 
 #if WITH_EDITOR
 public:
-	virtual void PostLoad() override;
-
 	void SetGraphNode(UEdGraphNode* NewGraphNode);
 	UEdGraphNode* GetGraphNode() const { return GraphNode; }
 
@@ -438,10 +436,6 @@ protected:
 
 	UPROPERTY(EditDefaultsOnly, Category = "FlowNode", meta = (Categories = "Flow.NodeStyle"))
 	FGameplayTag NodeDisplayStyle = FlowNodeStyle::Node;
-
-	/* Deprecated NodeStyle, replaced by NodeDisplayStyle. */
-	UPROPERTY(meta = (DeprecatedProperty, DeprecationMessage = "Use the NodeDisplayStyle instead."))
-	EFlowNodeStyle NodeStyle = EFlowNodeStyle::Invalid;
 
 	/* Set Node Style to custom to use your own color for this node (if using Flow.NodeStyle.Custom). */
 	UPROPERTY(EditDefaultsOnly, Category = "FlowNode", DisplayName = "Custom Node Color")
@@ -514,9 +508,6 @@ public:
 	 * contributed by attached addons are outside the scope of a CDO and are not reported here.
 	 */
 	virtual void GetCatalogPins(TArray<FFlowPin>& OutInputPins, TArray<FFlowPin>& OutOutputPins) const {}
-
-protected:
-	void EnsureNodeDisplayStyle();
 #endif // WITH_EDITOR
 
 public:

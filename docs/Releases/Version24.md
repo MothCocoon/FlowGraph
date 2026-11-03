@@ -28,6 +28,8 @@ The original Data Pins implementation and its automatic migration are now remove
     * This is a breaking change if you have custom UFlowGraphNode classes. Updating the code is trivial though.
 * Detail Customizations are now organized into subfolders.
     * This is a breaking change if you made changes to these classes.
+* Removed the deprecated `EFlowNodeStyle` enum, the `UFlowNodeBase::NodeStyle` property and `UFlowGraphSettings::NodeTitleColors`, replaced by `NodeDisplayStyle` tags in Flow 2.0. Nodes no longer run the conversion on every load.
+    * Assets not resaved since Flow 2.0 lose their node style. Resave them before upgrading.
 
 ### By default, Data Validation runs on saving a Flow Asset
 This is the result of hooking up Flow Asset validation to the engine's built-in validation. Thanks to this, many issues can be detected early on.

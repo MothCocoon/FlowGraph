@@ -145,9 +145,6 @@ class FLOWEDITOR_API UFlowGraphSettings : public UDeveloperSettings
 	TMap<FGameplayTag, FFlowNodeDisplayStyleConfig> NodeDisplayStylesMap;
 #endif
 
-	UPROPERTY(EditAnywhere, config, Category = "Nodes", meta = (Deprecated))
-	TMap<EFlowNodeStyle, FLinearColor> NodeTitleColors;
-
 	UPROPERTY(Config, EditAnywhere, Category = "Nodes")
 	TMap<TSoftClassPtr<UFlowNode>, FLinearColor> NodeSpecificColors;
 
