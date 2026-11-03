@@ -1,4 +1,4 @@
-// Copyright https://github.com/MothCocoon/FlowGraph/graphs/contributors
+﻿// Copyright https://github.com/MothCocoon/FlowGraph/graphs/contributors
 #pragma once
 
 #include "Types/FlowEnumUtils.h"
@@ -59,12 +59,7 @@ enum class EFlowSearchPinDirection : uint8
 	Any,
 	Input,
 	Output,
-
-	Max UMETA(Hidden),
-	Invalid UMETA(Hidden),
-	Min = 0 UMETA(Hidden),
 };
-FLOW_ENUM_RANGE_VALUES(EFlowSearchPinDirection);
 
 /**
  * Pin connection state accepted by a pin name match.
@@ -75,9 +70,4 @@ enum class EFlowSearchPinConnectionState : uint8
 	Any,
 	Connected,
 	Unconnected,
-
-	Max UMETA(Hidden),
-	Invalid UMETA(Hidden),
-	Min = 0 UMETA(Hidden),
 };
-FLOW_ENUM_RANGE_VALUES(EFlowSearchPinConnectionState);

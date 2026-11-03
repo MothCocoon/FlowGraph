@@ -32,7 +32,7 @@ public:
 		const bool bReplicates,
 		const bool bAlwaysRelevant,
 		TObjectPtr<AFlowLevelSequenceActor>& OutActor,
-		UClass* ActorClass = nullptr);
+		TSubclassOf<AFlowLevelSequenceActor> ActorClass = nullptr);
 
 	void SetFlowEventReceiver(UFlowNode* FlowNode) { FlowEventReceiver = FlowNode; }
 

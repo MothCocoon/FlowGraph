@@ -43,10 +43,10 @@ protected:
 	UPROPERTY(EditAnywhere, Category = "Graph", meta = (DefaultForInputFlowPin, FlowPinType = "Object"))
 	TSoftObjectPtr<UFlowAssetParams> AssetParams;
 
-	/* Allow creating an instance of the same Flow Asset as the one containing this node.
-	 * Warning: enabling this can cause infinite recursion if the graph spawns itself unconditionally. */
+	/* Allow to create instance of the same Flow Asset as the asset containing this node.
+	 * Enabling it may cause an infinite loop, if graph would keep creating copies of itself. */
 	UPROPERTY(EditAnywhere, Category = "Graph")
-	bool bCanInstanceIdenticalAsset = false;
+	bool bCanInstanceIdenticalAsset;
 
 	UPROPERTY(SaveGame)
 	FString SavedAssetInstanceName;

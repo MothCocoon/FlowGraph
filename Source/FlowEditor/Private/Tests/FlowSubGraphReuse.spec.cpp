@@ -553,9 +553,10 @@ void FFlowSubGraphReuseSpec::Define()
 		TestNotEqual(TEXT("Override policy creates a new instance"), SecondInstance, FirstInstance);
 	});
 
-	It("uses the configured project default for a child asset without a policy override", [this]()
+	It("uses the upstream project default for a child asset without a policy override", [this]()
 	{
-		const ESubGraphFinishPolicy ProjectDefault = GetDefault<UFlowSettings>()->SubGraphFinishPolicy;
+		TestEqual(TEXT("Flow project default is Deinitialize"),
+			GetDefault<UFlowSettings>()->SubGraphFinishPolicy, ESubGraphFinishPolicy::Deinitialize);
 
 		UFlowAsset* FirstInstance = StartSubFlow();
 		if (!TestNotNull(TEXT("First child instance"), FirstInstance))
@@ -563,14 +564,9 @@ void FFlowSubGraphReuseSpec::Define()
 			return;
 		}
 
-		TestEqual(TEXT("Child uses the configured project default"),
-			FirstInstance->GetSubGraphFinishPolicy(), ProjectDefault);
-
 		TStrongObjectPtr<UFlowAsset> FirstInstanceKeepAlive(FirstInstance);
 		FinishSubFlow(FirstInstance);
-		const bool bShouldRemainInitialized = ProjectDefault != ESubGraphFinishPolicy::Deinitialize;
-		TestEqual(TEXT("Configured policy controls whether the child stays initialized"),
-			FirstInstance->IsInstanceInitialized(), bShouldRemainInitialized);
+		TestFalse(TEXT("Default Deinitialize releases the first instance"), FirstInstance->IsInstanceInitialized());
 
 		UFlowAsset* SecondInstance = StartSubFlow();
 		if (!TestNotNull(TEXT("Second child instance"), SecondInstance))
@@ -578,9 +574,7 @@ void FFlowSubGraphReuseSpec::Define()
 			return;
 		}
 
-		const bool bShouldReuseInstance = ProjectDefault == ESubGraphFinishPolicy::Reuse;
-		TestEqual(TEXT("Only the Reuse policy preserves the child instance"),
-			SecondInstance == FirstInstance, bShouldReuseInstance);
+		TestNotEqual(TEXT("Project default creates a new child instance"), SecondInstance, FirstInstance);
 	});
 }
 

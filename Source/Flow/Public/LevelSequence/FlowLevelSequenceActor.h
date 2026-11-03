@@ -44,9 +44,8 @@ public:
 	void ClearAllBindings();
 
 protected:
-	/** Initializes the sequence player on clients. */
 	UFUNCTION()
-	virtual void OnRep_ReplicatedLevelSequenceAsset();
+	void OnRep_ReplicatedLevelSequenceAsset();
 
 	UPROPERTY(ReplicatedUsing = OnRep_BindingEntries)
 	TArray<FFlowSequenceBindingEntry> BindingEntries;

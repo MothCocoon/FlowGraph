@@ -239,11 +239,11 @@ void UFlowNode_PlayLevelSequence::ExecuteInput(const FName& PinName)
 	{
 		StopPlayback();
 	}
-	else if (PinName == TEXT("Pause") && SequencePlayer)
+	else if (PinName == TEXT("Pause"))
 	{
 		SequencePlayer->Pause();
 	}
-	else if (PinName == TEXT("Resume") && SequencePlayer && SequencePlayer->IsPaused())
+	else if (PinName == TEXT("Resume") && SequencePlayer->IsPaused())
 	{
 		SequencePlayer->Play();
 	}
