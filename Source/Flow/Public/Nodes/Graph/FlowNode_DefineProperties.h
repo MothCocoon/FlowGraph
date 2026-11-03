@@ -27,7 +27,6 @@ protected:
 	TArray<FFlowNamedDataPinProperty> NamedProperties;
 
 public:
-	virtual void PostLoad() override;
 
 #if WITH_EDITOR
 	// IFlowContextPinSupplierInterface

@@ -16,9 +16,6 @@
 #include <limits>
 #include <type_traits>
 
-// #FlowDataPinLegacy
-#include "Types/FlowDataPinProperties.h"
-// --
 
 namespace FlowPinType
 {
@@ -302,7 +299,6 @@ namespace FlowPinType
 		using ValueType = TPinType::ValueType;
 		using WrapperType = TPinType::WrapperType;
 		using PropertyType = TPinType::MainPropertyType;
-		using LegacyWrapperType = TPinType::LegacyWrapperType;
 
 		static EFlowDataPinResolveResult ExtractFromProperty(const FProperty* Property, const void* Container, TArray<ValueType>& OutValues)
 		{
@@ -316,15 +312,6 @@ namespace FlowPinType
 					return EFlowDataPinResolveResult::Success;
 				}
 
-				// #FlowDataPinLegacy - support sourcing from old property wrappers For Now(tm)
-				static const UScriptStruct* OldPropStruct = LegacyWrapperType::StaticStruct();
-				if (StructProp->Struct->IsChildOf(OldPropStruct))
-				{
-					const LegacyWrapperType* Wrapper = StructProp->ContainerPtrToValuePtr<LegacyWrapperType>(Container);
-					OutValues = { Wrapper->Value };
-					return EFlowDataPinResolveResult::Success;
-				}
-				// --
 			}
 
 			// 2. Direct property
@@ -513,7 +500,6 @@ namespace FlowPinType
 	{
 		using ValueType = TPinType::ValueType;
 		using WrapperType = TPinType::WrapperType;
-		using LegacyWrapperType = TPinType::LegacyWrapperType;
 
 		static EFlowDataPinResolveResult ExtractFromProperty(const FProperty* Property, const void* Container, TArray<ValueType>& OutValues)
 		{
@@ -535,15 +521,6 @@ namespace FlowPinType
 					return EFlowDataPinResolveResult::Success;
 				}
 
-				// #FlowDataPinLegacy - support sourcing from old property wrappers For Now(tm)
-				static const UScriptStruct* OldPropStruct = LegacyWrapperType::StaticStruct();
-				if (StructProp->Struct->IsChildOf(OldPropStruct))
-				{
-					const LegacyWrapperType* Wrapper = StructProp->ContainerPtrToValuePtr<LegacyWrapperType>(Container);
-					OutValues = { Wrapper->Value };
-					return EFlowDataPinResolveResult::Success;
-				}
-				// --
 			}
 			else if (const FArrayProperty* ArrayProp = CastField<FArrayProperty>(Property))
 			{
@@ -593,7 +570,6 @@ namespace FlowPinType
 		using TPinType = FFlowPinType_Enum;
 		using WrapperType = TPinType::WrapperType;
 		using ValueType = TPinType::ValueType;
-		using LegacyWrapperType = TPinType::LegacyWrapperType;
 
 		static EFlowDataPinResolveResult ExtractFromProperty(const FProperty* Property, const void* Container, TArray<FName>& OutValues, TSoftObjectPtr<UEnum>& OutEnumClass)
 		{
@@ -606,16 +582,6 @@ namespace FlowPinType
 				return EFlowDataPinResolveResult::Success;
 			}
 
-			// #FlowDataPinLegacy - support sourcing from old property wrappers For Now(tm)
-			static const UScriptStruct* OldPropStruct = LegacyWrapperType::StaticStruct();
-			if (StructProp && StructProp->Struct->IsChildOf(OldPropStruct))
-			{
-				const LegacyWrapperType* Wrapper = StructProp->ContainerPtrToValuePtr<LegacyWrapperType>(Container);
-				OutValues = { Wrapper->Value };
-				OutEnumClass = Wrapper->EnumClass;
-				return EFlowDataPinResolveResult::Success;
-			}
-			// --
 
 			if (const FEnumProperty* EnumProp = CastField<FEnumProperty>(Property))
 			{
@@ -716,15 +682,6 @@ namespace FlowPinType
 					return EFlowDataPinResolveResult::Success;
 				}
 
-				// #FlowDataPinLegacy - support sourcing from old property wrappers For Now(tm)
-				static const UScriptStruct* OldPropStruct = LegacyWrapperType::StaticStruct();
-				if (StructProp->Struct->IsChildOf(OldPropStruct))
-				{
-					const LegacyWrapperType* Wrapper = StructProp->ContainerPtrToValuePtr<LegacyWrapperType>(Container);
-					OutValues = { Wrapper->Value };
-					return EFlowDataPinResolveResult::Success;
-				}
-				// --
 			}
 			else if (const FArrayProperty* ArrayProp = CastField<FArrayProperty>(Property))
 			{
@@ -778,7 +735,6 @@ namespace FlowPinType
 	{
 		using ValueType = TPinType::ValueType;
 		using WrapperType = TPinType::WrapperType;
-		using LegacyWrapperType = TPinType::LegacyWrapperType;
 
 		static EFlowDataPinResolveResult ExtractFromProperty(const FProperty* Property, const void* Container, TArray<ValueType>& OutValues)
 		{
@@ -802,15 +758,6 @@ namespace FlowPinType
 					return EFlowDataPinResolveResult::Success;
 				}
 
-				// #FlowDataPinLegacy - support sourcing from old property wrappers For Now(tm)
-				static const UScriptStruct* OldPropStruct = LegacyWrapperType::StaticStruct();
-				if (StructProp->Struct->IsChildOf(OldPropStruct))
-				{
-					const LegacyWrapperType* Wrapper = StructProp->ContainerPtrToValuePtr<LegacyWrapperType>(Container);
-					OutValues = { Cast<TValueObjectType>(Wrapper->GetObjectValue()) };
-					return EFlowDataPinResolveResult::Success;
-				}
-				// --
 			}
 
 			if (const FArrayProperty* ArrProp = CastField<FArrayProperty>(Property))

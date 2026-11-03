@@ -31,10 +31,6 @@ struct FLOW_API FFlowPin
 	FString PinToolTip;
 #endif
 
-	/* Deprecated PinType, use PinTypeName instead (all standard names are defined in FFlowPinTypeNamesStandard). */
-	UPROPERTY(Meta = (DeprecatedProperty, DeprecationMessage = "Use PinTypeName instead"))
-	EFlowPinType PinType = EFlowPinType::Invalid;
-
 	/* Only supporting None (Single) or Array for now(tm) for data pins via EFlowMultiType. */
 	UPROPERTY()
 	EPinContainerType ContainerType = EPinContainerType::None;
@@ -253,7 +249,6 @@ public:
 	const FFlowPinTypeName& GetPinTypeName() const { return PinTypeName; }
 	const FFlowPinType* ResolveFlowPinType() const;
 	void SetPinSubCategoryObject(UObject* Object) { PinSubCategoryObject = Object; }
-	static FFlowPinTypeName GetPinTypeNameForLegacyPinType(EFlowPinType PinType);
 
 	const TWeakObjectPtr<UObject>& GetPinSubCategoryObject() const { return PinSubCategoryObject; }
 
@@ -268,7 +263,7 @@ public:
      */
 
 	/* SourceForOutputFlowPin
-	 * May be used on a non-FFlowDataPinProperty within a UFlowNode to bind the
+	 * May be used on a native property within a UFlowNode to bind the
 	 * output data pin to use the property as its source.
 	 * 
 	 * If a string value is given, it is interpreted as the Data Pin's name,
@@ -277,7 +272,7 @@ public:
 	static const FName MetadataKey_SourceForOutputFlowPin;
 
 	/* DefaultForInputFlowPin
-	 * May be used on a non-FFlowDataPinProperty within a UFlowNode to bind the
+	 * May be used on a native property within a UFlowNode to bind the
 	 * Input data pin to use the property as its default value.
 	 * 
 	 * If the input pin IS NOT connected to another node, then the bound property
@@ -293,16 +288,16 @@ public:
 
 	/* FlowPinType
 	 * May be used on either a property (within a UFlowNode) or a USTRUCT declaration for
-	 * a FFlowDataPinProperty subclass.
+	 * a FFlowDataPinValue subclass.
 	 * 
 	 * If used on a property, then it indicates that a data pin of the given type should be auto-generated,
 	 * and bound to the property.  May be used in conjunction with SourceForOutputFlowPin or DefaultForInputFlowPin
 	 * (but not both) to determine how the property binding is to be applied (as input default or output supply source)
 	 * 
-	 * If used on a FFlowDataPinProperty struct declaration, then it defines the type of pin
+	 * If used on a FFlowDataPinValue struct declaration, then it defines the type of pin
 	 * that should be auto-generated when the struct is used as a property in a UFlowNode.
 	 * 
-	 * The string value of the metadata should exactly match a value in EFlowPinType. */
+	 * The metadata value names a registered pin type (see FFlowPinTypeNamesStandard). */
 	static const FName MetadataKey_FlowPinType;
 	// --
 

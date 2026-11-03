@@ -301,14 +301,6 @@ public:
 
 	bool TryGetFlowDataPinSupplierDatasForPinName(const FName& PinName, TFlowPinValueSupplierDataArray& InOutPinValueSupplierDatas) const;
 
-	// #FlowDataPinLegacy
-public:
-	void FixupDataPinTypes();
-
-protected:
-	static void FixupDataPinTypesForArray(TArray<FFlowPin>& MutableDataPinArray);
-	static void FixupDataPinTypesForPin(FFlowPin& MutableDataPin);
-	// --
 
 //////////////////////////////////////////////////////////////////////////
 // Data validation

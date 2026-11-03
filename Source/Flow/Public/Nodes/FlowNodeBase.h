@@ -367,52 +367,6 @@ public:
 
 public:
 
-	// #FlowDataPinLegacy
-	UFUNCTION(BlueprintCallable, Category = DataPins, DisplayName = "Try Resolve DataPin As Bool", meta = (DeprecatedFunction, DeprecationMessage = "Use TryResolveDataPin (in blueprint) or TryResolveDataPinValue(s) (in code) instead"))
-	FFlowDataPinResult_Bool TryResolveDataPinAsBool(const FName& PinName) const;
-
-	UFUNCTION(BlueprintCallable, Category = DataPins, DisplayName = "Try Resolve DataPin As Int", meta = (DeprecatedFunction, DeprecationMessage = "Use TryResolveDataPin (in blueprint) or TryResolveDataPinValue(s) (in code) instead"))
-	FFlowDataPinResult_Int TryResolveDataPinAsInt(const FName& PinName) const;
-
-	UFUNCTION(BlueprintCallable, Category = DataPins, DisplayName = "Try Resolve DataPin As Float", meta = (DeprecatedFunction, DeprecationMessage = "Use TryResolveDataPin (in blueprint) or TryResolveDataPinValue(s) (in code) instead"))
-	FFlowDataPinResult_Float TryResolveDataPinAsFloat(const FName& PinName) const;
-
-	UFUNCTION(BlueprintCallable, Category = DataPins, DisplayName = "Try Resolve DataPin As Name", meta = (DeprecatedFunction, DeprecationMessage = "Use TryResolveDataPin (in blueprint) or TryResolveDataPinValue(s) (in code) instead"))
-	FFlowDataPinResult_Name TryResolveDataPinAsName(const FName& PinName) const;
-
-	UFUNCTION(BlueprintCallable, Category = DataPins, DisplayName = "Try Resolve DataPin As String", meta = (DeprecatedFunction, DeprecationMessage = "Use TryResolveDataPin (in blueprint) or TryResolveDataPinValue(s) (in code) instead"))
-	FFlowDataPinResult_String TryResolveDataPinAsString(const FName& PinName) const;
-
-	UFUNCTION(BlueprintCallable, Category = DataPins, DisplayName = "Try Resolve DataPin As Text", meta = (DeprecatedFunction, DeprecationMessage = "Use TryResolveDataPin (in blueprint) or TryResolveDataPinValue(s) (in code) instead"))
-	FFlowDataPinResult_Text TryResolveDataPinAsText(const FName& PinName) const;
-
-	UFUNCTION(BlueprintCallable, Category = DataPins, DisplayName = "Try Resolve DataPin As Enum", meta = (DeprecatedFunction, DeprecationMessage = "Use TryResolveDataPin (in blueprint) or TryResolveDataPinValue(s) (in code) instead"))
-	FFlowDataPinResult_Enum TryResolveDataPinAsEnum(const FName& PinName) const;
-
-	UFUNCTION(BlueprintCallable, Category = DataPins, DisplayName = "Try Resolve DataPin As Vector", meta = (DeprecatedFunction, DeprecationMessage = "Use TryResolveDataPin (in blueprint) or TryResolveDataPinValue(s) (in code) instead"))
-	FFlowDataPinResult_Vector TryResolveDataPinAsVector(const FName& PinName) const;
-
-	UFUNCTION(BlueprintCallable, Category = DataPins, DisplayName = "Try Resolve DataPin As Rotator", meta = (DeprecatedFunction, DeprecationMessage = "Use TryResolveDataPin (in blueprint) or TryResolveDataPinValue(s) (in code) instead"))
-	FFlowDataPinResult_Rotator TryResolveDataPinAsRotator(const FName& PinName) const;
-
-	UFUNCTION(BlueprintCallable, Category = DataPins, DisplayName = "Try Resolve DataPin As Transform", meta = (DeprecatedFunction, DeprecationMessage = "Use TryResolveDataPin (in blueprint) or TryResolveDataPinValue(s) (in code) instead"))
-	FFlowDataPinResult_Transform TryResolveDataPinAsTransform(const FName& PinName) const;
-
-	UFUNCTION(BlueprintCallable, Category = DataPins, DisplayName = "Try Resolve DataPin As GameplayTag", meta = (DeprecatedFunction, DeprecationMessage = "Use TryResolveDataPin (in blueprint) or TryResolveDataPinValue(s) (in code) instead"))
-	FFlowDataPinResult_GameplayTag TryResolveDataPinAsGameplayTag(const FName& PinName) const;
-
-	UFUNCTION(BlueprintCallable, Category = DataPins, DisplayName = "Try Resolve DataPin As GameplayTagContainer", meta = (DeprecatedFunction, DeprecationMessage = "Use TryResolveDataPin (in blueprint) or TryResolveDataPinValue(s) (in code) instead"))
-	FFlowDataPinResult_GameplayTagContainer TryResolveDataPinAsGameplayTagContainer(const FName& PinName) const;
-
-	UFUNCTION(BlueprintCallable, Category = DataPins, DisplayName = "Try Resolve DataPin As InstancedStruct", meta = (DeprecatedFunction, DeprecationMessage = "Use TryResolveDataPin (in blueprint) or TryResolveDataPinValue(s) (in code) instead"))
-	FFlowDataPinResult_InstancedStruct TryResolveDataPinAsInstancedStruct(const FName& PinName) const;
-
-	UFUNCTION(BlueprintCallable, Category = DataPins, DisplayName = "Try Resolve DataPin As Object", meta = (DeprecatedFunction, DeprecationMessage = "Use TryResolveDataPin (in blueprint) or TryResolveDataPinValue(s) (in code) instead"))
-	FFlowDataPinResult_Object TryResolveDataPinAsObject(const FName& PinName) const;
-
-	UFUNCTION(BlueprintCallable, Category = DataPins, DisplayName = "Try Resolve DataPin As Class", meta = (DeprecatedFunction, DeprecationMessage = "Use TryResolveDataPin (in blueprint) or TryResolveDataPinValue(s) (in code) instead"))
-	FFlowDataPinResult_Class TryResolveDataPinAsClass(const FName& PinName) const;
-	// --
 
 protected:
 	bool TryAddValueToFormatNamedArguments(const FFlowNamedDataPinProperty& NamedDataPinProperty, FFormatNamedArguments& InOutArguments) const;

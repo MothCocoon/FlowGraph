@@ -1266,10 +1266,9 @@ bool UFlowGraphNode::TryUpdateNodePins(TMap<FName, FName>& OutAutoDataPinNameRem
 	const UFlowNode* FlowNodeCDO = FlowNodeInstance->GetClass()->GetDefaultObject<UFlowNode>();
 	check(IsValid(FlowNodeCDO));
 
-	// Fix up old pins on the CDO
+	// Prepare AddOn ownership on the CDO
 	UFlowNode* MutableCDO = const_cast<UFlowNode*>(FlowNodeCDO);
 	MutableCDO->EnsureAddOnFlowNodePointersForEditor();
-	MutableCDO->FixupDataPinTypes();
 
 	const bool bIsRerouteGraphNode = (Cast<UFlowGraphNode_Reroute>(this) != nullptr);
 
