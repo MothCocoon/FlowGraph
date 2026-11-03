@@ -30,10 +30,6 @@ UFlowLevelSequencePlayer* UFlowLevelSequencePlayer::CreateFlowLevelSequencePlaye
 	{
 		ActorClass = AFlowLevelSequenceActor::StaticClass();
 	}
-	else if (!ensureMsgf(ActorClass->IsChildOf<AFlowLevelSequenceActor>(), TEXT("%s isn't a child of AFlowLevelSequenceActor"), *ActorClass->GetName()))
-	{
-		return nullptr;
-	}
 
 	UWorld* ContextWorld = GEngine->GetWorldFromContextObject(WorldContextObject, EGetWorldErrorMode::LogAndReturnNull);
 	if (ContextWorld == nullptr || ContextWorld->bIsTearingDown)
