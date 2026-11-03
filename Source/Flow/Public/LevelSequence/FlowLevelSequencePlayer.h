@@ -27,12 +27,12 @@ public:
 		const UObject* WorldContextObject,
 		ULevelSequence* LevelSequence,
 		const FMovieSceneSequencePlaybackSettings& Settings,
-		const FLevelSequenceCameraSettings CameraSettings,
+		const FLevelSequenceCameraSettings InCameraSettings,
 		const AActor* TransformOriginActor,
 		const bool bReplicates,
 		const bool bAlwaysRelevant,
 		TObjectPtr<AFlowLevelSequenceActor>& OutActor,
-		UClass* ActorClass = nullptr);
+		TSubclassOf<AFlowLevelSequenceActor> ActorClass = nullptr);
 
 	void SetFlowEventReceiver(UFlowNode* FlowNode) { FlowEventReceiver = FlowNode; }
 

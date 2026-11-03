@@ -7,6 +7,8 @@ public class FlowEditor : ModuleRules
 	{
 		PCHUsage = PCHUsageMode.UseExplicitOrSharedPCHs;
 
+		PrivateDefinitions.Add("FLOW_WITH_ANGELSCRIPT=0");
+
 		PublicDependencyModuleNames.AddRange(
 		[
 			"AssetSearch",
