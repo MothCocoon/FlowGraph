@@ -27,7 +27,7 @@ public:
 		const UObject* WorldContextObject,
 		ULevelSequence* LevelSequence,
 		const FMovieSceneSequencePlaybackSettings& Settings,
-		const FLevelSequenceCameraSettings CameraSettings,
+		const FLevelSequenceCameraSettings InCameraSettings,
 		const AActor* TransformOriginActor,
 		const bool bReplicates,
 		const bool bAlwaysRelevant,
