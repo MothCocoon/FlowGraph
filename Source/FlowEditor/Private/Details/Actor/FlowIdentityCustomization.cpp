@@ -19,14 +19,95 @@
 #include "DetailLayoutBuilder.h"
 #include "DetailWidgetRow.h"
 #include "IDetailChildrenBuilder.h"
-#include "SGameplayTagChip.h"
 #include "SLevelViewport.h"
 #include "Styling/SlateStyleRegistry.h"
+#include "Styling/StyleColors.h"
 #include "Widgets/Docking/SDockTab.h"
+#include "Widgets/Input/SButton.h"
 #include "Widgets/Input/SComboButton.h"
 #include "Widgets/Input/SSpinBox.h"
 
 #define LOCTEXT_NAMESPACE "FlowIdentityCustomization"
+
+//////////////////////////////////////////////////////////////////////////
+// SFlowIdentityTagChip
+
+void SFlowIdentityTagChip::Construct(const FArguments& InArgs)
+{
+	IsSelected = InArgs._IsSelected;
+	bShownAsSelected = IsSelected.Get();
+
+	ChildSlot
+	[
+		SNew(SBox)
+		.HeightOverride(18.0f)
+		[
+			SNew(SHorizontalBox)
+			+ SHorizontalBox::Slot()
+			.VAlign(VAlign_Fill)
+			.AutoWidth()
+			[
+				SAssignNew(ChipButton, SButton)
+				.ContentPadding(0)
+				.OnClicked(InArgs._OnEditPressed)
+				[
+					SNew(SHorizontalBox)
+					+ SHorizontalBox::Slot()
+					.AutoWidth()
+					.VAlign(VAlign_Center)
+					[
+						SNew(STextBlock)
+						.Font(FAppStyle::GetFontStyle(TEXT("PropertyWindow.NormalFont")))
+						.OverflowPolicy(ETextOverflowPolicy::Ellipsis)
+						.Text(InArgs._Text)
+					]
+					+ SHorizontalBox::Slot()
+					.AutoWidth()
+					.VAlign(VAlign_Center)
+					[
+						SAssignNew(ClearButton, SButton)
+						.Visibility(InArgs._ShowClearButton ? EVisibility::Visible : EVisibility::Collapsed)
+						.VAlign(VAlign_Center)
+						.HAlign(HAlign_Center)
+						.ButtonStyle(FSlateStyleRegistry::FindSlateStyle("GameplayTagStyle"), "GameplayTags.ChipClearButton")
+						.ToolTipText(LOCTEXT("ClearTag", "Clear Tag"))
+						.ContentPadding(FMargin(2, 0, 0, 0))
+						.OnClicked(InArgs._OnClearPressed)
+						[
+							SNew(SImage)
+							.ColorAndOpacity_Lambda([this]()
+							{
+								return ClearButton->IsHovered() ? FStyleColors::White : FStyleColors::Foreground;
+							})
+							.Image(FAppStyle::GetBrush("Icons.X"))
+							.DesiredSizeOverride(FVector2D(12.0f, 12.0f))
+						]
+					]
+				]
+			]
+		]
+	];
+
+	UpdateButtonStyle();
+}
+
+void SFlowIdentityTagChip::Tick(const FGeometry& AllottedGeometry, const double InCurrentTime, const float InDeltaTime)
+{
+	SCompoundWidget::Tick(AllottedGeometry, InCurrentTime, InDeltaTime);
+
+	const bool bSelected = IsSelected.Get();
+	if (bSelected != bShownAsSelected)
+	{
+		bShownAsSelected = bSelected;
+		UpdateButtonStyle();
+	}
+}
+
+void SFlowIdentityTagChip::UpdateButtonStyle()
+{
+	const FName StyleName = bShownAsSelected ? FName("GameplayTags.ChipButton.Selected") : FName("GameplayTags.ChipButton.Unselected");
+	ChipButton->SetButtonStyle(&FSlateStyleRegistry::FindSlateStyle("GameplayTagStyle")->GetWidgetStyle<FButtonStyle>(StyleName));
+}
 
 //////////////////////////////////////////////////////////////////////////
 // SFlowIdentityTagSelector
@@ -291,7 +372,7 @@ void SFlowIdentityTagSelector::RebuildTagOptions()
 			          .AutoHeight()
 			          .Padding(FMargin(0, 2))
 			[
-				SNew(SGameplayTagChip)
+				SNew(SFlowIdentityTagChip)
 				.ShowClearButton(false)
 				.Text(FText::FromString(GetTagString(GameplayTag) + TEXT("  ")))
 				.IsSelected(this, &SFlowIdentityTagSelector::IsTagSelected, GameplayTag)
@@ -350,7 +431,7 @@ void SFlowIdentityTagSelector::RebuildTagOptions()
 			                .AutoHeight()
 			                .Padding(FMargin(0, 2))
 			[
-				SNew(SGameplayTagChip)
+				SNew(SFlowIdentityTagChip)
 				.IsSelected(Count == CurrentTags.Num())
 				.OnClearPressed_Lambda([this, GameplayTag]()
 				{

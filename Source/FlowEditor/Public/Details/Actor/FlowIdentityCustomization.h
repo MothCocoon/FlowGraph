@@ -1,6 +1,7 @@
 // Copyright https://github.com/MothCocoon/FlowGraph/graphs/contributors
 #pragma once
 
+#include "Framework/SlateDelegates.h"
 #include "GameplayTagContainer.h"
 #include "IPropertyTypeCustomization.h"
 #include "StructUtils/InstancedStruct.h"
@@ -12,6 +13,41 @@
 #include "Types/FlowIdentity.h"
 
 class IDetailsView;
+class SButton;
+
+/**
+ * Gameplay tag chip drawn with the engine's GameplayTagStyle.
+ * Replaces SGameplayTagChip, which the engine doesn't export completely, so clang builds fail to link it.
+ */
+class FLOWEDITOR_API SFlowIdentityTagChip : public SCompoundWidget
+{
+public:
+	SLATE_BEGIN_ARGS(SFlowIdentityTagChip)
+		: _IsSelected(true)
+		, _ShowClearButton(true)
+	{
+	}
+		SLATE_ATTRIBUTE(FText, Text)
+		SLATE_ATTRIBUTE(bool, IsSelected)
+		SLATE_ARGUMENT(bool, ShowClearButton)
+		SLATE_EVENT(FOnClicked, OnEditPressed)
+		SLATE_EVENT(FOnClicked, OnClearPressed)
+	SLATE_END_ARGS()
+
+	void Construct(const FArguments& InArgs);
+
+	virtual void Tick(const FGeometry& AllottedGeometry, const double InCurrentTime, const float InDeltaTime) override;
+
+protected:
+	void UpdateButtonStyle();
+
+private:
+	TAttribute<bool> IsSelected;
+	bool bShownAsSelected = false;
+
+	TSharedPtr<SButton> ChipButton;
+	TSharedPtr<SButton> ClearButton;
+};
 
 /**
  * Flow Identity Tag Selector
