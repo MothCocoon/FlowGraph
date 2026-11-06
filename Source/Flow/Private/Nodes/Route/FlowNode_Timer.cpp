@@ -59,6 +59,49 @@ void UFlowNode_Timer::ExecuteInput(const FName& PinName)
 	}
 }
 
+void UFlowNode_Timer::FastForwardInput(const FName& PinName, const FName& OutputPinName)
+{
+	const bool bFastForwardCompleted = OutputPinName == TEXT("Completed");
+
+	if (bFastForwardCompleted || OutputPinName == TEXT("Step"))
+	{
+		// Timer starts like after a real input
+		if (!PinName.IsNone())
+		{
+			ExecuteInputForSelfAndAddOns(PinName);
+		}
+
+		// Time passes at once, so steps fire like while waiting
+		const int32 MaxSteps = StepTime > 0.0f ? FMath::CeilToInt(ResolvedCompletionTime / StepTime) : 0;
+		for (int32 StepIndex = 0; StepIndex < MaxSteps && GetActivationState() == EFlowNodeState::Active && (bFastForwardCompleted || StepIndex == 0); ++StepIndex)
+		{
+			OnStep();
+		}
+
+		if (bFastForwardCompleted && GetActivationState() == EFlowNodeState::Active)
+		{
+			OnCompletion();
+		}
+
+		// Running timers continue from the fast forwarded step
+		if (!bFastForwardCompleted && GetActivationState() == EFlowNodeState::Active && GetWorld())
+		{
+			GetWorld()->GetTimerManager().SetTimer(StepTimerHandle, this, &UFlowNode_Timer::OnStep, StepTime, true);
+			GetWorld()->GetTimerManager().SetTimer(CompletionTimerHandle, this, &UFlowNode_Timer::OnCompletion, FMath::Max(ResolvedCompletionTime - SumOfSteps, UE_KINDA_SMALL_NUMBER), false);
+		}
+	}
+	else
+	{
+		Super::FastForwardInput(PinName, OutputPinName);
+	}
+}
+
+bool UFlowNode_Timer::CanFastForward(const FName& InputPinName, const FName& OutputPinName) const
+{
+	// Only Skip input finishes the timer by Skipped output, Step output requires step time
+	return (InputPinName == TEXT("Skip")) == (OutputPinName == TEXT("Skipped")) && (OutputPinName != TEXT("Step") || StepTime > 0.0f);
+}
+
 void UFlowNode_Timer::SetTimer()
 {
 	if (GetWorld())
@@ -120,7 +163,11 @@ void UFlowNode_Timer::OnStep()
 
 void UFlowNode_Timer::OnCompletion()
 {
-	TriggerOutput(TEXT("Completed"), true);
+	// Completion scheduled for the next tick outlives the timer finished in the meantime
+	if (GetActivationState() == EFlowNodeState::Active)
+	{
+		TriggerOutput(TEXT("Completed"), true);
+	}
 }
 
 void UFlowNode_Timer::Cleanup()

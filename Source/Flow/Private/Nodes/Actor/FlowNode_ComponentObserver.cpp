@@ -2,6 +2,7 @@
 #include "Nodes/Actor/FlowNode_ComponentObserver.h"
 
 #include "FlowSubsystem.h"
+#include "Interfaces/FlowFastForwardGate.h"
 
 #include UE_INLINE_GENERATED_CPP_BY_NAME(FlowNode_ComponentObserver)
 
@@ -33,6 +34,55 @@ void UFlowNode_ComponentObserver::ExecuteInput(const FName& PinName)
 	{
 		LogError(MissingIdentityTag);
 	}
+}
+
+void UFlowNode_ComponentObserver::FastForwardInput(const FName& PinName, const FName& OutputPinName)
+{
+	const bool bFastForwardSuccess = OutputPinName == TEXT("Success");
+	const bool bFastForwardCompleted = OutputPinName == TEXT("Completed") && SuccessLimit > 0;
+
+	if (bFastForwardSuccess || bFastForwardCompleted)
+	{
+		const int32 PreviousSuccessCount = SuccessCount;
+
+		// Node starts observing like after a real input, already present actors might send events right away
+		if (!PinName.IsNone())
+		{
+			ExecuteInputForSelfAndAddOns(PinName);
+		}
+
+		// Subclass ignoring received events would never reach the expected count
+		const int32 MaxEvents = bFastForwardCompleted ? SuccessLimit - SuccessCount : 1;
+		for (int32 EventIndex = 0; EventIndex < MaxEvents && GetActivationState() == EFlowNodeState::Active
+			&& (bFastForwardCompleted ? SuccessCount < SuccessLimit : SuccessCount == PreviousSuccessCount); ++EventIndex)
+		{
+			const int32 SuccessCountBeforeEvent = SuccessCount;
+			FastForwardEvent();
+
+			// Event source is missing, so the event is received directly
+			if (GetActivationState() == EFlowNodeState::Active && SuccessCount == SuccessCountBeforeEvent)
+			{
+				FFlowFastForwardGate::ReportForcedOutput(*this, OutputPinName);
+				OnEventReceived();
+			}
+		}
+
+		if (IsFastForwardOutputPending(OutputPinName) && GetActivationState() == EFlowNodeState::Active)
+		{
+			FFlowFastForwardGate::ReportForcedOutput(*this, OutputPinName);
+			TriggerOutput(OutputPinName, bFastForwardCompleted);
+		}
+	}
+	else
+	{
+		Super::FastForwardInput(PinName, OutputPinName);
+	}
+}
+
+bool UFlowNode_ComponentObserver::CanFastForward(const FName& InputPinName, const FName& OutputPinName) const
+{
+	// Only Stop input finishes the node by Stopped output
+	return (InputPinName == TEXT("Stop")) == (OutputPinName == TEXT("Stopped"));
 }
 
 void UFlowNode_ComponentObserver::OnLoad_Implementation()

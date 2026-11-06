@@ -61,6 +61,7 @@ public:
 	TSharedPtr<FUICommandInfo> DisableNode;
 	TSharedPtr<FUICommandInfo> SetPassThrough;
 	TSharedPtr<FUICommandInfo> ForcePinActivation;
+	TSharedPtr<FUICommandInfo> FastForwardToHere;
 
 	// Jumps
 	TSharedPtr<FUICommandInfo> FocusViewport;

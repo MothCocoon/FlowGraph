@@ -7,6 +7,7 @@
 #include "Interfaces/FlowExecutionGate.h"
 #include "Interfaces/FlowPreloadableInterface.h"
 #include "Interfaces/FlowNodeWithExternalDataPinSupplierInterface.h"
+#include "Interfaces/FlowFastForwardGate.h"
 #include "Policies/FlowPreloadHelper.h"
 #include "Policies/FlowPreloadPolicy.h"
 #include "Types/FlowAutoDataPinsWorkingData.h"
@@ -1210,6 +1211,39 @@ void UFlowNode::ExecuteInput(const FName& PinName)
 	Super::ExecuteInput(PinName);
 }
 
+void UFlowNode::TriggerFastForwardInput(const FName& PinName, const FName& OutputPinName)
+{
+	PendingFastForwardOutputPinName = OutputPinName;
+
+	FastForwardInput(PinName, OutputPinName);
+
+	// Signal won't reach the next node of the route, whichever implementation of FastForwardInput finished the node
+	if (IsFastForwardOutputPending(OutputPinName) && HasFinished())
+	{
+		LogWarning(FString::Printf(TEXT("Fast Forward stopped, node finished without triggering output %s"), *OutputPinName.ToString()));
+		FFlowFastForwardGate::ReportBrokenRoute(*this, OutputPinName);
+	}
+
+	PendingFastForwardOutputPinName = NAME_None;
+}
+
+void UFlowNode::FastForwardInput(const FName& PinName, const FName& OutputPinName)
+{
+	// Active node starting the route received its input before
+	if (!PinName.IsNone())
+	{
+		ExecuteInputForSelfAndAddOns(PinName);
+	}
+
+	// Node waits for something that doesn't happen while fast forwarding
+	// Finishing the node is up to its logic, as in the game, so the node stays active
+	if (IsFastForwardOutputPending(OutputPinName) && !HasFinished())
+	{
+		FFlowFastForwardGate::ReportForcedOutput(*this, OutputPinName);
+		TriggerOutput(OutputPinName);
+	}
+}
+
 void UFlowNode::SetActivationState(const EFlowNodeState NewActivationState)
 {
 	if (ActivationState != NewActivationState)
@@ -1261,10 +1295,20 @@ void UFlowNode::TriggerInput(const FName& PinName, const EFlowPinActivationType 
 	}
 #endif
 
+	FName FastForwardOutputPinName = NAME_None;
+	const bool bFastForwardInput = FFlowFastForwardGate::ShouldFastForwardInput(*this, PinName, FastForwardOutputPinName);
+
 	switch (SignalMode)
 	{
 		case EFlowSignalMode::Enabled:
-			ExecuteInputForSelfAndAddOns(PinName);
+			if (bFastForwardInput)
+			{
+				TriggerFastForwardInput(PinName, FastForwardOutputPinName);
+			}
+			else
+			{
+				ExecuteInputForSelfAndAddOns(PinName);
+			}
 			break;
 		case EFlowSignalMode::Disabled:
 			if (GetDefault<UFlowSettings>()->bLogOnSignalDisabled)
@@ -1321,6 +1365,11 @@ void UFlowNode::TriggerOutput(const FName PinName, const bool bFinish /*= false*
 		// do not trigger output if node is already finished or aborted
 		LogError(TEXT("Trying to TriggerOutput after finished or aborted"), EFlowOnScreenMessageType::Disabled);
 		return;
+	}
+
+	if (PinName == PendingFastForwardOutputPinName)
+	{
+		PendingFastForwardOutputPinName = NAME_None;
 	}
 
 	// clean up node, if needed

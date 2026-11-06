@@ -78,6 +78,14 @@ void UFlowNode_Switch::ExecuteInput(const FName& PinName)
 	}
 }
 
+void UFlowNode_Switch::FastForwardInput(const FName& PinName, const FName& OutputPinName)
+{
+	ExecuteInputForAddOns(PinName);
+
+	// Route requires this case, whatever the case predicates say about the current game state
+	TriggerOutput(OutputPinName, true);
+}
+
 #undef LOCTEXT_NAMESPACE
 
 #if WITH_EDITOR

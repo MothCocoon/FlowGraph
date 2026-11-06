@@ -38,6 +38,11 @@ However, this might be annoying to users.
 * You can disable this in a specific `UFlowAsset` subclass by overriding the `ShouldValidateOnSave()` method.
 
 ## Flow Asset
+* New feature: Fast Forward to Here! It saves the time spent on reproducing bugs that require playing a part of the game first.
+    * You can find this option in the node context menu during PIE, in the `Execution Override` section.
+    * The route of the signal is found from the nearest active node to the chosen node, also across SubGraphs. The game is pushed along this route: nodes execute their logic, only waiting for player actions or passing time is skipped.
+    * Nodes can customize this through the new `FastForwardInput` and `CanFastForward` methods. Play Level Sequence, Timer and nodes observing components already implement it.
+    * This is an early implementation. See the [Fast Forward](../Debugging/FastForward.html) page for details and known limitations.
 * Saving graph state to SaveGame now iterates nodes connected to Custom Inputs. Previously, the code only iterated over nodes connected to the Start node. (contributed by dskliarov-gsc)
 * New feature: Create a SubGraph asset from selected nodes! (contributed by LindyHopperGT)
     * You can find this new option in the node context menu, in the `Organization` section.

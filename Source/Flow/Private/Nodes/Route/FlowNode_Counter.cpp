@@ -1,6 +1,8 @@
 // Copyright https://github.com/MothCocoon/FlowGraph/graphs/contributors
 #include "Nodes/Route/FlowNode_Counter.h"
 
+#include "Interfaces/FlowFastForwardGate.h"
+
 #include UE_INLINE_GENERATED_CPP_BY_NAME(FlowNode_Counter)
 
 UFlowNode_Counter::UFlowNode_Counter()
@@ -56,6 +58,41 @@ void UFlowNode_Counter::ExecuteInput(const FName& PinName)
 	{
 		TriggerOutput(TEXT("Skipped"), true);
 	}
+}
+
+void UFlowNode_Counter::FastForwardInput(const FName& PinName, const FName& OutputPinName)
+{
+	if (!PinName.IsNone())
+	{
+		ExecuteInputForSelfAndAddOns(PinName);
+	}
+
+	// Remaining increments or decrements come from outside the route, reaching Goal or Zero finishes the counter as in the game
+	if (IsFastForwardOutputPending(OutputPinName) && !HasFinished())
+	{
+		FFlowFastForwardGate::ReportForcedOutput(*this, OutputPinName);
+		TriggerOutput(OutputPinName, OutputPinName != TEXT("Step"));
+	}
+}
+
+bool UFlowNode_Counter::CanFastForward(const FName& InputPinName, const FName& OutputPinName) const
+{
+	bool bInputLeadsToOutput = OutputPinName == TEXT("Step");
+
+	if (InputPinName == TEXT("Increment"))
+	{
+		bInputLeadsToOutput |= OutputPinName == TEXT("Goal");
+	}
+	else if (InputPinName == TEXT("Decrement"))
+	{
+		bInputLeadsToOutput |= OutputPinName == TEXT("Zero");
+	}
+	else if (InputPinName == TEXT("Skip"))
+	{
+		bInputLeadsToOutput = OutputPinName == TEXT("Skipped");
+	}
+
+	return bInputLeadsToOutput;
 }
 
 void UFlowNode_Counter::Cleanup()

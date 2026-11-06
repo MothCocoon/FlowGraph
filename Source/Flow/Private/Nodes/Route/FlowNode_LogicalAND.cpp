@@ -1,6 +1,8 @@
 // Copyright https://github.com/MothCocoon/FlowGraph/graphs/contributors
 #include "Nodes/Route/FlowNode_LogicalAND.h"
 
+#include "Interfaces/FlowFastForwardGate.h"
+
 #include UE_INLINE_GENERATED_CPP_BY_NAME(FlowNode_LogicalAND)
 
 UFlowNode_LogicalAND::UFlowNode_LogicalAND()
@@ -37,6 +39,21 @@ void UFlowNode_LogicalAND::ExecuteInput(const FName& PinName)
 	if (ExecutedInputNames.Num() == InputPins.Num())
 	{
 		TriggerFirstOutput(true);
+	}
+}
+
+void UFlowNode_LogicalAND::FastForwardInput(const FName& PinName, const FName& OutputPinName)
+{
+	if (!PinName.IsNone())
+	{
+		ExecuteInputForSelfAndAddOns(PinName);
+	}
+
+	// Inputs outside the route come from branches skipped by Fast Forward, the output finishes the node as in the game
+	if (IsFastForwardOutputPending(OutputPinName) && !HasFinished())
+	{
+		FFlowFastForwardGate::ReportForcedOutput(*this, OutputPinName);
+		TriggerOutput(OutputPinName, true);
 	}
 }
 

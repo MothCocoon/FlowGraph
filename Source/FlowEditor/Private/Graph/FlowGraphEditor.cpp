@@ -9,9 +9,14 @@
 #include "Graph/Nodes/FlowGraphNode.h"
 
 #include "Debugger/FlowDebuggerSubsystem.h"
+#include "FlowSubsystem.h"
+#include "FastForward/FlowFastForwardRouteFinder.h"
+#include "FastForward/FlowFastForwardSubsystem.h"
 
 #include "EdGraphUtilities.h"
 #include "Editor/UnrealEdEngine.h"
+#include "Engine/GameInstance.h"
+#include "Engine/World.h"
 #include "Framework/Application/SlateApplication.h"
 #include "Framework/Commands/GenericCommands.h"
 #include "Framework/Notifications/NotificationManager.h"
@@ -300,6 +305,13 @@ void SFlowGraphEditor::BindGraphCommands()
 	                       FCanExecuteAction::CreateStatic(&SFlowGraphEditor::IsPIE),
 	                       FIsActionChecked(),
 	                       FIsActionButtonVisible::CreateStatic(&SFlowGraphEditor::IsPIE)
+	);
+
+	CommandList->MapAction(FlowGraphCommands.FastForwardToHere,
+	                       FExecuteAction::CreateSP(this, &SFlowGraphEditor::FastForwardToHere),
+	                       FCanExecuteAction::CreateSP(this, &SFlowGraphEditor::CanFastForwardToHere),
+	                       FIsActionChecked(),
+	                       FIsActionButtonVisible::CreateSP(this, &SFlowGraphEditor::CanFastForwardToHere)
 	);
 
 	// Jump commands
@@ -1638,6 +1650,79 @@ void SFlowGraphEditor::OnForcePinActivation()
 			GraphNode->ForcePinActivation(Pin);
 		}
 	}
+}
+
+void SFlowGraphEditor::FastForwardToHere() const
+{
+	const TArray<UFlowGraphNode*> SelectedNodes = GetSelectedFlowNodes();
+	const UFlowNode* FlowNode = SelectedNodes.Num() == 1 ? Cast<UFlowNode>(SelectedNodes[0]->GetFlowNodeBase()) : nullptr;
+
+	if (FlowNode)
+	{
+		// Node of a graph not instanced yet is searched by its template
+		const UFlowNode* InspectedNode = FlowNode->GetInspectedInstance();
+		const UFlowNode* TargetNode = InspectedNode ? InspectedNode : FlowNode;
+
+		UFlowSubsystem* FlowSubsystem = nullptr;
+		if (InspectedNode)
+		{
+			FlowSubsystem = InspectedNode->GetFlowAsset()->GetFlowSubsystem();
+		}
+		else if (GEditor->PlayWorld && GEditor->PlayWorld->GetGameInstance())
+		{
+			FlowSubsystem = GEditor->PlayWorld->GetGameInstance()->GetSubsystem<UFlowSubsystem>();
+		}
+
+		UFlowFastForwardSubsystem* FastForwardSubsystem = FlowSubsystem ? FlowSubsystem->GetGameInstance()->GetSubsystem<UFlowFastForwardSubsystem>() : nullptr;
+		if (FastForwardSubsystem)
+		{
+			FFlowFastForwardRoute Route;
+			FFlowFastForwardRouteFinder RouteFinder(*FlowSubsystem);
+
+			FText FailureReason;
+			switch (RouteFinder.FindRoute(*TargetNode, Route))
+			{
+				case EFlowFastForwardRouteResult::Found:
+				{
+					// Editor UI runs with the editor world as GWorld.
+					// Without this, soft pointers would resolve to editor objects and actors would spawn in the editor world.
+					FScopedConditionalWorldSwitcher WorldSwitcher(FlowSubsystem->GetWorld());
+					FastForwardSubsystem->StartFastForward(Route);
+					break;
+				}
+				case EFlowFastForwardRouteResult::TargetAlreadyActive:
+					FailureReason = LOCTEXT("FastForwardToHere_TargetAlreadyActive", "Fast Forward to Here: node is already active.");
+					break;
+				case EFlowFastForwardRouteResult::NoActiveNodeOnRoute:
+					FailureReason = LOCTEXT("FastForwardToHere_NoActiveNodeOnRoute", "Fast Forward to Here: no active node leads to this node.");
+					break;
+				case EFlowFastForwardRouteResult::InvalidTarget:
+					FailureReason = LOCTEXT("FastForwardToHere_InvalidTarget", "Fast Forward to Here: node doesn't belong to a running graph or a graph it can instance.");
+					break;
+				default: ;
+			}
+
+			if (!FailureReason.IsEmpty())
+			{
+				FNotificationInfo Info(FailureReason);
+				Info.ExpireDuration = 3.0f;
+				Info.bUseLargeFont = false;
+				FSlateNotificationManager::Get().AddNotification(Info);
+			}
+		}
+	}
+}
+
+bool SFlowGraphEditor::CanFastForwardToHere() const
+{
+	const TArray<UFlowGraphNode*> SelectedNodes = GetSelectedFlowNodes();
+	const UFlowNode* FlowNode = SelectedNodes.Num() == 1 ? Cast<UFlowNode>(SelectedNodes[0]->GetFlowNodeBase()) : nullptr;
+
+	// Node of a graph not instanced yet has no activation state
+	const UFlowNode* InspectedNode = FlowNode ? FlowNode->GetInspectedInstance() : nullptr;
+	const bool bNeverActivated = InspectedNode == nullptr || InspectedNode->GetActivationState() == EFlowNodeState::NeverActivated;
+
+	return IsPIE() && FlowNode && bNeverActivated;
 }
 
 void SFlowGraphEditor::FocusViewport() const

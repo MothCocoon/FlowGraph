@@ -344,6 +344,13 @@ TMap<UObject*, UFlowAsset*> UFlowSubsystem::GetRootInstances() const
 	return Result;
 }
 
+TArray<UFlowAsset*> UFlowSubsystem::GetAllRootInstances() const
+{
+	TArray<UFlowAsset*> Result;
+	ObjectPtrDecay(RootInstances).GetKeys(Result);
+	return Result;
+}
+
 TSet<UFlowAsset*> UFlowSubsystem::GetRootInstancesByOwner(const UObject* Owner) const
 {
 	TSet<UFlowAsset*> Result;

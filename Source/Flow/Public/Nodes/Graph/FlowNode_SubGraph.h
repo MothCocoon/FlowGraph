@@ -61,6 +61,8 @@ protected:
 	virtual bool CanBeAssetInstanced() const;
 
 public:
+	const TSoftObjectPtr<UFlowAsset>& GetAsset() const { return Asset; }
+
 	// IFlowPreloadableInterface
 	virtual EFlowPreloadResult PreloadContent() override;
 	virtual void FlushContent() override;

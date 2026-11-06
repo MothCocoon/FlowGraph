@@ -46,6 +46,12 @@ public:
 	virtual void ExecuteInput(const FName& PinName) override;
 
 protected:
+	virtual void FastForwardInput(const FName& PinName, const FName& OutputPinName) override;
+
+public:
+	virtual bool CanFastForward(const FName& InputPinName, const FName& OutputPinName) const override;
+
+protected:
 	virtual void OnLoad_Implementation() override;
 
 	virtual void StartObserving();
@@ -69,7 +75,10 @@ protected:
 	UFUNCTION()
 	virtual void OnEventReceived();
 
-public:	
+	/* Emulates the game event this node waits for at its source. */
+	virtual void FastForwardEvent() {}
+
+public:
 	virtual void Cleanup() override;
 
 #if WITH_EDITOR

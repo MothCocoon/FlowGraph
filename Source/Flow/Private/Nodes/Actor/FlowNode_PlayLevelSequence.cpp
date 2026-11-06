@@ -5,14 +5,13 @@
 #include "FlowLogChannels.h"
 #include "FlowSubsystem.h"
 #include "AddOns/FlowNodeAddOn.h"
+#include "Interfaces/FlowFastForwardGate.h"
 #include "LevelSequence/FlowLevelSequenceActor.h"
 #include "LevelSequence/FlowLevelSequencePlayer.h"
 #include "LevelSequence/IFlowPlayLevelSequenceAddOnInterface.h"
-
-#if WITH_EDITOR
+#include "MovieScene/MovieSceneFlowRepeaterSection.h"
 #include "MovieScene/MovieSceneFlowTrack.h"
 #include "MovieScene/MovieSceneFlowTriggerSection.h"
-#endif
 
 #include "LevelSequence.h"
 #include "VisualLogger/VisualLogger.h"
@@ -247,6 +246,144 @@ void UFlowNode_PlayLevelSequence::ExecuteInput(const FName& PinName)
 	{
 		SequencePlayer->Play();
 	}
+}
+
+void UFlowNode_PlayLevelSequence::FastForwardInput(const FName& PinName, const FName& OutputPinName)
+{
+	// Playback starts, pauses, resumes or stops like after a real input
+	if (!PinName.IsNone())
+	{
+		ExecuteInputForSelfAndAddOns(PinName);
+	}
+
+	if (GetActivationState() == EFlowNodeState::Active && SequencePlayer)
+	{
+		if (OutputPinName == TEXT("Completed"))
+		{
+			// Duration includes subframes, unlike the end time
+			FastForwardPlaybackTo(bPlayReverse
+				? SequencePlayer->GetStartTime().Time - FFrameTime(1)
+				: SequencePlayer->GetStartTime().Time + SequencePlayer->GetDuration().Time);
+
+			// Looping, paused or not yet playing sequence doesn't finish by evaluating its remaining frames
+			if (GetActivationState() == EFlowNodeState::Active)
+			{
+				FFlowFastForwardGate::ReportForcedOutput(*this, OutputPinName);
+
+				// Reverse playback finishes at the start
+				if (bPlayReverse)
+				{
+					SequencePlayer->SetPlaybackPosition(FMovieSceneSequencePlaybackParams(SequencePlayer->GetStartTime().Time, EUpdatePositionMethod::Jump));
+					SequencePlayer->StopAtCurrentTime();
+				}
+				else
+				{
+					SequencePlayer->GoToEndAndStop();
+				}
+
+				OnPlaybackFinished();
+			}
+		}
+		else if (OutputPinName == TEXT("Stopped"))
+		{
+			StopPlayback();
+		}
+		else if (const TOptional<FFrameTime> EventTime = FindEventTime(OutputPinName.ToString()))
+		{
+			FastForwardPlaybackTo(EventTime.GetValue());
+		}
+	}
+
+	// Event that didn't fire, output triggered by the active node before or playback waiting for preloaded content
+	if (IsFastForwardOutputPending(OutputPinName) && GetActivationState() == EFlowNodeState::Active)
+	{
+		FFlowFastForwardGate::ReportForcedOutput(*this, OutputPinName);
+		TriggerOutput(OutputPinName, OutputPinName == TEXT("Completed"));
+	}
+}
+
+bool UFlowNode_PlayLevelSequence::CanFastForward(const FName& InputPinName, const FName& OutputPinName) const
+{
+	bool bInputLeadsToOutput = OutputPinName != TEXT("Stopped");
+
+	if (InputPinName == TEXT("Stop"))
+	{
+		bInputLeadsToOutput = OutputPinName == TEXT("Stopped");
+	}
+	else if (InputPinName == TEXT("Pause"))
+	{
+		bInputLeadsToOutput = false;
+	}
+	else if (InputPinName == TEXT("Resume"))
+	{
+		// Only started sequence resumes, outputs triggered when playback starts are behind it already
+		bInputLeadsToOutput &= SequencePlayer != nullptr
+			&& OutputPinName != TEXT("PreStart") && OutputPinName != TEXT("Started") && OutputPinName != UFlowNode::DefaultOutputPin.PinName;
+	}
+
+	return bInputLeadsToOutput;
+}
+
+void UFlowNode_PlayLevelSequence::FastForwardPlaybackTo(const FFrameTime& Frame) const
+{
+	// Play method sweeps the whole range, unlike Jump, so actors end up in the state set by the sequence
+	SequencePlayer->SetPlaybackPosition(FMovieSceneSequencePlaybackParams(Frame, EUpdatePositionMethod::Play));
+}
+
+TOptional<FFrameTime> UFlowNode_PlayLevelSequence::FindEventTime(const FString& EventName) const
+{
+	TOptional<FFrameTime> EventTime;
+
+	const UMovieScene* MovieScene = LoadedSequence ? LoadedSequence->GetMovieScene() : nullptr;
+	if (MovieScene && SequencePlayer)
+	{
+		// Section keys use the tick resolution
+		TArray<FFrameNumber> KeyTimes;
+
+		for (const UMovieSceneTrack* Track : MovieScene->GetTracks())
+		{
+			if (Track->IsA<UMovieSceneFlowTrack>())
+			{
+				for (const UMovieSceneSection* Section : Track->GetAllSections())
+				{
+					if (const UMovieSceneFlowTriggerSection* TriggerSection = Cast<UMovieSceneFlowTriggerSection>(Section))
+					{
+						const TMovieSceneChannelData<const FString> ChannelData = TriggerSection->StringChannel.GetData();
+						for (int32 KeyIndex = 0; KeyIndex < ChannelData.GetValues().Num(); ++KeyIndex)
+						{
+							if (ChannelData.GetValues()[KeyIndex] == EventName)
+							{
+								KeyTimes.Add(ChannelData.GetTimes()[KeyIndex]);
+							}
+						}
+					}
+					else if (const UMovieSceneFlowRepeaterSection* RepeaterSection = Cast<UMovieSceneFlowRepeaterSection>(Section))
+					{
+						if (RepeaterSection->EventName == EventName && RepeaterSection->HasStartFrame())
+						{
+							KeyTimes.Add(RepeaterSection->GetInclusiveStartFrame());
+						}
+					}
+				}
+			}
+		}
+
+		// Nearest event ahead of the playback, so the sequence never moves backward
+		const FFrameTime CurrentTime = SequencePlayer->GetCurrentTime().Time;
+		for (const FFrameNumber& KeyTime : KeyTimes)
+		{
+			const FFrameTime KeyPlayerTime = ConvertFrameTime(FFrameTime(KeyTime), MovieScene->GetTickResolution(), SequencePlayer->GetFrameRate());
+			const bool bAhead = bPlayReverse ? KeyPlayerTime <= CurrentTime : KeyPlayerTime >= CurrentTime;
+			const bool bNearer = !EventTime.IsSet() || (bPlayReverse ? KeyPlayerTime > EventTime.GetValue() : KeyPlayerTime < EventTime.GetValue());
+
+			if (bAhead && bNearer)
+			{
+				EventTime = KeyPlayerTime;
+			}
+		}
+	}
+
+	return EventTime;
 }
 
 void UFlowNode_PlayLevelSequence::OnSave_Implementation()

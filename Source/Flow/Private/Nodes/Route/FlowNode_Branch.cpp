@@ -78,6 +78,14 @@ void UFlowNode_Branch::ExecuteInput(const FName& PinName)
 	}
 }
 
+void UFlowNode_Branch::FastForwardInput(const FName& PinName, const FName& OutputPinName)
+{
+	ExecuteInputForAddOns(PinName);
+
+	// Route requires this output, whatever the predicates say about the current game state
+	TriggerOutput(OutputPinName, true);
+}
+
 #undef LOCTEXT_NAMESPACE
 
 #if WITH_EDITOR

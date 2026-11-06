@@ -33,6 +33,8 @@ protected:
 	virtual void ForgetActor(TWeakObjectPtr<AActor> Actor, TWeakObjectPtr<UFlowComponent> Component) override;
 
 	virtual void OnNotifyFromComponent(UFlowComponent* Component, const FGameplayTag& Tag);
+
+	virtual void FastForwardEvent() override;
 	
 #if WITH_EDITOR
 public:

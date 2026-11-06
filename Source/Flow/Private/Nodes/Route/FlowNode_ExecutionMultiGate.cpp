@@ -92,6 +92,42 @@ void UFlowNode_ExecutionMultiGate::ExecuteInput(const FName& PinName)
 	}
 }
 
+void UFlowNode_ExecutionMultiGate::FastForwardInput(const FName& PinName, const FName& OutputPinName)
+{
+	const int32 OutputIndex = OutputPins.IndexOfByKey(OutputPinName);
+
+	if (Completed.Num() == 0)
+	{
+		Completed.Init(false, OutputPins.Num());
+	}
+
+	if (Completed.IsValidIndex(OutputIndex))
+	{
+		ExecuteInputForAddOns(PinName);
+
+		// Route requires this output, whatever the order or randomness of the gate
+		Completed[OutputIndex] = true;
+		NextOutput = (OutputIndex + 1) % OutputPins.Num();
+		TriggerOutput(OutputPinName, false);
+
+		if (!Completed.Contains(false) && bLoop)
+		{
+			Finish();
+		}
+	}
+	else
+	{
+		Super::FastForwardInput(PinName, OutputPinName);
+	}
+}
+
+bool UFlowNode_ExecutionMultiGate::CanFastForward(const FName& InputPinName, const FName& OutputPinName) const
+{
+	// Reset input finishes the gate without triggering any output, opened output doesn't open again until the gate finishes
+	const int32 OutputIndex = OutputPins.IndexOfByKey(OutputPinName);
+	return InputPinName != TEXT("Reset") && !(Completed.IsValidIndex(OutputIndex) && Completed[OutputIndex]);
+}
+
 void UFlowNode_ExecutionMultiGate::Cleanup()
 {
 	NextOutput = 0;

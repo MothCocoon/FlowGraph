@@ -668,6 +668,7 @@ void UFlowGraphNode::GetNodeContextMenuActions(class UToolMenu* Menu, class UGra
 			{
 				Section.AddMenuEntry(FlowGraphCommands.SetPassThrough);
 			}
+			Section.AddMenuEntry(FlowGraphCommands.FastForwardToHere);
 		}
 
 		{

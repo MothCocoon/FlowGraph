@@ -49,6 +49,12 @@ void UFlowNode_LogicalOR::ExecuteInput(const FName& PinName)
 	}
 }
 
+bool UFlowNode_LogicalOR::CanFastForward(const FName& InputPinName, const FName& OutputPinName) const
+{
+	// Only numbered inputs of the enabled node trigger the output
+	return bEnabled && InputPinName.ToString().IsNumeric();
+}
+
 void UFlowNode_LogicalOR::ResetCounter()
 {
 	ExecutionCount = 0;

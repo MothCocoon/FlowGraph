@@ -123,6 +123,18 @@ public:
 	virtual void ExecuteInput(const FName& PinName) override;
 
 protected:
+	virtual void FastForwardInput(const FName& PinName, const FName& OutputPinName) override;
+
+public:
+	virtual bool CanFastForward(const FName& InputPinName, const FName& OutputPinName) const override;
+
+protected:
+	/* Evaluates playback up to the given frame at once, firing sequence events on the way. */
+	void FastForwardPlaybackTo(const FFrameTime& Frame) const;
+
+	/* Frame of the first Flow track event with the given name, in the player's frame rate. */
+	TOptional<FFrameTime> FindEventTime(const FString& EventName) const;
+
 	virtual void OnSave_Implementation() override;
 	virtual void OnLoad_Implementation() override;
 

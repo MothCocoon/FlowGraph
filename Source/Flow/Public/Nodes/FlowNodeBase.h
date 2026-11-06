@@ -140,6 +140,7 @@ protected:
 public:
 	/* Dispatcher for ExecuteInput to ensure the AddOns get their ExecuteInput calls even if the node/addon. */
 	void ExecuteInputForSelfAndAddOns(const FName& PinName);
+	void ExecuteInputForAddOns(const FName& PinName);
 
 	/* Finish execution of node, it will call Cleanup. */
 	UFUNCTION(BlueprintCallable, Category = "FlowNode")

@@ -14,6 +14,7 @@ public class FlowDebugger : ModuleRules
 
 		PrivateDependencyModuleNames.AddRange(
 		[
+			"AssetRegistry",
 			"Core",
 			"CoreUObject",
 			"DeveloperSettings",

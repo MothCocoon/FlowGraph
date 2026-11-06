@@ -156,6 +156,11 @@ void UFlowNodeBase::ExecuteInputForSelfAndAddOns(const FName& PinName)
 		ExecuteInput(PinName);
 	}
 
+	ExecuteInputForAddOns(PinName);
+}
+
+void UFlowNodeBase::ExecuteInputForAddOns(const FName& PinName)
+{
 	for (UFlowNodeAddOn* AddOn : AddOns)
 	{
 		AddOn->ExecuteInputForSelfAndAddOns(PinName);

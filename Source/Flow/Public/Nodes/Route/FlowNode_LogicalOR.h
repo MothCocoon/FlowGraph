@@ -36,6 +36,7 @@ public:
 #endif
 
 	virtual void ExecuteInput(const FName& PinName) override;
+	virtual bool CanFastForward(const FName& InputPinName, const FName& OutputPinName) const override;
 
 protected:
 	void ResetCounter();

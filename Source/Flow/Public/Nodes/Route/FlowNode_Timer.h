@@ -53,6 +53,12 @@ public:
 	virtual void ExecuteInput(const FName& PinName) override;
 
 protected:
+	virtual void FastForwardInput(const FName& PinName, const FName& OutputPinName) override;
+
+public:
+	virtual bool CanFastForward(const FName& InputPinName, const FName& OutputPinName) const override;
+
+protected:
 	virtual void SetTimer();
 	virtual void Restart();
 

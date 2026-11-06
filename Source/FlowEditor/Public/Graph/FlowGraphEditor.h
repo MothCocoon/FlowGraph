@@ -183,6 +183,9 @@ private:
 
 	void OnForcePinActivation();
 
+	void FastForwardToHere() const;
+	bool CanFastForwardToHere() const;
+
 	void FocusViewport() const;
 	bool CanFocusViewport() const;
 

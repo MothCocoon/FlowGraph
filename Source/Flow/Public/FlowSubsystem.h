@@ -109,6 +109,9 @@ public:
 	UFUNCTION(BlueprintPure, Category = "FlowSubsystem")
 	TMap<UObject*, UFlowAsset*> GetRootInstances() const;
 
+	/* Returns all assets instanced by objects from another system, including multiple instances started by the same object */
+	TArray<UFlowAsset*> GetAllRootInstances() const;
+
 	/* Returns asset instanced by specific object */
 	UFUNCTION(BlueprintPure, Category = "FlowSubsystem")
 	TSet<UFlowAsset*> GetRootInstancesByOwner(const UObject* Owner) const;

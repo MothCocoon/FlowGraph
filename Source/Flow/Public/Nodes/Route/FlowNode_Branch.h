@@ -32,6 +32,10 @@ public:
 	/* Event reacting on triggering Input pin. */
 	virtual void ExecuteInput(const FName& PinName) override;
 
+protected:
+	virtual void FastForwardInput(const FName& PinName, const FName& OutputPinName) override;
+
+public:
 	static const FName INPIN_Evaluate;
 	static const FName OUTPIN_True;
 	static const FName OUTPIN_False;

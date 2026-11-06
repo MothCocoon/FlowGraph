@@ -30,6 +30,11 @@ public:
 #endif
 
 	virtual void ExecuteInput(const FName& PinName) override;
+
+protected:
+	virtual void FastForwardInput(const FName& PinName, const FName& OutputPinName) override;
+
+public:
 	virtual void Cleanup() override;
 
 #if WITH_EDITOR
