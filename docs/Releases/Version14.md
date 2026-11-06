@@ -28,7 +28,7 @@ Do not update directly from version 1.0 to this version. Important fixups of dep
 * Refactored plain debugger struct into Flow Debugger Subsystem which gathers Runtime Logs.
 * Fixed: `UFlowNode::LogError` doesn't execute its logic in Shipping builds anymore. Also, prevented calling runtime log methods on templates of the Flow Asset.
 
-![2UFTrHOoGP](https://user-images.githubusercontent.com/5065057/226177111-a987759b-43b9-45bc-befc-88069367aae5.png)
+![2UFTrHOoGP](../img/Version14-1.png)
 
 ## Editor misc
 * Compilation-breaking change for C++. Context Pins now are constructed directly as `FFlowPin` instead of `FName`. It allows setting display names and tooltips on such pins.

@@ -9,18 +9,26 @@
     - title: FAQ
       url: /Overview/FAQ
 
-- title: Features
+- title: Runtime
   docs:
-    - title: Asset Search
-      url: /Features/AssetSearch
-    - title: Force Pin Activation
-      url: /Features/ForcePinActivation
     - title: Generic Gameplay Tag Events
-      url: /Features/GenericGameplayTagEvents
+      url: /Runtime/GenericGameplayTagEvents
     - title: Save Game Support
-      url: /Features/SaveGameSupport
+      url: /Runtime/SaveGameSupport
     - title: Signal Modes
-      url: /Features/SignalModes
+      url: /Runtime/SignalModes
+
+- title: Debugging
+  docs:
+    - title: Fast Forward
+      url: /Debugging/FastForward
+    - title: Force Pin Activation
+      url: /Debugging/ForcePinActivation
+
+- title: Editing
+  docs:
+    - title: Search
+      url: /Editing/Search
 
 - title: Guides
   docs:
@@ -62,8 +70,3 @@
       url: /Releases/Version11
     - title: Version 1.0
       url: /Releases/Version10
-
-- title: Forks
-  docs:
-    - title: Notable Pull Requests
-      url: /Forks/NotablePullRequests

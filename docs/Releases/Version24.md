@@ -131,3 +131,12 @@ However, this might be annoying to users.
     * As a general rule, runtime properties shouldn't use TSubclassOf, which is a hard reference.
 * Fixed the `GetObjectsWithOuter` call in `RemoveOrphanedNodes` for UE 5.8. (contributed by fcarreiro)
 * Fixed `-Wunreachable-code-loop-increment` errors on Clang. (based on a changelist by northstarswap)
+
+## Documentation
+The documentation has been revamped.
+* Feature pages are split into the Runtime, Debugging and Editing sections, so it's easier to find the right page. Links to the former `Features` pages need updating.
+* Images are stored in the repository, so the documentation can be read offline. Previously, images were hosted on GitHub servers.
+* Pages were checked against the current code and updated. Notably, Generic Gameplay Tag Events now correctly states that Notify Tags are required to send a notify, and the Search page covers both the Search in the Flow Asset editor and the engine's Asset Search.
+* The Plugins page lists all official plugins extending Flow Graph.
+* How To Contribute explains how to add images and preview the documentation locally.
+* Removed the outdated Notable Pull Requests page.

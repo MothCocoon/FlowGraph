@@ -23,4 +23,4 @@ title: Adding Node Spawn Shortcut
 ```
 3. Restart the editor. You should see the assigned shortcut in the Palette.
 
-![BKCt3pDj9s](https://user-images.githubusercontent.com/5065057/114264581-062ee400-99ec-11eb-9ffc-ba3e6d901b3d.png)
+![BKCt3pDj9s](../img/AddingNodeSpawnShortcut-1.png)

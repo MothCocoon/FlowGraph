@@ -18,7 +18,7 @@ Flow Solo (sample project) releases
 * [Flow Solo 5.0](https://github.com/MothCocoon/FlowSolo/releases/tag/v1.3-5.0)
 
 ## SaveGame support
-* [Signal Modes](../Features/SignalModes.html) features provides a solution for modifying Flow Graphs post-launch, once players already have SaveGames with serialized graph state.
+* [Signal Modes](../Runtime/SignalModes.html) features provides a solution for modifying Flow Graphs post-launch, once players already have SaveGames with serialized graph state.
 
 ## New: Force Pin Activation
 * It's a debugging feature available from Pin's context menu during PIE.
@@ -26,7 +26,7 @@ Flow Solo (sample project) releases
 * It works both on Input pins and Output pins. You can even trigger unconnected Input pins this way.
 
 ## New: Asset Search
-* (UE 5.1+) Implemented Asset Search for Flow Assets. It's now possible to use properties of Flow Assets and Flow Nodes. See this [Asset Search](../Features/AssetSearch.html) documentation.
+* (UE 5.1+) Implemented Asset Search for Flow Assets. It's now possible to use properties of Flow Assets and Flow Nodes. See this [Asset Search](../Editing/Search.html) documentation.
 
 ## New: Visual Diff
 * (UE 5.1+) Implemented Visual Diff for Flow Assets.

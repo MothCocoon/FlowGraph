@@ -9,16 +9,20 @@ The Signal Modes concept was born from the need to support patching already rele
 
 Yet we sometimes need to change the logic of our game in patches. Signal Modes provide a solution for that. It allows designers to mark nodes as:
 * **Enabled** - Default state, node is fully executed.
-* **Disabled** - No logic executed, any Input Pin activation is ignored. Node instantly enters a deactivated state.
+* **Disabled** - No logic executed, any Input Pin activation is ignored. The node doesn't activate, so the signal stops there.
 * **PassThrough** - Internal node logic not executed. All connected outputs are triggered, node finishes its work.
 
-This way, we can deactivate nodes without removing them from the graph, so we can properly continue graph execution from a legacy SaveGame. Pin connections aren't serialized to a SaveGame, so we can safely change connections on pass-through nodes anyway we need.
+This way, we can deactivate nodes without removing them from the graph, so we can properly continue graph execution from a legacy SaveGame. Pin connections aren't serialized to a SaveGame, so we can safely change connections on pass-through nodes any way we need.
 
-![image](https://user-images.githubusercontent.com/5065057/201344208-2020cdad-ae0d-4df6-bd06-25dddc1c88aa.png)
+Signal Mode is set from the node's context menu, in the **Execution Override** section. It can't be changed during PIE.
+
+![image](../img/SignalModes-1.png)
+
+By default, a note is logged every time a disabled node ignores its input or a pass-through node passes the signal. You can turn it off in Project Settings, in the Flow section, with `Log On Signal Disabled` and `Log On Signal Passthrough`.
 
 ## Allowed Signal Modes
 
-The node author can limit a list of available signal nodes for a given Flow Node class.
+The node author can limit the list of available signal modes for a given Flow Node class.
 Some nodes are already acting like pass-through nodes by design, like Reroute or Sequence. It would be redundant or confusing to mark them as PassThrough, so we removed that from the list of available signal modes.
 
 `AllowedSignalModes = {EFlowSignalMode::Enabled, EFlowSignalMode::Disabled};`
