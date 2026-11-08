@@ -9,6 +9,7 @@ AFlowWorldSettings::AFlowWorldSettings(const FObjectInitializer& ObjectInitializ
 	: Super(ObjectInitializer)
 {
 	bReplicates = false;
+	bReplicateUsingRegisteredSubObjectList = true;
 
 	FlowComponent = CreateDefaultSubobject<UFlowComponent>(TEXT("FlowComponent"));
 
@@ -17,9 +18,9 @@ AFlowWorldSettings::AFlowWorldSettings(const FObjectInitializer& ObjectInitializ
 	FlowComponent->bAllowMultipleInstances = false;
 }
 
-void AFlowWorldSettings::PreInitializeComponents()
+void AFlowWorldSettings::PostInitializeComponents()
 {
-	Super::PreInitializeComponents();
+	Super::PostInitializeComponents();
 
 	// Engine reads only the persistent level's WorldSettings at runtime.
 	// Sublevel WorldSettings replicate only to serve their own Root Flow.
