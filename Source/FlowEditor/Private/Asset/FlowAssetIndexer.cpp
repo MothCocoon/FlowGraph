@@ -111,7 +111,7 @@ void FFlowAssetIndexer::IndexGraph(const UFlowAsset* InFlowAsset, FSearchSeriali
 		// Indexing Flow Node
 		if (const UFlowGraphNode* FlowGraphNode = Cast<UFlowGraphNode>(Node))
 		{
-			if (const UFlowNodeBase* FlowNodeBase = FlowGraphNode->GetFlowNodeBase())
+			if (const UFlowNodeBase* FlowNodeBase = FlowGraphNode->GetNodeTemplate())
 			{
 				const FString NodeFriendlyName = FString::Printf(TEXT("%s: %s"), *FlowNodeBase->GetClass()->GetName(), *FlowNodeBase->GetNodeDescription());
 				Serializer.BeginIndexingObject(FlowNodeBase, NodeFriendlyName);
