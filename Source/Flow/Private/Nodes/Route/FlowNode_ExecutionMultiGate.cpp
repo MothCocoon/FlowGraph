@@ -63,7 +63,7 @@ void UFlowNode_ExecutionMultiGate::ExecuteInput(const FName& PinName)
 			}
 
 			Completed[Index] = true;
-			TriggerOutput(OutputPins[Index].PinName, false);
+			TriggerOutput(OutputPins[Index].PinName, bLoop && !Completed.Contains(false));
 		}
 		else
 		{
@@ -78,12 +78,7 @@ void UFlowNode_ExecutionMultiGate::ExecuteInput(const FName& PinName)
 			NextOutput = ++NextOutput % OutputPins.Num();
 
 			Completed[CurrentOutput] = true;
-			TriggerOutput(OutputPins[CurrentOutput].PinName, false);
-		}
-
-		if (!Completed.Contains(false) && bLoop)
-		{
-			Finish();
+			TriggerOutput(OutputPins[CurrentOutput].PinName, bLoop && !Completed.Contains(false));
 		}
 	}
 	else if (PinName == TEXT("Reset"))
@@ -108,12 +103,7 @@ void UFlowNode_ExecutionMultiGate::FastForwardInput(const FName& PinName, const 
 		// Route requires this output, whatever the order or randomness of the gate
 		Completed[OutputIndex] = true;
 		NextOutput = (OutputIndex + 1) % OutputPins.Num();
-		TriggerOutput(OutputPinName, false);
-
-		if (!Completed.Contains(false) && bLoop)
-		{
-			Finish();
-		}
+		TriggerOutput(OutputPinName, bLoop && !Completed.Contains(false));
 	}
 	else
 	{
