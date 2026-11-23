@@ -4,7 +4,7 @@ title: Flow 2.4 (work in progress)
 
 This is the upcoming release. This page is updated regularly after changes are pushed to the repository.
 
-This release includes pull requests from the community: AMBXJianPing (Fong Jian Ping), Bargestt (Vasilii Bulgakov), CyaDaPaKnat, dskliarov-gsc, dyanikoglu (Doğa Can Yanıkoğlu), fcarreiro (Facundo), fede-Raider (Federico Ciardi), LindyHopperGT (Riot Games), Maksym Kapelianovych, northstarswap, omarchuk-gsc.
+This release includes pull requests from the community: AMBXJianPing (Fong Jian Ping), Bargestt (Vasilii Bulgakov), CyaDaPaKnat, DAE-FriesB (Fries Boury), dskliarov-gsc, dyanikoglu (Doğa Can Yanıkoğlu), fcarreiro (Facundo), fede-Raider (Federico Ciardi), LindyHopperGT (Riot Games), Maksym Kapelianovych, northstarswap, omarchuk-gsc.
 
 This is the first release for UE 5.9.
 
@@ -87,6 +87,7 @@ However, this might be annoying to users.
     * This is used to provide a convenient actor picker on Flow Nodes.
     * The struct needs to be manually added to a Flow Node class and read by the node's logic.
 * Added a PIE world context guard during `ForcePinActivation`. This fixes issues with nodes spawning actors in the wrong (editor) world. (contributed by CyaDaPaKnat)
+* `FlowAssetIndexer` now indexes the template node (the node stored in the asset) by using `UFlowGraphNode::GetTemplateNode()` instead of the inspected node instance. This fixes ensures caused by stale node information saved for Asset Search. (contributed by DAE-FriesB)
 * `GetNodeTitle()` and `GetNodeDescription()` are now called on node instances only when displaying actual node instances. This allows us to preserve the default title and description for the archetype (e.g. in the node selection list). (contributed by LindyHopperGT)
 * Node descriptions have been revamped and greatly improved. (contributed by LindyHopperGT)
 * Added documentation methods for LLM agents. All nodes now implement `GetAgentDoc()`. (contributed by LindyHopperGT)
@@ -114,6 +115,8 @@ However, this might be annoying to users.
     * Components injected into actors can now be shared between a SubGraph and its parent graphs. Such a component is removed only after its last user releases it. (contributed by LindyHopperGT)
 * The `PlayLevelSequence` node now supports multiplayer via a replicated binding on `AFlowLevelSequenceActor`. (contributed by LindyHopperGT)
 * `OnNotifyFromActor` now has a `bExactMatch` flag, allowing users to choose how the `NotifyTag` should be matched. It's similar to the `NotifyActor` node. (contributed by fede-Raider)
+* Fixed case of Multi Gate dropping the input looped back from its last output.
+    * With Loop enabled, the gate finishes before triggering the last output of the cycle, so an input wired back from it starts a new cycle.
 * Placing a Comment node immediately starts editing its text. This saves users the extra action of selecting the Comment node.
 
 ## Flow Component
