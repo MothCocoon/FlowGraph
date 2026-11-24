@@ -231,7 +231,9 @@ FString UFlowNode_Timer::GetStatusString() const
 	}
 	else if (CompletionTimerHandle.IsValid() && GetWorld())
 	{
-		ProgressString = FString::Printf(TEXT("%.*f"), 2, GetWorld()->GetTimerManager().GetTimerElapsed(CompletionTimerHandle));
+		const float RemainingTime = GetWorld()->GetTimerManager().GetTimerRemaining(CompletionTimerHandle);
+		const float Elapsed = FMath::Max(ResolvedCompletionTime - RemainingTime, 0.0f);
+		ProgressString = FString::Printf(TEXT("%.*f"), 2, Elapsed);
 	}
 
 	if (!ProgressString.IsEmpty())
