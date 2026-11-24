@@ -115,8 +115,9 @@ However, this might be annoying to users.
     * Components injected into actors can now be shared between a SubGraph and its parent graphs. Such a component is removed only after its last user releases it. (contributed by LindyHopperGT)
 * The `PlayLevelSequence` node now supports multiplayer via a replicated binding on `AFlowLevelSequenceActor`. (contributed by LindyHopperGT)
 * `OnNotifyFromActor` now has a `bExactMatch` flag, allowing users to choose how the `NotifyTag` should be matched. It's similar to the `NotifyActor` node. (contributed by fede-Raider)
-* Fixed case of Multi Gate dropping the input looped back from its last output.
+* Fixed case of `MultiGate` dropping the input looped back from its last output.
     * With Loop enabled, the gate finishes before triggering the last output of the cycle, so an input wired back from it starts a new cycle.
+* Fixed `Timer` status (a debug display) for node loaded from the SaveGame. (contributed by dskliarov-gsc)
 * Placing a Comment node immediately starts editing its text. This saves users the extra action of selecting the Comment node.
 
 ## Flow Component
