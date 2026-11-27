@@ -434,16 +434,12 @@ public:
 
 protected:
 	UFUNCTION(BlueprintNativeEvent, Category = "FlowNode")
-	void OnSave();
-
-	UFUNCTION(BlueprintNativeEvent, Category = "FlowNode")
 	void OnLoad();
 
 	UFUNCTION(BlueprintNativeEvent, Category = "FlowNode")
 	void OnPassThrough();
 
-	UFUNCTION(BlueprintNativeEvent, Category = "FlowNode")
-	bool ShouldSave();
+	virtual bool ShouldSave_Implementation() override;
 
 //////////////////////////////////////////////////////////////////////////
 // Utils

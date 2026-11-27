@@ -536,6 +536,17 @@ protected:
 	void UpdateNodeConfigText();
 
 //////////////////////////////////////////////////////////////////////////
+// SaveGame support
+
+public:
+	UFUNCTION(BlueprintNativeEvent, Category = "FlowNode")
+	bool ShouldSave();
+
+protected:
+	UFUNCTION(BlueprintNativeEvent, Category = "FlowNode")
+	void OnSave();
+
+//////////////////////////////////////////////////////////////////////////
 // Debug support
 
 #if WITH_EDITORONLY_DATA

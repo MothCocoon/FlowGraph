@@ -7,6 +7,7 @@
 #include "FlowNodeAddOn.generated.h"
 
 class UFlowNode;
+struct FFlowAddOnSaveData;
 
 /**
  * A Flow Node AddOn allows user to extend given node instance in the graph with additional logic.
@@ -109,6 +110,16 @@ public:
 	 * that the addon will need a reliable FlowNode pointer at editor-time */
 	void SetFlowNodeForEditor(UFlowNode* FlowNodeOwner) { FlowNode = FlowNodeOwner; }
 #endif // WITH_EDITOR
+
+//////////////////////////////////////////////////////////////////////////
+// SaveGame support
+
+public:
+	FLOW_API void SaveInstance(FFlowAddOnSaveData& AddOnRecord);
+
+	FLOW_API void LoadInstance(const FFlowAddOnSaveData& AddOnRecord);
+
+	FLOW_API virtual bool ShouldSave_Implementation() override;
 
 protected:
 	void CacheFlowNode();

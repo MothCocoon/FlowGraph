@@ -2,10 +2,13 @@
 #include "AddOns/FlowNodeAddOn.h"
 
 #include "FlowLogChannels.h"
+#include "FlowSave.h"
 
 #include "Nodes/FlowNode.h"
 
 #include "Misc/RuntimeErrors.h"
+#include "Serialization/MemoryReader.h"
+#include "Serialization/MemoryWriter.h"
 
 #include UE_INLINE_GENERATED_CPP_BY_NAME(FlowNodeAddOn)
 
@@ -212,3 +215,39 @@ TArray<FFlowPin> UFlowNodeAddOn::GetPinsForContext(
 	return ContextPins;
 }
 #endif // WITH_EDITOR
+
+bool UFlowNodeAddOn::ShouldSave_Implementation()
+{
+	for (TFieldIterator<FProperty> It(GetClass()); It; ++It)
+	{
+		if (It->HasAnyPropertyFlags(CPF_SaveGame))
+		{
+			return true;
+		}
+	}
+
+	return false;
+}
+
+void UFlowNodeAddOn::SaveInstance(FFlowAddOnSaveData& AddOnRecord)
+{
+	AddOnRecord.AddOnGuid = NodeGuid;
+	OnSave();
+
+	FMemoryWriter MemoryWriter(AddOnRecord.AddOnData, true);
+	FFlowArchive Ar(MemoryWriter);
+	Serialize(Ar);
+}
+
+void UFlowNodeAddOn::LoadInstance(const FFlowAddOnSaveData& AddOnRecord)
+{
+	if (!AddOnRecord.AddOnData.IsEmpty())
+	{
+		FMemoryReader MemoryReader(AddOnRecord.AddOnData, true);
+		FFlowArchive Ar(MemoryReader);
+		Serialize(Ar);
+
+		// OnLoad() is not called for AddOns to avoid issues caused by initialization order. 
+		// For now, AddOn can only prepare data for serialization, but any loading logic is fully on the owner node side
+	}
+}

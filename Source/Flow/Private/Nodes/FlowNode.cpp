@@ -1540,6 +1540,26 @@ void UFlowNode::SaveInstance(FFlowNodeSaveData& NodeRecord)
 	NodeRecord.NodeGuid = NodeGuid;
 	OnSave();
 
+	NodeRecord.AddOnRecords.Reset();
+	ForEachAddOn([this, &NodeRecord](UFlowNodeAddOn& AddOn)
+	{
+		if (!AddOn.ShouldSave())
+		{
+			return EFlowForEachAddOnFunctionReturnValue::Continue;
+		}
+
+		if (AddOn.GetGuid().IsValid())
+		{
+			AddOn.SaveInstance(NodeRecord.AddOnRecords.AddDefaulted_GetRef());
+		}
+		else
+		{
+			LogWarning(FString::Printf(TEXT("AddOn %s has no Guid and is not saved"), *AddOn.GetName()));
+		}
+
+		return EFlowForEachAddOnFunctionReturnValue::Continue;
+	});
+
 	FMemoryWriter MemoryWriter(NodeRecord.NodeData, true);
 	FFlowArchive Ar(MemoryWriter);
 	Serialize(Ar);
@@ -1562,6 +1582,21 @@ void UFlowNode::LoadInstance(const FFlowNodeSaveData& NodeRecord)
 	switch (SignalMode)
 	{
 		case EFlowSignalMode::Enabled:
+			ForEachAddOn([&NodeRecord](UFlowNodeAddOn& AddOn)
+			{
+				const FGuid& AddOnGuid = AddOn.GetGuid();
+				const FFlowAddOnSaveData* AddOnRecord = AddOnGuid.IsValid()
+					? NodeRecord.AddOnRecords.FindByPredicate([&AddOnGuid](const FFlowAddOnSaveData& Record) { return Record.AddOnGuid == AddOnGuid; })
+					: nullptr;
+
+				if (AddOnRecord)
+				{
+					AddOn.LoadInstance(*AddOnRecord);
+				}
+
+				return EFlowForEachAddOnFunctionReturnValue::Continue;
+			});
+
 			OnLoad();
 			break;
 		case EFlowSignalMode::Disabled:
@@ -1575,10 +1610,6 @@ void UFlowNode::LoadInstance(const FFlowNodeSaveData& NodeRecord)
 			break;
 		default: ;
 	}
-}
-
-void UFlowNode::OnSave_Implementation()
-{
 }
 
 void UFlowNode::OnLoad_Implementation()

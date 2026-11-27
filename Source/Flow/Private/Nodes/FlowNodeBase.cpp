@@ -950,6 +950,15 @@ void UFlowNodeBase::UpdateNodeConfigText_Implementation()
 {
 }
 
+bool UFlowNodeBase::ShouldSave_Implementation()
+{
+	return true;
+}
+
+void UFlowNodeBase::OnSave_Implementation()
+{
+}
+
 #if WITH_EDITOR
 FString UFlowNodeBase::GetNodeDescription() const
 {
