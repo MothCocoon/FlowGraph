@@ -2,10 +2,13 @@
 #include "AddOns/FlowNodeAddOn.h"
 
 #include "FlowLogChannels.h"
+#include "FlowSave.h"
 
 #include "Nodes/FlowNode.h"
 
 #include "Misc/RuntimeErrors.h"
+#include "Serialization/MemoryReader.h"
+#include "Serialization/MemoryWriter.h"
 
 #include UE_INLINE_GENERATED_CPP_BY_NAME(FlowNodeAddOn)
 
@@ -116,6 +119,13 @@ void UFlowNodeAddOn::InitializeReplica()
 	Super::InitializeReplica();
 }
 
+void UFlowNodeAddOn::CacheFlowNode()
+{
+	FlowNode = FindOwningFlowNode();
+
+	ensureAsRuntimeWarning(FlowNode);
+}
+
 UFlowNode* UFlowNodeAddOn::GetFlowNode() const
 {
 	// We are making the assumption that this would always be known during runtime 
@@ -177,21 +187,10 @@ void UFlowNodeAddOn::RequestReconstructionOnOwningFlowNode() const
 {
 	(void)OnAddOnRequestedParentReconstruction.ExecuteIfBound();
 }
-#endif // WITH_EDITOR
 
-void UFlowNodeAddOn::CacheFlowNode()
-{
-	FlowNode = FindOwningFlowNode();
-
-	ensureAsRuntimeWarning(FlowNode);
-}
-
-#if WITH_EDITOR
 // Build an AddOn's context from the inherited context of the same direction before adding
 // its own pins. This keeps nested input and output contributions separate during reconstruction.
-TArray<FFlowPin> UFlowNodeAddOn::GetPinsForContext(
-	const TArray<FFlowPin>& Context,
-	const TArray<FFlowPin>& BaseContext) const
+TArray<FFlowPin> UFlowNodeAddOn::GetPinsForContext(const TArray<FFlowPin>& Context, const TArray<FFlowPin>& BaseContext) const
 {
 	TArray<FFlowPin> ContextPins = BaseContext;
 
@@ -212,3 +211,39 @@ TArray<FFlowPin> UFlowNodeAddOn::GetPinsForContext(
 	return ContextPins;
 }
 #endif // WITH_EDITOR
+
+bool UFlowNodeAddOn::ShouldSave_Implementation()
+{
+	for (TFieldIterator<FProperty> It(GetClass()); It; ++It)
+	{
+		if (It->HasAnyPropertyFlags(CPF_SaveGame))
+		{
+			return true;
+		}
+	}
+
+	return false;
+}
+
+void UFlowNodeAddOn::SaveInstance(FFlowAddOnSaveData& AddOnRecord)
+{
+	AddOnRecord.AddOnGuid = NodeGuid;
+	OnSave();
+
+	FMemoryWriter MemoryWriter(AddOnRecord.AddOnData, true);
+	FFlowArchive Ar(MemoryWriter);
+	Serialize(Ar);
+}
+
+void UFlowNodeAddOn::LoadInstance(const FFlowAddOnSaveData& AddOnRecord)
+{
+	if (!AddOnRecord.AddOnData.IsEmpty())
+	{
+		FMemoryReader MemoryReader(AddOnRecord.AddOnData, true);
+		FFlowArchive Ar(MemoryReader);
+		Serialize(Ar);
+
+		// OnLoad() is not called for AddOns to avoid issues caused by initialization order. 
+		// For now, AddOn can only prepare data for serialization, but any loading logic is fully on the owner node side
+	}
+}

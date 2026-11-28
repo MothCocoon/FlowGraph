@@ -1535,10 +1535,35 @@ bool UFlowNode::DispatchExecuteInputToPreloadHelper(const FName& PinName)
 	return false;
 }
 
+bool UFlowNode::ShouldSave_Implementation()
+{
+	return GetActivationState() == EFlowNodeState::Active;
+}
+
 void UFlowNode::SaveInstance(FFlowNodeSaveData& NodeRecord)
 {
 	NodeRecord.NodeGuid = NodeGuid;
 	OnSave();
+
+	NodeRecord.AddOnRecords.Reset();
+	ForEachAddOn([this, &NodeRecord](UFlowNodeAddOn& AddOn)
+	{
+		if (!AddOn.ShouldSave())
+		{
+			return EFlowForEachAddOnFunctionReturnValue::Continue;
+		}
+
+		if (AddOn.GetGuid().IsValid())
+		{
+			AddOn.SaveInstance(NodeRecord.AddOnRecords.AddDefaulted_GetRef());
+		}
+		else
+		{
+			LogWarning(FString::Printf(TEXT("AddOn %s has no Guid and is not saved"), *AddOn.GetName()));
+		}
+
+		return EFlowForEachAddOnFunctionReturnValue::Continue;
+	});
 
 	FMemoryWriter MemoryWriter(NodeRecord.NodeData, true);
 	FFlowArchive Ar(MemoryWriter);
@@ -1550,6 +1575,21 @@ void UFlowNode::LoadInstance(const FFlowNodeSaveData& NodeRecord)
 	FMemoryReader MemoryReader(NodeRecord.NodeData, true);
 	FFlowArchive Ar(MemoryReader);
 	Serialize(Ar);
+
+	ForEachAddOn([&NodeRecord](UFlowNodeAddOn& AddOn)
+	{
+		const FGuid& AddOnGuid = AddOn.GetGuid();
+		const FFlowAddOnSaveData* AddOnRecord = AddOnGuid.IsValid()
+			? NodeRecord.AddOnRecords.FindByPredicate([&AddOnGuid](const FFlowAddOnSaveData& Record) { return Record.AddOnGuid == AddOnGuid; })
+			: nullptr;
+
+		if (AddOnRecord)
+		{
+			AddOn.LoadInstance(*AddOnRecord);
+		}
+
+		return EFlowForEachAddOnFunctionReturnValue::Continue;
+	});
 
 	if (UFlowAsset* FlowAsset = GetFlowAsset())
 	{
@@ -1577,10 +1617,6 @@ void UFlowNode::LoadInstance(const FFlowNodeSaveData& NodeRecord)
 	}
 }
 
-void UFlowNode::OnSave_Implementation()
-{
-}
-
 void UFlowNode::OnLoad_Implementation()
 {
 }
@@ -1599,11 +1635,6 @@ void UFlowNode::OnPassThrough_Implementation()
 
 	// deactivate node, so it doesn't get saved to a new SaveGame
 	Finish();
-}
-
-bool UFlowNode::ShouldSave_Implementation()
-{
-	return GetActivationState() == EFlowNodeState::Active;
 }
 
 #if WITH_EDITOR

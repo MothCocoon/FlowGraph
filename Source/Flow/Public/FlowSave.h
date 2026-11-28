@@ -6,6 +6,18 @@
 #include "FlowSave.generated.h"
 
 USTRUCT(BlueprintType)
+struct FLOW_API FFlowAddOnSaveData
+{
+	GENERATED_USTRUCT_BODY()
+
+	UPROPERTY(SaveGame, VisibleAnywhere, Category = "Flow")
+	FGuid AddOnGuid;
+
+	UPROPERTY(SaveGame, VisibleAnywhere, Category = "Flow")
+	TArray<uint8> AddOnData;
+};
+
+USTRUCT(BlueprintType)
 struct FLOW_API FFlowNodeSaveData
 {
 	GENERATED_USTRUCT_BODY()
@@ -15,6 +27,9 @@ struct FLOW_API FFlowNodeSaveData
 
 	UPROPERTY(SaveGame, VisibleAnywhere, Category = "Flow")
 	TArray<uint8> NodeData;
+
+	UPROPERTY(SaveGame, VisibleAnywhere, Category = "Flow")
+	TArray<FFlowAddOnSaveData> AddOnRecords;
 
 	friend FArchive& operator<<(FArchive& Ar, FFlowNodeSaveData& InNodeData)
 	{

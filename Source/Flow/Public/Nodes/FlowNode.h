@@ -426,6 +426,8 @@ protected:
 // SaveGame support
 
 public:
+	virtual bool ShouldSave_Implementation() override;
+	
 	UFUNCTION(BlueprintCallable, Category = "FlowNode")
 	void SaveInstance(FFlowNodeSaveData& NodeRecord);
 
@@ -434,16 +436,10 @@ public:
 
 protected:
 	UFUNCTION(BlueprintNativeEvent, Category = "FlowNode")
-	void OnSave();
-
-	UFUNCTION(BlueprintNativeEvent, Category = "FlowNode")
 	void OnLoad();
 
 	UFUNCTION(BlueprintNativeEvent, Category = "FlowNode")
 	void OnPassThrough();
-
-	UFUNCTION(BlueprintNativeEvent, Category = "FlowNode")
-	bool ShouldSave();
 
 //////////////////////////////////////////////////////////////////////////
 // Utils
