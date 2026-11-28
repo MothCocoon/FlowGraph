@@ -95,6 +95,7 @@ However, this might be annoying to users.
 ## Flow Node AddOns
 * Moved the `NodeGuid` property to `UFlowNodeBase`, so AddOns now use it for identification. (contributed by LindyHopperGT)
     * Added code to update legacy graphs to set `NodeGuid` on AddOns.
+* AddOns can now save their properties marked as `SaveGame`, so AddOn logic can continue after loading the game. (contributed by dskliarov-gsc)
 * Improved copy-pasting of AddOns.
     * Reworked pasting so multiple nodes with AddOns can be copy-pasted. Previously, the editor could crash in some cases.
     * Added validation of AddOn attachment during copy-paste. (contributed by LindyHopperGT)
