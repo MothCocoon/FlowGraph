@@ -76,8 +76,10 @@ public:
 	FLOW_API virtual void InitializeReplica() override;
 	// --
 
-	// UFlowNodeAddOn
+protected:
+	void CacheFlowNode();
 
+public:	
 	/* The FlowNode that contains this AddOn.
 	 * Accessible only when initialized, runtime only. */
 	UFUNCTION(BlueprintCallable, BlueprintPure, Category = "FlowNodeAddon", DisplayName = "Get Flow Node")
@@ -109,22 +111,7 @@ public:
 	/* Editor-only method to set the FlowNode for any follow-up operations 
 	 * that the addon will need a reliable FlowNode pointer at editor-time */
 	void SetFlowNodeForEditor(UFlowNode* FlowNodeOwner) { FlowNode = FlowNodeOwner; }
-#endif // WITH_EDITOR
-
-//////////////////////////////////////////////////////////////////////////
-// SaveGame support
-
-public:
-	FLOW_API void SaveInstance(FFlowAddOnSaveData& AddOnRecord);
-
-	FLOW_API void LoadInstance(const FFlowAddOnSaveData& AddOnRecord);
-
-	FLOW_API virtual bool ShouldSave_Implementation() override;
-
-protected:
-	void CacheFlowNode();
-
-#if WITH_EDITOR
+	
 	/**
 	 * Combines this AddOn's pins with the inherited context for one direction.
 	 * @param Context The pins contributed by this AddOn: InputPins or OutputPins.
@@ -132,5 +119,14 @@ protected:
 	 * @return BaseContext followed by the valid pins from Context.
 	 */
 	TArray<FFlowPin> GetPinsForContext(const TArray<FFlowPin>& Context, const TArray<FFlowPin>& BaseContext) const;
-#endif
+#endif // WITH_EDITOR
+
+//////////////////////////////////////////////////////////////////////////
+// SaveGame support
+
+public:	
+	FLOW_API virtual bool ShouldSave_Implementation() override;
+
+	FLOW_API void SaveInstance(FFlowAddOnSaveData& AddOnRecord);
+	FLOW_API void LoadInstance(const FFlowAddOnSaveData& AddOnRecord);
 };

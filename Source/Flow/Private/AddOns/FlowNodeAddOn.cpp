@@ -119,6 +119,13 @@ void UFlowNodeAddOn::InitializeReplica()
 	Super::InitializeReplica();
 }
 
+void UFlowNodeAddOn::CacheFlowNode()
+{
+	FlowNode = FindOwningFlowNode();
+
+	ensureAsRuntimeWarning(FlowNode);
+}
+
 UFlowNode* UFlowNodeAddOn::GetFlowNode() const
 {
 	// We are making the assumption that this would always be known during runtime 
@@ -180,21 +187,10 @@ void UFlowNodeAddOn::RequestReconstructionOnOwningFlowNode() const
 {
 	(void)OnAddOnRequestedParentReconstruction.ExecuteIfBound();
 }
-#endif // WITH_EDITOR
 
-void UFlowNodeAddOn::CacheFlowNode()
-{
-	FlowNode = FindOwningFlowNode();
-
-	ensureAsRuntimeWarning(FlowNode);
-}
-
-#if WITH_EDITOR
 // Build an AddOn's context from the inherited context of the same direction before adding
 // its own pins. This keeps nested input and output contributions separate during reconstruction.
-TArray<FFlowPin> UFlowNodeAddOn::GetPinsForContext(
-	const TArray<FFlowPin>& Context,
-	const TArray<FFlowPin>& BaseContext) const
+TArray<FFlowPin> UFlowNodeAddOn::GetPinsForContext(const TArray<FFlowPin>& Context, const TArray<FFlowPin>& BaseContext) const
 {
 	TArray<FFlowPin> ContextPins = BaseContext;
 

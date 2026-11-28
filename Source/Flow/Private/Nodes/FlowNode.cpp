@@ -1535,6 +1535,11 @@ bool UFlowNode::DispatchExecuteInputToPreloadHelper(const FName& PinName)
 	return false;
 }
 
+bool UFlowNode::ShouldSave_Implementation()
+{
+	return GetActivationState() == EFlowNodeState::Active;
+}
+
 void UFlowNode::SaveInstance(FFlowNodeSaveData& NodeRecord)
 {
 	NodeRecord.NodeGuid = NodeGuid;
@@ -1630,11 +1635,6 @@ void UFlowNode::OnPassThrough_Implementation()
 
 	// deactivate node, so it doesn't get saved to a new SaveGame
 	Finish();
-}
-
-bool UFlowNode::ShouldSave_Implementation()
-{
-	return GetActivationState() == EFlowNodeState::Active;
 }
 
 #if WITH_EDITOR
