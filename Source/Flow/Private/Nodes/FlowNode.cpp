@@ -1576,6 +1576,21 @@ void UFlowNode::LoadInstance(const FFlowNodeSaveData& NodeRecord)
 	FFlowArchive Ar(MemoryReader);
 	Serialize(Ar);
 
+	ForEachAddOn([&NodeRecord](UFlowNodeAddOn& AddOn)
+	{
+		const FGuid& AddOnGuid = AddOn.GetGuid();
+		const FFlowAddOnSaveData* AddOnRecord = AddOnGuid.IsValid()
+			? NodeRecord.AddOnRecords.FindByPredicate([&AddOnGuid](const FFlowAddOnSaveData& Record) { return Record.AddOnGuid == AddOnGuid; })
+			: nullptr;
+
+		if (AddOnRecord)
+		{
+			AddOn.LoadInstance(*AddOnRecord);
+		}
+
+		return EFlowForEachAddOnFunctionReturnValue::Continue;
+	});
+
 	if (UFlowAsset* FlowAsset = GetFlowAsset())
 	{
 		FlowAsset->OnActivationStateLoaded(this);
@@ -1587,21 +1602,6 @@ void UFlowNode::LoadInstance(const FFlowNodeSaveData& NodeRecord)
 	switch (SignalMode)
 	{
 		case EFlowSignalMode::Enabled:
-			ForEachAddOn([&NodeRecord](UFlowNodeAddOn& AddOn)
-			{
-				const FGuid& AddOnGuid = AddOn.GetGuid();
-				const FFlowAddOnSaveData* AddOnRecord = AddOnGuid.IsValid()
-					? NodeRecord.AddOnRecords.FindByPredicate([&AddOnGuid](const FFlowAddOnSaveData& Record) { return Record.AddOnGuid == AddOnGuid; })
-					: nullptr;
-
-				if (AddOnRecord)
-				{
-					AddOn.LoadInstance(*AddOnRecord);
-				}
-
-				return EFlowForEachAddOnFunctionReturnValue::Continue;
-			});
-
 			OnLoad();
 			break;
 		case EFlowSignalMode::Disabled:
